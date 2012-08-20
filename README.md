@@ -5,7 +5,8 @@ Otherlab core library
 with a fast, lightweight python binding layer.  The code is originally based on parts of the
 [PhysBAM simulation library](http://physbam.stanford.edu) but has since been heavily modified.
 
-The code is released under a standard three-clause BSD license (see `LICENSE`).
+The code is released under a standard three-clause BSD license (see
+[LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
 
 ### Dependencies
 
