@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+
+import os
+import re
+import fileinput
+import optparse
+import glob
+from collections import defaultdict
+
+usage = "usage: %prog [--fix] [files...]"
+parser = optparse.OptionParser(usage)
+parser.add_option('--fix',action='store_true',help='modify includes in place')
+options,files = parser.parse_args()
+fix = options.fix
+
+def correct(f):
+  if f.startswith('other'):
+    base = os.path.abspath(os.path.join(os.environ['OTHER'],'..'))
+  else:
+    return f
+  def g(s):
+    return ''.join(('[%s%s]'%(c.lower(),c.upper()) if c not in './' else c) for c in s)
+  c = glob.glob(os.path.join(base,g(f)))
+  if len(c)!=1:
+    raise RuntimeError('found %d files matching %s: %s'%(len(c),f,' '.join(c)))
+  return c[0][len(base)+1:]
+
+include_pattern = re.compile('^#include <(.*)>\s*$')
+includes = []
+for line in fileinput.input(files=files):
+  m = include_pattern.match(line)
+  if m:
+    includes.append(m.group(1))
+
+lower_to_file = defaultdict(lambda:set())
+for f in includes:
+  lower_to_file[f.lower()].add(f)
+corrections = {}
+for k,v in lower_to_file.items():
+  v = list(v)
+  c = correct(v[0])
+  bad = [f for f in v if f!=c]
+  for f in bad:
+    corrections[f] = c
+  if bad:
+    print '%s included as %s'%(c,', '.join(bad))
+
+if fix:
+  for line in fileinput.input(files=files,inplace=True):
+    m = include_pattern.match(line)
+    if m and m.group(1) in corrections:
+      print '#include <%s>'%corrections[m.group(1)]
+    else:
+      print line,

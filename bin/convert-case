@@ -1,0 +1,156 @@
+#!/usr/bin/env python
+'''Script to convert from Physbam case conventions to (new) Otherlab conventions'''
+
+import re
+import sys
+import glob
+import fileinput
+import subprocess
+
+class_ignore_pattern = re.compile(r'^(?:TRY_|INSTANT|BOOST|STATIC_ASSERT_SAME|FLT_|DBL_|NPY_|FE_|BREAKPOINT$|SIG|FILE$|RUSAGE_|FPE_|SA_|SEEK_|PY_|USE_|M_|CBLAS_|TRUE$|FALSE$|JSAM|JCS|PNG_(?!FILE))')
+
+class_overrides = {
+  'NDARRAY':'NdArray',
+  'SYMMQMR':'SymmQMR',
+  'IO_ERROR':'IOError',
+  'OS_ERROR':'OSError',
+  'TYPED_ISTREAM':'TypedIStream',
+  'TYPED_OSTREAM':'TypedOStream'}
+
+def convert_class(m):
+  old = s = m.group(1)
+  if class_ignore_pattern.match(s):
+    return s
+  try:
+    return class_overrides[s]
+  except:
+    pass
+  s = ''.join(s[0]+s[1:].lower() if s else '' for s in s.split('_'))
+  if s.endswith('Mxn') or s.endswith('Nxn'):
+    s = s[:-1] + 'N'
+  if old.endswith('_'):
+    s += '_'
+  return s
+
+keyword_pattern = re.compile(r'^(?:new|const_cast|return|virtual)$')
+function_ignore_pattern = re.compile(r'^(?:Py_.*|True|False|Exception|None|F[ed][0-9])$')
+
+def convert_function(m):
+  s = m.group(1)
+  if function_ignore_pattern.match(s[:-1]):
+    return s
+  if keyword_pattern.match(s[:-1].lower()):
+    return s[:-1].lower()+'_'+s[-1]
+  return s.lower()
+
+dir_map = {
+  'Arrays':'array',
+  'Data_Structures':'structure',
+  'Forces':'force',
+  'Geometry':'geometry',
+  'Images':'image',
+  'Math_Tools':'math',
+  'Meshes':'mesh',
+  'Python':'python',
+  'Random':'random',
+  'Utilities':'utility',
+  'Vectors':'vector'}
+
+def convert_namespace(m):
+  s = m.group(1)
+  s = s.lower()
+  if s == 'try':
+    s = 'other'
+  if s == 'log':
+    s = 'Log'
+  return 'namespace '+s
+
+class_pattern = re.compile(r'(?<!#undef )(?<!#define )\b([A-Z][A-Z_0-9]{2,})\b')
+function_pattern = re.compile(r'\b([A-Z][a-z0-9]{2,}(?:_[A-Z0-9][a-z0-9]*)*[(),<;":])')
+try_pattern = re.compile(r'\bTRY_')
+trycolon_pattern = re.compile(r'\b[Tt]ry::')
+namespace_pattern = re.compile(r'\bnamespace (\w+)\b')
+readwrite_pattern = re.compile(r'\bRead_Write\b')
+
+def convert(line):
+  line = readwrite_pattern.sub('ReadWrite',line)
+  line = function_pattern.sub(convert_function,line)
+  line = class_pattern.sub(convert_class,line)
+  line = namespace_pattern.sub(convert_namespace,line)
+  line = try_pattern.sub('OTHER_',line)
+  line = trycolon_pattern.sub('other::',line)
+  return line
+
+include_pattern = re.compile(r'#include <(Try|Pneumo)/(\w+)/(\w+).h>')
+def convert_include(m):
+  if m.group(1)=='Pneumo':
+    return '#include <other/sim/%s.h>'%convert(m.group(3))
+  return '#include <other/core/%s/%s.h>'%(dir_map[m.group(2)],convert(m.group(3)))
+
+module_pattern = re.compile(r'\bTry((?:\.[A-Z][a-z_]{2,})?)\b')
+def convert_module(m):
+  s = m.group(1)
+  return 'other.core'+('.'+dir_map[s[1:]] if s else '')
+
+module_name_pattern = re.compile(r'\bTry('+'|'.join(dir_map.keys())+r')\b')
+def convert_module_name(m):
+  s = m.group(1)
+  return 'other_'+dir_map[s]
+
+dir_pattern = re.compile(r'\b('+'|'.join(dir_map.keys())+r')\b')
+def convert_dir(m):
+  s = m.group(1)
+  return dir_map[s]
+
+relative_module_pattern = re.compile(r'(\bimport |(?<= )\.+)('+'|'.join(dir_map.keys())+r')\b')
+def convert_relative_module(m):
+  return m.group(1)+dir_map[m.group(2)]
+
+libtry_pattern = re.compile(r'\blibTry(\w+)\b')
+def convert_libtry(m):
+  s = m.group(1)
+  return 'libother_'+dir_map[s]
+
+def run(*cmd):
+  print ' '.join(cmd)
+  subprocess.call(cmd)
+
+if sys.argv[1] == '--names':
+  for old in sys.argv[2:]:
+    if old.endswith('.stl') or old.endswith('.STL'):
+      new = old[:-4]+'.stl'
+    else:
+      new = convert(old)
+    if new != old:
+      run('git','rm','--cached',old)
+      run('mv',old,new)
+      run('git','add',new)
+else:
+  ignore = '''array/RawArray.* array/Array.h array/Subarray.h array/Module.cpp math/hash.* utility/Process.cpp utility/Symbol.cpp python/Class.h vector/DiagonalMatrix* structure/Hashtable.h vector/Vector?d.h vector/SolidMatrix.h vector/Matrix*.h python/Module.*
+              vector/blas.* array/Array?d.h vector/Quaternion.h vector/SparseMatrix.* */Box.* geometry/Plane.* geometry/BoxTree.* structure/UnionFind.* geometry/Triangle3d.* mesh/*Mesh.* random/Random.* mesh/TriangleSubdivision.* vector/Complex.*
+              image/MovFile.* geometry/Module.cpp vector/Symmetric* __init__.py utility/Log.py */test_sobol.py array/test_array.py vector/Module.cpp vector/test_vector.py vector/test_matrix.py */Platonic.py */test_mesh.py */ClassTest.cpp
+              force/__init__.py force/test_force.py bin/convert-case vector/__init__.py python/test_class.py'''
+  ignore = set(s for p in ignore.split() for s in glob.glob(p))
+  if sys.argv[1] == '--commit-skipped':
+    run('git','ci','--amend','-m','IN PROGRESS',*ignore)
+    sys.exit(0)
+  for line in fileinput.input(inplace=1):
+    file = fileinput.filename()
+    if file in ignore:
+      print line,
+    else:
+      if 'CASE(' in line:
+        print line,
+      elif file.endswith('SConscript'):
+        line = module_name_pattern.sub(convert_module_name,line)
+        print line,
+      else:
+        if file.endswith('.py'):
+          line = module_pattern.sub(convert_module,line)
+          line = relative_module_pattern.sub(convert_relative_module,line)
+          line = libtry_pattern.sub(convert_libtry,line)
+          line = dir_pattern.sub(convert_dir,line)
+          line = line.replace('Log.Print','Log.write')
+        line = module_name_pattern.sub(convert_module_name,line)
+        line = include_pattern.sub(convert_include,line)
+        print convert(line),

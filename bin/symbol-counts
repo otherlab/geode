@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+import os
+import re
+import sys
+import subprocess
+from collections import defaultdict
+import optparse
+
+usage = "usage: %prog [options...] [files...]"
+parser = optparse.OptionParser(usage)
+#parser.add_option('-s','--summary',action='store_true',help='summarize info about each file')
+options,files = parser.parse_args()
+
+counts = defaultdict(lambda:0)
+types = defaultdict(lambda:set())
+
+symbol_pattern = re.compile(r'^(\d+) (\w) (.*)$')
+for file in files:
+  for line in subprocess.Popen('gnm -gC -t d --defined-only'.split()+[file],stdout=subprocess.PIPE,stderr=subprocess.PIPE).stdout:
+    m = symbol_pattern.match(line)
+    if not m:
+      print>>sys.stderr,'weird line:',line,
+      sys.exit(1)
+    s = m.group(3)
+    counts[s] += 1
+    types[s].add(m.group(2))
+
+symbols = sorted(counts.keys(),key=lambda s:counts[s])
+for s in symbols:
+  print '%d %s %s'%(counts[s],''.join(types[s]),s)

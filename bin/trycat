@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import optparse
+from other.core.utility import tryfile
+from numpy import *
+
+usage="usage: %prog [options] <data.try>..."
+parser=optparse.OptionParser(usage)
+parser.add_option('-s','--summary',action='store_true',help='print structure only')
+parser.add_option('-b','--boxes',action='store_true',help='print bounding boxes for arrays of vectors')
+parser.add_option('-l','--width',type=int,default=0,help='change line width for numpy printing')
+options,args = parser.parse_args()
+
+if options.width:
+  set_printoptions(linewidth=options.width)
+
+def dump(indent,d):
+  if isinstance(d,dict):
+    for k,v in d.items():
+      print '%s%s'%(indent,k),
+      if isinstance(v,ndarray):
+        print ':',
+        if v.ndim: print v.shape,
+        print v.dtype,
+        if options.boxes and v.ndim:
+          if 2<=v.shape[-1]<=4:
+            vb = v.reshape(-1,v.shape[-1]) 
+            print '%s-%s'%tuple('[%s]'%','.join(str(a) for a in e) for e in (vb.min(axis=0),vb.max(axis=0))),
+          else:
+            print '%s-%s'%(v.min(),v.max())
+      print 
+      dump(indent+'  ',v)
+  elif not options.summary:
+    for s in str(d).split('\n'):
+      print '%s%s'%(indent,s)
+
+for f in args:
+  print '%s:'%f
+  data = tryfile.read(f)
+  dump('  ',data) 

@@ -1,0 +1,448 @@
+import os
+import re
+import sys
+import subprocess
+
+def die(message):
+  print>>sys.stderr,'fatal:',message
+  sys.exit(1)
+
+# Require a recent version of scons
+EnsureSConsVersion(2,0,0)
+
+# Read configuration from config.py.
+# As far as I can tell, the scons version of this doesn't allow defining new options in SConscript files.
+sys.path.insert(0,Dir('#').abspath)
+import config
+del sys.path[0]
+def options(*vars):
+  for name,help,default in vars:
+    Help('%s: %s (default %s)'%(name,help,default))
+    env[name] = config.__dict__.get(name,default)
+
+# Base environment
+env = Environment(tools=['default','pdflatex','pdftex'])
+env.Replace(ENV=os.environ)
+
+# Default base directory
+if env['PLATFORM']=='darwin':
+  for base in '/opt/local','/usr/local':
+    if os.path.exists(base):
+      env.Replace(BASE=base)
+      env.Append(CPPPATH=[base+'/include'],LIBPATH=[base+'/lib'])
+      break
+  else:
+    die("We're on Mac, but neither /opt/local or /usr/local exists.  other requires either MacPorts or Homebrew.")
+else:
+  env.Replace(BASE='/usr')
+
+# Base options
+options(
+  ('CXX','C++ compiler','<detect-gcc>'),
+  ('arch','Architecture (e.g. pentium4, opteron, nocona, powerpc)',''),
+  ('type','Type of build (e.g. release, debug, profile)','release'),
+  ('default_arch','Architecture that doesn\'t need a suffix',''),
+  ('cache','Cache directory to use',''),
+  ('shared','Build shared libraries',1),
+  ('shared_objects','Build shareable objects when without shared libraries',1),
+  ('real','Primary floating point type (float or double)','double'),
+  ('install_programs','install programs into source directories',1),
+  ('Werror','turn warnings into errors',1),
+  ('Wconversion','warn about various conversion issues',0),
+  ('hidden','make symbols invisible by default',0),
+  ('openmp','use openmp',1),
+  ('has_latex','true if latex is available',0),
+  ('thread_safe','use thread safe reference counting in pure C++ code',0),
+  ('skip','list of modules to skip',[]),
+  ('BASE','Standard base directory for headers and libraries',env['BASE']),
+  ('CXXFLAGS_EXTRA','',[]),
+  ('LINKFLAGS_EXTRA','',[]),
+  ('CPPPATH_EXTRA','',['/usr/local/include']),
+  ('LIBPATH_EXTRA','',['/usr/local/lib']),
+  ('RPATH_EXTRA','',[]),
+  ('LIBS_EXTRA','',[]),
+  ('PREFIX','Path to install libraries, binaries, and scripts','#install/$type'),
+  ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
+  ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
+  ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
+  ('python','Python executable','python'),
+  ('mpicc','MPI wrapper compiler (used only to extract flags)','mpicc'),
+  ('qtdir','Top level Qt dir (autodetect by default)',''))
+assert env['real'] in ('float','double')
+
+# Extra flag options
+env.Append(CXXFLAGS=env['CXXFLAGS_EXTRA'])
+env.Append(LINKFLAGS=env['LINKFLAGS_EXTRA'])
+env.Append(CPPPATH=env['CPPPATH_EXTRA'])
+env.Append(LIBPATH=env['LIBPATH_EXTRA'])
+env.Append(RPATH=env['RPATH_EXTRA'])
+env.Append(LIBS=env['LIBS_EXTRA'])
+
+# External libraries
+externals = {}
+def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False):
+  lib = {'default':default,'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
+         'rpath':rpath,'libs':libs,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
+         'has':has,'hide':hide}
+
+  options(
+    ('has_'+name,'Whether '+name+' is available',lib['has']),
+    ('use_'+name,'Use '+name,lib['default']),
+    (name+'_dir','Base directory for '+name,dir),
+    (name+'_include','Include directory for '+name,0),
+    (name+'_libpath','Library directory for '+name,0),
+    (name+'_rpath','Extra rpath directory for '+name,0),
+    (name+'_libs','Libraries for '+name,0),
+    (name+'_frameworks','Frameworks for '+name,0),
+    (name+'_frameworkpath','Framework path for '+name,0),
+    (name+'_cxxflags','Compiler flags for '+name,0),
+    (name+'_linkflags','Linker flags for '+name,0),
+    (name+'_requires','Required libraries for '+name,0),
+    (name+'_pkgconfig','pkg-config names for '+name,0))
+
+  # Is this external library available?
+  if env['has_'+name]:
+    externals[name] = lib
+  else:
+    return
+
+  # Absorb settings
+  if env[name+'_pkgconfig']!=0: lib['pkg-config']=env[name+'_pkgconfig']
+  if 'pkg-config' in lib and lib['pkg-config']:
+    def pkgconfig(pkg,data):
+      return subprocess.Popen(['pkg-config',pkg,data],stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()[0].replace('\n','')
+    pkg = lib['pkg-config']
+    includes = pkgconfig(pkg,"--cflags-only-I").split()
+    lib['cpppath'] = [x.replace("-I","") for x in includes]
+    lib['cxxflags'] = pkgconfig(pkg,"--cflags-only-other")
+    lib['linkflags'] = pkgconfig(pkg,"--libs")
+  dir = env[name+'_dir']
+  def sanitize(path):
+    return [path] if isinstance(path,str) else path
+  if env[name+'_include']!=0: lib['cpppath'] = sanitize(env[name+'_include'])
+  elif dir and not lib['cpppath']: lib['cpppath'] = [dir+'/include']
+  if env[name+'_libpath']!=0: lib['libpath'] = sanitize(env[name+'_libpath'])
+  elif dir and not lib['libpath']: lib['libpath'] = [dir+'/lib']
+  if env[name+'_rpath']!=0: lib['rpath'] = sanitize(env[name+'_rpath'])
+  elif lib['rpath']==0: lib['rpath'] = [Dir(d).abspath for d in lib['libpath']]
+  if env[name+'_libs']!=0: lib['libs'] = env[name+'_libs']
+  if env[name+'_frameworks']!=0: lib['frameworks'] = env[name+'_frameworks']
+  if env[name+'_frameworkpath']!=0: lib['frameworkpath'] = sanitize(env[name+'_frameworkpath'])
+  if env[name+'_cxxflags']!=0: lib['cxxflags'] = env[name+'_cxxflags']
+  if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
+
+# Predefined external libraries
+external('python',default=1,frameworks=['Python'])
+external('boost',default=1,libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
+external('mpi',flags=['USE_MPI'])
+external('libjpeg',flags=['USE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
+external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=['/usr/X11/include'],libpath=['/usr/X11/lib'])
+external('openexr',flags=['USE_OPENEXR'],libs=['IlmImf','Half','Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile')
+external('atlas',libs=['cblas','lapack','atlas'])
+external('openblas',libs=['lapack','blas'])
+external('accelerate',default=1,frameworks=['Accelerate'])
+external('mkl',flags=['USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+
+# Automatic python configuration
+def configure_python():
+  include,numpy,libpath,lib,frameworkpath = subprocess.Popen([env['python'],'-c',re.sub(r'^\s+','','''
+  import numpy
+  import distutils.sysconfig as sc
+  get = sc.get_config_var
+  print sc.get_python_inc(),numpy.get_include(),get('LIBDIR'),get('LDLIBRARY'),get('PYTHONFRAMEWORKPREFIX')
+  ''',flags=re.MULTILINE)],stdout=subprocess.PIPE).communicate()[0].split()
+  python = externals['python']
+  assert include,numpy
+  python['cpppath'] = [include,numpy]
+  if env['PLATFORM']=='darwin':
+    assert frameworkpath
+    python['frameworkpath'] = [frameworkpath]
+  else:
+    assert libpath and lib
+    python['libpath'] = [libpath]
+    python['libs'] = [lib]
+configure_python()
+
+# Improve performance
+env.Decider('MD5-timestamp')
+env.SetOption('max_drift',100)
+env.SetDefault(CPPPATH_HIDDEN=[]) # directories in CPPPATH_HIDDEN won't be searched for dependencies
+env.SetDefault(CPPDEFINES=[])
+env.Replace(_CPPINCFLAGS=env['_CPPINCFLAGS']+re.sub(r'\$\( (.*)\bCPPPATH\b(.*)\$\)',r'\1CPPPATH_HIDDEN\2',env['_CPPINCFLAGS']))
+
+# Pick compiler if the user requested the default
+if env['CXX']=='<detect-gcc>':
+  for gcc in 'g++-mp-4.6','g++-4.6','g++':
+    if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
+      env.Replace(CXX=gcc)
+      break
+  else:
+    die('no suitable version of g++ found')
+
+# If we're using gcc, insist on 4.6 or higher
+if re.match(r'\bg\+\+',env['CXX']):
+  version = subprocess.Popen([env['CXX'],'--version'], stdout=subprocess.PIPE).communicate()[0]
+  m = re.search(r'\s+([\d\.]+)(\s+|\n|$)',version)
+  if not m:
+    die('weird version line: %s'%version[:-1])
+  if tuple(m.group(1).split('.'))<(4,6):
+    die('gcc 4.6 or higher is required, but %s has version %s'%(env['CXX'],m.group(1)))
+
+# Platform
+if env['arch']=='':
+  if os.environ.has_key('PLATFORM'): env['arch'] = os.environ['PLATFORM']
+  else: env['arch'] = 'nocona'
+
+# Build cache
+if env['cache']!='':
+  CacheDir(env['cache'])
+
+# Variant build setup
+env['variant_build'] = os.path.join('build',env['arch'],env['type'])
+env.VariantDir(env['variant_build'],'.',duplicate=0)
+program_suffix = ''
+if env['arch']!=env['default_arch']: program_suffix+='_'+env['arch']
+if env['type']!='release': program_suffix+='_'+env['type']
+else: executable_suffix=''
+
+# Put prefix as define so C programs can use it for accessing resources
+env.Append(CXXFLAGS=" -DPREFIX=\\\""+Dir(env["PREFIX"]).abspath+"\\\"")
+
+# Compiler flags
+clang = bool(re.search(r'\bclang\b',env['CXX']))
+if env['CXX'].endswith('icc') or env['CXX'].endswith('icpc'):
+  if env['type']=='optdebug' or env['type']=='debug': env.Append(CXXFLAGS=' -g')
+  if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
+    if env['arch']=='pentium4': env.Append(CXXFLAGS=' -O3 -xN')
+    elif env['arch']=='nocona': env.Append(CXXFLAGS=' -O3 -xP')
+    else: env.Append(CXXFLAGS=' -O3')
+  env.Append(CXXFLAGS=' -w -vec-report0 -Wall -Winit-self -Woverloaded-virtual',LINKFLAGS=' -w')
+else: # assume g++...
+  # machine flags
+  if env['arch']=='athlon': machine_flags=' -march=athlon-xp -msse'
+  elif env['arch']=='nocona': machine_flags=' -march=nocona -msse2'
+  elif env['arch']=='opteron': machine_flags=' -march=opteron -msse3'
+  elif env['arch']=='powerpc': machine_flags=' -msse3'
+  else: machine_flags=''
+  env.Append(CXXFLAGS=machine_flags)
+  # type specific flags
+  if env['type']=='optdebug': env.Append(CXXFLAGS=' -g3')
+  if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
+    optimization_flags=''
+    if env['arch']=='pentium4': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
+    elif env['arch']=='pentium3': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
+    elif env['arch']=='opteron': optimization_flags+=' -O2'
+    elif env['arch']=='nocona': optimization_flags+=' -O3 -funroll-loops'
+    elif env['arch']=='powerpc': optimization_flags+=' -O2'
+    env.Append(CXXFLAGS=optimization_flags)
+    env.Append(LINKFLAGS=' -dead_strip')
+    if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
+  elif env['type']=='debug': env.Append(CXXFLAGS=' -g',LINKFLAGS=' -g')
+  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -fno-strict-aliasing') # -Wstrict-aliasing=2
+
+# Optionally warn about conversion issues
+if env['Wconversion']:
+  env.Append(CXXFLAGS='-Wconversion -Wno-sign-conversion')
+
+# Use c++0x
+env.Append(CXXFLAGS=' -std=c++0x')
+
+# Hide symbols by default if desired
+if env['hidden']:
+  env.Append(CXXFLAGS=' -fvisibility=hidden',LINKFLAGS=' -fvisibility=hidden')
+
+if env['Werror']:
+  env.Append(CXXFLAGS=' -Werror')
+
+# Relax a few warnings for clang
+if clang:
+  env.Append(CXXFLAGS=' -Wno-array-bounds -Wno-unknown-pragmas') # for Python and OpenMP, respectively
+
+if env['type']=='release' or env['type']=='profile' or env['type']=='optdebug':
+  env.Append(CPPDEFINES=['NDEBUG'])
+env.Append(CPPDEFINES=[('OTHER_REAL',env['real'])])
+env.Append(CPPDEFINES=[('OTHER_THREAD_SAFE',int(env['thread_safe']))])
+
+# Enable OpenMP
+if env['openmp']:
+  if not clang:
+    env.Append(CXXFLAGS='-fopenmp',LINKFLAGS='-fopenmp')
+  else:
+    print>>sys.stderr, 'Warning: clang doesn\'t know how to do OpenMP, so many things will be slower'
+
+# Configure MPI if it exists
+try:
+  mpi = externals['mpi']
+  if not (mpi['cxxflags'] or mpi['linkflags'] or mpi['libs']):
+    for flags,stage in ('linkflags','link'),('cxxflags','compile'):
+      mpi[flags] = ' '+subprocess.Popen([env['mpicc'],'--showme:%s'%stage],stdout=subprocess.PIPE).communicate()[0].strip()
+    all_flags = mpi['linkflags'].strip().split()
+    flags = []
+    for f in all_flags:
+      if f.startswith('-l'):
+        mpi['libs'].append(f[2:])
+      else:
+        flags.append(f)
+    mpi['linkflags'] = ' '+' '.join(flags)
+except OSError:
+  pass
+
+# Turn off boost::exceptions to avoid completely useless code bloat
+env.Append(CPPDEFINES=['BOOST_EXCEPTION_DISABLE'])
+
+# Darwin specific options
+if env['PLATFORM']=='darwin':
+  env.Replace(LDMODULEPREFIX='lib')
+  env.Replace(LDMODULESUFFIX='.so')
+
+# Work around apparent bug in variable expansion
+env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
+
+def symlink_force(src,dst):
+  if os.path.islink(dst):
+    old_src = os.readlink(dst)
+    if old_src != src:
+      os.remove(dst)
+      print 'ln -sf %s %s'%(src,dst)
+      os.symlink(src,dst)
+  else:
+    dir = os.path.dirname(dst)
+    if not os.path.exists(dir):
+      print 'mkdir -p %s'%dir
+      os.makedirs(dir)
+    print 'ln -sf %s %s'%(src,dst)
+    os.symlink(src,dst)
+
+# Add a directory to the include path under a given name
+other_path = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'../../..'))
+def toplevel(name,path):
+  path = Dir(path).abspath
+  # Make other/build/include if it doesn't exist
+  include = os.path.join(other_path,'build/include')
+  if not os.path.exists(include):
+    os.makedirs(include)
+  symlink_force(path,os.path.join(include,name))
+  # If we're not under other, symlink us/build/include to other/build/include
+  if not File('#SConstruct').abspath.startswith(other_path+'/'):
+    symlink_force(include,Dir('#build/include').abspath)
+
+# Library configuration
+toplevel('other',other_path)
+env.Append(CPPPATH=['#build/include'],LIBPATH=[env['PREFIX_LIB']],RPATH=[Dir(env['PREFIX_LIB']).abspath])
+
+# Account for library dependencies
+def add_dependencies(env):
+  libs = [b for a,lib in externals.iteritems() if env['use_'+a] for b in lib['requires']]
+  while libs:
+    a = libs.pop()
+    env['use_'+a] = 1
+    libs.extend(externals[a]['requires'])
+
+# Linker flags
+def link_flags(env):
+  env_link = env.Clone(LINK=env['CXX'])
+  add_dependencies(env_link)
+  workaround = env.get('use_qt',0) and env['PLATFORM'] in ['posix','darwin']
+  for name,lib in externals.items():
+    if env['use_'+name]:
+      env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
+      env_link.PrependUnique(LIBPATH=lib['libpath'])
+      if workaround: # Prevent qt tool from dropping include paths when building moc files
+        env_link.PrependUnique(CPPPATH=lib['cpppath'])
+      if lib.has_key('rpath'): env_link.PrependUnique(RPATH=lib['rpath'])
+  return env_link
+
+# Convert sources into objects
+def objects(env,sources):
+  builder = env.SharedObject if env['shared_objects'] or env['shared'] else env.StaticObject
+  def Helper(env,source,libraries):
+    if type(source)!=str: return source # assume it's already an object
+    cppdefines_reversed=env['CPPDEFINES'][::-1]
+    cpppath_reversed=env['CPPPATH'][::-1]
+    cpppath_hidden_reversed=env['CPPPATH_HIDDEN'][::-1]
+    frameworkpath=env['FRAMEWORKPATH'][:]
+    frameworks=env['FRAMEWORKS'][:]
+    cxxflags=str(env['CXXFLAGS'])
+    for lib in libraries:
+      if lib['pattern'] and not lib['pattern'].search(source):
+        continue
+      cppdefines_reversed.extend(lib['flags'][::-1])
+      (cpppath_hidden_reversed if lib['hide'] else cpppath_reversed).extend(lib['cpppath'][::-1])
+      frameworkpath.extend(lib['frameworkpath'])
+      frameworks.extend(lib['frameworks'])
+      cxxflags+=lib['cxxflags']
+    return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1],
+                          FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
+  add_dependencies(env)
+  libraries = [externals[name] for name in externals.keys() if env['use_'+name]]
+  if type(sources)==list: return [Helper(env,source,libraries) for source in sources]
+  else: return Helper(env,sources,libraries)
+
+# Recursively list all files beneath a directory
+def files(dir,skip):
+  for f in os.listdir(dir):
+    if f.startswith('.') or f=='build' or f in skip:
+      continue
+    df = os.path.join(dir,f)
+    if os.path.isdir(df):
+      for c in files(df,skip):
+        yield os.path.join(f,c)
+    yield f
+
+# Automatic generation of library targets
+def library(env,name,libs=(),skip=(),extra=()):
+  cpps,resources = [],[]
+  for f in list(files(Dir('.').srcnode().abspath,skip))+list(extra):
+    if f.endswith('.cpp'): cpps.append(f)
+    elif f.endswith('.xpm') or f.endswith('.glade'): resources.append(f)
+  if not cpps: return None
+  if env.get('use_qt',0): # Qt gets confused if we only set options on the builder
+    env = env.Clone()
+    env.Append(CPPDEFINES=externals['qt']['flags'])
+  sources = objects(env,cpps)
+  env = link_flags(env)
+  env.Append(LIBS=libs)
+  if env['shared']:
+    linkflags=env['LINKFLAGS']
+    if env['PLATFORM']=='darwin':
+      linkflags='-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['PREFIX_LIB'])).abspath,name)+linkflags
+    lib = env.SharedLibrary(name,source=sources,LINKFLAGS=linkflags)
+  else:
+    lib = env.StaticLibrary(name,source=sources)
+  lib = env.Install(env['PREFIX_LIB'],lib)
+  env.Depends('.',lib)
+  if env['PLATFORM']=='darwin':
+    bundle = env.LoadableModule(name,source=[],LIBS=lib)
+    env.Depends('.',env.Install(env['PREFIX_LIB'],bundle))
+  for res in resources:
+    env.Depends('.',env.Install(env['PREFIX']+'/resources',res))
+  return lib
+
+# Build a program
+def program(env,name,cpp=None):
+  if cpp is None:
+    cpp = name + '.cpp'
+  env = link_flags(env)
+  bin = env.Program(name,objects(env,cpp))
+  bin = env.Install(env['PREFIX_BIN'],bin)
+  env.Depends('.',bin)
+
+# Turn a latex document into a pdf
+def latex(env,name):
+  if env['has_latex'] and env['type']=='release':
+    env.Install(Dir('.').srcnode(),env.PDF(name+'.pdf',name+'.tex'))
+
+# Descend into a child SConscript
+def child(env,dir):
+  # Descent into a subdirectory
+  if dir in env['skip']:
+    return
+  path = Dir(dir).path
+  variant = env['variant_build']
+  if not path.startswith(variant):
+    path = variant+'/'+path
+  env.SConscript('#'+os.path.join(path,'SConscript'),exports='env')
+
+# Build everything
+Export('child options external externals library objects program latex clang toplevel')
+child(env,'.')

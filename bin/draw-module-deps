@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+
+# Warning: This is rather lousy code
+
+from __future__ import division
+import os
+import re
+import sys
+import subprocess
+from collections import defaultdict
+
+top = sys.argv[1] if len(sys.argv)>1 else ''
+
+# Collect dependencies
+includes = defaultdict(lambda:set())
+include_pattern = re.compile(r'^#include\s+<other/(.+)/(?:.*)>\s*$')
+import_pattern = re.compile(r'^(?:import|from)\s+other\.(\S+)')
+skip_pattern = re.compile(r'^(./)?((build|install|\.git|__init__\.py|site_scons)\b|aws/ec2)|.*random123|.*old-nesting|.*/test_')
+find = 'gfind . -name .?* -prune -false -o -name *.h -o -name *.cpp -o -name *.py -o ( -perm -u+x -type f )'
+for line in subprocess.Popen(find.split(),shell=False,stdout=subprocess.PIPE).stdout:
+  if skip_pattern.match(line):
+    continue
+  file = line[:-1]
+  path = file.split('/')
+  assert path[0]=='.'
+  dir = '/'.join(path[1:-1])
+  ext = os.path.splitext(file)[1]
+  deps = includes[dir]
+  if 0:
+    print>>sys.stderr, 'processing %s, ext %s'%(file[2:],ext)
+  if ext in ('.h','.cpp'):
+    for line in open(file):
+      if line.startswith('#include'):
+        m = include_pattern.match(line)
+        if '#include <other/amf/amf.h>' in line:
+          assert m
+        if m:
+          deps.add(m.group(1))
+  else:
+    for line in open(file):
+      if line.startswith('import ') or line.startswith('from '):
+        m = import_pattern.match(line)
+        if m:
+          dep = m.group(1).replace('.','/')
+          while not os.path.isdir(dep):
+            dep = os.path.dirname(dep)
+          deps.add(dep)
+  for dep in list(deps):
+    if dep==dir or skip_pattern.match(dep):
+      deps.remove(dep)
+
+# Determine hierarchical structure
+dirs = set(includes.keys())
+for deps in includes.values():
+  dirs |= deps
+if 0:
+  print>>sys.stderr, 'dirs =\n  %s\n'%'\n  '.join(dirs)
+class Node(dict):
+  next_node = [0]
+  def __init__(self,name):
+    self.name = name
+    self.id = Node.next_node[0]
+    Node.next_node[0] += 1
+  def __hash__(self):
+    return self.id
+  def __str__(self):
+    return str(dict(self))
+  def __repr__(self):
+    return repr(dict(self))
+hierarchy = Node('other')
+def locate(dir,depth=1000):
+  n = hierarchy
+  if dir:
+    for p in dir.split('/'):
+      if not depth:
+        return n
+      depth -= 1
+      n = n[p]
+  return n
+def beneath(dir,node):
+  path = dir.split('/')
+  n = hierarchy
+  for p in path:
+    if n is node:
+      return True
+    n = n[p]
+  return False
+for dir in dirs:
+  path = dir.split('/')
+  n = hierarchy
+  for p in path:
+    if p not in n:
+      n[p] = Node(p)
+    n = n[p]
+
+def common(a,b):
+  if a and b and a[0]==b[0]:
+    return 1+common(a[1:],b[1:])
+  return 0
+
+# Draw graph
+def expand(node):
+  return len(node)>1 and node is top
+def fix(n):
+  return '%s%d_%s'%(('cluster_' if expand(n) else 'node_'),n.id,n.name.replace('/','_').replace('-','_'))
+def draw(depth,node):
+  if expand(node):
+    print '  '*depth+'%s %s {'%(('digraph' if node is top else 'subgraph'),fix(node))
+    if node is hierarchy:
+      print '  '*depth+'  compound = true;'
+    print '  '*depth+'  label = "%s";'%node.name
+    for child_name,child in node.items():
+      if not child_name.startswith('_'):
+        draw(depth+1,child)
+    local = {}
+    for a,deps in includes.items():
+      if beneath(a,node):
+        pa = a.split('/')
+        for b in deps:
+          pb = b.split('/')
+          if common(pa,pb)==depth: 
+            try:
+              pa[depth],pb[depth]
+              local[(locate(a,depth+1),locate(b,depth+1))] = locate(a),locate(b)
+            except IndexError:
+              pass
+    for (a,b),(aa,bb) in local.items():
+      sa = a is aa or not expand(a)
+      sb = b is bb or not expand(b)
+      if sa and sb: print '  '*depth+'  %s -> %s'%(fix(a),fix(b))
+      elif sa: print '  '*depth+'  %s -> %s [lhead = %s]'%(fix(a),fix(bb),fix(b))
+      elif sb: print '  '*depth+'  %s -> %s [ltail = %s]'%(fix(aa),fix(b),fix(a))
+      else: print '  '*depth+'  %s -> %s [ltail = %s, lhead = %s]'%(fix(aa),fix(bb),fix(a),fix(b))
+    print '  '*depth+'}'
+  else:
+    print '  '*depth+'%s [label = "%s"];'%(fix(node),node.name)
+depth = len(top.split('/')) if top else 0
+top = locate(top)
+draw(depth,top)

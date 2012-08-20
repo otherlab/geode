@@ -1,0 +1,9 @@
+*.pyc
+*.pdf
+.DS_Store
+*~
+\#*
+*\#
+*.orig
+*.sublime-project
+*.sublime-workspace

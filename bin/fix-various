@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+'''Fix the case of all C/C++ include statements'''
+
+import os
+import re
+import sys
+import fileinput
+
+def log(s):
+  print>>sys.stderr, s
+
+include_pattern = re.compile(r'^#include\s+(["<])([\w/.]+)([">])\s*$')
+base = os.path.normpath(os.path.join(os.environ['OTHER'],'..'))
+
+fixed = {'':''}
+def fix(path):
+  try:
+    return fixed[path]
+  except KeyError:
+    head,tail = os.path.split(path)
+    for f in os.listdir(os.path.join(base,head)):
+      if f.lower()==tail.lower():
+        tail = f
+        break
+    else:
+      log("couldn't find '%s'"%path)
+    fixed[path] = os.path.join(fix(head),tail)
+    return fixed[path]
+
+for line in fileinput.input(inplace=1):
+  # Fix case of includes
+  m = include_pattern.match(line)
+  if m:
+    scope = m.group(1)
+    path = m.group(2) 
+    if scope=='"':
+      log('relative include: "%s"'%path)
+    elif path.lower().startswith('other/'):
+      line = '#include <%s>\n'%os.path.normpath(fix(path))
+
+  # Make sure all lines end with a newline
+  if not line.endswith('\n'):
+    line += '\n'
+  print line,

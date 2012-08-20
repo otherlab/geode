@@ -1,0 +1,179 @@
+#!/usr/bin/env python
+
+from __future__ import division
+from numpy import *
+import runpy
+import os
+import sys
+import pylab
+import numbers
+import random
+
+def rand_offset(p):
+  eps = 0.001
+  return [p[0] + random.uniform(-eps,eps), p[1] + random.uniform(-eps, eps)]
+
+def is_poly(p):
+  return type(p) == list and len(p) > 0 and \
+      type(p[0]) == list and len(p[0]) == 2 and \
+      type(p[0][0]) == float and type(p[0][1]) == float
+
+def is_point(p):
+  return type(p) == list and len(p) == 2 and isinstance(p[0], numbers.Real) and isinstance(p[1], numbers.Real)
+
+def is_poly(p):
+  return type(p) == list and all([is_point(i) for i in p])
+
+def is_poly_vec(p):
+  return type(p) == list and all([is_poly(i) for i in p])
+
+def is_poly_vec_vec(p):
+  return type(p) == list and all([is_poly_vec(i) for i in p])
+
+def draw_function(p):
+  if is_poly_vec_vec(p):
+    return draw_nested_polys
+  if is_poly_vec(p):
+    return draw_polys
+  if is_poly(p):
+    return draw_poly
+  if is_point(p):
+    return draw_point
+  print "No draw function for: %s" % p
+  return None
+
+next_fig_num = 1
+def draw_all(polys, error_location="", show_seperate=True):
+  global next_fig_num
+  fig_num = next_fig_num
+  next_fig_num += 1
+  fig = pylab.figure(fig_num)
+  fig.add_subplot(axis="equal")
+  for name, p in polys.iteritems():
+    draw_function(p)(p, name=name)
+  if show_seperate:
+    a = pylab.axis()
+    for name, p in polys.iteritems():
+      pylab.figure()
+      fig.add_subplot(axis="equal")
+      pylab.title("%s\n%s" % (error_location, name))
+      draw_function(p)(p, name=name)
+      pylab.axis(a)
+  pylab.figure(fig_num)
+  
+def draw_line(line,name=None,*args,**kwargs):
+  line = asarray(line)
+  pylab.plot(line[:,0],line[:,1],*args,**kwargs)
+  for i, p in enumerate(line):
+    point_name = str(i) if name in [None, ""] else "%s:%d" % (name, i)
+    pylab.annotate(point_name, rand_offset(p))
+
+def draw_poly(poly,filled=False,offset=0,name=None,subpoly=False,*args,**kwargs):
+  poly = asarray(poly) + offset
+  poly = vstack([poly,[poly[0]]])
+  if filled:
+    pylab.fill(poly[:,0],poly[:,1],*args,**kwargs)
+  else:
+    pylab.plot(poly[:,0],poly[:,1],*args,**kwargs)
+  for i, p in enumerate(poly[:-1]):
+    point_name = str(i) if name in [None, ""] else "%s:%d" % (name, i)
+    pylab.annotate(point_name, rand_offset(p))
+
+def draw_polys(polys,name=None,*args,**kwargs):
+  for i, p in enumerate(polys):
+    sub_name = None if name == None else "%s%s%d" % (name, "" if name == "" else ":", i)
+    draw_poly(p,name=sub_name,subpoly=True,*args,**kwargs)
+
+def draw_nested_polys(nested,name=None,*args,**kwargs):
+  for i, p in enumerate(nested):
+    sub_name = None if name == None else "%s%s%d" % (name, "" if name == "" else ":", i)
+    draw_polys(p,name=sub_name,*args,**kwargs)
+
+def draw_point(P,name=None,*args,**kwargs):
+  pylab.plot([P[0]],[P[1]],'o',*args,**kwargs)
+  if name not in [None, ""]:
+    pylab.annotate(name, rand_offset(P))
+
+def draw_points(X,color,*args,**kwargs):
+  X = asarray(X)
+  pylab.plot(X[:,0],X[:,1],color+'o',*args,**kwargs)
+
+def draw_segments(segments):
+  segments = asarray(segments)
+  for s in segments:
+    pylab.plot(s[:,0],s[:,1])
+
+
+if __name__ == "__main__":
+  if [a for a in sys.argv[1:] if a[0]=='[']:
+    def parse(s):
+      cleaned = s.replace("\n","").replace(" ","").replace("\t","").strip()
+      print "Evaluating: \"%s\"" % cleaned
+      return eval(cleaned)
+    i,c = [1],[0]
+    def next():
+      a = sys.argv[i[0]]
+      i[0] += 1
+      return a
+    def color():
+      c[0] += 1
+      return 'rgb'[c[0]%3]
+    while i[0]<len(sys.argv):
+      a = next()
+      if a[0]=='[':
+        draw_polys(parse(a),color=color())
+      elif a=='points':
+        draw_points(parse(next()),color=color())
+      elif a=='filled':
+        draw_polys(parse(next()),color=color(),filled=1)
+      else:
+        print>>sys.stderr,"unknown argument:",a
+    data = {}
+  else:
+    name = os.path.splitext(sys.argv[1])[0]
+    print 'loading %s'%name
+    sys.path = ['.']
+    data = runpy.run_module(name)
+
+  if 0:
+    draw_polys(polys,'b')
+    draw_polys(split,'r',offset=(1e-3,0))
+
+  if 0:
+    draw_polys(polys,'b')
+    draw_polys(offset,'r')
+    chord = asarray(chord)
+    pylab.plot(chord[:,0],chord[:,1],'g')
+
+  if 0:
+    draw_segments(outers) 
+
+  if 0:
+    for d in output:
+      d = asarray(d)
+      pylab.fill(d[:,0],d[:,1],'b')
+    input = asarray(input)
+    for s in input:
+      pylab.plot(s[:,0],s[:,1],'r')
+
+  if 'minkowski' in data:
+    polys = data['polys']
+    minkowski = data['minkowski']
+    draw_polys(polys,'b')
+    s0 = min(k for k,v in minkowski.items() if v)
+    s1 = max(k for k,v in minkowski.items() if v)
+    c0 = array([0,1.,0])
+    c1 = array([1.,0,0])
+    for s,p in minkowski.items():
+      if len(p):
+        draw_polys(p,color=c0 + (c1-c0)*(s-s0)/(s1-s0))
+
+  if 'intersection' in data:
+    pa = data['pa']
+    pb = data['pb']
+    intersection = data['intersection']
+    draw_polys(pa,'r')
+    draw_polys(pb,'g')
+    draw_polys(intersection,'b',offset=(1e-3,0))
+
+  pylab.show()
