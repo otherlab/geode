@@ -45,10 +45,10 @@ Ideally, we will improve this part so that everything works more automatically.
         sudo apt-get install python python-numpy libboost-1.48 scons \
           python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
 
-2. Unpack `core` inside a root directory (we use `other`):
+2. Unpack `core` inside a root directory (we use `other`), and set $OTHER to that root directory.
 
         mkdir other 
-        export OTHER=<path-to-other>
+        export OTHER=`pwd`/other
         cd $OTHER
         git clone https://github.com/otherlab/core.git
 
@@ -57,7 +57,7 @@ Ideally, we will improve this part so that everything works more automatically.
         cd $OTHER
         ./core/build/setup
 
-3. Configure build: Edit `config.py` and set any desired options.  For example
+3. Configure build: If desired, edit `config.py` and set any desired options.  For example
 
         # config.py
         CXX = 'clang++'
