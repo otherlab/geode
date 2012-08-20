@@ -145,12 +145,13 @@ external('mkl',flags=['USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -
 
 # Automatic python configuration
 def configure_python():
-  include,numpy,libpath,lib,frameworkpath = subprocess.Popen([env['python'],'-c',re.sub(r'^\s+','','''
+  pattern=re.compile(r'^\s+',flags=re.MULTILINE)
+  include,numpy,libpath,lib,frameworkpath = subprocess.Popen([env['python'],'-c',pattern.sub('','''
   import numpy
   import distutils.sysconfig as sc
   get = sc.get_config_var
   print sc.get_python_inc(),numpy.get_include(),get('LIBDIR'),get('LDLIBRARY'),get('PYTHONFRAMEWORKPREFIX')
-  ''',flags=re.MULTILINE)],stdout=subprocess.PIPE).communicate()[0].split()
+  ''')],stdout=subprocess.PIPE).communicate()[0].split()
   python = externals['python']
   assert include,numpy
   python['cpppath'] = [include,numpy]
