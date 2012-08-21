@@ -17,8 +17,8 @@ import config
 del sys.path[0]
 def options(*vars):
   for name,help,default in vars:
-    Help('%s: %s (default %s)'%(name,help,default))
-    env[name] = config.__dict__.get(name,default)
+    Help('%s: %s (default %s)\n'%(name,help,default))
+    env[name] = ARGUMENTS.get(name,config.__dict__.get(name,default))
 
 # Base environment
 env = Environment(tools=['default','pdflatex','pdftex'])
@@ -84,13 +84,14 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 # External libraries
 externals = {}
 def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False):
-  lib = {'default':default,'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
+  lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide}
+  env['use_'+name] = default
 
+  Help('\n')
   options(
     ('has_'+name,'Whether '+name+' is available',lib['has']),
-    ('use_'+name,'Use '+name,lib['default']),
     (name+'_dir','Base directory for '+name,dir),
     (name+'_include','Include directory for '+name,0),
     (name+'_libpath','Library directory for '+name,0),
