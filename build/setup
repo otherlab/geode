@@ -10,9 +10,13 @@ def link(src,dst=None):
   if not dst:
     dst = os.path.basename(src)
   if not os.path.exists(dst):
-    print 'ln -s %s %s'%(src,dst)
-    os.symlink(src,dst)
-
+    try:
+      print 'ln -s %s %s'%(src,dst)
+      os.symlink(src,dst)
+    except os.error as e:
+      print "Couldn't link %s as %s: %s" %(src,dst,e)
+  else:
+    print "%s already exists! Please ensure that it is a symlink to %s" %(src,dst)
 def move(src,dst):
   print 'mv %s %s'%(src,dst)
   os.rename(src,dst)
