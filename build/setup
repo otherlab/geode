@@ -39,3 +39,4 @@ if not os.path.exists(config):
 link(os.path.join(build,'SConstruct'))
 link(os.path.join(build,'config.py'))
 link(os.path.join(build,'setup.cfg'))
+link(os.path.join(build,'__init__.py'))
