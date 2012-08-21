@@ -125,11 +125,11 @@ public:
 
     template<class TArray>
     static TV barycentric_coordinates(const TV& location,const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return barycentric_coordinates(location,X(0),X(1),X(2));}
+    {BOOST_STATIC_ASSERT(TArray::m==3);return barycentric_coordinates(location,X[0],X[1],X[2]);}
 
     template<class TArray>
     static TV clamped_barycentric_coordinates(const TV& location,const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return clamped_barycentric_coordinates(location,X(0),X(1),X(2));}
+    {BOOST_STATIC_ASSERT(TArray::m==3);return clamped_barycentric_coordinates(location,X[0],X[1],X[2]);}
 
     TV sum_barycentric_coordinates(const Triangle& embedded_triangle) const
     {return barycentric_coordinates(embedded_triangle.x0)+barycentric_coordinates(embedded_triangle.x1)+barycentric_coordinates(embedded_triangle.x2);}
