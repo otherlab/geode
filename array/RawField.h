@@ -54,6 +54,10 @@ public:
     return flat[i.idx()];
   }
 
+  T& operator()(Id i) const { // Allow use as a function
+    return flat[i.idx()];
+  }
+
   bool valid(Id i) const {
     return flat.valid(i.idx());
   }
