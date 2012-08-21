@@ -66,10 +66,6 @@ public:
     TV operator*(const TV& v) const
     {return t+r*v;}
     
-    inline TV apply(const TV &v) const {
-      return *this * v;
-    }
-
     void invert()
     {*this=inverse();}
 
