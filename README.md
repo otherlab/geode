@@ -30,7 +30,7 @@ Optional dependencies:
 * [libpng](http://www.libpng.org): Lossless image format (Custom non-viral license)
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom non-viral license)
 
-`core` makes extensive use of C++11 features, so a relatively recent C++ compile is necessary.  So far the code has been tested on
+`core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 
 * [gcc 4.6](http://gcc.gnu.org)
 * [clang 3.1](http://clang.llvm.org)
