@@ -1,12 +1,17 @@
 Otherlab core library
 =====================
 
-`other/core` is a utility library of vectors, matrices, arrays, and other mathematical code together
-with a fast, lightweight python binding layer.  The code is originally based on parts of the
-[PhysBAM simulation library](http://physbam.stanford.edu) but has since been heavily modified.
+`other/core` is an open source utility library of arrays, vectors, matrices, and other mathematical code together
+with a fast, lightweight python binding layer.  The license is standard three-clause BSD (see the included `LICENSE`
+file or [LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
 
-The code is released under a standard three-clause BSD license (see
-[LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
+### Acknowledgements
+
+Much of core is based on parts of the [PhysBAM simulation library](http://physbam.stanford.edu) developed by
+Ron Fedkiw et al. at Stanford University.
+
+For random numbers, we use the [Random123 library](http://www.deshawresearch.com/resources_random123.html) of
+John Salmon et al. at D. E. Shaw Research.  Random123 code is included inline in `core/random/random123`.
 
 ### Dependencies
 
