@@ -3,7 +3,7 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/vector/Complex.h>
+#include <other/core/vector/complex.h>
 #include <other/core/vector/Quaternion.h>
 #include <boost/utility/enable_if.hpp>
 #include <other/core/array/forward.h>
@@ -13,10 +13,7 @@
 #include <other/core/python/to_python.h>
 #include <other/core/utility/debug.h>
 #include <other/core/vector/Matrix.h>
-
 namespace other {
-
-#undef Complex // Remove terrible name for a macro
 
 using ::std::sin;
 using ::std::cos;
@@ -143,9 +140,9 @@ class Rotation<Vector<T,2> >
     typedef Vector<T,2> TV;
     typedef Vector<T,1> TSpin;
 
-    Complex<T> c;
+    std::complex<T> c;
 
-    Rotation(const Complex<T>& c2)
+    Rotation(const std::complex<T>& c2)
         :c(c2)
     {}
 
@@ -164,13 +161,13 @@ public:
     }
 
     explicit Rotation(const Matrix<T,2>& A)
-        :c(A.column(0).normalized())
+        :c(A.column(0).normalized().complex())
     {}
 
-    const Complex<T>& complex() const
+    const std::complex<T>& complex() const
     {return c;}
 
-    static Rotation<TV> from_complex(const Complex<T>& c2)
+    static Rotation<TV> from_complex(const std::complex<T>& c2)
     {return Rotation<TV>(c2).normalized();}
 
     bool operator==(const Rotation<TV>& r) const
@@ -186,13 +183,13 @@ public:
     {return Rotation<TV>(c*r.c);}
 
     Rotation<TV> inverse() const
-    {return Rotation<TV>(c.conjugated());}
+    {return Rotation<TV>(conj(c));}
 
     TV operator*(const TV& v) const
-    {return TV(c.re*v.x-c.im*v.y,c.im*v.x+c.re*v.y);}
+    {return TV(c.real()*v.x-c.imag()*v.y,c.imag()*v.x+c.real()*v.y);}
 
     TV inverse_times(const TV& v) const
-    {return TV(c.re*v.x+c.im*v.y,c.re*v.y-c.im*v.x);}
+    {return TV(c.real()*v.x+c.imag()*v.y,c.real()*v.y-c.imag()*v.x);}
 
     const TSpin& times_spin(const TSpin& spin) const
     {return spin;}
@@ -201,7 +198,7 @@ public:
     {return Twist<TV>(*this*(twist.linear),twist.angular);}
 
     T normalize()
-    {return c.normalize();}
+    {return other::normalize(c);}
 
     Rotation<TV> normalized() const
     {Rotation<TV> r(*this);r.normalize();return r;}
@@ -210,10 +207,10 @@ public:
     {return abs(c.sqr_magnitude()-(T)1)<=tolerance;}
 
     void get_rotated_frame(TV& x_axis,TV& y_axis) const
-    {assert(is_normalized());x_axis=TV(c.re,c.im);y_axis=TV(-c.im,c.re);}
+    {assert(is_normalized());x_axis=TV(c.real(),c.imag());y_axis=TV(-c.imag(),c.real());}
 
     T angle() const
-    {return atan2(c.im,c.re);}
+    {return atan2(c.imag(),c.real());}
 
     Vector<T,1> euler_angles() const
     {return rotation_vector();}
@@ -222,25 +219,25 @@ public:
     {return Vector<T,1>(angle());}
 
     Matrix<T,2> matrix() const
-    {return Matrix<T,2>(c.re,c.im,-c.im,c.re);}
+    {return Matrix<T,2>(c.real(),c.imag(),-c.imag(),c.real());}
 
     TV x_axis() const // Q*(1,0)
-    {return TV(c.re,c.im);}
+    {return TV(c.real(),c.imag());}
 
     TV y_axis() const // Q*(0,1)
-    {return TV(-c.im,c.re);}
+    {return TV(-c.imag(),c.real());}
 
     TV axis(const int axis) const
     {assert(unsigned(axis)<2);if(axis==0) return x_axis();return y_axis();}
 
     static Rotation<TV> from_angle(const T& a)
-    {return Rotation<TV>(Complex<T>::unit_polar(a));}
+    {return Rotation<TV>(cis(a));}
 
     static Rotation<TV> from_rotation_vector(const Vector<T,1>& v)
     {return from_angle(v.x);}
 
     static Rotation<TV> from_rotated_vector(const TV& v1,const TV& v2)
-    {return Rotation<TV>(Complex<T>(v1.x,-v1.y)*Complex<T>(v2.x,v2.y)).normalized();}
+    {return Rotation<TV>(std::complex<T>(v1.x,-v1.y)*std::complex<T>(v2.x,v2.y)).normalized();}
 
     static Rotation<TV> from_euler_angles(const Vector<T,1>& angle)
     {return from_rotation_vector(angle);}
@@ -252,15 +249,7 @@ public:
     {return r1*(r1.inverse()*r2).scale_angle(t);}
 
     static Rotation<TV> average_rotation(const Array<Rotation<TV> >& rotations)
-    {Complex<T> sum;for(int i=0;i<rotations.m;i++) sum+=rotations(i).c;return Rotation<TV>(sum.normalized());}
-
-    template<class RW>
-    void read(std::istream& input)
-    {c.template read<RW>(input);}
-
-    template<class RW>
-    void write(std::ostream& output) const
-    {c.template write<RW>(output);}
+    {std::complex<T> sum;for(int i=0;i<rotations.m;i++) sum+=rotations(i).c;return Rotation<TV>(sum.normalized());}
 };
 
 template<class T>
@@ -269,7 +258,7 @@ inline std::ostream& operator<<(std::ostream& output,const Rotation<Vector<T,2> 
 
 template<class T>
 inline std::istream& operator>>(std::istream& input,Rotation<Vector<T,2> >& r)
-{Complex<T> c;input>>c;r=Rotation<Vector<T,3> >::from_complex(c);return input;}
+{complex<T> c;input>>c;r=Rotation<Vector<T,3> >::from_complex(c);return input;}
 
 //#####################################################################
 // 3D
@@ -360,7 +349,7 @@ public:
     {return q.is_normalized(tolerance);}
 
     Rotation<TV> inverse() const
-    {return Rotation<TV>(q.conjugate());}
+    {return Rotation<TV>(conj(q));}
 
     TV rotation_vector() const
     {return 2*atan2_y_x_over_y(q.v.magnitude(),abs(q.s))*(q.s<0?-q.v:q.v);}

@@ -103,12 +103,13 @@ public:
     bool is_normalized(const T tolerance=(T)1e-3) const
     {return abs(sqr_magnitude()-(T)1)<=tolerance;}
 
-    Quaternion conjugate() const
-    {return Quaternion(s,-v);}
-
     Quaternion inverse() const
-    {return conjugate()/sqr_magnitude();}
+    {return Quaternion(s,-v)/sqr_magnitude();}
 };
+
+template<class T> static inline Quaternion<T> conj(const Quaternion<T>& q) {
+  return Quaternion<T>(q.s,-q.v);
+}
 
 template<class T>
 inline Quaternion<T> operator*(const T a,const Quaternion<T>& q)

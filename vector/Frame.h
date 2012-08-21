@@ -3,7 +3,6 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/vector/Complex.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/vector/VectorPolicy.h>
