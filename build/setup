@@ -4,7 +4,7 @@
 import os
 import sys
 
-build = os.path.abspath(os.path.dirname(__file__))
+build = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
 
 def link(src,dst=None):
   if not dst:
