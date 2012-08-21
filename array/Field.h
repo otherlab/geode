@@ -37,10 +37,7 @@ public:
   explicit Field(int n, bool initialize=true)
     : flat(n,initialize) {}
 
-  template<class TA> explicit Field(TA& source)
-    : flat(source) {}
-
-  template<class TA> explicit Field(const TA& source)
+  explicit Field(const Array<T>& source)
     : flat(source) {}
 
   int size() const {

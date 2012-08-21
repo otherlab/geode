@@ -65,7 +65,7 @@ public:
     return -mean*log(uniform());
   }
 
-  template<class TV> TV unit_sphere() {
+  template<class TV> TV unit_ball() {
     for (;;) {
       TV v = uniform<TV>(-1,1);
       if (v.sqr_magnitude()<=1) return v;
@@ -81,21 +81,6 @@ public:
     }
   }
 
-  template<class TV> Rotation<TV> rotation() {
-    return rotation_helper(unit_sphere<Vector<real,2*TV::m-2> >());
-  }
-
-  template<class TV> Frame<TV> frame(const TV& v0,const TV& v1) {
-    TV v = uniform<TV>(v0,v1);
-    return Frame<TV>(v,rotation<TV>());
-  }
-
-  template<class TV> Twist<TV> twist(const real& a) {
-    Twist<TV> tw;
-    tw.set_vector(uniform<Vector<real,Twist<TV>::m>>(-a,a));
-    return tw;
-  }
-
   template<class TArray> void shuffle(TArray& v) {
     int n = v.size();
     for (int i=0;i<n-1;i++) {
@@ -104,20 +89,6 @@ public:
     }
   }
 
-private:
-  template<class S> static Rotation<Vector<S,1> > rotation_helper(const Vector<S,0>&) {
-    return Rotation<Vector<S,1> >();
-  }
-
-  template<class S> static Rotation<Vector<S,2> > rotation_helper(const Vector<S,2>& v) {
-    return Rotation<Vector<S,2> >::from_complex(Complex<S>(v));
-  }
-
-  template<class S> static Rotation<Vector<S,3> > rotation_helper(const Vector<S,4>& v) {
-    return Rotation<Vector<S,3> >::from_quaternion(Quaternion<S>(v));
-  }
-public:
-
   real uniform() { // in [0,1)
     return ldexp((real)1,-8*(int)sizeof(real))*bits<RealBits>();
   }
@@ -125,6 +96,8 @@ public:
   Array<real> normal_py(int size);
   Array<real> uniform_py(int size);
   Array<int> uniform_int_py(int lo, int hi, int size);
+  template<class TV> Rotation<TV> rotation() OTHER_EXPORT;
+  template<class TV> Frame<TV> frame(const TV& v0,const TV& v1) OTHER_EXPORT;
 };
 
 // In [a,b)

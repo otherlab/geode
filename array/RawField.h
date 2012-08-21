@@ -27,7 +27,7 @@ public:
   static const bool is_const=boost::is_const<T>::value;
   typedef T& result_type;
 
-  RawArray<T> flat; 
+  RawArray<T> flat;
 
   RawField() {}
 
@@ -43,10 +43,7 @@ public:
   RawField(const Field<const Element,Id>& source)
     : flat(source.flat) {}
 
-  template<class TA> explicit RawField(TA& flat)
-    : flat(flat) {}
-
-  template<class TA> explicit RawField(const TA& flat)
+  explicit RawField(RawArray<T> flat)
     : flat(flat) {}
 
   int size() const {
@@ -54,6 +51,10 @@ public:
   }
 
   T& operator[](Id i) const {
+    return flat[i.idx()];
+  }
+
+  T& operator()(Id i) const { // Allow use as a function
     return flat[i.idx()];
   }
 

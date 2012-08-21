@@ -4,6 +4,7 @@
 #pragma once
 
 #include <other/core/vector/Vector1d.h>
+#include <other/core/vector/complex.h>
 #include <other/core/math/inverse.h>
 #include <other/core/math/clamp.h>
 #include <other/core/math/small_sort.h>
@@ -71,6 +72,9 @@ public:
     {
         BOOST_STATIC_ASSERT((boost::is_same<T,typename TVector::Element>::value && TVector::m==2));
     }
+
+    explicit Vector(const complex<T>& c)
+      : x(c.real()), y(c.imag()) {}
 
     template<class TVector> typename boost::enable_if<boost::mpl::and_<boost::is_same<T,typename TVector::Element>,mpl::bool_<TVector::m==2> >,Vector&>::type
     operator=(const TVector& v)
@@ -371,6 +375,10 @@ public:
     template<class TVector>
     void get_subvector(const int istart,TVector& v) const
     {for(int i=0;i<v.size();i++) v[i]=(*this)(istart+i);}
+
+    std::complex<T> complex() const {
+      return std::complex<T>(x,y);
+    }
 
     T* begin() // for stl
     {return &x;}

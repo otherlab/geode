@@ -3,7 +3,6 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/vector/Complex.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/vector/VectorPolicy.h>
@@ -67,10 +66,6 @@ public:
     TV operator*(const TV& v) const
     {return t+r*v;}
     
-    inline TV apply(const TV &v) const {
-      return *this * v;
-    }
-
     void invert()
     {*this=inverse();}
 
