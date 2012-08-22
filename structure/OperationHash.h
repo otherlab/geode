@@ -8,7 +8,7 @@ namespace other {
 
 class OperationHash {
 public:
-  Array<unsigned int,int> operations;
+  Array<unsigned int> operations;
   unsigned int current_operation;
 
   OperationHash(const int m=0)
