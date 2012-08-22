@@ -33,6 +33,7 @@ Optional dependencies:
 `core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 
 * [gcc 4.6](http://gcc.gnu.org)
+* [gcc 4.7](http://gcc.gnu.org)
 * [clang 3.1](http://clang.llvm.org)
 
 ### Setup
