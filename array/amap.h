@@ -16,7 +16,15 @@ template<class F,class A> auto amap(const F& f, const A& a)
   }
   
   return b;
+}
+
+template<class F,class A> A &amap_inplace(const F& f, A& a) {
   
+  for (int i = 0; i < a.flat.size(); ++i) {
+    a.flat[i] = f(a.flat[i]);
+  }
+  
+  return a;
 }
 
 }
