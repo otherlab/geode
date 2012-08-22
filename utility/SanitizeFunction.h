@@ -21,8 +21,12 @@ template<class T,class R,class... Args> struct Method {
   Method(F f)
     : f(f) {}
 
-  template<class... A> R operator()(T* self, A&&... args) const {
+  template<class... A> OTHER_ALWAYS_INLINE R operator()(T* self, A&&... args) const {
     return (self->*f)(other::move(args)...);
+  }
+
+  template<class... A> OTHER_ALWAYS_INLINE R operator()(T& self, A&&... args) const {
+    return (self.*f)(other::move(args)...);
   }
 };
 
