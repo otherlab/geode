@@ -53,6 +53,8 @@ public:
   typedef typename boost::remove_const<T>::type Element;
   static const bool is_const = boost::is_const<T>::value;
   typedef T& result_type;
+  enum Workaround1 {dimension=1};
+  enum Workaround2 {d=dimension};
 
   typedef ArrayBase<T,Array> Base;
   OTHER_USING(first,last,copy,same_array) 
@@ -69,6 +71,21 @@ public:
 
   Array()
     : m(0), max_size_(0), data_(0), owner_(0) {}
+
+  explicit Array(const Vector<int,d> &sizes, const bool initialize=true)
+    : m(sizes.x), max_size_(sizes.x) {
+    assert(m>=0);
+    Buffer* buffer = Buffer::new_<T>(m);
+    data_ = (T*)buffer->data;
+    owner_ = (PyObject*)buffer;
+    if (initialize) {
+      if (IsScalarVectorSpace<T>::value)
+        memset(data_,0,m*sizeof(T));
+      else
+        for (int i=0;i<m;i++)
+          const_cast<Element*>(data_)[i] = T();
+    }
+  }
 
   explicit Array(const int m, const bool initialize=true)
     : m(m), max_size_(m) {
