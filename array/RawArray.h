@@ -42,33 +42,32 @@ private:
   T* const data_;
 public:
   const int m;
-  RawArray<T, 1> &flat;
 
   RawArray()
-    : data_(0), m(0), flat(*this) {}
+    : data_(0), m(0) {}
 
   RawArray(const Array<Element>& source)
-    : data_(source.data()), m(source.size()), flat(*this) {}
+    : data_(source.data()), m(source.size()) {}
 
   RawArray(const Array<const Element>& source)
-    : data_(source.data()), m(source.size()), flat(*this) {}
+    : data_(source.data()), m(source.size()) {}
 
   RawArray(const NdArray<T>& array)
-    : data_(array.data()), m(array.flat.size()), flat(*this) {
+    : data_(array.data()), m(array.flat.size()) {
     OTHER_ASSERT(array.rank()==1);
   }
 
   RawArray(const RawArray<Element>& source)
-    : data_(source.data_), m(source.m), flat(*this) {}
+    : data_(source.data_), m(source.m) {}
 
   RawArray(const RawArray<const Element>& source)
-    : data_(source.data_), m(source.m), flat(*this) {}
+    : data_(source.data_), m(source.m) {}
 
   RawArray(typename CopyConst<std::vector<Element,std::allocator<Element> >,T>::type& source)
-    : data_(source.size()?&source[0]:0), m((int)source.size()), flat(*this) {}
+    : data_(source.size()?&source[0]:0), m((int)source.size()) {}
 
   RawArray(const int m, T* data)
-    : data_(data), m(m), flat(*this) {}
+    : data_(data), m(m) {}
 
   const RawArray& operator=(const RawArray& source) const {
     assert(size()==source.size());
@@ -516,6 +515,23 @@ public:
     return *this;
   }
 };
+
+
+template<class T, int d> static inline RawArray<T,d> &flat(RawArray<T,d> &A) {
+  return A.flat;
+}
+
+template<class T> static inline RawArray<T,1> &flat(RawArray<T,1> &A) {
+  return A;
+}
+
+template<class T, int d> static inline RawArray<T,d> const &flat(RawArray<T,d> const &A) {
+  return A.flat;
+}
+
+template<class T> static inline RawArray<T,1> const &flat(RawArray<T,1> const &A) {
+  return A;
+}
 
 template<class T> static inline std::ostream& operator<<(std::ostream& output,const RawArray<T,2>& a) {
     return output<<Subarray<const T,2>(a);

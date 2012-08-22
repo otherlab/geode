@@ -56,8 +56,6 @@ public:
   enum Workaround1 {dimension=1};
   enum Workaround2 {d=dimension};
 
-  Array<T> &flat;
-
   typedef ArrayBase<T,Array> Base;
   OTHER_USING(first,last,copy,same_array) 
 private:
@@ -72,10 +70,10 @@ private:
 public:
 
   Array()
-    : flat(*this), m(0), max_size_(0), data_(0), owner_(0) {}
+    : m(0), max_size_(0), data_(0), owner_(0) {}
 
   explicit Array(const Vector<int,d> &sizes, const bool initialize=true)
-    : flat(*this), m(sizes.x), max_size_(sizes.x) {
+    : m(sizes.x), max_size_(sizes.x) {
     assert(m>=0);
     Buffer* buffer = Buffer::new_<T>(m);
     data_ = (T*)buffer->data;
@@ -90,7 +88,7 @@ public:
   }
 
   explicit Array(const int m, const bool initialize=true)
-    : flat(*this), m(m), max_size_(m) {
+    : m(m), max_size_(m) {
     assert(m>=0);
     Buffer* buffer = Buffer::new_<T>(m);
     data_ = (T*)buffer->data;
@@ -105,14 +103,14 @@ public:
   }
 
   Array(const Array& source)
-    : flat(*this), m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     OTHER_XINCREF(owner_);
   }
 
   Array(typename mpl::if_c<is_const,const Array<Element>&,Unusable>::type source)
-    : flat(*this), m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     OTHER_XINCREF(owner_);
@@ -120,15 +118,14 @@ public:
 
   template<class TArray>
   explicit Array(const TArray& source, typename boost::enable_if<IsShareableArray<TArray>,Unusable>::type unused=Unusable())
-    : flat(*this), m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     STATIC_ASSERT_SAME(Element,typename TArray::Element);
     OTHER_XINCREF(owner_);
   }
 
-  explicit Array(const NdArray<T>& array)
-    : flat(*this) {
+  explicit Array(const NdArray<T>& array) {
     OTHER_ASSERT(array.rank()==1);
     m = max_size_=array.shape[0];
     data_ = array.data(); 
@@ -136,13 +133,13 @@ public:
   }
 
   Array(const int m, T* data, PyObject* owner)
-    : flat(*this), m(m), max_size_(m), data_(data), owner_(owner) {
+    : m(m), max_size_(m), data_(data), owner_(owner) {
     assert(owner_ || !data_);
     OTHER_XINCREF(owner_);
   }
 
   Array(const Vector<int,1>& counts, T* data, PyObject* owner)
-    : flat(*this), m(counts.x), max_size_(m), data_(data), owner_(owner) {
+    : m(counts.x), max_size_(m), data_(data), owner_(owner) {
     assert(owner_ || !data_);
     OTHER_XINCREF(owner_);
   }
@@ -487,6 +484,22 @@ template<class T,class A> static inline const RawArray<T> as_array(std::vector<T
 
 template<class T,class A> static inline const RawArray<const T> as_array(const std::vector<T,A>& v) {
   return RawArray<const T>(v.size(),&v[0]);
+}
+
+template<class T, int d> static inline Array<T,d> &flat(Array<T,d> &A) {
+  return A.flat;
+}
+
+template<class T> static inline Array<T,1> &flat(Array<T,1> &A) {
+  return A;
+}
+
+template<class T, int d> static inline Array<T,d> const &flat(Array<T,d> const &A) {
+  return A.flat;
+}
+
+template<class T> static inline Array<T,1> const &flat(Array<T,1> const &A) {
+  return A;
 }
 
 }

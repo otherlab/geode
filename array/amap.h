@@ -11,8 +11,8 @@ template<class F,class A> auto amap(const F& f, const A& a)
 
   ret b(a.sizes(), false);
   
-  for (int i = 0; i < a.flat.size(); ++i) {
-    b.flat[i] = f(a.flat[i]);
+  for (int i = 0; i < flat(a).size(); ++i) {
+    flat(b)[i] = f(flat(a)[i]);
   }
   
   return b;
@@ -20,8 +20,8 @@ template<class F,class A> auto amap(const F& f, const A& a)
 
 template<class F,class A> A &amap_inplace(const F& f, A& a) {
   
-  for (int i = 0; i < a.flat.size(); ++i) {
-    a.flat[i] = f(a.flat[i]);
+  for (int i = 0; i < flat(a).size(); ++i) {
+    flat(a)[i] = f(flat(a)[i]);
   }
   
   return a;
