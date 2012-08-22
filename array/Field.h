@@ -31,6 +31,9 @@ public:
 
   Field() {}
 
+  Field(const Field<Element,Id>& source)
+    : flat(source.flat) {}
+
   Field(const Field<const Element,Id>& source)
     : flat(source.flat) {}
 
@@ -40,11 +43,25 @@ public:
   explicit Field(const Array<T>& source)
     : flat(source) {}
 
+  Field& operator=(const Field<Element,Id>& source) {
+    flat = source.flat;
+    return *this;
+  }
+
+  Field& operator=(const Field<const Element,Id>& source) {
+    flat = source.flat;
+    return *this;
+  }
+
   int size() const {
     return flat.size();
   }
 
   T& operator[](Id i) const {
+    return flat[i.idx()];
+  }
+
+  T& operator()(Id i) const { // Allow use as a function
     return flat[i.idx()];
   }
 
