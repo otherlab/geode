@@ -42,32 +42,33 @@ private:
   T* const data_;
 public:
   const int m;
+  RawArray<T, 1> &flat;
 
   RawArray()
-    : data_(0), m(0) {}
+    : data_(0), m(0), flat(*this) {}
 
   RawArray(const Array<Element>& source)
-    : data_(source.data()), m(source.size()) {}
+    : data_(source.data()), m(source.size()), flat(*this) {}
 
   RawArray(const Array<const Element>& source)
-    : data_(source.data()), m(source.size()) {}
+    : data_(source.data()), m(source.size()), flat(*this) {}
 
   RawArray(const NdArray<T>& array)
-    : data_(array.data()), m(array.flat.size()) {
+    : data_(array.data()), m(array.flat.size()), flat(*this) {
     OTHER_ASSERT(array.rank()==1);
   }
 
   RawArray(const RawArray<Element>& source)
-    : data_(source.data_), m(source.m) {}
+    : data_(source.data_), m(source.m), flat(*this) {}
 
   RawArray(const RawArray<const Element>& source)
-    : data_(source.data_), m(source.m) {}
+    : data_(source.data_), m(source.m), flat(*this) {}
 
   RawArray(typename CopyConst<std::vector<Element,std::allocator<Element> >,T>::type& source)
-    : data_(source.size()?&source[0]:0), m((int)source.size()) {}
+    : data_(source.size()?&source[0]:0), m((int)source.size()), flat(*this) {}
 
   RawArray(const int m, T* data)
-    : data_(data), m(m) {}
+    : data_(data), m(m), flat(*this) {}
 
   const RawArray& operator=(const RawArray& source) const {
     assert(size()==source.size());
