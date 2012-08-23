@@ -4,10 +4,10 @@
 //
 // Converts a free C++ function into a python function.  It is normally used indirectly through function() (see Module.h).
 //
-// In order to convert a function of type R(...,Ai,...), there must be From_Python overloads converting PyObject* to Ai,
+// In order to convert a function of type R(...,Ai,...), there must be from_python overloads converting PyObject* to Ai,
 // and a to_python function converting R to PyObject*.  See to_python.h and from_python.h for details.
 //
-// note: Function_Inner_Wrapper unfortunately can't be declared static because gcc disallows static functions as template
+// note: function_inner_wrapper unfortunately can't be declared static because gcc disallows static functions as template
 // arguments.  Putting it in an unnamed namespace clutters up the stack traces, so we rely on hidden visibility.
 //
 //#####################################################################
