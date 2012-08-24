@@ -28,7 +28,7 @@ public:
     : offsets(nested_array_offsets(Array<const int>())) {}
 
   NestedArray(RawArray<const int> lengths, bool initialize=true)
-    : offsets(nested_array_offsets(lengths)), flat(offsets.last(),initialize) {}
+    : offsets(nested_array_offsets(lengths)), flat(offsets.back(),initialize) {}
 
   template<class S> NestedArray(const NestedArray<S>& other) {
     *this = other;
@@ -43,14 +43,14 @@ public:
   template<class S> static NestedArray zeros_like(const NestedArray<S>& other) {
     NestedArray array;
     array.offsets = other.offsets;
-    array.flat.resize(array.offsets.last());
+    array.flat.resize(array.offsets.back());
     return array;
   }
 
   template<class S> static NestedArray empty_like(const NestedArray<S>& other) {
     NestedArray array;
     array.offsets = other.offsets;
-    array.flat.resize(array.offsets.last(),false,false);
+    array.flat.resize(array.offsets.back(),false,false);
     return array;
   }
 
@@ -90,7 +90,7 @@ public:
   }
 
   int total_size() const {
-    return offsets.last();
+    return offsets.back();
   }
 
   Array<int> sizes() const {

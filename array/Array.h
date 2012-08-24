@@ -57,7 +57,7 @@ public:
   enum Workaround2 {d=dimension};
 
   typedef ArrayBase<T,Array> Base;
-  OTHER_USING(first,last,copy,same_array) 
+  OTHER_USING(front,back,copy,same_array) 
 private:
   friend class Array<Element>;
   friend class Array<const Element>;
@@ -399,7 +399,7 @@ public:
     m--;
   }
 
-  void remove_index_lazy(const int index) { // Fill holes with last()
+  void remove_index_lazy(const int index) { // Fill holes with back()
     assert(unsigned(index)<unsigned(m));
     data_[index] = data_[--m];
   }

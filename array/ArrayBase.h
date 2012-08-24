@@ -220,11 +220,11 @@ public:
     for (int i=0;i<m;i++) self[i] = -self[i];
   }
 
-  T_& first() const {
+  T_& front() const {
     return derived()[0];
   }
 
-  T_& last() const {
+  T_& back() const {
     const TArray& self = derived();
     return self[self.size()-1];
   }
@@ -521,11 +521,6 @@ public:
 
   T_* end() const { // for stl
     return derived().data()+derived().size();
-  }
-
-  T_& back() const {
-    const TArray& self = derived();
-    return self[self.size()-1];
   }
 };
 
