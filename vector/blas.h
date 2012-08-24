@@ -21,7 +21,7 @@ extern "C" {
 #endif
 #include <other/core/array/RawArray.h>
 #include <other/core/array/Array2d.h>
-#include <other/core/vector/Interval.h>
+#include <other/core/geometry/Box.h>
 #include <boost/preprocessor/cat.hpp>
 namespace other{
 
@@ -288,13 +288,13 @@ WRAP(void stedc(RawArray<T> d,RawArray<T> e,Array<T,2>& z,Array<char>& work))
 DECLARE(stegr,char*,char*,int*,T*,T*,T*,T*,int*,int*,T*,int*,T*,T*,int*,int*,T*,int*,int*,int*,int*)
 
 // warning: does not work in Mkl 10.2.3
-WRAP(void stegr(RawArray<T> d,RawArray<T> e,Interval<T> range,Array<T>& w,Array<T,2>& z,Array<int>& isuppz,Array<char>& work))
+WRAP(void stegr(RawArray<T> d,RawArray<T> e,Box<T> range,Array<T>& w,Array<T,2>& z,Array<int>& isuppz,Array<char>& work))
 {
     int n=d.size();
     OTHER_ASSERT(n==e.size());
     w.resize(n,false);z.resize(n,n,false);isuppz.resize(2*n,false);
     if(!n) return;
-    char *jobz=const_cast<char*>("V"),*ran=const_cast<char*>(range.contains(Interval<T>::full_box())?"A":"V");
+    char *jobz=const_cast<char*>("V"),*ran=const_cast<char*>(range.contains(Box<T>::full_box())?"A":"V");
     T lwork_T,unused_T;int liwork,m,query=-1,unused,ldz=z.n,info;
     BC(stegr)(jobz,ran,&n,d.data(),e.data(),&range.min,&range.max,&unused,&unused,&unused_T,&m,w.data(),z.data(),&ldz,
         isuppz.data(),&lwork_T,&query,&liwork,&query,&info);

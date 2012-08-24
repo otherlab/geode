@@ -10,7 +10,7 @@
 #include <other/core/array/Array.h>
 #include <other/core/force/Force.h>
 #include <other/core/vector/Vector.h>
-#include <other/core/vector/Interval.h>
+#include <other/core/geometry/Box.h>
 namespace other{
 
 template<class TV> struct SpringInfo
@@ -33,7 +33,7 @@ public:
 
     const Array<const Vector<int,2> > springs;
     bool resist_compression;
-    Interval<T> strain_range;
+    Box<T> strain_range;
     T off_axis_damping; // between 0 and 1
 private:
     const int nodes;
@@ -57,7 +57,7 @@ public:
     void add_damping_force(RawArray<TV> F,RawArray<const TV> V) const;
     T strain_rate(RawArray<const TV> V) const;
 
-    Interval<T> limit_strain(RawArray<TV> X) const;
+    Box<T> limit_strain(RawArray<TV> X) const;
 
     void structure(SolidMatrixStructure& structure) const;
     void add_elastic_gradient(SolidMatrix<TV>& matrix) const;

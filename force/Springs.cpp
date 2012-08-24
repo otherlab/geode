@@ -230,10 +230,10 @@ strain_rate(RawArray<const TV> V) const
     return max_strain_rate;
 }
 
-template<class TV> Interval<T> Springs<TV>::
+template<class TV> Box<T> Springs<TV>::
 limit_strain(RawArray<TV> X) const {
-  Interval<T> F_range = strain_range+1;
-  Interval<T> F_range_before(1);
+  Box<T> F_range = strain_range+1;
+  Box<T> F_range_before(1);
   for (int iter=0;iter<100;iter++) {
     for (int s=0;s<springs.size();s++) {
       int i,j;springs[s].get(i,j);

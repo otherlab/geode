@@ -27,8 +27,8 @@ Optional dependencies:
 * [scipy](http://www.scipy.org): Scientific computation for Python (BSD license)
 * [py.test >= 2.1](http://pytest.org): Simple python testing (MIT license)
 * [openexr](http://www.openexr.com): High dynamic range floating point image format (BSD license)
-* [libpng](http://www.libpng.org): Lossless image format (Custom non-viral license)
-* [libjpeg](http://www.ijg.org): Lossy image format (Custom non-viral license)
+* [libpng](http://www.libpng.org): Lossless image format (Custom noncopyleft license)
+* [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
 
 `core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 
