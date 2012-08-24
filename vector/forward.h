@@ -13,7 +13,6 @@ namespace mpl=boost::mpl;
 template<class T,int d> class OTHER_EXPORT Vector;
 
 struct Zero;
-template<class T> class Interval;
 template<class T> class Quaternion;
 template<class TV> class Rotation;
 template<class T> class TetrahedralGroup;
