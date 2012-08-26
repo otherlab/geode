@@ -13,7 +13,8 @@ namespace other {
 
 using ::std::abs;
 
-template<class TMatrix> static inline typename boost::disable_if<boost::is_fundamental<TMatrix>,TMatrix>::type inverse(const TMatrix& x) {
+template<class T> static inline auto inverse(const T& x)
+  -> typename boost::disable_if<boost::is_fundamental<T>,decltype(x.inverse())>::type {
   return x.inverse();
 }
 
