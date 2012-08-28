@@ -500,7 +500,7 @@ if __name__=='__main__':
   compiler.compile(segment_intersections_ordered_helper,2)
 
   # Finalize
-  compiler.source('// Forward declarate degeneracy handling routines')
+  compiler.source('// Forward declare degeneracy handling routines')
   compiler.source(*compiler.forwards)
   compiler.source('')
   for body in compiler.bodies:

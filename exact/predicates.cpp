@@ -11,7 +11,7 @@ namespace other {
 using exact::mul;
 using std::lower_bound;
 
-// Forward declarate degeneracy handling routines
+// Forward declare degeneracy handling routines
 static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_COLD OTHER_NEVER_INLINE;
 static bool segment_directions_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) OTHER_COLD OTHER_NEVER_INLINE;
 static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) OTHER_COLD OTHER_NEVER_INLINE;
