@@ -23,7 +23,7 @@ template<> OTHER_DEFINE_TYPE(Image<real>)
 template<class T> Array<Vector<T,3>,2> Image<T>::read(const string& filename)
 {
   string ext = path::extension(filename);
-  if(ext==".jpg") return JpgFile<T>::read(filename);
+  if(ext==".jpg" || ext==".jpeg") return JpgFile<T>::read(filename);
   else if(ext==".png") return PngFile<T>::read(filename);
   else if(ext==".exr") return ExrFile<T>::read(filename);
   OTHER_FATAL_ERROR(format("Unknown image file extension  from filename '%s' extension '%s'",filename,ext));
@@ -40,7 +40,7 @@ template<class T> void Image<T>::
 write(const string& filename,RawArray<const Vector<T,3>,2> image)
 {
     string ext = path::extension(filename);
-    if(ext==".jpg") JpgFile<T>::write(filename,image);
+    if(ext==".jpg" || ext==".jpeg") JpgFile<T>::write(filename,image);
     else if(ext==".png") PngFile<T>::write(filename,image);
     else if(ext==".exr") ExrFile<T>::write(filename,image);
     else OTHER_FATAL_ERROR(format("Unknown image file extension from filename '%s' extension '%s'",filename,ext));
@@ -119,7 +119,7 @@ template<class T> bool Image<T>::
 is_supported(const string& filename)
 {
     string ext = path::extension(filename);
-    if(ext==".jpg") return JpgFile<T>::is_supported();
+    if(ext==".jpg" || ext==".jpeg") return JpgFile<T>::is_supported();
     else if(ext==".png") return PngFile<T>::is_supported();
     else if(ext==".exr") return ExrFile<T>::is_supported();
     else return false;
