@@ -128,7 +128,7 @@ if sys.argv[1] == '--names':
 else:
   ignore = '''array/RawArray.* array/Array.h array/Subarray.h array/Module.cpp math/hash.* utility/Process.cpp utility/Symbol.cpp python/Class.h vector/DiagonalMatrix* structure/Hashtable.h vector/Vector?d.h vector/SolidMatrix.h vector/Matrix*.h python/Module.*
               vector/blas.* array/Array?d.h vector/Quaternion.h vector/SparseMatrix.* */Box.* geometry/Plane.* geometry/BoxTree.* structure/UnionFind.* geometry/Triangle3d.* mesh/*Mesh.* random/Random.* mesh/TriangleSubdivision.* vector/Complex.*
-              image/MovFile.* geometry/Module.cpp vector/Symmetric* __init__.py utility/Log.py */test_sobol.py array/test_array.py vector/Module.cpp vector/test_vector.py vector/test_matrix.py */Platonic.py */test_mesh.py */ClassTest.cpp
+              image/MovFile.* geometry/Module.cpp vector/Symmetric* __init__.py utility/Log.py */test_sobol.py array/test_array.py vector/Module.cpp vector/test_vector.py vector/test_matrix.py */platonic.py */test_mesh.py */ClassTest.cpp
               force/__init__.py force/test_force.py bin/convert-case vector/__init__.py python/test_class.py'''
   ignore = set(s for p in ignore.split() for s in glob.glob(p))
   if sys.argv[1] == '--commit-skipped':

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import division
-from other.core.geometry.Platonic import *
+from other.core.geometry.platonic import *
 from other.core.vector import *
 
 def test_icosahedron():

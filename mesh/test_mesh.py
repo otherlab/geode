@@ -4,7 +4,7 @@ from __future__ import division
 
 from numpy import *
 from other.core.mesh import PolygonMesh, SegmentMesh, TriangleMesh
-from other.core.geometry.Platonic import icosahedron_mesh, sphere_mesh
+from other.core.geometry.platonic import icosahedron_mesh, sphere_mesh
 from other.core.vector import relative_error
 
 def test_misc():
