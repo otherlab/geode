@@ -32,6 +32,7 @@ template<class Int> Int Random::bits() {
   return r;
 }
 
+template  uint8_t Random::bits();
 template uint16_t Random::bits();
 template uint32_t Random::bits();
 template uint64_t Random::bits();
@@ -48,6 +49,8 @@ template uint64_t Random::bits();
         return a+bits%n; \
     } \
   }
+INT(  int8_t, uint8_t)
+INT( uint8_t, uint8_t)
 INT( int16_t,uint16_t)
 INT(uint16_t,uint16_t)
 INT( int32_t,uint32_t)

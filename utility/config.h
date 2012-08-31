@@ -23,7 +23,9 @@ typedef float real;
 #define OTHER_NEVER_INLINE __attribute__ ((noinline))
 #define OTHER_PURE __attribute__ ((pure))
 #define OTHER_CONST __attribute__ ((const))
+#define OTHER_COLD __attribute__ ((const))
 #define OTHER_FORMAT(type,fmt,list) __attribute__ ((format(type,fmt,list)))
+#define OTHER_EXPECT(value,expect) __builtin_expect((value),expect)
 
 #if defined(__GNUC__) && __GNUC__ > 3 && defined(__GNUC_MINOR__) && __GNUC_MINOR__ > 4
 #define OTHER_UNREACHABLE() __builtin_unreachable()
@@ -68,6 +70,8 @@ typedef float real;
 #define OTHER_CONST
 #define OTHER_UNREACHABLE() ((void)0)
 #define OTHER_NOEXCEPT
+#define OTHER_COLD
 #define OTHER_FORMAT
+#define OTHER_EXPECT(value,expect) (value)
 
 #endif

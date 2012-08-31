@@ -69,3 +69,6 @@ def test_sparse():
 
 def test_cpp():
     run_tests()
+
+if __name__=='__main__':
+  test_conversions()

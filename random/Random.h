@@ -101,6 +101,8 @@ public:
 };
 
 // In [a,b)
+template<>   int8_t Random::uniform(const   int8_t a, const   int8_t b);
+template<>  uint8_t Random::uniform(const  uint8_t a, const  uint8_t b);
 template<>  int16_t Random::uniform(const  int16_t a, const  int16_t b);
 template<> uint16_t Random::uniform(const uint16_t a, const uint16_t b);
 template<>  int32_t Random::uniform(const  int32_t a, const  int32_t b);

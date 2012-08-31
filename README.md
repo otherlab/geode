@@ -13,6 +13,9 @@ Ron Fedkiw et al. at Stanford University.
 For random numbers, we use the [Random123 library](http://www.deshawresearch.com/resources_random123.html) of
 John Salmon et al. at D. E. Shaw Research.  Random123 code is included inline in `core/random/random123`.
 
+The interval arithmetic in `exact/Interval` is based on code by [Robert Bridson](http://www.cs.ubc.ca/~rbridson)
+and [Tyson Brochu](http://www.cs.ubc.ca/~tbrochu).
+
 ### Dependencies
 
 Required dependencies:
@@ -29,6 +32,10 @@ Optional dependencies:
 * [openexr](http://www.openexr.com): High dynamic range floating point image format (BSD license)
 * [libpng](http://www.libpng.org): Lossless image format (Custom noncopyleft license)
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
+* [sage](http://www.sagemath.org): Open source symbolic mathematics (GPLv2)
+
+Note that `sage` is used only by the `exact/sage/simplicity` code generator.  Since `sage` is GPL, the code
+generation script is also GPL, but the code it generates is BSD like the rest of core.
 
 `core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 

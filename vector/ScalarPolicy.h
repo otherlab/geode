@@ -14,6 +14,8 @@ namespace other {
 
 template<class T> struct IsScalar:public mpl::false_{};
 template<class T> struct IsScalar<const T>:public IsScalar<T>{};
+template<> struct IsScalar<signed char>:public mpl::true_{};
+template<> struct IsScalar<unsigned char>:public mpl::true_{};
 template<> struct IsScalar<short>:public mpl::true_{};
 template<> struct IsScalar<unsigned short>:public mpl::true_{};
 template<> struct IsScalar<int>:public mpl::true_{};
