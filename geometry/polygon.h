@@ -7,11 +7,15 @@
 
 namespace other {
   
+  class SegmentMesh;
+  
   typedef std::vector<Vector<real, 2> > Polygon;
   typedef std::vector<Polygon> Polygons; 
   
   Box<Vector<real,2> > bounding_box(Polygon const &poly) OTHER_EXPORT;
   Box<Vector<real,2> > bounding_box(Polygons const &polys) OTHER_EXPORT;
+
+  Tuple<Ref<SegmentMesh>,Array<Vector<real, 2> > > to_segment_mesh(Polygons const &) OTHER_EXPORT;
 
   Polygon polygon_from_index_list(Array<Vector<real,2> > const &positions, RawArray<const int> indices) OTHER_EXPORT;
   Polygons polygons_from_index_list(Array<Vector<real,2> > const &positions, NestedArray<const int> indices) OTHER_EXPORT;
@@ -36,4 +40,5 @@ namespace other {
   Vector<real,2> point_inside_polygon_component(Polygon const &poly, Polygons const &polys) OTHER_EXPORT;
   
   Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.) OTHER_EXPORT;
+  
 }
