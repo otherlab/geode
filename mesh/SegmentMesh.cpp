@@ -6,6 +6,10 @@
 #include <other/core/array/sort.h>
 #include <other/core/array/view.h>
 #include <other/core/python/Class.h>
+#include <other/core/utility/stl.h>
+
+#include <tr1/unordered_set>
+
 namespace other{
 
 typedef Vector<real,2> TV2;
@@ -26,6 +30,70 @@ SegmentMesh(Array<const Vector<int,2> > elements)
 SegmentMesh::
 ~SegmentMesh()
 {}
+
+NestedArray<const int> SegmentMesh::loops() const {
+
+  std::cout << "creating loops from " << elements.size() << " segments:" << elements << std::endl; 
+
+  if (nodes() && !loops_.size()) {
+    incident_elements();
+
+    // walk the segments, return loops as lists of vertex indices (this assumes all loops are closed)
+    std::vector<std::vector<int>> loops;
+    std::tr1::unordered_set<int> covered_segments;
+    for (int seed = 0; seed < elements.size(); ++seed) {
+      if (covered_segments.count(seed)) {
+        continue;
+      }
+      
+      loops.push_back(std::vector<int>());
+      
+      covered_segments.insert(seed);
+
+      int current = seed;
+      int endpoint = elements[current].y;
+      
+      loops.back().push_back(elements[current].x);
+
+      do {
+        loops.back().push_back(endpoint);        
+        
+        for (int e : incident_elements_[endpoint]) {
+          
+          Vector<int,2> edge = elements[e];
+          
+          // preserve order
+          if (edge.x != endpoint) {
+            continue;
+          }
+          
+          // don't walk across things twice
+          if (covered_segments.count(e)) {
+            continue;
+          }
+          
+          covered_segments.insert(e);
+          current = e;
+          endpoint = edge.y;
+          break;
+        }
+        
+        // quit if we failed to make progress
+      } while (endpoint != loops.back().back());
+      
+      if (endpoint != loops.back().front()) {
+        std::cout << "open contour detected: " << loops.back() << std::endl;
+      }
+      
+      std::cout << "created loop #" << loops.size() << " with " << loops.back().size() << " vertices." << std::endl;
+    }
+    
+    loops_ = NestedArray<int>(loops);
+    std::cout << "loop sizes: " << loops_.sizes() << std::endl;
+  }
+  
+  return loops_;
+}
 
 NestedArray<const int> SegmentMesh::
 neighbors() const {

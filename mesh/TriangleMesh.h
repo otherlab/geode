@@ -54,12 +54,12 @@ public:
 
     ~TriangleMesh();
     Ref<const SegmentMesh> segment_mesh() const OTHER_EXPORT;
-    NestedArray<const int> incident_elements() const OTHER_EXPORT;
-    Array<const Vector<int,3> > adjacent_elements() const OTHER_EXPORT;
-    Ref<SegmentMesh> boundary_mesh() const OTHER_EXPORT;
+    NestedArray<const int> incident_elements() const OTHER_EXPORT; // vertices to triangles
+    Array<const Vector<int,3> > adjacent_elements() const OTHER_EXPORT; // triangles to triangles
+    Ref<SegmentMesh> boundary_mesh() const OTHER_EXPORT; 
     Array<const Vector<int,4> > bending_quadruples() const OTHER_EXPORT;
     Array<const int> nodes_touched() const OTHER_EXPORT;
-    NestedArray<const int> sorted_neighbors() const OTHER_EXPORT;
+    NestedArray<const int> sorted_neighbors() const OTHER_EXPORT; // vertices to sorted one-ring
     T area(RawArray<const TV2> X) const OTHER_EXPORT;
     T volume(RawArray<const TV3> X) const OTHER_EXPORT; // assumes a closed surface
     T surface_area(RawArray<const TV3> X) const OTHER_EXPORT;
