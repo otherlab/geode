@@ -516,6 +516,23 @@ public:
   }
 };
 
+
+template<class T, int d> static inline RawArray<T,d> &flat(RawArray<T,d> &A) {
+  return A.flat;
+}
+
+template<class T> static inline RawArray<T,1> &flat(RawArray<T,1> &A) {
+  return A;
+}
+
+template<class T, int d> static inline RawArray<T,d> const &flat(RawArray<T,d> const &A) {
+  return A.flat;
+}
+
+template<class T> static inline RawArray<T,1> const &flat(RawArray<T,1> const &A) {
+  return A;
+}
+
 template<class T> static inline std::ostream& operator<<(std::ostream& output,const RawArray<T,2>& a) {
     return output<<Subarray<const T,2>(a);
 }

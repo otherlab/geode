@@ -4,14 +4,21 @@
 import os
 import sys
 
-build = os.path.abspath(os.path.dirname(__file__))
+build = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
 
 def link(src,dst=None):
   if not dst:
     dst = os.path.basename(src)
   if not os.path.exists(dst):
-    print 'ln -s %s %s'%(src,dst)
-    os.symlink(src,dst)
+    try:
+      print 'ln -s %s %s'%(src,dst)
+      os.symlink(src,dst)
+    except os.error as e:
+      print "Couldn't link %s as %s: %s" %(src,dst,e)
+  elif os.path.islink(dst) and os.readlink(dst)==src:
+    pass
+  else:
+    print "%s already exists! Please ensure that it is a symlink to %s" %(src,dst)
 
 def move(src,dst):
   print 'mv %s %s'%(src,dst)
@@ -19,16 +26,16 @@ def move(src,dst):
 
 # Rename SConstruct.options or config.py to core/build/config.py
 config = os.path.join(build,'config.py')
-for bad in 'SConstruct.options','config.py':
-  if os.path.exists(bad):
-    if os.path.islink(bad):
-      print 'rm %s'%bad
-      os.remove(bad)
-    elif os.path.exists(config):
-      print>>sys.stderr, 'Both %s and %s exist.  They should be merged into %s.'%(bad,config,config)
-      sys.exit(1)
-    else:
-      move(bad,config)
+bad = 'SConstruct.options'
+if os.path.exists(bad):
+  if os.path.exists('config.py') or os.path.exists(config):
+    print>>sys.stderr, 'Both %s and config.py exist.  They should be merged into %s.'%(bad,config)
+    sys.exit(1)
+  if os.path.islink(bad):
+    print 'rm %s'%bad
+    os.remove(bad)
+  else:
+    move(bad,config)
 
 # Touch core/build/config.py
 if not os.path.exists(config):
@@ -39,3 +46,4 @@ if not os.path.exists(config):
 link(os.path.join(build,'SConstruct'))
 link(os.path.join(build,'config.py'))
 link(os.path.join(build,'setup.cfg'))
+link(os.path.join(build,'__init__.py'))

@@ -207,6 +207,13 @@ closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) co
   return simplices[simplex].closest_point(point,weights);
 }
 
+template<class TV,int d> TV SimplexTree<TV,d>::
+closest_point(TV point, T max_distance) const {
+  int simplex;
+  Vector<T,d+1> weights;
+  return closest_point(point, simplex, weights, max_distance);
+}
+
 template class SimplexTree<Vector<T,2>,1>;
 template class SimplexTree<Vector<T,2>,2>;
 template class SimplexTree<Vector<T,3>,1>;

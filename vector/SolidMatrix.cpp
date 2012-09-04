@@ -8,7 +8,7 @@
 #include <other/core/python/Class.h>
 #include <other/core/vector/DiagonalMatrix.h>
 #include <other/core/vector/SymmetricMatrix.h>
-#include <other/core/vector/Interval.h>
+#include <other/core/geometry/Box.h>
 #include <other/core/utility/const_cast.h>
 namespace other{
 
@@ -287,13 +287,13 @@ inner_product(RawArray<const TV> x,RawArray<const TV> y) const
   return sum;
 }
 
-template<class TV> Interval<typename TV::Scalar> SolidMatrix<TV>::
+template<class TV> Box<typename TV::Scalar> SolidMatrix<TV>::
 diagonal_range() const {
   OTHER_ASSERT(!outers.size());
-  Interval<T> range = Interval<T>::empty_box();
+  Box<T> range = Box<T>::empty_box();
   for(int i=0;i<size();i++) {
     DiagonalMatrix<T,d> D = assume_symmetric(sparse_A(i,0)).diagonal_part();
-    range.enlarge(Interval<T>(D.min(),D.max()));
+    range.enlarge(Box<T>(D.min(),D.max()));
   }
   return range;
 }

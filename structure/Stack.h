@@ -38,7 +38,7 @@ public:
   }
 
   const T& peek() const {
-    return array.last();
+    return array.back();
   }
 
   bool empty() const {

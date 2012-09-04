@@ -37,6 +37,8 @@ public:
   bool inside(TV point) const OTHER_EXPORT;
   bool inside_given_closest_point(TV point, int simplex, Vector<T,d+1> weights) const OTHER_EXPORT;
   TV closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance=inf) const OTHER_EXPORT; // simplex=-1 if nothing is found
+  TV closest_point(TV point, T max_distance=inf) const OTHER_EXPORT; // return value is infinity if nothing is found
+  inline T distance (TV point, T max_distance=inf) const OTHER_EXPORT { return (point - closest_point(point, max_distance)).magnitude(); }; // return value is infinity if nothing is found
 };
 
 }

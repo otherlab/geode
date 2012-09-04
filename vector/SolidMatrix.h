@@ -127,7 +127,7 @@ public:
     void multiply(RawArray<const TV> x,RawArray<TV> y) const OTHER_EXPORT;
     T inner_product(RawArray<const TV> x,RawArray<const TV> y) const OTHER_EXPORT;
     Ref<SolidDiagonalMatrix<TV> > inverse_block_diagonal() const;
-    Interval<T> diagonal_range() const OTHER_EXPORT;
+    Box<T> diagonal_range() const OTHER_EXPORT;
     Array<T,2> dense() const;
 private:
     int find_entry(int i,int j) const;

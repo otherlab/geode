@@ -11,7 +11,7 @@ namespace other {
 
 // Comparison function objects
 
-template<class TArray,class TCompare=std::less<typename TArray::Element>> struct IndirectCompare {
+template<class TArray,class TCompare=std::less<typename TArray::value_type>> struct IndirectCompare {
   const TArray& array;
   TCompare comparison;
 
@@ -74,15 +74,15 @@ template<class TArray,class TCompare> static inline void stable_sort(TArray& arr
 }
 
 template<class TArray> static inline void sort(TArray& array) {
-  sort(array,std::less<typename TArray::Element>());
+  sort(array,std::less<typename TArray::value_type>());
 }
 
 template<class TArray> static inline void sort(const TArray& array) {
-  sort(array,std::less<typename TArray::Element>());
+  sort(array,std::less<typename TArray::value_type>());
 }
 
 template<class TArray> static inline void stable_sort(TArray& array) {
-  stable_sort(array,std::less<typename TArray::Element>());
+  stable_sort(array,std::less<typename TArray::value_type>());
 }
 
 }

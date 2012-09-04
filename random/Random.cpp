@@ -3,6 +3,7 @@
 //#####################################################################
 #include <other/core/random/Random.h>
 #include <other/core/python/Class.h>
+#include <other/core/vector/Frame.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/python/stl.h>
 namespace other {
@@ -31,6 +32,7 @@ template<class Int> Int Random::bits() {
   return r;
 }
 
+template  uint8_t Random::bits();
 template uint16_t Random::bits();
 template uint32_t Random::bits();
 template uint64_t Random::bits();
@@ -47,6 +49,8 @@ template uint64_t Random::bits();
         return a+bits%n; \
     } \
   }
+INT(  int8_t, uint8_t)
+INT( uint8_t, uint8_t)
 INT( int16_t,uint16_t)
 INT(uint16_t,uint16_t)
 INT( int32_t,uint32_t)
@@ -134,6 +138,29 @@ Array<int> Random::uniform_int_py(int lo, int hi, int size) {
     x = uniform<int>(lo,hi);
   return result;
 }
+
+static Rotation<Vector<real,2> > rotation_helper(const Vector<real,2>& v) {
+  return Rotation<Vector<real,2>>::from_complex(v.complex());
+}
+
+static Rotation<Vector<real,3> > rotation_helper(const Vector<real,4>& v) {
+  return Rotation<Vector<real,3>>::from_quaternion(Quaternion<real>(v));
+}
+
+template<class TV> Rotation<TV> Random::rotation() {
+  return rotation_helper(unit_ball<Vector<real,2*TV::m-2> >());
+}
+
+template<class TV> Frame<TV> Random::frame(const TV& v0,const TV& v1) {
+  TV v = uniform(v0,v1);
+  return Frame<TV>(v,rotation<TV>());
+}
+
+#define INSTANTIATE(d) \
+  template Rotation<Vector<real,d>> Random::rotation(); \
+  template Frame<Vector<real,d>> Random::frame(const Vector<real,d>&,const Vector<real,d>&);
+INSTANTIATE(2)
+INSTANTIATE(3)
 
 }
 using namespace other;

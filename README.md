@@ -1,12 +1,20 @@
 Otherlab core library
 =====================
 
-`other/core` is a utility library of vectors, matrices, arrays, and other mathematical code together
-with a fast, lightweight python binding layer.  The code is originally based on parts of the
-[PhysBAM simulation library](http://physbam.stanford.edu) but has since been heavily modified.
+`other/core` is an open source utility library of arrays, vectors, matrices, and other mathematical code together
+with a fast, lightweight python binding layer.  The license is standard three-clause BSD (see the included `LICENSE`
+file or [LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
 
-The code is released under a standard three-clause BSD license (see
-[LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
+### Acknowledgements
+
+Much of core is based on parts of the [PhysBAM simulation library](http://physbam.stanford.edu) developed by
+Ron Fedkiw et al. at Stanford University.
+
+For random numbers, we use the [Random123 library](http://www.deshawresearch.com/resources_random123.html) of
+John Salmon et al. at D. E. Shaw Research.  Random123 code is included inline in `core/random/random123`.
+
+The interval arithmetic in `exact/Interval` is based on code by [Robert Bridson](http://www.cs.ubc.ca/~rbridson)
+and [Tyson Brochu](http://www.cs.ubc.ca/~tbrochu).
 
 ### Dependencies
 
@@ -22,12 +30,17 @@ Optional dependencies:
 * [scipy](http://www.scipy.org): Scientific computation for Python (BSD license)
 * [py.test >= 2.1](http://pytest.org): Simple python testing (MIT license)
 * [openexr](http://www.openexr.com): High dynamic range floating point image format (BSD license)
-* [libpng](http://www.libpng.org): Lossless image format (Custom non-viral license)
-* [libjpeg](http://www.ijg.org): Lossy image format (Custom non-viral license)
+* [libpng](http://www.libpng.org): Lossless image format (Custom noncopyleft license)
+* [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
+* [sage](http://www.sagemath.org): Open source symbolic mathematics (GPLv2)
 
-`core` makes extensive use of C++11 features, so a relatively recent C++ compile is necessary.  So far the code has been tested on
+Note that `sage` is used only by the `exact/sage/simplicity` code generator.  Since `sage` is GPL, the code
+generation script is also GPL, but the code it generates is BSD like the rest of core.
+
+`core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 
 * [gcc 4.6](http://gcc.gnu.org)
+* [gcc 4.7](http://gcc.gnu.org)
 * [clang 3.1](http://clang.llvm.org)
 
 ### Setup
@@ -45,10 +58,10 @@ Ideally, we will improve this part so that everything works more automatically.
         sudo apt-get install python python-numpy libboost-1.48 scons \
           python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
 
-2. Unpack `core` inside a root directory (we use `other`):
+2. Unpack `core` inside a root directory (we use `other`), and set $OTHER to that root directory.
 
         mkdir other 
-        export OTHER=<path-to-other>
+        export OTHER=`pwd`/other
         cd $OTHER
         git clone https://github.com/otherlab/core.git
 
@@ -57,7 +70,7 @@ Ideally, we will improve this part so that everything works more automatically.
         cd $OTHER
         ./core/build/setup
 
-3. Configure build: Edit `config.py` and set any desired options.  For example
+3. Configure build: If desired, edit `config.py` and set any desired options.  For example
 
         # config.py
         CXX = 'clang++'

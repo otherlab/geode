@@ -31,23 +31,37 @@ public:
 
   Field() {}
 
+  Field(const Field<Element,Id>& source)
+    : flat(source.flat) {}
+
   Field(const Field<const Element,Id>& source)
     : flat(source.flat) {}
 
   explicit Field(int n, bool initialize=true)
     : flat(n,initialize) {}
 
-  template<class TA> explicit Field(TA& source)
+  explicit Field(const Array<T>& source)
     : flat(source) {}
 
-  template<class TA> explicit Field(const TA& source)
-    : flat(source) {}
+  Field& operator=(const Field<Element,Id>& source) {
+    flat = source.flat;
+    return *this;
+  }
+
+  Field& operator=(const Field<const Element,Id>& source) {
+    flat = source.flat;
+    return *this;
+  }
 
   int size() const {
     return flat.size();
   }
 
   T& operator[](Id i) const {
+    return flat[i.idx()];
+  }
+
+  T& operator()(Id i) const { // Allow use as a function
     return flat[i.idx()];
   }
 

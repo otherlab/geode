@@ -17,12 +17,15 @@ import config
 del sys.path[0]
 def options(*vars):
   for name,help,default in vars:
-    Help('%s: %s (default %s)'%(name,help,default))
-    env[name] = config.__dict__.get(name,default)
+    Help('%s: %s (default %s)\n'%(name,help,default))
+    env[name] = ARGUMENTS.get(name,config.__dict__.get(name,default))
 
 # Base environment
 env = Environment(tools=['default','pdflatex','pdftex'])
 env.Replace(ENV=os.environ)
+
+# Locate other in case we're in a different directory
+env['other'] = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'../../..'))
 
 # Default base directory
 if env['PLATFORM']=='darwin':
@@ -61,7 +64,7 @@ options(
   ('LIBPATH_EXTRA','',['/usr/local/lib']),
   ('RPATH_EXTRA','',[]),
   ('LIBS_EXTRA','',[]),
-  ('PREFIX','Path to install libraries, binaries, and scripts','#install/$type'),
+  ('PREFIX','Path to install libraries, binaries, and scripts','$other/install/$type'),
   ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
   ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
   ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
@@ -81,13 +84,14 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 # External libraries
 externals = {}
 def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False):
-  lib = {'default':default,'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
+  lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide}
+  env['use_'+name] = default
 
+  Help('\n')
   options(
     ('has_'+name,'Whether '+name+' is available',lib['has']),
-    ('use_'+name,'Use '+name,lib['default']),
     (name+'_dir','Base directory for '+name,dir),
     (name+'_include','Include directory for '+name,0),
     (name+'_libpath','Library directory for '+name,0),
@@ -133,7 +137,8 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
 
 # Predefined external libraries
 external('python',default=1,frameworks=['Python'])
-external('boost',default=1,libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
+external('boost',default=1,hide=1)
+external('boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
 external('mpi',flags=['USE_MPI'])
 external('libjpeg',flags=['USE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
 external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=['/usr/X11/include'],libpath=['/usr/X11/lib'])
@@ -146,12 +151,18 @@ external('mkl',flags=['USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -
 # Automatic python configuration
 def configure_python():
   pattern=re.compile(r'^\s+',flags=re.MULTILINE)
-  include,numpy,libpath,lib,frameworkpath = subprocess.Popen([env['python'],'-c',pattern.sub('','''
-  import numpy
-  import distutils.sysconfig as sc
-  get = sc.get_config_var
-  print sc.get_python_inc(),numpy.get_include(),get('LIBDIR'),get('LDLIBRARY'),get('PYTHONFRAMEWORKPREFIX')
-  ''')],stdout=subprocess.PIPE).communicate()[0].split()
+  data = subprocess.Popen([env['python'],'-c',pattern.sub('','''
+    import numpy
+    import distutils.sysconfig as sc
+    get = sc.get_config_var
+    def p(s): print "'%s'"%s
+    p(sc.get_python_inc())
+    p(numpy.get_include())
+    p(get('LIBDIR'))
+    p(get('LDLIBRARY'))
+    p(get('PYTHONFRAMEWORKPREFIX'))
+    ''')],stdout=subprocess.PIPE).communicate()[0]
+  include,numpy,libpath,lib,frameworkpath = [s[1:-1] for s in data.strip().split('\n')]
   python = externals['python']
   assert include,numpy
   python['cpppath'] = [include,numpy]
@@ -173,7 +184,7 @@ env.Replace(_CPPINCFLAGS=env['_CPPINCFLAGS']+re.sub(r'\$\( (.*)\bCPPPATH\b(.*)\$
 
 # Pick compiler if the user requested the default
 if env['CXX']=='<detect-gcc>':
-  for gcc in 'g++-mp-4.6','g++-4.6','g++':
+  for gcc in 'g++-mp-4.7','g++-4.7','g++-mp-4.6','g++-4.6','g++':
     if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
       env.Replace(CXX=gcc)
       break
@@ -315,20 +326,19 @@ def symlink_force(src,dst):
     os.symlink(src,dst)
 
 # Add a directory to the include path under a given name
-other_path = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'../../..'))
 def toplevel(name,path):
   path = Dir(path).abspath
   # Make other/build/include if it doesn't exist
-  include = os.path.join(other_path,'build/include')
+  include = os.path.join(env['other'],'build/include')
   if not os.path.exists(include):
     os.makedirs(include)
   symlink_force(path,os.path.join(include,name))
   # If we're not under other, symlink us/build/include to other/build/include
-  if not File('#SConstruct').abspath.startswith(other_path+'/'):
+  if not File('#SConstruct').abspath.startswith(env['other']+'/'):
     symlink_force(include,Dir('#build/include').abspath)
 
 # Library configuration
-toplevel('other',other_path)
+toplevel('other',env['other'])
 env.Append(CPPPATH=['#build/include'],LIBPATH=[env['PREFIX_LIB']],RPATH=[Dir(env['PREFIX_LIB']).abspath])
 
 # Account for library dependencies
@@ -446,4 +456,7 @@ def child(env,dir):
 
 # Build everything
 Export('child options external externals library objects program latex clang toplevel')
-child(env,'.')
+if os.path.exists('SConscript'):
+  child(env,'.')
+else:
+  child(env,'core')

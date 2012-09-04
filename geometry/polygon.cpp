@@ -10,6 +10,7 @@
 #include <other/core/vector/normalize.h>
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/Segment2d.h>
+#include <other/core/mesh/SegmentMesh.h>
 #include <other/core/array/NestedArray.h>
 #include <other/core/array/Array.h>
 #include <other/core/array/RawArray.h>
@@ -32,6 +33,20 @@ namespace other {
     return box;
   }
   
+  Tuple<Ref<SegmentMesh>,Array<Vector<real, 2> > > to_segment_mesh(Polygons const &polys) {
+    Array<Vector<real,2>> points;
+    Array<Vector<int,2>> segments;
+    for (auto const &p : polys) {
+      int offset = points.size();
+      for (int j = (int)p.size()-1, i = 0; i < (int)p.size(); j = i++) {
+        points.append(p[i]);
+        segments.append(vec(offset + j, offset + i));
+      }
+    }
+
+    return tuple(new_<SegmentMesh>(segments), points);
+  }
+
   Polygons polygons_from_index_list(Array<Vector<real,2> > const &positions, NestedArray<const int> indices) {
     Polygons polys;
     for (int i = 0; i < indices.size(); ++i) {

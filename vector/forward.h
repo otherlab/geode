@@ -6,15 +6,13 @@
 #include <other/core/utility/config.h>
 #include <other/core/utility/forward.h>
 #include <boost/mpl/and.hpp>
-namespace other{
+namespace other {
 
 namespace mpl=boost::mpl;
 
 template<class T,int d> class OTHER_EXPORT Vector;
 
 struct Zero;
-template<class T> class Interval;
-template<class T> class Complex;
 template<class T> class Quaternion;
 template<class TV> class Rotation;
 template<class T> class TetrahedralGroup;

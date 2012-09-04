@@ -10,7 +10,7 @@
 // Since python has no notion of constness, there is no difference between the wrapped versions of a method with and
 // without const qualification.
 //
-// note: Method_Inner_Wrapper_* unfortunately can't be declared static because gcc disallows static functions as template
+// note: method_inner_wrapper_* unfortunately can't be declared static because gcc disallows static functions as template
 // arguments.  Putting it in an unnamed namespace clutters up the stack traces, so we rely on hidden visibility.
 //
 //#####################################################################
