@@ -10,8 +10,6 @@
 #pragma once
 
 #include <other/core/array/Array.h>
-#include <vector>
-
 namespace other {
 
 template<class T> PyObject* to_python(const NestedArray<T>& array) OTHER_EXPORT;
@@ -32,23 +30,11 @@ public:
   NestedArray(RawArray<const int> lengths, bool initialize=true)
     : offsets(nested_array_offsets(lengths)), flat(offsets.back(),initialize) {}
 
-  NestedArray(std::vector<std::vector<T>> const &v) {
-    Array<int> sizes(v.size());
-    for (int i = 0; i < (int) v.size(); ++i) {
-      sizes[i] = v[i].size();
-    } 
-    offsets = nested_array_offsets(sizes);
-    flat = Array<T>(offsets.back(), false);
-    for (int i = 0; i < (int) v.size(); ++i) {
-      for (int j = 0; j < (int) v[i].size(); ++j) {
-        flat[offsets[i]+j] = v[i][j];
-      }
-    }
-  }
-
   template<class S> NestedArray(const NestedArray<S>& other) {
     *this = other;
   }
+
+  // Note: To convert vector<vector<T>> to a NestedArray, use copy below
 
   template<class S> NestedArray& operator=(const NestedArray<S>& other) {
     offsets = other.offsets;
@@ -129,5 +115,14 @@ public:
     copy.flat = flat.copy();
     return copy;
   }
+
+  ArrayIter<NestedArray> begin() const {
+    return ArrayIter<NestedArray>(*this,0);
+  }
+
+  ArrayIter<NestedArray> end() const {
+    return ArrayIter<NestedArray>(*this,size());
+  }
 };
+
 }
