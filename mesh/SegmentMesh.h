@@ -28,11 +28,11 @@ public:
     Array<const int> vertices; // = scalar_view(elements)
     Array<const Vector<int,2> > elements;
 private:
-    int node_count;
-    mutable NestedArray<int> loops_;
+    const int node_count;
     mutable NestedArray<int> neighbors_; 
     mutable NestedArray<int> incident_elements_;
     mutable Array<Vector<int,2> > adjacent_elements_;
+    mutable Vector<NestedArray<const int>,2> polygons_;
 
 protected:
     SegmentMesh(Array<const Vector<int,2> > elements) OTHER_EXPORT;
@@ -45,7 +45,10 @@ public:
     Ref<const SegmentMesh> segment_mesh() const
     {return ref(*this);}
 
-    NestedArray<const int> loops() const OTHER_EXPORT; // walk the segments, return loops as lists of vertex indices 
+    // Decompose segment mesh into maximal manifold contours, returning closed-contours, open-contours.
+    // Nonmanifold vertices will show up several times in different open contours.
+    const Vector<NestedArray<const int>,2>& polygons() const OTHER_EXPORT;
+
     NestedArray<const int> neighbors() const OTHER_EXPORT; // vertices to vertices
     NestedArray<const int> incident_elements() const OTHER_EXPORT; // vertices to segments
     Array<const Vector<int,2> > adjacent_elements() const OTHER_EXPORT; // segment to segments

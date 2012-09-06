@@ -3,85 +3,105 @@
 from __future__ import division
 
 from numpy import *
-from other.core.mesh import PolygonMesh, SegmentMesh, TriangleMesh
+from other.core import NestedArray, PolygonMesh, SegmentMesh, TriangleMesh
 from other.core.geometry.platonic import icosahedron_mesh, sphere_mesh
 from other.core.vector import relative_error
 
 def test_misc():
-    counts = array([3,4],dtype=int32)
-    vertices = array([0,1,2,2,1,3,4],dtype=int32)
-    polygon_mesh = PolygonMesh(counts,vertices)
-    assert all(polygon_mesh.counts==counts)
-    assert all(polygon_mesh.vertices==vertices)
-    triangle_mesh = polygon_mesh.triangle_mesh()
-    triangles = array([0,1,2,2,1,3,2,3,4]).reshape([-1,3])
-    assert all(triangle_mesh.elements==triangles)
+  counts = array([3,4],dtype=int32)
+  vertices = array([0,1,2,2,1,3,4],dtype=int32)
+  polygon_mesh = PolygonMesh(counts,vertices)
+  assert all(polygon_mesh.counts==counts)
+  assert all(polygon_mesh.vertices==vertices)
+  triangle_mesh = polygon_mesh.triangle_mesh()
+  triangles = array([0,1,2,2,1,3,2,3,4]).reshape([-1,3])
+  assert all(triangle_mesh.elements==triangles)
 
-    def make_set(s):
-        return set(tuple(sorted(a)) for a in s)
-    segments=make_set(array([0,1,1,2,2,0,2,1,1,3,3,4,4,2],dtype=int32).reshape(-1,2))
-    assert make_set(polygon_mesh.segment_mesh().elements)==segments
-    assert make_set(triangle_mesh.segment_mesh().elements)==segments|set([(2,3)])
-    
+  def make_set(s):
+    return set(tuple(sorted(a)) for a in s)
+  segments=make_set(array([0,1,1,2,2,0,2,1,1,3,3,4,4,2],dtype=int32).reshape(-1,2))
+  assert make_set(polygon_mesh.segment_mesh().elements)==segments
+  assert make_set(triangle_mesh.segment_mesh().elements)==segments|set([(2,3)])
+  
 def test_bad():
-    try:
-        PolygonMesh(array([-2],dtype=int32),array([1],dtype=int32))
-        assert False
-    except AssertionError:
-        pass
+  try:
+    PolygonMesh(array([-2],dtype=int32),array([1],dtype=int32))
+    assert False
+  except AssertionError:
+    pass
 
 def test_incident_segments():
-    mesh = SegmentMesh([(0,1),(0,2)])
-    incident = mesh.incident_elements()
-    print incident.offsets
-    print incident.flat
-    incident = map(list,mesh.incident_elements())
-    assert incident==[[0,1],[0],[1]]
+  mesh = SegmentMesh([(0,1),(0,2)])
+  incident = mesh.incident_elements()
+  print incident.offsets
+  print incident.flat
+  incident = map(list,mesh.incident_elements())
+  assert incident==[[0,1],[0],[1]]
 
 def test_incident_triangles():
-    mesh = TriangleMesh([(0,1,2),(0,3,4)])
-    incident =  mesh.incident_elements()
-    incident = map(list,incident)
-    assert incident==[[0,1],[0],[0],[1],[1]]
+  mesh = TriangleMesh([(0,1,2),(0,3,4)])
+  incident =  mesh.incident_elements()
+  incident = map(list,incident)
+  assert incident==[[0,1],[0],[0],[1],[1]]
 
 def test_boundary_mesh():
-    mesh = TriangleMesh([(0,1,2),(2,1,3)])
-    boundary = mesh.boundary_mesh()
-    assert all(boundary.elements==[[0,1],[2,0],[1,3],[3,2]])
+  mesh = TriangleMesh([(0,1,2),(2,1,3)])
+  boundary = mesh.boundary_mesh()
+  assert all(boundary.elements==[[0,1],[2,0],[1,3],[3,2]])
 
 def test_bending_quadruples():
-    mesh = TriangleMesh([(0,1,2),(2,1,3)])
-    assert all(mesh.bending_quadruples()==[(0,1,2,3)])
+  mesh = TriangleMesh([(0,1,2),(2,1,3)])
+  assert all(mesh.bending_quadruples()==[(0,1,2,3)])
 
 def test_adjacent_segments():
-    mesh = SegmentMesh([(0,1),(1,2)])
-    assert all(mesh.adjacent_elements()==[(-1,1),(0,-1)])
+  mesh = SegmentMesh([(0,1),(1,2)])
+  assert all(mesh.adjacent_elements()==[(-1,1),(0,-1)])
 
 def test_adjacent_triangles():
-    mesh = TriangleMesh([(0,1,2),(2,1,3)])
-    assert all(mesh.adjacent_elements()==[(-1,1,-1),(0,-1,-1)])
+  mesh = TriangleMesh([(0,1,2),(2,1,3)])
+  assert all(mesh.adjacent_elements()==[(-1,1,-1),(0,-1,-1)])
 
 def test_nodes_touched():
-    mesh = TriangleMesh([(4,7,5)])
-    assert all(mesh.nodes_touched()==[4,5,7])
+  mesh = TriangleMesh([(4,7,5)])
+  assert all(mesh.nodes_touched()==[4,5,7])
+
+def test_polygons():
+  random.seed(9831)
+  segments = array([(0,0), # degenerate
+                    (1,2),(2,3),(3,1), # closed
+                    (4,5),(7,6),(6,4),(4,8),(8,9),(9,10)]) # nonmanifold 
+  closed = NestedArray([(0,),(1,2,3)])
+  open = NestedArray([(4,5),(7,6,4),(4,8,9,10)])
+  def closed_key(p):
+    p = asarray(p)
+    i = argmin(p) 
+    return tuple(hstack([p[i:],p[:i]]))
+  for _ in xrange(4):
+    inj = injection(11)
+    segs = inj[segments]
+    random.shuffle(segs)
+    closed2,open2 = SegmentMesh(segs).polygons()
+    assert sorted(map(closed_key,closed2))==sorted(closed_key(inj[p]) for p in closed)
+    assert sorted(map(tuple,open2))==sorted(tuple(inj[p]) for p in open)
 
 def test_volume():
-    mesh,X = icosahedron_mesh()
-    a = 2 # see http://en.wikipedia.org/wiki/Icosahedron
-    assert relative_error(mesh.surface_area(X),5*sqrt(3)*a**2) < 1e-5
-    assert relative_error(mesh.volume(X),5/12*(3+sqrt(5))*a**3) < 1e-5
-    mesh,X = sphere_mesh(4)
-    assert relative_error(mesh.surface_area(X),4*pi) < .01
-    assert relative_error(mesh.volume(X),4/3*pi) < .01
+  mesh,X = icosahedron_mesh()
+  a = 2 # see http://en.wikipedia.org/wiki/Icosahedron
+  assert relative_error(mesh.surface_area(X),5*sqrt(3)*a**2) < 1e-5
+  assert relative_error(mesh.volume(X),5/12*(3+sqrt(5))*a**3) < 1e-5
+  mesh,X = sphere_mesh(4)
+  assert relative_error(mesh.surface_area(X),4*pi) < .01
+  assert relative_error(mesh.volume(X),4/3*pi) < .01
 
 def test_neighbors():
-    mesh = SegmentMesh([(0,1),(0,2),(0,2)])
-    assert all(mesh.neighbors()==[[1,2],[0],[0]])
+  mesh = SegmentMesh([(0,1),(0,2),(0,2)])
+  assert all(mesh.neighbors()==[[1,2],[0],[0]])
 
 def injection(n):
-  map = random.randint(5,5+n*n,n).astype(int32)
-  assert len(unique(map))==len(map)
-  return map
+  while 1:
+    map = random.randint(5,5+n*n,n).astype(int32)
+    if len(unique(map))==len(map):
+      return map
 
 def test_nonmanifold_segments():
   random.seed(71318)

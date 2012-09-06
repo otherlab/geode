@@ -17,70 +17,66 @@ namespace other{
 typedef real T;
 OTHER_DEFINE_TYPE(TriangleSubdivision)
 
-static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh)
-{
-    Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();
-    NestedArray<const int> incident_elements=segments->incident_elements();
-    int offset=coarse_mesh.nodes();
-    Array<Vector<int,3> > triangles(4*coarse_mesh.elements.size(),false);
-    for(int t=0;t<coarse_mesh.elements.size();t++){
-        Vector<int,3> nodes=coarse_mesh.elements[t];
-        Vector<int,3> edges;
-        for(int a=0;a<3;a++){
-            int start=nodes[a],end=nodes[(a+1)%3];
-            RawArray<const int> incident=incident_elements[start];
-            for(int i=0;i<incident.size();i++)
-                if(segments->elements[incident[i]].contains(end)){
-                    edges[a]=offset+incident[i];
-                    break;}}
-        triangles[4*t+0].set(nodes[0],edges[0],edges[2]);
-        triangles[4*t+1].set(edges[0],nodes[1],edges[1]);
-        triangles[4*t+2].set(edges[2],edges[1],nodes[2]);
-        triangles[4*t+3].set(edges[0],edges[1],edges[2]);}
-    return new_<TriangleMesh>(triangles);
+static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh) {
+  Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();
+  NestedArray<const int> incident_elements=segments->incident_elements();
+  int offset = coarse_mesh.nodes();
+  Array<Vector<int,3> > triangles(4*coarse_mesh.elements.size(),false);
+  for (int t=0;t<coarse_mesh.elements.size();t++) {
+    Vector<int,3> nodes = coarse_mesh.elements[t];
+    Vector<int,3> edges;
+    for (int a=0;a<3;a++) {
+      int start=nodes[a],end=nodes[(a+1)%3];
+      RawArray<const int> incident = incident_elements[start];
+      for (int i=0;i<incident.size();i++)
+        if (segments->elements[incident[i]].contains(end)) {
+          edges[a]=offset+incident[i];
+          break;
+        }
+    }
+    triangles[4*t+0].set(nodes[0],edges[0],edges[2]);
+    triangles[4*t+1].set(edges[0],nodes[1],edges[1]);
+    triangles[4*t+2].set(edges[2],edges[1],nodes[2]);
+    triangles[4*t+3].set(edges[0],edges[1],edges[2]);
+  }
+  return new_<TriangleMesh>(triangles);
 }
 
-TriangleSubdivision::
-TriangleSubdivision(const TriangleMesh& coarse_mesh)
-    :coarse_mesh(ref(coarse_mesh)),fine_mesh(make_fine_mesh(coarse_mesh))
-{}
+TriangleSubdivision::TriangleSubdivision(const TriangleMesh& coarse_mesh)
+  : coarse_mesh(ref(coarse_mesh))
+  , fine_mesh(make_fine_mesh(coarse_mesh)) {}
 
-TriangleSubdivision::
-~TriangleSubdivision()
-{}
+TriangleSubdivision::~TriangleSubdivision() {}
 
-template<class TV> Array<TV> TriangleSubdivision::
-linear_subdivide(RawArray<const TV> X) const
-{
-    typedef typename ScalarPolicy<TV>::type T;
-    int offset=coarse_mesh->nodes();
-    OTHER_ASSERT(X.size()==offset);
-    Ref<const SegmentMesh> segments=coarse_mesh->segment_mesh();
-    Array<TV> fine_X(offset+segments->elements.size(),false);
-    fine_X.slice(0,offset)=X;
-    for(int s=0;s<segments->elements.size();s++){
-        int i,j;segments->elements[s].get(i,j);
-        fine_X[offset+s]=(T).5*(X[i]+X[j]);}
-    return fine_X;
+template<class TV> Array<TV> TriangleSubdivision::linear_subdivide(RawArray<const TV> X) const {
+  typedef typename ScalarPolicy<TV>::type T;
+  int offset = coarse_mesh->nodes();
+  OTHER_ASSERT(X.size()==offset);
+  Ref<const SegmentMesh> segments = coarse_mesh->segment_mesh();
+  Array<TV> fine_X(offset+segments->elements.size(),false);
+  fine_X.slice(0,offset) = X;
+  for (int s=0;s<segments->elements.size();s++) {
+    int i,j;segments->elements[s].get(i,j);
+    fine_X[offset+s]=(T).5*(X[i]+X[j]);
+  }
+  return fine_X;
 }
 
-Array<T,2> TriangleSubdivision::
-linear_subdivide(RawArray<const T,2> X) const
-{
-    int offset=coarse_mesh->nodes();
-    OTHER_ASSERT(X.m==offset);
-    Ref<const SegmentMesh> segments=coarse_mesh->segment_mesh();
-    Array<T,2> fine_X(offset+segments->elements.size(),X.n,false);
-    fine_X.slice(0,offset)=X;
-    for(int s=0;s<segments->elements.size();s++){
-        int i,j;segments->elements[s].get(i,j);
-        for(int a=0;a<X.n;a++)
-            fine_X(offset+s,a)=(T).5*(X(i,a)+X(j,a));}
-    return fine_X;
+Array<T,2> TriangleSubdivision::linear_subdivide(RawArray<const T,2> X) const {
+  int offset = coarse_mesh->nodes();
+  OTHER_ASSERT(X.m==offset);
+  Ref<const SegmentMesh> segments = coarse_mesh->segment_mesh();
+  Array<T,2> fine_X(offset+segments->elements.size(),X.n,false);
+  fine_X.slice(0,offset) = X;
+  for (int s=0;s<segments->elements.size();s++) {
+    int i,j;segments->elements[s].get(i,j);
+    for (int a=0;a<X.n;a++)
+      fine_X(offset+s,a) = (T).5*(X(i,a)+X(j,a));
+  }
+  return fine_X;
 }
 
-NdArray<T> TriangleSubdivision::
-linear_subdivide_python(NdArray<const T> X) const {
+NdArray<T> TriangleSubdivision::linear_subdivide_python(NdArray<const T> X) const {
   if(X.rank()==1)
     return linear_subdivide(RawArray<const T>(X));
   else if(X.rank()==2) {
@@ -186,16 +182,14 @@ Ref<SparseMatrix> TriangleSubdivision::loop_matrix() const {
   return ref(loop_matrix_);
 }
 
-template<class TV> Array<TV> TriangleSubdivision::
-loop_subdivide(RawArray<const TV> X) const {
+template<class TV> Array<TV> TriangleSubdivision::loop_subdivide(RawArray<const TV> X) const {
   OTHER_ASSERT(X.size()==coarse_mesh->nodes());
   Array<TV> fine_X(fine_mesh->nodes(),false);
   loop_matrix()->multiply(X,fine_X);
   return fine_X;
 }
 
-NdArray<T> TriangleSubdivision::
-loop_subdivide_python(NdArray<const T> X) const {
+NdArray<T> TriangleSubdivision::loop_subdivide_python(NdArray<const T> X) const {
   if(X.rank()==1)
     return loop_subdivide(RawArray<const T>(X));
   else if(X.rank()==2) {
@@ -212,14 +206,13 @@ loop_subdivide_python(NdArray<const T> X) const {
 }
 using namespace other;
 
-void wrap_triangle_subdivision()
-{
-    typedef TriangleSubdivision Self;
-    Class<Self>("TriangleSubdivision")
-        .OTHER_INIT(TriangleMesh&)
-        .OTHER_FIELD(coarse_mesh)
-        .OTHER_FIELD(fine_mesh)
-        .OTHER_METHOD_2("linear_subdivide",linear_subdivide_python)
-        .OTHER_METHOD_2("loop_subdivide",loop_subdivide_python)
-        ;
+void wrap_triangle_subdivision() {
+  typedef TriangleSubdivision Self;
+  Class<Self>("TriangleSubdivision")
+    .OTHER_INIT(TriangleMesh&)
+    .OTHER_FIELD(coarse_mesh)
+    .OTHER_FIELD(fine_mesh)
+    .OTHER_METHOD_2("linear_subdivide",linear_subdivide_python)
+    .OTHER_METHOD_2("loop_subdivide",loop_subdivide_python)
+    ;
 }
