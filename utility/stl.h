@@ -14,6 +14,7 @@
 #include <boost/type_traits.hpp>
 #include <other/core/utility/remove_const_reference.h>
 #include <other/core/math/hash.h>
+#include <boost/shared_ptr.hpp>
 
 namespace other {
 
@@ -144,6 +145,10 @@ inline std::ostream &operator<<(std::ostream &os, std::list<T> const &v) {
 template<class T, class U>
 inline std::ostream &operator<<(std::ostream &os, std::map<T,U> const &v) {
   return print(os, v.begin(), v.end(), '{', '}');
+}
+
+template<class T> static inline other::Hash hash_reduce(const boost::shared_ptr<T>& p) {
+  return hash_reduce(p.get());
 }
 
 }
