@@ -291,8 +291,18 @@ public:
   void project_points_onto_line(const TV& direction, T& line_min, T& line_max) const {
     line_min = line_max = dot(direction,min);
     TV e = direction*(max-min);
-    for (int i=0;i<d;i++)
-      e[i]>0?line_max:line_min += e[i];
+    
+    for (int i=0;i<d;i++) {
+      //T& l = e[i]>0?line_max:line_min; // this works, but looks fragile for portability given the below doesn't work in clang
+      //l+=e[i];
+      
+      //e[i]>0?line_max:line_min += e[i]; // this should give invalid lvalue. It doesn't. It also doesn't work.
+      
+      if (e[i]>0)
+        line_max += e[i];
+      else 
+        line_min += e[i];
+    }
   }
 
   TV point_from_normalized_coordinates(const TV& weights) const {
