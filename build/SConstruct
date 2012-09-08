@@ -42,7 +42,7 @@ else:
 # Base options
 options(
   ('CXX','C++ compiler','<detect-gcc>'),
-  ('arch','Architecture (e.g. pentium4, opteron, nocona, powerpc)',''),
+  ('arch','Architecture (e.g. pentium4, opteron, nocona, powerpc, native)',''),
   ('type','Type of build (e.g. release, debug, profile)','release'),
   ('default_arch','Architecture that doesn\'t need a suffix',''),
   ('cache','Cache directory to use',''),
@@ -235,6 +235,7 @@ else: # assume g++...
   elif env['arch']=='nocona': machine_flags=' -march=nocona -msse2'
   elif env['arch']=='opteron': machine_flags=' -march=opteron -msse3'
   elif env['arch']=='powerpc': machine_flags=' -msse3'
+  elif env['arch']=='native': machine_flags=' -march=native -mtune=native'
   else: machine_flags=''
   env.Append(CXXFLAGS=machine_flags)
   # type specific flags
@@ -244,7 +245,7 @@ else: # assume g++...
     if env['arch']=='pentium4': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
     elif env['arch']=='pentium3': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
     elif env['arch']=='opteron': optimization_flags+=' -O2'
-    elif env['arch']=='nocona': optimization_flags+=' -O3 -funroll-loops'
+    elif env['arch'] in ('nocona','native'): optimization_flags+=' -O3 -funroll-loops'
     elif env['arch']=='powerpc': optimization_flags+=' -O2'
     env.Append(CXXFLAGS=optimization_flags)
     env.Append(LINKFLAGS=' -dead_strip')
