@@ -293,15 +293,7 @@ public:
     TV e = direction*(max-min);
     
     for (int i=0;i<d;i++) {
-      //T& l = e[i]>0?line_max:line_min; // this works, but looks fragile for portability given the below doesn't work in clang
-      //l+=e[i];
-      
-      //e[i]>0?line_max:line_min += e[i]; // this should give invalid lvalue. It doesn't. It also doesn't work.
-      
-      if (e[i]>0)
-        line_max += e[i];
-      else 
-        line_min += e[i];
+      (e[i]>0?line_max:line_min) += e[i]; // do not remove these parenthese, even if you think you know what you're doing.
     }
   }
 
