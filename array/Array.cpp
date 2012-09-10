@@ -32,5 +32,7 @@ ARRAY_CONVERSIONS(2,Vector<real,3>)
 ARRAY_CONVERSIONS(1,Vector<Vector<real,2>,3>)
 ARRAY_CONVERSIONS(2,Vector<unsigned char,3>)
 ARRAY_CONVERSIONS(2,Vector<unsigned char,4>)
+ARRAY_CONVERSIONS(2,Vector<float,4>)
+ARRAY_CONVERSIONS(2,Vector<double,4>)
 
 }
