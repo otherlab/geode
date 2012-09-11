@@ -20,6 +20,11 @@ static inline int wrap(const int i, const int n) {
   return r >= 0 ? r : r + n;
 }
 
+static inline int wrap(const int i, const int lower, const int upper) {
+  int r = i-lower % (upper-lower);
+  return r >= 0 ? r+lower : r+upper;
+}
+
 static inline float wrap(const float value, const float lower, const float upper) {
   float r = fmod(value-lower,upper-lower);
   return r<0?r+upper:r+lower;
