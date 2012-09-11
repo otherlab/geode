@@ -256,6 +256,12 @@ public:
     return *this->value;
   }
 
+  //WARNING: this will give a mutable reference to the contained prop; to keep sanity in the
+  //dependency graph, you will have to call signal
+  T& mutate() const {
+    return *this->value;
+  }
+
   PyObject* default_python() const {
     return to_python(default_);
   }

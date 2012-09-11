@@ -18,9 +18,11 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_enum.hpp>
 #include <string>
+namespace boost { template<class T> class shared_ptr;}
 namespace other {
 
 using std::string;
+using boost::shared_ptr;
 
 // Conversion for PyObject*
 static inline PyObject*
@@ -95,5 +97,11 @@ to_python(char value) {
 
 // Conversion to enums (see enum.h for the definition)
 template<class E> typename boost::enable_if<boost::is_enum<E>,PyObject*>::type to_python(E value) OTHER_EXPORT;
+
+
+//This is a dummy conversion for shared ptr, since we don't know how to convert shared ptr to python
+template<class T> static inline PyObject* to_python(const shared_ptr<T>& object) {
+  OTHER_NOT_IMPLEMENTED();
+}
 
 } // namespace other
