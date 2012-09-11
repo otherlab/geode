@@ -291,8 +291,10 @@ public:
   void project_points_onto_line(const TV& direction, T& line_min, T& line_max) const {
     line_min = line_max = dot(direction,min);
     TV e = direction*(max-min);
-    for (int i=0;i<d;i++)
-      e[i]>0?line_max:line_min += e[i];
+    
+    for (int i=0;i<d;i++) {
+      (e[i]>0?line_max:line_min) += e[i]; // do not remove these parenthese, even if you think you know what you're doing.
+    }
   }
 
   TV point_from_normalized_coordinates(const TV& weights) const {

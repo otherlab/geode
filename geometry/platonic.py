@@ -1,4 +1,4 @@
-"""geometry/Platonic.py"""
+'''Convenience functions for generating platonic solids'''
 
 from __future__ import (division,absolute_import)
 
