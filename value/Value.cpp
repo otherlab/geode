@@ -123,6 +123,11 @@ bool ValueBase::is_prop() const {
   return dynamic_cast<const PropBase*>(this)!=0;
 }
 
+// for backwards compatibility with previously un-named values
+const string& ValueBase::get_name() const { return name; }
+
+ValueBase& ValueBase::set_name(const string& s) { name = s; return *this; }
+
 // The following exist only for python purposes: they throw exceptions if the ValueBase isn't a PropBase.
 PropBase& ValueBase::prop() {
   if (PropBase* prop = dynamic_cast<PropBase*>(this))
@@ -142,7 +147,6 @@ ValueBase& ValueBase::set_allowed(PyObject* v)      { prop().set_allowed_python(
 ValueBase& ValueBase::set_min_py(PyObject* m)       { prop().set_min_python(m); return *this; }
 ValueBase& ValueBase::set_max_py(PyObject* m)       { prop().set_max_python(m); return *this; }
 ValueBase& ValueBase::set_step_py(PyObject* s)      { prop().set_step_python(s); return *this; }
-const string& ValueBase::get_name() const     { return prop().name; }
 const string& ValueBase::get_help() const     { return prop().help; }
 const string& ValueBase::get_category() const { return prop().category; }
 bool ValueBase::get_hidden() const            { return prop().hidden; }

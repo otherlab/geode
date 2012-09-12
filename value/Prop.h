@@ -33,7 +33,7 @@ class PropManager;
 class PropBase
 {
 protected:
-  PropBase(string const& name);
+  PropBase();
 private:
   PropBase(const PropBase&); // noncopyable
   void operator=(const PropBase&);
@@ -52,8 +52,12 @@ public:
   virtual void set_max_python(PyObject* v) = 0;
   virtual void set_step_python(PyObject* v) = 0;
 
-  const type_info& type() {
+  const type_info& type() const {
     return base().type();
+  }
+
+  const string& name() const {
+    return base().name;
   }
 
   template<class T> Prop<T>* cast() {
@@ -64,7 +68,6 @@ public:
     return 0;
   }
 
-  const string name;
   string help;
   bool hidden;
   bool required;
@@ -168,11 +171,13 @@ public:
   friend class PropManager;
   friend struct PropClamp<T,has_clamp<T>::value>;
   typedef PropClamp<T,has_clamp<T>::value> Clamp;
+  using Base::name;
 
 protected:
   Prop(string const& name, const T& value_)
-    : PropBase(name), default_(value_)
+    : PropBase(), default_(value_)
   {
+    this->set_name(name);
     this->set_value(value_);
   }
 

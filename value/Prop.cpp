@@ -15,9 +15,8 @@ using std::endl;
 using std::exception;
 using std::numeric_limits;
 
-PropBase::PropBase(string const& name)
-  : name(name)
-  , hidden(false)
+PropBase::PropBase()
+  : hidden(false)
   , required(false)
   , abbrev(0)
 {}
@@ -25,7 +24,7 @@ PropBase::PropBase(string const& name)
 PropBase::~PropBase() {}
 
 void PropBase::dump(int indent) const {
-  printf("%*sProp(\"%s\",%s)\n",2*indent,"",name.c_str(),value_str().c_str());
+  printf("%*sProp(\"%s\",%s)\n",2*indent,"",name().c_str(),value_str().c_str());
 }
 
 // Since PropBase doesn't by itself inherit from Object due to multiple inheritance woes,

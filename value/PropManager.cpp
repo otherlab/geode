@@ -22,21 +22,22 @@ using std::endl;
   }
 
   PropBase& PropManager::add(Ref<PropBase> prop) {
-    if (prop->name.find('-')!=string::npos)
-      throw ValueError(format("prop name '%s' contains a dash; use an underscore instead",prop->name));
+    const string& name = prop->name();
+    if (name.find('-')!=string::npos)
+      throw ValueError(format("prop name '%s' contains a dash; use an underscore instead",name));
     Props& props = instance().props_;
-    Props::iterator it = props.find(prop->name);
+    Props::iterator it = props.find(name);
     if (it == props.end()) {
-      props.insert(make_pair(prop->name,prop));
-      order().push_back(prop->name);
+      props.insert(make_pair(name,prop));
+      order().push_back(name);
       return *prop;
     }
     const type_info &old_type = it->second->type(),
                     &new_type = prop->type();
     if (new_type!=old_type && strcmp(new_type.name(),old_type.name()) != 0)
-      throw TypeError(format("Property '%s' accessed with type %s, but has type %s",prop->name,new_type.name(),old_type.name()));
+      throw TypeError(format("Property '%s' accessed with type %s, but has type %s",name,new_type.name(),old_type.name()));
     if (!prop->same_default(*it->second))
-      throw ValueError(format("Trying to add property '%s' with default %s, but old default was %s",prop->name,prop->value_str(true),it->second->value_str(true)));
+      throw ValueError(format("Trying to add property '%s' with default %s, but old default was %s",name,prop->value_str(true),it->second->value_str(true)));
     return *it->second;
   }
 

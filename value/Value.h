@@ -32,6 +32,9 @@ private:
   template<class T> friend class Value;
   mutable bool dirty_; // are we up to date?
   mutable ExceptionValue error; // is the value an exception?
+public:
+  string name;
+private:
 
   // A link between an Action and a Value
   struct Link
@@ -72,12 +75,16 @@ public:
       return static_cast<const Value<T>*>(this);
     return 0;
   }
-  
+
   void signal() const;
 
   virtual void dump(int indent) const = 0;
   virtual std::vector<Ptr<const ValueBase> > get_dependencies() const = 0;
   Ref<> dump_dependencies() const;
+
+  const string& get_name() const;
+  ValueBase& set_name(const string& n);
+
 private:
   void pull() const;
 
@@ -97,7 +104,6 @@ private:
   ValueBase& set_min_py(PyObject* m);
   ValueBase& set_max_py(PyObject* m);
   ValueBase& set_step_py(PyObject* s);
-  const string& get_name() const;
   const string& get_help() const;
   const string& get_category() const;
   bool get_hidden() const;
@@ -152,7 +158,7 @@ public:
   const type_info& type() const{
     return typeid(T);
   }
-  
+
 };
 
 template<class T> Value<T>::Value() {}
