@@ -33,20 +33,6 @@ namespace other {
     return box;
   }
   
-  Tuple<Ref<SegmentMesh>,Array<Vector<real, 2> > > to_segment_mesh(Polygons const &polys) {
-    Array<Vector<real,2>> points;
-    Array<Vector<int,2>> segments;
-    for (auto const &p : polys) {
-      int offset = points.size();
-      for (int j = (int)p.size()-1, i = 0; i < (int)p.size(); j = i++) {
-        points.append(p[i]);
-        segments.append(vec(offset + j, offset + i));
-      }
-    }
-
-    return tuple(new_<SegmentMesh>(segments), points);
-  }
-
   Polygons polygons_from_index_list(Array<Vector<real,2> > const &positions, NestedArray<const int> indices) {
     Polygons polys;
     for (int i = 0; i < indices.size(); ++i) {
@@ -539,5 +525,40 @@ namespace other {
     
     return Tuple<Polygon, std::vector<int> >(new_opoly, new_corr);
   }
+  
+  /*
+  Tuple<Ref<SegmentMesh>,Array<Vector<real, 2> > > to_segment_mesh(Polygons const &polys) {
+    Array<Vector<real,2>> points;
+    Array<Vector<int,2>> segments;
+    for (auto const &p : polys) {
+      int offset = points.size();
+      for (int j = (int)p.size()-1, i = 0; i < (int)p.size(); j = i++) {
+        points.append(p[i]);
+        segments.append(vec(offset + j, offset + i));
+      }
+    }
+
+    return tuple(new_<SegmentMesh>(segments), points);
+  }
+  */
+
+  template<int d>
+  Tuple<Ref<SegmentMesh>,Array<Vector<real, d> > > to_segment_mesh(const std::vector<std::vector<Vector<real,d> > >& polys, bool open) {
+    NestedArray<Vector<real, d> > nested = NestedArray<Vector<real, d>>::copy(polys);
+    Array<Vector<real, d>> pts = nested.flat;
+    Array<Vector<int,2>> segments(pts.size(),false);
+    for (int i=0;i<pts.size();i++)
+      segments[i] = vec(i,i+1);
+      
+    if (!open)
+      for (int i=0;i<nested.size();i++)
+        segments[nested.offsets[i+1]-1][1] = nested.offsets[i];
+      
+    Ref<SegmentMesh> sm = new_<SegmentMesh>(segments);
+    return tuple(sm, pts);
+  }
+
+  template Tuple<Ref<SegmentMesh>,Array<Vector<real,2> > > to_segment_mesh(const std::vector<std::vector<Vector<real,2> > >&, bool);
+  template Tuple<Ref<SegmentMesh>,Array<Vector<real,3> > > to_segment_mesh(const std::vector<std::vector<Vector<real,3> > >&, bool);
   
 }
