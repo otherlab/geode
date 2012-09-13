@@ -39,8 +39,6 @@ namespace other {
   
   Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.) OTHER_EXPORT;
   
-  //Tuple<Ref<SegmentMesh>,Array<Vector<real, 2> > > to_segment_mesh(Polygons const &) OTHER_EXPORT;
-
   template<int d>
   Tuple<Ref<SegmentMesh>, Array<Vector<real,d>>> to_segment_mesh(std::vector<std::vector<Vector<real,d>>> const &polys, bool open = false) OTHER_EXPORT;
 
