@@ -37,9 +37,9 @@ def try_autocomplete():
       return_options("", include_files=True)
     else:
       return_options("", include_files=False)
-      
+
   return_options(" ".join(["--"+fix_name(n) for n in PropManager.items().keys()]), include_files=True)
-          
+
 trailing_pattern = re.compile(r'0000.*')
 
 def format_number(v):
@@ -83,12 +83,12 @@ def format_value(prop):
     return format_commas(v.reals())
   else:
     raise NotImplementedError("Don't know how to convert value %r of type %s to a command line string"%(v,t))
-          
+
 def parse(description,positional=[]):
   parser = argparse.ArgumentParser(description = description)
 
   try_autocomplete()
-  
+
   props_set = set()
   positional = [(p.name if isinstance(p,Value) else p) for p in positional]
 
@@ -126,7 +126,12 @@ def parse(description,positional=[]):
     return fromstring(s,sep=',')
 
   def converter(prop):
-    v = prop()
+    try:
+      v = prop()
+    except Exception,e:
+      def fail(x):
+        raise e
+      return fail
     t = type(v)
     if t==bool:
       return convert_bool
@@ -196,15 +201,15 @@ def command(drop_defaults=True):
   args = [sys.argv[0]]
   for name in PropManager.order():
     prop = PropManager.get(name)
-    if not (drop_defaults and all(prop()==prop.default)) and not prop.hidden:
-      try:
+    try:
+      if not prop.hidden and not (drop_defaults and all(prop()==prop.default)):
         v = format_value(prop)
         if v.startswith('-'):
           args.append('--%s=%s'%(fix_name(name),v))
         else:
           args.extend(['--'+fix_name(name),v])
-      except NotImplementedError:
-        print 'Warning: Could not convert property %s, command line may be incomplete.' % name.replace('_','-')
+    except NotImplementedError:
+      print 'Warning: Could not convert property %s, command line may be incomplete.' % name.replace('_','-')
 
   def escape(s):
     if ' ' in s or s=='':
