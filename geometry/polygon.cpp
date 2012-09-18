@@ -530,14 +530,24 @@ namespace other {
   Tuple<Ref<SegmentMesh>,Array<Vector<real, d> > > to_segment_mesh(const std::vector<std::vector<Vector<real,d> > >& polys, bool open) {
     NestedArray<Vector<real, d> > nested = NestedArray<Vector<real, d>>::copy(polys);
     Array<Vector<real, d>> pts = nested.flat;
-    Array<Vector<int,2>> segments(pts.size(),false);
-    for (int i=0;i<pts.size();i++)
-      segments[i] = vec(i,i+1);
-      
-    if (!open)
+    Array<Vector<int,2>> segments;
+    if (open) {
+      segments.resize(pts.size() - polys.size(),false);
+      int s = 0;
+      for (int p = 0; p < polys.size(); ++p) {
+        for (int i = 0; i < nested.size(p)-1; ++i) {
+          segments[s++] = vec(i, i+1) + nested.offsets[p];
+        }
+      }      
+    } else {
+      segments.resize(pts.size(),false);
+      for (int i=0;i<pts.size();i++)
+        segments[i] = vec(i,i+1);
+        
       for (int i=0;i<nested.size();i++)
         segments[nested.offsets[i+1]-1][1] = nested.offsets[i];
-      
+    }
+          
     Ref<SegmentMesh> sm = new_<SegmentMesh>(segments);
     return tuple(sm, pts);
   }
