@@ -11,7 +11,6 @@
 #include <other/core/python/Object.h>
 #include <other/core/python/Ptr.h>
 #include <other/core/python/Ref.h>
-#include <other/core/structure/Hashtable.h>
 #include <other/core/vector/Vector.h>
 namespace other {
 
@@ -24,7 +23,7 @@ public:
 
   Ref<const TriangleMesh> coarse_mesh;
   Ref<TriangleMesh> fine_mesh;
-  Hashtable<int> corners;
+  Array<const int> corners; // Change only before subdivision functions are called
 protected:
   mutable Ptr<SparseMatrix> loop_matrix_;
 

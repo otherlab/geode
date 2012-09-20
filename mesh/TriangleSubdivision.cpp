@@ -3,19 +3,21 @@
 //#####################################################################
 #include <other/core/mesh/TriangleSubdivision.h>
 #include <other/core/mesh/SegmentMesh.h>
-#include <other/core/structure/Hashtable.h>
-#include <other/core/python/Class.h>
 #include <other/core/array/Array2d.h>
 #include <other/core/array/NdArray.h>
 #include <other/core/array/view.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/math/constants.h>
 #include <other/core/math/cube.h>
+#include <other/core/python/Class.h>
+#include <other/core/structure/Hashtable.h>
 #include <other/core/vector/SparseMatrix.h>
+#include <tr1/unordered_set>
 namespace other{
 
 typedef real T;
 OTHER_DEFINE_TYPE(TriangleSubdivision)
+using std::tr1::unordered_set;
 
 static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh) {
   Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();
@@ -132,9 +134,10 @@ Ref<SparseMatrix> TriangleSubdivision::loop_matrix() const {
   RawArray<const Vector<int,2> > segments = coarse_mesh->segment_mesh()->elements;
   NestedArray<const int> neighbors = coarse_mesh->sorted_neighbors();
   NestedArray<const int> boundary_neighbors = coarse_mesh->boundary_mesh()->neighbors();
+  unordered_set<int> corners_set(corners.begin(),corners.end());
   // Fill in node weights
   for (int i=0;i<offset;i++){
-    if (!neighbors.valid(i) || !neighbors.size(i) || corners.contains(i) || (boundary_neighbors.valid(i) && boundary_neighbors.size(i) && boundary_neighbors.size(i)!=2))
+    if (!neighbors.valid(i) || !neighbors.size(i) || corners_set.count(i) || (boundary_neighbors.valid(i) && boundary_neighbors.size(i) && boundary_neighbors.size(i)!=2))
       A.set(vec(i,i),1);
     else if (boundary_neighbors.valid(i) && boundary_neighbors.size(i)==2) { // Regular boundary node
       A.set(vec(i,i),(T).75);
@@ -212,6 +215,7 @@ void wrap_triangle_subdivision() {
     .OTHER_INIT(TriangleMesh&)
     .OTHER_FIELD(coarse_mesh)
     .OTHER_FIELD(fine_mesh)
+    .OTHER_FIELD(corners)
     .OTHER_METHOD_2("linear_subdivide",linear_subdivide_python)
     .OTHER_METHOD_2("loop_subdivide",loop_subdivide_python)
     ;
