@@ -173,6 +173,8 @@ void wrap_value_base() {
   Class<Self>("Value")
     .OTHER_CALL(PyObject*)
     .OTHER_METHOD(dirty)
+    .OTHER_METHOD(set_name)
+    .OTHER_METHOD(get_name)
     .OTHER_METHOD(dump)
     .OTHER_METHOD(get_dependencies)
     .OTHER_METHOD(signal)
