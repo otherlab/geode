@@ -181,7 +181,6 @@ void wrap_value_base() {
     .OTHER_METHOD(is_prop)
     // The following work only if the object is a Prop
     .OTHER_METHOD(set)
-    .property("name",&Self::get_name)
     .property("help",&Self::get_help)
     .property("hidden",&Self::get_hidden)
     .property("required",&Self::get_required)
