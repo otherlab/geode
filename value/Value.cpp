@@ -11,7 +11,7 @@
 
 #include <other/core/python/stl.h>
 
-namespace other{
+namespace other {
 
 using std::cout;
 using std::cerr;
@@ -172,9 +172,9 @@ void wrap_value_base() {
   typedef ValueBase Self;
   Class<Self>("Value")
     .OTHER_CALL(PyObject*)
-    .OTHER_METHOD(dirty)
+    .OTHER_FIELD(name)
     .OTHER_METHOD(set_name)
-    .OTHER_METHOD(get_name)
+    .OTHER_METHOD(dirty)
     .OTHER_METHOD(dump)
     .OTHER_METHOD(get_dependencies)
     .OTHER_METHOD(signal)

@@ -16,7 +16,7 @@ extern void wrap_value_base();
 #include <other/core/python/Ptr.h>
 #include <vector>
 
-namespace other{
+namespace other {
 
 using std::type_info;
 using boost::is_const;
@@ -39,10 +39,10 @@ private:
   // A link between an Action and a Value
   struct Link
   {
-      Link **value_prev, *value_next; // pointers for the value's linked list
-      Link **action_prev, *action_next; // pointers for the action's linked list
-      const ValueBase* value; // used only by dump()
-      Action* action;
+    Link **value_prev, *value_next; // pointers for the value's linked list
+    Link **action_prev, *action_next; // pointers for the action's linked list
+    const ValueBase* value; // used only by dump()
+    Action* action;
   };
   mutable Link* actions; // linked list of links to actions which depend on us
   static Link* pending; // linked list of pending signals
@@ -155,7 +155,7 @@ public:
     return to_python(*value);
   }
 
-  const type_info& type() const{
+  const type_info& type() const {
     return typeid(T);
   }
 
