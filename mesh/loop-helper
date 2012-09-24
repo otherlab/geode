@@ -11,14 +11,14 @@ lam = .375+.25*cos(2*pi/n)
 alpha[n] = 1-lam*(4+lam*(5*lam-8))/(2*(1-lam))+sqr(lam)
 alpha[3] = .4375
 alpha[4] = .5
-alpha[5] = .54546609462891
+alpha[5] = (81-5*sqrt(5))/128
 
 beta = zeros(n.max()+1)
 lam = .375+.25*cos((2*pi)/n)
 beta[n] = lam*(4+lam*(5*lam-8))/(2*(1-lam))
 beta[3] = .625
-beta[4] = .640625
-beta[5] = .65906781074217
+beta[4] = 41/64
+beta[5] = (31+5*sqrt(5))/64
 
 weights = zeros((n.max()+1,)*2)
 m = n.reshape(-1,1)
@@ -29,7 +29,7 @@ lam = .375+.25*cos(2*pi/m)
 weights[m,j] = 2*cube(lam)/(m*(1-lam))*(1+u(m,j))*sqr(1/lam-1.5+u(m,j))
 weights[3,j] = 1/6*(1.25+u(3,j))
 weights[4,j] = .5*sqr(.5+.375*u(4,j))
-weights[5,j] = .16362712429686842801278667714785*sqr(.55278640450004206071816526625374+u(5,j))
+weights[5,j] = (3+sqrt(5))/32*sqr((5-sqrt(5))/5+u(5,j))
 weights[m,j] *= j<m
 
 def init(a):
