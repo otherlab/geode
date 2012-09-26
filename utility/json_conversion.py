@@ -33,7 +33,7 @@ from_jsons['frame2'] = lambda d: Frames(d['v']['t'], Rotation.from_matrix(array(
 from_jsons['frame3'] = lambda d: Frames(d['v']['t'], Rotation.from_matrix(array(d['v']['r']).reshape(3, 3)))
 
 from_jsons['box2'] = from_jsons['box3'] = lambda d: Box(d['v']['min'], d['v']['max'])
-
+from_jsons['TriangleMesh'] = from_jsons['SegmentMesh'] = lambda d: d['v']
 
 to_jsons[int]   = lambda v: { "t": "int",    "v": v }
 to_jsons[real]  = lambda v: { "t": "real",   "v": v }
@@ -66,6 +66,17 @@ to_jsons[Frames] = lambda v: { # send matrix over the wire or make javascript co
   }
 }
 
+to_jsons[TriangleMesh] = lambda v: {
+	"t":"TriangleMesh",
+	"v":from_ndarray(v.elements,int)
+}
+to_jsons[SegmentMesh] = lambda v: {
+	"t":"SegmentMesh",
+	"v":from_ndarray(v.elements,int)
+}
+
+def dictionaried(v):
+    return to_jsons[type(v)](v)
 
 def to_json(v):
   fn = to_jsons.get(type(v), None)
