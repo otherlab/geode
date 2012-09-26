@@ -32,10 +32,13 @@ Optional dependencies:
 * [openexr](http://www.openexr.com): High dynamic range floating point image format (BSD license)
 * [libpng](http://www.libpng.org): Lossless image format (Custom noncopyleft license)
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
-* [sage](http://www.sagemath.org): Open source symbolic mathematics (GPLv2)
 
-Note that `sage` is used only by the `exact/sage/simplicity` code generator.  Since `sage` is GPL, the code
-generation script is also GPL, but the code it generates is BSD like the rest of core.
+In addition, the exact geometric predicates in `other/core/exact/predicates.*` were generated using
+the `simplicity` code generator:
+
+* [other/simplicity](https://github.com/otherlab/simplicity): Simulation of simplicity analysis and code generation (GPLv2)
+
+Note that this code generator is itself GPL, but the code in generates is not; `other/core` is pure BSD.
 
 `core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 
