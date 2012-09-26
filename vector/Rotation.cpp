@@ -67,6 +67,15 @@ template<class TV> static Array<Rotation<TV> > rotation_array_test(Array<const R
     return rr;
 }
 
+static PyObject* rotation_from_matrix(Array<const real,2> A) {
+  if (A.m==2 && A.n==2)
+    return to_python(Rotation<Vector<real,2>>(Matrix<real,2>(A)));
+  else if (A.m==3 && A.n==3)
+    return to_python(Rotation<Vector<real,3>>(Matrix<real,3>(A)));
+  else
+    throw TypeError(format("expected 2x2 or 3x3 matrix, got %dx%d",A.m,A.n));
+}
+
 }
 using namespace other;
 
@@ -77,4 +86,5 @@ void wrap_rotation() {
     function("rotation_test_3d",rotation_test<Vector<real,3> >);
     function("rotation_array_test_2d",rotation_array_test<Vector<real,2> >);
     function("rotation_array_test_3d",rotation_array_test<Vector<real,3> >);
+    OTHER_FUNCTION(rotation_from_matrix);
 }

@@ -187,6 +187,8 @@ def from_rotated_vector(initial,final):
   else:
     raise NotImplemented()
 
+from_matrix = rotation_from_matrix
+
 def identity(d):
   if d==2:
     return from_angle(0)
