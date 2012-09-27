@@ -405,7 +405,7 @@ def files(dir,skip):
 def library(env,name,libs=(),skip=(),extra=()):
   cpps,resources = [],[]
   for f in list(files(Dir('.').srcnode().abspath,skip))+list(extra):
-    if f.endswith('.cpp'): cpps.append(f)
+    if f.endswith('.cpp') or f.endswith('.cc'): cpps.append(f)
     elif f.endswith('.xpm') or f.endswith('.glade'): resources.append(f)
   if not cpps: return None
   if env.get('use_qt',0): # Qt gets confused if we only set options on the builder
