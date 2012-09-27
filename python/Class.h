@@ -94,6 +94,15 @@ OTHER_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObject* d
     free,                                     /* tp_free */\
   };
 
+template<class T> static PyObject* str_wrapper(PyObject* self) {
+  try {
+    return to_python(str(*(T*)(self+1)));
+  } catch (const exception& error) {
+    set_python_exception(error);
+    return 0;
+  }
+}
+
 class ClassBase {
 protected:
   PyTypeObject* const type;
@@ -139,6 +148,11 @@ public:
   template<class A,class B,class R> Class&
   property(const char* name, A (T::*get)() const, R (T::*set)(B)) {
     add_descriptor(type,name,wrap_property(name,get,set));
+    return *this;
+  }
+
+  Class& str() {
+    type->tp_str = str_wrapper<T>;
     return *this;
   }
 
@@ -199,6 +213,8 @@ const_field(S T::* field) {
 
 #define OTHER_OVERLOADED_METHOD(type,method_) \
   OTHER_OVERLOADED_METHOD_2(type,#method_,method_)
+
+#define OTHER_STR() str()
 
 #define OTHER_REPR() repr()
 
