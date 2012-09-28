@@ -35,7 +35,9 @@ void wrap_utility() {
 
   function("log_push_scope",Log::push_scope);
   function("log_pop_scope",Log::pop_scope);
-  function("log_print",log_print);
-  function("log_flush",log_flush);
-  function("log_error",log_error);
+  OTHER_FUNCTION(log_print)
+  OTHER_FUNCTION(log_flush)
+  OTHER_FUNCTION(log_error)
+
+  OTHER_WRAP(base64)
 }
