@@ -91,9 +91,11 @@ const char* FromPython<const char*>::convert(PyObject* object) {
 }
 
 string FromPython<string>::convert(PyObject* object) {
-  const char* string=PyString_AsString(object);
-  if (!string) throw_python_error();
-  return string;
+  char* buffer;
+  Py_ssize_t size;
+  if (PyString_AsStringAndSize(object,&buffer,&size))
+    throw_python_error();
+  return string(buffer,buffer+size);
 }
 
 char FromPython<char>::convert(PyObject* object) {
