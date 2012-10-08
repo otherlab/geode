@@ -10,6 +10,8 @@
 #include <other/core/array/NestedArray.h>
 #include <other/core/python/Object.h>
 #include <other/core/vector/Vector.h>
+#include <other/core/structure/Hashtable.h>
+
 namespace other {
 
 class SparseMatrix:public Object

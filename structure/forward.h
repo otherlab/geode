@@ -12,7 +12,7 @@ namespace mpl = boost::mpl;
 struct unit{};
 
 template<class... Ts> class Tuple;
-template<class TK,class T=unit> class Hashtable;
+
 class UnionFind;
 
 class OperationHash;
