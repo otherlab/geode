@@ -21,4 +21,5 @@ OTHER_PYTHON_MODULE(other_core) {
   OTHER_WRAP(random)
   OTHER_WRAP(value)
   OTHER_WRAP(force)
+  OTHER_WRAP(openmesh)
 }
