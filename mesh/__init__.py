@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
+from numpy import *
 from other.core import array,vector,real
 import libother_core
 from libother_core import *
-from numpy import *
 import struct
 
 def linear_subdivide(mesh,X):
