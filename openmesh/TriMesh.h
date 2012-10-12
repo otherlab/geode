@@ -405,6 +405,11 @@ public:
   std::tr1::unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
                                                                           std::vector<VertexHandle> const &sinks) const;
 
+  // compute the approximate geodesic distance from one point to a set of points, and store
+  // all values computed on the way (can be used to re-trace the approximate shortest paths)
+  std::tr1::unordered_map<VertexHandle, double, Hasher> geodesic_distance(std::vector<VertexHandle> const &sources,
+                                                                          std::vector<VertexHandle> const &sinks) const;
+
   // compute and return the approximate shortest path from one point to another
   std::vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
 

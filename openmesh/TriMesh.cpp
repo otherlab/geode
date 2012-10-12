@@ -601,17 +601,24 @@ std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance
     return geodesic_distance(source, std::vector<VertexHandle>(1, sink));
   }
 
+std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance(VertexHandle source,
+                                                                                 std::vector<VertexHandle> const &sinks) const {
+  return geodesic_distance(std::vector<VertexHandle>(1,source), sinks);
+  }
+
   // compute the approximate geodesic distance from one point to a set of points, and store
   // all values computed on the way (can be used to re-trace the approximate shortest paths)
-  std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance(VertexHandle source,
+std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance(std::vector<VertexHandle> const &sources,
                                                                                    std::vector<VertexHandle> const &sinks) const {
 
     // initialize distance map and unassigned set
     std::tr1::unordered_map<VertexHandle, double, Hasher> dist;
-    dist[source] = 0.;
+    for(auto& vh : sources)
+      dist[vh] = 0.;
 
     std::tr1::unordered_set<VertexHandle, Hasher> unassigned(sinks.begin(), sinks.end());
-    unassigned.erase(source);
+    for(auto& vh : sources)
+      unassigned.erase(vh);
 
     //std::cout << "computing geodesic distance from " << source << " to " << sinks.size() << " sinks, " << unassigned.size() << " distances unassigned." << std::endl;
 
@@ -619,7 +626,8 @@ std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance
       return dist;
 
     std::priority_queue<Prioritize<VertexHandle>, std::vector<Prioritize<VertexHandle> >, std::greater<Prioritize<VertexHandle> > > queue;
-    queue.push(prioritize(source, 0.));
+    for(auto& vh : sources)
+      queue.push(prioritize(vh, 0.));
 
     while (!queue.empty()) {
 
