@@ -73,7 +73,7 @@ class Frames(ndarray):
 
     def matrix(self):
         d = self.d
-        m = empty(self.shape+(d+1,d+1)).view(Matrix)
+        m = zeros(self.shape+(d+1,d+1)).view(Matrix)
         mv = m.reshape(-1,d+1,d+1)
         mv[:,-1,-1] = 1
         mv[:,:d,-1] = self.t
