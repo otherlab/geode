@@ -252,6 +252,7 @@ public:
 
   // save to file/stream
   void write(string const &filename) const;
+  void write_with_normals(string const &filename) const;
   void write(std::ostream &os, string const &ext) const;
 
   // add a property
@@ -455,6 +456,7 @@ public:
   Array<Vector<int,3> > elements() const;
   Array<Vector<real,3> > X_python() const;
   void set_X_python(RawArray<const Vector<real,3>> new_X);
+  void set_vertex_normals(RawArray<const Vector<real,3>> normals);
 
   // Warning: reference goes invalid if the mesh is changed
   RawArray<Vector<real,3> > X();

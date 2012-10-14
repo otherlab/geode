@@ -118,24 +118,33 @@ namespace other {
   };
   }
 
-  static OpenMesh::IO::Options write_options(const TriMesh& mesh, const string& ext) {
+  static OpenMesh::IO::Options write_options(const TriMesh& mesh, const string& ext, bool normals=false) {
     OpenMesh::IO::Options options = OpenMesh::IO::Options::Default;
     if (ext==".ply" || ext==".stl")
       options = options | OpenMesh::IO::Options::Binary;
     if (mesh.has_vertex_colors() && mesh.n_vertices())
       options.set(OpenMesh::IO::Options::VertexColor);
+    if (normals && mesh.has_vertex_normals())
+      options.set(OpenMesh::IO::Options::VertexNormal);
     if (ext!=".stl" && mesh.has_face_colors() && mesh.n_faces())
       options.set(OpenMesh::IO::Options::FaceColor);
     return options;
   }
 
-  // save to file/stream
-  void TriMesh::write(string const &filename) const {
+  static void write_helper(const TriMesh& mesh, const string& filename, bool normals) {
     //OMSilencer silencer;
     //Disabler disabler;
     string ext = boost::algorithm::to_lower_copy(boost::filesystem::extension(filename));
-    if (!OpenMesh::IO::write_mesh(*this, filename, write_options(*this,ext)))
+    if (!OpenMesh::IO::write_mesh(mesh, filename, write_options(mesh,ext,normals)))
       throw IOError(format("TriMesh::write: failed to write mesh to file '%s'", filename));
+  }
+
+  void TriMesh::write(string const &filename) const {
+    write_helper(*this,filename,false);
+  }
+
+  void TriMesh::write_with_normals(string const &filename) const {
+    write_helper(*this,filename,true);
   }
 
   void TriMesh::write(std::ostream &os, string const &extension) const {
@@ -1063,6 +1072,13 @@ std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance
     X() = new_X;
   }
 
+  void TriMesh::set_vertex_normals(RawArray<const Vector<real,3>> normals) {
+    request_vertex_normals();
+    OTHER_ASSERT(normals.size()==n_vertices());
+    for (auto v : vertex_handles())
+      set_normal(v,normals[v.idx()]);
+  }
+
   void TriMesh::add_box(TV min, TV max) {
     std::vector<VertexHandle> vh;
     vh.push_back(add_vertex(min));
@@ -1464,6 +1480,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(n_halfedges)
     .OTHER_OVERLOADED_METHOD(v_Method_str, read)
     .OTHER_OVERLOADED_METHOD(v_CMethod_str, write)
+    .OTHER_METHOD(write_with_normals)
     .OTHER_OVERLOADED_METHOD(box_Method, bounding_box)
     .OTHER_METHOD(mean_edge_length)
     .OTHER_OVERLOADED_METHOD_2(Vvh3_Method_fh, "face_vertex_handles", vertex_handles)
@@ -1478,6 +1495,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(invert)
     .OTHER_METHOD_2("X",X_python)
     .OTHER_METHOD_2("set_X",set_X_python)
+    .OTHER_METHOD(set_vertex_normals)
     .OTHER_METHOD(component_meshes)
     .OTHER_METHOD(request_vertex_normals)
     .OTHER_METHOD(request_face_normals)
