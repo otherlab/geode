@@ -16,6 +16,7 @@ template<class TV> struct is_packed_pod<Frame<TV> >:public is_packed_pod<typenam
 
 template<class TV> PyObject* to_python(const Frame<TV>& q) OTHER_EXPORT;
 template<class TV> struct FromPython<Frame<TV> >{OTHER_EXPORT static Frame<TV> convert(PyObject* object);};
+template<class TV> bool frames_check(PyObject* object) OTHER_EXPORT;
 
 template<class TV>
 class Frame

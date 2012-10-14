@@ -26,6 +26,7 @@ template<class TV> struct is_packed_pod<Rotation<TV> >:public mpl::and_<mpl::boo
 
 template<class TV> PyObject* to_python(const Rotation<TV>& q) OTHER_EXPORT;
 template<class TV> struct FromPython<Rotation<TV> >{OTHER_EXPORT static Rotation<TV> convert(PyObject* object);};
+template<class TV> bool rotations_check(PyObject* object) OTHER_EXPORT;
 
 //#####################################################################
 // 1D

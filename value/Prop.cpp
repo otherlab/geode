@@ -2,10 +2,13 @@
 #include <other/core/value/Listen.h>
 #include <other/core/array/NdArray.h>
 #include <other/core/python/Class.h>
+#include <other/core/python/numpy.h>
 #include <other/core/python/Ptr.h>
 #include <other/core/structure/Tuple.h>
 #include <other/core/utility/const_cast.h>
 #include <other/core/utility/format.h>
+#include <other/core/vector/Frame.h>
+#include <other/core/vector/Rotation.h>
 #include <boost/bind.hpp>
 #include <iostream>
 namespace other{
@@ -14,6 +17,10 @@ using std::cout;
 using std::endl;
 using std::exception;
 using std::numeric_limits;
+typedef real T;
+typedef Vector<T,2> TV2;
+typedef Vector<T,3> TV3;
+typedef Vector<T,4> TV4;
 
 PropBase::PropBase()
   : hidden(false)
@@ -30,7 +37,7 @@ void PropBase::dump(int indent) const {
 // Since PropBase doesn't by itself inherit from Object due to multiple inheritance woes,
 // we need a special wrapper class to expose Prop<T> to python.
 
-Ref<PropBase> make_prop(string const& n, PyObject* value) {
+Ref<PropBase> make_prop(const string& n, PyObject* value) {
   // If the value has known simple type, make the corresponding property
   if (PyBool_Check(value))
     return new_<Prop<bool> >(n,from_python<bool>(value));
@@ -41,13 +48,23 @@ Ref<PropBase> make_prop(string const& n, PyObject* value) {
   if (PyString_Check(value))
     return new_<Prop<string> >(n,from_python<string>(value));
   if (PySequence_Check(value)) {
+    if (PyArray_Check(value)) {
+      if (rotations_check<TV2>(value))
+        return new_<Prop<Rotation<TV2>>>(n,from_python<Rotation<TV2>>(value));
+      if (rotations_check<TV3>(value))
+        return new_<Prop<Rotation<TV3>>>(n,from_python<Rotation<TV3>>(value));
+      if (frames_check<TV2>(value))
+        return new_<Prop<Frame<TV2>>>(n,from_python<Frame<TV2>>(value));
+      if (frames_check<TV3>(value))
+        return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
+    }
     NdArray<const real> a = from_python<NdArray<const real> >(value);
     if (a.shape.size()==1 && a.shape[0]==2)
-      return new_<Prop<Vector<real,2> > >(n,vec(a[0],a[1]));
+      return new_<Prop<TV2>>(n,vec(a[0],a[1]));
     if (a.shape.size()==1 && a.shape[0]==3)
-      return new_<Prop<Vector<real,3> > >(n,vec(a[0],a[1],a[2]));
+      return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
     if (a.shape.size()==1 && a.shape[0]==4)
-      return new_<Prop<Vector<real,4> > >(n,vec(a[0],a[1],a[2],a[3]));
+      return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
     throw TypeError(format("don't know how to make a vector property of shape %s",str(a.shape)));
   }
   if (value == Py_None) {
@@ -126,9 +143,9 @@ template class Prop<bool>;
 template class Prop<int>;
 template class Prop<double>;
 template class Prop<string>;
-template class Prop<Vector<real,2>>;
-template class Prop<Vector<real,3>>;
-template class Prop<Vector<real,4>>;
+template class Prop<TV2>;
+template class Prop<TV3>;
+template class Prop<TV4>;
 
 }
 using namespace other;
