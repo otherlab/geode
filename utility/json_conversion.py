@@ -17,23 +17,24 @@ def from_array(v, typ = float):
 to_json_fn = {}
 from_json_fn = {}
 
-from_json_fn['int']    = lambda d: int(d['v'])
-from_json_fn['real']   = lambda d: real(d['v'])
-from_json_fn['float']  = lambda d: float(d['v'])
-from_json_fn['string'] = lambda d: str(d['v'])
-from_json_fn['bool']   = lambda d: bool(d['v'])
+from_json_fn['int']    = lambda v: int(v)
+from_json_fn['real']   = lambda v: real(v)
+from_json_fn['float']  = lambda v: float(v)
+from_json_fn['string'] = lambda v: str(v)
+from_json_fn['bool']   = lambda v: bool(v)
 
-from_json_fn['vec2'] = from_json_fn['vec3'] = from_json_fn['vec4'] = lambda d: array(d['v'])
+from_json_fn['vec2'] = from_json_fn['vec3'] = from_json_fn['vec4'] = lambda v: array(v)
 
-from_json_fn['mat22'] = lambda d: Matrix(array(d['v']).reshape(2, 2))
-from_json_fn['mat33'] = lambda d: Matrix(array(d['v']).reshape(3, 3))
-from_json_fn['mat44'] = lambda d: Matrix(array(d['v']).reshape(4, 4))
+from_json_fn['mat22'] = lambda v: Matrix(array(v).reshape(2, 2))
+from_json_fn['mat33'] = lambda v: Matrix(array(v).reshape(3, 3))
+from_json_fn['mat44'] = lambda v: Matrix(array(v).reshape(4, 4))
 
-from_json_fn['frame2'] = lambda d: Frames(d['v']['t'], Rotation.from_matrix(array(d['v']['r']).reshape(2, 2)))
-from_json_fn['frame3'] = lambda d: Frames(d['v']['t'], Rotation.from_matrix(array(d['v']['r']).reshape(3, 3)))
+from_json_fn['frame2'] = lambda v: Frames(v['t'], Rotation.from_matrix(array(v['r']).reshape(2, 2)))
+from_json_fn['frame3'] = lambda v: Frames(v['t'], Rotation.from_matrix(array(v['r']).reshape(3, 3)))
 
-from_json_fn['box2'] = from_json_fn['box3'] = lambda d: Box(d['v']['min'], d['v']['max'])
-from_json_fn['TriangleMesh'] = from_json_fn['SegmentMesh'] = lambda d: d['v']
+from_json_fn['box2'] = from_json_fn['box3'] = lambda v: Box(v['min'], v['max'])
+from_json_fn['TriangleMesh'] = from_json_fn['SegmentMesh'] = lambda v: v
+
 
 to_json_fn[int]   = lambda v: { "t": "int",    "v": v }
 to_json_fn[real]  = lambda v: { "t": "real",   "v": v }
@@ -42,7 +43,7 @@ to_json_fn[str]   = lambda v: { "t": "string", "v": v }
 to_json_fn[bool]  = lambda v: { "t": "bool",   "v": v }
 
 to_json_fn[Box2d] = to_json_fn[Box3d] = lambda v: {
-  "t": ('box%s')%len(v.min),
+  "t": ('box%s') % len(v.min),
   "v": {
     "min": from_array(v.min),
     "max": from_array(v.max)
@@ -75,6 +76,7 @@ to_json_fn[SegmentMesh] = lambda v: {
 	"v": from_ndarray(v.elements, int)
 }
 
+
 # def dictionaried(v):
 #   return to_json_fn[type(v)](v)
 
@@ -87,7 +89,7 @@ def to_json_string(v):
 
 def from_json(d):
   fn = from_json_fn.get(d['t'])
-  return fn(d) if callable(fn) else None
+  return fn(d['v']) if callable(fn) else None
 
 def from_json_string(s):
   return from_json(json.loads(s))
