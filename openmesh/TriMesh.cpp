@@ -457,37 +457,37 @@ Vector<real,3> TriMesh::centroid() {
 
     return out;
   }
-  
+
   // compute the 2D silhouettes of the mesh as seem from the given direction
   std::vector<std::vector<Vector<real,2>>> TriMesh::silhouette(Normal const &n) const {
-  
+
     OTHER_ASSERT(has_face_normals());
-  
+
     struct Project {
       Rotation<Vector<real,3>> R;
-      
+
       Project(Normal const &n)
-        : R(Rotation<Vector<real,3>>::from_rotated_vector(n, vec(0., 0., 1.)).normalized()) 
+        : R(Rotation<Vector<real,3>>::from_rotated_vector(n, vec(0., 0., 1.)).normalized())
       {}
-      
+
       inline Vector<real,2> operator()(Point const &p) const {
         return (R * p).xy();
       }
     } project(n);
-    
+
 #ifndef NDEBUG
     // check if this mesh has a boundary and remember its vertices
     std::vector<std::vector<HalfedgeHandle>> boundaries = boundary_loops();
-    
+
     std::tr1::unordered_set<VertexHandle, Hasher> boundary_vertices;
-    
+
     for (auto v : boundaries) {
       for (HalfedgeHandle he : v) {
         boundary_vertices.insert(to_vertex_handle(he));
       }
     }
 #endif
-    
+
     // find all halfedges that are part of the silhouette (those that are below, but whose
     // opposites are above). Edges are hashed by from_vertex_handle to cheaply find next one
     std::tr1::unordered_map<VertexHandle, std::tr1::unordered_set<HalfedgeHandle, Hasher>, Hasher> silhouette_edges;
@@ -496,16 +496,16 @@ Vector<real,3> TriMesh::centroid() {
       HalfedgeHandle he1 = halfedge_handle(eh, 1);
       FaceHandle fh0 = face_handle(he0);
       FaceHandle fh1 = face_handle(he1);
-      
+
       // boundary edge
       if (!fh0.is_valid() || !fh1.is_valid()) {
         continue;
       }
-      
+
       // this doesn't work if there are zero area triangles
       OTHER_ASSERT(normal(fh0).magnitude() > .5);
       OTHER_ASSERT(normal(fh1).magnitude() > .5);
-            
+
       real d0 = dot(normal(fh0), n);
       real d1 = dot(normal(fh1), n);
 
@@ -518,10 +518,10 @@ Vector<real,3> TriMesh::centroid() {
         //std::cout << "  adding " << from_vertex_handle(he1) << " -> " << to_vertex_handle(he1) << std::endl;
       }
     }
-    
+
     // walk loops until we have no edges left
     std::vector<std::vector<Vector<real,2>>> loops;
-    
+
     while (!silhouette_edges.empty()) {
       // grab one and walk until we have a loop (or no more points to go to)
       std::tr1::unordered_set<HalfedgeHandle, Hasher> &heset = silhouette_edges.begin()->second;
@@ -532,9 +532,9 @@ Vector<real,3> TriMesh::centroid() {
       }
 
       std::vector<VertexHandle> loop(1, from_vertex_handle(he));
-      while (to_vertex_handle(he) != loop.front() && 
+      while (to_vertex_handle(he) != loop.front() &&
              silhouette_edges.count(to_vertex_handle(he))) {
-        
+
         // find next halfedge and remove it
         std::tr1::unordered_set<HalfedgeHandle, Hasher> &heset = silhouette_edges[to_vertex_handle(he)];
         assert(!heset.empty());
@@ -548,15 +548,15 @@ Vector<real,3> TriMesh::centroid() {
         if (heset.empty()) {
           silhouette_edges.erase(from_vertex_handle(hen));
         }
-        
+
         he = hen;
         loop.push_back(from_vertex_handle(he));
-      } 
-      
+      }
+
       // if this is not a loop, make sure the end points are on the boundary
       if (to_vertex_handle(he) != loop.front()) {
         loop.push_back(to_vertex_handle(he));
-        
+
         assert(boundary_vertices.count(loop.front()));
         assert(boundary_vertices.count(loop.back()));
 
@@ -571,12 +571,12 @@ Vector<real,3> TriMesh::centroid() {
       }
       std::reverse(loops.back().begin(), loops.back().end());
     }
-    
+
     //std::cout << "loops: " << loops << std::endl;
-    
+
     return loops;
   }
-  
+
   std::tr1::unordered_set<HalfedgeHandle, Hasher> TriMesh::boundary_of(std::vector<FaceHandle> const &faces) const {
 
     std::tr1::unordered_set<EdgeHandle, Hasher> edgeboundary;
@@ -584,7 +584,7 @@ Vector<real,3> TriMesh::centroid() {
     for (FaceHandle f : faces) {
       for (ConstFaceHalfedgeIter he = cfh_iter(f); he; ++he) {
         if (edgeboundary.count(edge_handle(he.handle()))) {
-          boundary.erase(he.handle());
+          boundary.erase(opposite_halfedge_handle(he.handle()));
           edgeboundary.erase(edge_handle(he.handle()));
         } else {
           boundary.insert(he.handle());
@@ -592,7 +592,7 @@ Vector<real,3> TriMesh::centroid() {
         }
       }
     }
-    
+
     return boundary;
   }
 
@@ -1200,7 +1200,7 @@ void TriMesh::scale(TV s, const Vector<real, 3>& center) {
       set_point(v, center + R * (point(v) - center));
     }
   }
-  
+
   void TriMesh::invert() {
     // For each halfedge, collect next halfedge and source vertex
     std::tr1::unordered_map<TriMesh::HalfedgeHandle,std::pair<TriMesh::HalfedgeHandle,TriMesh::VertexHandle>,Hasher> infos;
