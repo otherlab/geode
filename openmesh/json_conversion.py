@@ -1,7 +1,7 @@
-from other.core.utility.json_conversion import *
+from other.core.utility.json_conversion import register
 from other.core.openmesh import *
 
-to_json_fn[TriMesh] = lambda v: {
+to_fn = lambda v: {
   't': 'TriMesh',
   'v': {
     'vertices': from_ndarray(v.X()),
@@ -9,6 +9,6 @@ to_json_fn[TriMesh] = lambda v: {
   }
 }
 
-from_json_fn = lambda d: d['v']
+from_fn = lambda d: d['v']
 
-register(TriMesh, 'TriMesh', to_json_fn, from_json_fn)
+register(TriMesh, 'TriMesh', to_fn, from_fn)
