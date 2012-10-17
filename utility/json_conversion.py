@@ -1,16 +1,11 @@
 import json
 
 from numpy import *
-from itertools import chain
-
 from other.core import *
 
 
-def flatten(l):
-  return list(chain.from_iterable(l))
-
 def from_ndarray(v, typ = float):
-  return map(typ, flatten(v))
+  return map(typ, v.flatten())
 
 def from_array(v, typ = float):
   return map(typ, v)
@@ -81,7 +76,7 @@ to_json_fn[SegmentMesh] = lambda v: {
 
 def to_json(v):
   fn = to_json_fn.get(type(v), None)
-  return fn(v) if callable(fn) else None
+  return fn(v) if callable(fn) else { 't': None, 'v': None }
 
 def to_json_string(v):
   return json.dumps(to_json(v), allow_nan = False, separators = (',', ':'))
