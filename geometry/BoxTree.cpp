@@ -6,6 +6,7 @@
 #include <other/core/array/ProjectedArray.h>
 #include <other/core/array/sort.h>
 #include <other/core/geometry/Box.h>
+#include <other/core/geometry/Sphere.h>
 #include <other/core/geometry/traverse.h>
 #include <other/core/math/integer_log.h>
 #include <other/core/python/Class.h>
@@ -176,8 +177,22 @@ check(RawArray<const TV> X) const {
   OTHER_ASSERT(culls==boxes.size() && leaves==this->leaves.size());
 }
 
+template<class TV,class Shape> static bool any_box_intersection_helper(const BoxTree<TV>& self, const Shape& shape, int node) {
+  return shape.lazy_intersects(self.boxes[node])
+      && (   self.is_leaf(node)
+          || any_box_intersection_helper(self,shape,2*node+1)
+          || any_box_intersection_helper(self,shape,2*node+2));
+}
+
+template<class TV> template<class Shape> bool BoxTree<TV>::
+any_box_intersection(const Shape& shape) const {
+  return any_box_intersection_helper(*this,shape,0);
+}
+
 #define INSTANTIATE(T,d) \
-  template class BoxTree<Vector<T,d> >;
+  template class BoxTree<Vector<T,d> >; \
+  template bool BoxTree<Vector<T,d>>::any_box_intersection(const Box<Vector<T,d>>&) const; \
+  template bool BoxTree<Vector<T,d>>::any_box_intersection(const Sphere<Vector<T,d>>&) const;
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)
 }
