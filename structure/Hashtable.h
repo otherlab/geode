@@ -294,7 +294,10 @@ struct HashtableIter {
       index++;
   }
 
-  void operator=(const HashtableIter& other) = delete;
+  void operator=(const HashtableIter& other) {
+    assert(table.data()==other.table.data());
+    index = other.index;
+  }
 
   bool operator==(const HashtableIter& other) const {
     return index==other.index; // Assume same table
@@ -308,6 +311,12 @@ struct HashtableIter {
     -> decltype(table[index].value()) {
     assert(index<table.size() && table[index].active());
     return table[index].value();
+  }
+
+  auto operator->() const
+    -> decltype(&table[index].value()) {
+    assert(index<table.size() && table[index].active());
+    return &table[index].value();
   }
 
   void operator++() {
