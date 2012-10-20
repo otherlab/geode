@@ -1079,6 +1079,13 @@ std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance
       set_normal(v,normals[v.idx()]);
   }
 
+  void TriMesh::set_vertex_colors(RawArray<const Vector<real,3>> colors) {
+    request_vertex_colors();
+    OTHER_ASSERT(colors.size()==n_vertices());
+    for (auto v : vertex_handles())
+      set_color(v,to_byte_color(colors[v.idx()]));
+  }
+
   void TriMesh::add_box(TV min, TV max) {
     std::vector<VertexHandle> vh;
     vh.push_back(add_vertex(min));
@@ -1496,6 +1503,7 @@ void wrap_trimesh() {
     .OTHER_METHOD_2("X",X_python)
     .OTHER_METHOD_2("set_X",set_X_python)
     .OTHER_METHOD(set_vertex_normals)
+    .OTHER_METHOD(set_vertex_colors)
     .OTHER_METHOD(component_meshes)
     .OTHER_METHOD(request_vertex_normals)
     .OTHER_METHOD(request_face_normals)
