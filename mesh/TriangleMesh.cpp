@@ -63,7 +63,7 @@ NestedArray<const int> TriangleMesh::incident_elements() const {
 Array<const Vector<int,3> > TriangleMesh::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
-    NestedArray<const int> incident = incident_elements(); 
+    NestedArray<const int> incident = incident_elements();
     for (int t=0;t<elements.size();t++) {
       Vector<int,3> tri = elements[t];
       for (int j=0,i=2;j<3;i=j++) {
@@ -76,7 +76,7 @@ Array<const Vector<int,3> > TriangleMesh::adjacent_elements() const {
             }
           }
         adjacent_elements_[t][i] = -1;
-        found:; 
+        found:;
       }
     }
   }
@@ -109,7 +109,7 @@ Ref<SegmentMesh> TriangleMesh::boundary_mesh() const {
 
 Array<const Vector<int,4> > TriangleMesh::bending_quadruples() const {
   if (!bending_quadruples_valid) {
-    Hashtable<Vector<int,2>,Array<int> > edge_to_face; 
+    Hashtable<Vector<int,2>,Array<int> > edge_to_face;
     for (int t=0;t<elements.size();t++) {
       Vector<int,3> nodes = elements[t];
       for (int a=0;a<3;a++)
@@ -167,15 +167,19 @@ NestedArray<const int> TriangleMesh::sorted_neighbors() const {
       int j = neighbors(i,0);
       for (int a=1;a<neighbors.size(i);a++) {
         if (int* p = prev.get_pointer(vec(i,j)))
-          j = *p; 
+          j = *p;
         else
           break;
       }
       // Walk around boundary.  Note that we assume the mesh is manifold (possibly with boundary)
       sorted_neighbors(i,0) = j;
-      for (int a=1;a<neighbors.size(i);a++) {
-        j = next.get(vec(i,j)); 
-        sorted_neighbors(i,a) = j;
+      try {
+        for (int a=1;a<neighbors.size(i);a++) {
+          j = next.get(vec(i,j));
+          sorted_neighbors(i,a) = j;
+        }
+      } catch (const KeyError&) {
+        throw RuntimeError(format("TriangleMesh::sorted_neighbors failed: node %d",i));
       }
     }
     sorted_neighbors_ = sorted_neighbors;
@@ -314,7 +318,7 @@ Array<int> TriangleMesh::nonmanifold_nodes(bool allow_boundary) const {
         count++;
       }
       if (count!=neighbors.size())
-        goto bad; 
+        goto bad;
     }
     continue; // manifold node
     bad: nonmanifold.append(i);
