@@ -31,7 +31,7 @@ PropBase::PropBase()
 PropBase::~PropBase() {}
 
 void PropBase::dump(int indent) const {
-  printf("%*sProp(\"%s\",%s)\n",2*indent,"",name().c_str(),value_str().c_str());
+  printf("%*sProp(\"%s\",%s)\n",2*indent,"",name_().c_str(),value_str().c_str());
 }
 
 // Since PropBase doesn't by itself inherit from Object due to multiple inheritance woes,
@@ -83,7 +83,7 @@ template<class T> PropClamp<T,true>::PropClamp()
 template<class T> PropClamp<T,true>::~PropClamp() {}
 
 template<class T> Prop<T>& PropClamp<T,true>::set_min(const PropRef<T> p, real alpha) {
-  auto& self = this->self();
+  Prop<T>& self = this->self();
   OTHER_ASSERT(p->name != self.name && !(p->prop_min && p->prop_min->x->name == self.name));
   prop_min.reset(new Tuple<PropRef<T>,Ref<Listen>,real>(p,listen(p,boost::bind(&Self::minimize,this)),alpha));
   minimize();

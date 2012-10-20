@@ -1074,14 +1074,14 @@ std::tr1::unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance
 
   void TriMesh::set_vertex_normals(RawArray<const Vector<real,3>> normals) {
     request_vertex_normals();
-    OTHER_ASSERT(normals.size()==n_vertices());
+    OTHER_ASSERT(normals.size()==(int)n_vertices());
     for (auto v : vertex_handles())
       set_normal(v,normals[v.idx()]);
   }
 
   void TriMesh::set_vertex_colors(RawArray<const Vector<real,3>> colors) {
     request_vertex_colors();
-    OTHER_ASSERT(colors.size()==n_vertices());
+    OTHER_ASSERT(colors.size()==(int)n_vertices());
     for (auto v : vertex_handles())
       set_color(v,to_byte_color(colors[v.idx()]));
   }

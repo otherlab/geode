@@ -56,7 +56,7 @@ public:
     return base().type();
   }
 
-  const string& name() const {
+  const string& name_() const { // Can't be named name due to ambiguity in gcc 4.6
     return base().name;
   }
 

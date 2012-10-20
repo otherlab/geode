@@ -534,7 +534,7 @@ namespace other {
     if (open) {
       segments.resize(pts.size() - polys.size(),false);
       int s = 0;
-      for (int p = 0; p < polys.size(); ++p) {
+      for (int p = 0; p < (int)polys.size(); ++p) {
         for (int i = 0; i < nested.size(p)-1; ++i) {
           segments[s++] = vec(i, i+1) + nested.offsets[p];
         }

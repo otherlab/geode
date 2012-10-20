@@ -75,7 +75,7 @@ string base64_decode(const string& src) {
     dst[3*i+2] = x&0xff;
   }
   // Handle remaining bytes
-  if (dst.size()==3*n+2) {
+  if (dst.size()==size_t(3*n+2)) {
     const uint32_t x = decode(src[4*n+0])<<18
                      | decode(src[4*n+1])<<12
                      | decode(src[4*n+2])<<6;
@@ -83,7 +83,7 @@ string base64_decode(const string& src) {
       throw ValueError("bad ending to base 64 encoded string");
     dst[3*n+0] = x>>16;
     dst[3*n+1] = x>>8&0xff;
-  } else if (dst.size()==3*n+1) {
+  } else if (dst.size()==size_t(3*n+1)) {
     const uint32_t x = decode(src[4*n+0])<<18
                      | decode(src[4*n+1])<<12;
     if (x&0xffff)

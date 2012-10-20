@@ -22,7 +22,7 @@ using std::endl;
   }
 
   PropBase& PropManager::add(Ref<PropBase> prop) {
-    const string& name = prop->name();
+    const string& name = prop->name_();
     if (name.find('-')!=string::npos)
       throw ValueError(format("prop name '%s' contains a dash; use an underscore instead",name));
     Props& props = instance().props_;
