@@ -27,6 +27,22 @@ Array<Matrix<real,4> > matrix_test(Array<Matrix<real,4> > array)
   return test_matrix;
 }
 
+double min_magnitude_python(NdArray<const real> array) {
+  switch (array.rank()) {
+    case 1: return array.flat.min_magnitude();
+    case 2:
+      switch (array.shape[1]) {
+        case 0: return 0;
+        case 1: return array.flat.min_magnitude();
+        case 2: return RawArray<const Vector<real,2> >(array.shape[0],(const Vector<real,2>*)array.data()).min_magnitude();
+        case 3: return RawArray<const Vector<real,3> >(array.shape[0],(const Vector<real,3>*)array.data()).min_magnitude();
+        default: PyErr_Format(PyExc_ValueError,"min_magnitude not implemented for shape (%d,%d)",array.shape[0],array.shape[1]);
+      }
+    default: PyErr_Format(PyExc_ValueError,"min_magnitude: expected rank 1 or 2, got %d",array.rank());
+  }
+  throw_python_error();
+}
+
 double max_magnitude_python(NdArray<const real> array) {
   switch (array.rank()) {
     case 1: return array.flat.max_magnitude();
@@ -65,7 +81,8 @@ void wrap_vector() {
   OTHER_WRAP(register)
   OTHER_WRAP(test)
 
-  python::function("max_magnitude",max_magnitude_python);
+  OTHER_FUNCTION_2(min_magnitude,min_magnitude_python)
+  OTHER_FUNCTION_2(max_magnitude,max_magnitude_python)
 
   // for testing purposes
   OTHER_FUNCTION(vector_test)

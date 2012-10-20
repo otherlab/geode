@@ -457,6 +457,7 @@ public:
   Array<Vector<real,3> > X_python() const;
   void set_X_python(RawArray<const Vector<real,3>> new_X);
   void set_vertex_normals(RawArray<const Vector<real,3>> normals);
+  void set_vertex_colors(RawArray<const Vector<real,3>> colors);
 
   // Warning: reference goes invalid if the mesh is changed
   RawArray<Vector<real,3> > X();
