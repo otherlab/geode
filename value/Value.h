@@ -118,6 +118,7 @@ template<class T> class OTHER_EXPORT Value:public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
+  static_assert(!boost::is_same<T,char*>::value && !boost::is_same<T,const char*>::value,"T can't be char*");
 public:
   typedef ValueBase Base;
     typedef T ValueType;

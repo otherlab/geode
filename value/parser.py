@@ -9,7 +9,7 @@ from other.core.vector import *
 def fix_name(name):
   return name.replace('_','-')
 
-def try_autocomplete():
+def try_autocomplete(props):
   import os
   def return_options(options, include_files=False):
     os.system("echo Completion_options_start")
@@ -26,8 +26,9 @@ def try_autocomplete():
   prev = prev.replace('-','_')
 
   print "prev: %s" % prev
-  if prev in PropManager.items():
-    prop = PropManager.items()[prev]
+  items = props.items
+  if prev in items:
+    prop = items[prev]
     t = type(prop())
     if len(prop.allowed) > 0:
       return_options(" ".join(prop.allowed))
@@ -38,7 +39,7 @@ def try_autocomplete():
     else:
       return_options("", include_files=False)
 
-  return_options(" ".join(["--"+fix_name(n) for n in PropManager.items().keys()]), include_files=True)
+  return_options(" ".join(["--"+fix_name(n) for n in items.keys()]), include_files=True)
 
 trailing_pattern = re.compile(r'0000.*')
 
@@ -84,10 +85,10 @@ def format_value(prop):
   else:
     raise NotImplementedError("Don't know how to convert value %r of type %s to a command line string"%(v,t))
 
-def parse(description,positional=[]):
+def parse(props,description,positional=[]):
   parser = argparse.ArgumentParser(description = description)
 
-  try_autocomplete()
+  try_autocomplete(props)
 
   props_set = set()
   positional = [(p.name if isinstance(p,Value) else p) for p in positional]
@@ -96,7 +97,7 @@ def parse(description,positional=[]):
     def __call__(self,parser,namespace,values,option_string=None):
       if values is not None:
         name = self.dest.replace('-','_')
-        prop = PropManager.get(name)
+        prop = props.get(name)
         try:
           prop.set(values)
         except ValueError:
@@ -157,7 +158,7 @@ def parse(description,positional=[]):
     return help
 
   # Add keyword arguments
-  for name,prop in PropManager.items().items():
+  for name,prop in props.items.items():
     # good arguments to consider adding to properties:
     # help
 
@@ -173,8 +174,8 @@ def parse(description,positional=[]):
 
   # Add positional arguments
   for name in positional:
-    prop = PropManager.get(name)
-#NEEDS A CHECK HERE, AS SOME POSITIONALS FAIL (e.g. solar/layout)
+    prop = props.get(name)
+    # NEEDS A CHECK HERE, AS SOME POSITIONALS FAIL (e.g. solar/layout)
     parser.add_argument(fix_name(name),nargs='*' if type(prop())==list else '?',type=converter(prop),action=PropAction)
 
   # Avoid jumbled output if we're inside a Log scope
@@ -185,22 +186,22 @@ def parse(description,positional=[]):
 
   # Check for missing positional arguments
   for name in positional:
-    prop = PropManager.get(name)
+    prop = props.get(name)
     if prop.required and name not in props_set:
       parser.error('missing positional argument %s'%fix_name(name))
 
   # Verify that we're able to convert the current prop values back into a command line.
   # It's very annoying to go through a whole bunch of setup only to fine that a bug
   # presents one from saving work.
-  command(drop_defaults=True)
-  command(drop_defaults=False)
+  command(props,drop_defaults=True)
+  command(props,drop_defaults=False)
 
   return props_set
 
-def command(drop_defaults=True):
+def command(props,drop_defaults=True):
   args = [sys.argv[0]]
-  for name in PropManager.order():
-    prop = PropManager.get(name)
+  for name in props.order:
+    prop = props.get(name)
     try:
       if not prop.hidden and not (drop_defaults and all(prop()==prop.default)):
         v = format_value(prop)

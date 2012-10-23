@@ -222,8 +222,9 @@ class SyncedKeysDict(Synced):
 if __name__ == "__main__":
   from other.core import *
 
-  var_a = PropManager.add("a", 3)
-  var_b = PropManager.add("b", 4)
+  props = PropManager()
+  var_a = props.add("a", 3)
+  var_b = props.add("b", 4)
   var_sum = cache(lambda: var_a() + var_b())
   ct = ChangeTracker()
   ct.track('a', var_a)
