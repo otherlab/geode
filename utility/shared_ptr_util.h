@@ -15,10 +15,6 @@ template<class T> static inline boost::shared_ptr<typename remove_reference<T>::
   return shared_ptr<typename remove_reference<T>::type>(new typename remove_reference<T>::type(other_forward<T>(t)));
 }
 
-struct null_sp {
-  template<typename T> operator shared_ptr<T>() { return shared_ptr<T>(); }
-};
-
 template<class T> shared_ptr<const std::vector<T> > new_copy_with_added(const shared_ptr<const std::vector<T> >& base, const T& t) {
   shared_ptr<std::vector<T> > result(new std::vector<T>(*base));
   result->push_back(t);
