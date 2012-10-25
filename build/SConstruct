@@ -197,8 +197,11 @@ if re.match(r'\bg\+\+',env['CXX']):
   m = re.search(r'\s+([\d\.]+)(\s+|\n|$)',version)
   if not m:
     die('weird version line: %s'%version[:-1])
-  if tuple(m.group(1).split('.'))<(4,6):
+  version_tuple = tuple(map(int, m.group(1).split('.')))
+  if version_tuple<(4,6):
     die('gcc 4.6 or higher is required, but %s has version %s'%(env['CXX'],m.group(1)))
+  if version_tuple[0:2] == (4,7) and version_tuple[2] in (0,1):
+    die('use of gcc 4.7.0 or 4.7.1 is strongly discouraged (ABI incompatabilities when mixing C++11 and other standards). %s is version %s'%(env['CXX'],m.group(1)))
 
 # Platform
 if env['arch']=='':
