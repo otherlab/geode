@@ -63,7 +63,7 @@ public:
     Twist operator*(const T a) const
     {return Twist<TV>(linear*a,angular*a);}
 
-    Vector<T,dimension> get_vector() const
+    Vector<T,dimension> vector() const
     {return Vector<T,dimension>(linear,angular);}
 
     void set_vector(const Vector<T,dimension>& vector)

@@ -1,6 +1,4 @@
-//#####################################################################
-// Class Sobol
-//#####################################################################
+// Class Sobol: Low discrepancy quasirandom numbers
 #pragma once
 
 #include <other/core/random/forward.h>
@@ -10,33 +8,33 @@
 #include <boost/noncopyable.hpp>
 #include <boost/mpl/if.hpp>
 #include <limits>
-namespace other{
+namespace other {
 
 template<class TV> class Box;
+using std::numeric_limits;
 
 template<class TV>
-class Sobol:public Object
-{
-    typedef typename TV::Scalar T;
-    BOOST_STATIC_ASSERT(std::numeric_limits<T>::radix==2);
-    static const int max_bits=std::numeric_limits<T>::digits;
-    typedef typename mpl::if_c<(max_bits<=30),uint32_t,uint64_t>::type TI; // pick an integer large enough to hold T's mantissa
-    BOOST_STATIC_ASSERT(std::numeric_limits<TI>::digits>max_bits);
-    enum Workaround {d=TV::m};
+class Sobol : public Object {
 public:
-    OTHER_DECLARE_TYPE
-private:
-    const TV offset,scales;
-    Array<Vector<TI,d> > v; // direction numbers
-    Vector<TI,d> x; // last result
-    TI n;
-private:
-    Sobol(const Box<TV>& box);
-public:
-    ~Sobol();
+  OTHER_DECLARE_TYPE
 
-//#####################################################################
-    TV get_vector();
-//#####################################################################
+  typedef typename TV::Scalar T;
+  BOOST_STATIC_ASSERT(numeric_limits<T>::radix==2);
+  static const int max_bits = numeric_limits<T>::digits;
+  typedef typename mpl::if_c<(max_bits<=30),uint32_t,uint64_t>::type TI; // pick an integer large enough to hold T's mantissa
+  BOOST_STATIC_ASSERT(numeric_limits<TI>::digits>max_bits);
+  enum Workaround {d=TV::m};
+
+private:
+  const TV offset, scales;
+  Vector<TI,d> x; // Last result
+  TI n;
+private:
+  Sobol(const Box<TV>& box);
+public:
+  ~Sobol();
+
+  TV vector();
 };
+
 }

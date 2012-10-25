@@ -27,7 +27,7 @@ def test_consistency():
     inner_box = empty_box(len(box.min))
     small = 1e-4*scale
     for _ in range(n):
-      X = sobol.get_vector()
+      X = sobol.vector()
       if shape.lazy_inside(X):
         inner_box.enlarge(X)
       phi = shape.phi(X)
