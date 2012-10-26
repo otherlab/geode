@@ -214,7 +214,7 @@ point_face_interaction(const Vector<T,2>& x,const Vector<T,2>& v,const TV& v1,co
 
 template<class T> T Segment<Vector<T,2> >::
 distance(const Segment<Vector<T,2> >& segment) const {
-  Vector<T,2> weights = Vector<T,2>::ones();
+  Vector<T,2> weights;
   return magnitude(shortest_vector_between_segments(segment,weights[0],weights[1]));
 }
 
