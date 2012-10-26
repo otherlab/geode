@@ -27,7 +27,7 @@ static T along_ray(const function<T(RawArray<const T>)>* f, RawArray<const T> x0
 static T linesearch_powell(const function<T(RawArray<const T>)>& f, RawArray<T> p, RawArray<T> xi, const T xtol, RawArray<T> tmp) {
   const int n = p.size();
   const T atol = min(.1,5*xtol/magnitude(xi));
-  const auto alpha_fret_iter = brent(curry(along_ray,&f,p,xi,tmp),vec<T>(0,1),atol,100);
+  const auto alpha_fret_iter = brent(curry(along_ray,&f,p,xi,tmp),Vector<T,2>(0,1),atol,100);
   const T alpha = alpha_fret_iter.x,
           fret = alpha_fret_iter.y;
   for (int i=0;i<n;i++) {
@@ -54,7 +54,7 @@ Tuple<T,int> powell(const function<T(RawArray<const T>)>& f, RawArray<T> x, T sc
   for (;;) {
     const T fx = fval;
     int bigind = 0;
-    T delta = 0; 
+    T delta = 0;
     for (int i=0;i<n;i++) {
       const T fx2 = fval;
       fval = linesearch_powell(f,x,direc[i],xtol,tmp);
