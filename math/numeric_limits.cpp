@@ -15,7 +15,7 @@ template<class T> struct Limits : public Object, public numeric_limits<T> {
 
   string repr() const {
     return format("numeric_limits<%s>:\n  min = %g\n  max = %g\n  epsilon = %g\n  round_error = %g\n  quiet_NaN = %g\n  signaling_NaN = %g\n  denorm_min = %g\n"
-                  "  digits = %d\n  digits10 = %d\n  min_exponent = %d\n  min_exponent10 = %d\n  max_exponent = %d\n max_exponent10 = %d",
+                  "  digits = %d\n  digits10 = %d\n  min_exponent = %d\n  min_exponent10 = %d\n  max_exponent = %d\n  max_exponent10 = %d",
                   boost::is_same<T,float>::value?"float":"double",
                   min,max,epsilon,round_error,quiet_NaN,signaling_NaN,denorm_min,
                   this->digits,this->digits10,this->min_exponent,this->min_exponent10,this->max_exponent,this->max_exponent10);

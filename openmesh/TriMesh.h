@@ -273,7 +273,7 @@ public:
 
   // bounding box
   Box<Vector<real,3> > bounding_box() const;
-  Box<Vector<real,3> > bounding_box(std::vector<FaceHandle> const &faces) const;
+  Box<Vector<real,3> > bounding_box(vector<FaceHandle> const &faces) const;
 
   //centroid
   Vector<real,3> centroid();
@@ -313,7 +313,7 @@ public:
   FaceHandle valid_face_handle(EdgeHandle eh) const;
 
   // get all vertices in the one-ring
-  std::vector<VertexHandle> vertex_one_ring(VertexHandle vh) const;
+  vector<VertexHandle> vertex_one_ring(VertexHandle vh) const;
 
   // check whether the quad around an edge is convex (and the edge can be flipped safely)
   bool quad_convex(EdgeHandle eh) const;
@@ -342,15 +342,10 @@ public:
   HalfedgeHandle halfedge_handle(FaceHandle fh, VertexHandle vh) const;
 
   // get the incident faces to a vertex
-  std::vector<FaceHandle> incident_faces(VertexHandle vh) const;
+  vector<FaceHandle> incident_faces(VertexHandle vh) const;
 
   /// return the common edge connecting two faces
-  EdgeHandle common_edge(FaceHandle fh, FaceHandle fh2) const {
-    for (ConstFaceHalfedgeIter e = cfh_iter(fh); e; ++e)
-      if (opposite_face_handle(e) == fh2)
-        return edge_handle(e);
-    return TriMesh::InvalidEdgeHandle;
-  }
+  EdgeHandle common_edge(FaceHandle fh, FaceHandle fh2) const;
 
   // get a normal for an edge (average of incident face normals)
   Normal normal(EdgeHandle eh) const;
@@ -370,49 +365,43 @@ public:
   T dihedral_angle(EdgeHandle e) const;
 
   // make a triangle fan
-  std::vector<FaceHandle> triangle_fan(std::vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
+  vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
 
   // extract a set of faces as a new mesh and store vertex correspondence: id2id[old] = new
-  Ref<TriMesh> extract_faces(std::vector<FaceHandle> const &faces,
-                             std::tr1::unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
+  Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces,
+                             unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
 
-  inline Ref<TriMesh> extract_faces(std::vector<FaceHandle> const &faces) const {
-    std::tr1::unordered_map<VertexHandle, VertexHandle, Hasher> id2id;
-    return extract_faces(faces, id2id);
-  }
+  Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces) const;
 
   // extract the inverse of a set of faces as a new mesh and store vertex correspondence
-  Ref<TriMesh> inverse_extract_faces(std::vector<FaceHandle> const &faces,
-                             std::tr1::unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
+  Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces,
+                             unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
 
-  inline Ref<TriMesh> inverse_extract_faces(std::vector<FaceHandle> const &faces) const {
-    std::tr1::unordered_map<VertexHandle, VertexHandle, Hasher> id2id;
-    return inverse_extract_faces(faces, id2id);
-  }
-  
-  // compute the 2D silhouettes of the mesh as seem from the given direction
-  std::vector<std::vector<Vector<real,2>>> silhouette(Normal const &n) const;
-  
+  Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces) const;
+
+  // compute the 2D silhouettes of the mesh as seem from the given rotation (with rotation*(0,0,1) as the normal)
+  vector<vector<Vector<real,2>>> silhouette(const Rotation<TV>& rotation) const;
+
   // get the halfedges bounding the given set of faces (for all halfedges, face_handle(he) is in faces)
-  std::tr1::unordered_set<HalfedgeHandle, Hasher> boundary_of(std::vector<FaceHandle> const &faces) const;
+  unordered_set<HalfedgeHandle, Hasher> boundary_of(vector<FaceHandle> const &faces) const;
 
   // compute the approximate geodesic distance from one point to another, and store
   // all values computed on the way (can be used to re-trace the approximate shortest path)
-  std::tr1::unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
-                                                                          VertexHandle sinks) const;
+  unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
+                                                                VertexHandle sinks) const;
 
   // compute the approximate geodesic distance from one point to a set of points, and store
   // all values computed on the way (can be used to re-trace the approximate shortest paths)
-  std::tr1::unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
-                                                                          std::vector<VertexHandle> const &sinks) const;
+  unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
+                                                                vector<VertexHandle> const &sinks) const;
 
   // compute the approximate geodesic distance from one point to a set of points, and store
   // all values computed on the way (can be used to re-trace the approximate shortest paths)
-  std::tr1::unordered_map<VertexHandle, double, Hasher> geodesic_distance(std::vector<VertexHandle> const &sources,
-                                                                          std::vector<VertexHandle> const &sinks) const;
+  unordered_map<VertexHandle, double, Hasher> geodesic_distance(vector<VertexHandle> const &sources,
+                                                                vector<VertexHandle> const &sinks) const;
 
   // compute and return the approximate shortest path from one point to another
-  std::vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
+  vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
 
   // compute the closest face to a point by breadth-first search starting at the given vertex/face
   FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
@@ -424,17 +413,21 @@ public:
   // mirror the mesh at a plane (positive side will be mirrored, negative replaced)
   void mirror(Plane<real> const &p, double epsilon = 1e-4);
 
+  // check if mesh has a boundary (faster than !boundary_loops().empty())
+  // this function will not report a boundary for isolated vertices!
+  bool has_boundary() const;
+
   // find boundary loops
-  std::vector<std::vector<HalfedgeHandle> > boundary_loops() const;
+  vector<vector<HalfedgeHandle> > boundary_loops() const;
 
   // find the boundary loop starting at seed (empty if seed is not on the boundary)
-  std::vector<HalfedgeHandle> boundary_loop(HalfedgeHandle const &seed) const;
+  vector<HalfedgeHandle> boundary_loop(HalfedgeHandle const &seed) const;
 
   // fill the hole enclosed by the given halfedges, retain the new faces only if the surface area is smaller than max_area
-  std::vector<FaceHandle> fill_hole(std::vector<HalfedgeHandle> const &loop, double max_area = std::numeric_limits<double>::max());
+  vector<FaceHandle> fill_hole(vector<HalfedgeHandle> const &loop, double max_area = inf);
 
   // fill all holes with maximum area given
-  void fill_holes(double max_area = std::numeric_limits<double>::max());
+  void fill_holes(double max_area = inf);
 
   void add_box(TV min, TV max);
   void add_sphere(TV c, real r, int divisions = 30);
@@ -500,7 +493,7 @@ public:
   ~OMSilencer();
 };
 
-Ref<TriMesh> merge(std::vector<Ref<const TriMesh>> meshes) OTHER_EXPORT;
+Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) OTHER_EXPORT;
 
 }
 
