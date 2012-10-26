@@ -492,7 +492,7 @@ Ref<TriMesh> TriMesh::inverse_extract_faces(vector<FaceHandle> const &faces) con
 
 vector<vector<Vector<real,2>>> TriMesh::silhouette(const Rotation<TV>& rotation) const {
   OTHER_ASSERT(has_face_normals());
-  OTHER_ASSERT(boundary_loops().empty());
+  OTHER_ASSERT(!has_boundary());
   const TV up = rotation.z_axis();
 
   // Classify silhouette halfedges: those that are above, but whose opposites are below
@@ -915,6 +915,15 @@ void TriMesh::cut(Plane<real> const &plane, T epsilon, T area_hack) {
 
 void TriMesh::mirror(Plane<real> const &plane, T epsilon) {
   cut_and_mirror(plane, true, epsilon, 0);
+}
+
+bool TriMesh::has_boundary() const {
+  // check vertices, not halfedges, which is faster
+  for (ConstVertexIter it = vertices_sbegin(); it != vertices_end(); ++it) {
+    if (is_boundary(it))
+      return true;
+  }
+  return false;
 }
 
 // find boundary loops

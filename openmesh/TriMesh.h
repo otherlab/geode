@@ -378,10 +378,10 @@ public:
                              unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
 
   Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces) const;
-  
+
   // compute the 2D silhouettes of the mesh as seem from the given rotation (with rotation*(0,0,1) as the normal)
   vector<vector<Vector<real,2>>> silhouette(const Rotation<TV>& rotation) const;
-  
+
   // get the halfedges bounding the given set of faces (for all halfedges, face_handle(he) is in faces)
   unordered_set<HalfedgeHandle, Hasher> boundary_of(vector<FaceHandle> const &faces) const;
 
@@ -412,6 +412,10 @@ public:
 
   // mirror the mesh at a plane (positive side will be mirrored, negative replaced)
   void mirror(Plane<real> const &p, double epsilon = 1e-4);
+
+  // check if mesh has a boundary (faster than !boundary_loops().empty())
+  // this function will not report a boundary for isolated vertices!
+  bool has_boundary() const;
 
   // find boundary loops
   vector<vector<HalfedgeHandle> > boundary_loops() const;
