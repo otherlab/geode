@@ -17,6 +17,8 @@
 #include <other/core/utility/safe_bool.h>
 namespace other{
 
+using std::ostream;
+
 template<class T> // T=PyObject
 class Ptr {
   OTHER_NEW_FRIEND
@@ -89,6 +91,10 @@ public:
 
   T* operator->() const {
     OTHER_ASSERT(self);
+    return self;
+  }
+
+  operator T*() const {
     return self;
   }
 
@@ -190,5 +196,9 @@ template<> struct FromPython<Ptr<PyObject> >{static Ptr<PyObject>
 convert(PyObject* object) {
   return ptr(object);
 }};
+
+template<class T> static inline ostream& operator<<(ostream& output, const Ptr<T>& p) {
+  return output<<p.get();
+}
 
 }
