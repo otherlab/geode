@@ -64,7 +64,8 @@ template<class E> E FromPython<E,typename boost::enable_if<boost::is_enum<E>>::t
 }
 
 #define OTHER_DEFINE_ENUM(E) \
-  template<> OTHER_DEFINE_TYPE(PyEnum<E>)
+  template<> OTHER_DEFINE_TYPE(PyEnum<E>) \
+  template E FromPython<E>::convert(PyObject*);
 
 #define OTHER_ENUM_2(N,E) \
   {typedef PyEnum<E> Self; \
