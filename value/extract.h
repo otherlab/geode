@@ -5,8 +5,8 @@
 
 #include <other/core/value/Compute.h>
 #include <other/core/structure/Tuple.h>
+#include <other/core/utility/curry.h>
 #include <other/core/utility/remove_const_reference.h>
-#include <boost/bind.hpp>
 namespace other{
 
 template<int n,class Tuple> static inline auto extract_helper(const ValueRef<Tuple>& value)
@@ -25,14 +25,14 @@ template<class Array> static inline auto extract_helper(const ValueRef<Array>& v
 template<int n,class Tuple> static inline auto extract(const ValueRef<Tuple>& value)
   -> ValueRef<typename remove_const_reference<decltype(value().template get<n>())>::type> {
   typedef decltype(value().template get<n>()) T;
-  return cache(boost::bind(static_cast<T(*)(const ValueRef<Tuple>&)>(extract_helper<n>),value));
+  return cache(static_cast<T(*)(const ValueRef<Tuple>&)>(extract_helper<n>),value);
 }
 
 // Extract the nth element of an array value as a value
 template<class Array> static inline auto extract(const ValueRef<Array>& value, int n)
   -> ValueRef<typename remove_const_reference<decltype(value()[0])>::type> {
   OTHER_ASSERT(n>=0);
-  return cache(boost::bind(extract_helper<Array>,value,n));
+  return cache(extract_helper<Array>,value,n);
 }
 
 }
