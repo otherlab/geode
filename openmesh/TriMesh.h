@@ -364,6 +364,9 @@ public:
 
   T dihedral_angle(EdgeHandle e) const;
 
+  // delete a set of faces
+  void delete_faces(std::vector<FaceHandle> const &fh);
+
   // make a triangle fan
   vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
 

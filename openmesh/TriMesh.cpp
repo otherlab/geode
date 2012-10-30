@@ -540,6 +540,9 @@ unordered_set<HalfedgeHandle, Hasher> TriMesh::boundary_of(vector<FaceHandle> co
   unordered_set<EdgeHandle, Hasher> edgeboundary;
   unordered_set<HalfedgeHandle, Hasher> boundary;
   for (FaceHandle f : faces) {
+    if (!f.is_valid())
+      continue;
+
     for (ConstFaceHalfedgeIter he = cfh_iter(f); he; ++he) {
       if (edgeboundary.count(edge_handle(he.handle()))) {
         boundary.erase(opposite_halfedge_handle(he.handle()));
@@ -1241,6 +1244,14 @@ real TriMesh::dihedral_angle(EdgeHandle e) const {
   TV d = t1.center() - t0.center();
   double abs_theta = acos(min(1.,max(-1.,dot(t0.n,t1.n))));
   return dot(t1.n-t0.n,d) > 0 ? abs_theta : -abs_theta;
+}
+
+// delete a set of faces
+void TriMesh::delete_faces(std::vector<FaceHandle> const &fh) {
+  for (FaceHandle f : fh) {
+    if (f.is_valid())
+      delete_face(f);
+  }
 }
 
 Tuple<int,Array<int> > TriMesh::component_vertex_map() const {
