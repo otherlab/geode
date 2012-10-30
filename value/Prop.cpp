@@ -6,10 +6,10 @@
 #include <other/core/python/Ptr.h>
 #include <other/core/structure/Tuple.h>
 #include <other/core/utility/const_cast.h>
+#include <other/core/utility/curry.h>
 #include <other/core/utility/format.h>
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/Rotation.h>
-#include <boost/bind.hpp>
 #include <iostream>
 namespace other{
 
@@ -85,7 +85,7 @@ template<class T> PropClamp<T,true>::~PropClamp() {}
 template<class T> Prop<T>& PropClamp<T,true>::set_min(const PropRef<T> p, real alpha) {
   Prop<T>& self = this->self();
   OTHER_ASSERT(p->name != self.name && !(p->prop_min && p->prop_min->x->name == self.name));
-  prop_min.reset(new Tuple<PropRef<T>,Ref<Listen>,real>(p,listen(p,boost::bind(&Self::minimize,this)),alpha));
+  prop_min.reset(new Tuple<PropRef<T>,Ref<Listen>,real>(p,listen(p,curry(&Self::minimize,this)),alpha));
   minimize();
   return self;
 }
@@ -93,7 +93,7 @@ template<class T> Prop<T>& PropClamp<T,true>::set_min(const PropRef<T> p, real a
 template<class T> Prop<T>& PropClamp<T,true>::set_max(const PropRef<T> p, real alpha) {
   auto& self = this->self();
   OTHER_ASSERT(p->name != self.name && !(p->prop_max && p->prop_max->x->name == self.name));
-  prop_max.reset(new Tuple<PropRef<T>,Ref<Listen>,real>(p,listen(p,boost::bind(&Self::maximize,this)),alpha));
+  prop_max.reset(new Tuple<PropRef<T>,Ref<Listen>,real>(p,listen(p,curry(&Self::maximize,this)),alpha));
   maximize();
   return self;
 }

@@ -6,10 +6,10 @@
 #include <other/core/value/Value.h>
 #include <other/core/value/Action.h>
 #include <other/core/structure/Tuple.h>
+#include <other/core/utility/curry.h>
 #include <other/core/utility/format.h>
 #include <other/core/utility/remove_const_reference.h>
 #include <boost/function.hpp>
-#include <boost/bind.hpp>
 namespace other{
 
 using boost::function;
@@ -53,9 +53,9 @@ template<class F> auto cache(const F& f)
 }
 
 template<class A0,class A1,class... Args> auto cache(const A0& a0, const A1& a1, const Args&... args)
-  -> ValueRef<typename remove_const_reference<decltype(boost::bind(a0,a1,args...)())>::type> {
-  typedef typename remove_const_reference<decltype(boost::bind(a0,a1,args...)())>::type T;
-  return ValueRef<T>(new_<Compute<T>>(boost::bind(a0,a1,args...)));
+  -> ValueRef<typename remove_const_reference<decltype(curry(a0,a1,args...)())>::type> {
+  typedef typename remove_const_reference<decltype(curry(a0,a1,args...)())>::type T;
+  return ValueRef<T>(new_<Compute<T>>(curry(a0,a1,args...)));
 }
 
 }
