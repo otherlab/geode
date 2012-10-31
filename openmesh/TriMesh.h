@@ -417,7 +417,7 @@ public:
   void mirror(Plane<real> const &p, double epsilon = 1e-4);
 
   // check if mesh has a boundary (faster than !boundary_loops().empty())
-  // this function will not report a boundary for isolated vertices!
+  // this function will report a boundary for isolated vertices!
   bool has_boundary() const;
 
   // find boundary loops
