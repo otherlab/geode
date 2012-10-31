@@ -19,6 +19,7 @@
 #include <other/core/python/forward.h>
 #include <other/core/python/exceptions.h>
 #include <other/core/python/new.h>
+#include <other/core/math/hash.h>
 #include <other/core/utility/debug.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/or.hpp>
@@ -26,7 +27,6 @@
 #include <boost/type_traits/is_base_of.hpp>
 #include <iostream>
 #include <other/core/python/to_python.h>
-
 namespace other {
 
 namespace mpl = boost::mpl;
@@ -233,6 +233,10 @@ template<class T,class S> inline Ref<T> static_cast_(const Ref<S>& ref) {
 
 template<class T> inline std::ostream& operator<<(std::ostream& output, const Ref<T>& ref) {
   return output<<"Ref("<<&*ref<<')';
+}
+
+template<class T> inline Hash hash_reduce(const Ref<T>& ref) {
+  return hash_reduce(&*ref);
 }
 
 }

@@ -201,4 +201,8 @@ template<class T> static inline ostream& operator<<(ostream& output, const Ptr<T
   return output<<p.get();
 }
 
+template<class T> inline Hash hash_reduce(const Ptr<T>& ptr) {
+  return hash_reduce(ptr.get());
+}
+
 }

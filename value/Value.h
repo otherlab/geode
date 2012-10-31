@@ -18,6 +18,7 @@ extern void wrap_value_base();
 
 namespace other {
 
+using std::vector;
 using std::type_info;
 using boost::is_const;
 using boost::is_reference;
@@ -79,7 +80,7 @@ public:
   void signal() const;
 
   virtual void dump(int indent) const = 0;
-  virtual std::vector<Ptr<const ValueBase> > get_dependencies() const = 0;
+  virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
   Ref<> dump_dependencies() const;
 
   const string& get_name() const;
@@ -170,8 +171,9 @@ template<class T> class ValueRef
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
 public:
-    typedef T ValueType;
-  Ref<const Value<T> > self;
+  typedef T ValueType;
+
+  Ref<const Value<T>> self;
 
   ValueRef(const Value<T>& value)
     :self(other::ref(value)) {}
@@ -186,6 +188,10 @@ public:
     return (*self)();
   }
 
+  const Value<T>& operator*() const {
+    return *self;
+  }
+
   const Value<T>* operator->() const {
     return &*self;
   }
@@ -195,7 +201,7 @@ template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {
   return to_python(*value.self);
 }
 
-// from_python<ValueRef<T> > is declared in convert.h to avoid circularity
+// from_python<ValueRef<T>> is declared in convert.h to avoid circularity
 
 // Instantiate common versions in the .cpp file
 extern template class Value<bool>;
