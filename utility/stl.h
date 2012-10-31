@@ -15,6 +15,7 @@
 #include <other/core/utility/remove_const_reference.h>
 #include <other/core/math/hash.h>
 #include <boost/shared_ptr.hpp>
+#include <other/core/utility/equals.h>
 
 namespace other {
 
@@ -62,7 +63,11 @@ template<class T,class C> inline void extend(std::deque<T>& dst, const C& src) {
 
 // check if a STL vector contains an element.
 template<class T> inline bool contains(const std::vector<T>& v, const T& x) {
-  return std::find(v.begin(), v.end(), x) != v.end();
+  for (auto y : v) {
+    if (equals<T>::eval(y,x))
+      return true;
+  }
+  return false;
 }
 
 // check if a STL map contains an element.
