@@ -103,13 +103,15 @@ Ref<TriMesh> TriMesh::copy() const {
 // load from file/stream
 void TriMesh::read(string const &filename) {
   OMSilencer silencer;
-  OpenMesh::IO::read_mesh(*this, filename);
+  if (!OpenMesh::IO::read_mesh(*this,filename))
+    throw IOError(format("TriMesh::read: failed to read mesh '%s'",filename));
 }
 
 void TriMesh::read(istream &is, string const &ext) {
   OMSilencer silencer;
   OpenMesh::IO::Options opt;
-  OpenMesh::IO::read_mesh(*this, is, ext, opt);
+  if (!OpenMesh::IO::read_mesh(*this,is,ext,opt))
+    throw IOError(format("TriMesh::read: failed to read mesh from stream, type '%s'",ext));
 }
 
 namespace {
