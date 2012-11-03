@@ -205,7 +205,12 @@ closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) co
   simplex = -1;
   T sqr_distance = sqr(max_distance);
   closest_point_helper(*this,point,simplex,sqr_distance,0);
-  return simplices[simplex].closest_point(point,weights);
+  if (simplex == -1) {
+    TV x;
+    x.fill(inf);
+    return x;
+  } else
+    return simplices[simplex].closest_point(point,weights);
 }
 
 template<class TV,int d> TV SimplexTree<TV,d>::
