@@ -161,6 +161,11 @@ public:
     return typeid(T);
   }
 
+  // Look at a value without adding a dependency graph node
+  const T& peek() const {
+    OTHER_ASSERT(!dirty_);
+    return *value;
+  }
 };
 
 template<class T> Value<T>::Value() {}
