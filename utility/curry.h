@@ -22,13 +22,13 @@ template<class F,class... Args> struct Curry {
 
   template<class... Rest> OTHER_ALWAYS_INLINE auto operator()(Rest&&... rest) const
     -> decltype(boost::declval<const S&>()(boost::declval<const Args&>()...,rest...)) {
-    return call(Enumerate<Args...>(),other::move(rest)...);
+    return call(Enumerate<Args...>(),other::forward<Rest>(rest)...);
   }
 
 private:
   template<class... Enum,class... Rest> OTHER_ALWAYS_INLINE auto call(Types<Enum...>, Rest&&... rest) const 
     -> decltype(boost::declval<const S&>()(boost::declval<const Args&>()...,rest...)) {
-    return f(args.template get<Enum::index>()...,other::move(rest)...);
+    return f(args.template get<Enum::index>()...,other::forward<Rest>(rest)...);
   }
 };
 
