@@ -440,6 +440,7 @@ public:
   void scale(TV scale, const Vector<real, 3>& center);
   void translate(Vector<real,3> const &t);
   void rotate(Rotation<Vector<real, 3> > const &R, Vector<real,3> const &center);
+  void transform(Frame<Vector<real, 3> > const &F);
 
   // flip all faces inside out
   void invert();

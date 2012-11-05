@@ -12,6 +12,7 @@
 #include <other/core/vector/Rotation.h>
 #include <other/core/utility/stl.h>
 #include <other/core/openmesh/triangulator.h>
+#include <other/core/vector/Frame.h>
 #include <queue>
 #include <iostream>
 
@@ -1184,6 +1185,12 @@ void TriMesh::translate(Vector<real, 3> const& t) {
 void TriMesh::rotate(Rotation<Vector<real, 3> > const &R, Vector<real,3> const &center) {
   for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v) {
     set_point(v, center + R * (point(v) - center));
+  }
+}
+
+void TriMesh::transform(Frame<Vector<real, 3> > const &F) {
+  for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v) {
+    set_point(v, F * point(v));
   }
 }
 
