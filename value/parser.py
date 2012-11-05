@@ -101,7 +101,7 @@ def parse(props,description,positional=[]):
         try:
           prop.set(values)
         except ValueError:
-          raise ValueError("property '%s' expects one of '%s', got '%s'"%(self.dest,' '.join(map(str,prop.allowed)),values))
+          raise ValueError("property '%s' expects one of %s, got '%s'"%(self.dest,', '.join(map(lambda s: "'%s'" % s,prop.allowed)),values))
         props_set.add(name)
 
   bools = dict((s,bool(i)) for i,ss in enumerate(('0 no false','1 yes true')) for s in ss.split())
