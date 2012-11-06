@@ -25,6 +25,7 @@
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/is_base_of.hpp>
+#include <boost/type_traits/remove_const.hpp>
 #include <iostream>
 #include <other/core/python/to_python.h>
 namespace other {
@@ -153,6 +154,11 @@ public:
 
   bool operator>=(const Ref& o) const {
     return self>=o.self;
+  }
+
+  Ref<typename boost::remove_const<T>::type> const_cast_() const {
+    typedef typename boost::remove_const<T>::type S;
+    return Ref<S>(const_cast<S&>(*self),owner_);
   }
 };
 
