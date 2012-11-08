@@ -15,6 +15,7 @@
 #pragma once
 
 #include <other/core/python/forward.h>
+#include <other/core/utility/debug.h>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_enum.hpp>
 #include <string>
