@@ -6,6 +6,7 @@
 #include <other/core/utility/Hasher.h>
 
 #include <other/core/utility/stl.h>
+#include <other/core/utility/str.h>
 #include <other/core/vector/Vector2d.h>
 #include <other/core/vector/normalize.h>
 #include <other/core/geometry/Box.h>
@@ -208,10 +209,8 @@ namespace other {
       
     } while (drel > 1e-10);
     
-    std::cout << "Could not find any point inside contour " << poly << " and inside shape " << polys << std::endl;
-    OTHER_ASSERT(false);
-    return Vector<real,2>(0.,0.);
-  } 
+    throw RuntimeError(format("point_inside_polygon_component: could not find a point inside contour and shape\n  contour = %s\n  shape = %s",str(poly),str(polys)));
+  }
   
   
   
