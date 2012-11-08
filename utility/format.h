@@ -8,7 +8,7 @@
 // 2. More concise.
 // 3. Doesn't add 100k to every object file.
 //
-// The main advantage over raw varargs is that we can pass std::string, and
+// The main advantage over raw varargs is that we can pass string, and
 // we can add more safety features later if we feel like it.
 //
 //#####################################################################
