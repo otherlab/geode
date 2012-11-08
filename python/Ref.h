@@ -19,15 +19,16 @@
 #include <other/core/python/forward.h>
 #include <other/core/python/exceptions.h>
 #include <other/core/python/new.h>
+#include <other/core/python/to_python.h>
 #include <other/core/math/hash.h>
 #include <other/core/utility/debug.h>
+#include <other/core/utility/move.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/is_base_of.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <iostream>
-#include <other/core/python/to_python.h>
 namespace other {
 
 namespace mpl = boost::mpl;
@@ -63,7 +64,7 @@ class Ref {
   template<class S> friend class Ptr;
   template<class S> friend Ref<S> steal_ref(S&);
 
-  T* self; // pointers is always nonzero
+  T* self; // pointers are always nonzero
   PyObject* owner_;
 
   Ref() {} // used by new_ and python interface code
@@ -159,6 +160,11 @@ public:
   Ref<typename boost::remove_const<T>::type> const_cast_() const {
     typedef typename boost::remove_const<T>::type S;
     return Ref<S>(const_cast<S&>(*self),owner_);
+  }
+
+  template<class... Args> OTHER_ALWAYS_INLINE auto operator()(Args&&... args) const
+    -> decltype((*self)(other::forward<Args>(args)...)) {
+    return (*self)(other::forward<Args>(args)...);
   }
 };
 
