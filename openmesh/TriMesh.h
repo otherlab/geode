@@ -290,8 +290,11 @@ public:
   Segment<Vector<real, 3> > segment(EdgeHandle eh) const;
   Segment<Vector<real, 3> > segment(HalfedgeHandle heh) const;
 
+  // get the vertex handles incident to the given halfedge
+  Vector<VertexHandle,2> vertex_handles(HalfedgeHandle heh) const;
+
   // get the vertex handles incident to the given edge
-  Vector<VertexHandle,2> vertex_handles(EdgeHandle fh) const;
+  Vector<VertexHandle,2> vertex_handles(EdgeHandle eh) const;
 
   // get the vertex handles incident to the given face
   Vector<VertexHandle,3> vertex_handles(FaceHandle fh) const;
