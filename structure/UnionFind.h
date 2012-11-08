@@ -32,6 +32,10 @@ public:
     return parents[i]<0;
   }
 
+  bool same(const int i,const int j) const {
+    return find(i)==find(j);
+  }
+
   int find(const int i) const {
     int root = find_without_path_compression(i);path_compress(i,root);
     return root;

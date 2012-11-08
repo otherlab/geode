@@ -266,9 +266,12 @@ Segment<Vector<real, 3> > TriMesh::segment(HalfedgeHandle heh) const {
   return Segment<Vector<real, 3> >(point(from_vertex_handle(heh)), point(to_vertex_handle(heh)));
 }
 
+Vector<VertexHandle, 2> TriMesh::vertex_handles(HalfedgeHandle heh) const {
+  return Vector<VertexHandle,2>(from_vertex_handle(heh),to_vertex_handle(heh));
+}
+
 Vector<VertexHandle, 2> TriMesh::vertex_handles(EdgeHandle eh) const {
-  return Vector<VertexHandle, 2>(from_vertex_handle(halfedge_handle(eh, 0)),
-                                 to_vertex_handle(halfedge_handle(eh, 0)));
+  return vertex_handles(halfedge_handle(eh,0));
 }
 
 Vector<VertexHandle, 3> TriMesh::vertex_handles(FaceHandle fh) const {
@@ -449,9 +452,8 @@ Ref<TriMesh> TriMesh::extract_faces(vector<FaceHandle> const &faces,
   for (vector<FaceHandle>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
     vector<VertexHandle> verts;
     for (ConstFaceVertexIter fv = cfv_iter(*it); fv; ++fv) {
-      if (!id2id.count(fv.handle())) {
+      if (!id2id.count(fv.handle()))
         id2id[fv.handle()] = out->add_vertex(point(fv.handle()));
-      }
 
       verts.push_back(id2id[fv.handle()]);
     }
