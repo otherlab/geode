@@ -1231,6 +1231,17 @@ real TriMesh::volume() const {
   return real(1./6)*sum;
 }
 
+real TriMesh::volume(RawArray<const FaceHandle> faces) const {
+  real sum=0;
+
+  for (TriMesh::FaceHandle f : faces) {
+    Triangle<Vector<real, 3> > t = triangle(f);
+    sum += det(t.x0,t.x1,t.x2);
+  }
+  return real(1./6)*sum;
+}
+
+
 real TriMesh::area() const {
   // TODO: Do the division by two once at the end
   T sum = 0;
@@ -1490,7 +1501,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(update_normals)
     .OTHER_METHOD(request_face_colors)
     .OTHER_METHOD(request_vertex_colors)
-    .OTHER_METHOD(volume)
+    .OTHER_OVERLOADED_METHOD(real(Self::*)()const,volume)
     .OTHER_OVERLOADED_METHOD(real(Self::*)()const,area)
     .OTHER_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)
     .OTHER_OVERLOADED_METHOD_2(v_Method_vec3_vec3, "scale_anisotropic", scale)

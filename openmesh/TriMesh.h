@@ -446,6 +446,7 @@ public:
   void invert();
 
   real volume() const;
+  real volume(RawArray<const FaceHandle> faces) const;
   real area() const;
   real area(RawArray<const FaceHandle> faces) const;
 
