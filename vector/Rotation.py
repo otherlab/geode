@@ -77,6 +77,10 @@ class Rotations3d(ndarray):
         self.view(ndarray)['v'] = v
     v = property(v,set_v)
 
+    @property
+    def sv(self):
+        return self.view(ndarray).ravel().view(real).reshape(self.shape+(4,))
+
     def __mul__(self,x):
         s = self.s
         v = self.v
