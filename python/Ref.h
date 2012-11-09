@@ -22,7 +22,6 @@
 #include <other/core/python/to_python.h>
 #include <other/core/math/hash.h>
 #include <other/core/utility/debug.h>
-#include <other/core/utility/move.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -118,7 +117,7 @@ public:
   operator T&() const {
     return *self;
   }
-  
+
   // allow conversion to Ref<const T>
   operator Ref<const T>() {
     return Ref<const T>(*self, owner_);
@@ -162,10 +161,12 @@ public:
     return Ref<S>(const_cast<S&>(*self),owner_);
   }
 
+/* waiting for C++11
   template<class... Args> OTHER_ALWAYS_INLINE auto operator()(Args&&... args) const
     -> decltype((*self)(other::forward<Args>(args)...)) {
     return (*self)(other::forward<Args>(args)...);
   }
+  */
 };
 
 template<class T> inline T* ptr_from_python(PyObject* object) {
