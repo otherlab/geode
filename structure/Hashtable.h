@@ -57,7 +57,7 @@ private:
 
 // Tables
 
-template<class TK,class T = unit>
+template<class TK,class T> // T = unit
 class Hashtable {
 private:
   typedef HashtableEntry<TK,T> Entry; // doesn't store data if T is unit
