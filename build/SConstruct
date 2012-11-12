@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import glob
 import subprocess
 
 def die(message):
@@ -458,9 +459,24 @@ def child(env,dir):
     path = variant+'/'+path
   env.SConscript('#'+os.path.join(path,'SConscript'),exports='env')
 
+# Descend into all child SConscripts in order of priority
+def children(env):
+  # Directories that define externals used by other directories must come first.
+  # Therefore, we sort children with .priority files first in increase order of priority.
+  def priority(dir):
+    try:
+      return float(open(File(os.path.join(dir,'.priority')).srcnode().abspath).read())
+    except IOError:
+      return 1e10
+  base = Dir('.').srcnode().abspath+'/'
+  dirs = [s[len(base):-11] for s in glob.glob(base+'*/SConscript')]
+  for dir in sorted(dirs,key=priority):
+    if os.path.exists(File(os.path.join(dir,'SConscript')).srcnode().abspath):
+      child(env,dir)
+
 # Build everything
-Export('child options external externals library objects program latex clang toplevel')
-if os.path.exists('SConscript'):
+Export('child children options external externals library objects program latex clang toplevel')
+if os.path.exists(File('#SConscript').abspath):
   child(env,'.')
 else:
-  child(env,'core')
+  children(env)
