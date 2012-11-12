@@ -45,6 +45,16 @@ public:
     return self;
   }
 
+  T& operator*() const {
+    assert(self);
+    return *self;
+  }
+
+  T* operator->() const {
+    assert(self);
+    return self;
+  }
+
   void swap(Unique& rhs) {
     std::swap(self, rhs.self);
   }
