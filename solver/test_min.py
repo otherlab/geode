@@ -2,7 +2,6 @@
 
 from __future__ import division
 from other.core import *
-from other.nonlinear import *
 from numpy import *
 
 def test_brent():
