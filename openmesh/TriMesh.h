@@ -448,6 +448,10 @@ public:
   // flip all faces inside out
   void invert();
 
+  // flip all faces in a connected component inside out (faces in component
+  // must not have neighbors not in component)
+  void invert_component(vector<FaceHandle> component);
+
   real volume() const;
   real volume(RawArray<const FaceHandle> faces) const;
   real area() const;

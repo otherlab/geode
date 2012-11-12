@@ -1196,22 +1196,58 @@ void TriMesh::transform(Frame<Vector<real, 3> > const &F) {
   }
 }
 
-void TriMesh::invert() {
+void TriMesh::invert_component(std::vector<FaceHandle> component) {
+  // this will fail horribly if the given faces are not a complete component
+  // (ie if they have neighbors that are not in the vector)
+
+  // get all half-edges and vertices in this component
+  std::vector<HalfedgeHandle> halfedges;
+  std::tr1::unordered_set<VertexHandle, Hasher> vertices;
+
+  for (FaceHandle f : component) {
+    for (ConstFaceHalfedgeIter fh = cfh_iter(f); fh; ++fh) {
+      halfedges.push_back(fh.handle());
+      vertices.insert(to_vertex_handle(fh.handle()));
+    }
+  }
+
   // For each halfedge, collect next halfedge and source vertex
-  unordered_map<TriMesh::HalfedgeHandle,pair<TriMesh::HalfedgeHandle,TriMesh::VertexHandle>,Hasher> infos;
-  for (TriMesh::ConstHalfedgeIter e = halfedges_begin(); e != halfedges_end(); ++e)
+  unordered_map<HalfedgeHandle,pair<HalfedgeHandle,VertexHandle>, Hasher> infos;
+  for (HalfedgeHandle e : halfedges)
     infos[e] = make_pair(next_halfedge_handle(e), from_vertex_handle(e));
 
   // Set each halfedge to point in the opposite direction
-  for (TriMesh::ConstHalfedgeIter e = halfedges_begin(); e != halfedges_end(); ++e) {
+  for (HalfedgeHandle e : halfedges) {
+    pair<HalfedgeHandle,VertexHandle> const &info = infos.find(e)->second;
+    set_next_halfedge_handle(info.first, e);
+    set_vertex_handle(e, info.second);
+  }
+
+  // Update vertex to edge pointers
+  for (VertexHandle v : vertices)
+    set_halfedge_handle(v, next_halfedge_handle(halfedge_handle(v)));
+}
+
+void TriMesh::invert() {
+  // For each halfedge, collect next halfedge and source vertex
+  unordered_map<TriMesh::HalfedgeHandle,pair<TriMesh::HalfedgeHandle,TriMesh::VertexHandle>,Hasher> infos;
+  for (TriMesh::ConstHalfedgeIter e = halfedges_sbegin(); e != halfedges_end(); ++e)
+    infos[e] = make_pair(next_halfedge_handle(e), from_vertex_handle(e));
+
+  // Set each halfedge to point in the opposite direction
+  for (TriMesh::ConstHalfedgeIter e = halfedges_sbegin(); e != halfedges_end(); ++e) {
     const pair<TriMesh::HalfedgeHandle,TriMesh::VertexHandle>& info = infos.find(e)->second;
     set_next_halfedge_handle(info.first, e);
     set_vertex_handle(e, info.second);
   }
 
   // Update vertex to edge pointers
-  for (TriMesh::ConstVertexIter v = vertices_begin(); v != vertices_end(); ++v)
-    set_halfedge_handle(v, opposite_halfedge_handle(halfedge_handle(v)));
+  for (TriMesh::ConstVertexIter v = vertices_sbegin(); v != vertices_end(); ++v)
+    // choosing the next halfedge will ensure that the halfedge is pointing away from v
+    // and the next halfedge will be in the same face as v's original halfedge_handle,
+    // in particular, an invalid face if v is on the boundary.
+    if (halfedge_handle(v).is_valid())
+      set_halfedge_handle(v, next_halfedge_handle(halfedge_handle(v)));
 }
 
 real TriMesh::volume() const {
