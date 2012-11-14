@@ -234,18 +234,6 @@ public:
     bool elements_equal() const
     {return x==y && x==z;}
 
-    bool all_greater(const Vector& v) const
-    {return x>v.x && y>v.y && z>v.z;}
-
-    bool all_less(const Vector& v) const
-    {return x<v.x && y<v.y && z<v.z;}
-
-    bool all_greater_equal(const Vector& v) const
-    {return x>=v.x && y>=v.y && z>=v.z;}
-
-    bool all_less_equal(const Vector& v) const
-    {return x<=v.x && y<=v.y && z<=v.z;}
-
     static Vector componentwise_min(const Vector& v1,const Vector& v2)
     {return Vector(other::min(v1.x,v2.x),other::min(v1.y,v2.y),other::min(v1.z,v2.z));}
 
@@ -407,19 +395,19 @@ public:
 // Miscellaneous free operators and functions
 //#####################################################################
 template<class T> inline Vector<T,3>
-operator+(const T& a,const Vector<T,3>& v)
+operator+(const typename Hide<T>::type& a,const Vector<T,3>& v)
 {return Vector<T,3>(a+v.x,a+v.y,a+v.z);}
 
 template<class T> inline Vector<T,3>
-operator-(const T& a,const Vector<T,3>& v)
+operator-(const typename Hide<T>::type& a,const Vector<T,3>& v)
 {return Vector<T,3>(a-v.x,a-v.y,a-v.z);}
 
 template<class T> inline Vector<T,3>
-operator*(const T& a,const Vector<T,3>& v)
+operator*(const typename Hide<T>::type& a,const Vector<T,3>& v)
 {return Vector<T,3>(a*v.x,a*v.y,a*v.z);}
 
 template<class T> inline Vector<T,3>
-operator/(const T& a,const Vector<T,3>& v)
+operator/(const typename Hide<T>::type& a,const Vector<T,3>& v)
 {return Vector<T,3>(a/v.x,a/v.y,a/v.z);}
 
 template<class T> inline Vector<T,3>
@@ -493,6 +481,22 @@ cross_product_matrix(const Vector<T,3>& v)
 template<class T> inline bool
 isfinite(const Vector<T,3>& v)
 {return isfinite(v.x) && isfinite(v.y) && isfinite(v.z);}
+
+template<class T> inline bool all_greater(const Vector<T,3>& v0, const Vector<T,3>& v1) {
+  return v0.x>v1.x && v0.y>v1.y && v0.z>v1.z;
+}
+
+template<class T> inline bool all_less(const Vector<T,3>& v0, const Vector<T,3>& v1) {
+  return v0.x<v1.x && v0.y<v1.y && v0.z<v1.z;
+}
+
+template<class T> inline bool all_greater_equal(const Vector<T,3>& v0, const Vector<T,3>& v1) {
+  return v0.x>=v1.x && v0.y>=v1.y && v0.z>=v1.z;
+}
+
+template<class T> inline bool all_less_equal(const Vector<T,3>& v0, const Vector<T,3>& v1) {
+  return v0.x<=v1.x && v0.y<=v1.y && v0.z<=v1.z;
+}
 
 //#####################################################################
 // Functions clamp, clamp_min, clamp_max, in_bounds

@@ -246,18 +246,6 @@ public:
     static Vector componentwise_max(const Vector& v1,const Vector& v2)
     {return Vector(other::max(v1.x,v2.x),other::max(v1.y,v2.y));}
 
-    bool all_greater(const Vector& v) const
-    {return x>v.x && y>v.y;}
-
-    bool all_less(const Vector& v) const
-    {return x<v.x && y<v.y;}
-
-    bool all_greater_equal(const Vector& v) const
-    {return x>=v.x && y>=v.y;}
-
-    bool all_less_equal(const Vector& v) const
-    {return x<=v.x && y<=v.y;}
-
     Vector projected_on_unit_direction(const Vector& direction) const
     {return dot(*this,direction)*direction;}
 
@@ -399,19 +387,19 @@ public:
 // Miscellaneous free operators and functions
 //#####################################################################
 template<class T> inline Vector<T,2>
-operator+(const T& a,const Vector<T,2>& v)
+operator+(const typename Hide<T>::type& a,const Vector<T,2>& v)
 {return Vector<T,2>(a+v.x,a+v.y);}
 
 template<class T> inline Vector<T,2>
-operator-(const T& a,const Vector<T,2>& v)
+operator-(const typename Hide<T>::type& a,const Vector<T,2>& v)
 {return Vector<T,2>(a-v.x,a-v.y);}
 
 template<class T> inline Vector<T,2>
-operator*(const T& a,const Vector<T,2>& v)
+operator*(const typename Hide<T>::type& a,const Vector<T,2>& v)
 {return Vector<T,2>(a*v.x,a*v.y);}
 
 template<class T> inline Vector<T,2>
-operator/(const T& a,const Vector<T,2>& v)
+operator/(const typename Hide<T>::type& a,const Vector<T,2>& v)
 {return Vector<T,2>(a/v.x,a/v.y);}
 
 template<class T> inline Vector<T,2>
@@ -489,6 +477,22 @@ oriented_angle_between(const Vector<T,2>& u,const Vector<T,2>& v)
 template<class T> inline bool
 isfinite(const Vector<T,2>& v)
 {return isfinite(v.x) && isfinite(v.y);}
+
+template<class T> inline bool all_greater(const Vector<T,2>& v0, const Vector<T,2>& v1) {
+  return v0.x>v1.x && v0.y>v1.y;
+}
+
+template<class T> inline bool all_less(const Vector<T,2>& v0, const Vector<T,2>& v1) {
+  return v0.x<v1.x && v0.y<v1.y;
+}
+
+template<class T> inline bool all_greater_equal(const Vector<T,2>& v0, const Vector<T,2>& v1) {
+  return v0.x>=v1.x && v0.y>=v1.y;
+}
+
+template<class T> inline bool all_less_equal(const Vector<T,2>& v0, const Vector<T,2>& v1) {
+  return v0.x<=v1.x && v0.y<=v1.y;
+}
 
 //#####################################################################
 // Functions clamp, clamp_min, clamp_max, in_bounds

@@ -8,10 +8,16 @@ template<class T> class shared_ptr;
 }
 namespace other {
 
+struct Hasher;
 template<class T> class Ptr;
 
 // Convenience struct for marking that function semantics have changed
 struct Mark {};
+
+// Convenience utility for hiding a type from use in overload resolution
+template<class T> struct Hide {
+  typedef T type;
+};
 
 // A list of types
 template<class... Args> struct Types {

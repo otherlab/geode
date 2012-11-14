@@ -1,4 +1,5 @@
 #include <other/core/openmesh/TriMesh.h>
+#include <other/core/openmesh/color_cast.h>
 #include <other/core/array/view.h>
 #include <other/core/utility/prioritize.h>
 #include <other/core/python/Class.h>
@@ -15,41 +16,6 @@
 #include <other/core/vector/Frame.h>
 #include <queue>
 #include <iostream>
-
-// Work around a bug in OpenMesh color casting
-namespace OpenMesh {
-template <> struct color_caster<other::OVec<uint8_t,4>,Vec3f> {
-  typedef other::OVec<uint8_t,4> return_type;
-  static return_type cast(const Vec3f& src) {
-    return return_type(uint8_t(255*src[0]),uint8_t(255*src[1]),uint8_t(255*src[2]),255);
-  }
-};
-template <> struct color_caster<other::OVec<uint8_t,4>,Vec3uc> {
-  typedef other::OVec<uint8_t,4> return_type;
-  static return_type cast(const Vec3uc& src) {
-    return return_type(src[0],src[1],src[2],255);
-  }
-};
-template <> struct color_caster<other::OVec<uint8_t,4>,Vec4uc> {
-  typedef other::OVec<uint8_t,4> return_type;
-  static return_type cast(const Vec4uc& src) {
-    return return_type(src[0],src[1],src[2],src[3]);
-  }
-};
-template <> struct color_caster<Vec3uc,other::OVec<uint8_t,4>> {
-  typedef Vec3uc return_type;
-  static return_type cast(const other::OVec<uint8_t,4>& src) {
-    return return_type(src[0],src[1],src[2]);
-  }
-};
-template <> struct color_caster<Vec4uc,other::OVec<uint8_t,4>> {
-  typedef Vec4uc return_type;
-  static return_type cast(const other::OVec<uint8_t,4>& src) {
-    return return_type(src[0],src[1],src[2],src[3]);
-  }
-};
-}
-
 namespace other {
 
 using std::cout;
@@ -218,22 +184,21 @@ Box<Vector<real,3> > TriMesh::bounding_box(vector<FaceHandle> const &faces) cons
   return box;
 }
 
-Vector<real,3> TriMesh::centroid() {
-Vector<real,3> c;
-double s = 0;
-for (TriMesh::ConstVertexIter vi = vertices_sbegin(); vi != vertices_end(); ++vi) {
-  double w = 0;
-  for (TriMesh::ConstVertexFaceIter vf = cvf_iter(vi); vf; ++vf) {
-    w += triangle(vf.handle()).area();
+Vector<real,3> TriMesh::centroid() const {
+  Vector<real,3> c;
+  double s = 0;
+  for (TriMesh::ConstVertexIter vi = vertices_sbegin(); vi != vertices_end(); ++vi) {
+    double w = 0;
+    for (TriMesh::ConstVertexFaceIter vf = cvf_iter(vi); vf; ++vf) {
+      w += triangle(vf.handle()).area();
+    }
+    w /= 3.;
+    c += w * point(vi.handle());
+    s += w;
   }
-  w /= 3.;
-  c += w * point(vi.handle());
-  s += w;
-}
 
-return c/s;
+  return c/s;
 }
-
 
 real TriMesh::mean_edge_length() const {
 
@@ -1163,20 +1128,16 @@ void TriMesh::scale(real s, const Vector<real, 3>& center) {
   Vector<real,3> base = center - s*center;
   for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v)
     set_point(v,base+s*point(v));
+}
+
+void TriMesh::scale(TV s, const Vector<real, 3>& center) {
+  Vector<real,3> base = center - s*center;
+  for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v)
+    set_point(v,base+s*point(v));
   if (has_face_normals())
     update_face_normals();
   if (has_vertex_normals())
     update_vertex_normals();
-}
-
-void TriMesh::scale(TV s, const Vector<real, 3>& center) {
-Vector<real,3> base = center - s*center;
-for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v)
-  set_point(v,base+s*point(v));
-if (has_face_normals())
-  update_face_normals();
-if (has_vertex_normals())
-  update_vertex_normals();
 }
 
 void TriMesh::translate(Vector<real, 3> const& t) {
@@ -1185,9 +1146,12 @@ void TriMesh::translate(Vector<real, 3> const& t) {
 }
 
 void TriMesh::rotate(Rotation<Vector<real, 3> > const &R, Vector<real,3> const &center) {
-  for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v) {
+  for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v)
     set_point(v, center + R * (point(v) - center));
-  }
+  if (has_face_normals())
+    update_face_normals();
+  if (has_vertex_normals())
+    update_vertex_normals();
 }
 
 void TriMesh::transform(Frame<Vector<real, 3> > const &F) {
@@ -1296,9 +1260,14 @@ real TriMesh::area(RawArray<const FaceHandle> faces) const {
   return sum;
 }
 
+
 real TriMesh::dihedral_angle(EdgeHandle e) const {
-  Triangle<TV> t0 = triangle(face_handle(halfedge_handle(e,0))),
-               t1 = triangle(face_handle(halfedge_handle(e,1)));
+  return dihedral_angle(halfedge_handle(e,0));
+}
+
+real TriMesh::dihedral_angle(HalfedgeHandle e) const {
+  Triangle<TV> t0 = triangle(face_handle(e)),
+               t1 = triangle(face_handle(opposite_halfedge_handle(e)));
   TV d = t1.center() - t0.center();
   double abs_theta = acos(min(1.,max(-1.,dot(t0.n,t1.n))));
   return dot(t1.n-t0.n,d) > 0 ? abs_theta : -abs_theta;

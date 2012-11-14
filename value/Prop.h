@@ -81,10 +81,6 @@ inline Ref<PropBase> ref(PropBase& prop) {
   return Ref<PropBase>(prop,to_python(prop.base()));
 }
 
-template<class T> struct has_clamp:public mpl::false_{};
-template<> struct has_clamp<int>:public mpl::true_{};
-template<> struct has_clamp<double>:public mpl::true_{};
-
 template<class T,bool enable> struct PropClamp;
 
 template<class T> struct PropClamp<T,false> {

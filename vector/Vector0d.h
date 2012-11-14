@@ -132,11 +132,11 @@ public:
 };
 
 template<class T> inline Vector<T,0>
-operator*(const T&,const Vector<T,0>& v)
+operator*(const typename Hide<T>::type&,const Vector<T,0>& v)
 {return v;}
 
 template<class T> inline Vector<T,0>
-operator/(const T&,const Vector<T,0>& v)
+operator/(const typename Hide<T>::type&,const Vector<T,0>& v)
 {return v;}
 
 template<class T> inline T

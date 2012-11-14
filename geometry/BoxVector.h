@@ -83,7 +83,7 @@ public:
   }
 
   bool empty() const {
-    return !min.all_less_equal(max);
+    return !all_less_equal(min,max);
   }
 
   bool operator==(const Box<TV>& r) const {
@@ -247,11 +247,11 @@ public:
   }
 
   bool lazy_inside(const TV& location) const {
-    return location.all_greater_equal(min) && location.all_less_equal(max);
+    return all_less_equal(min,location) && all_less_equal(location,max);
   }
 
   bool lazy_inside_half_open(const TV& location) const {
-    return location.all_greater_equal(min) && location.all_less(max);
+    return all_less_equal(min,location) && all_less(location,max);
   }
 
   bool inside(const TV& location, const T half_thickness) const {
@@ -275,7 +275,7 @@ public:
   }
 
   bool boundary(const TV& location, const T half_thickness) const {
-    bool strict_inside=location.all_greater(min+half_thickness) && location.all_less(max-half_thickness);
+    bool strict_inside=all_greater(location,min+half_thickness) && all_less(location,max-half_thickness);
     return !strict_inside && !outside(location,half_thickness);
   }
 
@@ -302,11 +302,11 @@ public:
   }
 
   bool contains(const Box<TV>& box) const {
-    return min.all_less_equal(box.min) && max.all_greater_equal(box.max);
+    return all_less_equal(min,box.min) && all_less_equal(box.max,max);
   }
 
   bool lazy_intersects(const Box<TV>& box) const {
-    return min.all_less_equal(box.max) && max.all_greater_equal(box.min);
+    return all_less_equal(min,box.max) && all_less_equal(box.min,max);
   }
 
   bool intersects(const Box<TV>& box, const T half_thickness) const {

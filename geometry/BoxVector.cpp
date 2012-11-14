@@ -37,7 +37,7 @@ template<class T,int d> Vector<T,d> Box<Vector<T,d>>::surface(const TV& X) const
 template<class T,int d> T Box<Vector<T,d>>::phi(const TV& X) const {
   TV lengths = sizes();
   TV phi = abs(X-center())-(T).5*lengths;
-  if (!phi.all_less_equal(TV()))
+  if (!all_less_equal(phi,TV()))
     return TV::componentwise_max(phi,TV()).magnitude();
   return phi.max();
 }

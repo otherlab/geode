@@ -152,12 +152,15 @@ inline std::ostream &operator<<(std::ostream &os, std::map<T,U> const &v) {
   return print(os, v.begin(), v.end(), '{', '}');
 }
 
-template<class T> static inline other::Hash hash_reduce(const boost::shared_ptr<T>& p) {
+}
+namespace boost {
+
+template<class T> static inline other::Hash hash_reduce(const shared_ptr<T>& p) {
+  using other::hash_reduce;
   return hash_reduce(p.get());
 }
 
 }
-
 namespace std {
 
 template<class T> other::Hash hash_reduce(const std::set<T>& s) {

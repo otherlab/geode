@@ -388,19 +388,19 @@ typedef Vector<real, 4> Vector4;
 // Miscellaneous free operators and functions
 //#####################################################################
 template<class T,int d> inline Vector<T,d>
-operator+(const T& a,const Vector<T,d>& v)
+operator+(const typename Hide<T>::type& a,const Vector<T,d>& v)
 {Vector<T,d> r;for(int i=0;i<d;i++) r.array[i]=a+v.array[i];return r;}
 
 template<class T,int d> inline Vector<T,d>
-operator-(const T& a,const Vector<T,d>& v)
+operator-(const typename Hide<T>::type& a,const Vector<T,d>& v)
 {Vector<T,d> r;for(int i=0;i<d;i++) r.array[i]=a-v.array[i];return r;}
 
 template<class T,int d> inline Vector<T,d>
-operator*(const T& a,const Vector<T,d>& v)
+operator*(const typename Hide<T>::type& a,const Vector<T,d>& v)
 {Vector<T,d> r;for(int i=0;i<d;i++) r.array[i]=a*v.array[i];return r;}
 
 template<class T,int d> inline Vector<T,d>
-operator/(const T& a,const Vector<T,d>& v)
+operator/(const typename Hide<T>::type& a,const Vector<T,d>& v)
 {Vector<T,d> r;for(int i=0;i<d;i++) r.array[i]=a/v.array[i];return r;}
 
 template<class T,int d> inline Vector<T,d>

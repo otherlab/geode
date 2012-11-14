@@ -241,7 +241,7 @@ public:
 
 public:
   // assign from another TriMesh
-  TriMesh & operator=(OTriMesh const &o);
+  TriMesh& operator=(OTriMesh const &o);
 
   // full copy
   Ref<TriMesh> copy() const;
@@ -275,8 +275,8 @@ public:
   Box<Vector<real,3> > bounding_box() const;
   Box<Vector<real,3> > bounding_box(vector<FaceHandle> const &faces) const;
 
-  //centroid
-  Vector<real,3> centroid();
+  // area weighted centroid
+  Vector<real,3> centroid() const;
 
   real mean_edge_length() const;
 
@@ -365,7 +365,9 @@ public:
   // get an interpolated normal at any point on the mesh
   Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
 
+  // dihedral angle between incident faces: positive for convex, negative for concave
   T dihedral_angle(EdgeHandle e) const;
+  T dihedral_angle(HalfedgeHandle e) const;
 
   // delete a set of faces
   void delete_faces(std::vector<FaceHandle> const &fh);
@@ -439,11 +441,11 @@ public:
   void add_sphere(TV c, real r, int divisions = 30);
   void add_cylinder(TV p1, TV p2, real r1, real r2, int divisions = 30, bool caps = true);
 
-  void scale(real scale, const Vector<real, 3>& center);
-  void scale(TV scale, const Vector<real, 3>& center);
-  void translate(Vector<real,3> const &t);
-  void rotate(Rotation<Vector<real, 3> > const &R, Vector<real,3> const &center);
-  void transform(Frame<Vector<real, 3> > const &F);
+  void scale(real scale, const TV& center=TV());
+  void scale(TV scale, const TV& center=TV());
+  void translate(const TV& c);
+  void rotate(const Rotation<TV>& R, const TV& center=TV());
+  void transform(const Frame<TV>& F);
 
   // flip all faces inside out
   void invert();

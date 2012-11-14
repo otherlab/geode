@@ -332,7 +332,7 @@ def symlink_force(src,dst):
 
 # Add a directory to the include path under a given name
 def toplevel(name,path):
-  path = Dir(path).abspath
+  path = Dir(path).srcnode().abspath
   # Make other/build/include if it doesn't exist
   include = os.path.join(env['other'],'build/include')
   if not os.path.exists(include):
