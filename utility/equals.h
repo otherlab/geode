@@ -17,7 +17,7 @@ template<class A, class B, class C> struct equals<std::tr1::unordered_set<A,B,C>
     if (s1.size() != s2.size())
       return false;
 
-    for (auto x : s1) {
+    for (A const &x : s1) {
       if (!s2.count(x)) {
         return false;
       }
