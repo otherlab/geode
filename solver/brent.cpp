@@ -39,7 +39,7 @@ static Tuple<Vector<T,3>,Vector<T,3>> bracket(const function<T(T)>& f, T xa, T x
     if (iter > maxiter)
       throw RuntimeError("bracket: Too many iterations");
     iter++;
-    T fw;
+    T fw = 0; // Should be left uninitialized, but gcc 4.7 complains
     if ((w-xc)*(xb-w) > 0) {
       T fw = f(w);
       if (fw < fc) {

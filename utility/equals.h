@@ -36,7 +36,7 @@ template<class A> struct equals<std::vector<A>> {
   inline static bool eval(std::vector<A> const &s1, std::vector<A> const &s2) {
     if (s1.size() != s2.size())
       return false;
-    for (int i = 0; i < s1.size(); ++i)
+    for (size_t i = 0; i < s1.size(); ++i)
       if (!equals<A>::eval(s1[i], s2[i]))
         return false;
     return true;
