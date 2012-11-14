@@ -14,7 +14,6 @@
 #include <other/core/python/config.h>
 #include <other/core/python/new.h>
 #include <other/core/python/Ref.h>
-#include <other/core/utility/safe_bool.h>
 namespace other{
 
 using std::ostream;
@@ -110,10 +109,6 @@ public:
     OTHER_XDECREF(owner_);
     self = 0;
     owner_ = 0;
-  }
-
-  operator SafeBool() const { // allow conversion to bool without allowing conversion to T
-    return safe_bool(self);
   }
 
   bool operator==(const Ptr& o) const {
