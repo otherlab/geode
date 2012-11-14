@@ -17,8 +17,8 @@ template<class A, class B, class C> struct equals<std::tr1::unordered_set<A,B,C>
     if (s1.size() != s2.size())
       return false;
 
-    for (A const &x : s1) {
-      if (!s2.count(x)) {
+    for (typename std::tr1::unordered_set<A,B,C>::const_iterator it = s1.begin(); it != s1.end(); ++it) {
+      if (!s2.count(*it)) {
         return false;
       }
     }
