@@ -389,6 +389,18 @@ TriMesh::Normal TriMesh::smooth_normal(FaceHandle fh,
   return n;
 }
 
+int TriMesh::remove_infinite_vertices() {
+  int removed = 0;
+  for (auto v : vertex_handles()) {
+    if (!isfinite(point(v))) {
+      removed++;
+      delete_vertex(v);
+    }
+  }
+  garbage_collection();
+  return removed;
+}
+
 vector<FaceHandle> TriMesh::triangle_fan(vector<VertexHandle> const &ring, VertexHandle center, bool closed) {
   // make a triangle fan, possibly closed, around a given node
   vector<FaceHandle> fh;
@@ -1481,6 +1493,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(n_faces)
     .OTHER_METHOD(n_edges)
     .OTHER_METHOD(n_halfedges)
+    .OTHER_METHOD(remove_infinite_vertices)
     .OTHER_OVERLOADED_METHOD(v_Method_str, read)
     .OTHER_OVERLOADED_METHOD(v_CMethod_str, write)
     .OTHER_METHOD(write_with_normals)
