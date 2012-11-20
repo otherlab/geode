@@ -255,7 +255,7 @@ else: # assume g++...
     env.Append(LINKFLAGS=' -dead_strip')
     if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
   elif env['type']=='debug': env.Append(CXXFLAGS=' -g',LINKFLAGS=' -g')
-  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -fno-strict-aliasing') # -Wstrict-aliasing=2
+  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
 
 # Optionally warn about conversion issues
 if env['Wconversion']:
