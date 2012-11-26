@@ -31,7 +31,9 @@ public:
 
   template<class T> static Buffer*
   new_(const int m) {
+#ifndef _WIN32
     BOOST_MPL_ASSERT((boost::has_trivial_destructor<T>));
+#endif
     Buffer* self = (Buffer*)malloc(sizeof(PyObject)+m*sizeof(T));
     return PyObject_INIT(self,&pytype);
   }

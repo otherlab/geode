@@ -60,7 +60,11 @@ OTHER_EXPORT void OTHER_NORETURN(fatal_error(const char* function,const char* fi
 OTHER_EXPORT void OTHER_NORETURN(assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message));
 
 // Instead of throwing an exception, call the given function when an error occurs
+#ifdef _WIN32
+typedef void (*ErrorCallback)(const string&);
+#else
 typedef void OTHER_NORETURN((*ErrorCallback)(const string&));
+#endif
 void set_error_callback(ErrorCallback callback) OTHER_EXPORT;
 
 }

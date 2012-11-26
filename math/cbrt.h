@@ -7,14 +7,14 @@
 //#####################################################################
 #pragma once
 
-#ifdef Win32
+#ifdef _WIN32
 #include <math.h>
 #else
 #include <cmath>
 #endif
 namespace other {
 
-#ifdef Win32
+#ifdef _WIN32
 inline float cbrt(const float a){return std::pow(a,(float)(1/3.));}
 inline double cbrt(const double a){return std::pow(a,(double)(1/3.));}
 #else

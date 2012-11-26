@@ -61,6 +61,11 @@ to_python(unsigned long value) {
 }
 
 static inline PyObject*
+to_python(long long value) {
+  return PyLong_FromLongLong(value);
+}
+
+static inline PyObject*
 to_python(unsigned long long value) {
   return PyLong_FromUnsignedLongLong(value);
 }

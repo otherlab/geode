@@ -26,14 +26,14 @@ template<> OTHER_DEFINE_TYPE(FiniteVolume<Vector<T,3>,2>)
 template<> OTHER_DEFINE_TYPE(FiniteVolume<Vector<T,3>,3>)
 
 template<class TV,int d> FiniteVolume<TV,d>::
-FiniteVolume(Ref<StrainMeasure<TV,d> > strain,T density,Ref<ConstitutiveModel<T,d> > model,Ptr<PlasticityModel<T,d> > plasticity)
-    :strain(strain),density(density),model(model),plasticity(plasticity)
+FiniteVolume(StrainMeasure<TV,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity)
+    :strain(ref(strain)),density(density),model(ref(model)),plasticity(plasticity)
 {
-    Be_scales.resize(strain->elements.size(),false,false);
+    Be_scales.resize(strain.elements.size(),false,false);
     for(int t=0;t<Be_scales.size();t++)
-        Be_scales[t] = -(T)1/Factorial<d>::value/strain->Dm_inverse[t].determinant();
-    isotropic = dynamic_cast<IsotropicConstitutiveModel<T,d>*>(&*model);
-    anisotropic = dynamic_cast<AnisotropicConstitutiveModel<T,d>*>(&*model);
+        Be_scales[t] = -(T)1/Factorial<d>::value/strain.Dm_inverse[t].determinant();
+    isotropic = dynamic_cast<IsotropicConstitutiveModel<T,d>*>(&model);
+    anisotropic = dynamic_cast<AnisotropicConstitutiveModel<T,d>*>(&model);
 }
 
 template<class TV,int d> FiniteVolume<TV,d>::
@@ -292,25 +292,18 @@ template class FiniteVolume<Vector<T,2>,2>;
 template class FiniteVolume<Vector<T,3>,2>;
 template class FiniteVolume<Vector<T,3>,3>;
 }
+using namespace other;
 
-void wrap_finite_volume()
-{
-    using namespace other;
-
-    {typedef FiniteVolume<Vector<T,2>,2> Self;
-    Class<Self>("FiniteVolume2d")
-        .OTHER_INIT(Ref<StrainMeasure<Vector<T,2>,2> >,T,Ref<ConstitutiveModel<T,2> >,Ptr<PlasticityModel<T,2> >)
-        ;}
-
-    {typedef FiniteVolume<Vector<T,3>,2> Self;
-    Class<Self>("FiniteVolumeS3d")
-        .OTHER_INIT(Ref<StrainMeasure<Vector<T,3>,2> >,T,Ref<ConstitutiveModel<T,2> >,Ptr<PlasticityModel<T,2> >)
-        ;}
-
-    {typedef FiniteVolume<Vector<T,3>,3> Self;
-    Class<Self>("FiniteVolume3d")
-        .OTHER_INIT(Ref<StrainMeasure<Vector<T,3>,3> >,T,Ref<ConstitutiveModel<T,3> >,Ptr<PlasticityModel<T,3> >)
-        ;}
+template<int m,int d> static void wrap_helper() {
+  typedef FiniteVolume<Vector<T,m>,d> Self;
+  static const string name = format("FiniteVolume%s",d==3?"3d":m==3?"S3d":"2d");
+  Class<Self>(name.c_str())
+    .OTHER_INIT(StrainMeasure<Vector<T,m>,d>&,T,ConstitutiveModel<T,d>&,Ptr<PlasticityModel<T,d>>)
+    ;
 }
 
-
+void wrap_finite_volume() {
+  wrap_helper<2,2>();
+  wrap_helper<3,2>();
+  wrap_helper<3,3>();
+}

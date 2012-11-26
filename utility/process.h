@@ -4,7 +4,7 @@
 #pragma once
 
 #include <other/core/utility/config.h>
-#ifndef Win32
+#ifndef _WIN32
 #include <fenv.h>
 #endif
 namespace other {
@@ -12,7 +12,7 @@ namespace process {
 
 size_t memory_usage() OTHER_EXPORT;
 
-#ifdef Win32
+#ifdef _WIN32
 enum {
   FE_INVALID   = 0x01,
   FE_DIVBYZERO = 0x04,

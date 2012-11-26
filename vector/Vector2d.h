@@ -10,6 +10,7 @@
 #include <other/core/math/small_sort.h>
 #include <other/core/math/argmax.h>
 #include <other/core/math/argmin.h>
+#include <other/core/math/isfinite.h>
 #include <other/core/math/isnan.h>
 #include <other/core/math/max.h>
 #include <other/core/math/maxabs.h>
@@ -25,7 +26,6 @@ using ::std::ceil;
 using ::std::sin;
 using ::std::cos;
 using ::std::sqrt;
-using ::std::isfinite;
 
 template<class T>
 class Vector<T,2>

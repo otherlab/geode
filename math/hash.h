@@ -7,6 +7,7 @@
 #include <boost/static_assert.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <stdint.h>
 #include <cstring>
 #include <string>
 namespace other {

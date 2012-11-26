@@ -106,7 +106,7 @@ template<class T> static PyObject* str_wrapper(PyObject* self) {
 class ClassBase {
 protected:
   PyTypeObject* const type;
-  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,int offset);
+  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,long offset);
 };
 
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file
@@ -116,7 +116,7 @@ template<class T>
 class Class : public ClassBase {
 public:
   Class(const char* name, bool visible=true)
-    : ClassBase(name,visible,&T::pytype,(long)(typename T::Base*)(T*)1-(long)(T*)1)
+    : ClassBase(name,visible,&T::pytype,(char*)(typename T::Base*)(T*)1-(char*)(T*)1)
   {}
 
   template<class... Args> Class&

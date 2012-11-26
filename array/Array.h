@@ -26,7 +26,6 @@
 #include <other/core/utility/format.h>
 #include <other/core/utility/config.h>
 #include <other/core/utility/range.h>
-#include <other/core/utility/using.h>
 #include <other/core/vector/Vector.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
@@ -57,7 +56,7 @@ public:
   enum Workaround2 {d=dimension};
 
   typedef ArrayBase<T,Array> Base;
-  OTHER_USING(front,back,copy,same_array) 
+  using Base::front;using Base::back;using Base::copy;using Base::same_array;
 private:
   friend class Array<Element>;
   friend class Array<const Element>;

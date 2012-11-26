@@ -46,25 +46,34 @@ void warning(const string& message,const char* function,const char* file,unsigne
 
 void function_is_not_defined(const char* function,const char* file,unsigned int line,const type_info& type) {
   string error=format("%s:%s:%d: Function not defined by %s",file,function,line,type.name());
-  if (error_callback)
+  if (error_callback) {
     error_callback(error);
-  else
+#ifdef WIN32
+    throw RuntimeError("error callback returned: "+error);
+#endif
+  } else
     throw RuntimeError(error);
 }
 
 void not_implemented(const char* function,const char* file,unsigned int line,const char* message) {
   string error=format("%s:%s:%d: Not implemented: %s",file,function,line,message?message:"something");
-  if (error_callback)
+  if (error_callback) {
     error_callback(error);
-  else
+#ifdef WIN32
+    throw RuntimeError("error callback returned: "+error);
+#endif
+  } else
     throw NotImplementedError(error);
 }
 
 void fatal_error(const char* function,const char* file,unsigned int line,const char* message) {
   string error=format("%s:%s:%d: %s",file,function,line,message?message:"Fatal error");
-  if (error_callback)
+  if (error_callback) {
     error_callback(error);
-  else
+#ifdef WIN32
+    throw RuntimeError("error callback returned: "+error);
+#endif
+  } else
     throw RuntimeError(error);
 }
 
@@ -78,9 +87,12 @@ void assertion_failed(const char* function,const char* file,unsigned int line,co
     Log::cerr<<"\n*** Error: "<<error<<'\n'<<endl;
     BREAKPOINT();
   }
-  if (error_callback)
+  if (error_callback) {
     error_callback(error);
-  else
+#ifdef WIN32
+    throw RuntimeError("error callback returned: "+error);
+#endif
+  } else
     throw AssertionError(error);
 }
 

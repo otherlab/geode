@@ -118,7 +118,7 @@ public:
     return *self;
   }
 
-  // allow conversion to Ref<const T>
+  // Allow conversion to Ref<const T>
   operator Ref<const T>() {
     return Ref<const T>(*self, owner_);
   }

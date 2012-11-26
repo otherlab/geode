@@ -37,7 +37,7 @@ protected:
 public:
 
 protected:
-    FiniteVolume(Ref<StrainMeasure<TV,d> > strain,T density,Ref<ConstitutiveModel<T,d> > model,Ptr<PlasticityModel<T,d> > plasticity);
+    FiniteVolume(StrainMeasure<TV,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity);
 public:
     virtual ~FiniteVolume();
 

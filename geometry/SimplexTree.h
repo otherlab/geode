@@ -8,7 +8,6 @@
 #include <other/core/mesh/SegmentMesh.h>
 #include <other/core/mesh/TriangleMesh.h>
 #include <other/core/math/constants.h>
-#include <other/core/utility/using.h>
 #include <vector>
 namespace other{
 
@@ -19,7 +18,8 @@ public:
   typedef BoxTree<TV> Base;
   typedef typename mpl::if_c<d==1,SegmentMesh,TriangleMesh>::type Mesh;
   typedef typename mpl::if_c<d==1,Segment<TV>,Triangle<TV>>::type Simplex;
-  OTHER_USING(leaves,prims,boxes,update_nonleaf_boxes,bounding_box,nodes)
+  using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;
+  using Base::bounding_box;using Base::nodes;
 
   const Ref<const Mesh> mesh;
   const Array<const TV> X;

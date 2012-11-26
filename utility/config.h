@@ -13,7 +13,7 @@ typedef float real;
 #endif
 }
 
-#ifndef Win32
+#ifndef _WIN32
 
 #define OTHER_EXPORT __attribute__ ((visibility("default")))
 #define OTHER_HIDDEN __attribute__ ((visibility("hidden")))
@@ -57,7 +57,7 @@ typedef float real;
 #  define OTHER_NOEXCEPT
 #endif
 
-#else // Win32
+#else // _WIN32
 
 #define OTHER_EXPORT
 #define OTHER_HIDDEN
