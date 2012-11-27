@@ -9,7 +9,7 @@
 #include <other/core/geometry/Ray.h>
 #include <other/core/vector/convert.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem/convenience.hpp>
+#include <other/core/utility/path.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/utility/stl.h>
 #include <other/core/openmesh/triangulator.h>
@@ -109,7 +109,7 @@ static OpenMesh::IO::Options write_options(const TriMesh& mesh, const string& ex
 static void write_helper(const TriMesh& mesh, const string& filename, bool normals) {
   //OMSilencer silencer;
   //Disabler disabler;
-  string ext = boost::algorithm::to_lower_copy(boost::filesystem::extension(filename));
+  string ext = boost::algorithm::to_lower_copy(path::extension(filename));
   if (!OpenMesh::IO::write_mesh(mesh, filename, write_options(mesh,ext,normals)))
     throw IOError(format("TriMesh::write: failed to write mesh to file '%s'", filename));
 }
@@ -387,6 +387,18 @@ TriMesh::Normal TriMesh::smooth_normal(FaceHandle fh,
   }
 
   return n;
+}
+
+int TriMesh::remove_infinite_vertices() {
+  int removed = 0;
+  for (auto v : vertex_handles()) {
+    if (!isfinite(point(v))) {
+      removed++;
+      delete_vertex(v);
+    }
+  }
+  garbage_collection();
+  return removed;
 }
 
 vector<FaceHandle> TriMesh::triangle_fan(vector<VertexHandle> const &ring, VertexHandle center, bool closed) {
@@ -1481,6 +1493,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(n_faces)
     .OTHER_METHOD(n_edges)
     .OTHER_METHOD(n_halfedges)
+    .OTHER_METHOD(remove_infinite_vertices)
     .OTHER_OVERLOADED_METHOD(v_Method_str, read)
     .OTHER_OVERLOADED_METHOD(v_CMethod_str, write)
     .OTHER_METHOD(write_with_normals)

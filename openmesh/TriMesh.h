@@ -365,6 +365,9 @@ public:
   // get an interpolated normal at any point on the mesh
   Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
 
+  // get rid of all infinite or nan vertices (they are simply deleted, along with incident faces)
+  int remove_infinite_vertices();
+
   // dihedral angle between incident faces: positive for convex, negative for concave
   T dihedral_angle(EdgeHandle e) const;
   T dihedral_angle(HalfedgeHandle e) const;

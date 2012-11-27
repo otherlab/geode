@@ -19,11 +19,11 @@ def test_misc():
   assert det((2,0,0),(0,0,3),(0,-1,0))==6
   assert abs(angle_between((1,0,0),(1,1,0))-pi/4)<1e-6
   t = arange(0,pi,.1)
-  a = (2*cos(t),2*sin(t),0)
-  b = (-sin(t),cos(t),0)
-  n = (0,0,-1)*ones_like(a)
-  print a,b,n
-  assert (abs(signed_angle_between(a,b,n)+pi/2)<1e-6).all()
+  a = asarray((2*cos(t),2*sin(t),0*t)).transpose()
+  b = asarray((-sin(t),cos(t),0*t)).transpose()
+  n = tile((0,0,-1), (len(t),1))
+  angles = signed_angle_between(a,b,n)
+  assert (abs(angles+pi/2)<1e-6).all()
 
 def test_magnitude():
   tolerance=1e-6
