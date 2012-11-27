@@ -1,0 +1,1341 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="array">
+      <UniqueIdentifier>{85332495-62d0-4fc1-a8b6-ff44b25cd892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="array\Header Files">
+      <UniqueIdentifier>{5c5eed4f-2989-403a-a783-89a364e0327d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="array\Source Files">
+      <UniqueIdentifier>{d3f2597d-3b5a-4117-b329-7a5dc508847d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="force">
+      <UniqueIdentifier>{b2f2b3f8-8f42-4a2d-86af-01ea48d21803}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="force\Source Files">
+      <UniqueIdentifier>{e83955fb-b05b-4aba-87d1-740d075b00c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="force\Header Files">
+      <UniqueIdentifier>{6b21958f-77c4-4caf-9cd7-3fa0706e054c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="geometry">
+      <UniqueIdentifier>{99d4ffdb-6e5a-4499-950d-bfbc33b635c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="geometry\Header Files">
+      <UniqueIdentifier>{ae5a3655-6bae-45c8-b53b-447619171a8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="geometry\Source Files">
+      <UniqueIdentifier>{277dde36-f28c-4c51-a707-dd9e44bd4577}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="image">
+      <UniqueIdentifier>{066a4d78-0c45-4bf4-90b5-e6e7e705187f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="image\Source Files">
+      <UniqueIdentifier>{86040850-f112-46ea-9e8a-8d320f934257}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="image\Header Files">
+      <UniqueIdentifier>{2d67d215-fdb9-4fb0-8a62-fbcd2d555c98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{40e5de54-3c3d-4953-9790-ef38788bee65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math\Source Files">
+      <UniqueIdentifier>{5ead57f9-1256-4377-925a-9baab4dcb7e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math\Header Files">
+      <UniqueIdentifier>{4013aad2-3256-497a-8039-876c14760974}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mesh">
+      <UniqueIdentifier>{3249f8ac-a05f-4829-83b4-3c3b349e3572}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mesh\Header Files">
+      <UniqueIdentifier>{07a69758-fe02-4ef6-a11f-aa77c1e227a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mesh\Source Files">
+      <UniqueIdentifier>{cf909812-c119-4f64-9cfc-71b1aae6a7ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="openmesh">
+      <UniqueIdentifier>{b0a44bb4-2ec1-4a17-a24a-deca1423b88a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="openmesh\Header Files">
+      <UniqueIdentifier>{a40a228c-3e27-4904-a2b0-ea7805035810}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="openmesh\Source Files">
+      <UniqueIdentifier>{6f52e12f-689f-4fd8-bef3-afaff4e2adbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="python">
+      <UniqueIdentifier>{8a6a275c-d528-40e5-8876-f9e1504a8991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="python\Header Files">
+      <UniqueIdentifier>{4d74981c-c448-44be-935e-0331811e1b23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="python\Source Files">
+      <UniqueIdentifier>{fe86353f-3921-48f3-80a9-5a63377354a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="random">
+      <UniqueIdentifier>{08da060b-3557-4f88-806c-9c53be51ed6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="random\Header Files">
+      <UniqueIdentifier>{163f5591-acb6-43d5-ab67-090e1d061208}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="random\Source Files">
+      <UniqueIdentifier>{4784b494-e9a8-44b0-ab15-c506a84543fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="solver">
+      <UniqueIdentifier>{d8aa1eaf-8141-438c-93e9-1dc41f7003df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="solver\Header Files">
+      <UniqueIdentifier>{f2bcd702-45e9-4040-bec5-e96b70052634}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="solver\Source Files">
+      <UniqueIdentifier>{8c49a011-1ca3-48c6-ae5b-8cbf322e0bc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="structure">
+      <UniqueIdentifier>{2fbad394-1137-44ae-b213-74bbc4335852}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="structure\Header Files">
+      <UniqueIdentifier>{1570d480-b36a-4828-960f-232af4f890e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="structure\Source Files">
+      <UniqueIdentifier>{d5cb335a-0820-4bdb-9409-3fd47924a53c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utility">
+      <UniqueIdentifier>{afd6e899-e487-4bba-913e-0ebb29b5e021}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utility\Header Files">
+      <UniqueIdentifier>{435fdac4-8afc-4741-96c6-4c227b016c45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utility\Source Files">
+      <UniqueIdentifier>{381e9319-45c7-4164-afa9-70dc78704c78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="value">
+      <UniqueIdentifier>{131ef4c1-510d-4524-8d69-961afb823b67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="value\Header Files">
+      <UniqueIdentifier>{b047c7d3-73ca-4e5f-b238-6a23fadfc076}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="value\Source Files">
+      <UniqueIdentifier>{fecf3492-adfb-4484-b531-0919721e8bee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vector">
+      <UniqueIdentifier>{baeeb244-8f21-4c68-8f15-6eb6516a94e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vector\Header Files">
+      <UniqueIdentifier>{9fad7f0e-9a7f-4b82-bfaa-059241cee8e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vector\Source Files">
+      <UniqueIdentifier>{151c25fe-c293-4d72-bf49-574bcd5b3aba}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="array\amap.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\Array.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\Array2d.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\Array3d.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\Array4d.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayAbs.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayBase.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayDifference.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayExpression.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayIter.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayLeftMultiple.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayNdBase.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayNegation.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayPlusScalar.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArrayProduct.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ArraySum.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ConstantMap.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\convert.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\Field.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\forward.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\IdentityMap.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\IndirectArray.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\NdArray.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\NestedArray.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\ProjectedArray.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\RawArray.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\RawField.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\RawStack.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\sort.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\Subarray.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="array\view.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\AnisotropicConstitutiveModel.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\ConstitutiveModel.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\DiagonalizedIsotropicStressDerivative.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\DiagonalizedStressDerivative.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\EtherDrag.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\FiniteVolume.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\Force.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\forward.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\Gravity.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\IsotropicConstitutiveModel.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\LinearBendingElements.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\LinearFiniteVolume.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\LinearFiniteVolumeHex.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\PlasticityModel.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\Springs.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\StrainMeasure.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="force\StrainMeasureHex.h">
+      <Filter>force\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\AnalyticImplicit.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Box.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\BoxScalar.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\BoxTree.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\BoxVector.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Capsule.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Cylinder.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\forward.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\FrameImplicit.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Implicit.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\mass_properties.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\ParticleTree.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Plane.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\platonic.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\polygon.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Ray.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Segment2d.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Segment3d.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\SimplexTree.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Sphere.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\traverse.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Triangle2d.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Triangle3d.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\PngFile.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\MovFile.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\JpgFile.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\Image.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\forward.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\ExrFile.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image\color_utils.h">
+      <Filter>image\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\argmax.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\argmin.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\cbrt.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\choice.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\clamp.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\componentwise.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\constants.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\copysign.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\cube.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\cyclic_shift.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Factorial.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\givens_rotate.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\hash.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\integer_log.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\inverse.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\isfinite.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\isnan.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\lerp.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\max.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\maxabs.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\maxmag.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\mean.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\min.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\minabs.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\minmag.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\One.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\popcount.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\pow.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\rint.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\robust.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\sign.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\small_sort.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\sqr.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\sse.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\uint128.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\wrap.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Zero.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh\forward.h">
+      <Filter>mesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh\PolygonMesh.h">
+      <Filter>mesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh\SegmentMesh.h">
+      <Filter>mesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh\TriangleMesh.h">
+      <Filter>mesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh\TriangleSubdivision.h">
+      <Filter>mesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\color_cast.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\decimate.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\floodfill.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\forward.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\triangulator.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\TriMesh.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\visualize.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\Buffer.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\cast.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\Class.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\config.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\enum.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\exceptions.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\ExceptionValue.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\forward.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\from_python.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\function.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\module.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\new.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\numpy.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\Object.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\outer_wrapper.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\Ptr.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\PyDictAdaptor.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\Ref.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\repr.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\stl.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\to_python.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\utility.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\wrap_call.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\wrap_constructor.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\wrap_field.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\wrap_function.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\wrap_method.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="python\wrap_property.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="random\counter.h">
+      <Filter>random\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="random\forward.h">
+      <Filter>random\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="random\Random.h">
+      <Filter>random\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="random\Sobol.h">
+      <Filter>random\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\brent.h">
+      <Filter>solver\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\powell.h">
+      <Filter>solver\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Empty.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\forward.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Hashtable.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\OperationHash.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Pair.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Quad.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Queue.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Quintuple.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Singleton.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Stack.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Triple.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\Tuple.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structure\UnionFind.h">
+      <Filter>structure\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\base64.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\c_str.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Cloneable.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\CloneArray.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\compose.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\config.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\const_cast.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\CopyConst.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\curry.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\debug.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\DebugPrint.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Enumerate.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\equals.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\format.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\forward.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\from_string.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\HasCheapCopy.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Hasher.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\interrupts.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Log.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\LogEntry.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\LogScope.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\macro_map.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\move.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\openmp.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\overload.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\pass.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\path.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\prioritize.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\process.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\ProgressIndicator.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Protect.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\range.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\remove_commas.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\remove_const_reference.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\safe_bool.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\SanitizeFunction.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\shared_ptr_util.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\STATIC_ASSERT_SAME.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\stl.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\str.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\stream.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\time.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\Unique.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility\using.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\Action.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\Compute.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\ConstValue.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\convert.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\error_value.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\extract.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\forward.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\link.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\Listen.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\Prop.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\PropManager.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value\Value.h">
+      <Filter>value\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\ArithmeticPolicy.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\blas.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\complex.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\convert.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\DiagonalMatrix.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\DiagonalMatrix2x2.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\DiagonalMatrix3x3.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Dot.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\forward.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Frame.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\group.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\magnitude.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix0x0.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix1x1.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix2x2.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix3x2.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix3x3.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Matrix4x4.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\normalize.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Quaternion.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Register.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Rotation.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\ScalarPolicy.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\SolidMatrix.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\SparseMatrix.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\SymmetricMatrix.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\SymmetricMatrix2x2.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\SymmetricMatrix3x3.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\TetrahedralGroup.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Twist.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\UpperTriangularMatrix.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\UpperTriangularMatrix2x2.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\UpperTriangularMatrix3x3.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Vector.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Vector0d.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Vector1d.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Vector2d.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Vector3d.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\Vector4d.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vector\VectorPolicy.h">
+      <Filter>vector\Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="array\Array.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="array\Array2d.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="array\module.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="array\NdArray.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="array\NestedArray.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="array\RawArray.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\ConstitutiveModel.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\DiagonalizedIsotropicStressDerivative.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\EtherDrag.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\FiniteVolume.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\Force.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\Gravity.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\LinearBendingElements.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\LinearFiniteVolume.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\LinearFiniteVolumeHex.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\module.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\NeoHookean.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\PlasticityModel.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\RotatedLinear.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\Springs.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\StrainMeasure.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\StrainMeasureHex.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\AnalyticImplicit.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\BoxScalar.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\BoxTree.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\BoxVector.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Cylinder.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\FrameImplicit.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Implicit.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\mass_properties.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\module.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\ParticleTree.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Plane.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\platonic.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\polygon.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Ray.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Segment2d.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Segment3d.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\SimplexTree.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Sphere.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Triangle2d.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Triangle3d.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\color_utils.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\ExrFile.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\Image.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\JpgFile.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\module.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\MovFile.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image\PngFile.cpp">
+      <Filter>image\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="math\hash.cpp">
+      <Filter>math\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="math\module.cpp">
+      <Filter>math\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="math\numeric_limits.cpp">
+      <Filter>math\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="math\uint128.cpp">
+      <Filter>math\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh\module.cpp">
+      <Filter>mesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh\PolygonMesh.cpp">
+      <Filter>mesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh\SegmentMesh.cpp">
+      <Filter>mesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh\TriangleMesh.cpp">
+      <Filter>mesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh\TriangleSubdivision.cpp">
+      <Filter>mesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\decimate.cpp">
+      <Filter>openmesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\module.cpp">
+      <Filter>openmesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\triangulator.cpp">
+      <Filter>openmesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\TriMesh.cpp">
+      <Filter>openmesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\visualize.cpp">
+      <Filter>openmesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\Buffer.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\Class.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\ClassTest.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\exceptions.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\ExceptionValue.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\from_python.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\function.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\module.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\numpy.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\Object.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\Ref.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\repr.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\wrap_constructor.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\wrap_field.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\wrap_function.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\wrap_method.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\wrap_property.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="random\counter.cpp">
+      <Filter>random\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="random\module.cpp">
+      <Filter>random\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="random\Random.cpp">
+      <Filter>random\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="random\Sobol.cpp">
+      <Filter>random\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solver\brent.cpp">
+      <Filter>solver\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solver\module.cpp">
+      <Filter>solver\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solver\powell.cpp">
+      <Filter>solver\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="structure\Tuple.cpp">
+      <Filter>structure\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\base64.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\CloneArray.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\curry.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\debug.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\DebugPrint.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\format.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\interrupts.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\Log.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\LogEntry.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\LogScope.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\module.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\path.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\process.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\ProgressIndicator.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\safe_bool.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\stream.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\time.cpp">
+      <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\Action.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\Compute.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\ConstValue.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\Listen.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\module.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\Prop.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\PropManager.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value\Value.cpp">
+      <Filter>value\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\blas.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Frame.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\group.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Matrix.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Matrix2x2.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Matrix3x2.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Matrix3x3.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Matrix4x4.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\module.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Register.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Rotation.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\SolidMatrix.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\SparseMatrix.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\SymmetricMatrix3x3.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\test_matrix.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\TetrahedralGroup.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector\Vector.cpp">
+      <Filter>vector\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
