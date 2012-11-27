@@ -3,6 +3,7 @@
 //#####################################################################
 #pragma once
 
+#include <other/core/utility/config.h>
 namespace boost {
 template<class T> class shared_ptr;
 }
@@ -20,9 +21,15 @@ template<class T> struct Hide {
 };
 
 // A list of types
+#ifdef OTHER_VARIADIC
 template<class... Args> struct Types {
   typedef Types type;
 };
+#else
+template<class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void,class A6=void,class A7=void,class A8=void,class A9=void> struct Types {
+  typedef Types type;
+};
+#endif
 
 // Null pointer convenience class
 struct null {
@@ -34,5 +41,9 @@ struct null {
     return boost::shared_ptr<T>();
   }
 };
+
+// OTHER_REMOVE_PARENS((a,b,c)) = a,b,c
+#define OTHER_REMOVE_PARENS_HELPER(...) __VA_ARGS__
+#define OTHER_REMOVE_PARENS(arg) OTHER_REMOVE_PARENS_HELPER arg
 
 }

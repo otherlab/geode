@@ -106,7 +106,7 @@ template<class T> static PyObject* str_wrapper(PyObject* self) {
 class ClassBase {
 protected:
   PyTypeObject* const type;
-  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,long offset);
+  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset);
 };
 
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file
@@ -119,6 +119,8 @@ public:
     : ClassBase(name,visible,&T::pytype,(char*)(typename T::Base*)(T*)1-(char*)(T*)1)
   {}
 
+#ifdef OTHER_VARIADIC
+
   template<class... Args> Class&
   init(Types<Args...>) {
     if (type->tp_new)
@@ -126,6 +128,17 @@ public:
     type->tp_new = wrapped_constructor<T,Args...>;
     return *this;
   }
+
+#else // Nonvariadic version
+
+  template<class Args> Class& init(Args) {
+    if (type->tp_new)
+      throw TypeError("Constructor already specified (can't wrap overloaded constructors directly)");
+    type->tp_new = WrapConstructor<T,Args>::wrap;
+    return *this;
+  }
+
+#endif
 
   template<class Field> Class&
   field(const char* name, Field field) {
@@ -187,8 +200,11 @@ const_field(S T::* field) {
   return field;
 } 
 
-#define OTHER_INIT(...) \
-  init(Enumerate<__VA_ARGS__>())
+#ifdef OTHER_VARIADIC
+#define OTHER_INIT(...) init(Enumerate<__VA_ARGS__>())
+#else
+#define OTHER_INIT(...) init(Types<__VA_ARGS__>())
+#endif
 
 #define OTHER_FIELD_2(name,field_) \
   field(name,&Self::field_)

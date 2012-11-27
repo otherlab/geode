@@ -23,7 +23,7 @@ void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr) {
   throw PythonError();
 }
 
-ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,long offset)
+ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset)
   :type(type) {
 
   // Verify that OTHER_DECLARE_TYPE has been used, and initialize name

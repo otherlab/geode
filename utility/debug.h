@@ -7,13 +7,17 @@
 #include <typeinfo>
 #include <string>
 
+#ifdef _WIN32
+#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__FUNCTION__) // cast to const char* to work around error in noreturn
+#else
 #define OTHER_DEBUG_FUNCTION_NAME ((const char*)__PRETTY_FUNCTION__) // cast to const char* to work around error in noreturn
+#endif
 
 #define OTHER_WARN_IF_NOT_OVERRIDDEN() \
-  do{static bool __first_time__=true;if(__first_time__){other::debug::warn_if_not_overridden(__FUNCTION__,__FILE__,__LINE__,typeid(*this));__first_time__=false;}}while(0)
+  do{static bool __first_time__=true;if(__first_time__){other::debug::warn_if_not_overridden(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this));__first_time__=false;}}while(0)
 
 #define OTHER_WARNING(message) \
-  do{static bool __first_time__=true;if(__first_time__){other::debug::warning((message),__FUNCTION__,__FILE__,__LINE__);__first_time__=false;}}while(0)
+  do{static bool __first_time__=true;if(__first_time__){other::debug::warning((message),OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__);__first_time__=false;}}while(0)
 
 #define OTHER_FUNCTION_IS_NOT_DEFINED() \
   other::debug::function_is_not_defined(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this))

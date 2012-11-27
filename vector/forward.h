@@ -32,7 +32,7 @@ template<class T,int d> struct IsScalarBlock<Vector<T,d> >:public mpl::and_<mpl:
 template<class T,int d> struct IsScalarVectorSpace<Vector<T,d> >:public mpl::and_<mpl::bool_<(d>0)>,IsScalarVectorSpace<T> >{};
 template<class T,int d> struct is_packed_pod<Vector<T,d> >:public mpl::and_<mpl::bool_<(d>0)>,is_packed_pod<T> >{};
 
-template<class T,int m,int n=m> class Matrix;
+template<class T,int m_,int n_=m_> class Matrix;
 template<class T,int d> class DiagonalMatrix;
 template<class T,int d> class SymmetricMatrix;
 template<class T,int d> class UpperTriangularMatrix;

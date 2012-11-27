@@ -15,6 +15,7 @@ typedef float real;
 
 #ifndef _WIN32
 
+#define OTHER_VARIADIC
 #define OTHER_EXPORT __attribute__ ((visibility("default")))
 #define OTHER_HIDDEN __attribute__ ((visibility("hidden")))
 

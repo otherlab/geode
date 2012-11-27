@@ -62,54 +62,54 @@ private:
   friend class Array<const Element>;
   struct Unusable{};
 
-  int m;
+  int m_;
   int max_size_; // buffer size
   T* data_;
   PyObject* owner_; // python object that owns the buffer
 public:
 
   Array()
-    : m(0), max_size_(0), data_(0), owner_(0) {}
+    : m_(0), max_size_(0), data_(0), owner_(0) {}
 
   explicit Array(const Vector<int,d> &sizes, const bool initialize=true)
-    : m(sizes.x), max_size_(sizes.x) {
-    assert(m>=0);
-    Buffer* buffer = Buffer::new_<T>(m);
+    : m_(sizes.x), max_size_(sizes.x) {
+    assert(m_>=0);
+    Buffer* buffer = Buffer::new_<T>(m_);
     data_ = (T*)buffer->data;
     owner_ = (PyObject*)buffer;
     if (initialize) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_,0,m*sizeof(T));
+        memset(data_,0,m_*sizeof(T));
       else
-        for (int i=0;i<m;i++)
+        for (int i=0;i<m_;i++)
           const_cast<Element*>(data_)[i] = T();
     }
   }
 
-  explicit Array(const int m, const bool initialize=true)
-    : m(m), max_size_(m) {
-    assert(m>=0);
-    Buffer* buffer = Buffer::new_<T>(m);
+  explicit Array(const int m_, const bool initialize=true)
+    : m_(m_), max_size_(m_) {
+    assert(m_>=0);
+    Buffer* buffer = Buffer::new_<T>(m_);
     data_ = (T*)buffer->data;
     owner_ = (PyObject*)buffer;
     if (initialize) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_,0,m*sizeof(T));
+        memset(data_,0,m_*sizeof(T));
       else
-        for (int i=0;i<m;i++)
+        for (int i=0;i<m_;i++)
           const_cast<Element*>(data_)[i] = T();
     }
   }
 
   Array(const Array& source)
-    : m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     OTHER_XINCREF(owner_);
   }
 
   Array(typename mpl::if_c<is_const,const Array<Element>&,Unusable>::type source)
-    : m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     OTHER_XINCREF(owner_);
@@ -117,7 +117,7 @@ public:
 
   template<class TArray>
   explicit Array(const TArray& source, typename boost::enable_if<IsShareableArray<TArray>,Unusable>::type unused=Unusable())
-    : m(source.m), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : m_(source.size()), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     STATIC_ASSERT_SAME(Element,typename TArray::Element);
@@ -126,19 +126,19 @@ public:
 
   explicit Array(const NdArray<T>& array) {
     OTHER_ASSERT(array.rank()==1);
-    m = max_size_=array.shape[0];
+    m_ = max_size_=array.shape[0];
     data_ = array.data(); 
     owner_ = array.owner();
   }
 
-  Array(const int m, T* data, PyObject* owner)
-    : m(m), max_size_(m), data_(data), owner_(owner) {
+  Array(const int m_, T* data, PyObject* owner)
+    : m_(m_), max_size_(m_), data_(data), owner_(owner) {
     assert(owner_ || !data_);
     OTHER_XINCREF(owner_);
   }
 
   Array(const Vector<int,1>& counts, T* data, PyObject* owner)
-    : m(counts.x), max_size_(m), data_(data), owner_(owner) {
+    : m_(counts.x), max_size_(m_), data_(data), owner_(owner) {
     assert(owner_ || !data_);
     OTHER_XINCREF(owner_);
   }
@@ -148,33 +148,33 @@ public:
   }
 
   RawArray<T> raw() const { // Return a non-owning array for use in threaded code where reference counting is bad
-    return RawArray<T>(m,data_);
+    return RawArray<T>(m_,data_);
   }
 
   int size() const {
-    return m;
+    return m_;
   }
 
   int total_size() const {
-    return m;
+    return m_;
   }
 
   Vector<int,1> sizes() const {
-    return Vector<int,1>(m);
+    return Vector<int,1>(m_);
   }
 
   T& operator[](const int i) const {
-    assert(unsigned(i)<unsigned(m));
+    assert(unsigned(i)<unsigned(m_));
     return data_[i];
   }
 
   T& operator()(const int i) const {
-    assert(unsigned(i)<unsigned(m));
+    assert(unsigned(i)<unsigned(m_));
     return data_[i];
   }
 
   bool valid(const int i) const {
-    return unsigned(i)<unsigned(m);
+    return unsigned(i)<unsigned(m_);
   }
 
   T* data() const {
@@ -200,11 +200,11 @@ public:
   }
 
   void clear() {
-    m = 0;
+    m_ = 0;
   }
 
   void swap(Array& other) {
-    std::swap(m,other.m);
+    std::swap(m_,other.m_);
     std::swap(max_size_,other.max_size_);
     std::swap(data_,other.data_);
     std::swap(owner_,other.owner_);
@@ -215,7 +215,7 @@ public:
     // Share a reference to the source buffer without copying it
     OTHER_XINCREF(source.owner_);
     owner_ = source.owner_;
-    m = source.m;
+    m_ = source.m_;
     max_size_ = source.max_size_;
     data_ = source.data_;
     // Call decref last in case of side effects or this==&source
@@ -229,7 +229,7 @@ public:
     // Share a reference to the source buffer without copying it
     OTHER_XINCREF(source.owner_);
     owner_ = source.owner_;
-    m = source.m;
+    m_ = source.m_;
     max_size_ = source.max_size_;
     data_ = source.data_;
     // Call decref last in case of side effects or this==&source
@@ -246,14 +246,14 @@ public:
     if (!same_array(*this,source))
       for (int i=0;i<source_m;i++)
         data_[i] = source[i];
-    m = source_m;
+    m_ = source_m;
   }
 
   template<class TArray> void copy(const TArray& source) const {
     // Const, so no resizing allowed
     STATIC_ASSERT_SAME(T,typename TArray::Element);
     int source_m = source.size();
-    assert(m==source_m);
+    assert(m_==source_m);
     if (!same_array(*this,source))
       for (int i=0;i<source_m;i++)
         data_[i] = source[i];
@@ -263,7 +263,7 @@ private:
   void grow_buffer(const int max_size_new, const bool copy_existing_elements=true) {
     if (max_size_>=max_size_new) return;
     Buffer* new_owner = Buffer::new_<T>(max_size_new);
-    int m_ = m; // teach compiler that m is constant
+    int m_ = this->m_; // teach compiler that m_ is constant
     if (copy_existing_elements)
       for (int i=0;i<m_;i++)
         ((T*)new_owner->data)[i] = data_[i];
@@ -281,18 +281,18 @@ public:
 
   void resize(const int m_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
     preallocate(m_new,copy_existing_elements);
-    if (initialize_new_elements && m_new>m) {
+    if (initialize_new_elements && m_new>m_) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_+m,0,(m_new-m)*sizeof(T));
+        memset(data_+m_,0,(m_new-m_)*sizeof(T));
       else
-        for (int i=m;i<m_new;i++) data_[i] = T();
+        for (int i=m_;i<m_new;i++) data_[i] = T();
     }
-    m = m_new;
+    m_ = m_new;
   }
 
   void exact_resize(const int m_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) { // Zero elbow room
-    if (m==m_new) return;
-    int m_end = other::min(m,m_new);
+    if (m_==m_new) return;
+    int m_end = other::min(m_,m_new);
     if (max_size_!=m_new) {
       Buffer* new_owner = Buffer::new_<T>(m_new);
       if (copy_existing_elements)
@@ -310,26 +310,26 @@ public:
         for (int i=m_end;i<m_new;i++)
           data_[i] = T();
     }
-    m = m_new;
+    m_ = m_new;
   }
 
   void compact() { // Note: if the buffer is shared, the memory will not be deallocated
-    if (m<max_size_)
-      exact_resize(m);
+    if (m_<max_size_)
+      exact_resize(m_);
   }
 
   RawArray<T> reshape(int m_new) const {
-    assert(m_new==m);
+    assert(m_new==m_);
     return RawArray<T>(m_new,data());
   }
 
   RawArray<T,2> reshape(int m_new,int n_new) const {
-    assert(m_new*n_new==m);
+    assert(m_new*n_new==m_);
     return RawArray<T,2>(m_new,n_new,data());
   }
 
   const Array<T,2> reshape_own(int m_new,int n_new) const {
-    assert(m_new*n_new==m);
+    assert(m_new*n_new==m_);
     return Array<T,2>(m_new,n_new,data(),owner_);
   }
 
@@ -338,12 +338,12 @@ public:
   }
 
   RawArray<T,3> reshape(int m_new,int n_new,int mn_new) const {
-    assert(m_new*n_new*mn_new==m);
+    assert(m_new*n_new*mn_new==m_);
     return RawArray<T,3>(m_new,n_new,mn_new,data());
   }
 
   const Array<T,3> reshape_own(int m_new,int n_new,int mn_new) const {
-    assert(m_new*n_new*mn_new==m);
+    assert(m_new*n_new*mn_new==m_);
     return Array<T,3>(m_new,n_new,mn_new,data(),owner_);
   }
 
@@ -352,31 +352,31 @@ public:
   }
 
   int append(const T& element) OTHER_ALWAYS_INLINE {
-    if (m<max_size_)
-      data_[m++] = element;
+    if (m_<max_size_)
+      data_[m_++] = element;
     else {
       T save = element; // element could be reference into the current array
-      preallocate(m+1);
-      data_[m++] = save;
+      preallocate(m_+1);
+      data_[m_++] = save;
     }
-    return m-1;
+    return m_-1;
   }
 
   int append_assuming_enough_space(const T& element) OTHER_ALWAYS_INLINE {
-    assert(m<max_size_);
-    data_[m++] = element;
-    return m-1;
+    assert(m_<max_size_);
+    data_[m_++] = element;
+    return m_-1;
   }
 
   template<class TArray> void append_elements(const TArray& append_array) {
     STATIC_ASSERT_SAME(T,typename TArray::Element);
     int append_m = append_array.size(),
-        m_new = m+append_m;
+        m_new = m_+append_m;
     if (max_size_<m_new)
       grow_buffer(m_new);
     for (int i=0;i<append_m;i++)
-      data_[m+i] = append_array[i];
-    m = m_new;
+      data_[m_+i] = append_array[i];
+    m_ = m_new;
   }
 
   void append_unique(const T& element) {
@@ -392,35 +392,35 @@ public:
   }
 
   void remove_index(const int index) { // Preserves ordering of remaining elements
-    assert(unsigned(index)<unsigned(m));
-    for (int i=index;i<m-1;i++)
+    assert(unsigned(index)<unsigned(m_));
+    for (int i=index;i<m_-1;i++)
       data_[i] = data_[i+1];
-    m--;
+    m_--;
   }
 
   void remove_index_lazy(const int index) { // Fill holes with back()
-    assert(unsigned(index)<unsigned(m));
-    data_[index] = data_[--m];
+    assert(unsigned(index)<unsigned(m_));
+    data_[index] = data_[--m_];
   }
 
   void insert(const T& element, const int index) {
-    preallocate(m+1);
-    m++;
-    for (int i=m-1;i>index;i--)
+    preallocate(m_+1);
+    m_++;
+    for (int i=m_-1;i>index;i--)
       data_[i] = data_[i-1];
     data_[index] = element;
   }
 
   T& pop() { // Returns a temporarily valid reference (safe since ~T() is trivial)
-    assert(m);
-    return data_[--m];
+    assert(m_);
+    return data_[--m_];
   }
 
   Array<const T> pop_elements(const int count) { // return value shares ownership with original
     BOOST_MPL_ASSERT((boost::has_trivial_destructor<T>));
-    assert(m-count>=0);
-    m -= count;
-    return Array<const T>(count,data_+m,owner_);
+    assert(m_-count>=0);
+    m_ -= count;
+    return Array<const T>(count,data_+m_,owner_);
   }
 
   Array<Element>& const_cast_() {
@@ -436,12 +436,12 @@ public:
   }
 
   RawArray<T> slice(int lo,int hi) const {
-    assert(unsigned(lo)<=unsigned(hi) && unsigned(hi)<=unsigned(m));
+    assert(unsigned(lo)<=unsigned(hi) && unsigned(hi)<=unsigned(m_));
     return RawArray<T>(hi-lo,data_+lo);
   }
 
   Array<T> slice_own(int lo,int hi) const {
-    assert(unsigned(lo)<=unsigned(hi) && unsigned(hi)<=unsigned(m));
+    assert(unsigned(lo)<=unsigned(hi) && unsigned(hi)<=unsigned(m_));
     return Array(hi-lo,data_+lo,owner_);
   }
 
@@ -455,7 +455,7 @@ public:
 
   void zero() const {
     BOOST_MPL_ASSERT((IsScalarVectorSpace<T>));
-    memset(data_,0,m*sizeof(T));
+    memset(data_,0,m_*sizeof(T));
   }
 
   template<class T2> typename boost::enable_if<boost::is_same<T2,Element>,Array<T>>::type as() const {
@@ -463,8 +463,8 @@ public:
   }
 
   template<class T2> typename boost::disable_if<boost::is_same<T2,Element>,Array<T2>>::type as() const {
-    Array<T2> copy(m,false);
-    for (int i=0;i<m;i++) copy[i] = data_[i];
+    Array<T2> copy(m_,false);
+    for (int i=0;i<m_;i++) copy[i] = data_[i];
     return copy;
   }
 };

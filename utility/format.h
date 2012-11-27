@@ -49,8 +49,38 @@ static inline const char* format_sanitize(const string& s) {
   return s.c_str();
 }
 
+#ifdef OTHER_VARIADIC
+
 template<class... Args> static inline string format(const char* format, const Args&... args) {
   return format_helper(format,format_sanitize(args)...);
 }
+
+#else // Unpleasant nonvariadic versions
+
+static inline string format(const char* format) {
+  return format_helper(format);
+}
+
+template<class A0> static inline string format(const char* format, const A0& a0) {
+  return format_helper(format,format_sanitize(a0));
+}
+
+template<class A0,class A1> static inline string format(const char* format, const A0& a0, const A1& a1) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1));
+}
+
+template<class A0,class A1,class A2> static inline string format(const char* format, const A0& a0, const A1& a1, const A2& a2) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2));
+}
+
+template<class A0,class A1,class A2,class A3> static inline string format(const char* format, const A0& a0, const A1& a1, const A2& a2, const A3& a3) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3));
+}
+
+template<class A0,class A1,class A2,class A3,class A4> static inline string format(const char* format, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4));
+}
+
+#endif
 
 }

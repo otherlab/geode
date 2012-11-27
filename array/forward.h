@@ -10,8 +10,13 @@ namespace other {
 namespace mpl = boost::mpl;
 
 template<class T,class TArray> class ArrayBase;
-template<class T,class TArray,class... Args> class ArrayExpression;
 template<class T,class TArray> class ArrayNdBase;
+
+#ifdef OTHER_VARIADIC
+template<class T,class TArray,class... Args> class ArrayExpression;
+#else
+template<class T,class TArray,class A0=void,class A1=void> class ArrayExpression;
+#endif
 
 template<class T,int d> class Vector;
 template<class T,int d=1> class Array;
