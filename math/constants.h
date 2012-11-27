@@ -10,7 +10,11 @@ namespace other {
 
 using std::numeric_limits;
 
+#ifdef _WIN32
+const double pi = 3.14159265358979323846;
+#else
 const double pi = M_PI;
+#endif
 const double speed_of_light = 2.99792458e8; // m/s
 const double plancks_constant = 6.6260755e-34; // J*s
 const double boltzmanns_constant = 1.380658e-23; // J/K

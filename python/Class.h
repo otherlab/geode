@@ -235,7 +235,7 @@ const_field(S T::* field) {
 #define OTHER_REPR() repr()
 
 #define OTHER_CALL(...) \
-  call(wrap_call<Self,__VA_ARGS__ >())
+  call(WrapCall<Self,__VA_ARGS__>::wrap())
 
 #define OTHER_GET(name) \
   property(#name,&Self::name)

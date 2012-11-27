@@ -271,11 +271,11 @@ public:
   }
 
   iterator end() {
-    return iterator(table_,table_.size());
+    return iterator(table_,(int)table_.size());
   }
 
   const_iterator end() const {
-    return const_iterator(table_,table_.size());
+    return const_iterator(table_,(int)table_.size());
   }
 };
 

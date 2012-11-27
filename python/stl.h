@@ -12,11 +12,10 @@
 #include <other/core/python/from_python.h>
 #include <other/core/python/to_python.h>
 #include <other/core/utility/config.h>
+#include <other/core/utility/tr1.h>
 #include <vector>
 #include <set>
 #include <map>
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
 
 // to_python needs to go in the std namespace to make Koenig lookup work
 namespace std {

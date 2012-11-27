@@ -9,7 +9,7 @@ namespace other{
 #ifdef OTHER_REAL
 typedef OTHER_REAL real;
 #else
-typedef float real;
+typedef double real;
 #endif
 }
 

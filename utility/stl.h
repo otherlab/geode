@@ -2,13 +2,12 @@
 
 #include <other/core/python/config.h> // Must be included first
 #include <other/core/utility/pass.h>
+#include <other/core/utility/tr1.h>
 #include <vector>
 #include <deque>
 #include <set>
 #include <list>
 #include <map>
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
 #include <algorithm>
 #include <iostream>
 #include <boost/type_traits.hpp>

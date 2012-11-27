@@ -17,13 +17,12 @@
 #include <other/core/python/Class.h>
 #include <other/core/utility/config.h>
 #include <other/core/utility/format.h>
+#include <other/core/utility/tr1.h>
 #include <boost/mpl/void.hpp>
 #include <boost/utility/enable_if.hpp>
-#include <tr1/unordered_map>
 namespace other{
 
 using std::make_pair;
-using std::tr1::unordered_map;
 
 template<class E> class PyEnum : public Object {
 public:

@@ -86,6 +86,7 @@ OTHER_WRAP_CONSTRUCTOR(2,(class A0,class A1),(A0,A1))
 OTHER_WRAP_CONSTRUCTOR(3,(class A0,class A1,class A2),(A0,A1,A2))
 OTHER_WRAP_CONSTRUCTOR(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3))
 OTHER_WRAP_CONSTRUCTOR(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4))
+OTHER_WRAP_CONSTRUCTOR(6,(class A0,class A1,class A2,class A3,class A4,class A5),(A0,A1,A2,A3,A4,A5))
 
 #undef OTHER_WRAP_CONSTRUCTOR_2
 #undef OTHER_WRAP_CONSTRUCTOR

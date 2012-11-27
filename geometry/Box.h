@@ -8,6 +8,7 @@
 //#####################################################################
 #pragma once
 
+#include <other/core/utility/config.h>
 #include <other/core/geometry/BoxScalar.h>
 #include <other/core/geometry/BoxVector.h>
 namespace other {
@@ -15,12 +16,15 @@ namespace other {
 using std::numeric_limits;
 
 #ifdef OTHER_VARIADIC
+
 template<class TV,class... Rest> static inline Box<TV> bounding_box(const TV& p0, const TV& p1, const Rest&... rest) {
   Box<TV> box(p0);
   box.enlarge_nonempty(p1,rest...);
   return box;
 }
-#else
+
+#else // Unpleasant nonvariadic versions
+
 template<class TV> static inline Box<TV> bounding_box(const TV& p0, const TV& p1) {
   Box<TV> box(p0);
   box.enlarge_nonempty(p1);
@@ -36,6 +40,7 @@ template<class TV> static inline Box<TV> bounding_box(const TV& p0, const TV& p1
   box.enlarge_nonempty(p1,p2,p3);
   return box;
 }
+
 #endif
 
 template<class TArray> inline Box<typename TArray::Element> bounding_box(const TArray& points) {

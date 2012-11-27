@@ -91,6 +91,10 @@ template<class T,class A0,class A1,class A2,class A3,class A4> static inline Ref
 #define OTHER_CONVERT_ARGS_3 OTHER_CONVERT_ARGS_2,from_python<A2>(PyTuple_GET_ITEM(args,2))
 #define OTHER_CONVERT_ARGS_4 OTHER_CONVERT_ARGS_3,from_python<A3>(PyTuple_GET_ITEM(args,3))
 #define OTHER_CONVERT_ARGS_5 OTHER_CONVERT_ARGS_4,from_python<A4>(PyTuple_GET_ITEM(args,4))
+#define OTHER_CONVERT_ARGS_6 OTHER_CONVERT_ARGS_5,from_python<A5>(PyTuple_GET_ITEM(args,5))
+#define OTHER_CONVERT_ARGS_7 OTHER_CONVERT_ARGS_6,from_python<A6>(PyTuple_GET_ITEM(args,6))
+#define OTHER_CONVERT_ARGS_8 OTHER_CONVERT_ARGS_7,from_python<A7>(PyTuple_GET_ITEM(args,7))
+#define OTHER_CONVERT_ARGS_9 OTHER_CONVERT_ARGS_8,from_python<A8>(PyTuple_GET_ITEM(args,8))
 
 #endif
 

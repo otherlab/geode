@@ -41,13 +41,13 @@ wrap_call() {
 
 #else // Unpleasant nonvariadic versions
 
-template<class R,class T,class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void> struct WrapCall;
+template<class T,class R,class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void> struct WrapCall;
 
 #define OTHER_WRAP_CALL(n,ARGS,Args) \
   OTHER_WRAP_CALL_2(n,(,OTHER_REMOVE_PARENS(ARGS)),(,OTHER_REMOVE_PARENS(Args)))
 
 #define OTHER_WRAP_CALL_2(n,CARGS,CArgs) \
-  template<class R,class T OTHER_REMOVE_PARENS(CARGS)> struct WrapCall<R,T OTHER_REMOVE_PARENS(CArgs)> { \
+  template<class T,class R OTHER_REMOVE_PARENS(CARGS)> struct WrapCall<T,R OTHER_REMOVE_PARENS(CArgs)> { \
     /* Inner wrapper: convert arguments and call method */ \
     static R inner_wrapper(PyObject* self,PyObject* args,PyObject* kwargs) { \
       Py_ssize_t size = PyTuple_GET_SIZE(args); \

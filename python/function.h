@@ -27,11 +27,34 @@ template<class R> struct PythonFunctionWrapper {
     return from_python<R>(&*steal_ref(*r));
   }
 
+#ifdef OTHER_VARIADIC
+
   template<class... Args> R operator()(Args&&... args) {
     PyObject* r = PyObject_CallFunctionObjArgs(&*f,&*to_python_check(args)...,0);
     if (!r) throw_python_error();
     return return_(r);
   }
+
+#else // Unpleasant nonvariadic versions
+
+  #define OTHER_FUNCTION_CALL(ARGS,Args,convert) \
+    OTHER_FUNCTION_CALL_2((template<OTHER_REMOVE_PARENS(ARGS)>),Args,(OTHER_REMOVE_PARENS(convert),))
+
+  #define OTHER_FUNCTION_CALL_2(TARGS,Args,convertC) \
+    OTHER_REMOVE_PARENS(TARGS) R operator() Args { \
+      PyObject* r = PyObject_CallFunctionObjArgs(&*f,convertC 0); \
+      if (!r) throw_python_error(); \
+      return return_(r); \
+    }
+
+  OTHER_FUNCTION_CALL_2((),(),())
+  OTHER_FUNCTION_CALL((class A0),(A0&& a0),(&*to_python_check(a0)))
+  OTHER_FUNCTION_CALL((class A0,class A1),(A0&& a0,A1&& a1),(&*to_python_check(a0),&*to_python_check(a1)))
+  OTHER_FUNCTION_CALL((class A0,class A1,class A2),(A0&& a0,A1&& a1,A2&& a2),(&*to_python_check(a0),&*to_python_check(a1),&*to_python_check(a2)))
+  #undef OTHER_FUNCTION_CALL_2
+  #undef OTHER_FUNCTION_CALL
+
+#endif
 };
 
 template<> void PythonFunctionWrapper<void>::

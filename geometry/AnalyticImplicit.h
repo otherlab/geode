@@ -17,9 +17,19 @@ public:
   typedef Implicit<TV> Base;
 
 protected:
+#ifdef OTHER_VARIADIC
+
   template<class... Args>
   AnalyticImplicit(const Args&... args)
-      :Shape(args...) {}
+      : Shape(args...) {}
+
+#else // Unpleasant nonvariadic versions
+
+  template<class A0> AnalyticImplicit(const A0& a0) : Shape(a0) {}
+  template<class A0,class A1> AnalyticImplicit(const A0& a0,const A1& a1) : Shape(a0,a1) {}
+  template<class A0,class A1,class A2> AnalyticImplicit(const A0& a0,const A1& a1,const A2& a2) : Shape(a0,a1,a2) {}
+
+#endif
 public:
   ~AnalyticImplicit();
 

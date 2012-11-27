@@ -14,8 +14,13 @@
 namespace other {
 
 void OTHER_NORETURN(throw_tuple_mismatch_error(int expected, int got)) OTHER_EXPORT;
-template<class Tup,class... Enum> static inline PyObject* tuple_to_python_helper(const Tup& src, Types<Enum...>);
-template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyObject* object, Types<Enum...>);
+
+template<class T> static inline Tuple<T>       as_tuple(const Vector<T,1>& v) { return Tuple<T>      (v.x); }
+template<class T> static inline Tuple<T,T>     as_tuple(const Vector<T,2>& v) { return Tuple<T,T>    (v.x,v.y); }
+template<class T> static inline Tuple<T,T,T>   as_tuple(const Vector<T,3>& v) { return Tuple<T,T,T>  (v.x,v.y,v.z); }
+template<class T> static inline Tuple<T,T,T,T> as_tuple(const Vector<T,4>& v) { return Tuple<T,T,T,T>(v.x,v.y,v.z,v.w); }
+
+#ifdef OTHER_VARIADIC
 
 // Convenience and conversion
 
@@ -23,10 +28,8 @@ template<class... Args> static inline Tuple<Args...> tuple(const Args&... args) 
   return Tuple<Args...>(args...);
 }
 
-template<class T> static inline Tuple<T>       as_tuple(const Vector<T,1>& v) { return Tuple<T>      (v.x); }
-template<class T> static inline Tuple<T,T>     as_tuple(const Vector<T,2>& v) { return Tuple<T,T>    (v.x,v.y); }
-template<class T> static inline Tuple<T,T,T>   as_tuple(const Vector<T,3>& v) { return Tuple<T,T,T>  (v.x,v.y,v.z); }
-template<class T> static inline Tuple<T,T,T,T> as_tuple(const Vector<T,4>& v) { return Tuple<T,T,T,T>(v.x,v.y,v.z,v.w); }
+template<class Tup,class... Enum> static inline PyObject* tuple_to_python_helper(const Tup& src, Types<Enum...>);
+template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyObject* object, Types<Enum...>);
 
 template<class... Args> PyObject* to_python(const Tuple<Args...>& src) {
   return tuple_to_python_helper(src,Enumerate<Args...>());
@@ -109,5 +112,51 @@ template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyO
   if (len!=n) throw_tuple_mismatch_error(n,len);
   return Tup(convert_sequence_item<Enum>(&*seq)...);
 }
+
+#else // Unpleasant nonvariadic versions
+
+static inline Tuple<> tuple() { return Tuple<>(); }
+template<class A0> static inline Tuple<A0> tuple(const A0& a0) { return Tuple<A0>(a0); }
+template<class A0,class A1> static inline Tuple<A0,A1> tuple(const A0& a0,const A1& a1) { return Tuple<A0,A1>(a0,a1); }
+template<class A0,class A1,class A2> static inline Tuple<A0,A1,A2> tuple(const A0& a0,const A1& a1,const A2& a2) { return Tuple<A0,A1,A2>(a0,a1,a2); }
+template<class A0,class A1,class A2,class A3> static inline Tuple<A0,A1,A2,A3> tuple(const A0& a0,const A1& a1,const A2& a2,const A3& a3) { return Tuple<A0,A1,A2,A3>(a0,a1,a2,a3); }
+template<class A0,class A1,class A2,class A3,class A4> static inline Tuple<A0,A1,A2,A3,A4> tuple(const A0& a0,const A1& a1,const A2& a2,const A3& a3,const A4& a4) { return Tuple<A0,A1,A2,A3,A4>(a0,a1,a2,a3,a4); }
+
+#define OTHER_TUPLE_CONVERT(n,ARGS,Args,fromargs,toargs) \
+  template<OTHER_REMOVE_PARENS(ARGS)> struct FromPython<Tuple<OTHER_REMOVE_PARENS(Args)>>{static Tuple<OTHER_REMOVE_PARENS(Args)> convert(PyObject* object) { \
+    Ref<PyObject> seq = steal_ref_check(PySequence_Fast(object,"expected tuple")); \
+    size_t len = PySequence_Length(&*seq); \
+    if (len!=n) throw_tuple_mismatch_error(n,len); \
+    return Tuple<OTHER_REMOVE_PARENS(Args)> fromargs; \
+  }}; \
+  \
+  template<OTHER_REMOVE_PARENS(ARGS)> PyObject* to_python(const Tuple<OTHER_REMOVE_PARENS(Args)>& src) { \
+    Vector<PyObject*,n> items toargs; \
+    for (auto o : items) \
+      if (!o) \
+        goto fail; \
+    if (auto dst = PyTuple_New(n)) { \
+      for (int i=0;i<n;i++) \
+        PyTuple_SET_ITEM(dst,i,items[i]); \
+      return dst; \
+    } \
+  fail: \
+    for (auto o : items) \
+      Py_XDECREF(o); \
+    return 0; \
+  }
+
+#define TF(i) from_python<A##i>(PySequence_Fast_GET_ITEM(args,i))
+#define TT(i) to_python(src.template get<i>())
+OTHER_TUPLE_CONVERT(1,(class A0),(A0),(TF(0)),(TT(0)))
+OTHER_TUPLE_CONVERT(2,(class A0,class A1),(A0,A1),(TF(0),TF(1)),(TT(0),TT(1)))
+OTHER_TUPLE_CONVERT(3,(class A0,class A1,class A2),(A0,A1,A2),(TF(0),TF(1),TF(2)),(TT(0),TT(1),TT(2)))
+OTHER_TUPLE_CONVERT(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3),(TF(0),TF(1),TF(2),TF(3)),(TT(0),TT(1),TT(2),TT(3)))
+OTHER_TUPLE_CONVERT(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4),(TF(0),TF(1),TF(2),TF(3),TF(4)),(TT(0),TT(1),TT(2),TT(3),TT(4)))
+#undef OTHER_TUPLE_CONVERT
+#undef TT
+#undef TF
+
+#endif
 
 }

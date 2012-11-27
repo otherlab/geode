@@ -9,12 +9,10 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/python/forward.h>
+#include <other/core/utility/forward.h>
 #include <other/core/math/max.h>
 #include <new>
 namespace other {
-
-#define PASS(...) __VA_ARGS__
 
 #ifdef OTHER_VARIADIC
 
@@ -67,6 +65,9 @@ OTHER_DEFINE_NEW((class A0,class A1,class A2),(A0&& a0,A1&& a1,A2&& a2),(a0,a1,a
 OTHER_DEFINE_NEW((class A0,class A1,class A2,class A3),(A0&& a0,A1&& a1,A2&& a2,A3&& a3),(a0,a1,a2,a3))
 OTHER_DEFINE_NEW((class A0,class A1,class A2,class A3,class A4),(A0&& a0,A1&& a1,A2&& a2,A3&& a3,A4&& a4),(a0,a1,a2,a3,a4))
 OTHER_DEFINE_NEW((class A0,class A1,class A2,class A3,class A4,class A5),(A0&& a0,A1&& a1,A2&& a2,A3&& a3,A4&& a4,A5&& a5),(a0,a1,a2,a3,a4,a5))
+OTHER_DEFINE_NEW((class A0,class A1,class A2,class A3,class A4,class A5,class A6),(A0&& a0,A1&& a1,A2&& a2,A3&& a3,A4&& a4,A5&& a5,A6&& a6),(a0,a1,a2,a3,a4,a5,a6))
+OTHER_DEFINE_NEW((class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7),(A0&& a0,A1&& a1,A2&& a2,A3&& a3,A4&& a4,A5&& a5,A6&& a6,A7&& a7),(a0,a1,a2,a3,a4,a5,a6,a7))
+OTHER_DEFINE_NEW((class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7,class A8),(A0&& a0,A1&& a1,A2&& a2,A3&& a3,A4&& a4,A5&& a5,A6&& a6,A7&& a7,A8&& a8),(a0,a1,a2,a3,a4,a5,a6,a7,a8))
 
 #endif
 

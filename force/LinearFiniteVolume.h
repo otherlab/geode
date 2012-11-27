@@ -7,11 +7,12 @@
 #include <other/core/force/StrainMeasure.h>
 namespace other{
 
-template<class TV,int d>
+template<class TV,int d_>
 class LinearFiniteVolume:public Force<TV>
 {
   typedef typename TV::Scalar T;
   enum {m=TV::m};
+  enum {d=d_};
 public:
   typedef Force<TV> Base;
   OTHER_DECLARE_TYPE

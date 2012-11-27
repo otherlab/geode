@@ -10,11 +10,12 @@
 #include <other/core/force/ConstitutiveModel.h>
 namespace other{
 
-template<class TV,int d>
+template<class TV,int d_>
 class FiniteVolume:public Force<TV>
 {
     typedef typename TV::Scalar T;
     enum {m=TV::m};
+    enum {d=d_};
 public:
     OTHER_DECLARE_TYPE
     typedef Force<TV> Base;
