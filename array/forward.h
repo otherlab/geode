@@ -3,7 +3,7 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/python/config.h> // Must be included before other headers
+#include <other/core/utility/config.h> // Must be included before other headers
 #include <boost/mpl/bool.hpp>
 namespace other {
 

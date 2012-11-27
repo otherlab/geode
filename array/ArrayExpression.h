@@ -27,7 +27,7 @@ template<int m_,class A,class... Args> struct SameSizeHelper<m_,A,Args...> {
   enum {m = SameSizeHelper<m_<0?Am:m_,Args...>::m};
 };
 #else
-template<int m,class A0=void,class A1=void> struct SameSizeHelper {
+template<int m_,class A0=void,class A1=void> struct SameSizeHelper {
   enum {m0 = SizeIfConstant<typename remove_const_reference<A0>::type>::m};
   enum {m1 = SizeIfConstant<typename remove_const_reference<A1>::type>::m};
   BOOST_STATIC_ASSERT((m0<0 || m1<0 || m0==m1));

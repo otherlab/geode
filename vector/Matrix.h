@@ -21,9 +21,7 @@ template<class T,int m_,int n_> // n_=m_
 class Matrix
 {
 public:
-    enum Workaround1 {m=m_};
-    enum Workaround2 {n=n_};
-    enum Workaround3 {size=n*m};
+    enum Workaround1 {m=m_,n=n_,size=m_*n_};
     BOOST_STATIC_ASSERT((!((m>=n && m<=3 && n>=2 && n<=3) || (m==4 && n==4) || (m==0 && n==0)))); // 0x0, 1x1, 2x2, 3x2, 3x3, and 4x4 are specialized
     static const bool is_const=false;
     typedef T Scalar;

@@ -16,6 +16,28 @@ namespace other {
 
 #define PASS(...) __VA_ARGS__
 
+#ifdef OTHER_VARIADIC
+
+template<class T,class... Args> static inline Ref<T> new_(Args&&... args) {
+  /* Note that we can't go through tp_alloc, since the actual object size will be larger than tp_basicsize
+   * if we have a C++ class that's derived from a Python type but isn't itself exposed to Python. */
+  PyObject* memory = (PyObject*)malloc(sizeof(PyObject)+sizeof(T));
+  if (!memory) throw std::bad_alloc();
+  memory = PyObject_INIT(memory,&T::pytype);
+  try {
+    new(memory+1) T(args...);
+    Ref<T> ref;
+    ref.self = (T*)(memory+1);
+    ref.owner_ = memory;
+    return ref;
+  } catch(...) {
+    free(memory);
+    throw;
+  }
+}
+
+#else // Unpleasant nonvariadic versions
+
 #define OTHER_DEFINE_NEW(ARGS,Args,args) \
   OTHER_DEFINE_NEW_2((,OTHER_REMOVE_PARENS(ARGS)),Args,args)
 
@@ -37,12 +59,6 @@ namespace other {
       throw; \
     } \
   }
-
-#ifdef OTHER_VARIADIC
-
-OTHER_DEFINE_NEW((class T,class... Args),(Args&&... args),(args...))
-
-#else
 
 OTHER_DEFINE_NEW_2((),(),())
 OTHER_DEFINE_NEW((class A0),(A0&& a0),(a0))
