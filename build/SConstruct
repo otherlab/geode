@@ -389,7 +389,7 @@ def add_dependencies(env):
 def link_flags(env):
   env_link = env.Clone(LINK=env['CXX'])
   add_dependencies(env_link)
-  workaround = env.get('use_qt',0) and env['PLATFORM'] in ['posix','darwin']
+  workaround = env.get('use_qt',0)
   for name,lib in externals.items():
     if env['use_'+name]:
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])

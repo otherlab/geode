@@ -38,6 +38,7 @@
 #include <boost/mpl/void.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/add_const.hpp>
+#include <boost/type_traits/remove_pointer.hpp>
 namespace other{
 
 namespace mpl = boost::mpl;
@@ -115,6 +116,8 @@ namespace {
 template<class T>
 class Class : public ClassBase {
 public:
+  typedef typename boost::remove_pointer<decltype(GetSelf<T>::get((PyObject*)0))>::type Self;
+
   Class(const char* name, bool visible=true)
     : ClassBase(name,visible,&T::pytype,(char*)(typename T::Base*)(T*)1-(char*)(T*)1)
   {}
@@ -151,8 +154,8 @@ public:
 #ifndef _WIN32
     add_descriptor(type,name,wrap_method<T,Method>(name,method));
 #else
-    typedef typename DerivedMethod<T,Method>::type DM;
-    add_descriptor(type,name,wrap_method<T>(name,(DM)method));
+    typedef typename DerivedMethod<Self,Method>::type DM;
+    add_descriptor(type,name,wrap_method<T,Self>(name,(DM)method));
 #endif
     return *this;
   }

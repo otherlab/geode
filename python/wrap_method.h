@@ -83,7 +83,7 @@ template<class T,class M> struct DerivedMethod {
   } \
   \
   /* wrap_method for static methods */ \
-  template<class T,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
+  template<class T,class Self,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
   wrap_method(const char* name,R (*method) Args) { \
     return wrap_function(name,method); \
   } \
@@ -92,9 +92,9 @@ template<class T,class M> struct DerivedMethod {
   template<class T,class B,class R OTHER_REMOVE_PARENS(CARGS)> struct DerivedMethod<T,R(B::*) Args> { \
     typedef R (T::*type) Args; \
   }; \
-  template<class T,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
-  wrap_method(const char* name,R (T::*method) Args) { \
-    typedef R (T::*M) Args; \
+  template<class T,class Self,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
+  wrap_method(const char* name,R (Self::*method) Args) { \
+    typedef R (Self::*M) Args; \
     return wrap_method_helper(&T::pytype,name,OuterWrapper<R,PyObject*,PyObject*,void*>::template wrap<method_inner_wrapper_##n<M,R,T OTHER_REMOVE_PARENS(CArgs)>>,(void*)new M(method)); \
   } \
   \
@@ -102,9 +102,9 @@ template<class T,class M> struct DerivedMethod {
   template<class T,class B,class R OTHER_REMOVE_PARENS(CARGS)> struct DerivedMethod<T,R(B::*) Args const> { \
     typedef R (T::*type) Args const; \
   }; \
-  template<class T,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
-  wrap_method(const char* name,R (T::*method) Args const) { \
-    typedef R (T::*M) Args const; \
+  template<class T,class Self,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
+  wrap_method(const char* name,R (Self::*method) Args const) { \
+    typedef R (Self::*M) Args const; \
     return wrap_method_helper(&T::pytype,name,OuterWrapper<R,PyObject*,PyObject*,void*>::template wrap<method_inner_wrapper_##n<M,R,T OTHER_REMOVE_PARENS(CArgs)>>,(void*)new M(method)); \
   }
 
