@@ -152,7 +152,7 @@ public:
     add_descriptor(type,name,wrap_method<T,Method>(name,method));
 #else
     typedef typename DerivedMethod<T,Method>::type DM;
-    add_descriptor(type,name,wrap_method<T,DM>(name,(DM)method));
+    add_descriptor(type,name,wrap_method<T>(name,(DM)method));
 #endif
     return *this;
   }
