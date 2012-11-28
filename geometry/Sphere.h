@@ -8,6 +8,7 @@
 #include <other/core/math/pow.h>
 #include <other/core/python/repr.h>
 #include <other/core/utility/format.h>
+#include <other/core/array/Array.h>
 namespace other{
 
 template<class TV>

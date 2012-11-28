@@ -15,7 +15,10 @@ typedef real T;
 typedef Vector<T,3> TV3;
 
 OTHER_DEFINE_TYPE(TriangleMesh)
+
+#ifndef _WIN32
 const int TriangleMesh::d;
+#endif
 
 TriangleMesh::TriangleMesh(Array<const Vector<int,3> > elements)
   : vertices(scalar_view_own(elements))
