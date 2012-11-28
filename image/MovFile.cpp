@@ -4,6 +4,9 @@
 #include <other/core/python/config.h> // Must be included first
 #ifdef USE_LIBJPEG
 extern "C"{
+#ifdef _WIN32
+#undef HAVE_STDDEF_H
+#endif
 #include <stdio.h>
 #include <jpeglib.h>
 }

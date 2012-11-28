@@ -33,7 +33,7 @@ template<class T, int C> Vector<T,C> to_scalar_color(const Vector<uint8_t, C> co
 template<class T, int C> Vector<uint8_t, C> to_byte_color(const Vector<T, C> color_in) {
   Vector<uint8_t,C> result;
   for(int i = 0; i < C; ++i) {
-    result[i] = component_to_byte_color<T>(color_in[i]);
+    result[i] = (uint8_t)component_to_byte_color<T>(color_in[i]);
   }
   return result;
 }
