@@ -68,6 +68,10 @@ wrap_method(const char* name,R (B::*method)(Args...) const) {
 #define OTHER_WRAP_METHOD(n,ARGS,Args) \
   OTHER_WRAP_METHOD_2(n,(,OTHER_REMOVE_PARENS(ARGS)),(,OTHER_REMOVE_PARENS(Args)),Args)
 
+template<class T,class M> struct DerivedMethod {
+  typedef M type;
+};
+
 #define OTHER_WRAP_METHOD_2(n,CARGS,CArgs,Args) \
   /* Can't be static because static functions can't be template arguments */ \
   template<class M,class R,class T OTHER_REMOVE_PARENS(CARGS)> R \
@@ -85,14 +89,20 @@ wrap_method(const char* name,R (B::*method)(Args...) const) {
   } \
   \
   /* wrap_method for nonconst methods */ \
-  template<class T,class M,class R,class B OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
-  wrap_method(const char* name,R (B::*method) Args) { \
+  template<class T,class B,class R OTHER_REMOVE_PARENS(CARGS)> struct DerivedMethod<T,R(B::*) Args> { \
+    typedef R (T::*type) Args; \
+  }; \
+  template<class T,class M,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
+  wrap_method(const char* name,R (T::*method) Args) { \
     return wrap_method_helper(&T::pytype,name,OuterWrapper<R,PyObject*,PyObject*,void*>::template wrap<method_inner_wrapper_##n<M,R,T OTHER_REMOVE_PARENS(CArgs)>>,(void*)new M(method)); \
   } \
   \
   /* wrap_method for const methods */ \
-  template<class T,class M,class R,class B OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
-  wrap_method(const char* name,R (B::*method) Args const) { \
+  template<class T,class B,class R OTHER_REMOVE_PARENS(CARGS)> struct DerivedMethod<T,R(B::*) Args const> { \
+    typedef R (T::*type) Args const; \
+  }; \
+  template<class T,class M,class R OTHER_REMOVE_PARENS(CARGS)> static PyObject* \
+  wrap_method(const char* name,R (T::*method) Args const) { \
     return wrap_method_helper(&T::pytype,name,OuterWrapper<R,PyObject*,PyObject*,void*>::template wrap<method_inner_wrapper_##n<M,R,T OTHER_REMOVE_PARENS(CArgs)>>,(void*)new M(method)); \
   }
 
@@ -102,6 +112,9 @@ OTHER_WRAP_METHOD(2,(class A0,class A1),(A0,A1))
 OTHER_WRAP_METHOD(3,(class A0,class A1,class A2),(A0,A1,A2))
 OTHER_WRAP_METHOD(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3))
 OTHER_WRAP_METHOD(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4))
+OTHER_WRAP_METHOD(6,(class A0,class A1,class A2,class A3,class A4,class A5),(A0,A1,A2,A3,A4,A5))
+OTHER_WRAP_METHOD(7,(class A0,class A1,class A2,class A3,class A4,class A5,class A6),(A0,A1,A2,A3,A4,A5,A6))
+OTHER_WRAP_METHOD(8,(class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7),(A0,A1,A2,A3,A4,A5,A6,A7))
 
 #undef OTHER_WRAP_METHOD_2
 #undef OTHER_WRAP_METHOD

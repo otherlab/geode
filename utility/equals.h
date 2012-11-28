@@ -1,9 +1,8 @@
 #pragma once
 
-#include <tr1/unordered_set>
+#include <other/core/utility/tr1.h>
 #include <vector>
 #include <set>
-
 namespace other {
 
 template<class T> struct equals {

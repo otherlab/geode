@@ -11,13 +11,12 @@
 #include <other/core/math/cube.h>
 #include <other/core/python/Class.h>
 #include <other/core/structure/Hashtable.h>
+#include <other/core/utility/tr1.h>
 #include <other/core/vector/SparseMatrix.h>
-#include <tr1/unordered_set>
 namespace other{
 
 typedef real T;
 OTHER_DEFINE_TYPE(TriangleSubdivision)
-using std::tr1::unordered_set;
 
 static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh) {
   Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();

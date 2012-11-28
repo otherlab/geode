@@ -17,21 +17,33 @@ namespace other{
 //#####################################################################
 #ifndef USE_LIBPNG
 
-template<class T> Array<Vector<T,3>,2> PngFile<T>::
-read(const std::string& filename)
-{
-    OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot read png image.");
+template<class T> Array<Vector<T,3>,2> PngFile<T>::read(const std::string& filename) {
+  OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot read png image.");
 }
 
-template<class T> void PngFile<T>::
-write(const std::string& filename,RawArray<const Vector<T,3>,2> image)
-{
-    OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot write png image.");
+template<class T> Array<Vector<T,4>,2> PngFile<T>::read_alpha(const std::string& filename) {
+  OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot read png image.");
 }
 
-template<class T> bool PngFile<T>::
-is_supported()
-{return false;}
+template<class T> void PngFile<T>::write(const std::string& filename,RawArray<const Vector<T,3>,2> image) {
+  OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot write png image.");
+}
+
+template<class T> void PngFile<T>::write(const std::string& filename,RawArray<const Vector<T,4>,2> image) {
+  OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot write png image.");
+}
+
+template<class T> vector<uint8_t> PngFile<T>::write_to_memory(RawArray<const Vector<T,3>,2> image) {
+  OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot write png image.");
+}
+
+template<class T> vector<uint8_t> PngFile<T>::write_to_memory(RawArray<const Vector<T,4>,2> image) {
+  OTHER_FATAL_ERROR("Not compiled with USE_LIBPNG.  Cannot write png image.");
+}
+
+template<class T> bool PngFile<T>::is_supported() {
+  return false;
+}
 
 #else
 //#####################################################################

@@ -15,14 +15,14 @@ namespace other {
 
 static double get_resolution() {
   __int64 frequency;
-  QueryPerformanceFrequency((LargeInteger*)&frequency);
+  QueryPerformanceFrequency((LARGE_INTEGER*)&frequency);
   return 1./frequency;
 }
 static double resolution = get_resolution();
 
 double get_time() {
   __int64 time;
-    QueryPerformanceCounter((LargeInteger*)&time);
+    QueryPerformanceCounter((LARGE_INTEGER*)&time);
     return resolution*time;
 }
 

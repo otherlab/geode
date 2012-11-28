@@ -12,11 +12,9 @@
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
-
 #include <other/core/utility/config.h>
 #include <other/core/utility/Hasher.h>
+#include <other/core/utility/tr1.h>
 #include <other/core/math/lerp.h>
 #include <other/core/image/color_utils.h>
 #include <other/core/utility/const_cast.h>

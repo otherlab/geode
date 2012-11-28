@@ -79,7 +79,7 @@ void fatal_error(const char* function,const char* file,unsigned int line,const c
 
 void assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message) {
   string error = format("%s:%s:%d: %s, condition = %s",file,function,line,message?message:"Assertion failed",condition);
-  static const bool break_on_assert = getenv("OTHER_BREAK_ON_ASSERT");
+  static const bool break_on_assert = getenv("OTHER_BREAK_ON_ASSERT")!=0;
   if (break_on_assert) {
     Log::cout<<flush;
     Log::cerr<<"\n";

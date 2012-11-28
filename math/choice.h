@@ -50,11 +50,11 @@ template<int i,class... Types> static inline auto choice(const Types&... args)
 #define OTHER_CHOICE_HELPER_4(ARGS,Args) OTHER_CHOICE_HELPER(3,ARGS,Args) OTHER_CHOICE_HELPER_3(ARGS,Args)
 #define OTHER_CHOICE_HELPER_5(ARGS,Args) OTHER_CHOICE_HELPER(4,ARGS,Args) OTHER_CHOICE_HELPER_4(ARGS,Args)
 
-OTHER_CHOICE(1,(class T0),(const T0& x0),(x0))
-OTHER_CHOICE(2,(class T0,class T1),(const T0& x0,const T1& x1),(x0,x1))
-OTHER_CHOICE(3,(class T0,class T1,class T2),(const T0& x0,const T1& x1,const T2& x2),(x0,x1,x2))
-OTHER_CHOICE(4,(class T0,class T1,class T2,class T3),(const T0& x0,const T1& x1,const T2& x2,const T3& x3),(x0,x1,x2,x3))
-OTHER_CHOICE(5,(class T0,class T1,class T2,class T3,class T4),(const T0& x0,const T1& x1,const T2& x2,const T3& x3,const T4& x4),(x0,x1,x2,x3,x4))
+OTHER_CHOICE(1,(class T0),(T0& x0),(x0))
+OTHER_CHOICE(2,(class T0,class T1),(T0& x0,T1& x1),(x0,x1))
+OTHER_CHOICE(3,(class T0,class T1,class T2),(T0& x0,T1& x1,T2& x2),(x0,x1,x2))
+OTHER_CHOICE(4,(class T0,class T1,class T2,class T3),(T0& x0,T1& x1,T2& x2,T3& x3),(x0,x1,x2,x3))
+OTHER_CHOICE(5,(class T0,class T1,class T2,class T3,class T4),(T0& x0,T1& x1,T2& x2,T3& x3,T4& x4),(x0,x1,x2,x3,x4))
 
 #undef OTHER_CHOICE_HELPER
 #undef OTHER_CHOICE

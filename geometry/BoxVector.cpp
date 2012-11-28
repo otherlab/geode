@@ -116,7 +116,7 @@ typedef Vector<T,3> TV;
   template Vector<T,d> Box<Vector<T,d>>::normal(const Vector<T,d>&) const; \
   template Vector<T,d> Box<Vector<T,d>>::surface(const Vector<T,d>&) const; \
   template Vector<T,d>::Scalar Box<Vector<T,d>>::phi(const Vector<T,d>&) const; \
-  template PyObject* to_python(const Box<Vector<T,d>>&); \
+  template PyObject* to_python<T,d>(const Box<Vector<T,d>>&); \
   template Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*);
 INSTANTIATION_HELPER(T,1)
 INSTANTIATION_HELPER(T,2)

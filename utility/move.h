@@ -13,7 +13,7 @@ template<class T> OTHER_ALWAYS_INLINE static inline typename remove_reference<T>
 }
 
 // For perfect forwarding
-template<class T> OTHER_ALWAYS_INLINE static inline T&& forward(typename remove_reference<T>::type& x) noexcept {
+template<class T> OTHER_ALWAYS_INLINE static inline T&& forward(typename remove_reference<T>::type& x) OTHER_NOEXCEPT {
   return static_cast<T&&>(x);
 }
 

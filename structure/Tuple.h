@@ -141,8 +141,9 @@ template<class A0,class A1,class A2,class A3,class A4> static inline Tuple<A0,A1
       return dst; \
     } \
   fail: \
-    for (auto o : items) \
+    for (auto o : items) { \
       Py_XDECREF(o); \
+    } \
     return 0; \
   }
 

@@ -7,10 +7,10 @@
 #include <other/core/python/Object.h>
 #include <other/core/python/to_python.h>
 #include <other/core/python/ExceptionValue.h>
+#include <other/core/utility/Optional.h>
 #include <other/core/vector/Vector.h>
 #include <boost/type_traits/is_const.hpp>
 #include <boost/type_traits/is_reference.hpp>
-#include <boost/optional.hpp>
 extern void wrap_value_base();
 
 #include <other/core/python/Ptr.h>
@@ -125,7 +125,7 @@ public:
     typedef T ValueType;
 
 protected:
-  mutable boost::optional<T> value; // the cached value
+  mutable Optional<T> value; // the cached value
 
   Value();
   ~Value();

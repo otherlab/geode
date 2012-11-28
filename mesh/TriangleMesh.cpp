@@ -115,11 +115,13 @@ Array<const Vector<int,4> > TriangleMesh::bending_quadruples() const {
       for (int a=0;a<3;a++)
         edge_to_face.get_or_insert(vec(nodes[a],nodes[(a+1)%3]).sorted()).append(t);
     }
+    Array<int> other;
+    Array<bool> flipped;
     for (const auto& it : edge_to_face) {
       Vector<int,2> sn = it.key;
       RawArray<const int> tris(it.data);
-      int other[tris.size()];
-      bool flipped[tris.size()];
+      other.resize(tris.size(),false,false);
+      flipped.resize(tris.size(),false,false);
       for (int a=0;a<tris.size();a++) {
         Vector<int,3> tn = elements[tris[a]];
         int b = !sn.contains(tn[0])?0:!sn.contains(tn[1])?1:2;

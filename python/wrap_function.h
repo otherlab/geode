@@ -71,6 +71,10 @@ OTHER_WRAP_FUNCTION(2,(class A0,class A1),(A0,A1))
 OTHER_WRAP_FUNCTION(3,(class A0,class A1,class A2),(A0,A1,A2))
 OTHER_WRAP_FUNCTION(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3))
 OTHER_WRAP_FUNCTION(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4))
+OTHER_WRAP_FUNCTION(6,(class A0,class A1,class A2,class A3,class A4,class A5),(A0,A1,A2,A3,A4,A5))
+OTHER_WRAP_FUNCTION(7,(class A0,class A1,class A2,class A3,class A4,class A5,class A6),(A0,A1,A2,A3,A4,A5,A6))
+OTHER_WRAP_FUNCTION(8,(class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7),(A0,A1,A2,A3,A4,A5,A6,A7))
+OTHER_WRAP_FUNCTION(9,(class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7,class A8),(A0,A1,A2,A3,A4,A5,A6,A7,A8))
 
 #undef OTHER_WRAP_FUNCTION_2
 #undef OTHER_WRAP_FUNCTION

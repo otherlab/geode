@@ -42,7 +42,7 @@ template<class R> struct PythonFunctionWrapper {
 
   #define OTHER_FUNCTION_CALL_2(TARGS,Args,convertC) \
     OTHER_REMOVE_PARENS(TARGS) R operator() Args { \
-      PyObject* r = PyObject_CallFunctionObjArgs(&*f,convertC 0); \
+      PyObject* r = PyObject_CallFunctionObjArgs(&*f,OTHER_REMOVE_PARENS(convertC) 0); \
       if (!r) throw_python_error(); \
       return return_(r); \
     }

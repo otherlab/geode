@@ -33,8 +33,6 @@ template<class T> struct IsScalarBlock<const T>:public IsScalarBlock<T>{};
 template<class T> struct IsScalarVectorSpace:public IsScalar<T>{}; // true if we can compute vector space operations on the underlying array of scalars
 template<class T> struct IsScalarVectorSpace<const T>:public IsScalarVectorSpace<T>{};
 
-template<class T1,class T2> struct First{typedef T1 type;};
-
 template<class T,class Enabler=void> struct ScalarPolicy{typedef struct Unusable{} type;};
 template<class T> struct ScalarPolicy<const T>{typedef typename boost::add_const<typename ScalarPolicy<T>::type>::type type;};
 template<class T> struct ScalarPolicy<T,typename boost::enable_if<mpl::and_<IsScalar<T>,mpl::not_<boost::is_const<T> > > >::type>{typedef T type;};

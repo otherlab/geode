@@ -81,6 +81,10 @@ template<class A0,class A1,class A2,class A3,class A4> static inline string form
   return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4));
 }
 
+template<class A0,class A1,class A2,class A3,class A4,class A5> static inline string format(const char* format, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4),format_sanitize(a5));
+}
+
 #endif
 
 }

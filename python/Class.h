@@ -148,7 +148,12 @@ public:
 
   template<class Method> Class&
   method(const char* name, Method method) {
+#ifndef _WIN32
     add_descriptor(type,name,wrap_method<T,Method>(name,method));
+#else
+    typedef typename DerivedMethod<T,Method>::type DM;
+    add_descriptor(type,name,wrap_method<T,DM>(name,(DM)method));
+#endif
     return *this;
   }
 

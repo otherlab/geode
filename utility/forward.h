@@ -20,6 +20,11 @@ template<class T> struct Hide {
   typedef T type;
 };
 
+// Return the first type given (for use in SFINAE)
+template<class T0,class T1> struct First {
+  typedef T0 type;
+};
+
 // A list of types
 #ifdef OTHER_VARIADIC
 template<class... Args> struct Types {

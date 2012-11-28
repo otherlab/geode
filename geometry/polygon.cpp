@@ -1,12 +1,11 @@
 #include "polygon.h"
 
 #include <other/core/vector/Matrix.h>
-
-#include <tr1/unordered_set>
+#include <other/core/math/constants.h>
 #include <other/core/utility/Hasher.h>
-
 #include <other/core/utility/stl.h>
 #include <other/core/utility/str.h>
+#include <other/core/utility/tr1.h>
 #include <other/core/vector/Vector2d.h>
 #include <other/core/vector/normalize.h>
 #include <other/core/geometry/Box.h>
@@ -215,7 +214,7 @@ namespace other {
   
   
   Polygon polygon_simplify(Polygon const &poly, real max_angle_deg, real max_dist) {
-    double mincos = cos(max_angle_deg / 180. * M_PI);
+    double mincos = cos(pi/180*max_angle_deg);
     double sqr_min_length = sqr(max_dist);
     
     // Repeatedly simplify until nothing changes
@@ -288,8 +287,8 @@ namespace other {
   Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg, real minangle_deg) {
     OTHER_ASSERT(poly.size() > 1);
     
-    real minangle = minangle_deg / 180. * M_PI;
-    real maxangle = maxangle_deg / 180. * M_PI;
+    real minangle = pi/180*minangle_deg;
+    real maxangle = pi/180*maxangle_deg;
     
     int sign;
     if (offset < 0) {
@@ -327,7 +326,7 @@ namespace other {
         Segment<Vector<real,2> > s1l(s1.x0 + offset * n1, s1.x1 + offset * n1);
         real t0, t1;
         
-        if (fabs(angle) < 0.01 || fabs(fabs(angle)-M_PI) < 0.01) {
+        if (fabs(angle) < 0.01 || fabs(fabs(angle)-pi) < 0.01) {
           
           t0 = 1.;
           
@@ -531,7 +530,7 @@ namespace other {
     Array<Vector<real, d>> pts = nested.flat;
     Array<Vector<int,2>> segments;
     if (open) {
-      segments.resize(pts.size() - polys.size(),false);
+      segments.resize(int(pts.size()-polys.size()),false);
       int s = 0;
       for (int p = 0; p < (int)polys.size(); ++p) {
         for (int i = 0; i < nested.size(p)-1; ++i) {

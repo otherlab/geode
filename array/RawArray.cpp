@@ -16,10 +16,6 @@ using std::endl;
 
 template<class T> void RawArray<T,2>::
 transpose() {
-#if USE_MKL
-  imatcopy(1,*this);
-  swap(n,m);
-#else
   if (m==n)
     for (int i=0;i<m;i++) for (int j=0;j<i;j++)
       swap(flat[i*n+j],flat[j*n+i]);
@@ -28,27 +24,48 @@ transpose() {
     swap(n,m);
     *this = copy;
   }
-#endif
 }
 
-#if USE_MKL
-static void omatcopy(CblasTranspose trans, int alpha, RawArray<const int,2> A, RawArray<int,2> B) {
-  BOOST_STATIC_ASSERT(sizeof(float)==sizeof(int));
-  OTHER_ASSERT(trans==CblasTrans && alpha==1);
-  mkl_somatcopy('r','t',A.m,A.n,1,reinterpret_cast<const float*>(A.data()),max(1,A.n),reinterpret_cast<float*>(B.data()),max(1,A.m));
+#ifdef USE_MKL
+template<> void RawArray<float,2>::transpose() {
+  imatcopy(1,*this);
+  swap(n,m);
+}
+template<> void RawArray<double,2>::transpose() {
+  imatcopy(1,*this);
+  swap(n,m);
 }
 #endif
 
 template<class T> Array<typename boost::remove_const<T>::type,2> RawArray<T,2>::transposed() const {
   Array<Element,2> A(n,m,false);
-#if USE_MKL
-  omatcopy(CblasTrans,1,*this,A);
-#else
   for (int i=0;i<m;i++) for (int j=0;j<n;j++)
     A(j,i) = flat[i*n+j];
-#endif
   return A;
 }
+
+#ifdef USE_MKL
+template<> Array<float,2> RawArray<float,2>::transposed() const {
+  Array<Element,2> A(n,m,false);
+  omatcopy(CblasTrans,1,*this,A);
+  return A;
+}
+template<> Array<float,2> RawArray<const float,2>::transposed() const {
+  Array<Element,2> A(n,m,false);
+  omatcopy(CblasTrans,1,*this,A);
+  return A;
+}
+template<> Array<double,2> RawArray<double,2>::transposed() const {
+  Array<Element,2> A(n,m,false);
+  omatcopy(CblasTrans,1,*this,A);
+  return A;
+}
+template<> Array<double,2> RawArray<const double,2>::transposed() const {
+  Array<Element,2> A(n,m,false);
+  omatcopy(CblasTrans,1,*this,A);
+  return A;
+}
+#endif
 
 template<class T> void RawArray<T,2>::permute_rows(RawArray<const int> p, int direction) const {
   // Not an exhaustive assertion, but should be sufficient:
@@ -113,19 +130,21 @@ real infinity_norm(RawArray<const real,2> A) {
   return norm;
 }
 
+#if !(defined(USE_MKL) && defined(_WIN32))
 template void RawArray<float,2>::transpose();
 template void RawArray<double,2>::transpose();
-template void RawArray<Vector<unsigned char,3>,2>::transpose();
-template void RawArray<Vector<unsigned char,4>,2>::transpose();
-template void RawArray<Vector<float,3>,2>::transpose();
-template void RawArray<Vector<float,4>,2>::transpose();
-template void RawArray<Vector<double,3>,2>::transpose();
-template void RawArray<Vector<double,4>,2>::transpose();
-template Array<int,2> RawArray<const int,2>::transposed() const;
 template Array<float,2> RawArray<float,2>::transposed() const;
 template Array<double,2> RawArray<double,2>::transposed() const;
 template Array<float,2> RawArray<const float,2>::transposed() const;
 template Array<double,2> RawArray<const double,2>::transposed() const;
+#endif
+template void RawArray<Vector<float,3>,2>::transpose();
+template void RawArray<Vector<float,4>,2>::transpose();
+template void RawArray<Vector<double,3>,2>::transpose();
+template void RawArray<Vector<double,4>,2>::transpose();
+template void RawArray<Vector<unsigned char,3>,2>::transpose();
+template void RawArray<Vector<unsigned char,4>,2>::transpose();
+template Array<int,2> RawArray<const int,2>::transposed() const;
 template Array<Vector<unsigned char,3>,2> RawArray<Vector<unsigned char,3>,2>::transposed() const;
 template Array<Vector<unsigned char,4>,2> RawArray<Vector<unsigned char,4>,2>::transposed() const;
 template void RawArray<real,2>::permute_rows(RawArray<const int>,int) const;

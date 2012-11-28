@@ -198,7 +198,7 @@ numpy_shape_match(mpl::identity<T>,int rank,const npy_intp* dimensions) {
 template<class TV> typename boost::enable_if<mpl::and_<NumpyIsStatic<TV>,mpl::not_<NumpyIsScalar<TV> > >,bool>::type
 numpy_shape_match(mpl::identity<TV>, int rank, const npy_intp* dimensions) {
   if (rank!=NumpyRank<TV>::value) return false;
-  npy_intp subdimensions[NumpyRank<TV>::value];
+  npy_intp subdimensions[NumpyRank<TV>::value?NumpyRank<TV>::value:1];
   NumpyInfo<TV>::dimensions(subdimensions);
   for (int i=0;i<NumpyRank<TV>::value;i++) if(dimensions[i]!=subdimensions[i]) return false;
   return true;

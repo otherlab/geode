@@ -1,8 +1,7 @@
 #pragma once
 
 #include <other/core/openmesh/TriMesh.h>
-#include <tr1/unordered_map>
-
+#include <other/core/utility/tr1.h>
 namespace other {
   
 // base class for edge priority classes used in triangulators

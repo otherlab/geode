@@ -16,6 +16,8 @@ C f(A,B) {
 }
 
 struct G {
+  typedef C result_type; // For Windows
+
   C g(A,B) {
     return C();
   }

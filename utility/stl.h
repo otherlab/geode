@@ -18,6 +18,8 @@
 
 namespace other {
 
+using std::vector;
+
 template<class T, class U> inline std::ostream &operator<<(std::ostream &os, std::pair<T,U> const &v);
 template<class T,class H> inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_set<T,H> const &v);
 template<class T, class U, class H> inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_map<T,U,H> const &v);
@@ -29,6 +31,8 @@ template<class T, class U> inline std::ostream &operator<<(std::ostream &os, std
 template<class S> S&& other_forward(typename remove_reference<S>::type& a) OTHER_NOEXCEPT {
   return static_cast<S&&>(a);
 }
+
+#ifdef OTHER_VARIADIC
 
 template<typename T, typename... Args> typename std::vector<T> make_vector(Args&&... args) {
   typename std::vector<T> result;
@@ -46,6 +50,31 @@ template<typename... Args> typename std::vector<typename make_vector_result<Args
   OTHER_PASS(result.push_back(other_forward<Args>(args)));
   return result;
 }
+
+#else // Unpleasant nonvariadic versions
+
+template<class T> vector<T> make_vector(const T& x0)
+{vector<T> v;v.push_back(x0);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1)
+{vector<T> v;v.push_back(x0);v.push_back(x1);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5,const T& x6)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);v.push_back(x6);return v;}
+
+#endif
 
 // Add a bunch of elements to an stl container
 template<class D,class S> inline void extend(D& dst, const S& src) {
