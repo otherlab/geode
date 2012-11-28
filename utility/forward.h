@@ -11,6 +11,7 @@ namespace other {
 
 struct Hasher;
 template<class T> class Ptr;
+template<class T> class Ref;
 
 // Convenience struct for marking that function semantics have changed
 struct Mark {};

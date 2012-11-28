@@ -152,7 +152,7 @@ public:
     add_descriptor(type,name,wrap_method<T,Method>(name,method));
 #else
     typedef typename DerivedMethod<T,Method>::type DM;
-    add_descriptor(type,name,wrap_method<T,DM>(name,(DM)method));
+    add_descriptor(type,name,wrap_method<T>(name,(DM)method));
 #endif
     return *this;
   }
@@ -203,7 +203,7 @@ private:
 template<class T,class S> static inline typename boost::add_const<S>::type T::*
 const_field(S T::* field) {
   return field;
-} 
+}
 
 #ifdef OTHER_VARIADIC
 #define OTHER_INIT(...) init(Enumerate<__VA_ARGS__>())
@@ -239,8 +239,13 @@ const_field(S T::* field) {
 
 #define OTHER_REPR() repr()
 
+#ifdef OTHER_VARIADIC
+#define OTHER_CALL(...) \
+  call(wrap_call<Self,__VA_ARGS__>())
+#else
 #define OTHER_CALL(...) \
   call(WrapCall<Self,__VA_ARGS__>::wrap())
+#endif
 
 #define OTHER_GET(name) \
   property(#name,&Self::name)

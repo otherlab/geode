@@ -4,9 +4,18 @@
 #ifndef _WIN32
 
 #include <boost/optional.hpp>
+
 namespace other {
 
-template<class T> struct Optional : public boost::optional<T> {};
+template<class T> struct Optional: public boost::optional<T> {
+  Optional() {}
+
+  Optional(const T& v)
+    : boost::optional<T>(v) {}
+
+  Optional(const Optional& o)
+    : boost::optional<T>(o) {}
+};
 
 }
 
