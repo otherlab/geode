@@ -145,7 +145,7 @@ template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value &&
 }
 
 template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key) {
-  int n = (sizeof(T)+3)/4;
+  const int n = (sizeof(T)+3)/4;
   int data[n];
   data[n-1] = 0;
   memcpy(data,&key,sizeof(key));

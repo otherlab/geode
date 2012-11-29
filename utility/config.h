@@ -69,7 +69,7 @@ typedef double real;
 #define OTHER_NEVER_INLINE
 #define OTHER_PURE
 #define OTHER_CONST
-#define OTHER_UNREACHABLE() ((void)0)
+#define OTHER_UNREACHABLE() OTHER_FATAL_ERROR()
 #define OTHER_NOEXCEPT
 #define OTHER_COLD
 #define OTHER_FORMAT

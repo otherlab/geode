@@ -21,6 +21,7 @@ template<class T> struct Optional: public boost::optional<T> {
 
 #else // Windows version
 
+#include <other/core/utility/safe_bool.h>
 #include <boost/scoped_ptr.hpp>
 namespace other {
 
@@ -50,15 +51,27 @@ public:
   }
 
   T& operator*() {
+    assert(value);
     return *value;
   }
 
   const T& operator*() const {
+    assert(value);
     return *value;
   }
 
+  T* operator->() {
+    assert(value);
+    return value.get();
+  }
+
+  const T* operator->() const {
+    assert(value);
+    return value.get();
+  }
+
   operator SafeBool() const {
-    return safebool(bool(value));
+    return safe_bool(bool(value));
   }
 };
 

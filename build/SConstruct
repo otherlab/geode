@@ -24,6 +24,7 @@ def options(*vars):
 # Base environment
 env = Environment(tools=['default','pdflatex','pdftex'])
 default_cxx = env['CXX']
+posix = env['PLATFORM']=='posix'
 darwin = env['PLATFORM']=='darwin'
 windows = env['PLATFORM']=='win32'
 if not windows:
@@ -514,7 +515,7 @@ def children(env):
       child(env,dir)
 
 # Build everything
-Export('child children options external externals library objects program latex clang toplevel')
+Export('child children options external externals library objects program latex clang posix darwin windows toplevel')
 if os.path.exists(File('#SConscript').abspath):
   child(env,'.')
 else:
