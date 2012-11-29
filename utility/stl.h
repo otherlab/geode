@@ -100,12 +100,12 @@ template<class T> inline bool contains(const std::vector<T>& v, const T& x) {
 
 // check if a STL map contains an element.
 template<class K, class V> inline bool contains(const std::map<K,V>& m,const K& idx){
-  return m.count(idx);
+  return m.count(idx)!=0;
 }
 
 // check if a STL set contains an element.
 template<class K> inline bool contains(const std::set<K>& s,const K& v){
-  return s.count(v);
+  return s.count(v)!=0;
 }
 
 // Remove an element of a vector in constant time, but destroys vector order.
