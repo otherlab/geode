@@ -14,7 +14,7 @@ template<class T> struct Optional: public boost::optional<T> {
     : boost::optional<T>(v) {}
 
   Optional(const Optional& o)
-    : boost::optional<T>(o) {}
+    : boost::optional<T>(dynamic_cast<const boost::optional<T>&>(o)) {}
 };
 
 }

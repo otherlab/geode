@@ -29,12 +29,12 @@ LinearFiniteVolume(Array<const Vector<int,d+1> > elements,Array<const TV> X_,con
   update_position(X_,false);
   const_cast_(Dm_inverse) = Array<Matrix<T,d,m> >(elements.size(),false);
   Bm_scales.resize(elements.size(),false,false);
-  if(m>d) normals.resize(elements.size(),false,false);
+  if((int)m>(int)d) normals.resize(elements.size(),false,false);
   for(int t=0;t<elements.size();t++){
     Matrix<T,m,d> Dm = Ds(X,t);
     T scale = Dm.parallelepiped_measure();
     Matrix<T,d,m> Dm_ct = Dm.cofactor_matrix().transposed();
-    if(m>d) normals[t] = normal(Dm);
+    if((int)m>(int)d) normals[t] = normal(Dm);
     OTHER_ASSERT(scale>0);
     const_cast_(Dm_inverse[t]) = Dm_ct/scale;
     Bm_scales[t] = -(T)1/Factorial<d>::value*scale;}
@@ -67,7 +67,7 @@ elastic_energy() const {
   T half_lambda = (T).5*lambda;
   for(int t=0;t<elements.size();t++){
     SymmetricMatrix<T,m> strain = symmetric_part(Ds(X,t)*Dm_inverse[t])-1; 
-    if(m>d) strain += outer_product(normals[t]);
+    if((int)m>(int)d) strain += outer_product(normals[t]);
     energy -= Bm_scales[t]*(mu*strain.sqr_frobenius_norm()+half_lambda*sqr(strain.trace()));}
   return energy;
 }
@@ -80,7 +80,7 @@ add_elastic_force(RawArray<TV> F) const {
   T two_mu_plus_m_lambda = 2*mu+m*lambda;
   for(int t=0;t<elements.size();t++){
     SymmetricMatrix<T,m> strain_plus_one = symmetric_part(Ds(X,t)*Dm_inverse[t]);
-    if(m>d) strain_plus_one += outer_product(normals[t]);
+    if((int)m>(int)d) strain_plus_one += outer_product(normals[t]);
     SymmetricMatrix<T,m> scaled_stress = Bm_scales[t]*two_mu*strain_plus_one+Bm_scales[t]*(lambda*strain_plus_one.trace()-two_mu_plus_m_lambda);
     StrainMeasure<TV,d>::distribute_force(F,elements[t],scaled_stress.times_transpose(Dm_inverse[t]));}
 }

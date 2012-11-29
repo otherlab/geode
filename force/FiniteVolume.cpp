@@ -137,7 +137,7 @@ template<class TV,int d> void FiniteVolume<TV,d>::
 update_stress_derivatives() const
 {
     if(stress_derivatives_valid) return;
-    OTHER_ASSERT(isotropic || TV::m==d); // codimension zero only for anisotropic for now
+    OTHER_ASSERT(isotropic || (int)TV::m==(int)d); // codimension zero only for anisotropic for now
     if(anisotropic && !anisotropic->use_isotropic_stress_derivative()){
         dP_dFe.resize(strain->elements.size(),false,false);
         for(int t=0;t<strain->elements.size();t++){
