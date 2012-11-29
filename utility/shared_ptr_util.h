@@ -7,9 +7,20 @@ namespace other {
 
 using boost::shared_ptr;
 
-template<class T,class... Args> static inline boost::shared_ptr<T> new_sp(Args&&... args) {
+#ifdef OTHER_VARIADIC
+
+template<class T,class... Args> static inline shared_ptr<T> new_sp(Args&&... args) {
   return shared_ptr<T>(new T(args...));
 }
+
+#else // Unpleasant nonvariadic versions
+
+template<class T> static inline shared_ptr<T> new_sp() { return shared_ptr<T>(new T()); }
+template<class T,class A0> static inline shared_ptr<T> new_sp(A0&& a0) { return shared_ptr<T>(new T(a0)); }
+template<class T,class A0,class A1> static inline shared_ptr<T> new_sp(A0&& a0,A1&& a1) { return shared_ptr<T>(new T(a0,a1)); }
+template<class T,class A0,class A1,class A2> static inline shared_ptr<T> new_sp(A0&& a0,A1&& a1,A2&& a2) { return shared_ptr<T>(new T(a0,a1,a2)); }
+
+#endif
 
 template<class T> static inline boost::shared_ptr<typename remove_reference<T>::type> new_sp_copy(T&& t) {
   return shared_ptr<typename remove_reference<T>::type>(new typename remove_reference<T>::type(other_forward<T>(t)));

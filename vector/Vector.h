@@ -528,6 +528,8 @@ template<class T> static inline Vector<T,1> vec(const T& a0) { return Vector<T,1
 template<class T> static inline Vector<T,2> vec(const T& a0,const T& a1) { return Vector<T,2>(a0,a1); }
 template<class T> static inline Vector<T,3> vec(const T& a0,const T& a1,const T& a2) { return Vector<T,3>(a0,a1,a2); }
 template<class T> static inline Vector<T,4> vec(const T& a0,const T& a1,const T& a2,const T& a3) { return Vector<T,4>(a0,a1,a2,a3); }
+template<class T> static inline Vector<T,5> vec(const T& a0,const T& a1,const T& a2,const T& a3,const T& a4) { return Vector<T,5>(a0,a1,a2,a3,a4); }
+template<class T> static inline Vector<T,6> vec(const T& a0,const T& a1,const T& a2,const T& a3,const T& a4,const T& a5) { return Vector<T,6>(a0,a1,a2,a3,a4,a5); }
 
 #endif
 //#####################################################################
