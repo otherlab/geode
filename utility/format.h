@@ -85,6 +85,21 @@ template<class A0,class A1,class A2,class A3,class A4,class A5> static inline st
   return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4),format_sanitize(a5));
 }
 
+template<class A0,class A1,class A2,class A3,class A4,class A5,class A6> static inline string format(const char* format,
+  const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4),format_sanitize(a5),format_sanitize(a6));
+}
+
+template<class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7> static inline string format(const char* format,
+  const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4),format_sanitize(a5),format_sanitize(a6),format_sanitize(a7));
+}
+
+template<class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7,class A8> static inline string format(const char* format,
+  const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8) {
+  return format_helper(format,format_sanitize(a0),format_sanitize(a1),format_sanitize(a2),format_sanitize(a3),format_sanitize(a4),format_sanitize(a5),format_sanitize(a6),format_sanitize(a7),format_sanitize(a8));
+}
+
 #endif
 
 }
