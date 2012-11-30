@@ -15,10 +15,11 @@ static inline __m128 operator+(__m128 a, __m128 b) { return _mm_add_ps(a,b); }
 static inline __m128 operator-(__m128 a, __m128 b) { return _mm_sub_ps(a,b); }
 static inline __m128 operator*(__m128 a, __m128 b) { return _mm_mul_ps(a,b); }
 static inline __m128 operator/(__m128 a, __m128 b) { return _mm_div_ps(a,b); }
-static inline __m128i operator~(__m128i a) { return _mm_andnot_si128(a,_mm_set1_epi32(~0)); }
 static inline __m128i operator&(__m128i a, __m128i b) { return _mm_and_si128(a,b); }
 static inline __m128i operator^(__m128i a, __m128i b) { return _mm_xor_si128(a,b); }
 static inline __m128i operator|(__m128i a, __m128i b) { return _mm_or_si128(a,b); }
+static inline __m128i operator~(__m128i a) { return _mm_andnot_si128(a,_mm_set1_epi32(~0)); }
+static inline __m128 operator-(__m128 a) { return _mm_castsi128_ps(_mm_castps_si128(a)^_mm_set1_epi32(1<<31)); }
 #endif
 
 // Mark __m128 and __m128i as fundamental types
@@ -103,16 +104,6 @@ static inline __m128i isnotfinite(__m128 a) {
   const __m128i exponent = _mm_set1_epi32(0xff<<23);
   return _mm_cmpeq_epi32(_mm_castps_si128(a)&exponent,exponent);
 }
-
-/*
-static inline __m128i complement(__m128i a) {
-#ifdef _WIN32
-  return _mm_andnot_si128(a,_mm_set1_epi32(~0));
-#else
-  return ~a;
-#endif
-}
-*/
 
 static inline __m128i isfinite(__m128 a) {
   return ~isnotfinite(a);

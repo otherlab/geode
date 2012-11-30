@@ -7,7 +7,7 @@
 namespace other {
 
 template<class T> inline bool is_instance(PyObject* object) {
-  return PyObject_IsInstance(object,(PyObject*)&T::pytype);
+  return PyObject_IsInstance(object,(PyObject*)&T::pytype)!=0;
 }
 
 template<class T> struct PythonCast;

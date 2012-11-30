@@ -63,6 +63,7 @@ options(
   ('has_latex','true if latex is available',0),
   ('thread_safe','use thread safe reference counting in pure C++ code',0),
   ('skip','list of modules to skip',[]),
+  ('skip_programs','Build libraries only',0),
   ('BASE','Standard base directory for headers and libraries',env['BASE']),
   ('CXXFLAGS_EXTRA','',[]),
   ('LINKFLAGS_EXTRA','',[]),
@@ -475,6 +476,8 @@ def library(env,name,libs=(),skip=(),extra=()):
 
 # Build a program
 def program(env,name,cpp=None):
+  if env['skip_programs']:
+    return
   if cpp is None:
     cpp = name + '.cpp'
   env = link_flags(env)
