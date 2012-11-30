@@ -3,6 +3,8 @@
 
 #include <other/core/openmesh/TriMesh.h>
 #include <other/core/structure/Tuple.h>
+
+#ifdef USE_OPENMESH
 namespace other {
 
 using std::vector;
@@ -96,3 +98,4 @@ template<class EdgeStop> Tuple<vector<FaceHandle>,unordered_set<HalfedgeHandle,H
 }
 
 }
+#endif // USE_OPENMESH

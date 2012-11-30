@@ -1,3 +1,5 @@
+#ifdef USE_OPENMESH
+
 #include "triangulator.h"
 #include <other/core/structure/Tuple.h>
 #include <other/core/mesh/TriangleMesh.h>
@@ -252,3 +254,4 @@ double ShortEdgePriority::computePriority(VertexHandle v1, VertexHandle v2) {
 }
 
 }
+#endif // USE_OPENMESH

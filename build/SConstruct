@@ -397,6 +397,7 @@ def link_flags(env):
       env_link.PrependUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
+        env_link.PrependUnique(CPPDEFINES=lib['flags'])
       if lib.has_key('rpath'): env_link.PrependUnique(RPATH=lib['rpath'])
   return env_link
 

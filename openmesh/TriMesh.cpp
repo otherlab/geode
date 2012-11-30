@@ -1,3 +1,4 @@
+#ifdef USE_OPENMESH
 #include <other/core/openmesh/TriMesh.h>
 #include <other/core/openmesh/color_cast.h>
 #include <other/core/array/view.h>
@@ -1528,3 +1529,4 @@ void wrap_trimesh() {
     ;
 }
 
+#endif // USE_OPENMESH

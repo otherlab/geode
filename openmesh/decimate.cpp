@@ -1,3 +1,4 @@
+#ifdef USE_OPENMESH
 #include <other/core/openmesh/decimate.h>
 #include <OpenMesh/Tools/Decimater/DecimaterT.hh>
 #include <OpenMesh/Tools/Decimater/ModQuadricT.hh>
@@ -198,3 +199,4 @@ using namespace other;
 void wrap_decimate() {
   OTHER_FUNCTION(decimate)
 }
+#endif // USE_OPENMESH

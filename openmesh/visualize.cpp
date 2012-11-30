@@ -1,4 +1,5 @@
 // Set colors on a TriMesh
+#ifdef USE_OPENMESH
 
 #include <other/core/openmesh/visualize.h>
 namespace other {
@@ -25,3 +26,4 @@ template<> void visualize(TriMesh& mesh, const function<TriMesh::Color(FaceHandl
 }
 
 }
+#endif // USE_OPENMESH

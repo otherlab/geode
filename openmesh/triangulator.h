@@ -2,6 +2,7 @@
 
 #include <other/core/openmesh/TriMesh.h>
 #include <other/core/utility/tr1.h>
+#ifdef USE_OPENMESH
 namespace other {
   
 // base class for edge priority classes used in triangulators
@@ -45,3 +46,4 @@ protected:
 };
 
 }
+#endif // USE_OPENMESH

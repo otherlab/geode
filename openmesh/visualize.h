@@ -4,6 +4,8 @@
 #include <other/core/openmesh/TriMesh.h>
 #include <other/core/utility/compose.h>
 #include <boost/function.hpp>
+
+#ifdef USE_OPENMESH
 namespace other {
 
 using boost::function;
@@ -122,3 +124,4 @@ template<class T> struct TransferMap {
 };
 
 }
+#endif // USE_OPENMESH

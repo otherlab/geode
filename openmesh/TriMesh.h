@@ -11,10 +11,14 @@
 #pragma warning( push )
 #pragma warning( disable : 4244 )
 #endif
+
+#ifdef USE_OPENMESH
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Utils/vector_traits.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+#endif
+
 #ifdef _WIN32
 #pragma warning( pop )
 #endif
@@ -44,6 +48,8 @@
 #include <other/core/geometry/Segment3d.h>
 #include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
+
+#ifdef USE_OPENMESH
 
 namespace other {
 
@@ -528,3 +534,5 @@ extern template class PropertyT<other::OVec<unsigned char,4>>;
 extern template class PropertyT<VectorT<double,3>>;
 extern template class PolyMeshT<AttribKernelT<FinalMeshItemsT<other::MeshTraits,true>,TriConnectivity>>;
 }
+
+#endif // USE_OPENMESH

@@ -2,6 +2,7 @@
 
 #include <other/core/openmesh/TriMesh.h>
 
+#ifdef USE_OPENMESH
 namespace other {
 
   // Decimate by collapsing edges, prioritized by quadric error, until no more
@@ -19,3 +20,4 @@ namespace other {
                 double min_boundary_dot = .9999);
 
 }
+#endif // USE_OPENMESH

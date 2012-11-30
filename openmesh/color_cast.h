@@ -2,6 +2,8 @@
 #pragma once
 
 #include <other/core/openmesh/TriMesh.h>
+
+#ifdef USE_OPENMESH
 namespace OpenMesh {
 
 template <> struct color_caster<other::OVec<uint8_t,4>,Vec3f> {
@@ -36,3 +38,5 @@ template <> struct color_caster<Vec4uc,other::OVec<uint8_t,4>> {
 };
 
 }
+
+#endif // USE_OPENMESH
