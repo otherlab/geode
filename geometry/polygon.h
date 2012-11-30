@@ -15,8 +15,8 @@ namespace other {
   Box<Vector<real,2> > bounding_box(Polygon const &poly) OTHER_EXPORT;
   Box<Vector<real,2> > bounding_box(Polygons const &polys) OTHER_EXPORT;
 
-  Polygon polygon_from_index_list(Array<Vector<real,2> > const &positions, RawArray<const int> indices) OTHER_EXPORT;
-  Polygons polygons_from_index_list(Array<Vector<real,2> > const &positions, NestedArray<const int> indices) OTHER_EXPORT;
+  Polygon polygon_from_index_list(RawArray<const Vector<real,2> > const &positions, RawArray<const int> indices) OTHER_EXPORT;
+  Polygons polygons_from_index_list(RawArray<const Vector<real,2> > const &positions, NestedArray<const int> indices) OTHER_EXPORT;
 
   // compute signed area of polygon(s)
   real polygon_area(Polygons const &polys) OTHER_EXPORT;

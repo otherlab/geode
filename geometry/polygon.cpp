@@ -33,7 +33,7 @@ namespace other {
     return box;
   }
   
-  Polygons polygons_from_index_list(Array<Vector<real,2> > const &positions, NestedArray<const int> indices) {
+  Polygons polygons_from_index_list(RawArray<const Vector<real,2> > const &positions, NestedArray<const int> indices) {
     Polygons polys;
     for (int i = 0; i < indices.size(); ++i) {
       polys.push_back(polygon_from_index_list(positions, indices[i]));
@@ -42,7 +42,7 @@ namespace other {
     return polys;
   }
   
-  Polygon polygon_from_index_list(Array<Vector<real,2> > const &positions, RawArray<const int> indices) {
+  Polygon polygon_from_index_list(RawArray<const Vector<real,2> > const &positions, RawArray<const int> indices) {
     Polygon poly;
     
     for (int i = 0; i < indices.size(); ++i) {
