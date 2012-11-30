@@ -147,7 +147,7 @@ template<class A0,class A1,class A2,class A3,class A4> static inline Tuple<A0,A1
     return 0; \
   }
 
-#define TF(i) from_python<A##i>(PySequence_Fast_GET_ITEM(args,i))
+#define TF(i) from_python<A##i>(PySequence_Fast_GET_ITEM(&*seq,i))
 #define TT(i) to_python(src.template get<i>())
 OTHER_TUPLE_CONVERT(1,(class A0),(A0),(TF(0)),(TT(0)))
 OTHER_TUPLE_CONVERT(2,(class A0,class A1),(A0,A1),(TF(0),TF(1)),(TT(0),TT(1)))

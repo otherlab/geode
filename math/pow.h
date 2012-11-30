@@ -8,6 +8,7 @@
 #pragma once
 
 #include <other/core/math/cbrt.h>
+#include <cmath>
 namespace other {
 
 using ::std::sqrt;

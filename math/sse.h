@@ -9,6 +9,18 @@
 #include <boost/type_traits/is_fundamental.hpp>
 namespace other {
 
+// Declaring these is legal on Windows, and they already exist for clang/gcc.
+#ifdef _WIN32
+static inline __m128 operator+(__m128 a, __m128 b) { return _mm_add_ps(a,b); }
+static inline __m128 operator-(__m128 a, __m128 b) { return _mm_sub_ps(a,b); }
+static inline __m128 operator*(__m128 a, __m128 b) { return _mm_mul_ps(a,b); }
+static inline __m128 operator/(__m128 a, __m128 b) { return _mm_div_ps(a,b); }
+static inline __m128i operator~(__m128i a) { return _mm_andnot_si128(a,_mm_set1_epi32(~0)); }
+static inline __m128i operator&(__m128i a, __m128i b) { return _mm_and_si128(a,b); }
+static inline __m128i operator^(__m128i a, __m128i b) { return _mm_xor_si128(a,b); }
+static inline __m128i operator|(__m128i a, __m128i b) { return _mm_or_si128(a,b); }
+#endif
+
 // Mark __m128 and __m128i as fundamental types
 } namespace boost {
 template<> struct is_fundamental<__m128> : public mpl::true_{};
@@ -22,7 +34,7 @@ static inline __m128i fast_select(__m128i a, __m128i b, __m128i mask) {
 }
 
 static inline __m128 fast_select(__m128 a, __m128 b, __m128i mask) {
-  return (__m128)fast_select((__m128i)a,(__m128i)b,mask);
+  return _mm_castsi128_ps(fast_select(_mm_castps_si128(a),_mm_castps_si128(b),mask));
 }
 
 inline __m128 min(__m128 a, __m128 b) {
@@ -84,20 +96,30 @@ static inline __m128 sqrt(__m128 a) {
 }
 
 static inline __m128 abs(__m128 a) {
-  return (__m128)((__m128i)a&_mm_set1_epi32(~(1<<31)));
+  return _mm_castsi128_ps(_mm_castps_si128(a)&_mm_set1_epi32(~(1<<31)));
 }
 
 static inline __m128i isnotfinite(__m128 a) {
   const __m128i exponent = _mm_set1_epi32(0xff<<23);
-  return _mm_cmpeq_epi32((__m128i)a&exponent,exponent);
+  return _mm_cmpeq_epi32(_mm_castps_si128(a)&exponent,exponent);
 }
+
+/*
+static inline __m128i complement(__m128i a) {
+#ifdef _WIN32
+  return _mm_andnot_si128(a,_mm_set1_epi32(~0));
+#else
+  return ~a;
+#endif
+}
+*/
 
 static inline __m128i isfinite(__m128 a) {
   return ~isnotfinite(a);
 }
 
 static inline __m128 copysign(__m128 mag, __m128 sign) {
-  return (__m128)(((__m128i)mag&_mm_set1_epi32(~(1<<31)))|((__m128i)sign&_mm_set1_epi32(1<<31)));
+  return _mm_castsi128_ps((_mm_castps_si128(mag)&_mm_set1_epi32(~(1<<31)))|(_mm_castps_si128(sign)&_mm_set1_epi32(1<<31)));
 }
 
 static inline std::ostream& operator<<(std::ostream& os, __m128 a) {
@@ -113,15 +135,15 @@ static inline std::ostream& operator<<(std::ostream& os, __m128i a) {
 }
 
 static inline void transpose(__m128i& i0, __m128i& i1, __m128i& i2, __m128i& i3) {
-  __m128 f0 = (__m128)i0,
-         f1 = (__m128)i1,
-         f2 = (__m128)i2,
-         f3 = (__m128)i3;
+  __m128 f0 = _mm_castsi128_ps(i0),
+         f1 = _mm_castsi128_ps(i1),
+         f2 = _mm_castsi128_ps(i2),
+         f3 = _mm_castsi128_ps(i3);
   _MM_TRANSPOSE4_PS(f0,f1,f2,f3);
-  i0 = (__m128i)f0;
-  i1 = (__m128i)f1;
-  i2 = (__m128i)f2;
-  i3 = (__m128i)f3;
+  i0 = _mm_castps_si128(f0);
+  i1 = _mm_castps_si128(f1);
+  i2 = _mm_castps_si128(f2);
+  i3 = _mm_castps_si128(f3);
 }
 
 }

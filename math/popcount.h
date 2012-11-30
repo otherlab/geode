@@ -7,7 +7,7 @@
 #include <stdint.h>
 namespace other {
 
-#ifdef __GNUC__
+#ifndef _WIN32
 
 static inline int popcount(uint16_t n) {
   return __builtin_popcount(n);
@@ -24,7 +24,20 @@ static inline int popcount(uint64_t n) {
 }
 
 #else
-#error "Need to implement popcount for non-gcc compilers (using a parallel prefix circuit)"
+
+static inline int popcount(uint16_t n) {
+  return __popcnt16(n);
+}
+
+static inline int popcount(uint32_t n) {
+  BOOST_STATIC_ASSERT(sizeof(int)==4);
+  return __popcnt(n);
+}
+
+static inline int popcount(uint64_t n) {
+  return (int)__popcnt64(n);
+}
+
 #endif
 
 }

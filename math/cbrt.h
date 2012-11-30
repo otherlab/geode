@@ -15,8 +15,8 @@
 namespace other {
 
 #ifdef _WIN32
-inline float cbrt(const float a){return std::pow(a,(float)(1/3.));}
-inline double cbrt(const double a){return std::pow(a,(double)(1/3.));}
+inline float cbrt(const float a){return ::pow(a,(float)(1/3.));}
+inline double cbrt(const double a){return ::pow(a,(double)(1/3.));}
 #else
 inline float cbrt(const float a){return ::cbrtf(a);}
 inline double cbrt(const double a){return ::cbrt(a);}
