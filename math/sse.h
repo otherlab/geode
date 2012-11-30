@@ -74,6 +74,7 @@ template<> inline __m128i pack<uint32_t>(uint32_t x0, uint32_t x1, uint32_t x2, 
   return _mm_set_epi32(x3,x2,x1,x0);
 }
 
+#if !defined(_WIN32) || defined(_WIN64)
 template<> inline __m128i pack<int64_t>(int64_t x0, int64_t x1) {
   return _mm_set_epi64x(x1,x0);
 }
@@ -81,6 +82,7 @@ template<> inline __m128i pack<int64_t>(int64_t x0, int64_t x1) {
 template<> inline __m128i pack<uint64_t>(uint64_t x0, uint64_t x1) {
   return _mm_set_epi64x(x1,x0);
 }
+#endif
 
 template<class D,class S> static inline D expand(S x);
 

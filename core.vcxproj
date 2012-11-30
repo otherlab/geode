@@ -456,7 +456,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>Win32;WIN32;_DEBUG;_LIB;USE_LIBJPEG;_USE_MATH_DEFINES;OTHER_REAL=double;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Win32;WIN32;_DEBUG;_LIB;USE_LIBJPEG;_USE_MATH_DEFINES;OTHER_REAL=double;USE_OPENMESH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)..;$(PYTHONDIR)\include;$(PYTHONDIR)\Lib\site-packages\numpy\core\include;$(BOOSTDIR);$(JPGLIBDIR);$(OPENMESHDIR)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
@@ -478,7 +478,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>Win32;WIN32;NDEBUG;_LIB;USE_LIBJPEG;_USE_MATH_DEFINES;OTHER_REAL=double;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Win32;WIN32;NDEBUG;_LIB;USE_LIBJPEG;_USE_MATH_DEFINES;OTHER_REAL=double;USE_OPENMESH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)..;$(PYTHONDIR)\include;$(PYTHONDIR)\Lib\site-packages\numpy\core\include;$(BOOSTDIR);$(JPGLIBDIR);$(OPENMESHDIR)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>

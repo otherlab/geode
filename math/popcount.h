@@ -35,7 +35,11 @@ static inline int popcount(uint32_t n) {
 }
 
 static inline int popcount(uint64_t n) {
+#ifdef _WIN64
   return (int)__popcnt64(n);
+#else
+  return __popcnt(uint32_t(n>>32))+__popcnt(uint32_t(n));
+#endif
 }
 
 #endif
