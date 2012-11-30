@@ -35,6 +35,8 @@ template<> struct Range<int> {
 
   Iter begin() const { return Iter(lo); }
   Iter end() const { return Iter(hi); }
+
+  bool contains(int i) const { return lo <= i && i < hi; }
 };
 
 template<class Iter> static inline Range<Iter> range(const Iter& lo, const Iter& hi) {
