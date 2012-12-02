@@ -14,6 +14,8 @@ namespace other {
 using std::string;
 using boost::function;
 
+#ifdef OTHER_PYTHON
+
 namespace {
 
 template<class R> struct PythonFunctionWrapper {
@@ -81,4 +83,5 @@ template<class F> PyObject* to_python(const boost::function<F>& f) {
   OTHER_NOT_IMPLEMENTED();
 }
 
+#endif
 }

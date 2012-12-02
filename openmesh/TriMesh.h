@@ -184,13 +184,17 @@ namespace OpenMesh {
 // the compiler (or declared before the declaration of whatever uses them)
 
 // python interface for handles
+#ifdef OTHER_PYTHON
 static inline PyObject* to_python(BaseHandle h) {
   return ::other::to_python(h.idx());
 }
+#endif
 
 }
 
 namespace other {
+
+#ifdef OTHER_PYTHON
 
 template<> struct FromPython<VertexHandle> {
   static VertexHandle convert(PyObject* object) {
@@ -215,6 +219,8 @@ template<> struct FromPython<HalfedgeHandle> {
     return HalfedgeHandle((unsigned int)from_python<int>(object));
   }
 };
+
+#endif
 
 template<class P> struct prop_handle_type;
 template<class T> struct prop_handle_type<OpenMesh::FPropHandleT<T> >{typedef FaceHandle type;};

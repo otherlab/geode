@@ -40,17 +40,19 @@ private:
 public:
   virtual ~PropBase();
 
-  virtual void set(PyObject* value_) = 0;
   virtual const ValueBase& base() const = 0;
-  virtual PyObject* default_python() const = 0;
   virtual bool same_default(PropBase& other) const = 0;
   virtual string value_str(bool use_default = false) const = 0;
+
+#ifdef OTHER_PYTHON
+  virtual void set(PyObject* value_) = 0;
+  virtual PyObject* default_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual PyObject* allowed_python() const = 0;
-
   virtual void set_min_python(PyObject* v) = 0;
   virtual void set_max_python(PyObject* v) = 0;
   virtual void set_step_python(PyObject* v) = 0;
+#endif
 
   const type_info& type() const {
     return base().type();
@@ -133,6 +135,7 @@ public:
     return self();
   }
 
+#ifdef OTHER_PYTHON
   void set_min_python(PyObject* v){
     set_min(from_python<T>(v));
   }
@@ -144,6 +147,7 @@ public:
   void set_step_python(PyObject* v){
     set_step(from_python<T>(v));
   }
+#endif
 
   Prop<T>& set_min(const PropRef<T> p, real alpha = 1);
   Prop<T>& set_max(const PropRef<T> p, real alpha = 1);
@@ -194,10 +198,6 @@ public:
     }
   }
 
-  void set(PyObject* value_) {
-    set(from_python<T>(value_));
-  }
-
   Prop<T>& set_help(const string& h){
     help = h;
     return *this;
@@ -228,6 +228,12 @@ public:
     return *this;
   }
 
+#ifdef OTHER_PYTHON
+
+  void set(PyObject* value_) {
+    set(from_python<T>(value_));
+  }
+
   void set_allowed_python(PyObject* values){
     set_allowed(from_python<vector<T> >(values));
   }
@@ -248,6 +254,12 @@ public:
     Clamp::set_step_python(s);
   }
 
+  PyObject* default_python() const {
+    return to_python(default_);
+  }
+
+#endif
+
   const ValueBase& base() const {
     return *this;
   }
@@ -263,10 +275,6 @@ public:
   // your own risk.
   T& mutate() {
     return *this->value;
-  }
-
-  PyObject* default_python() const {
-    return to_python(default_);
   }
 
   bool same_default(PropBase& other_) const {
@@ -323,6 +331,8 @@ public:
 
 };
 
+#ifdef OTHER_PYTHON
+
 PyObject* to_python(const PropBase& prop) OTHER_EXPORT;
 PyObject* ptr_to_python(const PropBase* prop) OTHER_EXPORT;
 PropBase& prop_from_python(PyObject* object, const type_info& type) OTHER_EXPORT;
@@ -343,6 +353,8 @@ template<class T> struct FromPython<PropRef<T> > {
     return static_cast<Prop<T>&>(prop_from_python(object,typeid(T)));
   }
 };
+
+#endif
 
 // Reduce template bloat
 extern template class Prop<bool>;

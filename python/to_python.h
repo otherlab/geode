@@ -28,9 +28,11 @@ using boost::shared_ptr;
 // Conversion for PyObject*
 static inline PyObject*
 to_python(PyObject* value) {
-  Py_INCREF(value);
+  OTHER_INCREF(value);
   return value;
 }
+
+#ifdef OTHER_PYTHON
 
 // Conversion from bool
 static inline PyObject*
@@ -104,10 +106,11 @@ to_python(char value) {
 // Conversion to enums (see enum.h for the definition)
 template<class E> typename boost::enable_if<boost::is_enum<E>,PyObject*>::type to_python(E value) OTHER_EXPORT;
 
-
-//This is a dummy conversion for shared ptr, since we don't know how to convert shared ptr to python
+// This is a dummy conversion for shared ptr, since we don't know how to convert shared ptr to python
 template<class T> static inline PyObject* to_python(const shared_ptr<T>& object) {
   OTHER_NOT_IMPLEMENTED();
 }
+
+#endif
 
 } // namespace other

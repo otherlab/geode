@@ -143,7 +143,7 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
   if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
 
 # Predefined external libraries
-external('python',default=1,frameworks=['Python'])
+external('python',default=1,frameworks=['Python'],flags=['OTHER_PYTHON'])
 external('boost',default=1,hide=1)
 external('boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
 external('mpi',flags=['USE_MPI'])
@@ -183,7 +183,8 @@ def configure_python():
     assert libpath and lib
     python['libpath'] = [libpath]
     python['libs'] = [lib]
-configure_python()
+if env['has_python']:
+  configure_python()
 
 # Improve performance
 env.Decider('MD5-timestamp')

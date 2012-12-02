@@ -5,6 +5,8 @@
 #include <other/core/python/exceptions.h>
 namespace other {
 
+#ifdef OTHER_PYTHON
+
 template<class T> OTHER_EXPORT PyObject* to_python(const Box<T>& self) {
   const char* format=boost::is_same<T,float>::value?"ff":"dd";
   return Py_BuildValue(format,self.min,self.max);
@@ -23,5 +25,7 @@ template<class T> Box<T> FromPython<Box<T> >::convert(PyObject* object) {
   template Box<T> FromPython<Box<T> >::convert(PyObject*);
 INSTANTIATE(float)
 INSTANTIATE(double)
+
+#endif
 
 }

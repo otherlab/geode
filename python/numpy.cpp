@@ -1,6 +1,7 @@
 //#####################################################################
 // Numpy interface functions
 //#####################################################################
+#ifdef OTHER_PYTHON
 #include <other/core/python/numpy.h>
 #include <numpy/npy_common.h>
 #include <boost/detail/endian.hpp>
@@ -120,3 +121,4 @@ void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int 
 }
 
 }
+#endif

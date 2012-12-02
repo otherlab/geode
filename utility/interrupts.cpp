@@ -27,6 +27,7 @@ void add_interrupt_checker(void (*checker)()) {
   interrupt_checkers.push_back(checker);
 }
 
+#ifdef OTHER_PYTHON
 void check_python_interrupts() {
   bool error = false;
   #pragma omp critical
@@ -37,5 +38,6 @@ void check_python_interrupts() {
   if (error)
     throw_python_error();
 }
+#endif
 
 }

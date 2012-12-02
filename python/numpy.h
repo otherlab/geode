@@ -2,6 +2,7 @@
 // Numpy interface functions
 //#####################################################################
 #pragma once
+#ifdef OTHER_PYTHON
 
 #define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
 #define NPY_NO_DEPRECATED_API
@@ -378,3 +379,4 @@ fill_numpy_header(Array<uint8_t>& header,const TArray& array) {
 
 }
 }
+#endif

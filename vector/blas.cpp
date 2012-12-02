@@ -28,15 +28,15 @@ template<class T> int ilaenv(int ispec,const char* name,const char* opts,int m,i
 #endif
 }
 
-CBLAS_TRANSPOSE FromPython<CBLAS_TRANSPOSE>::
-convert(PyObject* object)
-{
-    const char* s=from_python<const char*>(object);
-    switch(s[0]?s[1]?0:s[0]:0){
-        case 'n': case 'N': return CblasNoTrans;
-        case 't': case 'T': return CblasTrans;
-        default: throw ValueError("expected n or t (or N or T)");}
+#ifdef OTHER_PYTHON
+CBLAS_TRANSPOSE FromPython<CBLAS_TRANSPOSE>::convert(PyObject* object) {
+  const char* s = from_python<const char*>(object);
+  switch(s[0]?s[1]?0:s[0]:0){
+    case 'n': case 'N': return CblasNoTrans;
+    case 't': case 'T': return CblasTrans;
+    default: throw ValueError("expected n or t (or N or T)");}
 }
+#endif
 
 template int ilaenv<float>(int,const char*,const char*,int,int);
 template int ilaenv<double>(int,const char*,const char*,int,int);

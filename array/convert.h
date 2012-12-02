@@ -13,6 +13,8 @@
 #include <other/core/python/numpy.h>
 namespace other {
 
+#ifdef OTHER_PYTHON
+
 template<class T,int d> PyObject* to_python(const Array<T,d>& array) {
   return to_numpy(array);
 }
@@ -42,5 +44,12 @@ template<class T> NdArray<T> FromPython<NdArray<T> >::convert(PyObject* object) 
 #define NDARRAY_CONVERSIONS(...) \
   NDARRAY_CONVERSIONS_HELPER(__VA_ARGS__) \
   NDARRAY_CONVERSIONS_HELPER(const __VA_ARGS__)
+
+#else // non-python stubs
+
+#define ARRAY_CONVERSIONS(...)
+#define NDARRAY_CONVERSIONS(...)
+
+#endif
 
 }

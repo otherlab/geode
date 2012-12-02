@@ -88,6 +88,8 @@ template<class A> static inline auto convert_sequence_item(PyObject* args)
   return from_python<typename A::type>(PySequence_Fast_GET_ITEM(args,A::index));
 }
 
+#ifdef OTHER_PYTHON
+
 template<class Tup,class... Enum> static inline PyObject* tuple_to_python_helper(const Tup& src, Types<Enum...>) {
   const int n = sizeof...(Enum);
   Vector<PyObject*,n> items(convert_tuple_entry<Enum>(src)...);
@@ -113,6 +115,8 @@ template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyO
   return Tup(convert_sequence_item<Enum>(&*seq)...);
 }
 
+#endif
+
 #else // Unpleasant nonvariadic versions
 
 static inline Tuple<> tuple() { return Tuple<>(); }
@@ -121,6 +125,8 @@ template<class A0,class A1> static inline Tuple<A0,A1> tuple(const A0& a0,const 
 template<class A0,class A1,class A2> static inline Tuple<A0,A1,A2> tuple(const A0& a0,const A1& a1,const A2& a2) { return Tuple<A0,A1,A2>(a0,a1,a2); }
 template<class A0,class A1,class A2,class A3> static inline Tuple<A0,A1,A2,A3> tuple(const A0& a0,const A1& a1,const A2& a2,const A3& a3) { return Tuple<A0,A1,A2,A3>(a0,a1,a2,a3); }
 template<class A0,class A1,class A2,class A3,class A4> static inline Tuple<A0,A1,A2,A3,A4> tuple(const A0& a0,const A1& a1,const A2& a2,const A3& a3,const A4& a4) { return Tuple<A0,A1,A2,A3,A4>(a0,a1,a2,a3,a4); }
+
+#ifdef OTHER_PYTHON
 
 #define OTHER_TUPLE_CONVERT(n,ARGS,Args,fromargs,toargs) \
   template<OTHER_REMOVE_PARENS(ARGS)> struct FromPython<Tuple<OTHER_REMOVE_PARENS(Args)>>{static Tuple<OTHER_REMOVE_PARENS(Args)> convert(PyObject* object) { \
@@ -158,6 +164,7 @@ OTHER_TUPLE_CONVERT(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A
 #undef TT
 #undef TF
 
+#endif
 #endif
 
 }

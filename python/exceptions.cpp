@@ -10,6 +10,8 @@ namespace other{
 typedef unordered_map<const std::type_info*,PyObject*> ExceptionMap;
 ExceptionMap exception_map;
 
+#ifdef OTHER_PYTHON
+
 void set_python_exception(const std::exception& error) {
   if (typeid(error)!=typeid(PythonError)) {
     ExceptionMap::const_iterator exc=exception_map.find(&typeid(error));
@@ -18,12 +20,22 @@ void set_python_exception(const std::exception& error) {
   }
 }
 
+#else
+
+void throw_no_python() {
+  throw NotImplementedError("Python functionality was disabled during compilation");
+}
+
+#endif
+
 void register_python_exception(const std::type_info& type,PyObject* pytype) {
   exception_map[&type] = pytype;
 }
 
+#ifdef OTHER_PYTHON
+
 static void redefine_assertion_error(PyObject* exc) {
-  Py_INCREF(exc);
+  OTHER_INCREF(exc);
   register_python_exception<AssertionError>(exc);
 }
 
@@ -83,6 +95,8 @@ const char* PythonError::what() const throw() {
   return what_.c_str();
 }
 
+#endif
+
 #define INSTANTIATE(Error) \
   Error::Error(const std::string& message):Base(message){} \
   Error::~Error() throw () {}
@@ -104,6 +118,7 @@ INSTANTIATE(ReferenceError)
 using namespace other;
 
 void wrap_exceptions() {
+#ifdef OTHER_PYTHON
   register_python_exception<IOError>(PyExc_IOError);
   register_python_exception<OSError>(PyExc_OSError);
   register_python_exception<LookupError>(PyExc_LookupError);
@@ -119,4 +134,5 @@ void wrap_exceptions() {
   register_python_exception<ReferenceError>(PyExc_ReferenceError);
 
   OTHER_FUNCTION(redefine_assertion_error)
+#endif
 }

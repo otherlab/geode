@@ -19,9 +19,11 @@
 #include <iostream>
 namespace other {
 
+using std::map;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::pair;
 using std::make_pair;
 typedef Vector<real,2> TV2;
 

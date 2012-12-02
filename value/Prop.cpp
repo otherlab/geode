@@ -37,16 +37,17 @@ void PropBase::dump(int indent) const {
 // Since PropBase doesn't by itself inherit from Object due to multiple inheritance woes,
 // we need a special wrapper class to expose Prop<T> to python.
 
+#ifdef OTHER_PYTHON
 Ref<PropBase> make_prop(const string& n, PyObject* value) {
   // If the value has known simple type, make the corresponding property
   if (PyBool_Check(value))
-    return new_<Prop<bool> >(n,from_python<bool>(value));
+    return new_<Prop<bool>>(n,from_python<bool>(value));
   if (PyInt_Check(value))
-    return new_<Prop<int> >(n,from_python<int>(value));
+    return new_<Prop<int>>(n,from_python<int>(value));
   if (PyFloat_Check(value))
-    return new_<Prop<double> >(n,from_python<double>(value));
+    return new_<Prop<double>>(n,from_python<double>(value));
   if (PyString_Check(value))
-    return new_<Prop<string> >(n,from_python<string>(value));
+    return new_<Prop<string>>(n,from_python<string>(value));
   if (PySequence_Check(value)) {
     if (PyArray_Check(value)) {
       if (rotations_check<TV2>(value))
@@ -58,7 +59,7 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       if (frames_check<TV3>(value))
         return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
     }
-    NdArray<const real> a = from_python<NdArray<const real> >(value);
+    NdArray<const real> a = from_python<NdArray<const real>>(value);
     if (a.shape.size()==1 && a.shape[0]==2)
       return new_<Prop<TV2>>(n,vec(a[0],a[1]));
     if (a.shape.size()==1 && a.shape[0]==3)
@@ -74,6 +75,7 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
   // We don't understand the value, so complain
   throw TypeError(format("we don't know how to make a property of type '%s'",value->ob_type->tp_name));
 }
+#endif
 
 template<class T> PropClamp<T,true>::PropClamp()
   : min(-numeric_limits<T>::max())
@@ -115,6 +117,8 @@ template<class T> void PropClamp<T,true>::maximize() {
 template struct PropClamp<int,true>;
 template struct PropClamp<double,true>;
 
+#ifdef OTHER_PYTHON
+
 PyObject* to_python(const PropBase& prop) {
   return to_python(prop.base());
 }
@@ -138,6 +142,8 @@ PropBase& prop_from_python(PyObject* object, const type_info& goal) {
   throw TypeError(format("expected Prop<%s>, got Prop<%s>",goal.name(),self.type().name()));
 }
 
+#endif
+
 // Reduce template bloat
 template class Prop<bool>;
 template class Prop<int>;
@@ -151,5 +157,7 @@ template class Prop<TV4>;
 using namespace other;
 
 void wrap_prop() {
+#ifdef OTHER_PYTHON
   OTHER_FUNCTION_2(Prop,make_prop)
+#endif
 }

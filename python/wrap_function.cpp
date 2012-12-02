@@ -1,6 +1,7 @@
 //#####################################################################
 // Function wrap_function
 //#####################################################################
+#ifdef OTHER_PYTHON
 #include <other/core/python/wrap_function.h>
 namespace other {
 
@@ -66,10 +67,13 @@ PyObject* wrap_function_helper(const char* name, FunctionWrapper wrapper, void* 
 
 }
 using namespace other;
+#endif
 
 void wrap_python_function() {
+#ifdef OTHER_PYTHON
   if (PyType_Ready(&PythonFunction::pytype)<0)
     return;
+#endif
 
   // PythonFunction can't be created from python, so no need to add it to the module
 }

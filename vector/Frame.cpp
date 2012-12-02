@@ -9,6 +9,8 @@ namespace other{
 
 typedef real T;
 
+#ifdef OTHER_PYTHON
+
 namespace {
 PyTypeObject* frame_type;
 template<class TV> struct NumpyDescr<Frame<TV>>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
@@ -79,16 +81,20 @@ template<class TV> static Array<Frame<TV>> frame_interpolation(Array<const Frame
   return r;
 }
 
+#endif
+
 }
 using namespace other;
 
 void wrap_frame() {
-    using namespace python;
-    function("_set_frame_type",set_frame_type);
-    function("frame_test_2d",frame_test<Vector<real,2>>);
-    function("frame_test_3d",frame_test<Vector<real,3>>);
-    function("frame_array_test_2d",frame_array_test<Vector<real,2>>);
-    function("frame_array_test_3d",frame_array_test<Vector<real,3>>);
-    function("frame_interpolation_2d",frame_interpolation<Vector<real,2>>);
-    function("frame_interpolation_3d",frame_interpolation<Vector<real,3>>);
+#ifdef OTHER_PYTHON
+  using namespace python;
+  function("_set_frame_type",set_frame_type);
+  function("frame_test_2d",frame_test<Vector<real,2>>);
+  function("frame_test_3d",frame_test<Vector<real,3>>);
+  function("frame_array_test_2d",frame_array_test<Vector<real,2>>);
+  function("frame_array_test_3d",frame_array_test<Vector<real,3>>);
+  function("frame_interpolation_2d",frame_interpolation<Vector<real,2>>);
+  function("frame_interpolation_3d",frame_interpolation<Vector<real,3>>);
+#endif
 }

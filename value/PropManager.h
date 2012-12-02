@@ -77,8 +77,10 @@ public:
   // Turn char* to string
   Prop<string>& get_or_add(string const &name, const char* default_);
 
+#ifdef OTHER_PYTHON
   PropBase& add_python(string const &name, PyObject* default_);
   PropBase& get_or_add_python(string const &name, PyObject* default_);
+#endif
 };
 
 }

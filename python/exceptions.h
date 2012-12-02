@@ -27,12 +27,16 @@ using std::string;
 OTHER_EXPORT void set_python_exception(const std::exception& error);
 OTHER_EXPORT void register_python_exception(const std::type_info& type,PyObject* pytype);
 
-// exception throwing functions to reduce code bloat
+// Exception throwing functions to reduce code bloat
+#ifdef OTHER_PYTHON
 OTHER_EXPORT void OTHER_NORETURN(throw_python_error()); // python error must already be set
 OTHER_EXPORT void OTHER_NORETURN(throw_type_error(PyObject* object,PyTypeObject* type));
 OTHER_EXPORT void OTHER_NORETURN(unregistered_python_type(PyObject* object,PyTypeObject* type));
-OTHER_EXPORT void OTHER_NORETURN(throw_arity_mismatch(const int expected,const Py_ssize_t got));
+OTHER_EXPORT void OTHER_NORETURN(throw_arity_mismatch(const int expected,const ssize_t got));
 OTHER_EXPORT void OTHER_NORETURN(throw_no_keyword_args(PyObject* kwargs));
+#else
+OTHER_EXPORT void OTHER_NORETURN(throw_no_python());
+#endif
 
 template<class TError> static inline void
 register_python_exception(PyObject* pytype) {

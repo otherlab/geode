@@ -150,6 +150,8 @@ ptr(T* object) {
   return object ? Ptr<T>(object,ptr_to_python(object)) : Ptr<T>();
 }
 
+#ifdef OTHER_PYTHON
+
 // Convert Py_None to 0 as well
 template<> inline Ptr<PyObject>
 ptr(PyObject* object) {
@@ -162,7 +164,7 @@ static inline Ptr<> steal_ptr(PyObject* object) {
   return p;
 }
 
-// conversion from Ptr<T> to python
+// Conversion from Ptr<T> to python
 template<class T> static inline PyObject*
 to_python(const Ptr<T>& ptr) {
   if (ptr) {
@@ -171,13 +173,13 @@ to_python(const Ptr<T>& ptr) {
       set_self_owner_mismatch();
       return 0;
     }
-    Py_INCREF(owner);
+    OTHER_INCREF(owner);
     return owner;
   } else
     Py_RETURN_NONE;
 }
 
-// conversion from python to Ptr<T>
+// Conversion from python to Ptr<T>
 template<class T> struct FromPython<Ptr<T> >{static Ptr<T>
 convert(PyObject* object) {
   if (object==Py_None)
@@ -186,11 +188,13 @@ convert(PyObject* object) {
     return ref(FromPython<T&>::convert(object));
 }};
 
-// conversion from python to Ptr<PyObject>
+// Conversion from python to Ptr<PyObject>
 template<> struct FromPython<Ptr<PyObject> >{static Ptr<PyObject>
 convert(PyObject* object) {
   return ptr(object);
 }};
+
+#endif
 
 template<class T> static inline ostream& operator<<(ostream& output, const Ptr<T>& p) {
   return output<<p.get();

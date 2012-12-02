@@ -56,11 +56,13 @@ public:
 
   virtual ~ValueBase();
 
+#ifdef OTHER_PYTHON
   virtual PyObject* get_python() const = 0;
 
   PyObject* operator()() const {
     return get_python();
   }
+#endif
 
   bool is_prop() const;
   virtual const type_info& type() const = 0;
@@ -81,7 +83,6 @@ public:
 
   virtual void dump(int indent) const = 0;
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
-  Ref<> dump_dependencies() const;
 
   const string& get_name() const;
   ValueBase& set_name(const string& n);
@@ -95,24 +96,26 @@ private:
   // The following exist only for python purposes: they throw exceptions if the ValueBase isn't a PropBase.
   PropBase& prop();
   const PropBase& prop() const;
-  ValueBase& set(PyObject* value_);
   ValueBase& set_help(const string& h);
   ValueBase& set_category(const string& c);
   ValueBase& set_hidden(bool h);
   ValueBase& set_required(bool r);
   ValueBase& set_abbrev(char a);
-  ValueBase& set_allowed(PyObject* v);
-  ValueBase& set_min_py(PyObject* m);
-  ValueBase& set_max_py(PyObject* m);
-  ValueBase& set_step_py(PyObject* s);
   const string& get_help() const;
   const string& get_category() const;
   bool get_hidden() const;
   bool get_required() const;
   char get_abbrev() const;
+  friend void ::wrap_value_base();
+#ifdef OTHER_PYTHON
+  ValueBase& set(PyObject* value_);
+  ValueBase& set_allowed(PyObject* v);
+  ValueBase& set_min_py(PyObject* m);
+  ValueBase& set_max_py(PyObject* m);
+  ValueBase& set_step_py(PyObject* s);
   PyObject* get_default() const;
   PyObject* get_allowed() const;
-  friend void ::wrap_value_base();
+#endif
 };
 
 template<class T> class OTHER_EXPORT Value:public ValueBase
@@ -152,10 +155,12 @@ public:
     return *value;
   }
 
+#ifdef OTHER_PYTHON
   PyObject* get_python() const {
     pull();
     return to_python(*value);
   }
+#endif
 
   const type_info& type() const {
     return typeid(T);

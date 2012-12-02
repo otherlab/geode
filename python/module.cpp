@@ -19,18 +19,20 @@ namespace python {
 
 static std::vector<PyObject*> modules;
 
-static PyObject* module() {
-  if (modules.empty())
-    throw RuntimeError("No current module");
-  return modules.back();
-}
-
 Scope::Scope(PyObject* module) {
   modules.push_back(module);
 }
 
 Scope::~Scope() {
   modules.pop_back();
+}
+
+#ifdef OTHER_PYTHON
+
+static PyObject* module() {
+  if (modules.empty())
+    throw RuntimeError("No current module");
+  return modules.back();
 }
 
 void import_core() {
@@ -44,7 +46,7 @@ void import_core() {
     if (!python) throw_python_error();}
 }
 
-void add_object(const char* name,PyObject* object) {
+void add_object(const char* name, PyObject* object) {
   if (!object) throw PythonError();
   PyModule_AddObject(module(),name,object);
 }
@@ -55,6 +57,13 @@ template<class TC> static TC convert_test(const TC& c) {
 
 enum EnumTest { EnumTestA, EnumTestB };
 
+#else // non-python stubs
+
+void import_core() {}
+void add_object(const char* name, PyObject* object) {}
+
+#endif
+
 }
 
 OTHER_DEFINE_ENUM(python::EnumTest)
@@ -64,6 +73,7 @@ using namespace other;
 using namespace other::python;
 
 void wrap_python() {
+#ifdef OTHER_PYTHON
   if(strncmp(PY_VERSION,Py_GetVersion(),3)) {
     PyErr_Format(PyExc_ImportError,"python version mismatch: compiled again %s, linked against %s",PY_VERSION,Py_GetVersion());
     throw_python_error();
@@ -91,4 +101,5 @@ void wrap_python() {
   }
 
   python::add_object("real",(PyObject*)PyArray_DescrFromType(NumpyScalar<real>::value));
+#endif
 }

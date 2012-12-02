@@ -5,16 +5,18 @@
 #include <iostream>
 namespace other{
 
-int trivial_init(PyObject* self,PyObject* args,PyObject* kwds) {
+#ifdef OTHER_PYTHON
+
+int trivial_init(PyObject* self,PyObject* args, PyObject* kwds) {
   return 0; // all initialization is handled in __new__
 }
 
-PyObject* simple_alloc(PyTypeObject* type,Py_ssize_t nitems) {
+PyObject* simple_alloc(PyTypeObject* type, ssize_t nitems) {
   PyObject* object = (PyObject*)calloc(1,type->tp_basicsize);
   return object?PyObject_INIT(object,type):0;
 }
 
-void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr) {
+void add_descriptor(PyTypeObject* type, const char* name, PyObject* descr) {
   if (PyDict_GetItemString(type->tp_dict,name))
     PyErr_Format(PyExc_TypeError,"Descriptor '%s.%s' already specified for class",type->tp_name,name);
   else if (!PyDict_SetItemString(type->tp_dict,name,descr))
@@ -59,4 +61,5 @@ ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t 
   }
 }
 
+#endif
 }

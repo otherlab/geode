@@ -10,6 +10,8 @@ namespace other{
 
 using std::cout;
 
+#ifdef OTHER_PYTHON
+
 static PyObject* p64;
 
 PyObject* to_python(uint128_t n) {
@@ -66,12 +68,16 @@ static std::vector<uint128_t> uint128_test(uint128_t x,uint128_t y) {
   return r;
 }
 
+#endif
+
 }
 using namespace other;
 
 void wrap_uint128() {
+#ifdef OTHER_PYTHON
   p64 = PyInt_FromLong(64);
   if (!p64) throw_python_error();
 
   OTHER_FUNCTION(uint128_test)
+#endif
 }

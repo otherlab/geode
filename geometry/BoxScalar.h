@@ -19,6 +19,7 @@
 #include <other/core/python/forward.h>
 #include <other/core/utility/STATIC_ASSERT_SAME.h>
 #include <boost/mpl/assert.hpp>
+#include <cassert>
 #include <limits>
 #include <cfloat>
 namespace other {

@@ -12,6 +12,8 @@ namespace other {
 
 typedef real T;
 
+#ifdef OTHER_PYTHON
+
 template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) {
   return to_python(new_<AnalyticImplicit<Box<Vector<T,d>>>>(box));
 }
@@ -19,6 +21,8 @@ template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) {
 template<class T,int d> Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject* object) {
   return from_python<AnalyticImplicit<Box<Vector<T,d>>>&>(object);
 }
+
+#endif
 
 template<class T,int d> Vector<T,d> Box<Vector<T,d>>::surface(const TV& X) const {
   if (!lazy_inside(X)) return other::clamp(X,min,max);
@@ -116,8 +120,8 @@ typedef Vector<T,3> TV;
   template Vector<T,d> Box<Vector<T,d>>::normal(const Vector<T,d>&) const; \
   template Vector<T,d> Box<Vector<T,d>>::surface(const Vector<T,d>&) const; \
   template Vector<T,d>::Scalar Box<Vector<T,d>>::phi(const Vector<T,d>&) const; \
-  template PyObject* to_python<T,d>(const Box<Vector<T,d>>&); \
-  template Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*);
+  OTHER_ONLY_PYTHON(template PyObject* to_python<T,d>(const Box<Vector<T,d>>&)); \
+  OTHER_ONLY_PYTHON(template Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*));
 INSTANTIATION_HELPER(T,1)
 INSTANTIATION_HELPER(T,2)
 INSTANTIATION_HELPER(T,3)

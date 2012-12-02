@@ -4,6 +4,8 @@
 #include <other/core/python/numpy.h>
 namespace other{
 
+#ifdef OTHER_PYTHON
+
 // Python conversion for arbitrary vectors
 template<class T,class Enable=void> struct VectorToPython {
   template<int d> static PyObject* convert(const Vector<T,d>& v) {
@@ -37,5 +39,11 @@ template<class T,int d> Vector<T,d> FromPython<Vector<T,d> >::convert(PyObject* 
 #define VECTOR_CONVERSIONS(d,...) \
   template PyObject* to_python<__VA_ARGS__,d>(const Vector<__VA_ARGS__,d>&); \
   template Vector<__VA_ARGS__,d> FromPython<Vector<__VA_ARGS__,d> >::convert(PyObject*);
+
+#else // non-python stub
+
+#define VECTOR_CONVERSIONS(d,...)
+
+#endif
   
 }

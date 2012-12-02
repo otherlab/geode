@@ -21,7 +21,9 @@ bool interrupted() OTHER_EXPORT;
 // must be thread safe.
 void add_interrupt_checker(void (*checker)()) OTHER_EXPORT;
 
+#ifdef OTHER_PYTHON
 // Interrupt checker for Python exceptions.  Use only from core/module.cpp.
 void check_python_interrupts();
+#endif
 
 }

@@ -9,8 +9,10 @@ OTHER_PYTHON_MODULE(other_core) {
   OTHER_WRAP(python)
   OTHER_WRAP(utility)
 
+#ifdef OTHER_PYTHON
   // Check for python exceptions in check_interrupts()
   add_interrupt_checker(check_python_interrupts);
+#endif
 
   OTHER_WRAP(math)
   OTHER_WRAP(array)
