@@ -30,9 +30,9 @@ intersection(Plane<T> const &plane, Segment<Vector<T,3>> &result) const {
   double d0 = plane.phi(x0);
   double d1 = plane.phi(x1);
   double d2 = plane.phi(x2);
-  int sd0 = sign(d0);
-  int sd1 = sign(d1);
-  int sd2 = sign(d2);
+  int sd0 = (int)sign(d0);
+  int sd1 = (int)sign(d1);
+  int sd2 = (int)sign(d2);
 
   if (sd0 == sd1 && sd1 == sd2)
     return false;

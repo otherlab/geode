@@ -49,9 +49,20 @@ public:
 bool is_timing_suppressed() OTHER_EXPORT;
 void time_helper(const string& label) OTHER_EXPORT;
 
+#ifdef OTHER_VARIADIC
+
 template<class... Args> static inline void time(const char* fmt, Args&&... args) {
-  if(!is_timing_suppressed()) time_helper(format(fmt,args...));
+  if (!is_timing_suppressed()) time_helper(format(fmt,args...));
 }
+
+#else // Unpleasant nonvariadic versions
+
+static inline void time(const char* fmt) { if (!is_timing_suppressed()) time_helper(format(fmt)); }
+template<class A0> static inline void time(const char* fmt, A0&& a0) { if (!is_timing_suppressed()) time_helper(format(fmt,a0)); }
+template<class A0,class A1> static inline void time(const char* fmt, A0&& a0, A1&& a1) { if (!is_timing_suppressed()) time_helper(format(fmt,a0,a1)); }
+template<class A0,class A1,class A2> static inline void time(const char* fmt, A0&& a0, A1&& a1, A2&& a2) { if (!is_timing_suppressed()) time_helper(format(fmt,a0,a1,a2)); }
+
+#endif
 
 }
 }

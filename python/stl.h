@@ -12,11 +12,10 @@
 #include <other/core/python/from_python.h>
 #include <other/core/python/to_python.h>
 #include <other/core/utility/config.h>
+#include <other/core/utility/tr1.h>
 #include <vector>
 #include <set>
 #include <map>
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
 
 // to_python needs to go in the std namespace to make Koenig lookup work
 namespace std {
@@ -52,7 +51,7 @@ template<class TS> PyObject* to_python_set(const TS& s) {
   return set;
   fail:
   Py_XDECREF(set);
-  return 0; 
+  return 0;
 }
 
 template<class T,class O> static inline PyObject* to_python(const set<T,O>& s) {
@@ -84,7 +83,7 @@ template<class TM> PyObject* to_python_map(const TM& m) {
   return dict;
   fail:
   Py_XDECREF(dict);
-  return 0; 
+  return 0;
 }
 
 template<class T,class V,class O> static inline PyObject* to_python(const map<T,V,O>& m) {
@@ -96,6 +95,8 @@ template<class T,class V,class H> static inline PyObject* to_python(const tr1::u
 }
 
 template<class T0,class T1> PyObject* to_python(const pair<T0,T1>& p) {
+  using namespace other;
+  using other::to_python;
   PyObject *x0=0,*x1=0,*tuple=0;
   x0 = to_python(p.first);
   if (!x0) goto fail;

@@ -56,7 +56,7 @@ public:
     return base().type();
   }
 
-  const string& name() const {
+  const string& name_() const { // Can't be named name due to ambiguity in gcc 4.6
     return base().name;
   }
 
@@ -80,10 +80,6 @@ public:
 inline Ref<PropBase> ref(PropBase& prop) {
   return Ref<PropBase>(prop,to_python(prop.base()));
 }
-
-template<class T> struct has_clamp:public mpl::false_{};
-template<> struct has_clamp<int>:public mpl::true_{};
-template<> struct has_clamp<double>:public mpl::true_{};
 
 template<class T,bool enable> struct PropClamp;
 
@@ -191,7 +187,7 @@ public:
   vector<T> allowed;
 
   void set(const T& value_) {
-    if (Base::value != value_){
+    if (!equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !other::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name);
       this->set_value(Clamp::clamp(value_));
@@ -261,9 +257,11 @@ public:
     return *this->value;
   }
 
-  //WARNING: this will give a mutable reference to the contained prop; to keep sanity in the
-  //dependency graph, you will have to call signal
-  T& mutate() const {
+  // WARNING: This will give a mutable reference to the contained prop; to keep sanity in the
+  // dependency graph, you will have to call signal.  If you change the mutable reference
+  // and an exception prevents you from calling signal, an obscure bug will result.  Use at
+  // your own risk.
+  T& mutate() {
     return *this->value;
   }
 
@@ -273,7 +271,7 @@ public:
 
   bool same_default(PropBase& other_) const {
     Prop* other = other_.cast<T>();
-    return other && default_==other->default_;
+    return other && equals<T>::eval(default_,other->default_);
   }
 
   string value_str(bool use_default) const {

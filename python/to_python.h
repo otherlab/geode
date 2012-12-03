@@ -15,6 +15,7 @@
 #pragma once
 
 #include <other/core/python/forward.h>
+#include <other/core/utility/debug.h>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_enum.hpp>
 #include <string>
@@ -57,6 +58,11 @@ to_python(long value) {
 static inline PyObject*
 to_python(unsigned long value) {
   return PyLong_FromUnsignedLongLong(value);
+}
+
+static inline PyObject*
+to_python(long long value) {
+  return PyLong_FromLongLong(value);
 }
 
 static inline PyObject*

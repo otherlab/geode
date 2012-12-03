@@ -22,7 +22,9 @@ void throw_not_owned() {
 }
 
 void throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
-  if (!PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object), descr))
+  if (!PyArray_Check(object))
+    PyErr_Format(PyExc_TypeError, "expected numpy array, got %s", object->ob_type->tp_name);
+  else if (!PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object), descr))
     PyErr_Format(PyExc_TypeError, "expected array type %s, got %s", descr->typeobj->tp_name, PyArray_DESCR((PyArrayObject*)object)->typeobj->tp_name);
   else if (!PyArray_CHKFLAGS((PyArrayObject*)object,flags)){
     if (flags&NPY_ARRAY_WRITEABLE && !PyArray_ISWRITEABLE((PyArrayObject*)object))

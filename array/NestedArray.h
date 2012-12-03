@@ -65,11 +65,11 @@ public:
   }
 
   template<class TA> static NestedArray copy(const TA& other) {
-    int n = other.size();
+    const int n = (int)other.size();
     Array<int> offsets(n+1,false);
     offsets[0] = 0;
     for (int i=0;i<n;i++)
-      offsets[i+1] = offsets[i]+other[i].size();
+      offsets[i+1] = offsets[i]+(int)other[i].size();
     Array<Element> flat(offsets[n],false);
     for (int i=0;i<n;i++)
       flat.slice(offsets[i],offsets[i+1]) = other[i];

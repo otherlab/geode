@@ -65,6 +65,9 @@ public:
 
   void update_nonleaf_boxes();
   void check(RawArray<const TV> x) const;
+
+  // Warning: Doesn't know about structure without each tree leaf
+  template<class Shape> bool any_box_intersection(const Shape& shape) const OTHER_EXPORT; 
 };
 
 }

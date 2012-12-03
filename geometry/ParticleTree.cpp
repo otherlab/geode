@@ -25,7 +25,7 @@ template<class TV> ParticleTree<TV>::
 template<class TV> void ParticleTree<TV>::
 update() {
   for (int n : leaves)
-    boxes[n] = bounding_box(X.subset(prims(n)));
+    boxes[n] = other::bounding_box(X.subset(prims(n)));
   update_nonleaf_boxes();
 }
 

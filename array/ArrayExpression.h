@@ -18,6 +18,7 @@ template<class TA,class Enable=void> struct SizeIfConstant { enum {m = -1}; };
 template<class T,int d> struct SizeIfConstant<Vector<T,d>> { enum {m = d}; };
 template<class TA> struct SizeIfConstant<TA,typename boost::enable_if<boost::is_base_of<ConstantSizeArrayExpressionBase,TA>>::type> { enum {m = TA::m}; };
 
+#ifdef OTHER_VARIADIC
 template<int m,class... Args> struct SameSizeHelper;
 template<int m_> struct SameSizeHelper<m_> { enum {m = m_}; };
 template<int m_,class A,class... Args> struct SameSizeHelper<m_,A,Args...> {
@@ -25,9 +26,23 @@ template<int m_,class A,class... Args> struct SameSizeHelper<m_,A,Args...> {
   BOOST_STATIC_ASSERT((m_<0 || Am<0 || m_==Am));
   enum {m = SameSizeHelper<m_<0?Am:m_,Args...>::m};
 };
+#else
+template<int m_,class A0=void,class A1=void> struct SameSizeHelper {
+  enum {m0 = SizeIfConstant<typename remove_const_reference<A0>::type>::m};
+  enum {m1 = SizeIfConstant<typename remove_const_reference<A1>::type>::m};
+  BOOST_STATIC_ASSERT((m0<0 || m1<0 || m0==m1));
+  enum {m = m0>=0?m0:m1};
+};
+#endif
 
+#ifdef OTHER_VARIADIC
 template<class T_,class TArray,class... Args>
-class ArrayExpression : public ArrayBase<T_,TArray>, public ArrayExpressionBase<SameSizeHelper<-1,Args...>::m> {
+class ArrayExpression : public ArrayBase<T_,TArray>, public ArrayExpressionBase<SameSizeHelper<-1,Args...>::m>
+#else
+template<class T_,class TArray,class A0,class A1>
+class ArrayExpression : public ArrayBase<T_,TArray>, public ArrayExpressionBase<SameSizeHelper<-1,A0,A1>::m>
+#endif
+{
   using ArrayBase<T_,TArray>::derived;
 public:
   typedef ArrayIter<TArray> iterator;

@@ -1,0 +1,500 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="array\amap.h" />
+    <ClInclude Include="array\Array.h" />
+    <ClInclude Include="array\Array2d.h" />
+    <ClInclude Include="array\Array3d.h" />
+    <ClInclude Include="array\Array4d.h" />
+    <ClInclude Include="array\ArrayAbs.h" />
+    <ClInclude Include="array\ArrayBase.h" />
+    <ClInclude Include="array\ArrayDifference.h" />
+    <ClInclude Include="array\ArrayExpression.h" />
+    <ClInclude Include="array\ArrayIter.h" />
+    <ClInclude Include="array\ArrayLeftMultiple.h" />
+    <ClInclude Include="array\ArrayNdBase.h" />
+    <ClInclude Include="array\ArrayNegation.h" />
+    <ClInclude Include="array\ArrayPlusScalar.h" />
+    <ClInclude Include="array\ArrayProduct.h" />
+    <ClInclude Include="array\ArraySum.h" />
+    <ClInclude Include="array\ConstantMap.h" />
+    <ClInclude Include="array\convert.h" />
+    <ClInclude Include="array\Field.h" />
+    <ClInclude Include="array\forward.h" />
+    <ClInclude Include="array\IdentityMap.h" />
+    <ClInclude Include="array\IndirectArray.h" />
+    <ClInclude Include="array\NdArray.h" />
+    <ClInclude Include="array\NestedArray.h" />
+    <ClInclude Include="array\ProjectedArray.h" />
+    <ClInclude Include="array\RawArray.h" />
+    <ClInclude Include="array\RawField.h" />
+    <ClInclude Include="array\RawStack.h" />
+    <ClInclude Include="array\sort.h" />
+    <ClInclude Include="array\Subarray.h" />
+    <ClInclude Include="array\view.h" />
+    <ClInclude Include="force\AnisotropicConstitutiveModel.h" />
+    <ClInclude Include="force\ConstitutiveModel.h" />
+    <ClInclude Include="force\DiagonalizedIsotropicStressDerivative.h" />
+    <ClInclude Include="force\DiagonalizedStressDerivative.h" />
+    <ClInclude Include="force\EtherDrag.h" />
+    <ClInclude Include="force\FiniteVolume.h" />
+    <ClInclude Include="force\Force.h" />
+    <ClInclude Include="force\forward.h" />
+    <ClInclude Include="force\Gravity.h" />
+    <ClInclude Include="force\IsotropicConstitutiveModel.h" />
+    <ClInclude Include="force\LinearBendingElements.h" />
+    <ClInclude Include="force\LinearFiniteVolume.h" />
+    <ClInclude Include="force\LinearFiniteVolumeHex.h" />
+    <ClInclude Include="force\PlasticityModel.h" />
+    <ClInclude Include="force\Springs.h" />
+    <ClInclude Include="force\StrainMeasure.h" />
+    <ClInclude Include="force\StrainMeasureHex.h" />
+    <ClInclude Include="geometry\AnalyticImplicit.h" />
+    <ClInclude Include="geometry\Box.h" />
+    <ClInclude Include="geometry\BoxScalar.h" />
+    <ClInclude Include="geometry\BoxTree.h" />
+    <ClInclude Include="geometry\BoxVector.h" />
+    <ClInclude Include="geometry\Capsule.h" />
+    <ClInclude Include="geometry\Cylinder.h" />
+    <ClInclude Include="geometry\forward.h" />
+    <ClInclude Include="geometry\FrameImplicit.h" />
+    <ClInclude Include="geometry\Implicit.h" />
+    <ClInclude Include="geometry\mass_properties.h" />
+    <ClInclude Include="geometry\ParticleTree.h" />
+    <ClInclude Include="geometry\Plane.h" />
+    <ClInclude Include="geometry\platonic.h" />
+    <ClInclude Include="geometry\polygon.h" />
+    <ClInclude Include="geometry\Ray.h" />
+    <ClInclude Include="geometry\Segment2d.h" />
+    <ClInclude Include="geometry\Segment3d.h" />
+    <ClInclude Include="geometry\SimplexTree.h" />
+    <ClInclude Include="geometry\Sphere.h" />
+    <ClInclude Include="geometry\traverse.h" />
+    <ClInclude Include="geometry\Triangle2d.h" />
+    <ClInclude Include="geometry\Triangle3d.h" />
+    <ClInclude Include="image\color_utils.h" />
+    <ClInclude Include="image\ExrFile.h" />
+    <ClInclude Include="image\forward.h" />
+    <ClInclude Include="image\Image.h" />
+    <ClInclude Include="image\JpgFile.h" />
+    <ClInclude Include="image\MovFile.h" />
+    <ClInclude Include="image\PngFile.h" />
+    <ClInclude Include="math\argmax.h" />
+    <ClInclude Include="math\argmin.h" />
+    <ClInclude Include="math\cbrt.h" />
+    <ClInclude Include="math\choice.h" />
+    <ClInclude Include="math\clamp.h" />
+    <ClInclude Include="math\componentwise.h" />
+    <ClInclude Include="math\constants.h" />
+    <ClInclude Include="math\copysign.h" />
+    <ClInclude Include="math\cube.h" />
+    <ClInclude Include="math\cyclic_shift.h" />
+    <ClInclude Include="math\Factorial.h" />
+    <ClInclude Include="math\givens_rotate.h" />
+    <ClInclude Include="math\hash.h" />
+    <ClInclude Include="math\integer_log.h" />
+    <ClInclude Include="math\inverse.h" />
+    <ClInclude Include="math\isfinite.h" />
+    <ClInclude Include="math\isnan.h" />
+    <ClInclude Include="math\lerp.h" />
+    <ClInclude Include="math\max.h" />
+    <ClInclude Include="math\maxabs.h" />
+    <ClInclude Include="math\maxmag.h" />
+    <ClInclude Include="math\mean.h" />
+    <ClInclude Include="math\min.h" />
+    <ClInclude Include="math\minabs.h" />
+    <ClInclude Include="math\minmag.h" />
+    <ClInclude Include="math\One.h" />
+    <ClInclude Include="math\popcount.h" />
+    <ClInclude Include="math\pow.h" />
+    <ClInclude Include="math\rint.h" />
+    <ClInclude Include="math\robust.h" />
+    <ClInclude Include="math\sign.h" />
+    <ClInclude Include="math\small_sort.h" />
+    <ClInclude Include="math\sqr.h" />
+    <ClInclude Include="math\sse.h" />
+    <ClInclude Include="math\uint128.h" />
+    <ClInclude Include="math\wrap.h" />
+    <ClInclude Include="math\Zero.h" />
+    <ClInclude Include="mesh\forward.h" />
+    <ClInclude Include="mesh\PolygonMesh.h" />
+    <ClInclude Include="mesh\SegmentMesh.h" />
+    <ClInclude Include="mesh\TriangleMesh.h" />
+    <ClInclude Include="mesh\TriangleSubdivision.h" />
+    <ClInclude Include="openmesh\color_cast.h" />
+    <ClInclude Include="openmesh\decimate.h" />
+    <ClInclude Include="openmesh\floodfill.h" />
+    <ClInclude Include="openmesh\forward.h" />
+    <ClInclude Include="openmesh\triangulator.h" />
+    <ClInclude Include="openmesh\TriMesh.h" />
+    <ClInclude Include="openmesh\visualize.h" />
+    <ClInclude Include="python\Buffer.h" />
+    <ClInclude Include="python\cast.h" />
+    <ClInclude Include="python\Class.h" />
+    <ClInclude Include="python\config.h" />
+    <ClInclude Include="python\enum.h" />
+    <ClInclude Include="python\exceptions.h" />
+    <ClInclude Include="python\ExceptionValue.h" />
+    <ClInclude Include="python\forward.h" />
+    <ClInclude Include="python\from_python.h" />
+    <ClInclude Include="python\function.h" />
+    <ClInclude Include="python\module.h" />
+    <ClInclude Include="python\new.h" />
+    <ClInclude Include="python\numpy.h" />
+    <ClInclude Include="python\Object.h" />
+    <ClInclude Include="python\outer_wrapper.h" />
+    <ClInclude Include="python\Ptr.h" />
+    <ClInclude Include="python\PyDictAdaptor.h" />
+    <ClInclude Include="python\Ref.h" />
+    <ClInclude Include="python\repr.h" />
+    <ClInclude Include="python\stl.h" />
+    <ClInclude Include="python\to_python.h" />
+    <ClInclude Include="python\utility.h" />
+    <ClInclude Include="python\wrap_call.h" />
+    <ClInclude Include="python\wrap_constructor.h" />
+    <ClInclude Include="python\wrap_field.h" />
+    <ClInclude Include="python\wrap_function.h" />
+    <ClInclude Include="python\wrap_method.h" />
+    <ClInclude Include="python\wrap_property.h" />
+    <ClInclude Include="random\counter.h" />
+    <ClInclude Include="random\forward.h" />
+    <ClInclude Include="random\Random.h" />
+    <ClInclude Include="random\Sobol.h" />
+    <ClInclude Include="solver\brent.h" />
+    <ClInclude Include="solver\powell.h" />
+    <ClInclude Include="structure\Empty.h" />
+    <ClInclude Include="structure\forward.h" />
+    <ClInclude Include="structure\Hashtable.h" />
+    <ClInclude Include="structure\OperationHash.h" />
+    <ClInclude Include="structure\Pair.h" />
+    <ClInclude Include="structure\Quad.h" />
+    <ClInclude Include="structure\Queue.h" />
+    <ClInclude Include="structure\Quintuple.h" />
+    <ClInclude Include="structure\Singleton.h" />
+    <ClInclude Include="structure\Stack.h" />
+    <ClInclude Include="structure\Triple.h" />
+    <ClInclude Include="structure\Tuple.h" />
+    <ClInclude Include="structure\UnionFind.h" />
+    <ClInclude Include="utility\base64.h" />
+    <ClInclude Include="utility\Cloneable.h" />
+    <ClInclude Include="utility\CloneArray.h" />
+    <ClInclude Include="utility\compose.h" />
+    <ClInclude Include="utility\config.h" />
+    <ClInclude Include="utility\const_cast.h" />
+    <ClInclude Include="utility\CopyConst.h" />
+    <ClInclude Include="utility\curry.h" />
+    <ClInclude Include="utility\c_str.h" />
+    <ClInclude Include="utility\debug.h" />
+    <ClInclude Include="utility\DebugPrint.h" />
+    <ClInclude Include="utility\Enumerate.h" />
+    <ClInclude Include="utility\equals.h" />
+    <ClInclude Include="utility\format.h" />
+    <ClInclude Include="utility\forward.h" />
+    <ClInclude Include="utility\from_string.h" />
+    <ClInclude Include="utility\HasCheapCopy.h" />
+    <ClInclude Include="utility\Hasher.h" />
+    <ClInclude Include="utility\interrupts.h" />
+    <ClInclude Include="utility\Log.h" />
+    <ClInclude Include="utility\LogEntry.h" />
+    <ClInclude Include="utility\LogScope.h" />
+    <ClInclude Include="utility\macro_map.h" />
+    <ClInclude Include="utility\move.h" />
+    <ClInclude Include="utility\openmp.h" />
+    <ClInclude Include="utility\overload.h" />
+    <ClInclude Include="utility\pass.h" />
+    <ClInclude Include="utility\path.h" />
+    <ClInclude Include="utility\prioritize.h" />
+    <ClInclude Include="utility\process.h" />
+    <ClInclude Include="utility\ProgressIndicator.h" />
+    <ClInclude Include="utility\Protect.h" />
+    <ClInclude Include="utility\range.h" />
+    <ClInclude Include="utility\remove_commas.h" />
+    <ClInclude Include="utility\remove_const_reference.h" />
+    <ClInclude Include="utility\safe_bool.h" />
+    <ClInclude Include="utility\SanitizeFunction.h" />
+    <ClInclude Include="utility\shared_ptr_util.h" />
+    <ClInclude Include="utility\STATIC_ASSERT_SAME.h" />
+    <ClInclude Include="utility\stl.h" />
+    <ClInclude Include="utility\str.h" />
+    <ClInclude Include="utility\stream.h" />
+    <ClInclude Include="utility\time.h" />
+    <ClInclude Include="utility\Unique.h" />
+    <ClInclude Include="utility\using.h" />
+    <ClInclude Include="value\Action.h" />
+    <ClInclude Include="value\Compute.h" />
+    <ClInclude Include="value\ConstValue.h" />
+    <ClInclude Include="value\convert.h" />
+    <ClInclude Include="value\error_value.h" />
+    <ClInclude Include="value\extract.h" />
+    <ClInclude Include="value\forward.h" />
+    <ClInclude Include="value\link.h" />
+    <ClInclude Include="value\Listen.h" />
+    <ClInclude Include="value\Prop.h" />
+    <ClInclude Include="value\PropManager.h" />
+    <ClInclude Include="value\Value.h" />
+    <ClInclude Include="vector\ArithmeticPolicy.h" />
+    <ClInclude Include="vector\blas.h" />
+    <ClInclude Include="vector\complex.h" />
+    <ClInclude Include="vector\convert.h" />
+    <ClInclude Include="vector\DiagonalMatrix.h" />
+    <ClInclude Include="vector\DiagonalMatrix2x2.h" />
+    <ClInclude Include="vector\DiagonalMatrix3x3.h" />
+    <ClInclude Include="vector\Dot.h" />
+    <ClInclude Include="vector\forward.h" />
+    <ClInclude Include="vector\Frame.h" />
+    <ClInclude Include="vector\group.h" />
+    <ClInclude Include="vector\magnitude.h" />
+    <ClInclude Include="vector\Matrix.h" />
+    <ClInclude Include="vector\Matrix0x0.h" />
+    <ClInclude Include="vector\Matrix1x1.h" />
+    <ClInclude Include="vector\Matrix2x2.h" />
+    <ClInclude Include="vector\Matrix3x2.h" />
+    <ClInclude Include="vector\Matrix3x3.h" />
+    <ClInclude Include="vector\Matrix4x4.h" />
+    <ClInclude Include="vector\normalize.h" />
+    <ClInclude Include="vector\Quaternion.h" />
+    <ClInclude Include="vector\Register.h" />
+    <ClInclude Include="vector\Rotation.h" />
+    <ClInclude Include="vector\ScalarPolicy.h" />
+    <ClInclude Include="vector\SolidMatrix.h" />
+    <ClInclude Include="vector\SparseMatrix.h" />
+    <ClInclude Include="vector\SymmetricMatrix.h" />
+    <ClInclude Include="vector\SymmetricMatrix2x2.h" />
+    <ClInclude Include="vector\SymmetricMatrix3x3.h" />
+    <ClInclude Include="vector\TetrahedralGroup.h" />
+    <ClInclude Include="vector\Twist.h" />
+    <ClInclude Include="vector\UpperTriangularMatrix.h" />
+    <ClInclude Include="vector\UpperTriangularMatrix2x2.h" />
+    <ClInclude Include="vector\UpperTriangularMatrix3x3.h" />
+    <ClInclude Include="vector\Vector.h" />
+    <ClInclude Include="vector\Vector0d.h" />
+    <ClInclude Include="vector\Vector1d.h" />
+    <ClInclude Include="vector\Vector2d.h" />
+    <ClInclude Include="vector\Vector3d.h" />
+    <ClInclude Include="vector\Vector4d.h" />
+    <ClInclude Include="vector\VectorPolicy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="array\Array.cpp" />
+    <ClCompile Include="array\Array2d.cpp" />
+    <ClCompile Include="array\module.cpp" />
+    <ClCompile Include="array\NdArray.cpp" />
+    <ClCompile Include="array\NestedArray.cpp" />
+    <ClCompile Include="array\RawArray.cpp" />
+    <ClCompile Include="force\ConstitutiveModel.cpp" />
+    <ClCompile Include="force\DiagonalizedIsotropicStressDerivative.cpp" />
+    <ClCompile Include="force\EtherDrag.cpp" />
+    <ClCompile Include="force\FiniteVolume.cpp" />
+    <ClCompile Include="force\Force.cpp" />
+    <ClCompile Include="force\Gravity.cpp" />
+    <ClCompile Include="force\LinearBendingElements.cpp" />
+    <ClCompile Include="force\LinearFiniteVolume.cpp" />
+    <ClCompile Include="force\LinearFiniteVolumeHex.cpp" />
+    <ClCompile Include="force\module.cpp" />
+    <ClCompile Include="force\NeoHookean.cpp" />
+    <ClCompile Include="force\PlasticityModel.cpp" />
+    <ClCompile Include="force\RotatedLinear.cpp" />
+    <ClCompile Include="force\Springs.cpp" />
+    <ClCompile Include="force\StrainMeasure.cpp" />
+    <ClCompile Include="force\StrainMeasureHex.cpp" />
+    <ClCompile Include="geometry\AnalyticImplicit.cpp" />
+    <ClCompile Include="geometry\BoxScalar.cpp" />
+    <ClCompile Include="geometry\BoxTree.cpp" />
+    <ClCompile Include="geometry\BoxVector.cpp" />
+    <ClCompile Include="geometry\Cylinder.cpp" />
+    <ClCompile Include="geometry\FrameImplicit.cpp" />
+    <ClCompile Include="geometry\Implicit.cpp" />
+    <ClCompile Include="geometry\mass_properties.cpp" />
+    <ClCompile Include="geometry\module.cpp" />
+    <ClCompile Include="geometry\ParticleTree.cpp" />
+    <ClCompile Include="geometry\Plane.cpp" />
+    <ClCompile Include="geometry\platonic.cpp" />
+    <ClCompile Include="geometry\polygon.cpp" />
+    <ClCompile Include="geometry\Ray.cpp" />
+    <ClCompile Include="geometry\Segment2d.cpp" />
+    <ClCompile Include="geometry\Segment3d.cpp" />
+    <ClCompile Include="geometry\SimplexTree.cpp" />
+    <ClCompile Include="geometry\Sphere.cpp" />
+    <ClCompile Include="geometry\Triangle2d.cpp" />
+    <ClCompile Include="geometry\Triangle3d.cpp" />
+    <ClCompile Include="image\color_utils.cpp" />
+    <ClCompile Include="image\ExrFile.cpp" />
+    <ClCompile Include="image\Image.cpp" />
+    <ClCompile Include="image\JpgFile.cpp" />
+    <ClCompile Include="image\module.cpp" />
+    <ClCompile Include="image\MovFile.cpp" />
+    <ClCompile Include="image\PngFile.cpp" />
+    <ClCompile Include="math\hash.cpp" />
+    <ClCompile Include="math\module.cpp" />
+    <ClCompile Include="math\numeric_limits.cpp" />
+    <ClCompile Include="math\uint128.cpp" />
+    <ClCompile Include="mesh\module.cpp" />
+    <ClCompile Include="mesh\PolygonMesh.cpp" />
+    <ClCompile Include="mesh\SegmentMesh.cpp" />
+    <ClCompile Include="mesh\TriangleMesh.cpp" />
+    <ClCompile Include="mesh\TriangleSubdivision.cpp" />
+    <ClCompile Include="openmesh\decimate.cpp" />
+    <ClCompile Include="openmesh\module.cpp" />
+    <ClCompile Include="openmesh\triangulator.cpp" />
+    <ClCompile Include="openmesh\TriMesh.cpp" />
+    <ClCompile Include="openmesh\visualize.cpp" />
+    <ClCompile Include="python\Buffer.cpp" />
+    <ClCompile Include="python\Class.cpp" />
+    <ClCompile Include="python\ClassTest.cpp" />
+    <ClCompile Include="python\exceptions.cpp" />
+    <ClCompile Include="python\ExceptionValue.cpp" />
+    <ClCompile Include="python\from_python.cpp" />
+    <ClCompile Include="python\function.cpp" />
+    <ClCompile Include="python\module.cpp" />
+    <ClCompile Include="python\numpy.cpp" />
+    <ClCompile Include="python\Object.cpp" />
+    <ClCompile Include="python\Ref.cpp" />
+    <ClCompile Include="python\repr.cpp" />
+    <ClCompile Include="python\wrap_constructor.cpp" />
+    <ClCompile Include="python\wrap_field.cpp" />
+    <ClCompile Include="python\wrap_function.cpp" />
+    <ClCompile Include="python\wrap_method.cpp" />
+    <ClCompile Include="python\wrap_property.cpp" />
+    <ClCompile Include="random\counter.cpp" />
+    <ClCompile Include="random\module.cpp" />
+    <ClCompile Include="random\Random.cpp" />
+    <ClCompile Include="random\Sobol.cpp" />
+    <ClCompile Include="solver\brent.cpp" />
+    <ClCompile Include="solver\module.cpp" />
+    <ClCompile Include="solver\powell.cpp" />
+    <ClCompile Include="structure\Tuple.cpp" />
+    <ClCompile Include="utility\base64.cpp" />
+    <ClCompile Include="utility\CloneArray.cpp" />
+    <ClCompile Include="utility\curry.cpp" />
+    <ClCompile Include="utility\debug.cpp" />
+    <ClCompile Include="utility\DebugPrint.cpp" />
+    <ClCompile Include="utility\format.cpp" />
+    <ClCompile Include="utility\interrupts.cpp" />
+    <ClCompile Include="utility\Log.cpp" />
+    <ClCompile Include="utility\LogEntry.cpp" />
+    <ClCompile Include="utility\LogScope.cpp" />
+    <ClCompile Include="utility\module.cpp" />
+    <ClCompile Include="utility\path.cpp" />
+    <ClCompile Include="utility\process.cpp" />
+    <ClCompile Include="utility\ProgressIndicator.cpp" />
+    <ClCompile Include="utility\safe_bool.cpp" />
+    <ClCompile Include="utility\stream.cpp" />
+    <ClCompile Include="utility\time.cpp" />
+    <ClCompile Include="value\Action.cpp" />
+    <ClCompile Include="value\Compute.cpp" />
+    <ClCompile Include="value\ConstValue.cpp" />
+    <ClCompile Include="value\Listen.cpp" />
+    <ClCompile Include="value\module.cpp" />
+    <ClCompile Include="value\Prop.cpp" />
+    <ClCompile Include="value\PropManager.cpp" />
+    <ClCompile Include="value\Value.cpp" />
+    <ClCompile Include="vector\blas.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="vector\Frame.cpp" />
+    <ClCompile Include="vector\group.cpp" />
+    <ClCompile Include="vector\Matrix.cpp" />
+    <ClCompile Include="vector\Matrix2x2.cpp" />
+    <ClCompile Include="vector\Matrix3x2.cpp" />
+    <ClCompile Include="vector\Matrix3x3.cpp" />
+    <ClCompile Include="vector\Matrix4x4.cpp" />
+    <ClCompile Include="vector\module.cpp" />
+    <ClCompile Include="vector\Register.cpp" />
+    <ClCompile Include="vector\Rotation.cpp" />
+    <ClCompile Include="vector\SolidMatrix.cpp" />
+    <ClCompile Include="vector\SparseMatrix.cpp" />
+    <ClCompile Include="vector\SymmetricMatrix3x3.cpp" />
+    <ClCompile Include="vector\test_matrix.cpp" />
+    <ClCompile Include="vector\TetrahedralGroup.cpp" />
+    <ClCompile Include="vector\Vector.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D8C24306-C18B-4F50-866C-BB8E4659F714}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>other_core</RootNamespace>
+    <ProjectName>core</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>Win32;WIN32;_DEBUG;_LIB;USE_LIBJPEG;_USE_MATH_DEFINES;OTHER_REAL=double;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..;$(PYTHONDIR)\include;$(PYTHONDIR)\Lib\site-packages\numpy\core\include;$(BOOSTDIR);$(JPGLIBDIR);$(OPENMESHDIR)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Cpp0xSupport>true</Cpp0xSupport>
+      <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>Win32;WIN32;NDEBUG;_LIB;USE_LIBJPEG;_USE_MATH_DEFINES;OTHER_REAL=double;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..;$(PYTHONDIR)\include;$(PYTHONDIR)\Lib\site-packages\numpy\core\include;$(BOOSTDIR);$(JPGLIBDIR);$(OPENMESHDIR)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Cpp0xSupport>true</Cpp0xSupport>
+      <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

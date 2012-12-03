@@ -77,6 +77,10 @@ class Rotations3d(ndarray):
         self.view(ndarray)['v'] = v
     v = property(v,set_v)
 
+    @property
+    def sv(self):
+        return self.view(ndarray).ravel().view(real).reshape(self.shape+(4,))
+
     def __mul__(self,x):
         s = self.s
         v = self.v
@@ -131,7 +135,8 @@ class Rotations3d(ndarray):
 
     def angle_axis(self):
         m,v = magnitudes_and_normalized(self.v)
-        return atan2(m,self.s),v
+        v.reshape(-1,3)[asarray(self.s).reshape(-1)<0] *= -1
+        return 2*atan2(m,abs(self.s)),v
 
     def rotation_vector(self):
         m,v = magnitudes_and_normalized(self.v)
@@ -180,7 +185,8 @@ def from_rotated_vector(initial,final):
     v_norms = magnitudes(v)
     zeros = v_norms==0
     if any(zeros): # Some initial and final vectors are collinear
-      v[zeros] = orthogonal_vector(initial[zeros])
+      zeros = asarray(zeros).reshape(-1)
+      v.reshape(-1,d)[zeros] = orthogonal_vector(initial.reshape(-1,d)[zeros])
       v_norms = magnitudes(v)
     sqr_s = .5*(1+cos_theta) # half angle formula
     return from_sv(sqrt(sqr_s),(sqrt(1-sqr_s)/v_norms)[...,None]*v)

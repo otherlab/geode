@@ -9,6 +9,9 @@
 
 #include <stdio.h>
 extern "C"{
+#ifdef _WIN32
+#undef HAVE_STDDEF_H
+#endif
 #include <jpeglib.h>
 }
 #undef HAVE_PROTOTYPES
@@ -90,6 +93,8 @@ is_supported()
 }
 
 #else
+
+namespace other {
 
 //#####################################################################
 // Function Read

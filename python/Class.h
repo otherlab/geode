@@ -38,6 +38,7 @@
 #include <boost/mpl/void.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/add_const.hpp>
+#include <boost/type_traits/remove_pointer.hpp>
 namespace other{
 
 namespace mpl = boost::mpl;
@@ -106,7 +107,7 @@ template<class T> static PyObject* str_wrapper(PyObject* self) {
 class ClassBase {
 protected:
   PyTypeObject* const type;
-  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,int offset);
+  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset);
 };
 
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file
@@ -115,9 +116,13 @@ namespace {
 template<class T>
 class Class : public ClassBase {
 public:
+  typedef typename boost::remove_pointer<decltype(GetSelf<T>::get((PyObject*)0))>::type Self;
+
   Class(const char* name, bool visible=true)
-    : ClassBase(name,visible,&T::pytype,(long)(typename T::Base*)(T*)1-(long)(T*)1)
+    : ClassBase(name,visible,&T::pytype,(char*)(typename T::Base*)(T*)1-(char*)(T*)1)
   {}
+
+#ifdef OTHER_VARIADIC
 
   template<class... Args> Class&
   init(Types<Args...>) {
@@ -127,6 +132,17 @@ public:
     return *this;
   }
 
+#else // Nonvariadic version
+
+  template<class Args> Class& init(Args) {
+    if (type->tp_new)
+      throw TypeError("Constructor already specified (can't wrap overloaded constructors directly)");
+    type->tp_new = WrapConstructor<T,Args>::wrap;
+    return *this;
+  }
+
+#endif
+
   template<class Field> Class&
   field(const char* name, Field field) {
     add_descriptor(type,name,wrap_field<T>(name,field));
@@ -135,7 +151,12 @@ public:
 
   template<class Method> Class&
   method(const char* name, Method method) {
+#ifndef _WIN32
     add_descriptor(type,name,wrap_method<T,Method>(name,method));
+#else
+    typedef typename DerivedMethod<Self,Method>::type DM;
+    add_descriptor(type,name,wrap_method<T,Self>(name,(DM)method));
+#endif
     return *this;
   }
 
@@ -185,10 +206,13 @@ private:
 template<class T,class S> static inline typename boost::add_const<S>::type T::*
 const_field(S T::* field) {
   return field;
-} 
+}
 
-#define OTHER_INIT(...) \
-  init(Enumerate<__VA_ARGS__>())
+#ifdef OTHER_VARIADIC
+#define OTHER_INIT(...) init(Enumerate<__VA_ARGS__>())
+#else
+#define OTHER_INIT(...) init(Types<__VA_ARGS__>())
+#endif
 
 #define OTHER_FIELD_2(name,field_) \
   field(name,&Self::field_)
@@ -218,8 +242,13 @@ const_field(S T::* field) {
 
 #define OTHER_REPR() repr()
 
+#ifdef OTHER_VARIADIC
 #define OTHER_CALL(...) \
-  call(wrap_call<Self,__VA_ARGS__ >())
+  call(wrap_call<Self,__VA_ARGS__>())
+#else
+#define OTHER_CALL(...) \
+  call(WrapCall<Self,__VA_ARGS__>::wrap())
+#endif
 
 #define OTHER_GET(name) \
   property(#name,&Self::name)

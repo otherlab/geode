@@ -27,7 +27,7 @@ template<class Int> Int Random::bits() {
     free_bit_count = 128;
   }
   free_bit_count -= width;
-  Int r = free_bits;
+  Int r = cast_uint128<Int>(free_bits);
   free_bits >>= width;
   return r;
 }
@@ -42,7 +42,7 @@ template uint64_t Random::bits();
     assert(a<b); \
     const UI n = b-a; \
     /* Pick the largest possible multiple of n (minus 1) for rejection sampling */ \
-    const UI limit = (UI(-n)/n)*n+n-1; \
+    const UI limit = (UI(1+~n)/n)*n+n-1; \
     for (;;) { \
       const UI bits = this->bits<UI>(); \
       if (bits<=limit) \

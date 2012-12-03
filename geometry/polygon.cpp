@@ -1,11 +1,11 @@
 #include "polygon.h"
 
 #include <other/core/vector/Matrix.h>
-
-#include <tr1/unordered_set>
+#include <other/core/math/constants.h>
 #include <other/core/utility/Hasher.h>
-
 #include <other/core/utility/stl.h>
+#include <other/core/utility/str.h>
+#include <other/core/utility/tr1.h>
 #include <other/core/vector/Vector2d.h>
 #include <other/core/vector/normalize.h>
 #include <other/core/geometry/Box.h>
@@ -33,7 +33,7 @@ namespace other {
     return box;
   }
   
-  Polygons polygons_from_index_list(Array<Vector<real,2> > const &positions, NestedArray<const int> indices) {
+  Polygons polygons_from_index_list(RawArray<const Vector<real,2> > const &positions, NestedArray<const int> indices) {
     Polygons polys;
     for (int i = 0; i < indices.size(); ++i) {
       polys.push_back(polygon_from_index_list(positions, indices[i]));
@@ -42,7 +42,7 @@ namespace other {
     return polys;
   }
   
-  Polygon polygon_from_index_list(Array<Vector<real,2> > const &positions, RawArray<const int> indices) {
+  Polygon polygon_from_index_list(RawArray<const Vector<real,2> > const &positions, RawArray<const int> indices) {
     Polygon poly;
     
     for (int i = 0; i < indices.size(); ++i) {
@@ -208,15 +208,13 @@ namespace other {
       
     } while (drel > 1e-10);
     
-    std::cout << "Could not find any point inside contour " << poly << " and inside shape " << polys << std::endl;
-    OTHER_ASSERT(false);
-    return Vector<real,2>(0.,0.);
-  } 
+    throw RuntimeError(format("point_inside_polygon_component: could not find a point inside contour and shape\n  contour = %s\n  shape = %s",str(poly),str(polys)));
+  }
   
   
   
   Polygon polygon_simplify(Polygon const &poly, real max_angle_deg, real max_dist) {
-    double mincos = cos(max_angle_deg / 180. * M_PI);
+    double mincos = cos(pi/180*max_angle_deg);
     double sqr_min_length = sqr(max_dist);
     
     // Repeatedly simplify until nothing changes
@@ -289,8 +287,8 @@ namespace other {
   Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg, real minangle_deg) {
     OTHER_ASSERT(poly.size() > 1);
     
-    real minangle = minangle_deg / 180. * M_PI;
-    real maxangle = maxangle_deg / 180. * M_PI;
+    real minangle = pi/180*minangle_deg;
+    real maxangle = pi/180*maxangle_deg;
     
     int sign;
     if (offset < 0) {
@@ -328,7 +326,7 @@ namespace other {
         Segment<Vector<real,2> > s1l(s1.x0 + offset * n1, s1.x1 + offset * n1);
         real t0, t1;
         
-        if (fabs(angle) < 0.01 || fabs(fabs(angle)-M_PI) < 0.01) {
+        if (fabs(angle) < 0.01 || fabs(fabs(angle)-pi) < 0.01) {
           
           t0 = 1.;
           
@@ -532,9 +530,9 @@ namespace other {
     Array<Vector<real, d>> pts = nested.flat;
     Array<Vector<int,2>> segments;
     if (open) {
-      segments.resize(pts.size() - polys.size(),false);
+      segments.resize(int(pts.size()-polys.size()),false);
       int s = 0;
-      for (int p = 0; p < polys.size(); ++p) {
+      for (int p = 0; p < (int)polys.size(); ++p) {
         for (int i = 0; i < nested.size(p)-1; ++i) {
           segments[s++] = vec(i, i+1) + nested.offsets[p];
         }

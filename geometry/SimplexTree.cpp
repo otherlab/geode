@@ -65,6 +65,7 @@ template<> void intersection_helper(const SimplexTree<Vector<T,2>,2>& self, Ray<
 template<> void intersection_helper(const SimplexTree<Vector<T,3>,1>& self, Ray<Vector<T,3>>& ray, T thickness_over_two, int node) { OTHER_NOT_IMPLEMENTED(); }
 template<class TV,int d> bool SimplexTree<TV,d>::
 intersection(Ray<TV>& ray, T thickness_over_two) const {
+  if(boxes.size() == 0) return false; // No intersections possible for empty trees
   int aggregate_save = ray.aggregate_id;
   ray.aggregate_id = -1;
   intersection_helper(*this,ray,thickness_over_two,0);
@@ -204,7 +205,12 @@ closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) co
   simplex = -1;
   T sqr_distance = sqr(max_distance);
   closest_point_helper(*this,point,simplex,sqr_distance,0);
-  return simplices[simplex].closest_point(point,weights);
+  if (simplex == -1) {
+    TV x;
+    x.fill(inf);
+    return x;
+  } else
+    return simplices[simplex].closest_point(point,weights);
 }
 
 template<class TV,int d> TV SimplexTree<TV,d>::

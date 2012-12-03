@@ -125,6 +125,8 @@ public:
     TV closest_point(const TV& point) const;
     TV closest_point(const TV& point, Vector<T,2>& weights) const;
     T distance(const TV& point) const; // distance from point to segment
+    T distance(const Segment& segment) const; // distance between segments
+
     TV closest_point_on_line(const TV& point) const;
     T distance_from_point_to_line(const TV& point) const;
     TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;

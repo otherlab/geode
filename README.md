@@ -33,6 +33,7 @@ Optional dependencies:
 * [libpng](http://www.libpng.org): Lossless image format (Custom noncopyleft license)
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
 * [sympy](http://sympy.org): Symbolic mathematics for Python (BSD license)
+* [openmesh](http://www.openmesh.org): Halfedge triangle mesh data structure (LGPL)
 
 `core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 

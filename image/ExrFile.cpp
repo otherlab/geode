@@ -46,9 +46,9 @@ namespace other {
   template<>
   Imf::Rgba to_rgba(Vector<unsigned char,3> const &v) {
     Imf::Rgba rgba;
-    rgba.r = v.x/255;
-    rgba.g = v.y/255;
-    rgba.b = v.z/255;
+    rgba.r = (float)1./255*v.x;
+    rgba.g = (float)1./255*v.y;
+    rgba.b = (float)1./255*v.z;
     rgba.a = 1;
     return rgba;
   }

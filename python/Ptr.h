@@ -14,8 +14,9 @@
 #include <other/core/python/config.h>
 #include <other/core/python/new.h>
 #include <other/core/python/Ref.h>
-#include <other/core/utility/safe_bool.h>
 namespace other{
+
+using std::ostream;
 
 template<class T> // T=PyObject
 class Ptr {
@@ -92,6 +93,10 @@ public:
     return self;
   }
 
+  operator T*() const {
+    return self;
+  }
+
   T* get() const {
     return self;
   }
@@ -104,10 +109,6 @@ public:
     OTHER_XDECREF(owner_);
     self = 0;
     owner_ = 0;
-  }
-
-  operator SafeBool() const { // allow conversion to bool without allowing conversion to T
-    return safe_bool(self);
   }
 
   bool operator==(const Ptr& o) const {
@@ -190,5 +191,13 @@ template<> struct FromPython<Ptr<PyObject> >{static Ptr<PyObject>
 convert(PyObject* object) {
   return ptr(object);
 }};
+
+template<class T> static inline ostream& operator<<(ostream& output, const Ptr<T>& p) {
+  return output<<p.get();
+}
+
+template<class T> inline Hash hash_reduce(const Ptr<T>& ptr) {
+  return hash_reduce(ptr.get());
+}
 
 }

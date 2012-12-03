@@ -120,7 +120,8 @@ def angle_between(u,v):
     return atan2(magnitudes(cross(u,v)),dots(u,v))
 
 def signed_angle_between(u,v,n):
-  s = sign(dots(cross(u,v),n))
+  c = cross(u,v)
+  s = sign(dots(c,n))
   return s*angle_between(u,v)
 
 def angle(v):

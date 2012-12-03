@@ -7,6 +7,7 @@
 #include <boost/static_assert.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <stdint.h>
 #include <cstring>
 #include <string>
 namespace other {
@@ -25,7 +26,10 @@ template<> struct is_packed_pod<short>:public mpl::true_{};
 template<> struct is_packed_pod<unsigned short>:public mpl::true_{};
 template<> struct is_packed_pod<int>:public mpl::true_{};
 template<> struct is_packed_pod<unsigned int>:public mpl::true_{};
-template<> struct is_packed_pod<uint64_t>:public mpl::true_{};
+template<> struct is_packed_pod<long>:public mpl::true_{};
+template<> struct is_packed_pod<unsigned long>:public mpl::true_{};
+template<> struct is_packed_pod<long long>:public mpl::true_{};
+template<> struct is_packed_pod<unsigned long long>:public mpl::true_{};
 template<> struct is_packed_pod<float>:public mpl::true_{};
 template<> struct is_packed_pod<double>:public mpl::true_{};
 template<class T> struct is_packed_pod<T*>:public mpl::true_{};
@@ -141,7 +145,7 @@ template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value &&
 }
 
 template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key) {
-  int n = (sizeof(T)+3)/4;
+  const int n = (sizeof(T)+3)/4;
   int data[n];
   data[n-1] = 0;
   memcpy(data,&key,sizeof(key));

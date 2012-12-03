@@ -3,6 +3,7 @@
 //#####################################################################
 #pragma once
 
+#include <other/core/vector/forward.h>
 #include <other/core/vector/Matrix0x0.h>
 #include <other/core/vector/Matrix1x1.h>
 #include <other/core/vector/Matrix2x2.h>
@@ -16,11 +17,11 @@ namespace other {
 template<class T,int m,int n> PyObject* to_python(const Matrix<T,m,n>& matrix) OTHER_EXPORT;
 template<class T,int m,int n> struct FromPython<Matrix<T,m,n> >{OTHER_EXPORT static Matrix<T,m,n> convert(PyObject* object);};
 
-template<class T,int m_input,int n_input> // n_input=m_input
+template<class T,int m_,int n_> // n_=m_
 class Matrix
 {
 public:
-    enum Workaround1 {m=m_input,n=n_input,size=n_input*m_input};
+    enum Workaround1 {m=m_,n=n_,size=m_*n_};
     BOOST_STATIC_ASSERT((!((m>=n && m<=3 && n>=2 && n<=3) || (m==4 && n==4) || (m==0 && n==0)))); // 0x0, 1x1, 2x2, 3x2, 3x3, and 4x4 are specialized
     static const bool is_const=false;
     typedef T Scalar;

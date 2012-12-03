@@ -32,8 +32,6 @@ for line in subprocess.Popen(find.split(),shell=False,stdout=subprocess.PIPE).st
     for line in open(file):
       if line.startswith('#include'):
         m = include_pattern.match(line)
-        if '#include <other/amf/amf.h>' in line:
-          assert m
         if m:
           deps.add(m.group(1))
   else:

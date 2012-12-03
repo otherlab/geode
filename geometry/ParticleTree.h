@@ -5,7 +5,6 @@
 
 #include <other/core/geometry/forward.h>
 #include <other/core/geometry/BoxTree.h>
-#include <other/core/utility/using.h>
 namespace other{
 
 template<class TV> class ParticleTree : public BoxTree<TV>
@@ -14,7 +13,7 @@ template<class TV> class ParticleTree : public BoxTree<TV>
 public:
   OTHER_DECLARE_TYPE
   typedef BoxTree<TV> Base;
-  OTHER_USING(leaves,prims,boxes,update_nonleaf_boxes)
+  using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;
 
   const Array<const TV> X;
 

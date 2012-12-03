@@ -4,14 +4,13 @@
 #pragma once
 
 #include <other/core/utility/LogEntry.h>
-#include <tr1/unordered_map>
+#include <other/core/utility/tr1.h>
 #include <string>
 #include <vector>
 namespace other {
 
 using std::string;
 using std::vector;
-using std::tr1::unordered_map;
 
 class LogScope : public LogEntry {
 public:

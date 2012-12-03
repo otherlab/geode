@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import glob
 import subprocess
 
 def die(message):
@@ -22,13 +23,18 @@ def options(*vars):
 
 # Base environment
 env = Environment(tools=['default','pdflatex','pdftex'])
-env.Replace(ENV=os.environ)
+default_cxx = env['CXX']
+posix = env['PLATFORM']=='posix'
+darwin = env['PLATFORM']=='darwin'
+windows = env['PLATFORM']=='win32'
+if not windows:
+  env.Replace(ENV=os.environ)
 
 # Locate other in case we're in a different directory
 env['other'] = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'../../..'))
 
 # Default base directory
-if env['PLATFORM']=='darwin':
+if darwin:
   for base in '/opt/local','/usr/local':
     if os.path.exists(base):
       env.Replace(BASE=base)
@@ -41,7 +47,7 @@ else:
 
 # Base options
 options(
-  ('CXX','C++ compiler','<detect-gcc>'),
+  ('CXX','C++ compiler','<detect>'),
   ('arch','Architecture (e.g. pentium4, opteron, nocona, powerpc, native)',''),
   ('type','Type of build (e.g. release, debug, profile)','release'),
   ('default_arch','Architecture that doesn\'t need a suffix',''),
@@ -87,11 +93,11 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide}
-  env['use_'+name] = default
 
   Help('\n')
   options(
     ('has_'+name,'Whether '+name+' is available',lib['has']),
+    ('use_'+name,'Whether to use '+name+' by default',default),
     (name+'_dir','Base directory for '+name,dir),
     (name+'_include','Include directory for '+name,0),
     (name+'_libpath','Library directory for '+name,0),
@@ -142,11 +148,14 @@ external('boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix
 external('mpi',flags=['USE_MPI'])
 external('libjpeg',flags=['USE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
 external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=['/usr/X11/include'],libpath=['/usr/X11/lib'])
-external('openexr',flags=['USE_OPENEXR'],libs=['IlmImf','Half','Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile')
+external('openexr',flags=['USE_OPENEXR'],libs=['IlmImf','Half','Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
 external('atlas',libs=['cblas','lapack','atlas'])
 external('openblas',libs=['lapack','blas'])
 external('accelerate',default=1,frameworks=['Accelerate'])
-external('mkl',flags=['USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+if windows:
+  external('mkl',flags=['USE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
+else:
+  external('mkl',flags=['USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
 
 # Automatic python configuration
 def configure_python():
@@ -162,11 +171,11 @@ def configure_python():
     p(get('LDLIBRARY'))
     p(get('PYTHONFRAMEWORKPREFIX'))
     ''')],stdout=subprocess.PIPE).communicate()[0]
-  include,numpy,libpath,lib,frameworkpath = [s[1:-1] for s in data.strip().split('\n')]
+  include,numpy,libpath,lib,frameworkpath = [s.strip()[1:-1] for s in data.strip().split('\n')]
   python = externals['python']
   assert include,numpy
   python['cpppath'] = [include,numpy]
-  if env['PLATFORM']=='darwin':
+  if darwin:
     assert frameworkpath
     python['frameworkpath'] = [frameworkpath]
   else:
@@ -183,13 +192,16 @@ env.SetDefault(CPPDEFINES=[])
 env.Replace(_CPPINCFLAGS=env['_CPPINCFLAGS']+re.sub(r'\$\( (.*)\bCPPPATH\b(.*)\$\)',r'\1CPPPATH_HIDDEN\2',env['_CPPINCFLAGS']))
 
 # Pick compiler if the user requested the default
-if env['CXX']=='<detect-gcc>':
-  for gcc in 'g++-mp-4.7','g++-4.7','g++-mp-4.6','g++-4.6','g++':
-    if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
-      env.Replace(CXX=gcc)
-      break
+if env['CXX']=='<detect>':
+  if windows:
+    env.Replace(CXX=default_cxx)
   else:
-    die('no suitable version of g++ found')
+    for gcc in 'g++-mp-4.7','g++-4.7','g++-mp-4.6','g++-4.6','g++':
+      if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
+        env.Replace(CXX=gcc)
+        break
+    else:
+      die('no suitable version of g++ found')
 
 # If we're using gcc, insist on 4.6 or higher
 if re.match(r'\bg\+\+',env['CXX']):
@@ -197,8 +209,11 @@ if re.match(r'\bg\+\+',env['CXX']):
   m = re.search(r'\s+([\d\.]+)(\s+|\n|$)',version)
   if not m:
     die('weird version line: %s'%version[:-1])
-  if tuple(m.group(1).split('.'))<(4,6):
+  version_tuple = tuple(map(int, m.group(1).split('.')))
+  if version_tuple<(4,6):
     die('gcc 4.6 or higher is required, but %s has version %s'%(env['CXX'],m.group(1)))
+  if version_tuple[0:2] == (4,7) and version_tuple[2] in (0,1):
+    die('use of gcc 4.7.0 or 4.7.1 is strongly discouraged (ABI incompatabilities when mixing C++11 and other standards). %s is version %s'%(env['CXX'],m.group(1)))
 
 # Platform
 if env['arch']=='':
@@ -218,11 +233,22 @@ if env['type']!='release': program_suffix+='_'+env['type']
 else: executable_suffix=''
 
 # Put prefix as define so C programs can use it for accessing resources
-env.Append(CXXFLAGS=" -DPREFIX=\\\""+Dir(env["PREFIX"]).abspath+"\\\"")
+if 0:
+  env.Append(CXXFLAGS=" -DPREFIX=\\\""+Dir(env["PREFIX"]).abspath+"\\\"")
 
 # Compiler flags
 clang = bool(re.search(r'\bclang\b',env['CXX']))
-if env['CXX'].endswith('icc') or env['CXX'].endswith('icpc'):
+if windows:
+  if env['type'] in ('debug','optdebug'):
+    env.Append(CXXFLAGS=' /Zi')
+  if env['type'] in ('release','optdebug','profile'):
+    env.Append(CXXFLAGS=' /O2')
+  env.Append(CXXFLAGS=' /W3 /wd4996 /wd4267 /wd4180 /WL /EHs',CPPDEFINES=['_CRT_SECURE_NO_DEPRECATE','NOMINMAX','_USE_MATH_DEFINES'])
+  if env['CXX'].endswith('icl') or env['CXX'].endswith('icl"'):
+    env.Append(CXXFLAGS=' /wd2415 /wd597 /wd177')
+  if env['type']=='debug':
+    env.Append(CXXFLAGS=' /RTC1 /MDd',CCFLAGS=' /MDd',LINKFLAGS=' /DEBUG')
+elif env['CXX'].endswith('icc') or env['CXX'].endswith('icpc'):
   if env['type']=='optdebug' or env['type']=='debug': env.Append(CXXFLAGS=' -g')
   if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
     if env['arch']=='pentium4': env.Append(CXXFLAGS=' -O3 -xN')
@@ -251,21 +277,22 @@ else: # assume g++...
     env.Append(LINKFLAGS=' -dead_strip')
     if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
   elif env['type']=='debug': env.Append(CXXFLAGS=' -g',LINKFLAGS=' -g')
-  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -fno-strict-aliasing') # -Wstrict-aliasing=2
+  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
 
 # Optionally warn about conversion issues
 if env['Wconversion']:
   env.Append(CXXFLAGS='-Wconversion -Wno-sign-conversion')
 
 # Use c++0x
-env.Append(CXXFLAGS=' -std=c++0x')
+if not windows:
+  env.Append(CXXFLAGS=' -std=c++0x')
 
 # Hide symbols by default if desired
 if env['hidden']:
   env.Append(CXXFLAGS=' -fvisibility=hidden',LINKFLAGS=' -fvisibility=hidden')
 
 if env['Werror']:
-  env.Append(CXXFLAGS=' -Werror')
+  env.Append(CXXFLAGS=(' /WX' if windows else ' -Werror'))
 
 # Relax a few warnings for clang
 if clang:
@@ -278,7 +305,9 @@ env.Append(CPPDEFINES=[('OTHER_THREAD_SAFE',int(env['thread_safe']))])
 
 # Enable OpenMP
 if env['openmp']:
-  if not clang:
+  if windows:
+    env.Append(CXXFLAGS=' /openmp',LINKFLAGS=' /openmp')
+  elif not clang:
     env.Append(CXXFLAGS='-fopenmp',LINKFLAGS='-fopenmp')
   else:
     print>>sys.stderr, 'Warning: clang doesn\'t know how to do OpenMP, so many things will be slower'
@@ -304,7 +333,7 @@ except OSError:
 env.Append(CPPDEFINES=['BOOST_EXCEPTION_DISABLE'])
 
 # Darwin specific options
-if env['PLATFORM']=='darwin':
+if darwin:
   env.Replace(LDMODULEPREFIX='lib')
   env.Replace(LDMODULESUFFIX='.so')
 
@@ -328,7 +357,9 @@ def symlink_force(src,dst):
 
 # Add a directory to the include path under a given name
 def toplevel(name,path):
-  path = Dir(path).abspath
+  if env['type']=='msvc':
+    return
+  path = Dir(path).srcnode().abspath
   # Make other/build/include if it doesn't exist
   include = os.path.join(env['other'],'build/include')
   if not os.path.exists(include):
@@ -339,8 +370,13 @@ def toplevel(name,path):
     symlink_force(include,Dir('#build/include').abspath)
 
 # Library configuration
-toplevel('other',env['other'])
-env.Append(CPPPATH=['#build/include'],LIBPATH=[env['PREFIX_LIB']],RPATH=[Dir(env['PREFIX_LIB']).abspath])
+if not windows:
+  toplevel('other',env['other'])
+  env.Append(CPPPATH=['#build/include'])
+else:
+  # Windows doesn't support symlinks
+  env.Append(CPPPATH=['#..'])
+env.Append(LIBPATH=[env['PREFIX_LIB']],RPATH=[Dir(env['PREFIX_LIB']).abspath])
 
 # Account for library dependencies
 def add_dependencies(env):
@@ -354,13 +390,14 @@ def add_dependencies(env):
 def link_flags(env):
   env_link = env.Clone(LINK=env['CXX'])
   add_dependencies(env_link)
-  workaround = env.get('use_qt',0) and env['PLATFORM'] in ['posix','darwin']
+  workaround = env.get('use_qt',0)
   for name,lib in externals.items():
     if env['use_'+name]:
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
       env_link.PrependUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
+        env_link.PrependUnique(CPPDEFINES=lib['flags'])
       if lib.has_key('rpath'): env_link.PrependUnique(RPATH=lib['rpath'])
   return env_link
 
@@ -369,14 +406,17 @@ def objects(env,sources):
   builder = env.SharedObject if env['shared_objects'] or env['shared'] else env.StaticObject
   def Helper(env,source,libraries):
     if type(source)!=str: return source # assume it's already an object
-    cppdefines_reversed=env['CPPDEFINES'][::-1]
-    cpppath_reversed=env['CPPPATH'][::-1]
-    cpppath_hidden_reversed=env['CPPPATH_HIDDEN'][::-1]
-    frameworkpath=env['FRAMEWORKPATH'][:]
-    frameworks=env['FRAMEWORKS'][:]
-    cxxflags=str(env['CXXFLAGS'])
+    cppdefines_reversed = env['CPPDEFINES'][::-1]
+    cpppath_reversed = env['CPPPATH'][::-1]
+    cpppath_hidden_reversed = env['CPPPATH_HIDDEN'][::-1]
+    if darwin:
+      frameworkpath = env['FRAMEWORKPATH'][:]
+      frameworks = env['FRAMEWORKS'][:]
+    else:
+      frameworks,frameworkpath = [],[]
+    cxxflags = str(env['CXXFLAGS'])
     for lib in libraries:
-      if lib['pattern'] and not lib['pattern'].search(source):
+      if lib['pattern'] and not lib['pattern'].search(File(source).abspath):
         continue
       cppdefines_reversed.extend(lib['flags'][::-1])
       (cpppath_hidden_reversed if lib['hide'] else cpppath_reversed).extend(lib['cpppath'][::-1])
@@ -402,6 +442,7 @@ def files(dir,skip):
     yield f
 
 # Automatic generation of library targets
+projects = []
 def library(env,name,libs=(),skip=(),extra=()):
   cpps,resources = [],[]
   for f in list(files(Dir('.').srcnode().abspath,skip))+list(extra):
@@ -416,18 +457,20 @@ def library(env,name,libs=(),skip=(),extra=()):
   env.Append(LIBS=libs)
   if env['shared']:
     linkflags=env['LINKFLAGS']
-    if env['PLATFORM']=='darwin':
+    if darwin:
       linkflags='-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['PREFIX_LIB'])).abspath,name)+linkflags
     lib = env.SharedLibrary(name,source=sources,LINKFLAGS=linkflags)
   else:
     lib = env.StaticLibrary(name,source=sources)
   lib = env.Install(env['PREFIX_LIB'],lib)
   env.Depends('.',lib)
-  if env['PLATFORM']=='darwin':
+  if darwin:
     bundle = env.LoadableModule(name,source=[],LIBS=lib)
     env.Depends('.',env.Install(env['PREFIX_LIB'],bundle))
   for res in resources:
     env.Depends('.',env.Install(env['PREFIX']+'/resources',res))
+  if windows:
+    projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=cpps,variant=env['type'].capitalize(),buildtarget=lib,auto_build_solution=0))
   return lib
 
 # Build a program
@@ -437,6 +480,8 @@ def program(env,name,cpp=None):
   env = link_flags(env)
   bin = env.Program(name,objects(env,cpp))
   bin = env.Install(env['PREFIX_BIN'],bin)
+  if windows:
+    projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=[cpp],variant=env['type'].capitalize(),buildtarget=bin,auto_build_solution=0))
   env.Depends('.',bin)
 
 # Turn a latex document into a pdf
@@ -452,12 +497,31 @@ def child(env,dir):
   path = Dir(dir).path
   variant = env['variant_build']
   if not path.startswith(variant):
-    path = variant+'/'+path
+    path = os.path.join(variant,path)
   env.SConscript('#'+os.path.join(path,'SConscript'),exports='env')
 
+# Descend into all child SConscripts in order of priority
+def children(env):
+  # Directories that define externals used by other directories must come first.
+  # Therefore, we sort children with .priority files first in increase order of priority.
+  def priority(dir):
+    try:
+      return float(open(File(os.path.join(dir,'.priority')).srcnode().abspath).read())
+    except IOError:
+      return 1e10
+  base = Dir('.').srcnode().abspath+'/'
+  dirs = [s[len(base):-11] for s in glob.glob(base+'*/SConscript')]
+  for dir in sorted(dirs,key=priority):
+    if os.path.exists(File(os.path.join(dir,'SConscript')).srcnode().abspath):
+      child(env,dir)
+
 # Build everything
-Export('child options external externals library objects program latex clang toplevel')
-if os.path.exists('SConscript'):
+Export('child children options external externals library objects program latex clang posix darwin windows toplevel')
+if os.path.exists(File('#SConscript').abspath):
   child(env,'.')
 else:
-  child(env,'core')
+  children(env)
+
+# If we're in msvc mode, build a toplevel solution
+if windows:
+  env.MSVSSolution('#windows/other'+env['MSVSPROJECTSUFFIX'],projects=projects,variant=env['type'].capitalize())

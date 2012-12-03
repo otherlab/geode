@@ -153,9 +153,11 @@ struct r123m128i{
     // Thus, this code is conditionalized USE_CXX0X and we only set USE_CXX0X
     // in gccfeatures.h gcc 4.6 or higher.
     r123m128i() = default;
+#elif defined(_WIN32)
+    r123m128i() {}
+#endif
     r123m128i(__m128i _m): m(_m){}
     r123m128i(R123_ULONG_LONG n){ m = _mm_set_epi64x(0, n); }
-#endif
     r123m128i& operator=(const __m128i& rhs){ m=rhs; return *this;}
     r123m128i& operator=(R123_ULONG_LONG n){ m = _mm_set_epi64x(0, n); return *this;}
 #if R123_USE_CXX0X

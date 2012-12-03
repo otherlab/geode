@@ -9,7 +9,7 @@ template<class TV> Sphere<TV> approximate_bounding_sphere(Array<const TV> X)
 {
     typedef typename TV::Scalar T;
     if(!X.size()) return Sphere<TV>(TV(),0);
-    Box<TV> box=Box<TV>::bounding_box(X);
+    Box<TV> box = bounding_box(X);
     Sphere<TV> sphere(box.center(),(T).5*box.sizes().max());
     for(int i=0;i<X.size();i++){
         TV DX=X[i]-sphere.center;
@@ -22,5 +22,5 @@ template<class TV> Sphere<TV> approximate_bounding_sphere(Array<const TV> X)
     return sphere;
 };
 
-template<> Sphere<Vector<real,3> > approximate_bounding_sphere(Array<const Vector<real,3> > X);
+template Sphere<Vector<real,3> > approximate_bounding_sphere(Array<const Vector<real,3> > X);
 }

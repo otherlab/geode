@@ -2,21 +2,23 @@
 
 #include <other/core/python/config.h> // Must be included first
 #include <other/core/utility/pass.h>
+#include <other/core/utility/tr1.h>
 #include <vector>
 #include <deque>
 #include <set>
 #include <list>
 #include <map>
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
 #include <algorithm>
 #include <iostream>
 #include <boost/type_traits.hpp>
 #include <other/core/utility/remove_const_reference.h>
 #include <other/core/math/hash.h>
 #include <boost/shared_ptr.hpp>
+#include <other/core/utility/equals.h>
 
 namespace other {
+
+using std::vector;
 
 template<class T, class U> inline std::ostream &operator<<(std::ostream &os, std::pair<T,U> const &v);
 template<class T,class H> inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_set<T,H> const &v);
@@ -29,6 +31,8 @@ template<class T, class U> inline std::ostream &operator<<(std::ostream &os, std
 template<class S> S&& other_forward(typename remove_reference<S>::type& a) OTHER_NOEXCEPT {
   return static_cast<S&&>(a);
 }
+
+#ifdef OTHER_VARIADIC
 
 template<typename T, typename... Args> typename std::vector<T> make_vector(Args&&... args) {
   typename std::vector<T> result;
@@ -47,6 +51,31 @@ template<typename... Args> typename std::vector<typename make_vector_result<Args
   return result;
 }
 
+#else // Unpleasant nonvariadic versions
+
+template<class T> vector<T> make_vector(const T& x0)
+{vector<T> v;v.push_back(x0);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1)
+{vector<T> v;v.push_back(x0);v.push_back(x1);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5,const T& x6)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);v.push_back(x6);return v;}
+
+#endif
+
 // Add a bunch of elements to an stl container
 template<class D,class S> inline void extend(D& dst, const S& src) {
   dst.insert(src.begin(), src.end());
@@ -62,17 +91,21 @@ template<class T,class C> inline void extend(std::deque<T>& dst, const C& src) {
 
 // check if a STL vector contains an element.
 template<class T> inline bool contains(const std::vector<T>& v, const T& x) {
-  return std::find(v.begin(), v.end(), x) != v.end();
+  for (auto y : v) {
+    if (equals<T>::eval(y,x))
+      return true;
+  }
+  return false;
 }
 
 // check if a STL map contains an element.
 template<class K, class V> inline bool contains(const std::map<K,V>& m,const K& idx){
-  return m.count(idx);
+  return m.count(idx)!=0;
 }
 
 // check if a STL set contains an element.
 template<class K> inline bool contains(const std::set<K>& s,const K& v){
-  return s.count(v);
+  return s.count(v)!=0;
 }
 
 // Remove an element of a vector in constant time, but destroys vector order.
@@ -147,12 +180,15 @@ inline std::ostream &operator<<(std::ostream &os, std::map<T,U> const &v) {
   return print(os, v.begin(), v.end(), '{', '}');
 }
 
-template<class T> static inline other::Hash hash_reduce(const boost::shared_ptr<T>& p) {
+}
+namespace boost {
+
+template<class T> static inline other::Hash hash_reduce(const shared_ptr<T>& p) {
+  using other::hash_reduce;
   return hash_reduce(p.get());
 }
 
 }
-
 namespace std {
 
 template<class T> other::Hash hash_reduce(const std::set<T>& s) {

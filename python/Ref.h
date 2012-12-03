@@ -19,14 +19,15 @@
 #include <other/core/python/forward.h>
 #include <other/core/python/exceptions.h>
 #include <other/core/python/new.h>
+#include <other/core/python/to_python.h>
+#include <other/core/math/hash.h>
 #include <other/core/utility/debug.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/is_base_of.hpp>
+#include <boost/type_traits/remove_const.hpp>
 #include <iostream>
-#include <other/core/python/to_python.h>
-
 namespace other {
 
 namespace mpl = boost::mpl;
@@ -62,7 +63,7 @@ class Ref {
   template<class S> friend class Ptr;
   template<class S> friend Ref<S> steal_ref(S&);
 
-  T* self; // pointers is always nonzero
+  T* self; // pointers are always nonzero
   PyObject* owner_;
 
   Ref() {} // used by new_ and python interface code
@@ -116,8 +117,8 @@ public:
   operator T&() const {
     return *self;
   }
-  
-  // allow conversion to Ref<const T>
+
+  // Allow conversion to Ref<const T>
   operator Ref<const T>() {
     return Ref<const T>(*self, owner_);
   }
@@ -154,6 +155,18 @@ public:
   bool operator>=(const Ref& o) const {
     return self>=o.self;
   }
+
+  Ref<typename boost::remove_const<T>::type> const_cast_() const {
+    typedef typename boost::remove_const<T>::type S;
+    return Ref<S>(const_cast<S&>(*self),owner_);
+  }
+
+/* waiting for C++11
+  template<class... Args> OTHER_ALWAYS_INLINE auto operator()(Args&&... args) const
+    -> decltype((*self)(other::forward<Args>(args)...)) {
+    return (*self)(other::forward<Args>(args)...);
+  }
+  */
 };
 
 template<class T> inline T* ptr_from_python(PyObject* object) {
@@ -233,6 +246,10 @@ template<class T,class S> inline Ref<T> static_cast_(const Ref<S>& ref) {
 
 template<class T> inline std::ostream& operator<<(std::ostream& output, const Ref<T>& ref) {
   return output<<"Ref("<<&*ref<<')';
+}
+
+template<class T> inline Hash hash_reduce(const Ref<T>& ref) {
+  return hash_reduce(&*ref);
 }
 
 }

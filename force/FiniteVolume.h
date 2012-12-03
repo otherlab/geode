@@ -10,11 +10,12 @@
 #include <other/core/force/ConstitutiveModel.h>
 namespace other{
 
-template<class TV,int d>
+template<class TV,int d_>
 class FiniteVolume:public Force<TV>
 {
     typedef typename TV::Scalar T;
     enum {m=TV::m};
+    enum {d=d_};
 public:
     OTHER_DECLARE_TYPE
     typedef Force<TV> Base;
@@ -37,7 +38,7 @@ protected:
 public:
 
 protected:
-    FiniteVolume(Ref<StrainMeasure<TV,d> > strain,T density,Ref<ConstitutiveModel<T,d> > model,Ptr<PlasticityModel<T,d> > plasticity);
+    FiniteVolume(StrainMeasure<TV,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity);
 public:
     virtual ~FiniteVolume();
 

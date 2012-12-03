@@ -16,7 +16,10 @@ using std::vector;
 typedef Vector<real,2> TV2;
 
 OTHER_DEFINE_TYPE(SegmentMesh)
+
+#ifndef _WIN32
 const int SegmentMesh::d;
+#endif
 
 SegmentMesh::SegmentMesh(Array<const Vector<int,2> > elements)
   : vertices(scalar_view_own(elements))

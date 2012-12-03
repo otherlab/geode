@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from . import python
 from .python import real
 from libother_core import *
 from .utility import *

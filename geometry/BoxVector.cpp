@@ -37,7 +37,7 @@ template<class T,int d> Vector<T,d> Box<Vector<T,d>>::surface(const TV& X) const
 template<class T,int d> T Box<Vector<T,d>>::phi(const TV& X) const {
   TV lengths = sizes();
   TV phi = abs(X-center())-(T).5*lengths;
-  if (!phi.all_less_equal(TV()))
+  if (!all_less_equal(phi,TV()))
     return TV::componentwise_max(phi,TV()).magnitude();
   return phi.max();
 }
@@ -116,11 +116,14 @@ typedef Vector<T,3> TV;
   template Vector<T,d> Box<Vector<T,d>>::normal(const Vector<T,d>&) const; \
   template Vector<T,d> Box<Vector<T,d>>::surface(const Vector<T,d>&) const; \
   template Vector<T,d>::Scalar Box<Vector<T,d>>::phi(const Vector<T,d>&) const; \
-  template bool Box<Vector<T,d>>::lazy_intersects(const Ray<Vector<T,d>>&,T) const; \
-  template PyObject* to_python(const Box<Vector<T,d>>&); \
+  template PyObject* to_python<T,d>(const Box<Vector<T,d>>&); \
   template Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*);
 INSTANTIATION_HELPER(T,1)
 INSTANTIATION_HELPER(T,2)
 INSTANTIATION_HELPER(T,3)
+#ifndef _WIN32
+template bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>&,T) const;
+template bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>&,T) const;
+#endif
 
 }

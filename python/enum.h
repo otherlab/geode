@@ -17,13 +17,12 @@
 #include <other/core/python/Class.h>
 #include <other/core/utility/config.h>
 #include <other/core/utility/format.h>
+#include <other/core/utility/tr1.h>
 #include <boost/mpl/void.hpp>
 #include <boost/utility/enable_if.hpp>
-#include <tr1/unordered_map>
 namespace other{
 
 using std::make_pair;
-using std::tr1::unordered_map;
 
 template<class E> class PyEnum : public Object {
 public:
@@ -64,15 +63,20 @@ template<class E> E FromPython<E,typename boost::enable_if<boost::is_enum<E>>::t
 }
 
 #define OTHER_DEFINE_ENUM(E) \
-  template<> OTHER_DEFINE_TYPE(PyEnum<E>)
+  template<> OTHER_DEFINE_TYPE(PyEnum<E>) \
+  template E FromPython<E>::convert(PyObject*);
 
-#define OTHER_ENUM(E) \
+#define OTHER_ENUM_2(N,E) \
   {typedef PyEnum<E> Self; \
-  Class<Self>(#E) \
+  Class<Self>(N) \
     .repr() \
     ;}
 
-#define OTHER_ENUM_VALUE(V) \
-  other::python::add_object(#V,PyEnum<decltype(V)>::new_value(#V,V));
+#define OTHER_ENUM(E) OTHER_ENUM_2(#E,E)
+
+#define OTHER_ENUM_VALUE_2(N,V) \
+  other::python::add_object(N,PyEnum<decltype(V)>::new_value(N,V));
+
+#define OTHER_ENUM_VALUE(V) OTHER_ENUM_VALUE_2(#V,V)
 
 }

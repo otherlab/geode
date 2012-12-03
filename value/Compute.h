@@ -6,10 +6,10 @@
 #include <other/core/value/Value.h>
 #include <other/core/value/Action.h>
 #include <other/core/structure/Tuple.h>
+#include <other/core/utility/curry.h>
 #include <other/core/utility/format.h>
 #include <other/core/utility/remove_const_reference.h>
 #include <boost/function.hpp>
-#include <boost/bind.hpp>
 namespace other{
 
 using boost::function;
@@ -52,10 +52,27 @@ template<class F> auto cache(const F& f)
   return ValueRef<T>(new_<Compute<T>>(f));
 }
 
+#ifdef OTHER_VARIADIC
+
 template<class A0,class A1,class... Args> auto cache(const A0& a0, const A1& a1, const Args&... args)
-  -> ValueRef<typename remove_const_reference<decltype(boost::bind(a0,a1,args...)())>::type> {
-  typedef typename remove_const_reference<decltype(boost::bind(a0,a1,args...)())>::type T;
-  return ValueRef<T>(new_<Compute<T>>(boost::bind(a0,a1,args...)));
+  -> ValueRef<typename remove_const_reference<decltype(curry(a0,a1,args...)())>::type> {
+  typedef typename remove_const_reference<decltype(curry(a0,a1,args...)())>::type T;
+  return ValueRef<T>(new_<Compute<T>>(curry(a0,a1,args...)));
 }
+
+#else // Unpleasant nonvariadic versions
+
+#define OTHER_CACHE(ARGS,Argsargs,args) \
+  template<OTHER_REMOVE_PARENS(ARGS)> auto cache Argsargs \
+    -> ValueRef<typename remove_const_reference<decltype(curry args())>::type> { \
+    typedef typename remove_const_reference<decltype(curry args())>::type T; \
+    return ValueRef<T>(new_<Compute<T>>(curry args)); \
+  }
+OTHER_CACHE((class A0,class A1),(const A0& a0,const A1& a1),(a0,a1))
+OTHER_CACHE((class A0,class A1,class A2),(const A0& a0,const A1& a1,const A2& a2),(a0,a1,a2))
+OTHER_CACHE((class A0,class A1,class A2,class A3),(const A0& a0,const A1& a1,const A2& a2,const A3& a3),(a0,a1,a2,a3))
+#undef OTHER_CACHE
+
+#endif
 
 }

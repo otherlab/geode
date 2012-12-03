@@ -7,13 +7,17 @@
 #include <typeinfo>
 #include <string>
 
+#ifdef _WIN32
+#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__FUNCTION__) // cast to const char* to work around error in noreturn
+#else
 #define OTHER_DEBUG_FUNCTION_NAME ((const char*)__PRETTY_FUNCTION__) // cast to const char* to work around error in noreturn
+#endif
 
 #define OTHER_WARN_IF_NOT_OVERRIDDEN() \
-  do{static bool __first_time__=true;if(__first_time__){other::debug::warn_if_not_overridden(__FUNCTION__,__FILE__,__LINE__,typeid(*this));__first_time__=false;}}while(0)
+  do{static bool __first_time__=true;if(__first_time__){other::debug::warn_if_not_overridden(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this));__first_time__=false;}}while(0)
 
 #define OTHER_WARNING(message) \
-  do{static bool __first_time__=true;if(__first_time__){other::debug::warning((message),__FUNCTION__,__FILE__,__LINE__);__first_time__=false;}}while(0)
+  do{static bool __first_time__=true;if(__first_time__){other::debug::warning((message),OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__);__first_time__=false;}}while(0)
 
 #define OTHER_FUNCTION_IS_NOT_DEFINED() \
   other::debug::function_is_not_defined(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this))
@@ -60,7 +64,11 @@ OTHER_EXPORT void OTHER_NORETURN(fatal_error(const char* function,const char* fi
 OTHER_EXPORT void OTHER_NORETURN(assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message));
 
 // Instead of throwing an exception, call the given function when an error occurs
+#ifdef _WIN32
+typedef void (*ErrorCallback)(const string&);
+#else
 typedef void OTHER_NORETURN((*ErrorCallback)(const string&));
+#endif
 void set_error_callback(ErrorCallback callback) OTHER_EXPORT;
 
 }

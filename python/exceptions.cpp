@@ -3,10 +3,8 @@
 //#####################################################################
 #include <other/core/python/exceptions.h>
 #include <other/core/python/module.h>
-#include <tr1/unordered_map>
+#include <other/core/utility/tr1.h>
 namespace other{
-
-using std::tr1::unordered_map;
 
 // map from C++ to python exceptions
 typedef unordered_map<const std::type_info*,PyObject*> ExceptionMap;

@@ -9,7 +9,6 @@
 #include <boost/mpl/if.hpp>
 namespace other {
 
-using std::abs;
 template<class TArray> class ArrayAbs;
 template<class TArray> struct IsArray<ArrayAbs<TArray> >:public mpl::true_{};
 template<class TArray> struct HasCheapCopy<ArrayAbs<TArray> >:public mpl::true_{};

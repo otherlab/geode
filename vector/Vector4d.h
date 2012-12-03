@@ -223,18 +223,6 @@ public:
     bool elements_equal() const
   {return x==y && x==z && x==w;}
 
-    bool all_greater(const Vector& v) const
-    {return x>v.x && y>v.y && z>v.z && w>v.w;}
-
-    bool all_less(const Vector& v) const
-  {return x<v.x && y<v.y && z<v.z && w<v.w;}
-
-    bool all_greater_equal(const Vector& v) const
-    {return x>=v.x && y>=v.y && z>=v.z && w>=v.w;}
-
-    bool all_less_equal(const Vector& v) const
-    {return x<=v.x && y<=v.y && z<=v.z && w<=v.w;}
-
     static Vector componentwise_min(const Vector& v1,const Vector& v2)
     {return Vector(other::min(v1.x,v2.x),other::min(v1.y,v2.y),other::min(v1.z,v2.z),other::min(v1.w,v2.w));}
 
@@ -377,19 +365,19 @@ public:
 // Miscellaneous free operators and functions
 //#####################################################################
 template<class T> inline Vector<T,4>
-operator+(const T& a,const Vector<T,4>& v)
+operator+(const typename Hide<T>::type& a,const Vector<T,4>& v)
   {return Vector<T,4>(a+v.x,a+v.y,a+v.z,a+v.w);}
 
 template<class T> inline Vector<T,4>
-operator-(const T& a,const Vector<T,4>& v)
+operator-(const typename Hide<T>::type& a,const Vector<T,4>& v)
   {return Vector<T,4>(a-v.x,a-v.y,a-v.z,a-v.w);}
 
 template<class T> inline Vector<T,4>
-operator*(const T& a,const Vector<T,4>& v)
+operator*(const typename Hide<T>::type& a,const Vector<T,4>& v)
   {return Vector<T,4>(a*v.x,a*v.y,a*v.z,a*v.w);}
 
 template<class T> inline Vector<T,4>
-operator/(const T& a,const Vector<T,4>& v)
+operator/(const typename Hide<T>::type& a,const Vector<T,4>& v)
   {return Vector<T,4>(a/v.x,a/v.y,a/v.z,a/v.w);}
 
 template<class T> inline Vector<T,4>
@@ -447,6 +435,22 @@ dot(const Vector<T,4>& v1,const Vector<T,4>& v2)
 template<class T> inline bool
 isfinite(const Vector<T,4>& v)
 {return isfinite(v.x) && isfinite(v.y) && isfinite(v.z) && isfinite(v.w);}
+
+template<class T> inline bool all_greater(const Vector<T,4>& v0, const Vector<T,4>& v1) {
+  return v0.x>v1.x && v0.y>v1.y && v0.z>v1.z && v0.w>v1.w;
+}
+
+template<class T> inline bool all_less(const Vector<T,4>& v0, const Vector<T,4>& v1) {
+  return v0.x<v1.x && v0.y<v1.y && v0.z<v1.z && v0.w<v1.w;
+}
+
+template<class T> inline bool all_greater_equal(const Vector<T,4>& v0, const Vector<T,4>& v1) {
+  return v0.x>=v1.x && v0.y>=v1.y && v0.z>=v1.z && v0.w>=v1.w;
+}
+
+template<class T> inline bool all_less_equal(const Vector<T,4>& v0, const Vector<T,4>& v1) {
+  return v0.x<=v1.x && v0.y<=v1.y && v0.z<=v1.z && v0.w<=v1.w;
+}
 
 //#####################################################################
 // Functions clamp, clamp_min, clamp_max, in_bounds

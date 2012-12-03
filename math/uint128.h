@@ -4,6 +4,7 @@
 #pragma once
 
 #include <other/core/python/forward.h>
+#include <boost/static_assert.hpp>
 #include <stdint.h>
 namespace other {
 
@@ -11,6 +12,10 @@ namespace other {
 
 // Use the native integer type if possible
 typedef __uint128_t uint128_t;
+
+template<class I> static inline I cast_uint128(const uint128_t& n) {
+  return I(n);
+}
 
 #else
 
@@ -50,7 +55,7 @@ public:
 
   uint128_t operator*(uint128_t x) const {
     // Use 64-bit multiplies, since we're assuming a native uint128_t isn't available
-    uint64_t mask = (1L<<32)-1, ll = lo&mask, xll = x.lo&mask, lh = lo>>32, xlh = x.lo>>32, m0 = xlh*ll, m1 = xll*lh;
+    uint64_t mask = (uint64_t(1)<<32)-1, ll = lo&mask, xll = x.lo&mask, lh = lo>>32, xlh = x.lo>>32, m0 = xlh*ll, m1 = xll*lh;
     return uint128_t(lo*x.hi+hi*x.lo+xlh*lh,ll*xll)+uint128_t(m0>>32,m0<<32)+uint128_t(m1>>32,m1<<32);
   }
 
@@ -60,6 +65,16 @@ public:
 
   uint128_t operator>>(unsigned b) const {
     return b==64?uint128_t(0,hi):uint128_t(hi>>b,(lo>>b)+(hi<<(64-b)));
+  }
+
+  uint128_t& operator<<=(unsigned b) {
+    *this = *this<<b;
+    return *this;
+  }
+
+  uint128_t& operator>>=(unsigned b) {
+    *this = *this>>b;
+    return *this;
   }
 
   uint64_t operator&(uint64_t x) const {
@@ -72,6 +87,24 @@ public:
 
   uint128_t operator|(uint128_t x) const {
     return uint128_t(hi|x.hi,lo|x.lo);
+  }
+
+  uint128_t& operator++() { // prefix
+    uint64_t l = lo;
+    lo++;
+    hi += lo<l;
+    return *this;
+  }
+
+  uint128_t operator++(int) { // postfix
+    uint128_t save(*this);
+    ++*this;
+    return save;
+  }
+
+  template<class I> friend static inline I cast_uint128(const uint128_t& n) {
+    BOOST_STATIC_ASSERT((boost::is_integral<I>::value && sizeof(I)<=8));
+    return I(n.lo);
   }
 };
 

@@ -401,6 +401,14 @@ public:
   }
 
 private:
+  Scalar min_magnitude_helper(mpl::true_ is_scalar) const {
+    const TArray& self = derived();
+    T result = std::numeric_limits<T>::infinity();
+    int m = self.size();
+    for (int i=0;i<m;i++) result=other::min(result,abs(self[i]));
+    return result;
+  }
+
   Scalar max_magnitude_helper(mpl::true_ is_scalar) const {
     const TArray& self = derived();
     T result = 0;
@@ -409,12 +417,28 @@ private:
     return result;
   }
 
+  Scalar min_magnitude_helper(mpl::false_ is_scalar) const {
+    return sqrt(min_sqr_magnitude());
+  }
+
   Scalar max_magnitude_helper(mpl::false_ is_scalar) const {
     return sqrt(max_sqr_magnitude());
   }
 
+  Scalar min_sqr_magnitude_helper(mpl::true_ is_scalar) const {
+    return sqr(min_magnitude());
+  }
+
   Scalar max_sqr_magnitude_helper(mpl::true_ is_scalar) const {
     return sqr(max_magnitude());
+  }
+
+  Scalar min_sqr_magnitude_helper(mpl::false_ is_scalar) const {
+    const TArray& self = derived();
+    Scalar result = std::numeric_limits<Scalar>::infinity();
+    int m = self.size();
+    for (int i=0;i<m;i++) result = other::min(result,self[i].sqr_magnitude());
+    return result;
   }
 
   Scalar max_sqr_magnitude_helper(mpl::false_ is_scalar) const {
@@ -456,8 +480,16 @@ private:
   }
 public:
 
+  Scalar min_magnitude() const {
+    return min_magnitude_helper(IsScalar<T>());
+  }
+
   Scalar max_magnitude() const {
     return max_magnitude_helper(IsScalar<T>());
+  }
+
+  Scalar min_sqr_magnitude() const {
+    return min_sqr_magnitude_helper(IsScalar<T>());
   }
 
   Scalar max_sqr_magnitude() const {

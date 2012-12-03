@@ -9,12 +9,13 @@ namespace other{
 #ifdef OTHER_REAL
 typedef OTHER_REAL real;
 #else
-typedef float real;
+typedef double real;
 #endif
 }
 
-#ifndef Win32
+#ifndef _WIN32
 
+#define OTHER_VARIADIC
 #define OTHER_EXPORT __attribute__ ((visibility("default")))
 #define OTHER_HIDDEN __attribute__ ((visibility("hidden")))
 
@@ -57,7 +58,7 @@ typedef float real;
 #  define OTHER_NOEXCEPT
 #endif
 
-#else // Win32
+#else // _WIN32
 
 #define OTHER_EXPORT
 #define OTHER_HIDDEN
@@ -68,7 +69,7 @@ typedef float real;
 #define OTHER_NEVER_INLINE
 #define OTHER_PURE
 #define OTHER_CONST
-#define OTHER_UNREACHABLE() ((void)0)
+#define OTHER_UNREACHABLE() OTHER_FATAL_ERROR()
 #define OTHER_NOEXCEPT
 #define OTHER_COLD
 #define OTHER_FORMAT

@@ -1,7 +1,7 @@
 #include <other/core/python/config.h>
 #include <other/core/python/ExceptionValue.h>
 #include <other/core/python/exceptions.h>
-#include <tr1/unordered_map>
+#include <other/core/utility/tr1.h>
 #include <iostream>
 namespace other{
 

@@ -17,7 +17,7 @@ def test_sobol():
 
   count = m*n//100*10
   for _ in range(count):
-    X = sobol.get_vector()
+    X = sobol.vector()
     assert box.thickened(.1).lazy_inside(X)
     for i in range(3):
       cell = list(map(int,X))
@@ -27,7 +27,7 @@ def test_sobol():
   file = '/tmp/sobol.png'
   Image.write(file,im.astype(python.real))
   hash = hashlib.sha1(open(file).read()).hexdigest()
-  assert hash=='610205168525a5d3b15fd6f98f1c2cc3fe95d9a2'
+  assert hash=='1492d817fdb75a6de90bf174dbd05d222f42676d'
 
 def test_threefry():
   # Known answer test vectors for 20 round threefry2x64 from the Random123 distribution
@@ -119,3 +119,4 @@ def test_distributions():
 if __name__=='__main__':
   test_bits()
   test_distributions()
+  test_sobol()

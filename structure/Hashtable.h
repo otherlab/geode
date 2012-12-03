@@ -1,32 +1,54 @@
 //#####################################################################
 // Class Hashtable
+// This hashtable is about twice as fast as the tr1::unordered_map. 
+// A wrapper class for tr1::unordered_map can be found in STLHashtable.h
+// in the STLHashtable branch. It can be used to globally replace 
+// Hashtable if that is desired.
 //#####################################################################
 #pragma once
 
 #include <other/core/array/forward.h>
 #include <other/core/array/Array.h>
+
 #include <other/core/math/hash.h>
 #include <other/core/math/integer_log.h>
 #include <vector>
+
 namespace other {
 
 using std::vector;
 template<class TK,class T> struct HashtableIter;
+template<class TK,class T> class Hashtable;
 
 // Entries
 
 enum HashtableEntryState{EntryFree,EntryActive,EntryDeleted};
 
-template<class TK,class T> struct HashtableEntry {
+template<class TK,class T> class HashtableEntry {
+public:
   TK key;
   mutable T data;
+  
+  friend struct HashtableIter<TK,T>;
+  friend struct HashtableIter<TK,const T>;
+  friend class Hashtable<TK,T>;
+
+private:
   HashtableEntryState state;
   bool active() const {return state==EntryActive;}
   T& data_() const {return data;}
   const HashtableEntry& value() const {return *this;}
 };
-template<class TK> struct HashtableEntry<TK,unit> : public unit {
+
+template<class TK> class HashtableEntry<TK,unit> : public unit {
+public:
   TK key;
+
+  friend struct HashtableIter<TK,unit>;
+  friend struct HashtableIter<TK,const unit>;
+  friend class Hashtable<TK,unit>;
+
+private:
   HashtableEntryState state;
   bool active() const {return state==EntryActive;}
   unit& data_() {return *this;}
@@ -249,17 +271,17 @@ public:
   }
 
   iterator end() {
-    return iterator(table_,table_.size());
+    return iterator(table_,(int)table_.size());
   }
 
   const_iterator end() const {
-    return const_iterator(table_,table_.size());
+    return const_iterator(table_,(int)table_.size());
   }
 };
 
 // Iteration
 
-template<class TK,class T> // T = unit
+template<class TK,class T>
 struct HashtableIter {
   typedef HashtableEntry<TK,typename boost::remove_const<T>::type> Entry;
 
@@ -272,7 +294,10 @@ struct HashtableIter {
       index++;
   }
 
-  void operator=(const HashtableIter& other) = delete;
+  void operator=(const HashtableIter& other) {
+    assert(table.data()==other.table.data());
+    index = other.index;
+  }
 
   bool operator==(const HashtableIter& other) const {
     return index==other.index; // Assume same table
@@ -286,6 +311,12 @@ struct HashtableIter {
     -> decltype(table[index].value()) {
     assert(index<table.size() && table[index].active());
     return table[index].value();
+  }
+
+  auto operator->() const
+    -> decltype(&table[index].value()) {
+    assert(index<table.size() && table[index].active());
+    return &table[index].value();
   }
 
   void operator++() {

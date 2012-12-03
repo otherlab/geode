@@ -23,7 +23,7 @@ void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr) {
   throw PythonError();
 }
 
-ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,int offset)
+ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset)
   :type(type) {
 
   // Verify that OTHER_DECLARE_TYPE has been used, and initialize name
@@ -35,7 +35,7 @@ ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,int offset
 
   // Make sure base starts at the beginning
   if (offset) {
-    PyErr_Format(PyExc_AssertionError,"%s is offset %d bytes before its base",name,offset);
+    PyErr_Format(PyExc_AssertionError,"%s is offset %d bytes before its base",name,(int)offset);
     throw_python_error();
   }
 

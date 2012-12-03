@@ -47,3 +47,8 @@ link(os.path.join(build,'SConstruct'))
 link(os.path.join(build,'config.py'))
 link(os.path.join(build,'setup.cfg'))
 link(os.path.join(build,'__init__.py'))
+
+# Add site_scons symlink
+scons = 'gui/site_scons'
+if os.path.exists(scons):
+  link(scons)

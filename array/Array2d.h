@@ -139,6 +139,11 @@ public:
     return flat[index.x*n+index.y];
   }
 
+  T& operator[](const Vector<int,d>& index) const {
+    assert(unsigned(index.x)<unsigned(m) && unsigned(index.y)<unsigned(n));
+    return flat[index.x*n+index.y];
+  }
+
   const RawArray<T,d-1> operator[](const int i) const {
     assert(unsigned(i)<unsigned(m));
     return RawArray<T,d-1>(n,data()+i*n);

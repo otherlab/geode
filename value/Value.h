@@ -7,10 +7,10 @@
 #include <other/core/python/Object.h>
 #include <other/core/python/to_python.h>
 #include <other/core/python/ExceptionValue.h>
+#include <other/core/utility/Optional.h>
 #include <other/core/vector/Vector.h>
 #include <boost/type_traits/is_const.hpp>
 #include <boost/type_traits/is_reference.hpp>
-#include <boost/optional.hpp>
 extern void wrap_value_base();
 
 #include <other/core/python/Ptr.h>
@@ -18,6 +18,7 @@ extern void wrap_value_base();
 
 namespace other {
 
+using std::vector;
 using std::type_info;
 using boost::is_const;
 using boost::is_reference;
@@ -79,7 +80,7 @@ public:
   void signal() const;
 
   virtual void dump(int indent) const = 0;
-  virtual std::vector<Ptr<const ValueBase> > get_dependencies() const = 0;
+  virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
   Ref<> dump_dependencies() const;
 
   const string& get_name() const;
@@ -118,12 +119,13 @@ template<class T> class OTHER_EXPORT Value:public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
+  static_assert(!boost::is_same<T,char*>::value && !boost::is_same<T,const char*>::value,"T can't be char*");
 public:
   typedef ValueBase Base;
     typedef T ValueType;
 
 protected:
-  mutable boost::optional<T> value; // the cached value
+  mutable Optional<T> value; // the cached value
 
   Value();
   ~Value();
@@ -159,6 +161,11 @@ public:
     return typeid(T);
   }
 
+  // Look at a value without adding a dependency graph node
+  const T& peek() const {
+    OTHER_ASSERT(!dirty_);
+    return *value;
+  }
 };
 
 template<class T> Value<T>::Value() {}
@@ -169,8 +176,9 @@ template<class T> class ValueRef
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
 public:
-    typedef T ValueType;
-  Ref<const Value<T> > self;
+  typedef T ValueType;
+
+  Ref<const Value<T>> self;
 
   ValueRef(const Value<T>& value)
     :self(other::ref(value)) {}
@@ -185,6 +193,10 @@ public:
     return (*self)();
   }
 
+  const Value<T>& operator*() const {
+    return *self;
+  }
+
   const Value<T>* operator->() const {
     return &*self;
   }
@@ -194,7 +206,7 @@ template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {
   return to_python(*value.self);
 }
 
-// from_python<ValueRef<T> > is declared in convert.h to avoid circularity
+// from_python<ValueRef<T>> is declared in convert.h to avoid circularity
 
 // Instantiate common versions in the .cpp file
 extern template class Value<bool>;

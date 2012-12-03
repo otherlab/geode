@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <stdio.h>
 #include <cstring>
-#ifndef Win32
+#ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <signal.h>
@@ -26,7 +26,7 @@ namespace process{
 using std::endl;
 using std::flush;
 
-#ifdef Win32
+#ifdef _WIN32
 
 size_t memory_usage(){OTHER_NOT_IMPLEMENTED();}
 void set_float_exceptions(const int exceptions){OTHER_NOT_IMPLEMENTED();}

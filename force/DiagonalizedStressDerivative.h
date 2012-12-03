@@ -21,8 +21,8 @@ public:
 
     Matrix<T,2> differential(const Matrix<T,2>& dF) const
     {SymmetricMatrix<T,2> dC = twice_symmetric_part(F*dF);
-    Vector<T,3> ds=dSdC*Vector<T,3>(dC.x00,dC.x11,(T)sqrt(2)*dC.x10);
-    SymmetricMatrix<T,2> dS(ds.x,T(1/sqrt(2))*ds.z,ds.y);
+    Vector<T,3> ds=dSdC*Vector<T,3>(dC.x00,dC.x11,(T)sqrt(2.)*dC.x10);
+    SymmetricMatrix<T,2> dS(ds.x,T(1/sqrt(2.))*ds.z,ds.y);
     return dF*S+F*dS;}
 
     void enforce_definiteness()
@@ -40,9 +40,9 @@ public:
 
     Matrix<T,3> differential(const Matrix<T,3>& dF) const
     {SymmetricMatrix<T,3> dC = twice_symmetric_part(F*dF);
-    Vector<T,3> dC_d(dC.x00,dC.x11,dC.x22),dC_s((T)sqrt(2)*dC.x10,(T)sqrt(2)*dC.x20,(T)sqrt(2)*dC.x21);
+    Vector<T,3> dC_d(dC.x00,dC.x11,dC.x22),dC_s((T)sqrt(2.)*dC.x10,(T)sqrt(2.)*dC.x20,(T)sqrt(2.)*dC.x21);
     Vector<T,3> dS_d(dSdC_d*dC_d+dSdC_ds*dC_s),dS_s(dSdC_ds.transpose_times(dC_d)+dSdC_s*dC_s);
-    SymmetricMatrix<T,3> dS(dS_d.x,T(1/sqrt(2))*dS_s.x,T(1/sqrt(2))*dS_s.y,dS_d.y,T(1/sqrt(2))*dS_s.z,dS_d.z);
+    SymmetricMatrix<T,3> dS(dS_d.x,T(1/sqrt(2.))*dS_s.x,T(1/sqrt(2.))*dS_s.y,dS_d.y,T(1/sqrt(2.))*dS_s.z,dS_d.z);
     return dF*S+F*dS;}
 
     void enforce_definiteness()

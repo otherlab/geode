@@ -18,7 +18,8 @@ namespace other {
 using std::pow;
 using std::nth_element;
 
-template<> OTHER_DEFINE_TYPE(Image<real>)
+template<> OTHER_DEFINE_TYPE(Image<float>)
+template<> OTHER_DEFINE_TYPE(Image<double>)
 
 template<class T> Array<Vector<T,3>,2> Image<T>::read(const string& filename)
 {

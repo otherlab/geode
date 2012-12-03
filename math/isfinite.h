@@ -3,10 +3,10 @@
 #include <cmath>
 namespace other {
   
-#ifdef Win32
+#ifdef _WIN32
   
 template<class T> static inline bool isfinite(T x) {
-  return _isfinite(x);
+  return _finite(x)!=0;
 }
   
 #else

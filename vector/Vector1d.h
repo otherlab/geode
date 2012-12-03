@@ -210,18 +210,6 @@ public:
     static Vector componentwise_max(const Vector& v1,const Vector& v2)
     {return Vector(other::max(v1.x,v2.x));}
 
-    bool all_greater(const Vector& v) const
-    {return x>v.x;}
-
-    bool all_less(const Vector& v) const
-    {return x<v.x;}
-
-    bool all_greater_equal(const Vector& v) const
-    {return x>=v.x;}
-
-    bool all_less_equal(const Vector& v) const
-    {return x<=v.x;}
-
     Vector projected_on_unit_direction(const Vector& direction) const
     {return dot(*this,direction)*direction;}
 
@@ -331,19 +319,19 @@ public:
 // Miscellaneous free operators and functions
 //#####################################################################
 template<class T> inline Vector<T,1>
-operator+(const T& a,const Vector<T,1>& v)
+operator+(const typename Hide<T>::type& a,const Vector<T,1>& v)
 {return Vector<T,1>(a+v.x);}
 
 template<class T> inline Vector<T,1>
-operator-(const T& a,const Vector<T,1>& v)
+operator-(const typename Hide<T>::type& a,const Vector<T,1>& v)
 {return Vector<T,1>(a-v.x);}
 
 template<class T> inline Vector<T,1>
-operator*(const T& a,const Vector<T,1>& v)
+operator*(const typename Hide<T>::type& a,const Vector<T,1>& v)
 {return Vector<T,1>(a*v.x);}
 
 template<class T> inline Vector<T,1>
-operator/(const T& a,const Vector<T,1>& v)
+operator/(const typename Hide<T>::type& a,const Vector<T,1>& v)
 {return Vector<T,1>(a/v.x);}
 
 template<class T> inline Vector<T,1>
@@ -405,6 +393,22 @@ cross(const Vector<T,1>&,const Vector<T,1>&)
 template<class T> inline bool
 isfinite(const Vector<T,1>& v)
 {return isfinite(v.x);}
+
+template<class T> inline bool all_greater(const Vector<T,1>& v0, const Vector<T,1>& v1) {
+  return v0.x>v1.x;
+}
+
+template<class T> inline bool all_less(const Vector<T,1>& v0, const Vector<T,1>& v1) {
+  return v0.x<v1.x;
+}
+
+template<class T> inline bool all_greater_equal(const Vector<T,1>& v0, const Vector<T,1>& v1) {
+  return v0.x>=v1.x;
+}
+
+template<class T> inline bool all_less_equal(const Vector<T,1>& v0, const Vector<T,1>& v1) {
+  return v0.x<=v1.x;
+}
 
 //#####################################################################
 // Functions clamp, clamp_min, clamp_max, in_bounds
