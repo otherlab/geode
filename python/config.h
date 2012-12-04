@@ -11,7 +11,16 @@
 #endif
 #else
 #include <sys/types.h>
+
+#ifdef _WIN32 
+#define WINDOWS_LEAN_AND_MEAN
+#include <windows.h>
+
+typedef SSIZE_T ssize_t;
 #endif
+
+#endif
+
 
 namespace other {
 
@@ -87,13 +96,13 @@ typedef _typeobject PyTypeObject;
 
 #define OTHER_INCREF(op) \
   ((void)other::hack_fetch_and_add(&((PyObject*)(op))->ob_refcnt,1))
-#define OTHER_XINCREF(op) ({ \
-  if (op) OTHER_INCREF(op); })
-#define OTHER_DECREF(op) ({ \
-  if (other::hack_fetch_and_add(&((PyObject*)(op))->ob_refcnt,-1)==1) \
-    OTHER_PY_DEALLOC(op); })
-#define OTHER_XDECREF(op) ({ \
-  if (op) OTHER_DECREF(op); })
+#define OTHER_XINCREF(op) do { \
+  if (op) OTHER_INCREF(op); } while (false)
+#define OTHER_DECREF(op) do { \
+  if (other::hack_fetch_and_add(&((PyObject*)(op))->ob_refcnt,-1)==1)\
+    OTHER_PY_DEALLOC(op); } while(false)
+#define OTHER_XDECREF(op) do { \
+  if (op) OTHER_DECREF(op); } while (false)
 
 #endif
 

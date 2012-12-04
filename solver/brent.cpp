@@ -10,6 +10,14 @@
 #include <other/core/solver/brent.h>
 #include <other/core/python/module.h>
 #include <other/core/python/function.h>
+#include <other/core/math/copysign.h>
+
+
+// Windows silliness
+#undef small
+#undef far
+#undef near
+
 namespace other {
 
 typedef real T;

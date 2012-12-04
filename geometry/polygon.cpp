@@ -138,8 +138,8 @@ namespace other {
   
   bool inside_polygon(Vector<real,2> const &p, Polygon const &poly) {
     int count = 0;
-    real far = 1e3 * bounding_box(poly).sizes().max();
-    Vector<real,2> outside = poly[0] + vec(far,far); // TODO: make random? 
+    real vfar = 1e3 * bounding_box(poly).sizes().max();
+    Vector<real,2> outside = poly[0] + vec(vfar,vfar); // TODO: make random? 
     Segment<Vector<real,2> > S(p,outside);
     for (int i = 0, j = (int) poly.size()-1; i < (int) poly.size(); j = i++) {
       count += S.segment_segment_intersection(Segment<Vector<real,2> >(poly[i], poly[j])); 

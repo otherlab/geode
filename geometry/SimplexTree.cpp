@@ -10,6 +10,12 @@
 #include <other/core/geometry/Triangle3d.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/python/Class.h>
+
+// Windows silliness
+#undef small
+#undef far
+#undef near
+
 namespace other {
 using std::cout;
 using std::endl;
