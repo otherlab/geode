@@ -1,26 +1,18 @@
 //#####################################################################
-// Class ExrFile (requires libpng)
+// Class ExrFile
 //#####################################################################
-#ifndef _EXR_FILE_h
-#define _EXR_FILE_h
+#pragma once
 
 #include <other/core/array/forward.h>
 #include <other/core/vector/forward.h>
 #include <string>
-namespace other{
+namespace other {
   
-  template<class T>
-  class ExrFile
-  {
-  public:
-    ExrFile()
-    {}
-    
-    //#####################################################################
-    static Array<Vector<T,3>,2> read(const std::string& filename) OTHER_EXPORT;
-    static void write(const std::string& filename,RawArray<const Vector<T,3>,2> image) OTHER_EXPORT;
-    static bool is_supported() OTHER_EXPORT;
-    //#####################################################################
-  };
+template<class T> class ExrFile {
+public:
+  static Array<Vector<T,3>,2> read(const std::string& filename) OTHER_EXPORT;
+  static void write(const std::string& filename,RawArray<const Vector<T,3>,2> image) OTHER_EXPORT;
+  static bool is_supported() OTHER_EXPORT;
+};
+
 }
-#endif

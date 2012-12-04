@@ -10,48 +10,47 @@ namespace other{
 
 using boost::remove_reference;
 
-class OTHER_EXPORT Action
-{
+class OTHER_EXPORT Action {
 private:
-    template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, std::vector<ValueBase const*> const &);
-    friend class ValueBase;
-    mutable ValueBase::Link* inputs_; // linked list of inputs we depend on
-    static const Action* current; // if nonzero, pulled values link themselves to this automatically
-    mutable bool executing; // are we in the middle of execution?
+  template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, std::vector<ValueBase const*> const &);
+  friend class ValueBase;
+  mutable ValueBase::Link* inputs_; // linked list of inputs we depend on
+  static const Action* current OTHER_EXPORT; // if nonzero, pulled values link themselves to this automatically
+  mutable bool executing; // are we in the middle of execution?
 protected:
-    class Executing {
-        bool& executing;
-        const Action* const parent;
-    public:
-        Executing(); // Values pulled during execution won't be registered to any action
-        Executing(const Action& self);
-        ~Executing() {
-          stop(0);
-        }
-        // Convenience function to stop execution in the middle of a statement
-        template<class T> typename remove_reference<T>::type&& stop(T&& x) {
-          executing = false;
-          Action::current = parent;
-          return other::move(x);
-        }
-    };
-    friend class Executing;
+  class Executing {
+    bool& executing;
+    const Action* const parent;
+  public:
+    Executing() OTHER_EXPORT; // Values pulled during execution won't be registered to any action
+    Executing(const Action& self) OTHER_EXPORT;
+    ~Executing() {
+      stop(0);
+    }
+    // Convenience function to stop execution in the middle of a statement
+    template<class T> typename remove_reference<T>::type&& stop(T&& x) {
+      executing = false;
+      Action::current = parent;
+      return other::move(x);
+    }
+  };
+  friend class Executing;
 public:
 
-    Action();
-    virtual ~Action();
+  Action() OTHER_EXPORT;
+  virtual ~Action() OTHER_EXPORT;
 
-    // Count inputs
-    int inputs() const;
+  // Count inputs
+  int inputs() const;
 
-    void dump_dependencies(int indent) const;
-    std::vector<Ptr<const ValueBase> > get_dependencies() const;
+  void dump_dependencies(int indent) const OTHER_EXPORT;
+  std::vector<Ptr<const ValueBase>> get_dependencies() const OTHER_EXPORT;
 
 protected:
-    void clear_dependencies() const;
-    void depend_on(const ValueBase& value) const;
+  void clear_dependencies() const;
+  void depend_on(const ValueBase& value) const;
 private:
-    virtual void input_changed() const = 0;
+  virtual void input_changed() const = 0;
 };
 
 

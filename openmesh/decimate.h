@@ -17,7 +17,7 @@ namespace other {
                 double maxangleerror = 90.,
                 double maxquadricerror = std::numeric_limits<double>::infinity(),
                 double min_face_quality = 1e-5,
-                double min_boundary_dot = .9999);
+                double min_boundary_dot = .9999) OTHER_EXPORT;
 
 }
 #endif // USE_OPENMESH

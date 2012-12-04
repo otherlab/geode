@@ -22,6 +22,10 @@ OTHER_DEFINE_TYPE(ValueBase)
 // destruct during dependency propagation.
 ValueBase::Link* ValueBase::pending = 0;
 
+ValueBase::ValueBase()
+  : dirty_(true), actions(0)
+{}
+
 ValueBase::~ValueBase() {
   // Unlink ourselves from all actions
   Link* link = actions;

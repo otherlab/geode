@@ -1458,6 +1458,7 @@ Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) {
 }
 
 // Reduce template bloat
+/* See header.
 namespace OpenMesh {
 template class PropertyT<int>;
 template class PropertyT<other::OVec<other::real,2>>;
@@ -1466,6 +1467,7 @@ template class PropertyT<other::OVec<unsigned char,4>>;
 template class PropertyT<VectorT<double,3>>;
 template class PolyMeshT<AttribKernelT<FinalMeshItemsT<other::MeshTraits,true>,TriConnectivity>>;
 }
+*/
 
 using namespace other;
 

@@ -131,7 +131,7 @@ namespace other {
 
 template<class T,int d>
 struct FromPython<OVec<T,d> > {
-  OTHER_EXPORT static OVec<T,d> convert(PyObject* object) {
+  static OVec<T,d> convert(PyObject* object) {
     return OVec<T,d>(FromPython<Vector<T,d> >::convert(object));
   }
 };
@@ -532,6 +532,7 @@ Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) OTHER_EXPORT;
 }
 
 // Reduce template bloat
+/* Unfortunately, this conflicts with hidden visibility, so we can't do it after all.
 namespace OpenMesh {
 extern template class PropertyT<int>;
 extern template class PropertyT<other::OVec<other::real,2>>;
@@ -540,5 +541,6 @@ extern template class PropertyT<other::OVec<unsigned char,4>>;
 extern template class PropertyT<VectorT<double,3>>;
 extern template class PolyMeshT<AttribKernelT<FinalMeshItemsT<other::MeshTraits,true>,TriConnectivity>>;
 }
+*/
 
 #endif // USE_OPENMESH

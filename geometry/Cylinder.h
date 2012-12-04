@@ -24,7 +24,7 @@ public:
   Cylinder(const Plane<T>& base, T radius, T height)
     : base(base), radius(radius), height(height) {}
 
-  Cylinder(TV x0, TV x1, T radius);
+  Cylinder(TV x0, TV x1, T radius) OTHER_EXPORT;
 
   bool operator==(const Cylinder& other) const;
   TV normal(const TV& X) const;

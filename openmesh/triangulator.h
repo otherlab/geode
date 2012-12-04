@@ -24,7 +24,7 @@ int triangulate_cylinder(TriMesh &mesh, std::vector<VertexHandle> const &ring1, 
                          std::vector<FaceHandle> &faces, EdgePriority &ep, bool debug = false);
 
 // a caching version of the edge priority
-class CachedEdgePriority: public EdgePriority {
+class OTHER_EXPORT CachedEdgePriority : public EdgePriority {
 protected:
   std::tr1::unordered_map<Vector<VertexHandle, 2>, double, Hasher> cache;
   virtual double computePriority(VertexHandle v1, VertexHandle v2) = 0;
@@ -36,7 +36,7 @@ public:
 };
 
 // An edge priority class giving precedence to short edges. 
-class ShortEdgePriority: public CachedEdgePriority {
+class OTHER_EXPORT ShortEdgePriority : public CachedEdgePriority {
 public:
   ShortEdgePriority(TriMesh const &mesh);
   ~ShortEdgePriority();

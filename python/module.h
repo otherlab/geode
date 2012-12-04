@@ -26,8 +26,7 @@ namespace python {
 #define OTHER_PYTHON_MODULE(name) \
   static void Init_Helper_##name(); \
   PyMODINIT_FUNC OTHER_EXPORT initlib##name(); \
-  PyMODINIT_FUNC OTHER_EXPORT \
-  initlib##name() { \
+  PyMODINIT_FUNC OTHER_EXPORT initlib##name() { \
     PyObject* module = Py_InitModule3("lib"#name,0,0); \
     if (module) { \
       try { \

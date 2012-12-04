@@ -14,7 +14,7 @@ namespace other{
 
 using boost::function;
 
-template<class T> class Compute:public Value<T>,public Action
+template<class T> class OTHER_EXPORT Compute:public Value<T>,public Action
 {
 public:
   OTHER_NEW_FRIEND
@@ -40,13 +40,13 @@ public:
     printf("%*sCompute<%s>\n",2*indent,"",typeid(T).name());
     Action::dump_dependencies(indent);
   }
+
   std::vector<Ptr<const ValueBase> > get_dependencies() const {
     return Action::get_dependencies();
   }
-
 };
 
-template<class F> auto cache(const F& f)
+template<class F> static inline auto cache(const F& f)
   -> ValueRef<typename remove_const_reference<decltype(f())>::type> {
   typedef typename remove_const_reference<decltype(f())>::type T;
   return ValueRef<T>(new_<Compute<T>>(f));
@@ -54,7 +54,7 @@ template<class F> auto cache(const F& f)
 
 #ifdef OTHER_VARIADIC
 
-template<class A0,class A1,class... Args> auto cache(const A0& a0, const A1& a1, const Args&... args)
+template<class A0,class A1,class... Args> static inline auto cache(const A0& a0, const A1& a1, const Args&... args)
   -> ValueRef<typename remove_const_reference<decltype(curry(a0,a1,args...)())>::type> {
   typedef typename remove_const_reference<decltype(curry(a0,a1,args...)())>::type T;
   return ValueRef<T>(new_<Compute<T>>(curry(a0,a1,args...)));
@@ -63,7 +63,7 @@ template<class A0,class A1,class... Args> auto cache(const A0& a0, const A1& a1,
 #else // Unpleasant nonvariadic versions
 
 #define OTHER_CACHE(ARGS,Argsargs,args) \
-  template<OTHER_REMOVE_PARENS(ARGS)> auto cache Argsargs \
+  template<OTHER_REMOVE_PARENS(ARGS)> static inline auto cache Argsargs \
     -> ValueRef<typename remove_const_reference<decltype(curry args())>::type> { \
     typedef typename remove_const_reference<decltype(curry args())>::type T; \
     return ValueRef<T>(new_<Compute<T>>(curry args)); \

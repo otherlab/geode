@@ -7,7 +7,7 @@ namespace other {
 
 #ifdef OTHER_PYTHON
 
-template<class T> OTHER_EXPORT PyObject* to_python(const Box<T>& self) {
+template<class T> PyObject* to_python(const Box<T>& self) {
   const char* format=boost::is_same<T,float>::value?"ff":"dd";
   return Py_BuildValue(format,self.min,self.max);
 }

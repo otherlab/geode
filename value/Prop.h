@@ -30,15 +30,14 @@ using boost::scoped_ptr;
 
 class PropManager;
 
-class PropBase
-{
+class OTHER_EXPORT PropBase { // Need OTHER_EXPORT for typeid
 protected:
-  PropBase();
+  PropBase() OTHER_EXPORT;
 private:
   PropBase(const PropBase&); // noncopyable
   void operator=(const PropBase&);
 public:
-  virtual ~PropBase();
+  virtual ~PropBase() OTHER_EXPORT;
 
   virtual const ValueBase& base() const = 0;
   virtual bool same_default(PropBase& other) const = 0;
@@ -64,7 +63,7 @@ public:
 
   template<class T> Prop<T>* cast() {
     const type_info &goal = typeid(Prop<T>),
-      &self = typeid(*this);
+                    &self = typeid(*this);
     if (goal==self || !strcmp(goal.name(),self.name())) // Use string comparison to avoid symbol visibility issues
       return static_cast<Prop<T>*>(this);
     return 0;
@@ -76,7 +75,7 @@ public:
   char abbrev;
   string category; //TODO: nested categorization? include anything dependency-graph based?
 
-  void dump(int indent) const;
+  void dump(int indent) const OTHER_EXPORT;
 };
 
 inline Ref<PropBase> ref(PropBase& prop) {
@@ -125,7 +124,7 @@ public:
     return self();
   }
 
-  Prop<T>& set_max(const T& m){
+  Prop<T>& set_max(const T& m) {
     max = m;
     return self();
   }
@@ -149,8 +148,8 @@ public:
   }
 #endif
 
-  Prop<T>& set_min(const PropRef<T> p, real alpha = 1);
-  Prop<T>& set_max(const PropRef<T> p, real alpha = 1);
+  Prop<T>& set_min(const PropRef<T> p, real alpha = 1) OTHER_EXPORT;
+  Prop<T>& set_max(const PropRef<T> p, real alpha = 1) OTHER_EXPORT;
 
   Prop<T>& copy_range_from(const PropClamp& p) {
     set_min(p.min);
@@ -163,7 +162,7 @@ private:
   void maximize();
 };
 
-template<class T> class Prop: public Value<T>, public PropBase, public PropClamp<T,has_clamp<T>::value>
+template<class T> class OTHER_EXPORT Prop : public Value<T>, public PropBase, public PropClamp<T,has_clamp<T>::value>
 {
 public:
   OTHER_NEW_FRIEND
@@ -174,7 +173,7 @@ public:
   using Base::name;
 
 protected:
-  Prop(string const& name, const T& value_)
+  Prop(string const& name, const T& value_) OTHER_EXPORT
     : PropBase(), default_(value_)
   {
     this->set_name(name);
@@ -190,7 +189,7 @@ public:
   const T default_;
   vector<T> allowed;
 
-  void set(const T& value_) {
+  void set(const T& value_) OTHER_EXPORT {
     if (!equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !other::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name);
