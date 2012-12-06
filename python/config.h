@@ -15,8 +15,18 @@
 #ifdef _WIN32 
 #define WINDOWS_LEAN_AND_MEAN
 #include <windows.h>
-
 typedef SSIZE_T ssize_t;
+
+#ifndef LEAVE_WINDOWS_DEFINES_ALONE
+// clean up after windows.h
+#undef min
+#undef max
+#undef far
+#undef near
+#undef interface
+#undef small
+#endif
+
 #endif
 
 #endif
