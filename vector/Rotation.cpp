@@ -11,6 +11,8 @@ namespace other{
 
 typedef real T;
 
+#ifdef OTHER_PYTHON
+
 namespace {
 template<class TV> struct NumpyDescr<Rotation<TV>>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
 template<class TV> struct NumpyArrayType<Rotation<TV>>{static PyTypeObject* t;static PyTypeObject* type(){OTHER_ASSERT(t);Py_INCREF(t);return t;}};
@@ -82,15 +84,18 @@ static PyObject* rotation_from_matrix(Array<const real,2> A) {
     throw TypeError(format("expected 2x2 or 3x3 matrix, got %dx%d",A.m,A.n));
 }
 
+#endif
 }
 using namespace other;
 
 void wrap_rotation() {
-    using namespace python;
-    function("_set_rotation_types",set_rotation_types);
-    function("rotation_test_2d",rotation_test<Vector<real,2>>);
-    function("rotation_test_3d",rotation_test<Vector<real,3>>);
-    function("rotation_array_test_2d",rotation_array_test<Vector<real,2>>);
-    function("rotation_array_test_3d",rotation_array_test<Vector<real,3>>);
-    OTHER_FUNCTION(rotation_from_matrix);
+#ifdef OTHER_PYTHON
+  using namespace python;
+  function("_set_rotation_types",set_rotation_types);
+  function("rotation_test_2d",rotation_test<Vector<real,2>>);
+  function("rotation_test_3d",rotation_test<Vector<real,3>>);
+  function("rotation_array_test_2d",rotation_array_test<Vector<real,2>>);
+  function("rotation_array_test_3d",rotation_array_test<Vector<real,3>>);
+  OTHER_FUNCTION(rotation_from_matrix);
+#endif
 }

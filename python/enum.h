@@ -20,9 +20,11 @@
 #include <other/core/utility/tr1.h>
 #include <boost/mpl/void.hpp>
 #include <boost/utility/enable_if.hpp>
-namespace other{
+namespace other {
 
 using std::make_pair;
+
+#ifdef OTHER_PYTHON
 
 template<class E> class PyEnum : public Object {
 public:
@@ -79,4 +81,13 @@ template<class E> E FromPython<E,typename boost::enable_if<boost::is_enum<E>>::t
 
 #define OTHER_ENUM_VALUE(V) OTHER_ENUM_VALUE_2(#V,V)
 
+#else // non-python stubs
+
+#define OTHER_DEFINE_ENUM(E)
+#define OTHER_ENUM_2(N,E)
+#define OTHER_ENUM(E)
+#define OTHER_ENUM_VALUE_2(N,V)
+#define OTHER_ENUM_VALUE(V)
+
+#endif
 }

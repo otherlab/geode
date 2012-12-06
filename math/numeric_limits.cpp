@@ -8,6 +8,8 @@ namespace other {
 
 using std::numeric_limits;
 
+#ifdef OTHER_PYTHON
+
 namespace {
 template<class T> struct Limits : public Object, public numeric_limits<T> {
   OTHER_DECLARE_TYPE
@@ -52,9 +54,11 @@ static PyObject* build_limits(PyObject* dtype) {
   }
 }
 
+#endif
 }
 using namespace other;
 
+#ifdef OTHER_PYTHON
 template<class T> static void wrap_helper() {
   typedef Limits<T> Self;
   Class<Self>("numeric_limits")
@@ -75,9 +79,12 @@ template<class T> static void wrap_helper() {
     .OTHER_REPR()
     ;
 }
+#endif
 
 void wrap_numeric_limits() {
+#ifdef OTHER_PYTHON
   wrap_helper<float>();
   wrap_helper<double>();
   OTHER_FUNCTION_2(numeric_limits,build_limits)
+#endif
 }

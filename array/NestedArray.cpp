@@ -3,12 +3,7 @@
 //#####################################################################
 #include <other/core/array/NestedArray.h>
 #include <other/core/python/Class.h>
-static PyTypeObject* nested_array_type;
 namespace other {
-
-static PyObject* offsets_string;
-static PyObject* flat_string;
-static PyObject* empty_tuple;
 
 Array<int> nested_array_offsets(RawArray<const int> lengths) {
   Array<int> offsets(lengths.size()+1,false);
@@ -19,6 +14,13 @@ Array<int> nested_array_offsets(RawArray<const int> lengths) {
   }
   return offsets;
 }
+
+#ifdef OTHER_PYTHON
+
+static PyTypeObject* nested_array_type;
+static PyObject* offsets_string;
+static PyObject* flat_string;
+static PyObject* empty_tuple;
 
 static void _set_nested_array(PyObject* nested_array) {
   OTHER_ASSERT(PyObject_IsInstance(nested_array,(PyObject*)&PyType_Type));
@@ -76,11 +78,14 @@ INSTANTIATE(int)
 INSTANTIATE(float)
 INSTANTIATE(double)
 INSTANTIATE(Vector<real,2>)
+
+#endif
 }
 
 void wrap_nested_array() {
   using namespace other;
 
+#ifdef OTHER_PYTHON
   OTHER_FUNCTION(_set_nested_array)
 
   offsets_string = PyString_FromString("offsets");
@@ -89,4 +94,5 @@ void wrap_nested_array() {
   if (!flat_string) throw_python_error();
   empty_tuple = PyTuple_New(0);
   if (!empty_tuple) throw_python_error();
+#endif
 }

@@ -42,10 +42,6 @@ Prop<string>& PropManager::get_or_add(string const &name, const char* default_) 
   return get_or_add(name,string(default_));
 }
 
-PropBase& PropManager::add_python(string const &name, PyObject* default_) {
-  return add(make_prop(name,default_));
-}
-
 PropBase& PropManager::get(string const &name) const {
   auto it = items.find(name);
   if (it == items.end())
@@ -53,24 +49,32 @@ PropBase& PropManager::get(string const &name) const {
   return it->second;
 }
 
+#ifdef OTHER_PYTHON
+PropBase& PropManager::add_python(string const &name, PyObject* default_) {
+  return add(make_prop(name,default_));
+}
+
 PropBase& PropManager::get_or_add_python(string const &name, PyObject* default_) {
   auto it = items.find(name);
   if (it != items.end()) return it->second;
   else return add_python(name, default_);
 }
+#endif
 
 }
 
 void wrap_prop_manager() {
+#ifdef OTHER_PYTHON
   using namespace other;
   typedef PropManager Self;
   Class<Self>("PropManager")
     .OTHER_INIT()
-    .OTHER_METHOD_2("add",add_python)
     .method("add_existing",static_cast<PropBase&(Self::*)(PropBase&)>(&Self::add))
     .method("get",static_cast<PropBase&(Self::*)(const string&)const>(&Self::get))
+    .OTHER_METHOD_2("add",add_python)
     .OTHER_METHOD_2("get_or_add",get_or_add_python)
     .OTHER_CONST_FIELD(items)
     .OTHER_CONST_FIELD(order)
     ;
+#endif
 }

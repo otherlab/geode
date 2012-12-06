@@ -4,6 +4,13 @@
 #include <other/core/utility/format.h>
 #include <cstdarg>
 #include <cstdio>
+
+
+// Windows silliness
+#undef small
+#undef far
+#undef near
+
 namespace other {
 
 string format_helper(const char* format,...) {

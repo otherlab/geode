@@ -7,17 +7,17 @@
 #include <other/core/python/module.h>
 #include <sstream>
 using namespace other;
-namespace{
+namespace {
 
 using std::istringstream;
 
-Vector<int,3> vector_test(const Vector<int,3>& vector)
-{
+#ifdef OTHER_PYTHON
+
+static Vector<int,3> vector_test(const Vector<int,3>& vector) {
   return vector;
 }
 
-Array<Matrix<real,4> > matrix_test(Array<Matrix<real,4> > array)
-{
+static Array<Matrix<real,4>> matrix_test(Array<Matrix<real,4> > array) {
   Matrix<real,4> A = Matrix<real,4>::identity_matrix();
   OTHER_ASSERT(array[1]==A);
   A(1,2) = 3;
@@ -70,6 +70,7 @@ void vector_stream_test() {
   } catch (const ValueError&) {}
 }
 
+#endif
 }
 
 void wrap_vector() {
@@ -81,6 +82,7 @@ void wrap_vector() {
   OTHER_WRAP(register)
   OTHER_WRAP(test)
 
+#ifdef OTHER_PYTHON
   OTHER_FUNCTION_2(min_magnitude,min_magnitude_python)
   OTHER_FUNCTION_2(max_magnitude,max_magnitude_python)
 
@@ -88,4 +90,5 @@ void wrap_vector() {
   OTHER_FUNCTION(vector_test)
   OTHER_FUNCTION(matrix_test)
   OTHER_FUNCTION(vector_stream_test)
+#endif
 }

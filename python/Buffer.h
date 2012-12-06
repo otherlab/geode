@@ -14,13 +14,14 @@
 #include <other/core/utility/config.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <stdlib.h>
 namespace other {
 
 namespace mpl = boost::mpl;
 
 struct Buffer {
   OTHER_DECLARE_TYPE
-  PyObject_HEAD // contains a reference count and a pointer to the type object
+  OTHER_PY_OBJECT_HEAD // contains a reference count and a pointer to the type object
   char data[1]; // should be size zero, but Windows would complain
 
 private:
@@ -35,7 +36,7 @@ public:
     BOOST_MPL_ASSERT((boost::has_trivial_destructor<T>));
 #endif
     Buffer* self = (Buffer*)malloc(sizeof(PyObject)+m*sizeof(T));
-    return PyObject_INIT(self,&pytype);
+    return OTHER_PY_OBJECT_INIT(self,&pytype);
   }
 };
 }

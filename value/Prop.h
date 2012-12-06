@@ -30,27 +30,28 @@ using boost::scoped_ptr;
 
 class PropManager;
 
-class PropBase
-{
+class OTHER_EXPORT PropBase { // Need OTHER_EXPORT for typeid
 protected:
-  PropBase();
+  PropBase() OTHER_EXPORT;
 private:
   PropBase(const PropBase&); // noncopyable
   void operator=(const PropBase&);
 public:
-  virtual ~PropBase();
+  virtual ~PropBase() OTHER_EXPORT;
 
-  virtual void set(PyObject* value_) = 0;
   virtual const ValueBase& base() const = 0;
-  virtual PyObject* default_python() const = 0;
   virtual bool same_default(PropBase& other) const = 0;
   virtual string value_str(bool use_default = false) const = 0;
+
+#ifdef OTHER_PYTHON
+  virtual void set(PyObject* value_) = 0;
+  virtual PyObject* default_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual PyObject* allowed_python() const = 0;
-
   virtual void set_min_python(PyObject* v) = 0;
   virtual void set_max_python(PyObject* v) = 0;
   virtual void set_step_python(PyObject* v) = 0;
+#endif
 
   const type_info& type() const {
     return base().type();
@@ -62,7 +63,7 @@ public:
 
   template<class T> Prop<T>* cast() {
     const type_info &goal = typeid(Prop<T>),
-      &self = typeid(*this);
+                    &self = typeid(*this);
     if (goal==self || !strcmp(goal.name(),self.name())) // Use string comparison to avoid symbol visibility issues
       return static_cast<Prop<T>*>(this);
     return 0;
@@ -74,7 +75,7 @@ public:
   char abbrev;
   string category; //TODO: nested categorization? include anything dependency-graph based?
 
-  void dump(int indent) const;
+  void dump(int indent) const OTHER_EXPORT;
 };
 
 inline Ref<PropBase> ref(PropBase& prop) {
@@ -123,7 +124,7 @@ public:
     return self();
   }
 
-  Prop<T>& set_max(const T& m){
+  Prop<T>& set_max(const T& m) {
     max = m;
     return self();
   }
@@ -133,6 +134,7 @@ public:
     return self();
   }
 
+#ifdef OTHER_PYTHON
   void set_min_python(PyObject* v){
     set_min(from_python<T>(v));
   }
@@ -144,9 +146,10 @@ public:
   void set_step_python(PyObject* v){
     set_step(from_python<T>(v));
   }
+#endif
 
-  Prop<T>& set_min(const PropRef<T> p, real alpha = 1);
-  Prop<T>& set_max(const PropRef<T> p, real alpha = 1);
+  Prop<T>& set_min(const PropRef<T> p, real alpha = 1) OTHER_EXPORT;
+  Prop<T>& set_max(const PropRef<T> p, real alpha = 1) OTHER_EXPORT;
 
   Prop<T>& copy_range_from(const PropClamp& p) {
     set_min(p.min);
@@ -159,7 +162,7 @@ private:
   void maximize();
 };
 
-template<class T> class Prop: public Value<T>, public PropBase, public PropClamp<T,has_clamp<T>::value>
+template<class T> class OTHER_EXPORT Prop : public Value<T>, public PropBase, public PropClamp<T,has_clamp<T>::value>
 {
 public:
   OTHER_NEW_FRIEND
@@ -170,7 +173,7 @@ public:
   using Base::name;
 
 protected:
-  Prop(string const& name, const T& value_)
+  Prop(string const& name, const T& value_) OTHER_EXPORT
     : PropBase(), default_(value_)
   {
     this->set_name(name);
@@ -186,16 +189,12 @@ public:
   const T default_;
   vector<T> allowed;
 
-  void set(const T& value_) {
+  void set(const T& value_) OTHER_EXPORT {
     if (!equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !other::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name);
       this->set_value(Clamp::clamp(value_));
     }
-  }
-
-  void set(PyObject* value_) {
-    set(from_python<T>(value_));
   }
 
   Prop<T>& set_help(const string& h){
@@ -228,6 +227,12 @@ public:
     return *this;
   }
 
+#ifdef OTHER_PYTHON
+
+  void set(PyObject* value_) {
+    set(from_python<T>(value_));
+  }
+
   void set_allowed_python(PyObject* values){
     set_allowed(from_python<vector<T> >(values));
   }
@@ -248,6 +253,12 @@ public:
     Clamp::set_step_python(s);
   }
 
+  PyObject* default_python() const {
+    return to_python(default_);
+  }
+
+#endif
+
   const ValueBase& base() const {
     return *this;
   }
@@ -263,10 +274,6 @@ public:
   // your own risk.
   T& mutate() {
     return *this->value;
-  }
-
-  PyObject* default_python() const {
-    return to_python(default_);
   }
 
   bool same_default(PropBase& other_) const {
@@ -323,6 +330,8 @@ public:
 
 };
 
+#ifdef OTHER_PYTHON
+
 PyObject* to_python(const PropBase& prop) OTHER_EXPORT;
 PyObject* ptr_to_python(const PropBase* prop) OTHER_EXPORT;
 PropBase& prop_from_python(PyObject* object, const type_info& type) OTHER_EXPORT;
@@ -343,6 +352,8 @@ template<class T> struct FromPython<PropRef<T> > {
     return static_cast<Prop<T>&>(prop_from_python(object,typeid(T)));
   }
 };
+
+#endif
 
 // Reduce template bloat
 extern template class Prop<bool>;

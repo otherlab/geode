@@ -31,6 +31,8 @@ public:
   }
 };
 
+#ifdef OTHER_PYTHON
+
 template<> class SavedException<PythonError> : public SavedExceptionBase {
 public:
   PyObject *type, *value, *traceback;
@@ -58,6 +60,8 @@ public:
   }
 };
 
+#endif
+
 typedef SavedExceptionBase* (*Factory)(const char* what);
 
 template<class Error> SavedExceptionBase* factory(const char* what) {
@@ -70,7 +74,9 @@ typedef unordered_map<const type_info*,Factory> Factories;
 Factories make_factories() {
   Factories factories;
   #define LEARN(Error) factories[&typeid(Error)] = factory<Error>;
+#ifdef OTHER_PYTHON
   LEARN(PythonError)
+#endif
   LEARN(RuntimeError)
   LEARN(IOError)
   LEARN(OSError)

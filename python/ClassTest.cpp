@@ -10,7 +10,6 @@
 #include <other/core/python/Object.h>
 #include <other/core/python/Ptr.h>
 #include <other/core/python/Ref.h>
-#include <other/core/python/wrap_call.h>
 namespace other {
 namespace {
 

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cmath>
+#include <cassert>
 namespace other {
 
 using std::fmod;

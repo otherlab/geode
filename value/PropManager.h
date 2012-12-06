@@ -11,7 +11,7 @@
 #include <vector>
 namespace other {
 
-class OTHER_EXPORT PropManager: public Object {
+class PropManager: public Object {
 public:
   OTHER_DECLARE_TYPE
 
@@ -20,11 +20,11 @@ public:
   vector<string> order;
 
 private:
-  PropManager();
+  PropManager() OTHER_EXPORT;
 public:
   ~PropManager();
 
-  PropBase& add(PropBase& prop);
+  PropBase& add(PropBase& prop) OTHER_EXPORT;
 
   template<class T> Prop<T>& add(PropRef<T> prop) {
     return static_cast<Prop<T>&>(add(prop.self));
@@ -44,10 +44,10 @@ public:
   }
 
   // Turn char* to string
-  Prop<string>& add(string const &name, const char* default_,  bool required=false, bool hidden=false);
+  Prop<string>& add(string const &name, const char* default_,  bool required=false, bool hidden=false) OTHER_EXPORT;
 
   // Gets a property by name, throwing an exception if none found
-  PropBase& get(string const &name) const;
+  PropBase& get(string const &name) const OTHER_EXPORT;
 
   // Gets a property by name, throwing an exception if none found (or not the right type)
   template<class T> Prop<T>& get(string const &name) const {
@@ -75,10 +75,12 @@ public:
   }
 
   // Turn char* to string
-  Prop<string>& get_or_add(string const &name, const char* default_);
+  Prop<string>& get_or_add(string const &name, const char* default_) OTHER_EXPORT;
 
+#ifdef OTHER_PYTHON
   PropBase& add_python(string const &name, PyObject* default_);
   PropBase& get_or_add_python(string const &name, PyObject* default_);
+#endif
 };
 
 }

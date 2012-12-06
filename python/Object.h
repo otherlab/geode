@@ -60,7 +60,7 @@ template<class T> static inline
 typename boost::enable_if<boost::is_base_of<Object,T>,PyObject*>::type
 to_python(T& value) {
   PyObject* object = (PyObject*)&value-1;
-  Py_INCREF(object);
+  OTHER_INCREF(object);
   return object;
 }
 

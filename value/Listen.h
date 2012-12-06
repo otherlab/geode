@@ -29,15 +29,15 @@ public:
 };
 
 inline Ref<Listen> listen(const Ref<const ValueBase>& value, const function<void()>& f) {
-    return new_<Listen>(value,f);
+  return new_<Listen>(value,f);
 }
 
 template<class T> Ref<Listen> listen(const PropRef<T>& value, const function<void()>& f) {
-    return listen(value.self,f);
+  return listen(value.self,f);
 }
 
 template<class T> Ref<Listen> listen(const ValueRef<T>& value, const function<void()>& f) {
-    return listen(value.self,f);
+  return listen(value.self,f);
 }
 
 }

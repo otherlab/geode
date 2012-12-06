@@ -26,7 +26,9 @@ Array<const int> const_array_test(Array<const int> array) {
   return test;
 }
 
-Py_ssize_t base_refcnt(PyObject* array) {
+#ifdef OTHER_PYTHON
+
+ssize_t base_refcnt(PyObject* array) {
   OTHER_ASSERT(PyArray_Check(array));
   PyObject* base = PyArray_BASE((PyArrayObject*)array);
   return base?base->ob_refcnt:0;
@@ -39,6 +41,8 @@ Array<uint8_t> array_write_test(const string& filename, RawArray<const real,2> a
   return header;
 }
 
+#endif
+
 }
 
 void wrap_array() {
@@ -48,6 +52,8 @@ void wrap_array() {
   OTHER_FUNCTION(empty_array)
   OTHER_FUNCTION(array_test)
   OTHER_FUNCTION(const_array_test)
+#ifdef OTHER_PYTHON
   OTHER_FUNCTION(base_refcnt)
   OTHER_FUNCTION(array_write_test)
+#endif
 }

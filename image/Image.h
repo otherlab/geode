@@ -41,7 +41,7 @@ template<class T, int C> Vector<uint8_t, C> to_byte_color(const Vector<T, C> col
 // Read functions return Arrays constructed from row major data that end up 'transposed' (i.e. width = sizes().y and height = sizes().x) but can be directly passed to openGL
 // The write functions currently take column major data and require a transpose() for data comeing from a read or openGL
 template<class T>
-class OTHER_EXPORT Image : public Object
+class Image : public Object
 {
 public:
     OTHER_DECLARE_TYPE
@@ -65,16 +65,16 @@ public:
     {for(int i=0;i<image.m;i++) for(int j=0;j<image.n;j++) image(i,j)=image(i,j).magnitude()<threshold?low_color:high_color;}
 
 //#####################################################################
-    static Array<Vector<T,3>,2> read(const string& filename);
-    static Array<Vector<T,4>,2> read_alpha(const string& filename);
-    static void write(const string& filename,RawArray<const Vector<T,3>,2> image);
-    static void write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image);
-    static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,3>,2> image);
-    static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,4>,2> image);
-    static Array<Vector<T,3>,2> gamma_compress(Array<const Vector<T,3>,2> image,const real gamma);
-    static Array<Vector<T,3>,2> dither(Array<const Vector<T,3>,2> image);
-    static bool is_supported(const string& filename);
-    static Array<Vector<T,3>,2> median(const vector<Array<const Vector<T,3>,2> >& images);
+    static Array<Vector<T,3>,2> read(const string& filename) OTHER_EXPORT;
+    static Array<Vector<T,4>,2> read_alpha(const string& filename) OTHER_EXPORT;
+    static void write(const string& filename,RawArray<const Vector<T,3>,2> image) OTHER_EXPORT;
+    static void write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image) OTHER_EXPORT;
+    static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,3>,2> image) OTHER_EXPORT;
+    static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,4>,2> image) OTHER_EXPORT;
+    static Array<Vector<T,3>,2> gamma_compress(Array<const Vector<T,3>,2> image,const real gamma) OTHER_EXPORT;
+    static Array<Vector<T,3>,2> dither(Array<const Vector<T,3>,2> image) OTHER_EXPORT;
+    static bool is_supported(const string& filename) OTHER_EXPORT;
+    static Array<Vector<T,3>,2> median(const vector<Array<const Vector<T,3>,2> >& images) OTHER_EXPORT;
 //#####################################################################
 };
 }

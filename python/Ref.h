@@ -161,7 +161,7 @@ public:
     return Ref<S>(const_cast<S&>(*self),owner_);
   }
 
-/* waiting for C++11
+/* Waiting for C++11 to work with PCL
   template<class... Args> OTHER_ALWAYS_INLINE auto operator()(Args&&... args) const
     -> decltype((*self)(other::forward<Args>(args)...)) {
     return (*self)(other::forward<Args>(args)...);
@@ -193,6 +193,7 @@ steal_ref(T& object) {
   return ref;
 }
 
+#ifdef OTHER_PYTHON
 template<class T> static inline Ref<T>
 ref_check(T* object) {
   if (!object) throw_python_error();
@@ -204,6 +205,7 @@ steal_ref_check(T* object) {
   if (!object) throw_python_error();
   return steal_ref(*object);
 }
+#endif
 
 // conversion from Ref<T> to python
 template<class T> static inline PyObject*
@@ -213,14 +215,16 @@ to_python(const Ref<T>& ref) {
     set_self_owner_mismatch();
     return 0;
   }
-  Py_INCREF(owner);
+  OTHER_INCREF(owner);
   return owner;
 }
 
+#ifdef OTHER_PYTHON
 template<class T> static inline Ref<PyObject>
 to_python_ref(const T& x) {
   return steal_ref_check(to_python(x));
 }
+#endif
 
 // conversion from python to Ref<T>
 template<class T> struct FromPython<Ref<T> >{static Ref<T>

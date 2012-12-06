@@ -45,6 +45,8 @@ template<> struct FromPython<PyObject*>{static PyObject* convert(PyObject* objec
   return object;
 }};
 
+#ifdef OTHER_PYTHON
+
 template<> struct FromPython<bool>{static bool convert(PyObject* object) OTHER_EXPORT;};
 template<> struct FromPython<int>{static int convert(PyObject* object) OTHER_EXPORT;};
 template<> struct FromPython<unsigned int>{static int convert(PyObject* object) OTHER_EXPORT;};
@@ -70,6 +72,11 @@ convert(PyObject* object) {
 // Conversion to const T& for non-python types
 template<class T> struct FromPython<const T&,typename boost::disable_if<boost::is_base_of<Object,T> >::type> : public FromPython<T>{};
 
+// Conversion from enums
+template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type> { static E convert(PyObject*) OTHER_EXPORT; };
+
+#endif
+
 // Conversion to const T
 template<class T> struct FromPython<const T> : public FromPython<T>{};
 
@@ -78,8 +85,5 @@ template<class T> struct FromPython<const T> : public FromPython<T>{};
 template<class T> struct FromPython<shared_ptr<T> >{static shared_ptr<T> convert(PyObject* object) {
   OTHER_NOT_IMPLEMENTED();
 }};
-
-// Conversion from enums
-template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type> { static E convert(PyObject*) OTHER_EXPORT; };
 
 }

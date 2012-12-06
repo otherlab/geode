@@ -29,19 +29,25 @@
 
 #include <other/core/python/config.h>
 #include <other/core/python/module.h>
+#include <other/core/python/Object.h>
+#include <other/core/utility/Enumerate.h>
+#ifdef OTHER_PYTHON
 #include <other/core/python/wrap_constructor.h>
 #include <other/core/python/wrap_field.h>
 #include <other/core/python/wrap_method.h>
 #include <other/core/python/wrap_property.h>
 #include <other/core/python/wrap_call.h>
+#endif
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/void.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/add_const.hpp>
 #include <boost/type_traits/remove_pointer.hpp>
-namespace other{
+namespace other {
 
 namespace mpl = boost::mpl;
+
+#ifdef OTHER_PYTHON
 
 OTHER_EXPORT int trivial_init(PyObject* self,PyObject* args,PyObject* kwds);
 OTHER_EXPORT PyObject* simple_alloc(PyTypeObject* type,Py_ssize_t nitems);
@@ -50,7 +56,7 @@ OTHER_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObject* d
 #define OTHER_BASE_PYTYPE(...) \
   (boost::is_same<__VA_ARGS__::Base,__VA_ARGS__>::value?0:&__VA_ARGS__::Base::pytype)
 
-// should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE
+// Should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE
 #define OTHER_DEFINE_TYPE(...) \
   PyTypeObject __VA_ARGS__::pytype = { \
     PyObject_HEAD_INIT(&PyType_Type) \
@@ -203,6 +209,40 @@ private:
   }
 };
 
+}
+
+#else // non-python stubs
+
+namespace {
+
+// Should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE
+#define OTHER_DEFINE_TYPE(...) \
+  other::PyTypeObject __VA_ARGS__::pytype = { \
+    typeid(__VA_ARGS__).name(),  /* tp_name */ \
+    Class<__VA_ARGS__>::dealloc, /* tp_dealloc */ \
+  };
+
+template<class T> class Class {
+public:
+  Class(const char* name, bool visible=true) {}
+  template<class Args> Class& init(Args) { return *this; }
+  template<class Field> Class& field(const char* name, Field field) { return *this; }
+  template<class Method> Class& method(const char* name, Method method) { return *this; }
+  template<class A> Class& property(const char* name, A (T::*get)() const) { return *this; }
+  template<class A,class B,class R> Class& property(const char* name, A (T::*get)() const, R (T::*set)(B)) { return *this; }
+  Class& str() { return *this; }
+  Class& repr() { return *this; }
+  Class& call() { return *this; }
+
+  static void dealloc(PyObject* self) {
+    ((T*)(self+1))->~T(); // call destructor
+    free(self);
+  }
+};
+
+}
+#endif
+
 template<class T,class S> static inline typename boost::add_const<S>::type T::*
 const_field(S T::* field) {
   return field;
@@ -242,12 +282,16 @@ const_field(S T::* field) {
 
 #define OTHER_REPR() repr()
 
+#ifdef OTHER_PYTHON
 #ifdef OTHER_VARIADIC
 #define OTHER_CALL(...) \
   call(wrap_call<Self,__VA_ARGS__>())
 #else
 #define OTHER_CALL(...) \
   call(WrapCall<Self,__VA_ARGS__>::wrap())
+#endif
+#else
+#define OTHER_CALL(...) call()
 #endif
 
 #define OTHER_GET(name) \
@@ -256,5 +300,4 @@ const_field(S T::* field) {
 #define OTHER_GETSET(name) \
   property(#name,&Self::name,&Self::set_##name)
 
-}
 }

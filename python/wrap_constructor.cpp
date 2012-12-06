@@ -1,6 +1,7 @@
 //#####################################################################
 // Function Wrap_Constructor
 //#####################################################################
+#ifdef OTHER_PYTHON
 #include <other/core/python/wrap_constructor.h>
 namespace other{
 
@@ -25,3 +26,4 @@ void handle_constructor_error(PyObject* self,const std::exception& error) {
 }
 
 }
+#endif

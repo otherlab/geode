@@ -2,6 +2,7 @@
 // Various python interface utilities
 //#####################################################################
 #pragma once
+#ifdef OTHER_PYTHON
 
 #include <other/core/python/config.h>
 #include <other/core/python/Object.h>
@@ -99,3 +100,4 @@ template<class T,class A0,class A1,class A2,class A3,class A4> static inline Ref
 #endif
 
 }
+#endif

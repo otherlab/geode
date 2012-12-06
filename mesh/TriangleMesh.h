@@ -43,6 +43,7 @@ private:
 protected:
   TriangleMesh(Array<const Vector<int,3> > elements) OTHER_EXPORT;
 public:
+  ~TriangleMesh();
 
   int nodes() const {
     return node_count;
@@ -53,7 +54,6 @@ public:
     return ref(*this);
   }
 
-  ~TriangleMesh();
   Ref<const SegmentMesh> segment_mesh() const OTHER_EXPORT;
   NestedArray<const int> incident_elements() const OTHER_EXPORT; // vertices to triangles
   Array<const Vector<int,3> > adjacent_elements() const OTHER_EXPORT; // triangles to triangles

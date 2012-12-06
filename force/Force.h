@@ -12,34 +12,33 @@
 namespace other{
 
 template<class TV>
-class Force:public Object
-{
+class Force:public Object {
 public:
-    OTHER_DECLARE_TYPE
-    typedef Object Base;
-    typedef typename TV::Scalar T;
-    enum {d=TV::m};
+  OTHER_DECLARE_TYPE
+  typedef Object Base;
+  typedef typename TV::Scalar T;
+  enum {d=TV::m};
 
 protected:
-    Force() OTHER_EXPORT;
+  Force() OTHER_EXPORT;
 public:
-    ~Force() OTHER_EXPORT;
+  ~Force() OTHER_EXPORT;
 
-    virtual void update_position(Array<const TV> X,bool definite)=0;
-    virtual T elastic_energy() const=0;
-    virtual void add_elastic_force(RawArray<TV> F) const=0;
-    virtual void add_elastic_differential(RawArray<TV> dF,RawArray<const TV> dX) const=0;
-    virtual void add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,d> > dFdX) const=0;
-    virtual T damping_energy(RawArray<const TV> V) const=0;
-    virtual void add_damping_force(RawArray<TV> F,RawArray<const TV> V) const=0;
-    virtual void add_frequency_squared(RawArray<T> frequency_squared) const=0;
-    virtual T strain_rate(RawArray<const TV> V) const=0;
+  virtual void update_position(Array<const TV> X,bool definite)=0;
+  virtual T elastic_energy() const=0;
+  virtual void add_elastic_force(RawArray<TV> F) const=0;
+  virtual void add_elastic_differential(RawArray<TV> dF,RawArray<const TV> dX) const=0;
+  virtual void add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,d> > dFdX) const=0;
+  virtual T damping_energy(RawArray<const TV> V) const=0;
+  virtual void add_damping_force(RawArray<TV> F,RawArray<const TV> V) const=0;
+  virtual void add_frequency_squared(RawArray<T> frequency_squared) const=0;
+  virtual T strain_rate(RawArray<const TV> V) const=0;
 
-    virtual void structure(SolidMatrixStructure& structure) const=0;
-    virtual void add_elastic_gradient(SolidMatrix<TV>& matrix) const=0;
-    virtual void add_damping_gradient(SolidMatrix<TV>& matrix) const=0;
+  virtual void structure(SolidMatrixStructure& structure) const=0;
+  virtual void add_elastic_gradient(SolidMatrix<TV>& matrix) const=0;
+  virtual void add_damping_gradient(SolidMatrix<TV>& matrix) const=0;
 
-    // For testing purposes
-    Array<TV> elastic_gradient_block_diagonal_times(RawArray<TV> dX) const;
+  // For testing purposes
+  Array<TV> elastic_gradient_block_diagonal_times(RawArray<TV> dX) const;
 };
 }

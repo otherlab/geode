@@ -4,6 +4,8 @@
 #include <other/core/python/from_python.h>
 namespace other {
 
+#ifdef OTHER_PYTHON
+
 bool FromPython<bool>::convert(PyObject* object) {
   // Accept only bool/int to avoid confusion
   if (!PyInt_Check(object))
@@ -109,4 +111,5 @@ char FromPython<char>::convert(PyObject* object) {
   return string[0];
 }
 
+#endif
 }

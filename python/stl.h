@@ -17,6 +17,8 @@
 #include <set>
 #include <map>
 
+#ifdef OTHER_PYTHON
+
 // to_python needs to go in the std namespace to make Koenig lookup work
 namespace std {
 
@@ -161,3 +163,4 @@ template<class T0,class T1> struct FromPython<pair<T0,T1> >{static pair<T0,T1> c
 }};
 
 }
+#endif

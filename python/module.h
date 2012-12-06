@@ -14,16 +14,19 @@
 
 #include <other/core/python/config.h>
 #include <other/core/python/exceptions.h>
-#include <other/core/python/wrap_function.h>
 #include <other/core/utility/config.h>
+#ifdef OTHER_PYTHON
+#include <other/core/python/wrap_function.h>
+#endif
 namespace other {
 namespace python {
+
+#ifdef OTHER_PYTHON
 
 #define OTHER_PYTHON_MODULE(name) \
   static void Init_Helper_##name(); \
   PyMODINIT_FUNC OTHER_EXPORT initlib##name(); \
-  PyMODINIT_FUNC OTHER_EXPORT \
-  initlib##name() { \
+  PyMODINIT_FUNC OTHER_EXPORT initlib##name() { \
     PyObject* module = Py_InitModule3("lib"#name,0,0); \
     if (module) { \
       try { \
@@ -37,17 +40,28 @@ namespace python {
   } \
   static void Init_Helper_##name()
 
+#else // non-python stub
+
+#define OTHER_PYTHON_MODULE(name) \
+  static OTHER_UNUSED void Init_Helper_##name()
+
+#endif
+
 void import_core() OTHER_EXPORT;
 
 // Steal reference to object and add it to the current module
-void add_object(const char* name,PyObject* object) OTHER_EXPORT;
+void add_object(const char* name, other::PyObject* object) OTHER_EXPORT;
 
-template<class T> static inline void add_object(const char* name,const T& object) {
+template<class T> static inline void add_object(const char* name, const T& object) {
+#ifdef OTHER_PYTHON
   add_object(name,to_python(object));
+#endif
 }
 
-template<class Function> static inline void function(const char* name,Function function) {
+template<class Function> static inline void function(const char* name, Function function) {
+#ifdef OTHER_PYTHON
   add_object(name,wrap_function(name,function)); 
+#endif
 }
 
 #define OTHER_OBJECT(name) ::other::python::add_object(#name,name);

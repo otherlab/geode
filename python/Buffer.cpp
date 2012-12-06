@@ -4,7 +4,9 @@
 #include <other/core/python/Buffer.h>
 using namespace other;
 
-PyTypeObject Buffer::pytype={
+#ifdef OTHER_PYTHON
+
+PyTypeObject Buffer::pytype = {
     PyObject_HEAD_INIT(&PyType_Type)
     0,                          // ob_size
     "other.Buffer",             // tp_name
@@ -48,3 +50,12 @@ PyTypeObject Buffer::pytype={
 };
 
 // All necessary Buffer::pytpe fields are filled in, so no PyType_Ready is needed
+
+#else // non-python stub
+
+PyTypeObject Buffer::pytype = {
+  "other.Buffer",           // tp_name
+  (void(*)(PyObject*))free, // tp_dealloc
+};
+
+#endif

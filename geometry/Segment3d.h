@@ -6,76 +6,71 @@
 #include <other/core/array/forward.h>
 #include <other/core/geometry/Box.h>
 #include <other/core/vector/Vector3d.h>
-namespace other{
+namespace other {
 
 template<class T>
-class OTHER_EXPORT Segment<Vector<T,3> >
-{
-    typedef Vector<T,3> TV;
+class Segment<Vector<T,3>> {
+  typedef Vector<T,3> TV;
 public:
-    Vector<T,3> x0,x1;
+  Vector<T,3> x0,x1;
 
-    Segment()
-    {}
+  Segment()
+  {}
 
-    Segment(const Vector<T,3>& x0,const Vector<T,3>& x1)
-        :x0(x0),x1(x1)
-    {}
+  Segment(const Vector<T,3>& x0,const Vector<T,3>& x1)
+      :x0(x0),x1(x1)
+  {}
 
-    template<class TArray>
-    Segment(const TArray& X)
-        :x0(X[0]),x1(X[1])
-    {
-        BOOST_STATIC_ASSERT(TArray::m==2);
-    }
+  template<class TArray>
+  Segment(const TArray& X)
+      :x0(X[0]),x1(X[1])
+  {
+      BOOST_STATIC_ASSERT(TArray::m==2);
+  }
 
-    T length() const
-    {return (x1-x0).magnitude();}
+  T length() const
+  {return (x1-x0).magnitude();}
 
-    T size() const
-    {return length();}
-  
-    static T size(const TV& x0,const TV& x1)
-    {return (x1-x0).magnitude();}
+  T size() const
+  {return length();}
 
-    template<class TArray>
-    static T signed_size(const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==2);return size(X(0),X(1));}
+  static T size(const TV& x0,const TV& x1)
+  {return (x1-x0).magnitude();}
 
-    template<class TArray>
-    static T size(const TArray& X)
-    {return signed_size(X);}
+  template<class TArray>
+  static T signed_size(const TArray& X)
+  {BOOST_STATIC_ASSERT(TArray::m==2);return size(X(0),X(1));}
 
-    TV vector() const
-    {return x1-x0;}
-  
-    TV interpolated(real t) const 
-    {return x0 + vector() * t;}
+  template<class TArray>
+  static T size(const TArray& X)
+  {return signed_size(X);}
 
-    Box<TV> bounding_box() const
-    {return other::bounding_box(x0,x1);}
+  TV vector() const
+  {return x1-x0;}
 
-//#####################################################################
-    Vector<T,3> closest_point(const Vector<T,3>& point) const;
-    Vector<T,3> closest_point(const Vector<T,3>& point,Vector<T,2>& weights) const;
-    T distance(const Vector<T,3>& point) const; // distance from point to segment
-    T distance(const Segment& segment) const; // distance between segments
-    Vector<T,3> closest_point_on_line(const Vector<T,3>& point) const;
-    T distance_from_point_to_line(const Vector<T,3>& point) const;
-    Vector<T,3> shortest_vector_between_lines(const Segment& segment,Vector<T,2>& weights) const;
-    Vector<T,3> shortest_vector_between_segments(const Segment& segment,Vector<T,2>& weights) const;
-    T interpolation_fraction(const Vector<T,3>& location) const;
-    Vector<T,2> barycentric_coordinates(const Vector<T,3>& location) const;
-    Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const T tolerance=1e-7) const;
-    static T interpolation_fraction(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1);
-    static Vector<T,2> barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1);
-    static Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1,const T tolerance=1e-7);
-//#####################################################################
-  
+  TV interpolated(real t) const 
+  {return x0 + vector() * t;}
+
+  Box<TV> bounding_box() const
+  {return other::bounding_box(x0,x1);}
+
+  Vector<T,3> closest_point(const Vector<T,3>& point) const OTHER_EXPORT;
+  Vector<T,3> closest_point(const Vector<T,3>& point,Vector<T,2>& weights) const OTHER_EXPORT;
+  T distance(const Vector<T,3>& point) const OTHER_EXPORT; // distance from point to segment
+  T distance(const Segment& segment) const OTHER_EXPORT; // distance between segments
+  Vector<T,3> closest_point_on_line(const Vector<T,3>& point) const OTHER_EXPORT;
+  T distance_from_point_to_line(const Vector<T,3>& point) const OTHER_EXPORT;
+  Vector<T,3> shortest_vector_between_lines(const Segment& segment,Vector<T,2>& weights) const OTHER_EXPORT;
+  Vector<T,3> shortest_vector_between_segments(const Segment& segment,Vector<T,2>& weights) const OTHER_EXPORT;
+  T interpolation_fraction(const Vector<T,3>& location) const OTHER_EXPORT;
+  Vector<T,2> barycentric_coordinates(const Vector<T,3>& location) const OTHER_EXPORT;
+  Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const T tolerance=1e-7) const OTHER_EXPORT;
+  static T interpolation_fraction(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1) OTHER_EXPORT;
+  static Vector<T,2> barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1) OTHER_EXPORT;
+  static Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1,const T tolerance=1e-7) OTHER_EXPORT;
 };
   
 template<class TV> std::ostream& operator<<(std::ostream& output, Segment<TV> const &s)
 {return output<<'['<<s.x0<<','<<s.x1<<']';}
-  
 
 }

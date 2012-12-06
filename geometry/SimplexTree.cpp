@@ -10,6 +10,12 @@
 #include <other/core/geometry/Triangle3d.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/python/Class.h>
+
+// Windows silliness
+#undef small
+#undef far
+#undef near
+
 namespace other {
 using std::cout;
 using std::endl;
@@ -218,6 +224,11 @@ closest_point(TV point, T max_distance) const {
   int simplex;
   Vector<T,d+1> weights;
   return closest_point(point, simplex, weights, max_distance);
+}
+
+template<class TV,int d> T SimplexTree<TV,d>::
+distance(TV point, T max_distance) const {
+  return (point - closest_point(point, max_distance)).magnitude();
 }
 
 template class SimplexTree<Vector<T,2>,1>;

@@ -63,6 +63,7 @@ options(
   ('has_latex','true if latex is available',0),
   ('thread_safe','use thread safe reference counting in pure C++ code',0),
   ('skip','list of modules to skip',[]),
+  ('skip_programs','Build libraries only',0),
   ('BASE','Standard base directory for headers and libraries',env['BASE']),
   ('CXXFLAGS_EXTRA','',[]),
   ('LINKFLAGS_EXTRA','',[]),
@@ -142,7 +143,7 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
   if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
 
 # Predefined external libraries
-external('python',default=1,frameworks=['Python'])
+external('python',default=1,frameworks=['Python'],flags=['OTHER_PYTHON'])
 external('boost',default=1,hide=1)
 external('boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
 external('mpi',flags=['USE_MPI'])
@@ -182,7 +183,8 @@ def configure_python():
     assert libpath and lib
     python['libpath'] = [libpath]
     python['libs'] = [lib]
-configure_python()
+if env['has_python']:
+  configure_python()
 
 # Improve performance
 env.Decider('MD5-timestamp')
@@ -300,7 +302,8 @@ if clang:
 
 if env['type']=='release' or env['type']=='profile' or env['type']=='optdebug':
   env.Append(CPPDEFINES=['NDEBUG'])
-env.Append(CPPDEFINES=[('OTHER_REAL',env['real'])])
+if env['real']=='float':
+  env.Append(CPPDEFINES=['OTHER_FLOAT'])
 env.Append(CPPDEFINES=[('OTHER_THREAD_SAFE',int(env['thread_safe']))])
 
 # Enable OpenMP
@@ -475,6 +478,8 @@ def library(env,name,libs=(),skip=(),extra=()):
 
 # Build a program
 def program(env,name,cpp=None):
+  if env['skip_programs']:
+    return
   if cpp is None:
     cpp = name + '.cpp'
   env = link_flags(env)

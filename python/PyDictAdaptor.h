@@ -1,7 +1,9 @@
 #pragma once
 
-
+#include <other/core/python/exceptions.h>
 namespace other {
+
+#ifdef OTHER_PYTHON
 
 class PyDictAdaptor {
   const Ref<> dict;
@@ -10,9 +12,7 @@ public:
   PyDictAdaptor()
     : dict(steal_ref_check(PyDict_New())) {}
 
-  ~PyDictAdaptor() {}
-
-  template<class K, class V> void put(const K& k, const V& v) {
+  template<class K,class V> void set(const K& k, const V& v) {
     Ref<> py_k = to_python_ref(k);
     Ref<> py_v = to_python_ref(v);
     PyDict_SetItem(&*dict, &*py_k, &*py_v);
@@ -27,4 +27,15 @@ public:
   }
 };
 
+#else // non-python stub
+
+class PyDictAdaptor {
+public:
+  PyDictAdaptor() {}
+  template<class K,class V> void set(const K& k, const V& v) { throw_no_python(); }
+  template<class K> Ptr<> get(const K& k) { throw_no_python(); }
+  const Ref<>& operator*() { throw_no_python(); }
+};
+
+#endif
 }

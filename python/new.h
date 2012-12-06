@@ -19,9 +19,9 @@ namespace other {
 template<class T,class... Args> static inline Ref<T> new_(Args&&... args) {
   /* Note that we can't go through tp_alloc, since the actual object size will be larger than tp_basicsize
    * if we have a C++ class that's derived from a Python type but isn't itself exposed to Python. */
-  PyObject* memory = (PyObject*)malloc(sizeof(PyObject)+sizeof(T));
+  other::PyObject* memory = (other::PyObject*)malloc(sizeof(other::PyObject)+sizeof(T));
   if (!memory) throw std::bad_alloc();
-  memory = PyObject_INIT(memory,&T::pytype);
+  memory = OTHER_PY_OBJECT_INIT(memory,&T::pytype);
   try {
     new(memory+1) T(args...);
     Ref<T> ref;
@@ -43,9 +43,9 @@ template<class T,class... Args> static inline Ref<T> new_(Args&&... args) {
   template<class T OTHER_REMOVE_PARENS(CARGS)> static inline Ref<T> new_ Args { \
     /* Note that we can't go through tp_alloc, since the actual object size will be larger than tp_basicsize
      * if we have a C++ class that's derived from a Python type but isn't itself exposed to Python. */ \
-    PyObject* memory = (PyObject*)malloc(sizeof(PyObject)+sizeof(T)); \
+    other::PyObject* memory = (other::PyObject*)malloc(sizeof(other::PyObject)+sizeof(T)); \
     if (!memory) throw std::bad_alloc(); \
-    memory = PyObject_INIT(memory,&T::pytype); \
+    memory = OTHER_PY_OBJECT_INIT(memory,&T::pytype); \
     try { \
       new(memory+1) T args; \
       Ref<T> ref; \

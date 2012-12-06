@@ -63,7 +63,7 @@ public:
   static int child(int node,int i)
   {assert(unsigned(i)<2);return 2*node+1+i;}
 
-  void update_nonleaf_boxes();
+  void update_nonleaf_boxes() OTHER_EXPORT;
   void check(RawArray<const TV> x) const;
 
   // Warning: Doesn't know about structure without each tree leaf
