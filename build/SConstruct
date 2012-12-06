@@ -302,7 +302,8 @@ if clang:
 
 if env['type']=='release' or env['type']=='profile' or env['type']=='optdebug':
   env.Append(CPPDEFINES=['NDEBUG'])
-env.Append(CPPDEFINES=[('OTHER_REAL',env['real'])])
+if env['real']=='float':
+  env.Append(CPPDEFINES=['OTHER_FLOAT'])
 env.Append(CPPDEFINES=[('OTHER_THREAD_SAFE',int(env['thread_safe']))])
 
 # Enable OpenMP
