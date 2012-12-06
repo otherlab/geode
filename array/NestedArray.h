@@ -30,6 +30,11 @@ public:
   NestedArray(RawArray<const int> lengths, bool initialize=true)
     : offsets(nested_array_offsets(lengths)), flat(offsets.back(),initialize) {}
 
+  template<class S> NestedArray(RawArray<const int> lengths, const Array<S>& flat)
+    : offsets(nested_array_offsets(lengths)), flat(flat) {
+      assert(offsets.back() == flat.size());
+    }
+
   template<class S> NestedArray(const NestedArray<S>& other) {
     *this = other;
   }

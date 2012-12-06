@@ -10,16 +10,14 @@
 #include <other/core/utility/format.h>
 namespace other {
 
-typedef real T;
-
 #ifdef OTHER_PYTHON
 
 template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) {
-  return to_python(new_<AnalyticImplicit<Box<Vector<T,d>>>>(box));
+  return to_python(new_<AnalyticImplicit<Box<Vector<real,d>>>>(box));
 }
 
 template<class T,int d> Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject* object) {
-  return from_python<AnalyticImplicit<Box<Vector<T,d>>>&>(object);
+  return Box<Vector<T,d>>(from_python<AnalyticImplicit<Box<Vector<real,d>>>&>(object));
 }
 
 #endif
@@ -80,13 +78,13 @@ template<class T,int d> bool Box<Vector<T,d>>::lazy_intersects(const Ray<TV>& ra
 
 // This is a fast routine to do ray box intersections
 // box_enlargement modifies the bounds of the box -- it's not a thickness
-template<> bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>& ray,T box_enlargement) const {
-  BOOST_STATIC_ASSERT(d==2);
+
+template<class T> bool lazy_intersects_helper_2(const Box<Vector<T,2>>& self, const Ray<Vector<T,2>>& ray,T box_enlargement) {
   // This comes from a paper "An efficient and Robust Ray-Box Intersection algorithm" by williams, barrus, morley, and Shirley
   // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
   if(!ray.computed_lazy_box_intersection_acceleration_data)
       ray.compute_lazy_box_intersection_acceleration_data();
-  Vector<T,2> extremes[2] = {min-box_enlargement,max+box_enlargement};
+  Vector<T,2> extremes[2] = {self.min-box_enlargement,self.max+box_enlargement};
   T tmin =                (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
   T tmax =                (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
   tmin = other::max(tmin, (extremes[  ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
@@ -94,17 +92,22 @@ template<> bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>& ray,T 
   return tmin<=tmax && 0<=tmax && tmin<=ray.t_max;
 }
 
+template<> bool Box<Vector<real,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>& ray,Scalar box_enlargement) const { return lazy_intersects_helper_2<Scalar>(*this, ray, box_enlargement); }
+#ifndef OTHER_FLOAT
+template<> bool Box<Vector<float,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>& ray,Scalar box_enlargement) const { return lazy_intersects_helper_2<Scalar>(*this, ray, box_enlargement); }
+#endif
+
 // This is a fast routine to do ray box intersections
 // box_enlargement modifies the bounds of the box -- it's not a thickness
-template<> bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>& ray,T box_enlargement) const {
+template<> bool Box<Vector<real,3>>::lazy_intersects(const Ray<Vector<Scalar,3>>& ray,Scalar box_enlargement) const {
   BOOST_STATIC_ASSERT(d==3);
   // This comes from a paper "An efficient and Robust Ray-Box Intersection algorithm" by williams, barrus, morley, and Shirley
   // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
   if(!ray.computed_lazy_box_intersection_acceleration_data)
       ray.compute_lazy_box_intersection_acceleration_data();
-  Vector<T,3> extremes[2] = {min-box_enlargement,max+box_enlargement};
-  T tmin =                (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  T tmax =                (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
+  Vector<Scalar,3> extremes[2] = {min-box_enlargement,max+box_enlargement};
+  Scalar tmin =           (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
+  Scalar tmax =           (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
   tmin = other::max(tmin, (extremes[  ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
   tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
   tmin = other::max(tmin, (extremes[  ray.direction_is_negative.z].z-ray.start.z)*ray.inverse_direction.z);
@@ -112,7 +115,11 @@ template<> bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>& ray,T 
   return tmin<=tmax && 0<=tmax && tmin<=ray.t_max;
 }
 
-typedef Vector<T,3> TV;
+//template<> bool Box<Vector<real,2>>::lazy_intersects_2<real>(const Ray<Vector<real,2>>& ray,real box_enlargement) const;
+//template<> bool Box<Vector<real,3>>::lazy_intersects_3<real>(const Ray<Vector<real,3>>& ray,real box_enlargement) const;
+//#ifndef OTHER_FLOAT
+//template<> bool Box<Vector<float,2>>::lazy_intersects_2<float>(const Ray<Vector<float,2>>& ray,float box_enlargement) const;
+//#endif
 
 #define INSTANTIATION_HELPER(T,d) \
   template string Box<Vector<T,d>>::name(); \
@@ -122,12 +129,15 @@ typedef Vector<T,3> TV;
   template Vector<T,d>::Scalar Box<Vector<T,d>>::phi(const Vector<T,d>&) const; \
   OTHER_ONLY_PYTHON(template PyObject* to_python<T,d>(const Box<Vector<T,d>>&)); \
   OTHER_ONLY_PYTHON(template Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*));
-INSTANTIATION_HELPER(T,1)
-INSTANTIATION_HELPER(T,2)
-INSTANTIATION_HELPER(T,3)
+INSTANTIATION_HELPER(real,1)
+INSTANTIATION_HELPER(real,2)
+INSTANTIATION_HELPER(real,3)
+#ifndef OTHER_FLOAT
+INSTANTIATION_HELPER(float,2)
+#endif
 #ifndef _WIN32
-template bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>&,T) const;
-template bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>&,T) const;
+template bool Box<Vector<real,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>&,Scalar) const;
+template bool Box<Vector<real,3>>::lazy_intersects(const Ray<Vector<Scalar,3>>&,Scalar) const;
 #endif
 
 }

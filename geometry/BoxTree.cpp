@@ -16,7 +16,9 @@ using std::endl;
 
 template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,2> >)
 template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,3> >)
-
+#ifndef OTHER_FLOAT
+template<> OTHER_DEFINE_TYPE(BoxTree<Vector<float,2> >)
+#endif
 namespace {
 
 template<class T,int d> inline T center(const Vector<T,d>& x, int axis) {
@@ -195,6 +197,9 @@ any_box_intersection(const Shape& shape) const {
   template bool BoxTree<Vector<T,d>>::any_box_intersection(const Sphere<Vector<T,d>>&) const;
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)
+#ifndef OTHER_FLOAT
+INSTANTIATE(float,2)
+#endif
 }
 using namespace other;
 

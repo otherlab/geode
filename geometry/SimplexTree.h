@@ -12,7 +12,7 @@
 namespace other{
 
 template<class TV,int d> class SimplexTree : public BoxTree<TV> {
-  typedef real T;
+  typedef typename TV::Scalar T;
 public:
   OTHER_DECLARE_TYPE
   typedef BoxTree<TV> Base;

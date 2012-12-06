@@ -12,9 +12,111 @@ using exact::mul;
 using std::lower_bound;
 
 // Forward declare degeneracy handling routines
+static bool rightwards_degenerate(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) OTHER_COLD OTHER_NEVER_INLINE;
+static bool upwards_degenerate(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) OTHER_COLD OTHER_NEVER_INLINE;
 static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_COLD OTHER_NEVER_INLINE;
 static bool segment_directions_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) OTHER_COLD OTHER_NEVER_INLINE;
 static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) OTHER_COLD OTHER_NEVER_INLINE;
+
+bool rightwards(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) {
+  // Evaluate with interval arithmetic first
+  Interval filter;
+  {
+    filter = Interval(b.x)-Interval(a.x);
+    if (OTHER_EXPECT(!filter.contains_zero(),true))
+      return filter.certainly_positive();
+  }
+
+  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
+  assert(ax==a.x && ay==a.y && bx==b.x && by==b.y);
+  const auto pred = bx-ax;
+  assert(filter.contains(pred));
+  if (OTHER_EXPECT(bool(pred),true))
+    return pred>0;
+
+  // The constant term is exactly zero, so fall back to simulation of simplicity.
+  return rightwards_degenerate(ai,a,bi,b);
+}
+
+static bool rightwards_degenerate(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) {
+  // Compute input permutation
+  int order[2] = {ai,bi};
+  const int permutation = permutation_id(2,order);
+
+  // Losslessly cast to integers
+  OTHER_UNUSED const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
+
+  // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
+  // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.
+  // Each coordinate gets a unique infinitesimal, each infinitely smaller than the last, so cancellation
+  // of all of them together is impossible.  In total, the error polynomial has 3 terms, of which 2 are
+  // unique (up to sign), but it usually suffices to evaluate only a few.
+
+  // Different permutations produce different predicates.  To reduce code size,
+  // we use lookup tables and a switch statement.  I.e., a tiny bytecode interpreter.
+  static const uint8_t starts[2] = {0,1};
+  static const uint8_t terms[2] = {1,0};
+  for (int i=starts[permutation];;i++) {
+    const bool f = terms[i]&1;
+    switch (terms[i]>>1) {
+      case 0:
+        return !f;
+      default:
+        OTHER_UNREACHABLE();
+    }
+  }
+}
+
+bool upwards(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) {
+  // Evaluate with interval arithmetic first
+  Interval filter;
+  {
+    filter = Interval(b.y)-Interval(a.y);
+    if (OTHER_EXPECT(!filter.contains_zero(),true))
+      return filter.certainly_positive();
+  }
+
+  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
+  assert(ax==a.x && ay==a.y && bx==b.x && by==b.y);
+  const auto pred = by-ay;
+  assert(filter.contains(pred));
+  if (OTHER_EXPECT(bool(pred),true))
+    return pred>0;
+
+  // The constant term is exactly zero, so fall back to simulation of simplicity.
+  return upwards_degenerate(ai,a,bi,b);
+}
+
+static bool upwards_degenerate(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) {
+  // Compute input permutation
+  int order[2] = {ai,bi};
+  const int permutation = permutation_id(2,order);
+
+  // Losslessly cast to integers
+  OTHER_UNUSED const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
+
+  // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
+  // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.
+  // Each coordinate gets a unique infinitesimal, each infinitely smaller than the last, so cancellation
+  // of all of them together is impossible.  In total, the error polynomial has 3 terms, of which 2 are
+  // unique (up to sign), but it usually suffices to evaluate only a few.
+
+  // Different permutations produce different predicates.  To reduce code size,
+  // we use lookup tables and a switch statement.  I.e., a tiny bytecode interpreter.
+  static const uint8_t starts[2] = {0,1};
+  static const uint8_t terms[2] = {1,0};
+  for (int i=starts[permutation];;i++) {
+    const bool f = terms[i]&1;
+    switch (terms[i]>>1) {
+      case 0:
+        return !f;
+      default:
+        OTHER_UNREACHABLE();
+    }
+  }
+}
 
 bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) {
   // Evaluate with interval arithmetic first

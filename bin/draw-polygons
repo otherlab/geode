@@ -43,21 +43,21 @@ def draw_function(p):
   return None
 
 next_fig_num = 1
-def draw_all(polys, error_location="", show_seperate=True):
+def draw_all(polys, error_location="", show_seperate=True, draw_closed=True):
   global next_fig_num
   fig_num = next_fig_num
   next_fig_num += 1
   fig = pylab.figure(fig_num)
   fig.add_subplot(axis="equal")
   for name, p in polys.iteritems():
-    draw_function(p)(p, name=name)
+    draw_function(p)(p, name=name, draw_closed=draw_closed)
   if show_seperate:
     a = pylab.axis()
     for name, p in polys.iteritems():
       pylab.figure()
       fig.add_subplot(axis="equal")
       pylab.title("%s\n%s" % (error_location, name))
-      draw_function(p)(p, name=name)
+      draw_function(p)(p, name=name, draw_closed=draw_closed)
       pylab.axis(a)
   pylab.figure(fig_num)
   
@@ -68,9 +68,11 @@ def draw_line(line,name=None,*args,**kwargs):
     point_name = str(i) if name in [None, ""] else "%s:%d" % (name, i)
     pylab.annotate(point_name, rand_offset(p))
 
-def draw_poly(poly,filled=False,offset=0,name=None,subpoly=False,*args,**kwargs):
+def draw_poly(poly,filled=False,offset=0,name=None,subpoly=False,draw_closed=True,*args,**kwargs):
   poly = asarray(poly) + offset
-  poly = vstack([poly,[poly[0]]])
+  if draw_closed:
+    poly = vstack([poly,[poly[0]]])
+
   if filled:
     pylab.fill(poly[:,0],poly[:,1],*args,**kwargs)
   else:
@@ -79,12 +81,12 @@ def draw_poly(poly,filled=False,offset=0,name=None,subpoly=False,*args,**kwargs)
     point_name = str(i) if name in [None, ""] else "%s:%d" % (name, i)
     pylab.annotate(point_name, rand_offset(p))
 
-def draw_polys(polys,name=None,*args,**kwargs):
+def draw_polys(polys,name=None,draw_closed=True,*args,**kwargs):
   for i, p in enumerate(polys):
     sub_name = None if name == None else "%s%s%d" % (name, "" if name == "" else ":", i)
     draw_poly(p,name=sub_name,subpoly=True,*args,**kwargs)
 
-def draw_nested_polys(nested,name=None,*args,**kwargs):
+def draw_nested_polys(nested,name=None,draw_closed=True,*args,**kwargs):
   for i, p in enumerate(nested):
     sub_name = None if name == None else "%s%s%d" % (name, "" if name == "" else ":", i)
     draw_polys(p,name=sub_name,*args,**kwargs)

@@ -594,6 +594,14 @@ class Compiler(object):
 
 ### Specific predicates
 
+def rightwards(a,b):
+  '''Is b.x > a.x?'''
+  return b[0]-a[0]
+
+def upwards(a,b):
+  '''Is b.y > a.y?'''
+  return b[1]-a[1]
+
 def triangle_oriented(p0,p1,p2):
   '''Is a 2D triangle positively oriented?'''
   return cross(p1-p0,p2-p0)
@@ -620,6 +628,8 @@ if __name__=='__main__':
     +'#include <other/core/exact/permutation_id.h>\n#include <algorithm>\nnamespace other {\n\nusing exact::mul;\nusing std::lower_bound;\n')
 
   # Compile predicates
+  compiler.compile(rightwards,2)
+  compiler.compile(upwards,2)
   compiler.compile(triangle_oriented,2)
   compiler.compile(segment_directions_oriented,2)
   compiler.compile(segment_intersections_ordered_helper,2)

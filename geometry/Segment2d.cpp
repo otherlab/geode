@@ -220,4 +220,7 @@ distance(const Segment<Vector<T,2> >& segment) const {
 
 
 template class Segment<Vector<real,2> >;
+#ifndef OTHER_FLOAT
+template class Segment<Vector<float,2> >;
+#endif
 }

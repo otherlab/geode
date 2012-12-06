@@ -12,15 +12,15 @@
  * also exactly converted to int32_t for exact integer math.
  */
 
-#include <other/core/utility/Box.h>
+#include <other/core/geometry/Box.h>
 #include <limits>
 namespace other {
 
 template<class TS,int d> struct Quantizer {
   typedef float T;
   typedef int32_t Int;
-  typedef Vector<T,d> TV;
-  typedef Vector<TS,d> TVS;
+  typedef Vector<T,d> TV;  // quantized vector type
+  typedef Vector<TS,d> TVS; // unquantized vector type
 
   struct Inverse {
     const TVS center;
@@ -29,14 +29,14 @@ template<class TS,int d> struct Quantizer {
     Inverse(TVS center, TS inv_scale)
       : center(center), inv_scale(inv_scale) {}
 
-    TVS operator()(const TVS& p) const {
-      return center+inv_scale*p;
+    TVS operator()(const TV& p) const {
+      return center+(inv_scale*TVS(p));
     }
   };
 
   const TVS center;
   const TS scale;
-  Inverse inverse;
+  const Inverse inverse;
 
   Quantizer(const Box<TVS>& box)
     : center(box.center())
@@ -51,7 +51,7 @@ template<class TS,int d> struct Quantizer {
   }
 };
 
-template<class TS,int d> static inline Quantizer<d> quantizer(const Box<Vector<TS,d>>& box) {
+template<class TS,int d> static inline Quantizer<TS, d> quantizer(const Box<Vector<TS,d>>& box) {
   return Quantizer<TS,d>(box);
 }
 

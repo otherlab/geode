@@ -5,6 +5,14 @@
 #include <other/core/vector/Vector.h>
 namespace other {
 
+// Is b.x > a.x?
+// Is b.x > a.x?
+bool rightwards(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) OTHER_EXPORT;
+
+// Is b.y > a.y?
+// Is b.y > a.y?
+bool upwards(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) OTHER_EXPORT;
+
 // Is a 2D triangle positively oriented?
 // Is a 2D triangle positively oriented?
 bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_EXPORT;
