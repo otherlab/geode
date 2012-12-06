@@ -19,7 +19,15 @@ del sys.path[0]
 def options(*vars):
   for name,help,default in vars:
     Help('%s: %s (default %s)\n'%(name,help,default))
-    env[name] = ARGUMENTS.get(name,config.__dict__.get(name,default))
+    if name in ARGUMENTS:
+      value = ARGUMENTS[name]
+      try:
+        value = int(value)
+      except ValueError:
+        pass
+      env[name] = value
+    else:
+      env[name] = config.__dict__.get(name,default)
 
 # Base environment
 env = Environment(tools=['default','pdflatex','pdftex'])
