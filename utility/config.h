@@ -5,10 +5,13 @@
 
 #include <other/core/python/config.h> // Must be included first
 
-namespace other{
-#ifdef OTHER_REAL
-typedef OTHER_REAL real;
-#else
+namespace other {
+#if defined(OTHER_FLOAT)
+typedef float real;
+#elif defined(OTHER_DOUBLE)
+typedef double real;
+#else // default to double
+#define OTHER_DOUBLE
 typedef double real;
 #endif
 }
