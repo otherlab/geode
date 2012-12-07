@@ -29,8 +29,9 @@ def options(*vars):
     else:
       env[name] = config.__dict__.get(name,default)
 
+
 # Base environment
-env = Environment(tools=['default','pdflatex','pdftex'])
+env = Environment(tools=['default','pdflatex','pdftex'],TARGET_ARCH='x86') # TARGET_ARCH applies only on Windows
 default_cxx = env['CXX']
 posix = env['PLATFORM']=='posix'
 darwin = env['PLATFORM']=='darwin'
@@ -39,7 +40,7 @@ if not windows:
   env.Replace(ENV=os.environ)
 
 # Locate other in case we're in a different directory
-env['other'] = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'../../..'))
+env['other'] = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'..' if windows else '../../..'))
 
 # Default base directory
 if darwin:
@@ -98,9 +99,9 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 
 # External libraries
 externals = {}
-def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False):
+def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],copy=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False):
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
-         'rpath':rpath,'libs':libs,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
+         'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide}
 
   Help('\n')
@@ -112,6 +113,7 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
     (name+'_libpath','Library directory for '+name,0),
     (name+'_rpath','Extra rpath directory for '+name,0),
     (name+'_libs','Libraries for '+name,0),
+    (name+'_copy','Copy these files to the binary output directory for ' + name,0),
     (name+'_frameworks','Frameworks for '+name,0),
     (name+'_frameworkpath','Framework path for '+name,0),
     (name+'_cxxflags','Compiler flags for '+name,0),
@@ -149,18 +151,22 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
   if env[name+'_frameworkpath']!=0: lib['frameworkpath'] = sanitize(env[name+'_frameworkpath'])
   if env[name+'_cxxflags']!=0: lib['cxxflags'] = env[name+'_cxxflags']
   if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
+  if env[name+'_copy']!=0: lib['copy'] = env[name+'_copy']
 
 # Predefined external libraries
 external('python',default=1,frameworks=['Python'],flags=['OTHER_PYTHON'])
 external('boost',default=1,hide=1)
 external('boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
 external('mpi',flags=['USE_MPI'])
+external('zlib',flags=['USE_ZLIB'],libs=['z'])
 external('libjpeg',flags=['USE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
-external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=['/usr/X11/include'],libpath=['/usr/X11/lib'])
+external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=['/usr/X11/include'],libpath=['/usr/X11/lib'], requires=['zlib'] if windows else [])
 external('openexr',flags=['USE_OPENEXR'],libs=['IlmImf','Half','Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
 external('atlas',libs=['cblas','lapack','atlas'])
 external('openblas',libs=['lapack','blas'])
 external('accelerate',default=1,frameworks=['Accelerate'])
+if windows:
+  external('shellapi',default=windows,libs=['Shell32.lib'])
 if windows:
   external('mkl',flags=['USE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
 else:
@@ -168,7 +174,7 @@ else:
 
 # Automatic python configuration
 def configure_python():
-  pattern=re.compile(r'^\s+',flags=re.MULTILINE)
+  pattern = re.compile(r'^\s+',flags=re.MULTILINE)
   data = subprocess.Popen([env['python'],'-c',pattern.sub('','''
     import numpy
     import distutils.sysconfig as sc
@@ -179,16 +185,21 @@ def configure_python():
     p(get('LIBDIR'))
     p(get('LDLIBRARY'))
     p(get('PYTHONFRAMEWORKPREFIX'))
+    p(get('VERSION'))
+    p(get('prefix'))
     ''')],stdout=subprocess.PIPE).communicate()[0]
-  include,numpy,libpath,lib,frameworkpath = [s.strip()[1:-1] for s in data.strip().split('\n')]
+  include,nmpy,libpath,lib,frameworkpath,version,prefix = [s.strip()[1:-1] for s in data.strip().split('\n')]
   python = externals['python']
-  assert include,numpy
-  python['cpppath'] = [include,numpy]
+  assert include,nmpy
+  python['cpppath'] = [include,nmpy]
   if darwin:
     assert frameworkpath
     python['frameworkpath'] = [frameworkpath]
+  elif windows:
+    python['libpath'] = [prefix,os.path.join(prefix,'libs')]
+    python['libs'] = ['python%s'%version]
   else:
-    assert libpath and lib
+    assert libpath and lib and libpath!='None' and lib!='None'
     python['libpath'] = [libpath]
     python['libs'] = [lib]
 if env['has_python']:
@@ -258,6 +269,9 @@ if windows:
     env.Append(CXXFLAGS=' /wd2415 /wd597 /wd177')
   if env['type']=='debug':
     env.Append(CXXFLAGS=' /RTC1 /MDd',CCFLAGS=' /MDd',LINKFLAGS=' /DEBUG')
+  else:
+    env.Append(CXXFLAGS=' /MD')
+  #dangerous: env.Append(LINKFLAGS='/NODEFAULTLIB:libcmtd.lib')
 elif env['CXX'].endswith('icc') or env['CXX'].endswith('icpc'):
   if env['type']=='optdebug' or env['type']=='debug': env.Append(CXXFLAGS=' -g')
   if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
@@ -317,7 +331,7 @@ env.Append(CPPDEFINES=[('OTHER_THREAD_SAFE',int(env['thread_safe']))])
 # Enable OpenMP
 if env['openmp']:
   if windows:
-    env.Append(CXXFLAGS=' /openmp',LINKFLAGS=' /openmp')
+    env.Append(CXXFLAGS=' /openmp',LINKFLAGS='/openmp')
   elif not clang:
     env.Append(CXXFLAGS='-fopenmp',LINKFLAGS='-fopenmp')
   else:
@@ -399,9 +413,13 @@ def add_dependencies(env):
 
 # Linker flags
 def link_flags(env):
-  env_link = env.Clone(LINK=env['CXX'])
+  if not windows:
+    env_link = env.Clone(LINK=env['CXX'])
+  else:
+    env_link = env.Clone()
   add_dependencies(env_link)
   workaround = env.get('use_qt',0)
+
   for name,lib in externals.items():
     if env['use_'+name]:
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
@@ -411,6 +429,19 @@ def link_flags(env):
         env_link.PrependUnique(CPPDEFINES=lib['flags'])
       if lib.has_key('rpath'): env_link.PrependUnique(RPATH=lib['rpath'])
   return env_link
+
+copied_files = set()
+def copy_files(env):
+  env_copy = env.Clone()
+  add_dependencies(env_copy)
+  for name,lib in externals.items():
+    if env['use_'+name]:
+      for cp in lib['copy']:
+        target = env['PREFIX_BIN']+cp
+        if target not in copied_files:
+          copied_files.add(target)
+          env_copy.Install(env['PREFIX_BIN'], cp)
+  return env_copy
 
 # Convert sources into objects
 def objects(env,sources):
@@ -465,35 +496,39 @@ def library(env,name,libs=(),skip=(),extra=()):
     env.Append(CPPDEFINES=externals['qt']['flags'])
   sources = objects(env,cpps)
   env = link_flags(env)
+  env = copy_files(env)
   env.Append(LIBS=libs)
   if env['shared']:
     linkflags=env['LINKFLAGS']
     if darwin:
       linkflags='-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['PREFIX_LIB'])).abspath,name)+linkflags
+    # on Windows, this will create two files: a .lib (for other builds), and a .dll for the runtime.
     lib = env.SharedLibrary(name,source=sources,LINKFLAGS=linkflags)
   else:
     lib = env.StaticLibrary(name,source=sources)
+ 
   lib = env.Install(env['PREFIX_LIB'],lib)
   env.Depends('.',lib)
+  
   if darwin:
     bundle = env.LoadableModule(name,source=[],LIBS=lib)
     env.Depends('.',env.Install(env['PREFIX_LIB'],bundle))
   for res in resources:
     env.Depends('.',env.Install(env['PREFIX']+'/resources',res))
-  if windows:
+  if windows and 0:
     projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=cpps,variant=env['type'].capitalize(),buildtarget=lib,auto_build_solution=0))
   return lib
 
 # Build a program
 def program(env,name,cpp=None):
-  if env['skip_programs']:
-    return
   if cpp is None:
     cpp = name + '.cpp'
   env = link_flags(env)
-  bin = env.Program(name,objects(env,cpp))
+  env = copy_files(env)
+  files = objects(env,cpp)
+  bin = env.Program(name,files)
   bin = env.Install(env['PREFIX_BIN'],bin)
-  if windows:
+  if windows and 0:
     projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=[cpp],variant=env['type'].capitalize(),buildtarget=bin,auto_build_solution=0))
   env.Depends('.',bin)
 
@@ -536,5 +571,5 @@ else:
   children(env)
 
 # If we're in msvc mode, build a toplevel solution
-if windows:
+if windows and 0:
   env.MSVSSolution('#windows/other'+env['MSVSPROJECTSUFFIX'],projects=projects,variant=env['type'].capitalize())
