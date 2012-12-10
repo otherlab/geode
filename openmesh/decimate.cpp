@@ -122,8 +122,8 @@ public:
                                 mesh.point(mesh.to_vertex_handle(next)))
                     .distance(mesh.point(mesh.from_vertex_handle(next)));
 
-    return error < max_error ? OpenMesh::Decimater::ModBaseT<Decimater>::LEGAL_COLLAPSE
-                             : OpenMesh::Decimater::ModBaseT<Decimater>::ILLEGAL_COLLAPSE;
+    return float(error < max_error ? OpenMesh::Decimater::ModBaseT<Decimater>::LEGAL_COLLAPSE
+                                   : OpenMesh::Decimater::ModBaseT<Decimater>::ILLEGAL_COLLAPSE);
   }
 
 private:
