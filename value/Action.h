@@ -15,14 +15,14 @@ private:
   template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, std::vector<ValueBase const*> const &);
   friend class ValueBase;
   mutable ValueBase::Link* inputs_; // linked list of inputs we depend on
-  static const Action* current OTHER_CORE_EXPORT; // if nonzero, pulled values link themselves to this automatically
+  OTHER_CORE_EXPORT static const Action* current; // if nonzero, pulled values link themselves to this automatically
   mutable bool executing; // are we in the middle of execution?
 protected:
   class Executing {
     bool& executing;
     const Action* const parent;
   public:
-    Executing() OTHER_CORE_EXPORT; // Values pulled during execution won't be registered to any action
+    OTHER_CORE_EXPORT Executing(); // Values pulled during execution won't be registered to any action
     OTHER_CORE_EXPORT Executing(const Action& self) ;
     ~Executing() {
       stop(0);

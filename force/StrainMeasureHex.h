@@ -43,7 +43,7 @@ public:
     }
   }
 
-  Matrix<T,3> gradient(RawArray<const TV> X,int hex,TV w) const OTHER_CORE_EXPORT; // w in [0,1]^3
+  OTHER_CORE_EXPORT Matrix<T,3> gradient(RawArray<const TV> X,int hex,TV w) const; // w in [0,1]^3
   T DmH_minimum_altitude(int hex) const; // this is only vaguely an altitude
 };
 

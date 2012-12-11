@@ -46,13 +46,13 @@ public:
 
   // Decompose segment mesh into maximal manifold contours, returning closed-contours, open-contours.
   // Nonmanifold vertices will show up several times in different open contours.
-OTHER_CORE_EXPORT const Vector<NestedArray<const int>,2>& polygons() const;
+  OTHER_CORE_EXPORT const Vector<NestedArray<const int>,2>& polygons() const;
 
-  NestedArray<const int> neighbors() const OTHER_CORE_EXPORT; // vertices to vertices
-  NestedArray<const int> incident_elements() const OTHER_CORE_EXPORT; // vertices to segments
-  Array<const Vector<int,2> > adjacent_elements() const OTHER_CORE_EXPORT; // segment to segments
-OTHER_CORE_EXPORT Array<TV2> element_normals(RawArray<const TV2> X) const;
-OTHER_CORE_EXPORT Array<int> nonmanifold_nodes(bool allow_boundary) const;
+  OTHER_CORE_EXPORT NestedArray<const int> neighbors() const; // vertices to vertices
+  OTHER_CORE_EXPORT NestedArray<const int> incident_elements() const; // vertices to segments
+  OTHER_CORE_EXPORT Array<const Vector<int,2> > adjacent_elements() const; // segment to segments
+  OTHER_CORE_EXPORT Array<TV2> element_normals(RawArray<const TV2> X) const;
+  OTHER_CORE_EXPORT Array<int> nonmanifold_nodes(bool allow_boundary) const;
 };
 
 }
