@@ -29,7 +29,7 @@ namespace mpl = boost::mpl;
 using std::string;
 
 // Unfortunately, since format_helper is called indirectly through format, we can't use gcc's format attribute.
-string format_helper(const char* format,...) OTHER_EXPORT;
+string format_helper(const char* format,...) OTHER_CORE_EXPORT;
 
 template<class T> static inline typename mpl::if_<boost::is_enum<T>,int,T>::type format_sanitize(const T d) {
   // Ensure that passing as a vararg is safe

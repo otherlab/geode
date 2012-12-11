@@ -33,8 +33,8 @@ using boost::common_type;
 
 template<class TArray,class TIndices> class IndirectArray;
 
-template<class T,int d> PyObject* to_python(const Vector<T,d>& vector) OTHER_EXPORT;
-template<class T,int d> struct FromPython<Vector<T,d> >{OTHER_EXPORT static Vector<T,d> convert(PyObject* object);};
+template<class T,int d> PyObject* to_python(const Vector<T,d>& vector) OTHER_CORE_EXPORT;
+template<class T,int d> struct FromPython<Vector<T,d> >{OTHER_CORE_EXPORT static Vector<T,d> convert(PyObject* object);};
 
 template<class T,int d>
 class Vector

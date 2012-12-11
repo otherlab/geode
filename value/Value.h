@@ -23,7 +23,7 @@ using std::type_info;
 using boost::is_const;
 using boost::is_reference;
 
-class OTHER_EXPORT ValueBase : public Object {
+class OTHER_CORE_EXPORT ValueBase : public Object {
 public:
   OTHER_DECLARE_TYPE
   typedef Object Base;
@@ -48,9 +48,9 @@ private:
   static Link* pending; // linked list of pending signals
 
 protected:
-  ValueBase() OTHER_EXPORT;
+  ValueBase() OTHER_CORE_EXPORT;
 public:
-  virtual ~ValueBase() OTHER_EXPORT;
+  virtual ~ValueBase() OTHER_CORE_EXPORT;
 
 #ifdef OTHER_PYTHON
   virtual PyObject* get_python() const = 0;
@@ -75,16 +75,16 @@ public:
     return 0;
   }
 
-  void signal() const OTHER_EXPORT;
+  void signal() const OTHER_CORE_EXPORT;
 
   virtual void dump(int indent) const = 0;
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
 
   const string& get_name() const;
-  ValueBase& set_name(const string& n) OTHER_EXPORT;
+  ValueBase& set_name(const string& n) OTHER_CORE_EXPORT;
 
 private:
-  void pull() const OTHER_EXPORT;
+  void pull() const OTHER_CORE_EXPORT;
 
   virtual void update() const = 0;
   static inline void signal_pending();
@@ -114,7 +114,7 @@ private:
 #endif
 };
 
-template<class T> class OTHER_EXPORT Value : public ValueBase
+template<class T> class OTHER_CORE_EXPORT Value : public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
@@ -126,10 +126,10 @@ public:
 protected:
   mutable Optional<T> value; // the cached value
 
-  Value() OTHER_EXPORT;
-  ~Value() OTHER_EXPORT;
+  Value() OTHER_CORE_EXPORT;
+  ~Value() OTHER_CORE_EXPORT;
 
-  void set_dirty() const OTHER_EXPORT {
+  void set_dirty() const OTHER_CORE_EXPORT {
     if (!dirty_) {
       dirty_ = true;
       error = ExceptionValue();
@@ -138,7 +138,7 @@ protected:
     }
   }
 
-  void set_value(const T& value_) const OTHER_EXPORT {
+  void set_value(const T& value_) const OTHER_CORE_EXPORT {
     dirty_ = false;
     error = ExceptionValue();
     value = value_;
@@ -152,7 +152,7 @@ public:
   }
 
 #ifdef OTHER_PYTHON
-  PyObject* get_python() const OTHER_EXPORT {
+  PyObject* get_python() const OTHER_CORE_EXPORT {
     pull();
     return to_python(*value);
   }

@@ -317,14 +317,14 @@ public:
     return *this;
   }
 
-  void transpose() OTHER_EXPORT;
-  Array<Element,2> transposed() const OTHER_EXPORT;
-  void permute_rows(RawArray<const int> p,int direction) const OTHER_EXPORT; // 1 for forward (A[i] = A[p[i]]), -1 for backward (A[p[i]] = A[i])
-  void permute_columns(RawArray<const int> p,int direction) const OTHER_EXPORT; // 1 for forward (A[i] = A[p[i]]), -1 for backward (A[p[i]] = A[i])
+  void transpose() OTHER_CORE_EXPORT;
+  Array<Element,2> transposed() const OTHER_CORE_EXPORT;
+  void permute_rows(RawArray<const int> p,int direction) const OTHER_CORE_EXPORT; // 1 for forward (A[i] = A[p[i]]), -1 for backward (A[p[i]] = A[i])
+  void permute_columns(RawArray<const int> p,int direction) const OTHER_CORE_EXPORT; // 1 for forward (A[i] = A[p[i]]), -1 for backward (A[p[i]] = A[i])
 };
 
-real frobenius_norm(RawArray<const real,2> A) OTHER_EXPORT;
-real infinity_norm(RawArray<const real,2> A) OTHER_EXPORT; // Matrix infinity norm
+real frobenius_norm(RawArray<const real,2> A) OTHER_CORE_EXPORT;
+real infinity_norm(RawArray<const real,2> A) OTHER_CORE_EXPORT; // Matrix infinity norm
 
 template<class T>
 class RawArray<T,3> {
@@ -539,8 +539,8 @@ template<class T> static inline std::ostream& operator<<(std::ostream& output,co
 
 struct TemporaryOwner {
   Ref<PyObject> owner;
-  TemporaryOwner() OTHER_EXPORT; // creates owner with reference count 1
-  ~TemporaryOwner() OTHER_EXPORT; // bails if reference count isn't back to 1
+  TemporaryOwner() OTHER_CORE_EXPORT; // creates owner with reference count 1
+  ~TemporaryOwner() OTHER_CORE_EXPORT; // bails if reference count isn't back to 1
 
   template<class T,int d> Array<T,d> share(RawArray<T,d> array) {
     return Array<T,d>(array.sizes(),array.data(),&*owner);

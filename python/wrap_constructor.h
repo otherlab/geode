@@ -16,8 +16,8 @@ namespace other {
 namespace mpl = boost::mpl;
 using std::exception;
 
-void set_argument_count_error(int desired,PyObject* args,PyObject* kwds) OTHER_EXPORT;
-void handle_constructor_error(PyObject* self,const exception& error) OTHER_EXPORT;
+void set_argument_count_error(int desired,PyObject* args,PyObject* kwds) OTHER_CORE_EXPORT;
+void handle_constructor_error(PyObject* self,const exception& error) OTHER_CORE_EXPORT;
 
 #ifdef OTHER_VARIADIC
 

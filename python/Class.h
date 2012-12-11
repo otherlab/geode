@@ -49,9 +49,9 @@ namespace mpl = boost::mpl;
 
 #ifdef OTHER_PYTHON
 
-OTHER_EXPORT int trivial_init(PyObject* self,PyObject* args,PyObject* kwds);
-OTHER_EXPORT PyObject* simple_alloc(PyTypeObject* type,Py_ssize_t nitems);
-OTHER_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr);
+OTHER_CORE_EXPORT int trivial_init(PyObject* self,PyObject* args,PyObject* kwds);
+OTHER_CORE_EXPORT PyObject* simple_alloc(PyTypeObject* type,Py_ssize_t nitems);
+OTHER_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr);
 
 #define OTHER_BASE_PYTYPE(...) \
   (boost::is_same<__VA_ARGS__::Base,__VA_ARGS__>::value?0:&__VA_ARGS__::Base::pytype)
@@ -113,7 +113,7 @@ template<class T> static PyObject* str_wrapper(PyObject* self) {
 class ClassBase {
 protected:
   PyTypeObject* const type;
-  OTHER_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset);
+  OTHER_CORE_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset);
 };
 
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file

@@ -25,8 +25,8 @@ namespace python {
 
 #define OTHER_PYTHON_MODULE(name) \
   static void Init_Helper_##name(); \
-  PyMODINIT_FUNC OTHER_EXPORT initlib##name(); \
-  PyMODINIT_FUNC OTHER_EXPORT initlib##name() { \
+  PyMODINIT_FUNC OTHER_CORE_EXPORT initlib##name(); \
+  PyMODINIT_FUNC OTHER_CORE_EXPORT initlib##name() { \
     PyObject* module = Py_InitModule3("lib"#name,0,0); \
     if (module) { \
       try { \
@@ -47,10 +47,10 @@ namespace python {
 
 #endif
 
-void import_core() OTHER_EXPORT;
+void import_core() OTHER_CORE_EXPORT;
 
 // Steal reference to object and add it to the current module
-void add_object(const char* name, other::PyObject* object) OTHER_EXPORT;
+void add_object(const char* name, other::PyObject* object) OTHER_CORE_EXPORT;
 
 template<class T> static inline void add_object(const char* name, const T& object) {
 #ifdef OTHER_PYTHON
@@ -60,7 +60,7 @@ template<class T> static inline void add_object(const char* name, const T& objec
 
 template<class Function> static inline void function(const char* name, Function function) {
 #ifdef OTHER_PYTHON
-  add_object(name,wrap_function(name,function)); 
+  add_object(name,wrap_function(name,function));
 #endif
 }
 
@@ -71,12 +71,12 @@ template<class Function> static inline void function(const char* name, Function 
 #define OTHER_FUNCTION_2(name,f) ::other::python::function(#name,f);
 
 #define OTHER_OVERLOADED_FUNCTION_2(type,name,function_) ::other::python::function(name,(type)function_);
-  
+
 #define OTHER_OVERLOADED_FUNCTION(type,function_) OTHER_OVERLOADED_FUNCTION_2(type,#function_,function_);
-  
+
 struct Scope {
-  OTHER_EXPORT Scope(PyObject* module); 
-  OTHER_EXPORT ~Scope();
+  OTHER_CORE_EXPORT Scope(PyObject* module);
+  OTHER_CORE_EXPORT ~Scope();
 };
 
 #define OTHER_WRAP(name) extern void wrap_##name();wrap_##name();

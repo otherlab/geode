@@ -497,6 +497,10 @@ def library(env,name,libs=(),skip=(),extra=()):
   sources = objects(env,cpps)
   env = link_flags(env)
   env = copy_files(env)
+
+  # tell the compiler which library we're building
+  env.Append(CPPDEFINES=['BUILDING_' + name])
+
   env.Append(LIBS=libs)
   if env['shared']:
     linkflags=env['LINKFLAGS']
@@ -506,10 +510,10 @@ def library(env,name,libs=(),skip=(),extra=()):
     lib = env.SharedLibrary(name,source=sources,LINKFLAGS=linkflags)
   else:
     lib = env.StaticLibrary(name,source=sources)
- 
+
   lib = env.Install(env['PREFIX_LIB'],lib)
   env.Depends('.',lib)
-  
+
   if darwin:
     bundle = env.LoadableModule(name,source=[],LIBS=lib)
     env.Depends('.',env.Install(env['PREFIX_LIB'],bundle))

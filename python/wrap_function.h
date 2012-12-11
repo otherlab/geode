@@ -24,7 +24,7 @@
 namespace other {
 
 typedef PyObject* (*FunctionWrapper)(PyObject* args,void* wrapped);
-OTHER_EXPORT PyObject* wrap_function_helper(const char* name,FunctionWrapper wrapper,void* function);
+OTHER_CORE_EXPORT PyObject* wrap_function_helper(const char* name,FunctionWrapper wrapper,void* function);
 
 #ifdef OTHER_VARIADIC
 

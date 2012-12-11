@@ -69,7 +69,7 @@ return_(PyObject* r) {
 
 }
 
-OTHER_EXPORT void OTHER_NORETURN(throw_callable_error(PyObject* object));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_callable_error(PyObject* object));
 
 template<class F> struct FromPython<function<F> >{static function<F> convert(PyObject* object) {
   if (object==Py_None)

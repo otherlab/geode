@@ -3,7 +3,7 @@
 //#####################################################################
 //
 // Abstract base class for solids forces
-// 
+//
 //#####################################################################
 #pragma once
 
@@ -20,9 +20,9 @@ public:
   enum {d=TV::m};
 
 protected:
-  Force() OTHER_EXPORT;
+  Force() OTHER_CORE_EXPORT;
 public:
-  ~Force() OTHER_EXPORT;
+  ~Force() OTHER_CORE_EXPORT;
 
   virtual void update_position(Array<const TV> X,bool definite)=0;
   virtual T elastic_energy() const=0;

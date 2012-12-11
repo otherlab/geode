@@ -19,7 +19,12 @@ typedef double real;
 #ifndef _WIN32
 
 #define OTHER_VARIADIC
+
+// marks the current symbol for export
 #define OTHER_EXPORT __attribute__ ((visibility("default")))
+// marks the current symbol as imported (does nothing in non-windows)
+#define OTHER_IMPORT
+
 #define OTHER_HIDDEN __attribute__ ((visibility("hidden")))
 
 #define OTHER_UNUSED __attribute__ ((unused))
@@ -63,7 +68,9 @@ typedef double real;
 
 #else // _WIN32
 
-#define OTHER_EXPORT
+#define OTHER_EXPORT __declspec(dllexport)
+#define OTHER_IMPORT __declspec(dllimport)
+
 #define OTHER_HIDDEN
 #define OTHER_UNUSED
 #define OTHER_NORETURN(declaration) __declspec(noreturn) declaration
@@ -77,5 +84,22 @@ typedef double real;
 #define OTHER_COLD
 #define OTHER_FORMAT
 #define OTHER_EXPECT(value,expect) (value)
+
+#endif
+
+// Mark symbols when building core
+#ifdef _WIN32
+
+#ifdef BUILDING_other_core
+#define OTHER_CORE_EXPORT OTHER_EXPORT
+#else
+#define OTHER_CORE_EXPORT OTHER_IMPORT
+#endif
+
+#else
+
+// On non-windows, this is not a import/export issue, but a visibility issue.
+// So we don't have to distinguish between import and export.
+#define OTHER_CORE_EXPORT OTHER_EXPORT
 
 #endif

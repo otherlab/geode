@@ -252,8 +252,8 @@ public:
     Matrix<T,3> operator*(const DiagonalMatrix<T,3>& A) const;
     Matrix<T,3> operator*(const UpperTriangularMatrix<T,3>& A) const;
     SymmetricMatrix operator+(const DiagonalMatrix<T,3>& A) const;
-    DiagonalMatrix<T,3> fast_eigenvalues() const OTHER_EXPORT;
-    void fast_solve_eigenproblem(DiagonalMatrix<T,3>& eigenvalues,Matrix<T,3>& eigenvectors) const OTHER_EXPORT;
+    DiagonalMatrix<T,3> fast_eigenvalues() const OTHER_CORE_EXPORT;
+    void fast_solve_eigenproblem(DiagonalMatrix<T,3>& eigenvalues,Matrix<T,3>& eigenvectors) const OTHER_CORE_EXPORT;
     void solve_eigenproblem(DiagonalMatrix<T,3>& eigenvalues,Matrix<T,3>& eigenvectors) const;
 private:
     static void jacobi_transform(const int sweep,const T threshold,T& app,T& apq,T& aqq,T& arp,T& arq,T& v1p,T& v1q,T& v2p,T& v2q,T& v3p,T& v3q);

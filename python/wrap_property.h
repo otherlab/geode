@@ -18,7 +18,7 @@ namespace other {
 namespace mpl = boost::mpl;
 using std::exception;
 
-OTHER_EXPORT PyObject* wrap_property_helper(PyTypeObject* type,const char* name,getter get_wrapper,setter set_wrapper,void* get);
+OTHER_CORE_EXPORT PyObject* wrap_property_helper(PyTypeObject* type,const char* name,getter get_wrapper,setter set_wrapper,void* get);
 
 template<class T,class A> static PyObject*
 property_get_wrapper(PyObject* self, void* get) {

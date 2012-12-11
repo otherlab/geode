@@ -18,8 +18,8 @@ namespace other {
 
 using std::numeric_limits;
 
-template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) OTHER_EXPORT;
-template<class T,int d> struct FromPython<Box<Vector<T,d>>>{OTHER_EXPORT static Box<Vector<T,d>> convert(PyObject* object);};
+template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) OTHER_CORE_EXPORT;
+template<class T,int d> struct FromPython<Box<Vector<T,d>>>{OTHER_CORE_EXPORT static Box<Vector<T,d>> convert(PyObject* object);};
 
 template<class T,int d_> class Box<Vector<T,d_>> {
   typedef Vector<T,d_> TV;
@@ -291,7 +291,7 @@ public:
   void project_points_onto_line(const TV& direction, T& line_min, T& line_max) const {
     line_min = line_max = dot(direction,min);
     TV e = direction*(max-min);
-    
+
     for (int i=0;i<d;i++) {
       (e[i]>0?line_max:line_min) += e[i]; // do not remove these parenthese, even if you think you know what you're doing.
     }

@@ -18,7 +18,7 @@ template<class T,class Enable=void> struct FromPython; // from_python<T> isn't d
 // Should appear at the beginning of all mixed python/C++ classes, after public:
 #define OTHER_DECLARE_TYPE \
   OTHER_NEW_FRIEND \
-  OTHER_EXPORT static other::PyTypeObject pytype;
+  OTHER_CORE_EXPORT static other::PyTypeObject pytype;
 
 #ifdef OTHER_VARIADIC
 

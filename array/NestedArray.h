@@ -12,9 +12,9 @@
 #include <other/core/array/Array.h>
 namespace other {
 
-template<class T> PyObject* to_python(const NestedArray<T>& array) OTHER_EXPORT;
-template<class T> struct FromPython<NestedArray<T> >{OTHER_EXPORT static NestedArray<T> convert(PyObject* object);};
-Array<int> nested_array_offsets(RawArray<const int> lengths) OTHER_EXPORT;
+template<class T> PyObject* to_python(const NestedArray<T>& array) OTHER_CORE_EXPORT;
+template<class T> struct FromPython<NestedArray<T> >{OTHER_CORE_EXPORT static NestedArray<T> convert(PyObject* object);};
+Array<int> nested_array_offsets(RawArray<const int> lengths) OTHER_CORE_EXPORT;
 
 template<class T>
 class NestedArray {

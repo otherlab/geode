@@ -30,11 +30,11 @@ private:
   Vector<TI,d> x; // Last result
   TI n;
 private:
-  Sobol(const Box<TV>& box) OTHER_EXPORT;
+  Sobol(const Box<TV>& box) OTHER_CORE_EXPORT;
 public:
   ~Sobol();
 
-  TV vector() OTHER_EXPORT;
+  TV vector() OTHER_CORE_EXPORT;
 };
 
 }

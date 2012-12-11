@@ -27,7 +27,7 @@ public:
 protected:
   mutable Ptr<SparseMatrix> loop_matrix_;
 
-  TriangleSubdivision(const TriangleMesh& coarse_mesh) OTHER_EXPORT;
+  TriangleSubdivision(const TriangleMesh& coarse_mesh) OTHER_CORE_EXPORT;
 public:
   ~TriangleSubdivision();
 
@@ -39,9 +39,9 @@ public:
     return loop_subdivide(RawArray<typename boost::add_const<TV>::type,d>(X));
   }
 
-  template<class TV> OTHER_EXPORT Array<TV> linear_subdivide(RawArray<const TV> X) const;
-  template<class TV> Array<TV> loop_subdivide(RawArray<const TV> X) const OTHER_EXPORT;
-  Array<T,2> linear_subdivide(RawArray<const T,2> X) const OTHER_EXPORT;
+  template<class TV> OTHER_CORE_EXPORT Array<TV> linear_subdivide(RawArray<const TV> X) const;
+  template<class TV> Array<TV> loop_subdivide(RawArray<const TV> X) const OTHER_CORE_EXPORT;
+  Array<T,2> linear_subdivide(RawArray<const T,2> X) const OTHER_CORE_EXPORT;
   NdArray<T> linear_subdivide_python(NdArray<const T> X) const;
   NdArray<T> loop_subdivide_python(NdArray<const T> X) const;
   Ref<SparseMatrix> loop_matrix() const;

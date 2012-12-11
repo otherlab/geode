@@ -15,23 +15,23 @@ using std::ostream;
 
 namespace Log {
 
-ostream& cout_Helper() OTHER_EXPORT;
-ostream& cerr_Helper() OTHER_EXPORT;
+ostream& cout_Helper() OTHER_CORE_EXPORT;
+ostream& cerr_Helper() OTHER_CORE_EXPORT;
 
 static ostream& cout OTHER_UNUSED=cout_Helper();
 static ostream& cerr OTHER_UNUSED=cerr_Helper();
 
-void push_scope(const string& name) OTHER_EXPORT;
-void pop_scope() OTHER_EXPORT;
-void copy_to_file(const string& filename,const bool append) OTHER_EXPORT;
+void push_scope(const string& name) OTHER_CORE_EXPORT;
+void pop_scope() OTHER_CORE_EXPORT;
+void copy_to_file(const string& filename,const bool append) OTHER_CORE_EXPORT;
 
-void configure(const string& root_name, const bool suppress_cout=false, const bool suppress_timing=false,const int verbosity_level=1<<30) OTHER_EXPORT;
-void cache_initial_output() OTHER_EXPORT;
-void finish() OTHER_EXPORT;
-void stop_time() OTHER_EXPORT;
-template<class TValue> OTHER_EXPORT void stat(const string& label, const TValue& value) OTHER_EXPORT;
-void reset() OTHER_EXPORT;
-void dump() OTHER_EXPORT;
+void configure(const string& root_name, const bool suppress_cout=false, const bool suppress_timing=false,const int verbosity_level=1<<30) OTHER_CORE_EXPORT;
+void cache_initial_output() OTHER_CORE_EXPORT;
+void finish() OTHER_CORE_EXPORT;
+void stop_time() OTHER_CORE_EXPORT;
+template<class TValue> OTHER_CORE_EXPORT void stat(const string& label, const TValue& value) OTHER_CORE_EXPORT;
+void reset() OTHER_CORE_EXPORT;
+void dump() OTHER_CORE_EXPORT;
 
 namespace {
 struct Scope : private boost::noncopyable {
@@ -46,8 +46,8 @@ public:
 };
 }
 
-bool is_timing_suppressed() OTHER_EXPORT;
-void time_helper(const string& label) OTHER_EXPORT;
+bool is_timing_suppressed() OTHER_CORE_EXPORT;
+void time_helper(const string& label) OTHER_CORE_EXPORT;
 
 #ifdef OTHER_VARIADIC
 

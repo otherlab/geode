@@ -28,8 +28,8 @@ private:
     mutable Array<const int> diagonal_index;
     struct Private{};
 
-    OTHER_EXPORT SparseMatrix(NestedArray<int> J,Array<T> A); // entries in each row will be sorted
-    OTHER_EXPORT SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vector<int,2>& sizes = (Vector<int,2>(-1,-1)));
+    OTHER_CORE_EXPORT SparseMatrix(NestedArray<int> J,Array<T> A); // entries in each row will be sorted
+    OTHER_CORE_EXPORT SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vector<int,2>& sizes = (Vector<int,2>(-1,-1)));
     SparseMatrix(Private);
 public:
     ~SparseMatrix();

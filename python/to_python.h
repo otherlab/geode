@@ -104,7 +104,7 @@ to_python(char value) {
 }
 
 // Conversion to enums (see enum.h for the definition)
-template<class E> typename boost::enable_if<boost::is_enum<E>,PyObject*>::type to_python(E value) OTHER_EXPORT;
+template<class E> typename boost::enable_if<boost::is_enum<E>,PyObject*>::type to_python(E value) OTHER_CORE_EXPORT;
 
 // This is a dummy conversion for shared ptr, since we don't know how to convert shared ptr to python
 template<class T> static inline PyObject* to_python(const shared_ptr<T>& object) {

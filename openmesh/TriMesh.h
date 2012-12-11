@@ -238,7 +238,7 @@ template<class Iter> static inline Range<HandleIter<Iter> > handle_range(Iter be
 }
 
 // TriMesh class
-class OTHER_EXPORT TriMesh: public Object, public OTriMesh {
+class OTHER_CORE_EXPORT TriMesh: public Object, public OTriMesh {
 public:
   OTHER_DECLARE_TYPE
   typedef Object Base;
@@ -327,6 +327,9 @@ public:
 
   // get the face handles incident to the given edge (one of which is invalid if at boundary)
   Vector<FaceHandle, 2> face_handles(EdgeHandle eh) const;
+
+  // get the edge-incident faces to a face (some of which may be invalid if at a boundary)
+  Vector<FaceHandle,3> face_handles(FaceHandle fh) const;
 
   // get a valid face handle incident to an edge (invalid only if there is none at all,
   // in that case, the edge should have been deleted)
@@ -527,7 +530,7 @@ public:
   ~OMSilencer();
 };
 
-Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) OTHER_EXPORT;
+Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) OTHER_CORE_EXPORT;
 
 }
 

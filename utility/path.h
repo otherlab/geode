@@ -23,13 +23,13 @@ static inline bool is_sep(char c) {
 }
 #endif
 
-string join(const string& p, const string& q) OTHER_EXPORT;
+string join(const string& p, const string& q) OTHER_CORE_EXPORT;
 
-string extension(const string& path) OTHER_EXPORT;
+string extension(const string& path) OTHER_CORE_EXPORT;
 
-string remove_extension(const string& path) OTHER_EXPORT;
+string remove_extension(const string& path) OTHER_CORE_EXPORT;
 
-string basename(const string& path) OTHER_EXPORT;
+string basename(const string& path) OTHER_CORE_EXPORT;
 
 }
 }

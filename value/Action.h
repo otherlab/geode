@@ -10,20 +10,20 @@ namespace other{
 
 using boost::remove_reference;
 
-class OTHER_EXPORT Action {
+class OTHER_CORE_EXPORT Action {
 private:
   template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, std::vector<ValueBase const*> const &);
   friend class ValueBase;
   mutable ValueBase::Link* inputs_; // linked list of inputs we depend on
-  static const Action* current OTHER_EXPORT; // if nonzero, pulled values link themselves to this automatically
+  static const Action* current OTHER_CORE_EXPORT; // if nonzero, pulled values link themselves to this automatically
   mutable bool executing; // are we in the middle of execution?
 protected:
   class Executing {
     bool& executing;
     const Action* const parent;
   public:
-    Executing() OTHER_EXPORT; // Values pulled during execution won't be registered to any action
-    Executing(const Action& self) OTHER_EXPORT;
+    Executing() OTHER_CORE_EXPORT; // Values pulled during execution won't be registered to any action
+    Executing(const Action& self) OTHER_CORE_EXPORT;
     ~Executing() {
       stop(0);
     }
@@ -37,14 +37,14 @@ protected:
   friend class Executing;
 public:
 
-  Action() OTHER_EXPORT;
-  virtual ~Action() OTHER_EXPORT;
+  Action() OTHER_CORE_EXPORT;
+  virtual ~Action() OTHER_CORE_EXPORT;
 
   // Count inputs
   int inputs() const;
 
-  void dump_dependencies(int indent) const OTHER_EXPORT;
-  std::vector<Ptr<const ValueBase>> get_dependencies() const OTHER_EXPORT;
+  void dump_dependencies(int indent) const OTHER_CORE_EXPORT;
+  std::vector<Ptr<const ValueBase>> get_dependencies() const OTHER_CORE_EXPORT;
 
 protected:
   void clear_dependencies() const;
@@ -57,17 +57,17 @@ private:
 // set the ValueRef to the given value, and set its dependencies manually (instead of a cache() or other
 // automatic way of determining them. You should know what you're doing. This only works if the ValueRef
 // passed in points to an object which inherits from both Value<T> and Action (such as Compute<T>).
-template<class T> 
+template<class T>
 void set_value_and_dependencies(ValueRef<T> &value, T const &v, std::vector<ValueBase const*> const &dependencies) {
-  
+
   // get the action
   Action *action = NULL;
   try {
     action = dynamic_cast<Action*>(&*value);
-  } catch (std::bad_cast) { 
+  } catch (std::bad_cast) {
     throw std::runtime_error("set_value_and_dependencies only works on objects derived from both Action and Value");
   }
-  
+
   // set new dependencies
   action->clear_dependencies();
   for (ValueBase const *dep : dependencies) {
@@ -75,7 +75,7 @@ void set_value_and_dependencies(ValueRef<T> &value, T const &v, std::vector<Valu
   }
 
   // set the value
-  value.set_value(v);  
+  value.set_value(v);
 }
 
 

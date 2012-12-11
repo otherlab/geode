@@ -1,6 +1,6 @@
 //#####################################################################
 // Class Segment<Vector<T,3> >
-//##################################################################### 
+//#####################################################################
 #pragma once
 
 #include <other/core/array/forward.h>
@@ -48,28 +48,28 @@ public:
   TV vector() const
   {return x1-x0;}
 
-  TV interpolated(real t) const 
+  TV interpolated(real t) const
   {return x0 + vector() * t;}
 
   Box<TV> bounding_box() const
   {return other::bounding_box(x0,x1);}
 
-  Vector<T,3> closest_point(const Vector<T,3>& point) const OTHER_EXPORT;
-  Vector<T,3> closest_point(const Vector<T,3>& point,Vector<T,2>& weights) const OTHER_EXPORT;
-  T distance(const Vector<T,3>& point) const OTHER_EXPORT; // distance from point to segment
-  T distance(const Segment& segment) const OTHER_EXPORT; // distance between segments
-  Vector<T,3> closest_point_on_line(const Vector<T,3>& point) const OTHER_EXPORT;
-  T distance_from_point_to_line(const Vector<T,3>& point) const OTHER_EXPORT;
-  Vector<T,3> shortest_vector_between_lines(const Segment& segment,Vector<T,2>& weights) const OTHER_EXPORT;
-  Vector<T,3> shortest_vector_between_segments(const Segment& segment,Vector<T,2>& weights) const OTHER_EXPORT;
-  T interpolation_fraction(const Vector<T,3>& location) const OTHER_EXPORT;
-  Vector<T,2> barycentric_coordinates(const Vector<T,3>& location) const OTHER_EXPORT;
-  Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const T tolerance=1e-7) const OTHER_EXPORT;
-  static T interpolation_fraction(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1) OTHER_EXPORT;
-  static Vector<T,2> barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1) OTHER_EXPORT;
-  static Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1,const T tolerance=1e-7) OTHER_EXPORT;
+  Vector<T,3> closest_point(const Vector<T,3>& point) const OTHER_CORE_EXPORT;
+  Vector<T,3> closest_point(const Vector<T,3>& point,Vector<T,2>& weights) const OTHER_CORE_EXPORT;
+  T distance(const Vector<T,3>& point) const OTHER_CORE_EXPORT; // distance from point to segment
+  T distance(const Segment& segment) const OTHER_CORE_EXPORT; // distance between segments
+  Vector<T,3> closest_point_on_line(const Vector<T,3>& point) const OTHER_CORE_EXPORT;
+  T distance_from_point_to_line(const Vector<T,3>& point) const OTHER_CORE_EXPORT;
+  Vector<T,3> shortest_vector_between_lines(const Segment& segment,Vector<T,2>& weights) const OTHER_CORE_EXPORT;
+  Vector<T,3> shortest_vector_between_segments(const Segment& segment,Vector<T,2>& weights) const OTHER_CORE_EXPORT;
+  T interpolation_fraction(const Vector<T,3>& location) const OTHER_CORE_EXPORT;
+  Vector<T,2> barycentric_coordinates(const Vector<T,3>& location) const OTHER_CORE_EXPORT;
+  Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const T tolerance=1e-7) const OTHER_CORE_EXPORT;
+  static T interpolation_fraction(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1) OTHER_CORE_EXPORT;
+  static Vector<T,2> barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1) OTHER_CORE_EXPORT;
+  static Vector<T,2> clamped_barycentric_coordinates(const Vector<T,3>& location,const Vector<T,3>& x0,const Vector<T,3>& x1,const T tolerance=1e-7) OTHER_CORE_EXPORT;
 };
-  
+
 template<class TV> std::ostream& operator<<(std::ostream& output, Segment<TV> const &s)
 {return output<<'['<<s.x0<<','<<s.x1<<']';}
 

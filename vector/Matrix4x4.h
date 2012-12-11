@@ -216,10 +216,10 @@ public:
     {return sqrt(sqr_frobenius_norm());}
 
 //#####################################################################
-    OTHER_EXPORT Matrix operator*(const Matrix& A) const;
-    OTHER_EXPORT void invert();
-    OTHER_EXPORT Matrix inverse() const;
-    OTHER_EXPORT Matrix cofactor_matrix() const;
+    OTHER_CORE_EXPORT Matrix operator*(const Matrix& A) const;
+    OTHER_CORE_EXPORT void invert();
+    OTHER_CORE_EXPORT Matrix inverse() const;
+    OTHER_CORE_EXPORT Matrix cofactor_matrix() const;
 //#####################################################################
 };
 template<class T>
@@ -233,14 +233,14 @@ inline std::istream& operator>>(std::istream& input,Matrix<T,4>& A)
 template<class T>
 inline std::ostream& operator<<(std::ostream& output,Matrix<T,4>& A) {
   output << '[' << std::endl;
-  for(int i=0;i<4;i++) { 
-    output << '[' << A.x[i][0]; 
-    for(int j=1;j<4;j++) 
-      output<<", "<<A.x[i][j]; 
+  for(int i=0;i<4;i++) {
+    output << '[' << A.x[i][0];
+    for(int j=1;j<4;j++)
+      output<<", "<<A.x[i][j];
     output << ']';
     if (i != 3)
       output << ", ";
-  } 
+  }
   output << ']';
   return output;
 }

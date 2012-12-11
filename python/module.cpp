@@ -4,7 +4,7 @@
 #include <other/core/utility/config.h>
 #define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
 extern "C" {
-OTHER_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
+OTHER_CORE_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
 }
 #define OTHER_IMPORT_NUMPY
 

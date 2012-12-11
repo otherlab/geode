@@ -21,7 +21,7 @@ namespace other {
 
 using std::exception;
 
-OTHER_EXPORT PyObject* wrap_field_helper(PyTypeObject* type,const char* name,size_t offset,getter get,setter set);
+OTHER_CORE_EXPORT PyObject* wrap_field_helper(PyTypeObject* type,const char* name,size_t offset,getter get,setter set);
 
 // use an unnamed namespace since instances of wrap_field never need to be shared
 namespace {

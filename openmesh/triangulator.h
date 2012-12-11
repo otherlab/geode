@@ -4,7 +4,7 @@
 #include <other/core/utility/tr1.h>
 #ifdef USE_OPENMESH
 namespace other {
-  
+
 // base class for edge priority classes used in triangulators
 class EdgePriority {
 public:
@@ -13,18 +13,18 @@ public:
 
   // mark an edge as used and from now on forbidden
   virtual void used_edge(VertexHandle v1, VertexHandle v2) = 0;
-  
+
   virtual double operator()(VertexHandle v1, VertexHandle v2) = 0;
 };
 
 int triangulate_face(TriMesh &mesh, std::vector<VertexHandle> const &face, std::vector<FaceHandle> &faces,
                      EdgePriority &ep, bool debug = false, int depth = 0);
 
-int triangulate_cylinder(TriMesh &mesh, std::vector<VertexHandle> const &ring1, std::vector<VertexHandle> const &ring2, 
+int triangulate_cylinder(TriMesh &mesh, std::vector<VertexHandle> const &ring1, std::vector<VertexHandle> const &ring2,
                          std::vector<FaceHandle> &faces, EdgePriority &ep, bool debug = false);
 
 // a caching version of the edge priority
-class OTHER_EXPORT CachedEdgePriority : public EdgePriority {
+class OTHER_CORE_EXPORT CachedEdgePriority : public EdgePriority {
 protected:
   std::tr1::unordered_map<Vector<VertexHandle, 2>, double, Hasher> cache;
   virtual double computePriority(VertexHandle v1, VertexHandle v2) = 0;
@@ -35,8 +35,8 @@ public:
   virtual double operator()(VertexHandle v1, VertexHandle v2);
 };
 
-// An edge priority class giving precedence to short edges. 
-class OTHER_EXPORT ShortEdgePriority : public CachedEdgePriority {
+// An edge priority class giving precedence to short edges.
+class OTHER_CORE_EXPORT ShortEdgePriority : public CachedEdgePriority {
 public:
   ShortEdgePriority(TriMesh const &mesh);
   ~ShortEdgePriority();

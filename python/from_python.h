@@ -47,17 +47,17 @@ template<> struct FromPython<PyObject*>{static PyObject* convert(PyObject* objec
 
 #ifdef OTHER_PYTHON
 
-template<> struct FromPython<bool>{static bool convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<int>{static int convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<unsigned int>{static int convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<long>{static long convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<unsigned long>{static unsigned long convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<unsigned long long>{static unsigned long long convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<float>{static float convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<double>{static double convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<const char*>{static const char* convert(PyObject* object) OTHER_EXPORT;};
-template<> struct FromPython<string>{static string convert(PyObject*) OTHER_EXPORT;};
-template<> struct FromPython<char>{static char convert(PyObject* object) OTHER_EXPORT;};
+template<> struct FromPython<bool>{static bool convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<int>{static int convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<unsigned int>{static int convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<long>{static long convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<unsigned long>{static unsigned long convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<unsigned long long>{static unsigned long long convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<float>{static float convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<double>{static double convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<const char*>{static const char* convert(PyObject* object) OTHER_CORE_EXPORT;};
+template<> struct FromPython<string>{static string convert(PyObject*) OTHER_CORE_EXPORT;};
+template<> struct FromPython<char>{static char convert(PyObject* object) OTHER_CORE_EXPORT;};
 
 // Conversion to T& for python types
 template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T> >::type>{static T&
@@ -73,7 +73,7 @@ convert(PyObject* object) {
 template<class T> struct FromPython<const T&,typename boost::disable_if<boost::is_base_of<Object,T> >::type> : public FromPython<T>{};
 
 // Conversion from enums
-template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type> { static E convert(PyObject*) OTHER_EXPORT; };
+template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type> { static E convert(PyObject*) OTHER_CORE_EXPORT; };
 
 #endif
 

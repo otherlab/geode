@@ -270,6 +270,17 @@ Vector<FaceHandle, 2> TriMesh::face_handles(EdgeHandle eh) const {
   return vec(face_handle(halfedge_handle(eh, 0)), face_handle(halfedge_handle(eh, 1)));
 }
 
+Vector<FaceHandle,3> TriMesh::face_handles(FaceHandle fh) const {
+  Vector<FaceHandle,3> v;
+  int i = 0;
+  for (CFFIter it = cff_iter(fh); it; ++it) {
+    v[i] = it.handle();
+    i++;
+  }
+  return v;
+}
+
+
 FaceHandle TriMesh::valid_face_handle(EdgeHandle eh) const {
   Vector<FaceHandle, 2> fh = face_handles(eh);
 

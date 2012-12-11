@@ -26,8 +26,8 @@ namespace other {
 
 using std::numeric_limits;
 
-template<class T> PyObject* to_python(const Box<T>& self) OTHER_EXPORT;
-template<class T> struct FromPython<Box<T> >{OTHER_EXPORT static Box<T> convert(PyObject* object);};
+template<class T> PyObject* to_python(const Box<T>& self) OTHER_CORE_EXPORT;
+template<class T> struct FromPython<Box<T> >{OTHER_CORE_EXPORT static Box<T> convert(PyObject* object);};
 
 template<class T> class Box {
 public:

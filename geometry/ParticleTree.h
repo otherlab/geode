@@ -18,13 +18,13 @@ public:
   const Array<const TV> X;
 
 protected:
-  ParticleTree(Array<const TV> X, int leaf_size) OTHER_EXPORT;
+  ParticleTree(Array<const TV> X, int leaf_size) OTHER_CORE_EXPORT;
 public:
   ~ParticleTree();
 
-  void update() OTHER_EXPORT; // Call whenever X changes
-  Array<int> remove_duplicates(T tolerance) const OTHER_EXPORT; // Returns map from point to component index
-  template<class Shape> void intersection(const Shape& box, Array<int>& hits) const OTHER_EXPORT;
+  void update() OTHER_CORE_EXPORT; // Call whenever X changes
+  Array<int> remove_duplicates(T tolerance) const OTHER_CORE_EXPORT; // Returns map from point to component index
+  template<class Shape> void intersection(const Shape& box, Array<int>& hits) const OTHER_CORE_EXPORT;
 };
 
 }

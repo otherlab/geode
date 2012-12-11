@@ -23,11 +23,11 @@ namespace other {
 
 typedef Py_intptr_t npy_intp;
 
-OTHER_EXPORT void OTHER_NORETURN(throw_dimension_mismatch());
-OTHER_EXPORT void OTHER_NORETURN(throw_not_owned());
-OTHER_EXPORT void OTHER_NORETURN(throw_array_conversion_error(PyObject* object,int flags,int rank_range,PyArray_Descr* descr));
-OTHER_EXPORT size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num); // Returns total data size in bytes
-OTHER_EXPORT void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int type_num,void* data);
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_dimension_mismatch());
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_not_owned());
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_array_conversion_error(PyObject* object,int flags,int rank_range,PyArray_Descr* descr));
+OTHER_CORE_EXPORT size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num); // Returns total data size in bytes
+OTHER_CORE_EXPORT void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int type_num,void* data);
 
 // Stay compatible with old versions of numpy
 #ifndef NPY_ARRAY_WRITEABLE

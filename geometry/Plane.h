@@ -74,14 +74,14 @@ public:
     TV surface(const TV& location) const
     {return location-phi(location)*n;}
 
-    TV mirror(const TV& location) const 
+    TV mirror(const TV& location) const
     {return location-2*phi(location)*n;}
-  
+
     bool segment_intersection(const TV& endpoint1,const TV& endpoint2,T& interpolation_fraction) const
     {return segment_plane_intersection(endpoint1,endpoint2,interpolation_fraction);}
 
-    TV segment_intersection(Segment<TV> const &s) const OTHER_EXPORT;
-  
+    TV segment_intersection(Segment<TV> const &s) const OTHER_CORE_EXPORT;
+
     Box<TV> bounding_box() const
     {return Box<TV>::full_box();}
 
@@ -102,7 +102,7 @@ public:
     string repr() const
     {return format("Plane(%s,%s)",tuple_repr(n),tuple_repr(x0));}
 };
-  
+
 template<class T> std::ostream & operator<<(std::ostream & os, Plane<T> const &p) {
   return os << '[' << p.x0 << ", " << p.n << ']' << std::endl;
 }

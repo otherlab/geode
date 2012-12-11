@@ -277,11 +277,11 @@ template<class T> static inline T infinity_norm(const Array<T,2>& a) {
   return infinity_norm(a.raw());
 }
 
-OTHER_EXPORT Array<real,2> identity_matrix(int m, int n=-1);
+OTHER_CORE_EXPORT Array<real,2> identity_matrix(int m, int n=-1);
 
-OTHER_EXPORT Array<float,2> dot(Subarray<const float,2> A, Subarray<const float,2> B);
-OTHER_EXPORT Array<double,2> dot(Subarray<const double,2> A, Subarray<const double,2> B);
-OTHER_EXPORT Array<float> dot(Subarray<const float,2> A, RawArray<const float> x);
-OTHER_EXPORT Array<double> dot(Subarray<const double,2> A, RawArray<const double> x);
+OTHER_CORE_EXPORT Array<float,2> dot(Subarray<const float,2> A, Subarray<const float,2> B);
+OTHER_CORE_EXPORT Array<double,2> dot(Subarray<const double,2> A, Subarray<const double,2> B);
+OTHER_CORE_EXPORT Array<float> dot(Subarray<const float,2> A, RawArray<const float> x);
+OTHER_CORE_EXPORT Array<double> dot(Subarray<const double,2> A, RawArray<const double> x);
 
 }

@@ -1,4 +1,4 @@
-// Stream I/O related utilities 
+// Stream I/O related utilities
 
 #pragma once
 
@@ -14,10 +14,10 @@ struct expect {
     :c(c) {}
 };
 
-OTHER_EXPORT void OTHER_NORETURN(throw_unexpected_error(expect expected,char got));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_unexpected_error(expect expected,char got));
 
 inline istream& operator>>(istream& input, expect expected) {
-  char got; 
+  char got;
   input >> got;
   if (got != expected.c)
     throw_unexpected_error(expected,got);

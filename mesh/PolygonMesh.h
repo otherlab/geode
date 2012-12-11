@@ -37,7 +37,7 @@ public:
   }
 
   ~PolygonMesh();
-  Ref<SegmentMesh> segment_mesh() const OTHER_EXPORT;
-  Ref<TriangleMesh> triangle_mesh() const OTHER_EXPORT;
+  Ref<SegmentMesh> segment_mesh() const OTHER_CORE_EXPORT;
+  Ref<TriangleMesh> triangle_mesh() const OTHER_CORE_EXPORT;
 };
 }
