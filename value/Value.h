@@ -23,7 +23,7 @@ using std::type_info;
 using boost::is_const;
 using boost::is_reference;
 
-class OTHER_CORE_EXPORT ValueBase : public Object {
+class OTHER_CORE_CLASS_EXPORT ValueBase : public Object {
 public:
   OTHER_DECLARE_TYPE
   typedef Object Base;
@@ -114,7 +114,7 @@ private:
 #endif
 };
 
-template<class T> class OTHER_CORE_EXPORT Value : public ValueBase
+template<class T> class OTHER_CORE_CLASS_EXPORT Value : public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");

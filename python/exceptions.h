@@ -46,7 +46,7 @@ register_python_exception(PyObject* pytype) {
 // note: destructors must be in .cpp to avoid shared library name lookup issues
 
 // python error must have already been set
-struct OTHER_CORE_EXPORT PythonError:public std::exception {
+struct OTHER_CORE_CLASS_EXPORT PythonError:public std::exception {
   typedef std::exception Base;
   PythonError();
   virtual ~PythonError() throw ();
@@ -56,7 +56,7 @@ private:
 };
 
 #define OTHER_SIMPLE_EXCEPTION(Error,Base_) \
-  struct OTHER_CORE_EXPORT Error : public Base_ { \
+  struct OTHER_CORE_CLASS_EXPORT Error : public Base_ { \
     typedef Base_ Base; \
     Error(const std::string& message); \
     virtual ~Error() throw (); \

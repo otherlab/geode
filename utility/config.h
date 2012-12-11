@@ -96,10 +96,16 @@ typedef double real;
 #define OTHER_CORE_EXPORT OTHER_IMPORT
 #endif
 
+// no class exports on windows (only cause trouble, and also conflict with member exports)
+#define OTHER_CORE_CLASS_EXPORT
+
 #else
 
 // On non-windows, this is not a import/export issue, but a visibility issue.
 // So we don't have to distinguish between import and export.
 #define OTHER_CORE_EXPORT OTHER_EXPORT
+
+// On non-windows, typeid needs to be exported for each class
+#define OTHER_CORE_CLASS_EXPORT OTHER_EXPORT
 
 #endif

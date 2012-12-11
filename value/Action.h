@@ -10,7 +10,7 @@ namespace other{
 
 using boost::remove_reference;
 
-class OTHER_CORE_EXPORT Action {
+class OTHER_CORE_CLASS_EXPORT Action {
 private:
   template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, std::vector<ValueBase const*> const &);
   friend class ValueBase;

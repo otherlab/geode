@@ -10,7 +10,7 @@ namespace other {
 
 namespace mpl=boost::mpl;
 
-template<class T,int d> class OTHER_CORE_EXPORT Vector;
+template<class T,int d> class OTHER_CORE_CLASS_EXPORT Vector;
 
 struct Zero;
 template<class T> class Quaternion;

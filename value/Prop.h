@@ -30,7 +30,7 @@ using boost::scoped_ptr;
 
 class PropManager;
 
-class OTHER_CORE_EXPORT PropBase { // Need OTHER_CORE_EXPORT for typeid
+class OTHER_CORE_CLASS_EXPORT PropBase { // Need OTHER_CORE_EXPORT for typeid
 protected:
   OTHER_CORE_EXPORT PropBase() ;
 private:
@@ -162,7 +162,7 @@ private:
   void maximize();
 };
 
-template<class T> class OTHER_CORE_EXPORT Prop : public Value<T>, public PropBase, public PropClamp<T,has_clamp<T>::value>
+template<class T> class OTHER_CORE_CLASS_EXPORT Prop : public Value<T>, public PropBase, public PropClamp<T,has_clamp<T>::value>
 {
 public:
   OTHER_NEW_FRIEND

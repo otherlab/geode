@@ -238,7 +238,7 @@ template<class Iter> static inline Range<HandleIter<Iter> > handle_range(Iter be
 }
 
 // TriMesh class
-class OTHER_CORE_EXPORT TriMesh: public Object, public OTriMesh {
+class OTHER_CORE_CLASS_EXPORT TriMesh: public Object, public OTriMesh {
 public:
   OTHER_DECLARE_TYPE
   typedef Object Base;

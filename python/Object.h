@@ -33,7 +33,7 @@ namespace other {
 
 namespace mpl = boost::mpl;
 
-class OTHER_CORE_EXPORT Object {
+class OTHER_CORE_CLASS_EXPORT Object {
 public:
   OTHER_DECLARE_TYPE
   typedef Object Base; // the hierarchy stops here
