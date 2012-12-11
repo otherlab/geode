@@ -25,7 +25,7 @@ extern "C" {
 #include <boost/preprocessor/cat.hpp>
 namespace other{
 
-template<class T> int ilaenv(int ispec,const char* name,const char* opts,int m,int n) OTHER_CORE_EXPORT;
+template<class T> OTHER_CORE_EXPORT int ilaenv(int ispec,const char* name,const char* opts,int m,int n) ;
 template<> struct FromPython<CBLAS_TRANSPOSE>{OTHER_CORE_EXPORT static CBLAS_TRANSPOSE convert(PyObject* object);};
 
 #define WRAP(declaration) \

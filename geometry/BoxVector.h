@@ -18,7 +18,7 @@ namespace other {
 
 using std::numeric_limits;
 
-template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) OTHER_CORE_EXPORT;
+template<class T,int d> OTHER_CORE_EXPORT PyObject* to_python(const Box<Vector<T,d>>& box);
 template<class T,int d> struct FromPython<Box<Vector<T,d>>>{OTHER_CORE_EXPORT static Box<Vector<T,d>> convert(PyObject* object);};
 
 template<class T,int d_> class Box<Vector<T,d_>> {

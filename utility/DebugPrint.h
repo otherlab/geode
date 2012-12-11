@@ -10,10 +10,10 @@
 #include <other/core/utility/macro_map.h>
 namespace other {
 
-void debug_print_single(const char* prefix) OTHER_CORE_EXPORT;
-void debug_print_msg(const char* prefix, const char* msg) OTHER_CORE_EXPORT;
-void debug_print_helper(const char* prefix,...) OTHER_CORE_EXPORT;
-void debug_print_helper_multiline(const char* prefix,...) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void debug_print_single(const char* prefix);
+OTHER_CORE_EXPORT void debug_print_msg(const char* prefix, const char* msg);
+OTHER_CORE_EXPORT void debug_print_helper(const char* prefix,...);
+OTHER_CORE_EXPORT void debug_print_helper_multiline(const char* prefix,...);
 
 #define OTHER_DEBUG_PRINT_HELPER(a) #a,other::str(a).c_str()
 

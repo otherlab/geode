@@ -20,7 +20,7 @@ private:
   Ref<const ValueBase> value;
   function<void()> f;
 
-  Listen(Ref<const ValueBase> value, const function<void()>& f) OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT Listen(Ref<const ValueBase> value, const function<void()>& f) ;
 
 public:
   ~Listen();

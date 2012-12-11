@@ -47,10 +47,10 @@ namespace python {
 
 #endif
 
-void import_core() OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void import_core();
 
 // Steal reference to object and add it to the current module
-void add_object(const char* name, other::PyObject* object) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void add_object(const char* name, other::PyObject* object);
 
 template<class T> static inline void add_object(const char* name, const T& object) {
 #ifdef OTHER_PYTHON

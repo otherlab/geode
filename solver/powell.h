@@ -22,6 +22,6 @@ using boost::function;
 //   scale: initial step size
 //   xtol: absolute point tolerance
 //   ftol: absolute function value tolerance
-Tuple<real,int> powell(const function<real(RawArray<const real>)>& f, RawArray<real> x, real scale, real xtol, real ftol, int maxiter) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT Tuple<real,int> powell(const function<real(RawArray<const real>)>& f, RawArray<real> x, real scale, real xtol, real ftol, int maxiter);
 
 }

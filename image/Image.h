@@ -65,16 +65,16 @@ public:
     {for(int i=0;i<image.m;i++) for(int j=0;j<image.n;j++) image(i,j)=image(i,j).magnitude()<threshold?low_color:high_color;}
 
 //#####################################################################
-    static Array<Vector<T,3>,2> read(const string& filename) OTHER_CORE_EXPORT;
-    static Array<Vector<T,4>,2> read_alpha(const string& filename) OTHER_CORE_EXPORT;
-    static void write(const string& filename,RawArray<const Vector<T,3>,2> image) OTHER_CORE_EXPORT;
-    static void write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image) OTHER_CORE_EXPORT;
-    static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,3>,2> image) OTHER_CORE_EXPORT;
-    static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,4>,2> image) OTHER_CORE_EXPORT;
-    static Array<Vector<T,3>,2> gamma_compress(Array<const Vector<T,3>,2> image,const real gamma) OTHER_CORE_EXPORT;
-    static Array<Vector<T,3>,2> dither(Array<const Vector<T,3>,2> image) OTHER_CORE_EXPORT;
-    static bool is_supported(const string& filename) OTHER_CORE_EXPORT;
-    static Array<Vector<T,3>,2> median(const vector<Array<const Vector<T,3>,2> >& images) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT static Array<Vector<T,3>,2> read(const string& filename);
+OTHER_CORE_EXPORT static Array<Vector<T,4>,2> read_alpha(const string& filename);
+OTHER_CORE_EXPORT static void write(const string& filename,RawArray<const Vector<T,3>,2> image);
+OTHER_CORE_EXPORT static void write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image);
+OTHER_CORE_EXPORT static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,3>,2> image);
+OTHER_CORE_EXPORT static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,4>,2> image);
+OTHER_CORE_EXPORT static Array<Vector<T,3>,2> gamma_compress(Array<const Vector<T,3>,2> image,const real gamma);
+OTHER_CORE_EXPORT static Array<Vector<T,3>,2> dither(Array<const Vector<T,3>,2> image);
+OTHER_CORE_EXPORT static bool is_supported(const string& filename);
+OTHER_CORE_EXPORT static Array<Vector<T,3>,2> median(const vector<Array<const Vector<T,3>,2> >& images);
 //#####################################################################
 };
 }

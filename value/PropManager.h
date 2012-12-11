@@ -20,11 +20,11 @@ public:
   vector<string> order;
 
 private:
-  PropManager() OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT PropManager() ;
 public:
   ~PropManager();
 
-  PropBase& add(PropBase& prop) OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT PropBase& add(PropBase& prop) ;
 
   template<class T> Prop<T>& add(PropRef<T> prop) {
     return static_cast<Prop<T>&>(add(prop.self));
@@ -44,10 +44,10 @@ public:
   }
 
   // Turn char* to string
-  Prop<string>& add(string const &name, const char* default_,  bool required=false, bool hidden=false) OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT Prop<string>& add(string const &name, const char* default_,  bool required=false, bool hidden=false) ;
 
   // Gets a property by name, throwing an exception if none found
-  PropBase& get(string const &name) const OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT PropBase& get(string const &name) const ;
 
   // Gets a property by name, throwing an exception if none found (or not the right type)
   template<class T> Prop<T>& get(string const &name) const {
@@ -75,7 +75,7 @@ public:
   }
 
   // Turn char* to string
-  Prop<string>& get_or_add(string const &name, const char* default_) OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT Prop<string>& get_or_add(string const &name, const char* default_) ;
 
 #ifdef OTHER_PYTHON
   PropBase& add_python(string const &name, PyObject* default_);

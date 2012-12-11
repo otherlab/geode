@@ -317,13 +317,13 @@ public:
     return *this;
   }
 
-  void transpose() OTHER_CORE_EXPORT;
-  Array<Element,2> transposed() const OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void transpose();
+OTHER_CORE_EXPORT Array<Element,2> transposed() const;
   void permute_rows(RawArray<const int> p,int direction) const OTHER_CORE_EXPORT; // 1 for forward (A[i] = A[p[i]]), -1 for backward (A[p[i]] = A[i])
   void permute_columns(RawArray<const int> p,int direction) const OTHER_CORE_EXPORT; // 1 for forward (A[i] = A[p[i]]), -1 for backward (A[p[i]] = A[i])
 };
 
-real frobenius_norm(RawArray<const real,2> A) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT real frobenius_norm(RawArray<const real,2> A);
 real infinity_norm(RawArray<const real,2> A) OTHER_CORE_EXPORT; // Matrix infinity norm
 
 template<class T>

@@ -47,7 +47,7 @@ namespace other {
 using std::string;
 using std::type_info;
 
-void breakpoint() OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void breakpoint();
 
 namespace debug {
 
@@ -69,7 +69,7 @@ typedef void (*ErrorCallback)(const string&);
 #else
 typedef void OTHER_NORETURN((*ErrorCallback)(const string&));
 #endif
-void set_error_callback(ErrorCallback callback) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void set_error_callback(ErrorCallback callback);
 
 }
 }

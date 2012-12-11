@@ -23,9 +23,9 @@ public:
   shared_ptr<SavedExceptionBase> error;
 
   ExceptionValue() {}
-  ExceptionValue(const std::exception& e) OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT ExceptionValue(const std::exception& e);
 
-  void throw_() const OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT void throw_() const;
 
   operator SafeBool() const { // Allow conversion to bool without allowing conversion to T
     return safe_bool(error);

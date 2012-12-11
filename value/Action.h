@@ -23,7 +23,7 @@ protected:
     const Action* const parent;
   public:
     Executing() OTHER_CORE_EXPORT; // Values pulled during execution won't be registered to any action
-    Executing(const Action& self) OTHER_CORE_EXPORT;
+    OTHER_CORE_EXPORT Executing(const Action& self) ;
     ~Executing() {
       stop(0);
     }
@@ -37,14 +37,14 @@ protected:
   friend class Executing;
 public:
 
-  Action() OTHER_CORE_EXPORT;
-  virtual ~Action() OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT Action() ;
+  OTHER_CORE_EXPORT virtual ~Action() ;
 
   // Count inputs
   int inputs() const;
 
-  void dump_dependencies(int indent) const OTHER_CORE_EXPORT;
-  std::vector<Ptr<const ValueBase>> get_dependencies() const OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT void dump_dependencies(int indent) const ;
+  OTHER_CORE_EXPORT std::vector<Ptr<const ValueBase>> get_dependencies() const ;
 
 protected:
   void clear_dependencies() const;

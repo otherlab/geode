@@ -22,7 +22,7 @@ template<class TV> struct MassProperties {
     :volume(),center(),inertia_tensor() {}
 };
 
-template<class TV,int s> MassProperties<TV> mass_properties(RawArray<const Vector<int,s> > elements, RawArray<const TV> X, bool filled) OTHER_CORE_EXPORT;
-template<class TV,int s> Frame<TV> principal_frame(RawArray<const Vector<int,s> > elements, RawArray<const TV> X, bool filled) OTHER_CORE_EXPORT;
+template<class TV,int s> OTHER_CORE_EXPORT MassProperties<TV> mass_properties(RawArray<const Vector<int,s> > elements, RawArray<const TV> X, bool filled);
+template<class TV,int s> OTHER_CORE_EXPORT Frame<TV> principal_frame(RawArray<const Vector<int,s> > elements, RawArray<const TV> X, bool filled);
 
 }

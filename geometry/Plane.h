@@ -80,7 +80,7 @@ public:
     bool segment_intersection(const TV& endpoint1,const TV& endpoint2,T& interpolation_fraction) const
     {return segment_plane_intersection(endpoint1,endpoint2,interpolation_fraction);}
 
-    TV segment_intersection(Segment<TV> const &s) const OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT TV segment_intersection(Segment<TV> const &s) const;
 
     Box<TV> bounding_box() const
     {return Box<TV>::full_box();}

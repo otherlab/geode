@@ -14,7 +14,7 @@
 #include <iomanip>
 namespace other {
 
-template<class T,int m,int n> PyObject* to_python(const Matrix<T,m,n>& matrix) OTHER_CORE_EXPORT;
+template<class T,int m,int n> OTHER_CORE_EXPORT PyObject* to_python(const Matrix<T,m,n>& matrix) ;
 template<class T,int m,int n> struct FromPython<Matrix<T,m,n> >{OTHER_CORE_EXPORT static Matrix<T,m,n> convert(PyObject* object);};
 
 template<class T,int m_,int n_> // n_=m_

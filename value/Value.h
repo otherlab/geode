@@ -48,9 +48,9 @@ private:
   static Link* pending; // linked list of pending signals
 
 protected:
-  ValueBase() OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT ValueBase() ;
 public:
-  virtual ~ValueBase() OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT virtual ~ValueBase() ;
 
 #ifdef OTHER_PYTHON
   virtual PyObject* get_python() const = 0;
@@ -75,16 +75,16 @@ public:
     return 0;
   }
 
-  void signal() const OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT void signal() const ;
 
   virtual void dump(int indent) const = 0;
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
 
   const string& get_name() const;
-  ValueBase& set_name(const string& n) OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT ValueBase& set_name(const string& n) ;
 
 private:
-  void pull() const OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT void pull() const ;
 
   virtual void update() const = 0;
   static inline void signal_pending();
@@ -126,8 +126,8 @@ public:
 protected:
   mutable Optional<T> value; // the cached value
 
-  Value() OTHER_CORE_EXPORT;
-  ~Value() OTHER_CORE_EXPORT;
+  OTHER_CORE_EXPORT Value() ;
+  OTHER_CORE_EXPORT ~Value() ;
 
   void set_dirty() const OTHER_CORE_EXPORT {
     if (!dirty_) {

@@ -5,9 +5,9 @@
 #include <string>
 namespace other {
 
-string base64_encode(const string& src) OTHER_CORE_EXPORT;
-string base64_encode(RawArray<const uint8_t> src) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT string base64_encode(const string& src);
+OTHER_CORE_EXPORT string base64_encode(RawArray<const uint8_t> src);
 
-string base64_decode(const string& src) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT string base64_decode(const string& src);
 
 }

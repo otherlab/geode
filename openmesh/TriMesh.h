@@ -530,7 +530,7 @@ public:
   ~OMSilencer();
 };
 
-Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes);
 
 }
 

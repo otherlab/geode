@@ -42,7 +42,7 @@ template<class TArray> struct IsShareableArray<const TArray>:public IsShareableA
 // Array<T> is shareable
 template<class T> struct IsShareableArray<Array<T>>:public mpl::true_{};
 
-template<class T,int d> PyObject* to_python(const Array<T,d>& array) OTHER_CORE_EXPORT;
+template<class T,int d> OTHER_CORE_EXPORT PyObject* to_python(const Array<T,d>& array);
 template<class T,int d> struct FromPython<Array<T,d>>{OTHER_CORE_EXPORT static Array<T,d> convert(PyObject* object);};
 
 template<class T_>

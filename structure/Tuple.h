@@ -13,7 +13,7 @@
 #include <other/core/vector/forward.h>
 namespace other {
 
-void OTHER_NORETURN(throw_tuple_mismatch_error(int expected, int got)) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_tuple_mismatch_error(int expected, int got));
 
 template<class T> static inline Tuple<T>       as_tuple(const Vector<T,1>& v) { return Tuple<T>      (v.x); }
 template<class T> static inline Tuple<T,T>     as_tuple(const Vector<T,2>& v) { return Tuple<T,T>    (v.x,v.y); }

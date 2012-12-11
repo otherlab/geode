@@ -34,7 +34,7 @@ private:
   mutable Vector<NestedArray<const int>,2> polygons_;
 
 protected:
-  SegmentMesh(Array<const Vector<int,2> > elements) OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
 public:
   ~SegmentMesh();
 
@@ -46,13 +46,13 @@ public:
 
   // Decompose segment mesh into maximal manifold contours, returning closed-contours, open-contours.
   // Nonmanifold vertices will show up several times in different open contours.
-  const Vector<NestedArray<const int>,2>& polygons() const OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT const Vector<NestedArray<const int>,2>& polygons() const;
 
   NestedArray<const int> neighbors() const OTHER_CORE_EXPORT; // vertices to vertices
   NestedArray<const int> incident_elements() const OTHER_CORE_EXPORT; // vertices to segments
   Array<const Vector<int,2> > adjacent_elements() const OTHER_CORE_EXPORT; // segment to segments
-  Array<TV2> element_normals(RawArray<const TV2> X) const OTHER_CORE_EXPORT;
-  Array<int> nonmanifold_nodes(bool allow_boundary) const OTHER_CORE_EXPORT;
+OTHER_CORE_EXPORT Array<TV2> element_normals(RawArray<const TV2> X) const;
+OTHER_CORE_EXPORT Array<int> nonmanifold_nodes(bool allow_boundary) const;
 };
 
 }
