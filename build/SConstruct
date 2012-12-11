@@ -331,7 +331,7 @@ env.Append(CPPDEFINES=[('OTHER_THREAD_SAFE',int(env['thread_safe']))])
 # Enable OpenMP
 if env['openmp']:
   if windows:
-    env.Append(CXXFLAGS=' /openmp',LINKFLAGS='/openmp')
+    env.Append(CXXFLAGS=' /openmp')
   elif not clang:
     env.Append(CXXFLAGS='-fopenmp',LINKFLAGS='-fopenmp')
   else:
@@ -465,8 +465,7 @@ def objects(env,sources):
       frameworkpath.extend(lib['frameworkpath'])
       frameworks.extend(lib['frameworks'])
       cxxflags+=lib['cxxflags']
-    return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1],
-                          FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
+    return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1], FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
   add_dependencies(env)
   libraries = [externals[name] for name in externals.keys() if env['use_'+name]]
   if type(sources)==list: return [Helper(env,source,libraries) for source in sources]
@@ -494,12 +493,13 @@ def library(env,name,libs=(),skip=(),extra=()):
   if env.get('use_qt',0): # Qt gets confused if we only set options on the builder
     env = env.Clone()
     env.Append(CPPDEFINES=externals['qt']['flags'])
+  
+  # tell the compiler which library we're building
+  env.Append(CPPDEFINES=['BUILDING_' + name])
+
   sources = objects(env,cpps)
   env = link_flags(env)
   env = copy_files(env)
-
-  # tell the compiler which library we're building
-  env.Append(CPPDEFINES=['BUILDING_' + name])
 
   env.Append(LIBS=libs)
   if env['shared']:
