@@ -32,12 +32,12 @@ class PropManager;
 
 class OTHER_CORE_CLASS_EXPORT PropBase { // Need OTHER_CORE_EXPORT for typeid
 protected:
-  OTHER_CORE_EXPORT PropBase() ;
+  OTHER_CORE_EXPORT PropBase();
 private:
   PropBase(const PropBase&); // noncopyable
   void operator=(const PropBase&);
 public:
-  OTHER_CORE_EXPORT virtual ~PropBase() ;
+  OTHER_CORE_EXPORT virtual ~PropBase();
 
   virtual const ValueBase& base() const = 0;
   virtual bool same_default(PropBase& other) const = 0;
@@ -332,10 +332,10 @@ public:
 
 #ifdef OTHER_PYTHON
 
-OTHER_CORE_EXPORT PyObject* to_python(const PropBase& prop) ;
-OTHER_CORE_EXPORT PyObject* ptr_to_python(const PropBase* prop) ;
-OTHER_CORE_EXPORT PropBase& prop_from_python(PyObject* object, const type_info& type) ;
-OTHER_CORE_EXPORT Ref<PropBase> make_prop(string const&, PyObject* value) ;
+OTHER_CORE_EXPORT PyObject* to_python(const PropBase& prop);
+OTHER_CORE_EXPORT PyObject* ptr_to_python(const PropBase* prop);
+OTHER_CORE_EXPORT PropBase& prop_from_python(PyObject* object, const type_info& type);
+OTHER_CORE_EXPORT Ref<PropBase> make_prop(string const&, PyObject* value);
 
 template<class T> PyObject* ptr_to_python(const Prop<T>* prop) {
   return ptr_to_python(static_cast<const PropBase*>(prop));

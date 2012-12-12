@@ -23,7 +23,7 @@ protected:
     const Action* const parent;
   public:
     OTHER_CORE_EXPORT Executing(); // Values pulled during execution won't be registered to any action
-    OTHER_CORE_EXPORT Executing(const Action& self) ;
+    OTHER_CORE_EXPORT Executing(const Action& self);
     ~Executing() {
       stop(0);
     }
@@ -37,8 +37,8 @@ protected:
   friend class Executing;
 public:
 
-  OTHER_CORE_EXPORT Action() ;
-  OTHER_CORE_EXPORT virtual ~Action() ;
+  OTHER_CORE_EXPORT Action();
+  OTHER_CORE_EXPORT virtual ~Action();
 
   // Count inputs
   int inputs() const;

@@ -48,9 +48,9 @@ private:
   static Link* pending; // linked list of pending signals
 
 protected:
-  OTHER_CORE_EXPORT ValueBase() ;
+  OTHER_CORE_EXPORT ValueBase();
 public:
-  OTHER_CORE_EXPORT virtual ~ValueBase() ;
+  OTHER_CORE_EXPORT virtual ~ValueBase();
 
 #ifdef OTHER_PYTHON
   virtual PyObject* get_python() const = 0;
@@ -81,7 +81,7 @@ public:
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
 
   const string& get_name() const;
-  OTHER_CORE_EXPORT ValueBase& set_name(const string& n) ;
+  OTHER_CORE_EXPORT ValueBase& set_name(const string& n);
 
 private:
   OTHER_CORE_EXPORT void pull() const ;
