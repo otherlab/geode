@@ -25,6 +25,25 @@ template<class A, class B, class C> struct equals<std::tr1::unordered_set<A,B,C>
   }
 };
 
+template<class A, class B, class C> struct equals<std::tr1::unordered_map<A,B,C>> {
+  inline static bool eval(std::tr1::unordered_map<A,B,C> const &s1, std::tr1::unordered_map<A,B,C> const &s2) {
+    if (s1.size() != s2.size())
+      return false;
+
+    for (typename std::tr1::unordered_map<A,B,C>::const_iterator it = s1.begin(); it != s1.end(); ++it) {
+      if (!s2.count(it->first)) {
+        return false;
+      }else{
+        if(s2.find(it->first)->second != it->second){
+          return false;
+        }
+      }
+
+    }
+    return true;
+  }
+};
+
 template<class A, class B> struct equals<std::pair<A,B>> {
   inline static bool eval(std::pair<A,B> const &s1, std::pair<A,B> const &s2) {
     return equals<A>::eval(s1.first,s2.first) && equals<B>::eval(s1.second,s2.second);

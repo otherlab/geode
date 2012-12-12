@@ -320,6 +320,10 @@ public:
     return (*self)();
   }
 
+  bool operator==(const PropRef<type>& p) const{
+    return self == p.self;
+  }
+
   PropRef<T> clone_prop() const {
     PropRef<T> result(self->name,self->default_);
     result->set_allowed(self->allowed);
@@ -343,6 +347,10 @@ template<class T> PyObject* ptr_to_python(const Prop<T>* prop) {
 
 template<class T> PyObject* to_python(const PropRef<T>& prop) {
   return to_python(static_cast<PropBase&>(prop.self));
+}
+
+template<class T> inline std::ostream& operator<<(std::ostream& output, const PropRef<T>& ref) {
+  return output<<ref();
 }
 
 template<> struct FromPython<PropBase&> { static PropBase& convert(PyObject* object); };
