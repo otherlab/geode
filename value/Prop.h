@@ -173,7 +173,7 @@ public:
   using Base::name;
 
 protected:
-  Prop(string const& name, const T& value_) OTHER_CORE_EXPORT
+  OTHER_CORE_EXPORT Prop(string const& name, const T& value_) 
     : PropBase(), default_(value_)
   {
     this->set_name(name);
@@ -189,7 +189,7 @@ public:
   const T default_;
   vector<T> allowed;
 
-  void set(const T& value_) OTHER_CORE_EXPORT {
+  OTHER_CORE_EXPORT void set(const T& value_) {
     if (!equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !other::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name);

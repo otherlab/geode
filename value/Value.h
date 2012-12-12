@@ -126,10 +126,10 @@ public:
 protected:
   mutable Optional<T> value; // the cached value
 
-  OTHER_CORE_EXPORT Value() ;
-  OTHER_CORE_EXPORT ~Value() ;
+  OTHER_CORE_EXPORT Value() {};
+  OTHER_CORE_EXPORT ~Value() {};
 
-  void set_dirty() const OTHER_CORE_EXPORT {
+  OTHER_CORE_EXPORT void set_dirty() const {
     if (!dirty_) {
       dirty_ = true;
       error = ExceptionValue();
@@ -138,7 +138,7 @@ protected:
     }
   }
 
-  void set_value(const T& value_) const OTHER_CORE_EXPORT {
+  OTHER_CORE_EXPORT void set_value(const T& value_) const {
     dirty_ = false;
     error = ExceptionValue();
     value = value_;
@@ -152,7 +152,7 @@ public:
   }
 
 #ifdef OTHER_PYTHON
-  PyObject* get_python() const OTHER_CORE_EXPORT {
+  OTHER_CORE_EXPORT PyObject* get_python() const {
     pull();
     return to_python(*value);
   }
@@ -168,9 +168,6 @@ public:
     return *value;
   }
 };
-
-template<class T> Value<T>::Value() {}
-template<class T> Value<T>::~Value() {}
 
 template<class T> class ValueRef
 {

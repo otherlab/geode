@@ -41,6 +41,6 @@ OTHER_CORE_EXPORT Cylinder(TV x0, TV x1, T radius);
 
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const Cylinder& cylinder);
 OTHER_CORE_EXPORT PyObject* to_python(const Cylinder& cylinder);
-template<> struct FromPython<Cylinder>{ static Cylinder convert(PyObject* object) OTHER_CORE_EXPORT; };
+template<> struct FromPython<Cylinder>{ OTHER_CORE_EXPORT static Cylinder convert(PyObject* object); };
 
 }
