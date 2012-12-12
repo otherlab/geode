@@ -550,7 +550,7 @@ namespace other {
     return tuple(sm, pts);
   }
 
-  template Tuple<Ref<SegmentMesh>,Array<Vector<real,2> > > to_segment_mesh(const std::vector<std::vector<Vector<real,2> > >&, bool);
-  template Tuple<Ref<SegmentMesh>,Array<Vector<real,3> > > to_segment_mesh(const std::vector<std::vector<Vector<real,3> > >&, bool);
+  template Tuple<Ref<SegmentMesh>,Array<Vector<real,2> > > to_segment_mesh<2>(const std::vector<std::vector<Vector<real,2> > >&, bool);
+  template Tuple<Ref<SegmentMesh>,Array<Vector<real,3> > > to_segment_mesh<3>(const std::vector<std::vector<Vector<real,3> > >&, bool);
   
 }

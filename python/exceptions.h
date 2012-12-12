@@ -58,8 +58,8 @@ private:
 #define OTHER_SIMPLE_EXCEPTION(Error,Base_) \
   struct OTHER_CORE_CLASS_EXPORT Error : public Base_ { \
     typedef Base_ Base; \
-    Error(const std::string& message); \
-    virtual ~Error() throw (); \
+    OTHER_CORE_EXPORT Error(const std::string& message); \
+    OTHER_CORE_EXPORT virtual ~Error() throw (); \
   };
 
 typedef std::runtime_error RuntimeError;

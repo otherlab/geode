@@ -40,6 +40,8 @@ OTHER_CORE_EXPORT Vector<real,2> point_inside_polygon_component(Polygon const &p
 OTHER_CORE_EXPORT Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.);
 
 template<int d>
-OTHER_CORE_EXPORT Tuple<Ref<SegmentMesh>, Array<Vector<real,d>>> to_segment_mesh(std::vector<std::vector<Vector<real,d>>> const &polys, bool open = false);
+OTHER_CORE_EXPORT Tuple<Ref<SegmentMesh>, Array<Vector<real,d>>> to_segment_mesh(std::vector<std::vector<Vector<real,d>>> const &polys, bool open);
+
+//OTHER_CORE_EXPORT Tuple<Ref<SegmentMesh>, Array<Vector<real,2>>> to_segment_mesh(std::vector<std::vector<Vector<real,2>>> const &polys, bool open);
 
 }

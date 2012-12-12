@@ -155,16 +155,6 @@ PyObject* ValueBase::get_default() const      { return prop().default_python(); 
 PyObject* ValueBase::get_allowed() const      { return prop().allowed_python(); }
 #endif
 
-// Instantiate common versions
-template class Value<bool>;
-template class Value<int>;
-template class Value<double>;
-template class Value<string>;
-template class Value<Vector<real,2>>;
-
-template class Value<Vector<real,3>>;
-template class Value<Vector<real,4>>;
-
 }
 using namespace other;
 

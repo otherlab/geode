@@ -107,9 +107,9 @@ private:
   scoped_ptr<Tuple<PropRef<T>,Ref<Listen>,real>> prop_min, prop_max, prop_step;
 
 protected:
-  PropClamp();
+  OTHER_CORE_EXPORT PropClamp();
 public:
-  ~PropClamp();
+  OTHER_CORE_EXPORT ~PropClamp();
 
   Prop<T>& self() {
     return static_cast<Prop<T>&>(*this);
@@ -148,8 +148,8 @@ public:
   }
 #endif
 
-  OTHER_CORE_EXPORT Prop<T>& set_min(const PropRef<T> p, real alpha = 1) ;
-  OTHER_CORE_EXPORT Prop<T>& set_max(const PropRef<T> p, real alpha = 1) ;
+  OTHER_CORE_EXPORT Prop<T>& set_min(const PropRef<T> p, real alpha = 1);
+  OTHER_CORE_EXPORT Prop<T>& set_max(const PropRef<T> p, real alpha = 1);
 
   Prop<T>& copy_range_from(const PropClamp& p) {
     set_min(p.min);
@@ -173,7 +173,7 @@ public:
   using Base::name;
 
 protected:
-  OTHER_CORE_EXPORT Prop(string const& name, const T& value_) 
+  Prop(string const& name, const T& value_) 
     : PropBase(), default_(value_)
   {
     this->set_name(name);
@@ -189,7 +189,7 @@ public:
   const T default_;
   vector<T> allowed;
 
-  OTHER_CORE_EXPORT void set(const T& value_) {
+  void set(const T& value_) {
     if (!equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !other::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name);
@@ -354,14 +354,5 @@ template<class T> struct FromPython<PropRef<T> > {
 };
 
 #endif
-
-// Reduce template bloat
-extern template class Prop<bool>;
-extern template class Prop<int>;
-extern template class Prop<double>;
-extern template class Prop<string>;
-extern template class Prop<Vector<real,2>>;
-extern template class Prop<Vector<real,3>>;
-extern template class Prop<Vector<real,4>>;
 
 }

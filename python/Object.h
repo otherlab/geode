@@ -41,9 +41,9 @@ private:
   Object(const Object&); // noncopyable by default
   void operator=(const Object&); // noncopyable by default
 protected:
-  Object();
+  OTHER_CORE_EXPORT Object();
 public:
-  virtual ~Object();
+  OTHER_CORE_EXPORT virtual ~Object();
 };
 
 // Helper for derived classes which are simple wrappers around other real classes

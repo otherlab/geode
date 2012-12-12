@@ -247,30 +247,30 @@ public:
 
   // add constructors and access functions to make the OpenMesh class more usable
 protected:
-  TriMesh();
-  TriMesh(const TriMesh& m);
-  TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real,3> > X);
-  TriMesh(Tuple<Ref<TriangleMesh>,Array<Vector<real,3>>> const &);
+  OTHER_CORE_EXPORT TriMesh();
+  OTHER_CORE_EXPORT TriMesh(const TriMesh& m);
+  OTHER_CORE_EXPORT TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real,3> > X);
+  OTHER_CORE_EXPORT TriMesh(Tuple<Ref<TriangleMesh>,Array<Vector<real,3>>> const &);
 
   void cut_and_mirror(Plane<real> const &p, bool mirror, T epsilon, T area_hack);
 public:
-  virtual ~TriMesh();
+  OTHER_CORE_EXPORT virtual ~TriMesh();
 
 public:
   // assign from another TriMesh
-  TriMesh& operator=(OTriMesh const &o);
+  OTHER_CORE_EXPORT TriMesh& operator=(OTriMesh const &o);
 
   // full copy
-  Ref<TriMesh> copy() const;
+  OTHER_CORE_EXPORT Ref<TriMesh> copy() const;
 
   // load from file/stream
-  void read(string const &filename);
-  void read(std::istream &is, string const &ext);
+  OTHER_CORE_EXPORT void read(string const &filename);
+  OTHER_CORE_EXPORT void read(std::istream &is, string const &ext);
 
   // save to file/stream
-  void write(string const &filename) const;
-  void write_with_normals(string const &filename) const;
-  void write(std::ostream &os, string const &ext) const;
+  OTHER_CORE_EXPORT void write(string const &filename) const;
+  OTHER_CORE_EXPORT void write_with_normals(string const &filename) const;
+  OTHER_CORE_EXPORT void write(std::ostream &os, string const &ext) const;
 
   // add a property
   template<class T,class Handle> typename HandleToProp<T,Handle>::type add_prop(const char* name) {
@@ -280,66 +280,66 @@ public:
   }
 
   // add a bunch of vertices
-  void add_vertices(RawArray<const TV> X);
+  OTHER_CORE_EXPORT void add_vertices(RawArray<const TV> X);
 
   // add a bunch of faces
-  void add_faces(RawArray<const Vector<int,3> > faces);
+  OTHER_CORE_EXPORT void add_faces(RawArray<const Vector<int,3> > faces);
 
   // add a mesh to this (vertices/faces)
-  void add_mesh(TriMesh const &mesh);
+  OTHER_CORE_EXPORT void add_mesh(TriMesh const &mesh);
 
   // bounding box
-  Box<Vector<real,3> > bounding_box() const;
-  Box<Vector<real,3> > bounding_box(vector<FaceHandle> const &faces) const;
+  OTHER_CORE_EXPORT Box<Vector<real,3> > bounding_box() const;
+  OTHER_CORE_EXPORT Box<Vector<real,3> > bounding_box(vector<FaceHandle> const &faces) const;
 
   // area weighted centroid
-  Vector<real,3> centroid() const;
+  OTHER_CORE_EXPORT Vector<real,3> centroid() const;
 
-  real mean_edge_length() const;
+  OTHER_CORE_EXPORT real mean_edge_length() const;
 
   // get a triangle area
-  real area(FaceHandle fh) const;
+  OTHER_CORE_EXPORT real area(FaceHandle fh) const;
 
   // get the face as a Triangle
-  Triangle<Vector<real, 3> > triangle(FaceHandle fh) const;
+  OTHER_CORE_EXPORT Triangle<Vector<real, 3> > triangle(FaceHandle fh) const;
 
   // get an edge as a Segment
-  Segment<Vector<real, 3> > segment(EdgeHandle eh) const;
-  Segment<Vector<real, 3> > segment(HalfedgeHandle heh) const;
+  OTHER_CORE_EXPORT Segment<Vector<real, 3> > segment(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT Segment<Vector<real, 3> > segment(HalfedgeHandle heh) const;
 
   // get the vertex handles incident to the given halfedge
-  Vector<VertexHandle,2> vertex_handles(HalfedgeHandle heh) const;
+  OTHER_CORE_EXPORT Vector<VertexHandle,2> vertex_handles(HalfedgeHandle heh) const;
 
   // get the vertex handles incident to the given edge
-  Vector<VertexHandle,2> vertex_handles(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT Vector<VertexHandle,2> vertex_handles(EdgeHandle eh) const;
 
   // get the vertex handles incident to the given face
-  Vector<VertexHandle,3> vertex_handles(FaceHandle fh) const;
+  OTHER_CORE_EXPORT Vector<VertexHandle,3> vertex_handles(FaceHandle fh) const;
 
   // get the edge handles incident to the given face
-  Vector<EdgeHandle,3> edge_handles(FaceHandle fh) const;
+  OTHER_CORE_EXPORT Vector<EdgeHandle,3> edge_handles(FaceHandle fh) const;
 
   // get the halfedge handles that make up the given edge
-  Vector<HalfedgeHandle,2> halfedge_handles(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT Vector<HalfedgeHandle,2> halfedge_handles(EdgeHandle eh) const;
 
   // get the halfedge handles incident to the given face
-  Vector<HalfedgeHandle,3> halfedge_handles(FaceHandle fh) const;
+  OTHER_CORE_EXPORT Vector<HalfedgeHandle,3> halfedge_handles(FaceHandle fh) const;
 
   // get the face handles incident to the given edge (one of which is invalid if at boundary)
-  Vector<FaceHandle, 2> face_handles(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT Vector<FaceHandle, 2> face_handles(EdgeHandle eh) const;
 
   // get the edge-incident faces to a face (some of which may be invalid if at a boundary)
-  Vector<FaceHandle,3> face_handles(FaceHandle fh) const;
+  OTHER_CORE_EXPORT Vector<FaceHandle,3> face_handles(FaceHandle fh) const;
 
   // get a valid face handle incident to an edge (invalid only if there is none at all,
   // in that case, the edge should have been deleted)
-  FaceHandle valid_face_handle(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT FaceHandle valid_face_handle(EdgeHandle eh) const;
 
   // get all vertices in the one-ring
-  vector<VertexHandle> vertex_one_ring(VertexHandle vh) const;
+  OTHER_CORE_EXPORT vector<VertexHandle> vertex_one_ring(VertexHandle vh) const;
 
   // check whether the quad around an edge is convex (and the edge can be flipped safely)
-  bool quad_convex(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT bool quad_convex(EdgeHandle eh) const;
 
   // re-publish overloads from OTriMesh
   inline EdgeHandle edge_handle(HalfedgeHandle he) const {
@@ -356,22 +356,22 @@ public:
   }
 
   // get the handle of the edge between two vertices (invalid if none)
-  EdgeHandle edge_handle(VertexHandle vh1, VertexHandle vh2) const;
+  OTHER_CORE_EXPORT EdgeHandle edge_handle(VertexHandle vh1, VertexHandle vh2) const;
 
   // get the handle of the halfedge starting at vh1 going to vh2
-  HalfedgeHandle halfedge_handle(VertexHandle vh1, VertexHandle vh2) const;
+  OTHER_CORE_EXPORT HalfedgeHandle halfedge_handle(VertexHandle vh1, VertexHandle vh2) const;
 
   // get the handle of the halfedge pointing at vh, in face fh
-  HalfedgeHandle halfedge_handle(FaceHandle fh, VertexHandle vh) const;
+  OTHER_CORE_EXPORT HalfedgeHandle halfedge_handle(FaceHandle fh, VertexHandle vh) const;
 
   // get the incident faces to a vertex
-  vector<FaceHandle> incident_faces(VertexHandle vh) const;
+  OTHER_CORE_EXPORT vector<FaceHandle> incident_faces(VertexHandle vh) const;
 
   /// return the common edge connecting two faces
-  EdgeHandle common_edge(FaceHandle fh, FaceHandle fh2) const;
+  OTHER_CORE_EXPORT EdgeHandle common_edge(FaceHandle fh, FaceHandle fh2) const;
 
   // get a normal for an edge (average of incident face normals)
-  Normal normal(EdgeHandle eh) const;
+  OTHER_CORE_EXPORT Normal normal(EdgeHandle eh) const;
 
   // re-publish overloads from OTriMesh
   inline Normal normal(VertexHandle vh) const {
@@ -383,115 +383,115 @@ public:
   }
 
   // get an interpolated normal at any point on the mesh
-  Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
+  OTHER_CORE_EXPORT Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
 
   // get rid of all infinite or nan vertices (they are simply deleted, along with incident faces)
-  int remove_infinite_vertices();
+  OTHER_CORE_EXPORT int remove_infinite_vertices();
 
   // dihedral angle between incident faces: positive for convex, negative for concave
-  T dihedral_angle(EdgeHandle e) const;
-  T dihedral_angle(HalfedgeHandle e) const;
+  OTHER_CORE_EXPORT T dihedral_angle(EdgeHandle e) const;
+  OTHER_CORE_EXPORT T dihedral_angle(HalfedgeHandle e) const;
 
   // delete a set of faces
-  void delete_faces(std::vector<FaceHandle> const &fh);
+  OTHER_CORE_EXPORT void delete_faces(std::vector<FaceHandle> const &fh);
 
   // make a triangle fan
-  vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
+  OTHER_CORE_EXPORT vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
 
   // extract a set of faces as a new mesh and store vertex correspondence: id2id[old] = new
-  Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces,
+  OTHER_CORE_EXPORT Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces,
                              unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
 
-  Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces) const;
+  OTHER_CORE_EXPORT Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces) const;
 
   // extract the inverse of a set of faces as a new mesh and store vertex correspondence
-  Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces,
+  OTHER_CORE_EXPORT Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces,
                              unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const;
 
-  Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces) const;
+  OTHER_CORE_EXPORT Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces) const;
 
   // compute the 2D silhouettes of the mesh as seem from the given rotation (with rotation*(0,0,1) as the normal)
-  vector<vector<Vector<real,2>>> silhouette(const Rotation<TV>& rotation) const;
+  OTHER_CORE_EXPORT vector<vector<Vector<real,2>>> silhouette(const Rotation<TV>& rotation) const;
 
   // get the halfedges bounding the given set of faces (for all halfedges, face_handle(he) is in faces)
-  unordered_set<HalfedgeHandle, Hasher> boundary_of(vector<FaceHandle> const &faces) const;
+  OTHER_CORE_EXPORT unordered_set<HalfedgeHandle, Hasher> boundary_of(vector<FaceHandle> const &faces) const;
 
   // compute the approximate geodesic distance from one point to another, and store
   // all values computed on the way (can be used to re-trace the approximate shortest path)
-  unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
+  OTHER_CORE_EXPORT unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
                                                                 VertexHandle sinks) const;
 
   // compute the approximate geodesic distance from one point to a set of points, and store
   // all values computed on the way (can be used to re-trace the approximate shortest paths)
-  unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
+  OTHER_CORE_EXPORT unordered_map<VertexHandle, double, Hasher> geodesic_distance(VertexHandle source,
                                                                 vector<VertexHandle> const &sinks) const;
 
   // compute the approximate geodesic distance from one point to a set of points, and store
   // all values computed on the way (can be used to re-trace the approximate shortest paths)
-  unordered_map<VertexHandle, double, Hasher> geodesic_distance(vector<VertexHandle> const &sources,
+  OTHER_CORE_EXPORT unordered_map<VertexHandle, double, Hasher> geodesic_distance(vector<VertexHandle> const &sources,
                                                                 vector<VertexHandle> const &sinks) const;
 
   // compute and return the approximate shortest path from one point to another
-  vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
+  OTHER_CORE_EXPORT vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
 
   // compute the closest face to a point by breadth-first search starting at the given vertex/face
-  FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
-  FaceHandle local_closest_face(Point const &p, VertexHandle start) const;
+  OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
+  OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, VertexHandle start) const;
 
   // cut the mesh with a plane (negative side will be removed)
-  void cut(Plane<real> const &p, double epsilon = 1e-4, double area_hack = 0);
+  OTHER_CORE_EXPORT void cut(Plane<real> const &p, double epsilon = 1e-4, double area_hack = 0);
 
   // mirror the mesh at a plane (positive side will be mirrored, negative replaced)
-  void mirror(Plane<real> const &p, double epsilon = 1e-4);
+  OTHER_CORE_EXPORT void mirror(Plane<real> const &p, double epsilon = 1e-4);
 
   // check if mesh has a boundary (faster than !boundary_loops().empty())
   // this function will report a boundary for isolated vertices!
-  bool has_boundary() const;
+  OTHER_CORE_EXPORT bool has_boundary() const;
 
   // find boundary loops
-  vector<vector<HalfedgeHandle> > boundary_loops() const;
+  OTHER_CORE_EXPORT vector<vector<HalfedgeHandle> > boundary_loops() const;
 
   // find the boundary loop starting at seed (empty if seed is not on the boundary)
-  vector<HalfedgeHandle> boundary_loop(HalfedgeHandle const &seed) const;
+  OTHER_CORE_EXPORT vector<HalfedgeHandle> boundary_loop(HalfedgeHandle const &seed) const;
 
   // fill the hole enclosed by the given halfedges, retain the new faces only if the surface area is smaller than max_area
-  vector<FaceHandle> fill_hole(vector<HalfedgeHandle> const &loop, double max_area = inf);
+  OTHER_CORE_EXPORT vector<FaceHandle> fill_hole(vector<HalfedgeHandle> const &loop, double max_area = inf);
 
   // fill all holes with maximum area given
-  void fill_holes(double max_area = inf);
+  OTHER_CORE_EXPORT void fill_holes(double max_area = inf);
 
-  void add_box(TV min, TV max);
-  void add_sphere(TV c, real r, int divisions = 30);
-  void add_cylinder(TV p1, TV p2, real r1, real r2, int divisions = 30, bool caps = true);
+  OTHER_CORE_EXPORT void add_box(TV min, TV max);
+  OTHER_CORE_EXPORT void add_sphere(TV c, real r, int divisions = 30);
+  OTHER_CORE_EXPORT void add_cylinder(TV p1, TV p2, real r1, real r2, int divisions = 30, bool caps = true);
 
-  void scale(real scale, const TV& center=TV());
-  void scale(TV scale, const TV& center=TV());
-  void translate(const TV& c);
-  void rotate(const Rotation<TV>& R, const TV& center=TV());
-  void transform(const Frame<TV>& F);
+  OTHER_CORE_EXPORT void scale(real scale, const TV& center=TV());
+  OTHER_CORE_EXPORT void scale(TV scale, const TV& center=TV());
+  OTHER_CORE_EXPORT void translate(const TV& c);
+  OTHER_CORE_EXPORT void rotate(const Rotation<TV>& R, const TV& center=TV());
+  OTHER_CORE_EXPORT void transform(const Frame<TV>& F);
 
   // flip all faces inside out
-  void invert();
+  OTHER_CORE_EXPORT void invert();
 
   // flip all faces in a connected component inside out (faces in component
   // must not have neighbors not in component)
-  void invert_component(vector<FaceHandle> component);
+  OTHER_CORE_EXPORT void invert_component(vector<FaceHandle> component);
 
-  real volume() const;
-  real volume(RawArray<const FaceHandle> faces) const;
-  real area() const;
-  real area(RawArray<const FaceHandle> faces) const;
+  OTHER_CORE_EXPORT real volume() const;
+  OTHER_CORE_EXPORT real volume(RawArray<const FaceHandle> faces) const;
+  OTHER_CORE_EXPORT real area() const;
+  OTHER_CORE_EXPORT real area(RawArray<const FaceHandle> faces) const;
 
   // Warning: these construct new arrays or copy memory
-  Array<Vector<int,3> > elements() const;
-  Array<Vector<real,3> > X_python() const;
-  void set_X_python(RawArray<const Vector<real,3>> new_X);
-  void set_vertex_normals(RawArray<const Vector<real,3>> normals);
-  void set_vertex_colors(RawArray<const Vector<real,3>> colors);
+  OTHER_CORE_EXPORT Array<Vector<int,3> > elements() const;
+  OTHER_CORE_EXPORT Array<Vector<real,3> > X_python() const;
+  OTHER_CORE_EXPORT void set_X_python(RawArray<const Vector<real,3>> new_X);
+  OTHER_CORE_EXPORT void set_vertex_normals(RawArray<const Vector<real,3>> normals);
+  OTHER_CORE_EXPORT void set_vertex_colors(RawArray<const Vector<real,3>> colors);
 
   // Warning: reference goes invalid if the mesh is changed
-  RawArray<Vector<real,3> > X();
-  RawArray<const Vector<real,3> > X() const;
+  OTHER_CORE_EXPORT RawArray<Vector<real,3> > X();
+  OTHER_CORE_EXPORT RawArray<const Vector<real,3> > X() const;
 
   // Warning: reference goes invalid if the mesh is changed
   template<class PropHandle> RawField<typename PropHandle::Value,typename prop_handle_type<PropHandle>::type> prop(PropHandle p) {
@@ -504,46 +504,34 @@ public:
   }
 
   // Component analysis
-  Tuple<int,Array<int> > component_vertex_map() const;
-  Array<int> component_face_map() const;
+  OTHER_CORE_EXPORT Tuple<int,Array<int> > component_vertex_map() const;
+  OTHER_CORE_EXPORT Array<int> component_face_map() const;
 
   // Split a mesh into connected components
-  vector<Ref<TriMesh> > component_meshes() const;
-  vector<Ref<TriMesh> > nested_components() const;
+  OTHER_CORE_EXPORT vector<Ref<TriMesh> > component_meshes() const;
+  OTHER_CORE_EXPORT vector<Ref<TriMesh> > nested_components() const;
 
   // Convenience functions for use in range-based for loops
-  Range<HandleIter<VertexIter>> vertex_handles() { return handle_range(vertices_begin(),vertices_end()); }
-  Range<HandleIter<ConstVertexIter>> vertex_handles() const { return handle_range(vertices_begin(),vertices_end()); }
-  Range<HandleIter<EdgeIter>> edge_handles() { return handle_range(edges_begin(),edges_end()); }
-  Range<HandleIter<ConstEdgeIter>> edge_handles() const { return handle_range(edges_begin(),edges_end()); }
-  Range<HandleIter<HalfedgeIter>> halfedge_handles() { return handle_range(halfedges_begin(),halfedges_end()); }
-  Range<HandleIter<ConstHalfedgeIter>> halfedge_handles() const { return handle_range(halfedges_begin(),halfedges_end()); }
-  Range<HandleIter<FaceIter>> face_handles() { return handle_range(faces_begin(),faces_end()); }
-  Range<HandleIter<ConstFaceIter>> face_handles() const { return handle_range(faces_begin(),faces_end()); }
+  inline Range<HandleIter<VertexIter>> vertex_handles() { return handle_range(vertices_begin(),vertices_end()); }
+  inline Range<HandleIter<ConstVertexIter>> vertex_handles() const { return handle_range(vertices_begin(),vertices_end()); }
+  inline Range<HandleIter<EdgeIter>> edge_handles() { return handle_range(edges_begin(),edges_end()); }
+  inline Range<HandleIter<ConstEdgeIter>> edge_handles() const { return handle_range(edges_begin(),edges_end()); }
+  inline Range<HandleIter<HalfedgeIter>> halfedge_handles() { return handle_range(halfedges_begin(),halfedges_end()); }
+  inline Range<HandleIter<ConstHalfedgeIter>> halfedge_handles() const { return handle_range(halfedges_begin(),halfedges_end()); }
+  inline Range<HandleIter<FaceIter>> face_handles() { return handle_range(faces_begin(),faces_end()); }
+  inline Range<HandleIter<ConstFaceIter>> face_handles() const { return handle_range(faces_begin(),faces_end()); }
 };
 
 // Silence OpenMesh output for the scope of this object
 class OMSilencer {
   const bool log_enabled, err_enabled, out_enabled;
 public:
-  OMSilencer(bool log=true, bool err=true, bool out=true);
-  ~OMSilencer();
+  OTHER_CORE_EXPORT OMSilencer(bool log=true, bool err=true, bool out=true);
+  OTHER_CORE_EXPORT ~OMSilencer();
 };
 
 OTHER_CORE_EXPORT Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes);
 
 }
-
-// Reduce template bloat
-/* Unfortunately, this conflicts with hidden visibility, so we can't do it after all.
-namespace OpenMesh {
-extern template class PropertyT<int>;
-extern template class PropertyT<other::OVec<other::real,2>>;
-extern template class PropertyT<other::OVec<other::real,3>>;
-extern template class PropertyT<other::OVec<unsigned char,4>>;
-extern template class PropertyT<VectorT<double,3>>;
-extern template class PolyMeshT<AttribKernelT<FinalMeshItemsT<other::MeshTraits,true>,TriConnectivity>>;
-}
-*/
 
 #endif // USE_OPENMESH

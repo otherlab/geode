@@ -126,10 +126,10 @@ public:
 protected:
   mutable Optional<T> value; // the cached value
 
-  OTHER_CORE_EXPORT Value() {};
-  OTHER_CORE_EXPORT ~Value() {};
+  Value() {}
+  ~Value() {}
 
-  OTHER_CORE_EXPORT void set_dirty() const {
+  void set_dirty() const {
     if (!dirty_) {
       dirty_ = true;
       error = ExceptionValue();
@@ -138,7 +138,7 @@ protected:
     }
   }
 
-  OTHER_CORE_EXPORT void set_value(const T& value_) const {
+  void set_value(const T& value_) const {
     dirty_ = false;
     error = ExceptionValue();
     value = value_;
@@ -152,7 +152,7 @@ public:
   }
 
 #ifdef OTHER_PYTHON
-  OTHER_CORE_EXPORT PyObject* get_python() const {
+  PyObject* get_python() const {
     pull();
     return to_python(*value);
   }
@@ -205,14 +205,5 @@ template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {
 }
 
 // from_python<ValueRef<T>> is declared in convert.h to avoid circularity
-
-// Instantiate common versions in the .cpp file
-extern template class Value<bool>;
-extern template class Value<int>;
-extern template class Value<double>;
-extern template class Value<string>;
-extern template class Value<Vector<real,2>>;
-extern template class Value<Vector<real,3>>;
-extern template class Value<Vector<real,4>>;
 
 }
