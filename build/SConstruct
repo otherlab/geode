@@ -83,6 +83,7 @@ options(
   ('PREFIX','Path to install libraries, binaries, and scripts','$other/install/$type'),
   ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
   ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
+  ('PREFIX_SHARE','Override path to install resources','$PREFIX_BIN'),
   ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
   ('python','Python executable','python'),
   ('mpicc','MPI wrapper compiler (used only to extract flags)','mpicc'),
@@ -252,10 +253,6 @@ program_suffix = ''
 if env['arch']!=env['default_arch']: program_suffix+='_'+env['arch']
 if env['type']!='release': program_suffix+='_'+env['type']
 else: executable_suffix=''
-
-# Put prefix as define so C programs can use it for accessing resources
-if 0:
-  env.Append(CXXFLAGS=" -DPREFIX=\\\""+Dir(env["PREFIX"]).abspath+"\\\"")
 
 # Compiler flags
 clang = bool(re.search(r'\bclang\b',env['CXX']))
@@ -430,6 +427,7 @@ def link_flags(env):
       if lib.has_key('rpath'): env_link.PrependUnique(RPATH=lib['rpath'])
   return env_link
 
+# Copy necessary files into bin (necessary for dlls on windows)
 copied_files = set()
 def copy_files(env):
   env_copy = env.Clone()
@@ -472,7 +470,7 @@ def objects(env,sources):
   else: return Helper(env,sources,libraries)
 
 # Recursively list all files beneath a directory
-def files(dir,skip):
+def files(dir,skip=()):
   for f in os.listdir(dir):
     if f.startswith('.') or f=='build' or f in skip:
       continue
@@ -485,10 +483,10 @@ def files(dir,skip):
 # Automatic generation of library targets
 projects = []
 def library(env,name,libs=(),skip=(),extra=()):
-  cpps,resources = [],[]
+  cpps = []
   for f in list(files(Dir('.').srcnode().abspath,skip))+list(extra):
-    if f.endswith('.cpp') or f.endswith('.cc'): cpps.append(f)
-    elif f.endswith('.xpm') or f.endswith('.glade'): resources.append(f)
+    if f.endswith('.cpp') or f.endswith('.cc'):
+      cpps.append(f)
   if not cpps: return None
   if env.get('use_qt',0): # Qt gets confused if we only set options on the builder
     env = env.Clone()
@@ -506,7 +504,7 @@ def library(env,name,libs=(),skip=(),extra=()):
     linkflags=env['LINKFLAGS']
     if darwin:
       linkflags='-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['PREFIX_LIB'])).abspath,name)+linkflags
-    # on Windows, this will create two files: a .lib (for other builds), and a .dll for the runtime.
+    # On Windows, this will create two files: a .lib (for other builds), and a .dll for the runtime.
     lib = env.SharedLibrary(name,source=sources,LINKFLAGS=linkflags)
   else:
     lib = env.StaticLibrary(name,source=sources)
@@ -517,8 +515,6 @@ def library(env,name,libs=(),skip=(),extra=()):
   if darwin:
     bundle = env.LoadableModule(name,source=[],LIBS=lib)
     env.Depends('.',env.Install(env['PREFIX_LIB'],bundle))
-  for res in resources:
-    env.Depends('.',env.Install(env['PREFIX']+'/resources',res))
   if windows and 0:
     projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=cpps,variant=env['type'].capitalize(),buildtarget=lib,auto_build_solution=0))
   return lib
@@ -535,6 +531,10 @@ def program(env,name,cpp=None):
   if windows and 0:
     projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=[cpp],variant=env['type'].capitalize(),buildtarget=bin,auto_build_solution=0))
   env.Depends('.',bin)
+
+# Install a (possibly directory) resource
+def resource(env,dir):
+  env.Depends('.',env.Install(env['PREFIX_SHARE'],Dir(dir).srcnode()))
 
 # Turn a latex document into a pdf
 def latex(env,name):
@@ -568,7 +568,7 @@ def children(env):
       child(env,dir)
 
 # Build everything
-Export('child children options external externals library objects program latex clang posix darwin windows toplevel')
+Export('child children options external externals library objects program latex clang posix darwin windows toplevel resource')
 if os.path.exists(File('#SConscript').abspath):
   child(env,'.')
 else:
