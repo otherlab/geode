@@ -13,7 +13,7 @@ class RotatedLinear:public IsotropicConstitutiveModel<T,d>
 {
     typedef Vector<T,d> TV;
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef IsotropicConstitutiveModel<T,d> Base;
     using Base::lambda;using Base::mu;using Base::alpha;using Base::beta;
 
@@ -52,7 +52,7 @@ public:
     {SymmetricMatrix<T,d> strain_rate = symmetric_part(F_dot);
     if(!beta.rank()) return beta()*strain_rate.sqr_frobenius_norm()+(T).5*alpha()*sqr(strain_rate.trace());
     else return beta[simplex]*strain_rate.sqr_frobenius_norm()+(T).5*alpha[simplex]*sqr(strain_rate.trace());}
-    
+
     Matrix<T,d> P_From_Strain_Rate(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& F_dot,const T scale,const int simplex) const
     {SymmetricMatrix<T,d> strain_rate = symmetric_part(F_dot);
     if(!beta.rank()) return 2*scale*beta()*strain_rate+scale*alpha()*strain_rate.trace();

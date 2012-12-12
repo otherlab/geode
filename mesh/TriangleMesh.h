@@ -23,7 +23,7 @@ class TriangleMesh : public Object {
   typedef Vector<T,2> TV2;
   typedef Vector<T,3> TV3;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   static const int d = 2;
 

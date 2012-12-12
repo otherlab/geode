@@ -13,7 +13,7 @@ namespace other {
 
 class PropManager: public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
   typedef unordered_map<string,Ref<PropBase>> Props;
   Props items;

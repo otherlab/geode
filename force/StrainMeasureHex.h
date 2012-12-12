@@ -12,7 +12,7 @@ class StrainMeasureHex : public Object {
   typedef real T;
   typedef Vector<T,3> TV;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   const int nodes;

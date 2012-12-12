@@ -3,7 +3,7 @@
 //#####################################################################
 //
 // Mass-proportional ether drag: F = -k m v
-// 
+//
 //#####################################################################
 #pragma once
 
@@ -16,7 +16,7 @@ template<class TV>
 class EtherDrag:public Force<TV>
 {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Force<TV> Base;
   typedef real T;
   enum {m=TV::m};

@@ -1,6 +1,6 @@
 //#####################################################################
 // Class ConstitutiveModel
-//##################################################################### 
+//#####################################################################
 #pragma once
 
 #include <other/core/array/NdArray.h>
@@ -14,7 +14,7 @@ template<class T,int d>
 class ConstitutiveModel:public Object
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Object Base;
 
     NdArray<T> lambda,mu; // constant or spatially varying Lame coefficients (used by almost all derived models)

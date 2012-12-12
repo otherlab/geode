@@ -16,7 +16,7 @@ namespace other {
 
 class TriangleSubdivision : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   typedef real T;

@@ -14,7 +14,7 @@ namespace other{
 template<class TV,int d> class SimplexTree : public BoxTree<TV> {
   typedef real T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef BoxTree<TV> Base;
   typedef typename mpl::if_c<d==1,SegmentMesh,TriangleMesh>::type Mesh;
   typedef typename mpl::if_c<d==1,Segment<TV>,Triangle<TV>>::type Simplex;

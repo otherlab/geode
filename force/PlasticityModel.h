@@ -1,6 +1,6 @@
 //#####################################################################
 // Class PlasticityModel
-//##################################################################### 
+//#####################################################################
 #pragma once
 
 #include <other/core/array/Array.h>
@@ -10,7 +10,7 @@ template<class T,int d>
 class PlasticityModel:public Object
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Object Base;
 
     Array<SymmetricMatrix<T,d> > Fp_inverse;
@@ -20,7 +20,7 @@ public:
         Fp_inverse.exact_resize(elements);
         Fp_inverse.fill(SymmetricMatrix<T,d>::identity_matrix());
     }
-    
+
     virtual ~PlasticityModel()
     {}
 

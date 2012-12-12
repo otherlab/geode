@@ -14,7 +14,7 @@ namespace other{
 template<class TV>
 class Force:public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef typename TV::Scalar T;
   enum {d=TV::m};

@@ -14,7 +14,7 @@ using boost::function;
 class Listen: public Object, public Action
 {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 private:
   Ref<const ValueBase> value;

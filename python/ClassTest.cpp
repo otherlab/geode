@@ -15,7 +15,7 @@ namespace {
 
 class ClassTest : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   int field;

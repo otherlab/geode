@@ -13,7 +13,7 @@ class Implicit:public Object
 {
   typedef typename TV::Scalar T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   static const int d = TV::m;
 
   Implicit();

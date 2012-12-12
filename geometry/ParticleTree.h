@@ -11,7 +11,7 @@ template<class TV> class ParticleTree : public BoxTree<TV>
 {
   typedef typename TV::Scalar T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef BoxTree<TV> Base;
   using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;
 

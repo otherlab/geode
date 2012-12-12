@@ -15,7 +15,7 @@ class StrainMeasure:public Object
     typedef Matrix<T,TV::m,d> TMatrix;
     template<int d2> struct Unusable{};
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Object Base;
 
     Array<const Vector<int,d+1> > elements;

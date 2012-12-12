@@ -19,7 +19,7 @@ namespace other {
 
 class SegmentMesh : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef Vector<real,2> TV2;
   static const int d = 1;

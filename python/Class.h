@@ -56,7 +56,7 @@ OTHER_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObje
 #define OTHER_BASE_PYTYPE(...) \
   (boost::is_same<__VA_ARGS__::Base,__VA_ARGS__>::value?0:&__VA_ARGS__::Base::pytype)
 
-// Should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE
+// Should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 #define OTHER_DEFINE_TYPE(...) \
   PyTypeObject __VA_ARGS__::pytype = { \
     PyObject_HEAD_INIT(&PyType_Type) \
@@ -215,7 +215,7 @@ private:
 
 namespace {
 
-// Should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE
+// Should appear in the .cpp to define the fields declared by OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 #define OTHER_DEFINE_TYPE(...) \
   other::PyTypeObject __VA_ARGS__::pytype = { \
     typeid(__VA_ARGS__).name(),  /* tp_name */ \

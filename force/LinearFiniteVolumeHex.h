@@ -13,7 +13,7 @@ class LinearFiniteVolumeHex:public Force<Vector<real,3> >
   typedef Vector<T,3> TV;
   enum {m=3};
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Force<TV> Base;
 
   const Ref<const StrainMeasureHex> strain;

@@ -3,7 +3,7 @@
 //#####################################################################
 //
 // Linear spring force
-// 
+//
 //#####################################################################
 #pragma once
 
@@ -26,7 +26,7 @@ template<class TV>
 class Springs:public Force<TV>
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Force<TV> Base;
     typedef real T;
     enum {m=TV::m};

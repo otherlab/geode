@@ -27,7 +27,7 @@ namespace other {
 class SolidMatrixStructure:public Object
 {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
 private:
   template<class TV> friend class SolidMatrix;
@@ -56,7 +56,7 @@ template<class TV>
 class SolidMatrixBase:public Object
 {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef typename TV::Scalar T;
 
@@ -82,7 +82,7 @@ class SolidMatrix:public SolidMatrixBase<TV>
     typedef Matrix<T,d> TMatrix;
     struct Unusable {};
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef SolidMatrixBase<TV> Base;
     using Base::size;
 
@@ -139,7 +139,7 @@ class SolidDiagonalMatrix:public SolidMatrixBase<TV> {
   enum {d=TV::m};
   typedef SymmetricMatrix<T,d> SM;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef SolidMatrixBase<TV> Base;
 
   const Array<SM> A;
