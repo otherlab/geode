@@ -35,7 +35,7 @@ namespace mpl = boost::mpl;
 
 class OTHER_CORE_CLASS_EXPORT Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base; // the hierarchy stops here
 private:
   Object(const Object&); // noncopyable by default

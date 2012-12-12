@@ -19,7 +19,7 @@ template<class TV> class Box;
 
 class Random : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef mpl::if_c<sizeof(real)==4,uint32_t,uint64_t>::type RealBits;
   BOOST_STATIC_ASSERT(sizeof(RealBits)==sizeof(real));

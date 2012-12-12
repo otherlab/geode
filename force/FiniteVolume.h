@@ -17,7 +17,7 @@ class FiniteVolume:public Force<TV>
     enum {m=TV::m};
     enum {d=d_};
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Force<TV> Base;
 
     Ref<StrainMeasure<TV,d> > strain;

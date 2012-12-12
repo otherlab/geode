@@ -17,7 +17,7 @@ namespace other {
 class SparseMatrix:public Object
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef real T;
 
     const NestedArray<const int> J;

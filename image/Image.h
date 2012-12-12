@@ -44,7 +44,7 @@ template<class T>
 class Image : public Object
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
     template<int C> static Vector<T,C> to_scalar_color(const Vector<uint8_t,C> color_in)
     {return other::to_scalar_color<T,C>(color_in);}

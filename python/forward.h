@@ -16,9 +16,9 @@ template<class T=PyObject> class Ptr;
 template<class T,class Enable=void> struct FromPython; // from_python<T> isn't defined for types by default
 
 // Should appear at the beginning of all mixed python/C++ classes, after public:
-#define OTHER_DECLARE_TYPE \
+#define OTHER_DECLARE_TYPE(export_spec) \
   OTHER_NEW_FRIEND \
-  OTHER_CORE_EXPORT static other::PyTypeObject pytype;
+  export_spec static other::PyTypeObject pytype;
 
 #ifdef OTHER_VARIADIC
 

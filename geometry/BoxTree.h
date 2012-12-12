@@ -24,7 +24,7 @@ template<class TV> class BoxTree : public Object
 {
   typedef typename TV::Scalar T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   const int leaf_size;

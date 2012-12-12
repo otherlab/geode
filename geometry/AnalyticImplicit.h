@@ -13,7 +13,7 @@ class AnalyticImplicit:public Implicit<typename Shape::VectorT>,public Shape
   typedef typename Shape::VectorT TV;
   BOOST_MPL_ASSERT((boost::is_same<T,typename TV::Scalar>));
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Implicit<TV> Base;
 
 protected:

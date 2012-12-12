@@ -20,7 +20,7 @@ namespace other {
 namespace mpl = boost::mpl;
 
 struct Buffer {
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   OTHER_PY_OBJECT_HEAD // contains a reference count and a pointer to the type object
   char data[1]; // should be size zero, but Windows would complain
 

@@ -18,7 +18,7 @@ namespace other {
 
 class PolygonMesh : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   const Array<const int> counts; // number of vertices in each polygon

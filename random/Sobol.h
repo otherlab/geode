@@ -16,7 +16,7 @@ using std::numeric_limits;
 template<class TV>
 class Sobol : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
   typedef typename TV::Scalar T;
   BOOST_STATIC_ASSERT(numeric_limits<T>::radix==2);

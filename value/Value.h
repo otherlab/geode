@@ -25,7 +25,7 @@ using boost::is_reference;
 
 class OTHER_CORE_CLASS_EXPORT ValueBase : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 private:
   friend class Action;

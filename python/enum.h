@@ -28,7 +28,7 @@ using std::make_pair;
 
 template<class E> class PyEnum : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   static unordered_map<int,Ref<PyEnum>> values;

@@ -12,7 +12,7 @@ class FrameImplicit:public Implicit<TV>
 {
   typedef typename TV::Scalar T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Implicit<TV> Base;
 
   Frame<TV> frame;
