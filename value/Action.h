@@ -47,8 +47,8 @@ public:
   OTHER_CORE_EXPORT std::vector<Ptr<const ValueBase>> get_dependencies() const ;
 
 protected:
-  void clear_dependencies() const;
-  void depend_on(const ValueBase& value) const;
+  OTHER_CORE_EXPORT void clear_dependencies() const;
+  OTHER_CORE_EXPORT void depend_on(const ValueBase& value) const;
 private:
   virtual void input_changed() const = 0;
 };
