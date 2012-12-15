@@ -8,13 +8,13 @@
 #include <other/core/structure/UnionFind.h>
 #include <other/core/geometry/SimplexTree.h>
 #include <other/core/geometry/Ray.h>
-#include <other/core/vector/convert.h>
 #include <boost/algorithm/string.hpp>
 #include <other/core/utility/path.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/utility/stl.h>
 #include <other/core/openmesh/triangulator.h>
 #include <other/core/vector/Frame.h>
+#include <other/core/vector/convert.h>
 #include <queue>
 #include <iostream>
 namespace other {
@@ -28,6 +28,11 @@ using std::make_pair;
 typedef Vector<real,2> TV2;
 
 OTHER_DEFINE_TYPE(TriMesh)
+
+VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 2, OpenMesh::VertexHandle)
+VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 3, OpenMesh::VertexHandle)
+VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 2, OpenMesh::FaceHandle)
+VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 3, OpenMesh::FaceHandle)
 
 TriMesh::TriMesh(): OTriMesh() {
 }

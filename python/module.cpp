@@ -2,12 +2,15 @@
 // Module Python
 //#####################################################################
 #include <other/core/utility/config.h>
-#define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
-extern "C" {
-OTHER_CORE_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
-}
+//#define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
+//extern "C" {
+//#ifdef _WIN32
+//extern void** PY_ARRAY_UNIQUE_SYMBOL;
+//#else
+//OTHER_CORE_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
+//#endif
+//}
 #define OTHER_IMPORT_NUMPY
-
 #include <other/core/python/module.h>
 #include <other/core/python/enum.h>
 #include <other/core/python/numpy.h>
@@ -66,7 +69,7 @@ void add_object(const char* name, PyObject* object) {}
 
 }
 
-OTHER_DEFINE_ENUM(python::EnumTest)
+OTHER_DEFINE_ENUM(python::EnumTest,OTHER_CORE_EXPORT)
 
 }
 using namespace other;

@@ -23,6 +23,7 @@
 //#####################################################################
 #pragma once
 
+#include <other/core/python/config.h>
 #include <other/core/python/forward.h>
 #include <other/core/python/new.h>
 #include <other/core/utility/config.h>

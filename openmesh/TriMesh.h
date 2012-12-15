@@ -127,6 +127,8 @@ struct vector_traits<other::OVec<T,d> >
 
 }
 
+#include <other/core/python/numpy.h>
+
 namespace other {
 
 template<class T,int d>
@@ -175,6 +177,21 @@ template<class T,class Handle> struct HandleToProp;
 template<class T> struct HandleToProp<T,VertexHandle> { typedef OpenMesh::VPropHandleT<T> type; };
 template<class T> struct HandleToProp<T,FaceHandle>   { typedef OpenMesh::FPropHandleT<T> type; };
 template<class T> struct HandleToProp<T,EdgeHandle>   { typedef OpenMesh::EPropHandleT<T> type; };
+
+namespace {
+// for vector conversions
+template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::VertexHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::EdgeHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::HalfedgeHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::FaceHandle>:public mpl::true_{};
+
+template<> struct NumpyScalar<OpenMesh::BaseHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::VertexHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
+}
 
 }
 

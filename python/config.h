@@ -70,12 +70,20 @@ static inline int hack_fetch_and_add(ssize_t* n, int dn) {
 #define OTHER_PY_DEALLOC _Py_Dealloc
 #define OTHER_PY_OBJECT_HEAD PyObject_HEAD
 #define OTHER_PY_OBJECT_INIT PyObject_INIT
+
+#ifndef _WIN32
 struct _object;
 struct _typeobject;
 namespace other {
 typedef _object PyObject;
 typedef _typeobject PyTypeObject;
-};
+}
+#else
+namespace other {
+using ::PyObject;
+using ::PyTypeObject;
+}
+#endif
 
 #else
 

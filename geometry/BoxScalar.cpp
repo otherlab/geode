@@ -21,8 +21,8 @@ template<class T> Box<T> FromPython<Box<T> >::convert(PyObject* object) {
 }
 
 #define INSTANTIATE(T) \
-  template PyObject* to_python(const Box<T>&); \
-  template Box<T> FromPython<Box<T> >::convert(PyObject*);
+  template OTHER_CORE_EXPORT PyObject* to_python(const Box<T>&); \
+  template OTHER_CORE_EXPORT Box<T> FromPython<Box<T> >::convert(PyObject*);
 INSTANTIATE(float)
 INSTANTIATE(double)
 

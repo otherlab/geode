@@ -15,6 +15,7 @@
 #include <other/core/python/Ptr.h>
 #include <other/core/python/Ref.h>
 #include <other/core/vector/Vector.h>
+#include <other/core/structure/Tuple.h>
 namespace other {
 
 class SegmentMesh : public Object {
@@ -31,7 +32,7 @@ private:
   mutable NestedArray<int> neighbors_;
   mutable NestedArray<int> incident_elements_;
   mutable Array<Vector<int,2> > adjacent_elements_;
-  mutable Vector<NestedArray<const int>,2> polygons_;
+  mutable Tuple<NestedArray<const int>,NestedArray<const int>> polygons_;
 
 protected:
 OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
@@ -46,7 +47,7 @@ public:
 
   // Decompose segment mesh into maximal manifold contours, returning closed-contours, open-contours.
   // Nonmanifold vertices will show up several times in different open contours.
-  OTHER_CORE_EXPORT const Vector<NestedArray<const int>,2>& polygons() const;
+  OTHER_CORE_EXPORT const Tuple<NestedArray<const int>,NestedArray<const int>>& polygons() const;
 
   OTHER_CORE_EXPORT NestedArray<const int> neighbors() const; // vertices to vertices
   OTHER_CORE_EXPORT NestedArray<const int> incident_elements() const; // vertices to segments

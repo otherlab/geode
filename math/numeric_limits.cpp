@@ -1,9 +1,10 @@
 // Python needs numeric_limits
 
+#include <limits>
 #include <other/core/python/Class.h>
 #include <other/core/python/module.h>
 #include <other/core/python/numpy.h>
-#include <limits>
+
 namespace other {
 
 using std::numeric_limits;

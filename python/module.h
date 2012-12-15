@@ -23,10 +23,17 @@ namespace python {
 
 #ifdef OTHER_PYTHON
 
+#ifdef _WIN32
+#define MODINIT PyMODINIT_FUNC
+#else
+#define MODINIT PyMODINIT_FUNC OTHER_CORE_EXPORT 
+#endif
+
+
 #define OTHER_PYTHON_MODULE(name) \
   static void Init_Helper_##name(); \
-  PyMODINIT_FUNC OTHER_CORE_EXPORT initlib##name(); \
-  PyMODINIT_FUNC OTHER_CORE_EXPORT initlib##name() { \
+  MODINIT initlib##name(); \
+  MODINIT initlib##name() { \
     PyObject* module = Py_InitModule3("lib"#name,0,0); \
     if (module) { \
       try { \

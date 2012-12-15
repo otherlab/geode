@@ -57,9 +57,9 @@ template<class TV> Rotation<TV> FromPython<Rotation<TV>>::convert(PyObject* obje
 }
 
 #define INSTANTIATE(T,d) \
-    template PyObject* to_python<Vector<T,d>>(const Rotation<Vector<T,d>>&); \
-    template Rotation<Vector<T,d>> FromPython<Rotation<Vector<T,d>>>::convert(PyObject*); \
-    template bool rotations_check<Vector<T,d>>(PyObject*); \
+    template OTHER_CORE_EXPORT PyObject* to_python<Vector<T,d>>(const Rotation<Vector<T,d>>&); \
+    template OTHER_CORE_EXPORT Rotation<Vector<T,d>> FromPython<Rotation<Vector<T,d>>>::convert(PyObject*); \
+    template OTHER_CORE_EXPORT bool rotations_check<Vector<T,d>>(PyObject*); \
     ARRAY_CONVERSIONS(1,Rotation<Vector<T,d>>)
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)

@@ -1,7 +1,10 @@
-#pragma once
+#ifndef _VECTOR_CONVERT_H
+#define _VECTOR_CONVERT_H
 
 #include <other/core/vector/Vector.h>
 #include <other/core/python/numpy.h>
+#include <other/core/utility/config.h>
+
 namespace other{
 
 #ifdef OTHER_PYTHON
@@ -28,17 +31,12 @@ template<class T> struct VectorToPython<T,typename boost::enable_if<NumpyIsStati
   }
 };
   
-template<class T,int d> PyObject* to_python(const Vector<T,d>& vector) {
-  return VectorToPython<T>::convert(vector);
-}
+template<class T,int d> PyObject* to_python(const Vector<T,d>& vector);
+//template<class T,int d> Vector<T,d> FromPython<Vector<T,d> >::convert(PyObject* object);
 
-template<class T,int d> Vector<T,d> FromPython<Vector<T,d> >::convert(PyObject* object) {
-  return from_numpy<Vector<T,d> >(object);
-}
-  
-#define VECTOR_CONVERSIONS(d,...) \
-  template PyObject* to_python<__VA_ARGS__,d>(const Vector<__VA_ARGS__,d>&); \
-  template Vector<__VA_ARGS__,d> FromPython<Vector<__VA_ARGS__,d> >::convert(PyObject*);
+#define VECTOR_CONVERSIONS(EXPORT,d,...) \
+  template<> EXPORT PyObject* to_python<__VA_ARGS__,d>(const Vector<__VA_ARGS__,d>&v) {return VectorToPython<__VA_ARGS__>::convert(v);}\
+  template<> EXPORT Vector<__VA_ARGS__,d> FromPython<Vector<__VA_ARGS__,d>>::convert(PyObject*o) { return from_numpy<Vector<__VA_ARGS__,d>>(o); }
 
 #else // non-python stub
 
@@ -47,3 +45,6 @@ template<class T,int d> Vector<T,d> FromPython<Vector<T,d> >::convert(PyObject* 
 #endif
   
 }
+
+#endif
+

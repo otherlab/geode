@@ -533,4 +533,7 @@ template<class T> static inline Vector<T,6> vec(const T& a0,const T& a1,const T&
 
 #endif
 //#####################################################################
+
 }
+
+
