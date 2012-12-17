@@ -29,17 +29,15 @@ typedef Vector<real,2> TV2;
 
 OTHER_DEFINE_TYPE(TriMesh)
 
-VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 2, OpenMesh::VertexHandle)
-VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 3, OpenMesh::VertexHandle)
-VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 2, OpenMesh::FaceHandle)
-VECTOR_CONVERSIONS(OTHER_CORE_EXPORT, 3, OpenMesh::FaceHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,VertexHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,FaceHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,FaceHandle)
 
-TriMesh::TriMesh(): OTriMesh() {
-}
+TriMesh::TriMesh() {}
 
-TriMesh::TriMesh(const TriMesh& m): OTriMesh(m) {
-
-}
+TriMesh::TriMesh(const TriMesh& m)
+  : OTriMesh(m) {}
 
 TriMesh::TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real,3> > X) {
   if (tris.size())

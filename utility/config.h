@@ -16,13 +16,15 @@ typedef double real;
 #endif
 }
 
+#define OTHER_NO_EXPORT // For documentation purposes
+
 #ifndef _WIN32
 
 #define OTHER_VARIADIC
 
-// marks the current symbol for export
+// Mark the current symbol for export
 #define OTHER_EXPORT __attribute__ ((visibility("default")))
-// marks the current symbol as imported (does nothing in non-windows)
+// Mark the current symbol as imported (does nothing in non-windows)
 #define OTHER_IMPORT
 
 #define OTHER_HIDDEN __attribute__ ((visibility("hidden")))

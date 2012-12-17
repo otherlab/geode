@@ -33,8 +33,20 @@ using boost::common_type;
 
 template<class TArray,class TIndices> class IndirectArray;
 
-template<class T,int d> OTHER_CORE_EXPORT PyObject* to_python(const Vector<T,d>& vector);
-template<class T,int d> struct FromPython<Vector<T,d> >{OTHER_CORE_EXPORT static Vector<T,d> convert(PyObject* object);};
+// Declare blanket to_python for numpy-incompatible vectors
+template<class T,int d> PyObject* to_python(const Vector<T,d>& vector);
+
+// Declare the base set of numpy compatible vector conversions
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,4,int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,short int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,short int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,4,short int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,1,real)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,real)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,real)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,4,real)
 
 template<class T,int d>
 class Vector

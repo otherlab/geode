@@ -46,4 +46,13 @@ class SolidMatrixStructure;
 template<class TV> class SolidMatrix;
 template<class TV> class SolidDiagonalMatrix;
 
+// Declare vector conversions.  See vector/convert.h for the matching OTHER_DEFINE_VECTOR_CONVERSIONS.
+#ifdef OTHER_PYTHON
+#define OTHER_DECLARE_VECTOR_CONVERSIONS(EXPORT,d,...) \
+  EXPORT PyObject* to_python(const Vector<__VA_ARGS__,d>& v); \
+  template<> struct FromPython<Vector<__VA_ARGS__,d>> { EXPORT static Vector<__VA_ARGS__,d> convert(PyObject* o); };
+#else
+#define OTHER_DECLARE_VECTOR_CONVERSIONS(...) // non-python stub
+#endif
+
 }

@@ -178,6 +178,11 @@ template<class T> struct HandleToProp<T,VertexHandle> { typedef OpenMesh::VPropH
 template<class T> struct HandleToProp<T,FaceHandle>   { typedef OpenMesh::FPropHandleT<T> type; };
 template<class T> struct HandleToProp<T,EdgeHandle>   { typedef OpenMesh::EPropHandleT<T> type; };
 
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,VertexHandle)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,FaceHandle)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,FaceHandle)
+
 namespace {
 // for vector conversions
 template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};

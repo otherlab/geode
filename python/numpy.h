@@ -32,10 +32,7 @@ OTHER_CORE_EXPORT void OTHER_NORETURN(throw_not_owned());
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_array_conversion_error(PyObject* object,int flags,int rank_range,PyArray_Descr* descr));
 OTHER_CORE_EXPORT size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num); // Returns total data size in bytes
 OTHER_CORE_EXPORT void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int type_num,void* data);
-
-OTHER_CORE_EXPORT inline bool is_numpy_array(void *o) {
-  return PyArray_Check(o);
-}
+OTHER_CORE_EXPORT bool is_numpy_array(PyObject* o);
 
 // Stay compatible with old versions of numpy
 #ifndef NPY_ARRAY_WRITEABLE
