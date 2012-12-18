@@ -61,7 +61,7 @@ public:
     {}
 
     template<class TVector>
-    explicit Vector(const TVector& v,typename boost::enable_if<mpl::and_<boost::is_same<T,typename TVector::Element>,mpl::bool_<TVector::m==1> >,Unusable>::type unusable=Unusable())
+    explicit Vector(const TVector& v,typename EnableForVectorLike<T,1,TVector,Unusable>::type unusable=Unusable())
         :x(v[0])
     {}
 
@@ -71,7 +71,7 @@ public:
         for(int i=0;i<n;i++) (*this)(i)=v1(i);for(int i=n;i<1;i++) (*this)(i)=v2(i-n);
     }
 
-    template<class TVector> typename boost::enable_if<boost::mpl::and_<boost::is_same<T,typename TVector::Element>,mpl::bool_<TVector::m==1> >,Vector&>::type
+    template<class TVector> typename EnableForVectorLike<T,1,TVector,Vector&>::type
     operator=(const TVector& v)
     {
         x=v[0];return *this;

@@ -114,7 +114,7 @@ public:
         for(int i=0;i<n;i++) (*this)(i)=v1(i);for(int i=n;i<d;i++) (*this)(i)=v2(i-n);
     }
 
-    template<class TVector> typename boost::enable_if<mpl::and_<boost::is_same<T,typename TVector::Element>,mpl::bool_<TVector::m==d> >,Vector&>::type
+    template<class TVector> typename EnableForVectorLike<T,d,TVector,Vector&>::type
     operator=(const TVector& v)
     {
         for(int i=0;i<d;i++) array[i]=v[i];return *this;

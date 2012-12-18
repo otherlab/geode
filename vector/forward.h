@@ -46,6 +46,12 @@ class SolidMatrixStructure;
 template<class TV> class SolidMatrix;
 template<class TV> class SolidDiagonalMatrix;
 
+// Windows doesn't like function level SFINAE, so use template classes instead.
+template<int d,class TV,class Result,class D=mpl::int_<d>> struct EnableForSize;
+template<int d,class TV,class Result> struct EnableForSize<d,TV,Result,mpl::int_<TV::m>> { typedef Result type; };
+template<class T,int d,class TV,class Result,class D=mpl::int_<d>> struct EnableForVectorLike;
+template<class TV,int d,class Result> struct EnableForVectorLike<typename TV::Element,d,TV,Result,mpl::int_<TV::m>> { typedef Result type; };
+
 // Declare vector conversions.  See vector/convert.h for the matching OTHER_DEFINE_VECTOR_CONVERSIONS.
 #ifdef OTHER_PYTHON
 #define OTHER_DECLARE_VECTOR_CONVERSIONS(EXPORT,d,...) \
