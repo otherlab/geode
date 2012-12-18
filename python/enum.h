@@ -2,14 +2,19 @@
 // Python conversion for enums
 //#####################################################################
 //
-// To use, put OTHER_DEFINE_ENUM(E) in a .cpp, then in a wrap() function do
+// To use,
 //
-//   OTHER_WRAP_ENUM(E)
+// 1. Put OTHER_DECLARE_ENUM(E) in a .h.
+// 2. Put OTHER_DEFINE_ENUM(E) in a .cpp.
+// 3. In a wrap() function, do
+//
+//   OTHER_ENUM(E)
 //   OTHER_ENUM_VALUE(value0)
 //   OTHER_ENUM_VALUE(value1)
 //   ...
 //
-// Note: Including enum.h from a header will result in duplicate symbols.
+// Note: Including enum.h from a header will result in duplicate symbols.  Due to complicated
+// namespace issues, everything (including the enum) must go inside the other namespace.
 //
 //#####################################################################
 #pragma once
@@ -27,18 +32,15 @@ using std::make_pair;
 
 #ifdef OTHER_PYTHON
 
-// these are just stubs for the compiler to expect the specializations later.
+// These are just stubs for the compiler to expect the specializations later.
 template<class E> class PyEnum : public Object {};
 
-// we have to declare this function
-#define OTHER_DECLARE_ENUM(E,EXPORT) \
-  EXPORT PyObject* to_python(E value);
-
-// for dllimport/export reaons, this has to be used in the library it is exported from, with its export specifier. So
+// For dllimport/export reaons, this has to be used in the library it is exported from, with its export specifier. So
 // we declare the generic template here (which is independent of export specs), and this macro declares template 
 // specializations with the proper exports.
 #define OTHER_DEFINE_ENUM(E,EXPORT) \
   template<> class PyEnum<E> : public Object { \
+    typedef int Unused##E; /* E must be unqualified */ \
   public: \
     OTHER_DECLARE_TYPE(EXPORT) \
     typedef Object Base; \

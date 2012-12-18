@@ -54,4 +54,8 @@ template<class T,class Args> struct WrapConstructor;
 
 #endif
 
+// Declare an enum to python.  Must have a corresponding call to OTHER_DEFINE_ENUM from enum.h (in a .cpp).
+#define OTHER_DECLARE_ENUM(E,EXPORT) \
+  EXPORT PyObject* to_python(E value);
+
 } // namespace other

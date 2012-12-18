@@ -58,8 +58,6 @@ template<class TC> static TC convert_test(const TC& c) {
   return c;
 }
 
-enum EnumTest { EnumTestA, EnumTestB };
-
 #else // non-python stubs
 
 void import_core() {}
@@ -69,7 +67,8 @@ void add_object(const char* name, PyObject* object) {}
 
 }
 
-OTHER_DEFINE_ENUM(python::EnumTest,OTHER_CORE_EXPORT)
+enum EnumTest { EnumTestA, EnumTestB };
+OTHER_DEFINE_ENUM(EnumTest,OTHER_CORE_EXPORT)
 
 }
 using namespace other;
