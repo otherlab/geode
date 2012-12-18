@@ -3,7 +3,7 @@
 from __future__ import (with_statement,absolute_import)
 from contextlib import contextmanager
 
-from libother_core import (
+from other_core import (
   log_configure as configure,
   log_cache_initial_output as cache_initial_output,
   log_copy_to_file as copy_to_file,

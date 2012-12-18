@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import other.core.utility
 from numpy import *
-from libother_core import *
-from libother_core import _set_nested_array
+from other_core import *
+from other_core import _set_nested_array
 
 class NestedArray(object):
   """Represents a nested array of arrays using flat storage for efficiency.

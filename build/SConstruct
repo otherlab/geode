@@ -356,7 +356,6 @@ env.Append(CPPDEFINES=['BOOST_EXCEPTION_DISABLE'])
 
 # Darwin specific options
 if darwin:
-  env.Replace(LDMODULEPREFIX='lib')
   env.Replace(LDMODULESUFFIX='.so')
 
 # Work around apparent bug in variable expansion

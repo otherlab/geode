@@ -7,7 +7,7 @@
 // 1. Catches and translates any C++ exceptions into python.
 // 2. Sets the current_module variable for use in Class and other wrapper helpers.
 //
-// If the module is named blah, the shared library should be libBlah.so, not Blah.so.
+// If the module is named blah, the shared library should be blah.so, not libblah.so.
 //
 //#####################################################################
 #pragma once
@@ -32,9 +32,9 @@ namespace python {
 
 #define OTHER_PYTHON_MODULE(name) \
   static void Init_Helper_##name(); \
-  MODINIT initlib##name(); \
-  MODINIT initlib##name() { \
-    PyObject* module = Py_InitModule3("lib"#name,0,0); \
+  MODINIT init##name(); \
+  MODINIT init##name() { \
+    PyObject* module = Py_InitModule3(#name,0,0); \
     if (module) { \
       try { \
         ::other::python::Scope scope(module); \

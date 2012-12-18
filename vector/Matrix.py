@@ -56,5 +56,5 @@ class Matrix(numpy.ndarray):
     def inverse(self):
         return numpy.linalg.inv(self)
 
-import libother_core
-libother_core._set_matrix_type(Matrix)
+import other_core
+other_core._set_matrix_type(Matrix)

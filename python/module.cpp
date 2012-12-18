@@ -41,7 +41,7 @@ static PyObject* module() {
 void import_core() {
   char* name = PyModule_GetName(module());
   if (!name) throw_python_error();
-  if (strcmp(name,"libother_core")){
+  if (strcmp(name,"other_core")){
     PyObject* python_str=PyString_FromString("other.core");
     if (!python_str) throw_python_error();
     PyObject* python = PyImport_Import(python_str);

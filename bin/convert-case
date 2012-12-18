@@ -109,7 +109,7 @@ def convert_relative_module(m):
 libtry_pattern = re.compile(r'\blibTry(\w+)\b')
 def convert_libtry(m):
   s = m.group(1)
-  return 'libother_'+dir_map[s]
+  return 'other_'+dir_map[s]
 
 def run(*cmd):
   print ' '.join(cmd)
