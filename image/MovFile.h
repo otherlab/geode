@@ -10,7 +10,7 @@ class QtAtom;
 
 class MovWriter : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef real T;
 private:
@@ -22,12 +22,12 @@ private:
   Array<int> sample_lengths;
 
 protected:
-  OTHER_EXPORT MovWriter(const std::string& filename,const int frames_per_second=24);
+  OTHER_CORE_EXPORT MovWriter(const std::string& filename,const int frames_per_second=24);
 public:
-  OTHER_EXPORT ~MovWriter();
-  OTHER_EXPORT void add_frame(const Array<Vector<T,3>,2>& image);
-  OTHER_EXPORT void write_footer();
-  OTHER_EXPORT static bool enabled();
+  OTHER_CORE_EXPORT ~MovWriter();
+  OTHER_CORE_EXPORT void add_frame(const Array<Vector<T,3>,2>& image);
+  OTHER_CORE_EXPORT void write_footer();
+  OTHER_CORE_EXPORT static bool enabled();
 };
 
 }

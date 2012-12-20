@@ -1,6 +1,11 @@
 //#####################################################################
 // Class JpgFile
 //#####################################################################
+
+#ifdef _WIN32
+#define LEAVE_WINDOWS_DEFINES_ALONE
+#endif
+
 #include <other/core/image/JpgFile.h>
 #include <other/core/array/Array2d.h>
 #include <other/core/vector/Vector3d.h>

@@ -40,4 +40,5 @@ void wrap_utility() {
   OTHER_FUNCTION(log_error)
 
   OTHER_WRAP(base64)
+  OTHER_WRAP(resource)
 }

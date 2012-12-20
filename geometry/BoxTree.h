@@ -24,7 +24,7 @@ template<class TV> class BoxTree : public Object
 {
   typedef typename TV::Scalar T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   const int leaf_size;
@@ -36,8 +36,8 @@ public:
   mutable Array<int> traversal_buffer; // for use during tree traversals
 
 protected:
-  BoxTree(RawArray<const TV> geo,int leaf_size) OTHER_EXPORT;
-  BoxTree(RawArray<const Box<TV>> geo,int leaf_size) OTHER_EXPORT;
+  OTHER_CORE_EXPORT BoxTree(RawArray<const TV> geo,int leaf_size);
+  OTHER_CORE_EXPORT BoxTree(RawArray<const Box<TV>> geo,int leaf_size);
 public:
   ~BoxTree();
 
@@ -63,11 +63,12 @@ public:
   static int child(int node,int i)
   {assert(unsigned(i)<2);return 2*node+1+i;}
 
-  void update_nonleaf_boxes() OTHER_EXPORT;
+  OTHER_CORE_EXPORT void update_nonleaf_boxes();
   void check(RawArray<const TV> x) const;
 
   // Warning: Doesn't know about structure without each tree leaf
-  template<class Shape> bool any_box_intersection(const Shape& shape) const OTHER_EXPORT; 
+  template<class Shape>
+  OTHER_CORE_EXPORT bool any_box_intersection(const Shape& shape) const;
 };
 
 }

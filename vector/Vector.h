@@ -33,8 +33,20 @@ using boost::common_type;
 
 template<class TArray,class TIndices> class IndirectArray;
 
-template<class T,int d> PyObject* to_python(const Vector<T,d>& vector) OTHER_EXPORT;
-template<class T,int d> struct FromPython<Vector<T,d> >{OTHER_EXPORT static Vector<T,d> convert(PyObject* object);};
+// Declare blanket to_python for numpy-incompatible vectors
+template<class T,int d> PyObject* to_python(const Vector<T,d>& vector);
+
+// Declare the base set of numpy compatible vector conversions
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,4,int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,short int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,short int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,4,short int)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,1,real)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,real)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,real)
+OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,4,real)
 
 template<class T,int d>
 class Vector
@@ -102,7 +114,7 @@ public:
         for(int i=0;i<n;i++) (*this)(i)=v1(i);for(int i=n;i<d;i++) (*this)(i)=v2(i-n);
     }
 
-    template<class TVector> typename boost::enable_if<mpl::and_<boost::is_same<T,typename TVector::Element>,mpl::bool_<TVector::m==d> >,Vector&>::type
+    template<class TVector> typename EnableForVectorLike<T,d,TVector,Vector&>::type
     operator=(const TVector& v)
     {
         for(int i=0;i<d;i++) array[i]=v[i];return *this;
@@ -533,4 +545,7 @@ template<class T> static inline Vector<T,6> vec(const T& a0,const T& a1,const T&
 
 #endif
 //#####################################################################
+
 }
+
+

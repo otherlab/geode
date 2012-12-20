@@ -6,40 +6,42 @@
 #include <vector>
 
 namespace other {
-  
+
 class SegmentMesh;
 
 typedef std::vector<Vector<real, 2> > Polygon;
-typedef std::vector<Polygon> Polygons; 
+typedef std::vector<Polygon> Polygons;
 
-Box<Vector<real,2> > bounding_box(Polygon const &poly) OTHER_EXPORT;
-Box<Vector<real,2> > bounding_box(Polygons const &polys) OTHER_EXPORT;
+OTHER_CORE_EXPORT Box<Vector<real,2> > bounding_box(Polygon const &poly);
+OTHER_CORE_EXPORT Box<Vector<real,2> > bounding_box(Polygons const &polys);
 
-Polygon polygon_from_index_list(RawArray<const Vector<real,2> > const &positions, RawArray<const int> indices) OTHER_EXPORT;
-Polygons polygons_from_index_list(RawArray<const Vector<real,2> > const &positions, NestedArray<const int> indices) OTHER_EXPORT;
+OTHER_CORE_EXPORT Polygon polygon_from_index_list(RawArray<const Vector<real,2> > const &positions, RawArray<const int> indices);
+OTHER_CORE_EXPORT Polygons polygons_from_index_list(RawArray<const Vector<real,2> > const &positions, NestedArray<const int> indices);
 
 // compute signed area of polygon(s)
-real polygon_area(Polygons const &polys) OTHER_EXPORT;
-real polygon_area(Polygon const &poly) OTHER_EXPORT;
+OTHER_CORE_EXPORT real polygon_area(Polygons const &polys);
+OTHER_CORE_EXPORT real polygon_area(Polygon const &poly);
 
 // compute the length of an (open) polyline
-real polyline_length(Polygon const &poly) OTHER_EXPORT;
+OTHER_CORE_EXPORT real polyline_length(Polygon const &poly);
 
 // compute the circumference of a closed polygon
-real polygon_length(Polygon const &poly) OTHER_EXPORT;
+OTHER_CORE_EXPORT real polygon_length(Polygon const &poly);
 
 // enforce maximum edge length along the polygon
-Polygon resample_polygon(Polygon poly, double maximum_edge_length) OTHER_EXPORT;
+OTHER_CORE_EXPORT Polygon resample_polygon(Polygon poly, double maximum_edge_length);
 
 // return whether the point is inside the polygon
-bool inside_polygon(Vector<real,2> const &p, Polygon const &poly) OTHER_EXPORT;
+OTHER_CORE_EXPORT bool inside_polygon(Vector<real,2> const &p, Polygon const &poly);
 
 // find a point inside the shape defined by polys, and inside the contour poly
-Vector<real,2> point_inside_polygon_component(Polygon const &poly, Polygons const &polys) OTHER_EXPORT;
+OTHER_CORE_EXPORT Vector<real,2> point_inside_polygon_component(Polygon const &poly, Polygons const &polys);
 
-Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.) OTHER_EXPORT;
+OTHER_CORE_EXPORT Tuple<Polygon, std::vector<int> > offset_polygon_with_correspondence(Polygon const &poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.);
 
 template<int d>
-Tuple<Ref<SegmentMesh>, Array<Vector<real,d>>> to_segment_mesh(std::vector<std::vector<Vector<real,d>>> const &polys, bool open = false) OTHER_EXPORT;
+OTHER_CORE_EXPORT Tuple<Ref<SegmentMesh>, Array<Vector<real,d>>> to_segment_mesh(std::vector<std::vector<Vector<real,d>>> const &polys, bool open);
+
+//OTHER_CORE_EXPORT Tuple<Ref<SegmentMesh>, Array<Vector<real,2>>> to_segment_mesh(std::vector<std::vector<Vector<real,2>>> const &polys, bool open);
 
 }

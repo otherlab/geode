@@ -90,8 +90,8 @@ intersection(const Shape& shape, Array<int>& hits) const {
 
 #define INSTANTIATE(d) \
   template class ParticleTree<Vector<T,d>>; \
-  template void ParticleTree<Vector<T,d>>::intersection(const Box<Vector<T,d>>&,Array<int>&) const; \
-  template void ParticleTree<Vector<T,d>>::intersection(const Sphere<Vector<T,d>>&,Array<int>&) const;
+  template OTHER_CORE_EXPORT void ParticleTree<Vector<T,d>>::intersection(const Box<Vector<T,d>>&,Array<int>&) const; \
+  template OTHER_CORE_EXPORT void ParticleTree<Vector<T,d>>::intersection(const Sphere<Vector<T,d>>&,Array<int>&) const;
 INSTANTIATE(2)
 INSTANTIATE(3)
 }

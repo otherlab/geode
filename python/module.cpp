@@ -2,12 +2,15 @@
 // Module Python
 //#####################################################################
 #include <other/core/utility/config.h>
-#define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
-extern "C" {
-OTHER_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
-}
+//#define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
+//extern "C" {
+//#ifdef _WIN32
+//extern void** PY_ARRAY_UNIQUE_SYMBOL;
+//#else
+//OTHER_CORE_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
+//#endif
+//}
 #define OTHER_IMPORT_NUMPY
-
 #include <other/core/python/module.h>
 #include <other/core/python/enum.h>
 #include <other/core/python/numpy.h>
@@ -38,7 +41,7 @@ static PyObject* module() {
 void import_core() {
   char* name = PyModule_GetName(module());
   if (!name) throw_python_error();
-  if (strcmp(name,"libother_core")){
+  if (strcmp(name,"other_core")){
     PyObject* python_str=PyString_FromString("other.core");
     if (!python_str) throw_python_error();
     PyObject* python = PyImport_Import(python_str);
@@ -55,8 +58,6 @@ template<class TC> static TC convert_test(const TC& c) {
   return c;
 }
 
-enum EnumTest { EnumTestA, EnumTestB };
-
 #else // non-python stubs
 
 void import_core() {}
@@ -66,7 +67,8 @@ void add_object(const char* name, PyObject* object) {}
 
 }
 
-OTHER_DEFINE_ENUM(python::EnumTest)
+enum EnumTest { EnumTestA, EnumTestB };
+OTHER_DEFINE_ENUM(EnumTest,OTHER_CORE_EXPORT)
 
 }
 using namespace other;

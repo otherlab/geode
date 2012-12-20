@@ -122,19 +122,20 @@ template<> bool Box<Vector<real,3>>::lazy_intersects(const Ray<Vector<Scalar,3>>
 //#endif
 
 #define INSTANTIATION_HELPER(T,d) \
-  template string Box<Vector<T,d>>::name(); \
-  template string Box<Vector<T,d>>::repr() const; \
-  template Vector<T,d> Box<Vector<T,d>>::normal(const Vector<T,d>&) const; \
-  template Vector<T,d> Box<Vector<T,d>>::surface(const Vector<T,d>&) const; \
-  template Vector<T,d>::Scalar Box<Vector<T,d>>::phi(const Vector<T,d>&) const; \
-  OTHER_ONLY_PYTHON(template PyObject* to_python<T,d>(const Box<Vector<T,d>>&)); \
-  OTHER_ONLY_PYTHON(template Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*));
+  template OTHER_CORE_EXPORT string Box<Vector<T,d>>::name(); \
+  template OTHER_CORE_EXPORT string Box<Vector<T,d>>::repr() const; \
+  template OTHER_CORE_EXPORT Vector<T,d> Box<Vector<T,d>>::normal(const Vector<T,d>&) const; \
+  template OTHER_CORE_EXPORT Vector<T,d> Box<Vector<T,d>>::surface(const Vector<T,d>&) const; \
+  template OTHER_CORE_EXPORT Vector<T,d>::Scalar Box<Vector<T,d>>::phi(const Vector<T,d>&) const; \
+  OTHER_ONLY_PYTHON(template OTHER_CORE_EXPORT PyObject* to_python<T,d>(const Box<Vector<T,d>>&)); \
+  OTHER_ONLY_PYTHON(template OTHER_CORE_EXPORT Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject*));
 INSTANTIATION_HELPER(real,1)
 INSTANTIATION_HELPER(real,2)
 INSTANTIATION_HELPER(real,3)
 #ifndef OTHER_FLOAT
 INSTANTIATION_HELPER(float,2)
 #endif
+
 #ifndef _WIN32
 template bool Box<Vector<real,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>&,Scalar) const;
 template bool Box<Vector<real,3>>::lazy_intersects(const Ray<Vector<Scalar,3>>&,Scalar) const;

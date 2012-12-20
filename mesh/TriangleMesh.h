@@ -23,7 +23,7 @@ class TriangleMesh : public Object {
   typedef Vector<T,2> TV2;
   typedef Vector<T,3> TV3;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   static const int d = 2;
 
@@ -41,7 +41,7 @@ private:
   mutable NestedArray<const int> sorted_neighbors_;
 
 protected:
-  TriangleMesh(Array<const Vector<int,3> > elements) OTHER_EXPORT;
+OTHER_CORE_EXPORT TriangleMesh(Array<const Vector<int,3> > elements);
 public:
   ~TriangleMesh();
 
@@ -54,20 +54,20 @@ public:
     return ref(*this);
   }
 
-  Ref<const SegmentMesh> segment_mesh() const OTHER_EXPORT;
-  NestedArray<const int> incident_elements() const OTHER_EXPORT; // vertices to triangles
-  Array<const Vector<int,3> > adjacent_elements() const OTHER_EXPORT; // triangles to triangles
-  Ref<SegmentMesh> boundary_mesh() const OTHER_EXPORT; 
-  Array<const Vector<int,4> > bending_quadruples() const OTHER_EXPORT;
-  Array<const int> nodes_touched() const OTHER_EXPORT;
-  NestedArray<const int> sorted_neighbors() const OTHER_EXPORT; // vertices to sorted one-ring
-  T area(RawArray<const TV2> X) const OTHER_EXPORT;
-  T volume(RawArray<const TV3> X) const OTHER_EXPORT; // assumes a closed surface
-  T surface_area(RawArray<const TV3> X) const OTHER_EXPORT;
-  Array<T> vertex_areas(RawArray<const TV3> X) const OTHER_EXPORT;
-  Array<TV3> vertex_normals(RawArray<const TV3> X) const OTHER_EXPORT;
-  Array<TV3> element_normals(RawArray<const TV3> X) const OTHER_EXPORT;
-  Array<int> nonmanifold_nodes(bool allow_boundary) const OTHER_EXPORT;
+  OTHER_CORE_EXPORT Ref<const SegmentMesh> segment_mesh() const;
+  OTHER_CORE_EXPORT NestedArray<const int> incident_elements() const; // vertices to triangles
+  OTHER_CORE_EXPORT Array<const Vector<int,3> > adjacent_elements() const; // triangles to triangles
+  OTHER_CORE_EXPORT Ref<SegmentMesh> boundary_mesh() const;
+  OTHER_CORE_EXPORT Array<const Vector<int,4> > bending_quadruples() const;
+  OTHER_CORE_EXPORT Array<const int> nodes_touched() const;
+  OTHER_CORE_EXPORT NestedArray<const int> sorted_neighbors() const; // vertices to sorted one-ring
+  OTHER_CORE_EXPORT T area(RawArray<const TV2> X) const;
+  OTHER_CORE_EXPORT T volume(RawArray<const TV3> X) const; // assumes a closed surface
+  OTHER_CORE_EXPORT T surface_area(RawArray<const TV3> X) const;
+  OTHER_CORE_EXPORT Array<T> vertex_areas(RawArray<const TV3> X) const;
+  OTHER_CORE_EXPORT Array<TV3> vertex_normals(RawArray<const TV3> X) const;
+  OTHER_CORE_EXPORT Array<TV3> element_normals(RawArray<const TV3> X) const;
+  OTHER_CORE_EXPORT Array<int> nonmanifold_nodes(bool allow_boundary) const;
 };
 
 }

@@ -1,9 +1,10 @@
 // Python needs numeric_limits
 
+#include <limits>
 #include <other/core/python/Class.h>
 #include <other/core/python/module.h>
 #include <other/core/python/numpy.h>
-#include <limits>
+
 namespace other {
 
 using std::numeric_limits;
@@ -12,7 +13,7 @@ using std::numeric_limits;
 
 namespace {
 template<class T> struct Limits : public Object, public numeric_limits<T> {
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   static const T min, max, epsilon, round_error, infinity, quiet_NaN, signaling_NaN, denorm_min;
 
   string repr() const {

@@ -34,8 +34,8 @@ template<> struct is_packed_pod<float>:public mpl::true_{};
 template<> struct is_packed_pod<double>:public mpl::true_{};
 template<class T> struct is_packed_pod<T*>:public mpl::true_{};
 
-Hash hash_reduce(const char* key) OTHER_EXPORT;
-Hash hash_reduce(const string& key) OTHER_EXPORT;
+OTHER_CORE_EXPORT Hash hash_reduce(const char* key);
+OTHER_CORE_EXPORT Hash hash_reduce(const string& key);
 template<class T> inline typename boost::enable_if_c<is_packed_pod<T>::value && sizeof(T)<=4,int>::type hash_reduce(const T& key);
 template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>4 && sizeof(T)<=8),Hash>::type hash_reduce(const T& key);
 template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key);

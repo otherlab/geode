@@ -144,15 +144,6 @@ PropBase& prop_from_python(PyObject* object, const type_info& goal) {
 
 #endif
 
-// Reduce template bloat
-template class Prop<bool>;
-template class Prop<int>;
-template class Prop<double>;
-template class Prop<string>;
-template class Prop<TV2>;
-template class Prop<TV3>;
-template class Prop<TV4>;
-
 }
 using namespace other;
 

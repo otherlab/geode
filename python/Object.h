@@ -23,6 +23,7 @@
 //#####################################################################
 #pragma once
 
+#include <other/core/python/config.h>
 #include <other/core/python/forward.h>
 #include <other/core/python/new.h>
 #include <other/core/utility/config.h>
@@ -33,17 +34,17 @@ namespace other {
 
 namespace mpl = boost::mpl;
 
-class OTHER_EXPORT Object {
+class OTHER_CORE_CLASS_EXPORT Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base; // the hierarchy stops here
 private:
   Object(const Object&); // noncopyable by default
   void operator=(const Object&); // noncopyable by default
 protected:
-  Object();
+  OTHER_CORE_EXPORT Object();
 public:
-  virtual ~Object();
+  OTHER_CORE_EXPORT virtual ~Object();
 };
 
 // Helper for derived classes which are simple wrappers around other real classes

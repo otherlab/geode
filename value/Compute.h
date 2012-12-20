@@ -14,7 +14,7 @@ namespace other{
 
 using boost::function;
 
-template<class T> class OTHER_EXPORT Compute:public Value<T>,public Action
+template<class T> class OTHER_CORE_CLASS_EXPORT Compute:public Value<T>,public Action
 {
 public:
   OTHER_NEW_FRIEND

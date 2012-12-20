@@ -23,9 +23,9 @@ using boost::function;
 //   xtol: absolute point tolerance
 //   ftol: absolute function value tolerance
 // x is updated to minimize f(x), and x,f(x),iters is returned.
-Tuple<real,real,int> brent(const function<real(real)>& f, Vector<real,2> bracket, real xtol, int maxiter) OTHER_EXPORT;
+OTHER_CORE_EXPORT Tuple<real,real,int> brent(const function<real(real)>& f, Vector<real,2> bracket, real xtol, int maxiter);
 
 // Same as above, but specify the full bracketing interval explicitly.  bracket = (a,b,c) must satisfy b in [a,c], f(b) < f(a),f(c).
-Tuple<real,real,int> brent(const function<real(real)>& f, Vector<real,3> bracket, real xtol, int maxiter) OTHER_EXPORT;
+OTHER_CORE_EXPORT Tuple<real,real,int> brent(const function<real(real)>& f, Vector<real,3> bracket, real xtol, int maxiter);
 
 }

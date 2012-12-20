@@ -6,13 +6,12 @@
 #include <other/core/geometry/forward.h>
 #include <other/core/vector/Vector3d.h>
 #include <other/core/math/Zero.h>
-#include <boost/utility/enable_if.hpp>
 namespace other{
 
 template<class T> inline Vector<T,3> normal(const Vector<T,3>& x0,const Vector<T,3>& x1,const Vector<T,3>& x2)
 {return cross(x1-x0,x2-x0).normalized();}
 
-template<class TArray> inline typename boost::enable_if_c<TArray::m==3,typename TArray::Element>::type normal(const TArray& X)
+template<class TArray> inline typename EnableForSize<3,TArray,typename TArray::Element>::type normal(const TArray& X)
 {return normal(X(0),X(1),X(2));}
 
 template<class T>
@@ -74,14 +73,14 @@ public:
     TV surface(const TV& location) const
     {return location-phi(location)*n;}
 
-    TV mirror(const TV& location) const 
+    TV mirror(const TV& location) const
     {return location-2*phi(location)*n;}
-  
+
     bool segment_intersection(const TV& endpoint1,const TV& endpoint2,T& interpolation_fraction) const
     {return segment_plane_intersection(endpoint1,endpoint2,interpolation_fraction);}
 
-    TV segment_intersection(Segment<TV> const &s) const OTHER_EXPORT;
-  
+OTHER_CORE_EXPORT TV segment_intersection(Segment<TV> const &s) const;
+
     Box<TV> bounding_box() const
     {return Box<TV>::full_box();}
 
@@ -102,7 +101,7 @@ public:
     string repr() const
     {return format("Plane(%s,%s)",tuple_repr(n),tuple_repr(x0));}
 };
-  
+
 template<class T> std::ostream & operator<<(std::ostream & os, Plane<T> const &p) {
   return os << '[' << p.x0 << ", " << p.n << ']' << std::endl;
 }

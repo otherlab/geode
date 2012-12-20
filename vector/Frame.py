@@ -99,5 +99,5 @@ def from_reals(x):
   d = size_to_d[x.shape[-1]]
   return x.ravel().view(Frames.dtypes[d]).view(Frames).reshape(x.shape[:-1])
 
-import libother_core
-libother_core._set_frame_type(Frames)
+import other_core
+other_core._set_frame_type(Frames)

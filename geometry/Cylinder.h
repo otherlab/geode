@@ -24,7 +24,7 @@ public:
   Cylinder(const Plane<T>& base, T radius, T height)
     : base(base), radius(radius), height(height) {}
 
-  Cylinder(TV x0, TV x1, T radius) OTHER_EXPORT;
+OTHER_CORE_EXPORT Cylinder(TV x0, TV x1, T radius);
 
   bool operator==(const Cylinder& other) const;
   TV normal(const TV& X) const;
@@ -39,8 +39,8 @@ public:
   string repr() const;
 };
 
-ostream& operator<<(ostream& output, const Cylinder& cylinder) OTHER_EXPORT;
-PyObject* to_python(const Cylinder& cylinder) OTHER_EXPORT;
-template<> struct FromPython<Cylinder>{ static Cylinder convert(PyObject* object) OTHER_EXPORT; };
+OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const Cylinder& cylinder);
+OTHER_CORE_EXPORT PyObject* to_python(const Cylinder& cylinder);
+template<> struct FromPython<Cylinder>{ OTHER_CORE_EXPORT static Cylinder convert(PyObject* object); };
 
 }

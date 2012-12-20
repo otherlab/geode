@@ -12,7 +12,7 @@ namespace other{
 template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) 
 {return (x1-x0).normalized().rotate_right_90();}
 
-template<class TArray> inline typename boost::enable_if_c<TArray::m==2,typename TArray::Element>::type normal(const TArray& X)
+template<class TArray> inline typename EnableForSize<2,TArray,typename TArray::Element>::type normal(const TArray& X)
 {return normal(X[0],X[1]);}
 
 template<class T>

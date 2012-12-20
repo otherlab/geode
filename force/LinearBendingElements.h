@@ -13,7 +13,7 @@ class LinearBendingElements:public Force<TV> {
   typedef typename TV::Scalar T;
   enum Workaround {d=TV::m};
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Force<TV> Base;
   typedef typename mpl::if_c<d==2,SegmentMesh,TriangleMesh>::type Mesh;
 
@@ -28,7 +28,7 @@ protected:
 public:
   ~LinearBendingElements();
 
-  void update_position(Array<const TV> X,bool definite); 
+  void update_position(Array<const TV> X,bool definite);
   void add_frequency_squared(RawArray<T> frequency_squared) const;
   T strain_rate(RawArray<const TV> V) const;
   T elastic_energy() const;

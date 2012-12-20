@@ -32,8 +32,8 @@ namespace other {
 
 namespace mpl = boost::mpl;
 
-OTHER_EXPORT void set_self_owner_mismatch();
-OTHER_EXPORT void OTHER_NORETURN(throw_self_owner_mismatch());
+OTHER_CORE_EXPORT void set_self_owner_mismatch();
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_self_owner_mismatch());
 
 template<class T> static inline Ref<T> ref(T& object);
 template<class T> static inline Ref<T> steal_ref(T& object);

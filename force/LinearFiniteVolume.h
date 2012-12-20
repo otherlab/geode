@@ -15,7 +15,7 @@ class LinearFiniteVolume:public Force<TV>
   enum {d=d_};
 public:
   typedef Force<TV> Base;
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
   const Array<const Vector<int,d+1> > elements;
   T youngs_modulus;

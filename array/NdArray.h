@@ -10,8 +10,8 @@
 #include <other/core/array/Array.h>
 namespace other {
 
-template<class T> PyObject* to_python(const NdArray<T>& array) OTHER_EXPORT;
-template<class T> struct FromPython<NdArray<T> >{OTHER_EXPORT static NdArray<T> convert(PyObject* object);};
+template<class T> OTHER_CORE_EXPORT PyObject* to_python(const NdArray<T>& array);
+template<class T> struct FromPython<NdArray<T> >{OTHER_CORE_EXPORT static NdArray<T> convert(PyObject* object);};
 
 template<class T>
 class NdArray {

@@ -19,7 +19,7 @@ template<class TV> class Box;
 
 class Random : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef mpl::if_c<sizeof(real)==4,uint32_t,uint64_t>::type RealBits;
   BOOST_STATIC_ASSERT(sizeof(RealBits)==sizeof(real));
@@ -32,11 +32,11 @@ private:
   real free_gaussian; // If nonzero, a free Gaussian random number
 
 protected:
-  explicit Random(uint128_t seed) OTHER_EXPORT;
+  OTHER_CORE_EXPORT explicit Random(uint128_t seed);
 public:
   ~Random();
 
-  template<class Int> Int bits() OTHER_EXPORT;
+  template<class Int> OTHER_CORE_EXPORT Int bits();
 
   template<class S> S uniform(const typename ScalarPolicy<S>::type a,const typename ScalarPolicy<S>::type b) { // in [a,b)
     // Specialized versions for int and real are below
@@ -59,7 +59,7 @@ public:
     return uniform(box.min,box.max);
   }
 
-  real normal() OTHER_EXPORT;
+  OTHER_CORE_EXPORT real normal();
 
   real exponential(real mean) { // We take mean = 1/lambda for speed
     return -mean*log(uniform());
@@ -96,19 +96,19 @@ public:
   Array<real> normal_py(int size);
   Array<real> uniform_py(int size);
   Array<int> uniform_int_py(int lo, int hi, int size);
-  template<class TV> Rotation<TV> rotation() OTHER_EXPORT;
-  template<class TV> Frame<TV> frame(const TV& v0,const TV& v1) OTHER_EXPORT;
+  template<class TV> OTHER_CORE_EXPORT Rotation<TV> rotation();
+  template<class TV> OTHER_CORE_EXPORT Frame<TV> frame(const TV& v0,const TV& v1);
 };
 
 // In [a,b)
-template<>   int8_t Random::uniform(const   int8_t a, const   int8_t b) OTHER_EXPORT;
-template<>  uint8_t Random::uniform(const  uint8_t a, const  uint8_t b) OTHER_EXPORT;
-template<>  int16_t Random::uniform(const  int16_t a, const  int16_t b) OTHER_EXPORT;
-template<> uint16_t Random::uniform(const uint16_t a, const uint16_t b) OTHER_EXPORT;
-template<>  int32_t Random::uniform(const  int32_t a, const  int32_t b) OTHER_EXPORT;
-template<> uint32_t Random::uniform(const uint32_t a, const uint32_t b) OTHER_EXPORT;
-template<>  int64_t Random::uniform(const  int64_t a, const  int64_t b) OTHER_EXPORT;
-template<> uint64_t Random::uniform(const uint64_t a, const uint64_t b) OTHER_EXPORT;
+template<> OTHER_CORE_EXPORT  int8_t Random::uniform(const   int8_t a, const   int8_t b);
+template<> OTHER_CORE_EXPORT  uint8_t Random::uniform(const  uint8_t a, const  uint8_t b);
+template<> OTHER_CORE_EXPORT  int16_t Random::uniform(const  int16_t a, const  int16_t b);
+template<> OTHER_CORE_EXPORT uint16_t Random::uniform(const uint16_t a, const uint16_t b);
+template<> OTHER_CORE_EXPORT  int32_t Random::uniform(const  int32_t a, const  int32_t b);
+template<> OTHER_CORE_EXPORT uint32_t Random::uniform(const uint32_t a, const uint32_t b);
+template<> OTHER_CORE_EXPORT  int64_t Random::uniform(const  int64_t a, const  int64_t b);
+template<> OTHER_CORE_EXPORT uint64_t Random::uniform(const uint64_t a, const uint64_t b);
 
 template<> inline real Random::uniform(const real a, const real b) { // in [a,b)
   assert(a<b);

@@ -1,7 +1,11 @@
 //#####################################################################
 // Class MovFile
 //#####################################################################
-#include <other/core/python/config.h> // Must be included first
+#ifdef _WIN32
+// we need config.h to not undefine far, which is used in jpeglib.h
+#define LEAVE_WINDOWS_DEFINES_ALONE
+#endif
+#include <other/core/python/config.h>
 #ifdef USE_LIBJPEG
 extern "C"{
 #ifdef _WIN32

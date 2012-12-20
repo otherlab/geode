@@ -18,7 +18,7 @@ namespace other {
 
 class PolygonMesh : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   const Array<const int> counts; // number of vertices in each polygon
@@ -37,7 +37,7 @@ public:
   }
 
   ~PolygonMesh();
-  Ref<SegmentMesh> segment_mesh() const OTHER_EXPORT;
-  Ref<TriangleMesh> triangle_mesh() const OTHER_EXPORT;
+OTHER_CORE_EXPORT Ref<SegmentMesh> segment_mesh() const;
+OTHER_CORE_EXPORT Ref<TriangleMesh> triangle_mesh() const;
 };
 }

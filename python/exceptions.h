@@ -24,18 +24,18 @@ namespace other {
 
 using std::string;
 
-OTHER_EXPORT void set_python_exception(const std::exception& error);
-OTHER_EXPORT void register_python_exception(const std::type_info& type,PyObject* pytype);
+OTHER_CORE_EXPORT void set_python_exception(const std::exception& error);
+OTHER_CORE_EXPORT void register_python_exception(const std::type_info& type,PyObject* pytype);
 
 // Exception throwing functions to reduce code bloat
 #ifdef OTHER_PYTHON
-OTHER_EXPORT void OTHER_NORETURN(throw_python_error()); // python error must already be set
-OTHER_EXPORT void OTHER_NORETURN(throw_type_error(PyObject* object,PyTypeObject* type));
-OTHER_EXPORT void OTHER_NORETURN(unregistered_python_type(PyObject* object,PyTypeObject* type));
-OTHER_EXPORT void OTHER_NORETURN(throw_arity_mismatch(const int expected,const ssize_t got));
-OTHER_EXPORT void OTHER_NORETURN(throw_no_keyword_args(PyObject* kwargs));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_python_error()); // python error must already be set
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_type_error(PyObject* object,PyTypeObject* type));
+OTHER_CORE_EXPORT void OTHER_NORETURN(unregistered_python_type(PyObject* object,PyTypeObject* type));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_arity_mismatch(const int expected,const ssize_t got));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_no_keyword_args(PyObject* kwargs));
 #else
-OTHER_EXPORT void OTHER_NORETURN(throw_no_python());
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_no_python());
 #endif
 
 template<class TError> static inline void
@@ -46,7 +46,7 @@ register_python_exception(PyObject* pytype) {
 // note: destructors must be in .cpp to avoid shared library name lookup issues
 
 // python error must have already been set
-struct OTHER_EXPORT PythonError:public std::exception {
+struct OTHER_CORE_CLASS_EXPORT PythonError:public std::exception {
   typedef std::exception Base;
   PythonError();
   virtual ~PythonError() throw ();
@@ -56,10 +56,10 @@ private:
 };
 
 #define OTHER_SIMPLE_EXCEPTION(Error,Base_) \
-  struct OTHER_EXPORT Error : public Base_ { \
+  struct OTHER_CORE_CLASS_EXPORT Error : public Base_ { \
     typedef Base_ Base; \
-    Error(const std::string& message); \
-    virtual ~Error() throw (); \
+    OTHER_CORE_EXPORT Error(const std::string& message); \
+    OTHER_CORE_EXPORT virtual ~Error() throw (); \
   };
 
 typedef std::runtime_error RuntimeError;

@@ -164,9 +164,9 @@ public:
     {assert(check_orientation(a,b,c) && check_orientation(d,c,b));b-=a;c-=a;d-=a;
     return det(b.append(b.sqr_magnitude()),c.append(c.sqr_magnitude()),d.append(d.sqr_magnitude()))>=0;}
 
-    TV closest_point(const TV& location,Vector<T,3>& weights) const OTHER_EXPORT;
-    TV closest_point(const TV& location) const OTHER_EXPORT;
-    T distance(const TV& location) const OTHER_EXPORT;
+OTHER_CORE_EXPORT TV closest_point(const TV& location,Vector<T,3>& weights) const;
+OTHER_CORE_EXPORT TV closest_point(const TV& location) const;
+OTHER_CORE_EXPORT T distance(const TV& location) const;
 };
 
 template<class T> std::ostream& operator<<(std::ostream& output,const Triangle<Vector<T,2> >& triangle)

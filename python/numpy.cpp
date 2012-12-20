@@ -22,6 +22,10 @@ void throw_not_owned() {
   throw PythonError();
 }
 
+bool is_numpy_array(PyObject* o) {
+  return PyArray_Check(o);
+}
+
 void throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
   if (!PyArray_Check(object))
     PyErr_Format(PyExc_TypeError, "expected numpy array, got %s", object->ob_type->tp_name);

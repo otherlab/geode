@@ -34,7 +34,7 @@ SegmentMesh::SegmentMesh(Array<const Vector<int,2> > elements)
 
 SegmentMesh::~SegmentMesh() {}
 
-const Vector<NestedArray<const int>,2>& SegmentMesh::polygons() const {
+const Tuple<NestedArray<const int>,NestedArray<const int>>& SegmentMesh::polygons() const {
   if (nodes() && !polygons_.x.size() && !polygons_.y.size()) {
     const auto incident = incident_elements();
     // Start from each segment, compute the contour that contains it and classify as either closed or open
@@ -77,7 +77,7 @@ const Vector<NestedArray<const int>,2>& SegmentMesh::polygons() const {
       }
     }
     // Store results
-    polygons_.set(NestedArray<int>::copy(closed),NestedArray<int>::copy(open));
+    polygons_ = tuple(NestedArray<const int>::copy(closed),NestedArray<const int>::copy(open));
   }
   return polygons_; 
 }

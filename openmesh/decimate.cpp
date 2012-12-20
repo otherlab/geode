@@ -8,6 +8,9 @@
 #include <other/core/python/module.h>
 namespace other {
 
+typedef real T;
+typedef Vector<T,3> TV;
+
 template<class Decimater>
 class FaceQualityModule: public OpenMesh::Decimater::ModBaseT<Decimater> {
 
@@ -87,13 +90,15 @@ public:
   // this is a binary module only
 
 protected:
-  double mindot;
+  double max_error;
 
 public:
-  BoundaryPreservationModule(Decimater& dec) : OpenMesh::Decimater::ModBaseT<Decimater>(dec, true), mindot(1e-5) {}
+  BoundaryPreservationModule(Decimater& dec)
+    : OpenMesh::Decimater::ModBaseT<Decimater>(dec, true), max_error(0) {}
 
-  double min_dot() { return mindot; }
-  void min_dot(double dot) { mindot = dot; }
+  void set_max_error(double error) {
+    max_error = error;
+  }
 
   virtual float collapse_priority(const OpenMesh::Decimater::CollapseInfoT<Mesh> &ci) {
 
@@ -102,31 +107,23 @@ public:
     typename Mesh::HalfedgeHandle last, next;
 
     if (mesh.is_boundary(ci.v0v1)) {
-
       last = mesh.prev_halfedge_handle(ci.v0v1);
       next = ci.v0v1;
-
     } else if (mesh.is_boundary(ci.v1v0)) {
-
       last = ci.v1v0;
       next = mesh.next_halfedge_handle(ci.v1v0);
-
     } else {
       // no boundary, always allowed
       return OpenMesh::Decimater::ModBaseT<Decimater>::LEGAL_COLLAPSE;
     }
 
-    // compute dot between last and next
-    typename Mesh::Normal vl, vn;
-    mesh.calc_edge_vector(last, vl);
-    mesh.calc_edge_vector(next, vn);
-    vl.normalize();
-    vn.normalize();
+    // Measure distance from middle point to segment between outer points
+    const T error = Segment<TV>(mesh.point(mesh.from_vertex_handle(last)),
+                                mesh.point(mesh.to_vertex_handle(next)))
+                    .distance(mesh.point(mesh.from_vertex_handle(next)));
 
-    if (dot(vl, vn) > mindot)
-      return OpenMesh::Decimater::ModBaseT<Decimater>::LEGAL_COLLAPSE;
-    else
-      return OpenMesh::Decimater::ModBaseT<Decimater>::ILLEGAL_COLLAPSE;
+    return float(error < max_error ? OpenMesh::Decimater::ModBaseT<Decimater>::LEGAL_COLLAPSE
+                                   : OpenMesh::Decimater::ModBaseT<Decimater>::ILLEGAL_COLLAPSE);
   }
 
 private:
@@ -137,7 +134,7 @@ private:
 
 
 
-void decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxquadricerror, double min_face_quality, double min_boundary_dot) {
+int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxquadricerror, double min_face_quality) {
 
   // need normals for this
   mesh.request_face_normals();
@@ -155,17 +152,17 @@ void decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double max
   HModQuadric hModQuadric;
   decimater.add(hModQuadric);
 
+  std::cout << "actual maxquadricerror = "<<maxquadricerror<<std::endl;
+  std::cout << "  box = "<<mesh.bounding_box()<<std::endl;
   if (maxquadricerror == std::numeric_limits<double>::infinity())
     decimater.module(hModQuadric).unset_max_err(); // use only as priority
   else
-    decimater.module(hModQuadric).set_max_err(sqrt(maxquadricerror));
+    decimater.module(hModQuadric).set_max_err(sqr(maxquadricerror));
 
   // prevent ruining the boundary
-  if (min_boundary_dot > -1) {
-    BoundaryPreservationModule<DecimaterT>::Handle hModBoundary;
-    decimater.add(hModBoundary);
-    decimater.module(hModBoundary).min_dot(min_boundary_dot);
-  }
+  BoundaryPreservationModule<DecimaterT>::Handle hModBoundary;
+  decimater.add(hModBoundary);
+  decimater.module(hModBoundary).set_max_error(maxquadricerror);
 
   // prevent creation of crappy triangles
   if (min_face_quality > 0.) {
@@ -183,14 +180,15 @@ void decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double max
 
   if (!decimater.initialize()) {
     std::cerr << "ERROR: could not initialize decimation." << std::endl;
-    return;
+    return 0;
   }
 
-  decimater.decimate(max_collapses);
+  const int count = decimater.decimate(max_collapses);
 
   mesh.release_face_normals();
 
   mesh.garbage_collection();
+  return count;
 }
 
 }

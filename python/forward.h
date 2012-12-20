@@ -16,9 +16,9 @@ template<class T=PyObject> class Ptr;
 template<class T,class Enable=void> struct FromPython; // from_python<T> isn't defined for types by default
 
 // Should appear at the beginning of all mixed python/C++ classes, after public:
-#define OTHER_DECLARE_TYPE \
+#define OTHER_DECLARE_TYPE(export_spec) \
   OTHER_NEW_FRIEND \
-  OTHER_EXPORT static other::PyTypeObject pytype;
+  export_spec static other::PyTypeObject pytype;
 
 #ifdef OTHER_VARIADIC
 
@@ -53,5 +53,9 @@ template<class T,class Args> struct WrapConstructor;
   template<class _T,class _Args> friend struct other::WrapConstructor;
 
 #endif
+
+// Declare an enum to python.  Must have a corresponding call to OTHER_DEFINE_ENUM from enum.h (in a .cpp).
+#define OTHER_DECLARE_ENUM(E,EXPORT) \
+  EXPORT PyObject* to_python(E value);
 
 } // namespace other

@@ -32,8 +32,8 @@ convert(PyObject* object) {
 }
 
 #define INSTANTIATE(T,m,n) \
-  template PyObject* to_python<T,m,n>(const Matrix<T,m,n>&); \
-  template Matrix<T,m,n> FromPython<Matrix<T,m,n> >::convert(PyObject*); \
+  template OTHER_CORE_EXPORT PyObject* to_python<T,m,n>(const Matrix<T,m,n>&); \
+  template OTHER_CORE_EXPORT Matrix<T,m,n> FromPython<Matrix<T,m,n> >::convert(PyObject*); \
   ARRAY_CONVERSIONS(1,Matrix<T,m,n>)
 INSTANTIATE(real,2,2)
 INSTANTIATE(real,3,3)

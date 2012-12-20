@@ -31,8 +31,8 @@ template<class PropHandle> static inline PropFunction<PropHandle> prop_function(
 }
 
 // Visualize things on the vertices, edges, or faces
-template<class Handle> void visualize(TriMesh& mesh, const function<TriMesh::Color(Handle)>& color) OTHER_EXPORT;
-  
+template<class Handle> OTHER_CORE_EXPORT void visualize(TriMesh& mesh, const function<TriMesh::Color(Handle)>& color);
+
 // Visualize properties using a transfer function
 template<class PropHandle,class Transfer> static inline void visualize(TriMesh& mesh, PropHandle prop, const Transfer& transfer) {
   return visualize<typename PropToHandle<PropHandle>::type>(mesh,compose(transfer,prop_function(mesh,prop)));

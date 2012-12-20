@@ -399,9 +399,9 @@ public:
 //#####################################################################
     explicit Matrix(RawArray<const T,2> matrix);
     Matrix higham_iterate(const T tolerance=1e-5,const int max_iterations=20,const bool exit_on_max_iterations=false) const;
-    void fast_singular_value_decomposition(Matrix<T,3>& U,DiagonalMatrix<T,3>& singular_values,Matrix<T,3>& V) const OTHER_EXPORT;
-    void fast_indefinite_polar_decomposition(Matrix<T,3>& Q,SymmetricMatrix<T,3>& S) const OTHER_EXPORT;
-    T simplex_minimum_altitude() const OTHER_EXPORT;
+    OTHER_CORE_EXPORT void fast_singular_value_decomposition(Matrix<T,3>& U,DiagonalMatrix<T,3>& singular_values,Matrix<T,3>& V) const ;
+    OTHER_CORE_EXPORT void fast_indefinite_polar_decomposition(Matrix<T,3>& Q,SymmetricMatrix<T,3>& S) const ;
+    OTHER_CORE_EXPORT T simplex_minimum_altitude() const ;
 //#####################################################################
 };
 // global functions

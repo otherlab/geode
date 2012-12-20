@@ -204,5 +204,5 @@ def identity(d):
 def random(*shape):
   return from_sv(normalized(numpy.random.randn(*(shape+(4,)))))
 
-import libother_core
-libother_core._set_rotation_types(Rotations2d,Rotations3d)
+import other_core
+other_core._set_rotation_types(Rotations2d,Rotations3d)

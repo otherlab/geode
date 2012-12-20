@@ -42,8 +42,8 @@ template<class TArray> struct IsShareableArray<const TArray>:public IsShareableA
 // Array<T> is shareable
 template<class T> struct IsShareableArray<Array<T>>:public mpl::true_{};
 
-template<class T,int d> PyObject* to_python(const Array<T,d>& array) OTHER_EXPORT;
-template<class T,int d> struct FromPython<Array<T,d>>{OTHER_EXPORT static Array<T,d> convert(PyObject* object);};
+template<class T,int d> OTHER_CORE_EXPORT PyObject* to_python(const Array<T,d>& array);
+template<class T,int d> struct FromPython<Array<T,d>>{OTHER_CORE_EXPORT static Array<T,d> convert(PyObject* object);};
 
 template<class T_>
 class Array<T_,1> : public ArrayBase<T_,Array<T_>> {
@@ -127,7 +127,7 @@ public:
   explicit Array(const NdArray<T>& array) {
     OTHER_ASSERT(array.rank()==1);
     m_ = max_size_=array.shape[0];
-    data_ = array.data(); 
+    data_ = array.data();
     owner_ = array.owner();
   }
 

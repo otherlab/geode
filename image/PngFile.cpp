@@ -1,6 +1,11 @@
 //#####################################################################
 // Class PngFile
 //#####################################################################
+#ifdef _WIN32
+// libpng uses far
+#define LEAVE_WINDOWS_DEFINES_ALONE
+#endif
+
 #include <other/core/python/config.h> // Must be included first
 #ifdef USE_LIBPNG
 #define PNG_SKIP_SETJMP_CHECK // Both png and python want to be included first

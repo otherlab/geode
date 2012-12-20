@@ -23,9 +23,9 @@ using std::type_info;
 using boost::is_const;
 using boost::is_reference;
 
-class OTHER_EXPORT ValueBase : public Object {
+class OTHER_CORE_CLASS_EXPORT ValueBase : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 private:
   friend class Action;
@@ -48,9 +48,9 @@ private:
   static Link* pending; // linked list of pending signals
 
 protected:
-  ValueBase() OTHER_EXPORT;
+  OTHER_CORE_EXPORT ValueBase();
 public:
-  virtual ~ValueBase() OTHER_EXPORT;
+  OTHER_CORE_EXPORT virtual ~ValueBase();
 
 #ifdef OTHER_PYTHON
   virtual PyObject* get_python() const = 0;
@@ -75,16 +75,16 @@ public:
     return 0;
   }
 
-  void signal() const OTHER_EXPORT;
+  OTHER_CORE_EXPORT void signal() const ;
 
   virtual void dump(int indent) const = 0;
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
 
   const string& get_name() const;
-  ValueBase& set_name(const string& n) OTHER_EXPORT;
+  OTHER_CORE_EXPORT ValueBase& set_name(const string& n);
 
 private:
-  void pull() const OTHER_EXPORT;
+  OTHER_CORE_EXPORT void pull() const ;
 
   virtual void update() const = 0;
   static inline void signal_pending();
@@ -114,7 +114,7 @@ private:
 #endif
 };
 
-template<class T> class OTHER_EXPORT Value : public ValueBase
+template<class T> class OTHER_CORE_CLASS_EXPORT Value : public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
@@ -126,10 +126,10 @@ public:
 protected:
   mutable Optional<T> value; // the cached value
 
-  Value() OTHER_EXPORT;
-  ~Value() OTHER_EXPORT;
+  Value() {}
+  ~Value() {}
 
-  void set_dirty() const OTHER_EXPORT {
+  void set_dirty() const {
     if (!dirty_) {
       dirty_ = true;
       error = ExceptionValue();
@@ -138,7 +138,7 @@ protected:
     }
   }
 
-  void set_value(const T& value_) const OTHER_EXPORT {
+  void set_value(const T& value_) const {
     dirty_ = false;
     error = ExceptionValue();
     value = value_;
@@ -152,7 +152,7 @@ public:
   }
 
 #ifdef OTHER_PYTHON
-  PyObject* get_python() const OTHER_EXPORT {
+  PyObject* get_python() const {
     pull();
     return to_python(*value);
   }
@@ -168,9 +168,6 @@ public:
     return *value;
   }
 };
-
-template<class T> Value<T>::Value() {}
-template<class T> Value<T>::~Value() {}
 
 template<class T> class ValueRef
 {
@@ -208,14 +205,5 @@ template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {
 }
 
 // from_python<ValueRef<T>> is declared in convert.h to avoid circularity
-
-// Instantiate common versions in the .cpp file
-extern template class Value<bool>;
-extern template class Value<int>;
-extern template class Value<double>;
-extern template class Value<string>;
-extern template class Value<Vector<real,2>>;
-extern template class Value<Vector<real,3>>;
-extern template class Value<Vector<real,4>>;
 
 }

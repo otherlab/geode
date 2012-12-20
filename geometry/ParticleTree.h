@@ -11,20 +11,22 @@ template<class TV> class ParticleTree : public BoxTree<TV>
 {
   typedef typename TV::Scalar T;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef BoxTree<TV> Base;
   using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;
 
   const Array<const TV> X;
 
 protected:
-  ParticleTree(Array<const TV> X, int leaf_size) OTHER_EXPORT;
+  OTHER_CORE_EXPORT ParticleTree(Array<const TV> X, int leaf_size);
 public:
   ~ParticleTree();
 
-  void update() OTHER_EXPORT; // Call whenever X changes
-  Array<int> remove_duplicates(T tolerance) const OTHER_EXPORT; // Returns map from point to component index
-  template<class Shape> void intersection(const Shape& box, Array<int>& hits) const OTHER_EXPORT;
+  OTHER_CORE_EXPORT void update(); // Call whenever X changes
+  OTHER_CORE_EXPORT Array<int> remove_duplicates(T tolerance) const; // Returns map from point to component index
+
+  template<class Shape>
+  OTHER_CORE_EXPORT void intersection(const Shape& box, Array<int>& hits) const;
 };
 
 }

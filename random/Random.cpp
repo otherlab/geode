@@ -157,8 +157,8 @@ template<class TV> Frame<TV> Random::frame(const TV& v0,const TV& v1) {
 }
 
 #define INSTANTIATE(d) \
-  template Rotation<Vector<real,d>> Random::rotation(); \
-  template Frame<Vector<real,d>> Random::frame(const Vector<real,d>&,const Vector<real,d>&);
+  template OTHER_CORE_EXPORT Rotation<Vector<real,d>> Random::rotation(); \
+  template OTHER_CORE_EXPORT Frame<Vector<real,d>> Random::frame(const Vector<real,d>&,const Vector<real,d>&);
 INSTANTIATE(2)
 INSTANTIATE(3)
 

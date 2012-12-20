@@ -16,7 +16,7 @@ using std::numeric_limits;
 template<class TV>
 class Sobol : public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
   typedef typename TV::Scalar T;
   BOOST_STATIC_ASSERT(numeric_limits<T>::radix==2);
@@ -30,11 +30,11 @@ private:
   Vector<TI,d> x; // Last result
   TI n;
 private:
-  Sobol(const Box<TV>& box) OTHER_EXPORT;
+  OTHER_CORE_EXPORT Sobol(const Box<TV>& box);
 public:
   ~Sobol();
 
-  TV vector() OTHER_EXPORT;
+  OTHER_CORE_EXPORT TV vector();
 };
 
 }

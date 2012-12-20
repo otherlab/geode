@@ -14,9 +14,9 @@ public:
   int percent_done;
   bool print;
 
-  ProgressIndicator(const int total=1, const bool brief=false) OTHER_EXPORT;
-  void initialize(const int total_input) OTHER_EXPORT;
-  bool progress(const int by=1) OTHER_EXPORT;
+  OTHER_CORE_EXPORT ProgressIndicator(const int total=1, const bool brief=false);
+  OTHER_CORE_EXPORT void initialize(const int total_input);
+  OTHER_CORE_EXPORT bool progress(const int by=1);
 };
 
 }

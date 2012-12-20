@@ -8,13 +8,13 @@
 #include <other/core/structure/UnionFind.h>
 #include <other/core/geometry/SimplexTree.h>
 #include <other/core/geometry/Ray.h>
-#include <other/core/vector/convert.h>
 #include <boost/algorithm/string.hpp>
 #include <other/core/utility/path.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/utility/stl.h>
 #include <other/core/openmesh/triangulator.h>
 #include <other/core/vector/Frame.h>
+#include <other/core/vector/convert.h>
 #include <queue>
 #include <iostream>
 namespace other {
@@ -29,12 +29,15 @@ typedef Vector<real,2> TV2;
 
 OTHER_DEFINE_TYPE(TriMesh)
 
-TriMesh::TriMesh(): OTriMesh() {
-}
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,VertexHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,FaceHandle)
+OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,FaceHandle)
 
-TriMesh::TriMesh(const TriMesh& m): OTriMesh(m) {
+TriMesh::TriMesh() {}
 
-}
+TriMesh::TriMesh(const TriMesh& m)
+  : OTriMesh(m) {}
 
 TriMesh::TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real,3> > X) {
   if (tris.size())
@@ -269,6 +272,17 @@ Vector<HalfedgeHandle,3> TriMesh::halfedge_handles(FaceHandle fh) const {
 Vector<FaceHandle, 2> TriMesh::face_handles(EdgeHandle eh) const {
   return vec(face_handle(halfedge_handle(eh, 0)), face_handle(halfedge_handle(eh, 1)));
 }
+
+Vector<FaceHandle,3> TriMesh::face_handles(FaceHandle fh) const {
+  Vector<FaceHandle,3> v;
+  int i = 0;
+  for (CFFIter it = cff_iter(fh); it; ++it) {
+    v[i] = it.handle();
+    i++;
+  }
+  return v;
+}
+
 
 FaceHandle TriMesh::valid_face_handle(EdgeHandle eh) const {
   Vector<FaceHandle, 2> fh = face_handles(eh);

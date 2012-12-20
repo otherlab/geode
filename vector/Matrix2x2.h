@@ -265,8 +265,8 @@ public:
     T simplex_minimum_altitude() const
     {return determinant()/sqrt(max(column(0).sqr_magnitude(),column(1).sqr_magnitude(),(column(0)-column(1)).sqr_magnitude()));}
 
-    void indefinite_polar_decomposition(Matrix& Q,SymmetricMatrix<T,2>& S) const OTHER_EXPORT;
-    void fast_singular_value_decomposition(Matrix& U,DiagonalMatrix<T,2>& singular_values,Matrix& V) const OTHER_EXPORT;
+    OTHER_CORE_EXPORT void indefinite_polar_decomposition(Matrix& Q,SymmetricMatrix<T,2>& S) const ;
+    OTHER_CORE_EXPORT void fast_singular_value_decomposition(Matrix& U,DiagonalMatrix<T,2>& singular_values,Matrix& V) const ;
 };
 
 // global functions

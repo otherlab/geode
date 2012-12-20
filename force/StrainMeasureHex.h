@@ -12,7 +12,7 @@ class StrainMeasureHex : public Object {
   typedef real T;
   typedef Vector<T,3> TV;
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
 
   const int nodes;
@@ -22,7 +22,7 @@ public:
   Array<Vector<T,8> > DmH_det;
 private:
   static const Vector<Matrix<T,8,3>,8> Hg;
-    
+
 protected:
   StrainMeasureHex(Array<const Vector<int,8> > elements,Array<const TV> X);
 public:
@@ -43,7 +43,7 @@ public:
     }
   }
 
-  Matrix<T,3> gradient(RawArray<const TV> X,int hex,TV w) const OTHER_EXPORT; // w in [0,1]^3
+  OTHER_CORE_EXPORT Matrix<T,3> gradient(RawArray<const TV> X,int hex,TV w) const; // w in [0,1]^3
   T DmH_minimum_altitude(int hex) const; // this is only vaguely an altitude
 };
 

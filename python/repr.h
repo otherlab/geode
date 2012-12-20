@@ -13,8 +13,8 @@ template<class T> inline string repr(const T& x) {
   return x.repr();
 }
 
-OTHER_EXPORT string repr(const float x);
-OTHER_EXPORT string repr(const double x);
-OTHER_EXPORT string repr(const long double x);
+OTHER_CORE_EXPORT string repr(const float x);
+OTHER_CORE_EXPORT string repr(const double x);
+OTHER_CORE_EXPORT string repr(const long double x);
 
 }

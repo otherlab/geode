@@ -17,9 +17,9 @@ namespace other {
 
 template<class T> class JpgFile {
 public:
-  static Array<Vector<T,3>,2> read(const std::string& filename) OTHER_EXPORT;
-  static void write(const std::string& filename,RawArray<const Vector<T,3>,2> image) OTHER_EXPORT;
-  static bool is_supported() OTHER_EXPORT;
+OTHER_CORE_EXPORT static Array<Vector<T,3>,2> read(const std::string& filename);
+OTHER_CORE_EXPORT static void write(const std::string& filename,RawArray<const Vector<T,3>,2> image);
+OTHER_CORE_EXPORT static bool is_supported();
 };
 
 }

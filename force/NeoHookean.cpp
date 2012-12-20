@@ -20,7 +20,7 @@ template<class T,int d>
 class NeoHookean:public IsotropicConstitutiveModel<T,d>
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef IsotropicConstitutiveModel<T,d> Base;
     using Base::lambda;using Base::mu;using Base::alpha;using Base::beta;
     using Base::failure_threshold;
@@ -116,12 +116,12 @@ using namespace other;
 void wrap_neo_hookean()
 {
     {typedef NeoHookean<T,2> Self;
-    Class<Self>("NeoHookean2d") 
+    Class<Self>("NeoHookean2d")
         .OTHER_INIT(T,T,T,T)
         ;}
 
     {typedef NeoHookean<T,3> Self;
-    Class<Self>("NeoHookean3d") 
+    Class<Self>("NeoHookean3d")
         .OTHER_INIT(T,T,T,T)
         ;}
 }

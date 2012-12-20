@@ -12,7 +12,7 @@ template<class TV>
 class Gravity:public Force<TV>
 {
 public:
-    OTHER_DECLARE_TYPE
+    OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Force<TV> Base;
     typedef typename TV::Scalar T;
     enum {m=TV::m};

@@ -55,9 +55,9 @@ template<class TV> Frame<TV> FromPython<Frame<TV>>::convert(PyObject* object) {
 }
 
 #define INSTANTIATE(T,d) \
-    template PyObject* to_python<Vector<T,d>>(const Frame<Vector<T,d>>&); \
-    template Frame<Vector<T,d>> FromPython<Frame<Vector<T,d>>>::convert(PyObject*); \
-    template bool frames_check<Vector<T,d>>(PyObject*); \
+    template OTHER_CORE_EXPORT PyObject* to_python<Vector<T,d>>(const Frame<Vector<T,d>>&); \
+    template OTHER_CORE_EXPORT Frame<Vector<T,d>> FromPython<Frame<Vector<T,d>>>::convert(PyObject*); \
+    template OTHER_CORE_EXPORT bool frames_check<Vector<T,d>>(PyObject*); \
     ARRAY_CONVERSIONS(1,Frame<Vector<T,d>>)
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)

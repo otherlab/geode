@@ -28,7 +28,7 @@ namespace other {
 
 namespace mpl = boost::mpl;
 
-OTHER_EXPORT PyObject* wrap_method_helper(PyTypeObject* type,const char* name,wrapperfunc wrapper,void* method);
+OTHER_CORE_EXPORT PyObject* wrap_method_helper(PyTypeObject* type,const char* name,wrapperfunc wrapper,void* method);
 
 #ifdef OTHER_VARIADIC
 

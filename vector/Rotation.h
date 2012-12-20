@@ -24,9 +24,9 @@ template<class TV> class Rotation;
 template<class TV> struct IsScalarBlock<Rotation<TV> >:public mpl::and_<mpl::bool_<(TV::m>1)>,IsScalarBlock<TV> >{};
 template<class TV> struct is_packed_pod<Rotation<TV> >:public mpl::and_<mpl::bool_<(TV::m>1)>,is_packed_pod<typename TV::Scalar> >{};
 
-template<class TV> PyObject* to_python(const Rotation<TV>& q) OTHER_EXPORT;
-template<class TV> struct FromPython<Rotation<TV> >{OTHER_EXPORT static Rotation<TV> convert(PyObject* object);};
-template<class TV> bool rotations_check(PyObject* object) OTHER_EXPORT;
+template<class TV> OTHER_CORE_EXPORT PyObject* to_python(const Rotation<TV>& q);
+template<class TV> struct FromPython<Rotation<TV> >{OTHER_CORE_EXPORT static Rotation<TV> convert(PyObject* object);};
+template<class TV> OTHER_CORE_EXPORT bool rotations_check(PyObject* object);
 
 //#####################################################################
 // 1D

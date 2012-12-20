@@ -40,7 +40,7 @@ public:
 private:
   // Private since this constructor doesn't exist if we're using the native __uint128_t version
   uint128_t(uint64_t hi,uint64_t lo)
-    :lo(lo),hi(hi) {} 
+    :lo(lo),hi(hi) {}
 public:
 
   uint128_t operator+(uint128_t x) const {
@@ -110,7 +110,7 @@ public:
 
 #endif
 
-PyObject* to_python(uint128_t n) OTHER_EXPORT;
-template<> struct FromPython<uint128_t>{OTHER_EXPORT static uint128_t convert(PyObject* object);};
+OTHER_CORE_EXPORT PyObject* to_python(uint128_t n);
+template<> struct FromPython<uint128_t>{OTHER_CORE_EXPORT static uint128_t convert(PyObject* object);};
 
 }

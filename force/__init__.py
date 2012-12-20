@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from libother_core import *
+from other_core import *
 from ..python import Object
 from ..vector import magnitudes, relative_error, maxabs, SolidMatrixStructure, SolidMatrix
 from .. import real

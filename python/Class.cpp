@@ -28,9 +28,9 @@ void add_descriptor(PyTypeObject* type, const char* name, PyObject* descr) {
 ClassBase::ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset)
   :type(type) {
 
-  // Verify that OTHER_DECLARE_TYPE has been used, and initialize name
+  // Verify that OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT) has been used, and initialize name
   if (!type->tp_name || strncmp(type->tp_name,"other_default_name",18)) {
-    PyErr_Format(PyExc_AssertionError,"%s->type->tp_name is %s: did you forget OTHER_DECLARE_TYPE?",name,type->tp_name?type->tp_name:"0");
+    PyErr_Format(PyExc_AssertionError,"%s->type->tp_name is %s: did you forget OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)?",name,type->tp_name?type->tp_name:"0");
     throw_python_error();
   }
   type->tp_name = name;

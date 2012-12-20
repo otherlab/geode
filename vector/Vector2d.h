@@ -76,7 +76,7 @@ public:
     explicit Vector(const complex<T>& c)
       : x(c.real()), y(c.imag()) {}
 
-    template<class TVector> typename boost::enable_if<boost::mpl::and_<boost::is_same<T,typename TVector::Element>,mpl::bool_<TVector::m==2> >,Vector&>::type
+    template<class TVector> typename EnableForVectorLike<T,2,TVector,Vector&>::type
     operator=(const TVector& v)
     {
         x=v[0];y=v[1];return *this;

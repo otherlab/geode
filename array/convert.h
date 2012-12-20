@@ -24,8 +24,8 @@ template<class T,int d> Array<T,d> FromPython<Array<T,d> >::convert(PyObject* ob
 }
 
 #define ARRAY_CONVERSIONS_HELPER(d,...) \
-  template PyObject* to_python<__VA_ARGS__,d>(const Array<__VA_ARGS__,d>&); \
-  template Array<__VA_ARGS__,d> FromPython<Array<__VA_ARGS__,d> >::convert(PyObject*);
+  template OTHER_CORE_EXPORT PyObject* to_python<__VA_ARGS__,d>(const Array<__VA_ARGS__,d>&); \
+  template OTHER_CORE_EXPORT Array<__VA_ARGS__,d> FromPython<Array<__VA_ARGS__,d> >::convert(PyObject*);
 #define ARRAY_CONVERSIONS(d,...) \
   ARRAY_CONVERSIONS_HELPER(d,__VA_ARGS__) \
   ARRAY_CONVERSIONS_HELPER(d,const __VA_ARGS__)
@@ -39,8 +39,8 @@ template<class T> NdArray<T> FromPython<NdArray<T> >::convert(PyObject* object) 
 }
 
 #define NDARRAY_CONVERSIONS_HELPER(...) \
-  template PyObject* to_python<__VA_ARGS__>(const NdArray<__VA_ARGS__>&); \
-  template NdArray<__VA_ARGS__> FromPython<NdArray<__VA_ARGS__> >::convert(PyObject*);
+  template OTHER_CORE_EXPORT PyObject* to_python<__VA_ARGS__>(const NdArray<__VA_ARGS__>&); \
+  template OTHER_CORE_EXPORT NdArray<__VA_ARGS__> FromPython<NdArray<__VA_ARGS__> >::convert(PyObject*);
 #define NDARRAY_CONVERSIONS(...) \
   NDARRAY_CONVERSIONS_HELPER(__VA_ARGS__) \
   NDARRAY_CONVERSIONS_HELPER(const __VA_ARGS__)

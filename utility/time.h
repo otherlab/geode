@@ -4,6 +4,6 @@
 #include <other/core/utility/config.h>
 namespace other{
 
-double get_time() OTHER_EXPORT;
+OTHER_CORE_EXPORT double get_time();
 
 }

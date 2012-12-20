@@ -19,7 +19,7 @@ public:
 
     Triangle()
     {
-        n = TV(0,0,1); 
+        n = TV(0,0,1);
         x0 = TV(0,0,0);
         x1 = TV(0,1,0);
         x2 = TV(1,0,0);
@@ -52,7 +52,7 @@ public:
       // compute rms edge length
       real lrms2 = 0.3 * ((x1-x0).sqr_magnitude() + (x2-x0).sqr_magnitude() + (x2-x1).sqr_magnitude());
       real A = area();
-      
+
       if (A == 0)
         return 0.;
       else {
@@ -60,8 +60,8 @@ public:
         const real normalization = 0.25 * sqrt(3.);
         return 1./normalization * A / lrms2;
       }
-    }    
-  
+    }
+
     T size() const
     {return area();}
 
@@ -189,29 +189,29 @@ public:
       return angles(x0,x1,x2);
     }
 
-//#####################################################################
-    void change_size(const T delta) OTHER_EXPORT;
-    bool intersection(Plane<T> const &plane, Segment<Vector<T,3>> &result) const OTHER_EXPORT;
-    bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const OTHER_EXPORT;
-    bool lazy_intersection(Ray<Vector<T,3> >& ray) const OTHER_EXPORT;
-    bool closest_non_intersecting_point(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const OTHER_EXPORT;
-    bool point_inside_triangle(const TV& point,const T thickness_over_2=0) const OTHER_EXPORT;
-    bool planar_point_inside_triangle(const TV& point,const T thickness_over_2=0) const OTHER_EXPORT;
-    bool lazy_planar_point_inside_triangle(const TV& point) const OTHER_EXPORT;
-    T minimum_edge_length() const OTHER_EXPORT;
-    T maximum_edge_length() const OTHER_EXPORT;
-    TV closest_point(const TV& location,TV& weights) const OTHER_EXPORT;
-    TV closest_point(const TV& location) const OTHER_EXPORT;
-    T distance(const TV& location) const OTHER_EXPORT; // distance from point to triangle
-    T minimum_angle() const OTHER_EXPORT;
-    T maximum_angle() const OTHER_EXPORT;
-    T signed_solid_angle(const TV& center) const OTHER_EXPORT;
-//#####################################################################
+    //#####################################################################
+    OTHER_CORE_EXPORT void change_size(const T delta);
+    OTHER_CORE_EXPORT bool intersection(Plane<T> const &plane, Segment<Vector<T,3>> &result) const;
+    OTHER_CORE_EXPORT bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const;
+    OTHER_CORE_EXPORT bool lazy_intersection(Ray<Vector<T,3> >& ray) const;
+    OTHER_CORE_EXPORT bool closest_non_intersecting_point(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const;
+    OTHER_CORE_EXPORT bool point_inside_triangle(const TV& point,const T thickness_over_2=0) const;
+    OTHER_CORE_EXPORT bool planar_point_inside_triangle(const TV& point,const T thickness_over_2=0) const;
+    OTHER_CORE_EXPORT bool lazy_planar_point_inside_triangle(const TV& point) const;
+    OTHER_CORE_EXPORT T minimum_edge_length() const;
+    OTHER_CORE_EXPORT T maximum_edge_length() const;
+    OTHER_CORE_EXPORT TV closest_point(const TV& location,TV& weights) const;
+    OTHER_CORE_EXPORT TV closest_point(const TV& location) const;
+    OTHER_CORE_EXPORT T distance(const TV& location) const; // distance from point to triangle
+    OTHER_CORE_EXPORT T minimum_angle() const;
+    OTHER_CORE_EXPORT T maximum_angle() const;
+    OTHER_CORE_EXPORT T signed_solid_angle(const TV& center) const;
+    //#####################################################################
 };
 
 template<class T> std::ostream& operator<<(std::ostream& output,const Triangle<Vector<T,3> >& triangle)
 {output<<'['<<triangle.x0<<','<<triangle.x1<<','<<triangle.x2<<']';return output;}
 
-bool intersection(const Segment<Vector<real,3> >& segment, const Triangle<Vector<real,3> >& triangle, const real thickness_over_2=0) OTHER_EXPORT;
+OTHER_CORE_EXPORT bool intersection(const Segment<Vector<real,3> >& segment, const Triangle<Vector<real,3> >& triangle, const real thickness_over_2=0);
 
 }

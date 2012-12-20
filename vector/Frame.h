@@ -14,9 +14,9 @@ template<class TV> struct HasCheapCopy<Frame<TV> >:public mpl::true_{};
 template<class TV> struct IsScalarBlock<Frame<TV> >:public IsScalarBlock<TV>{};
 template<class TV> struct is_packed_pod<Frame<TV> >:public is_packed_pod<typename TV::Scalar>{};
 
-template<class TV> PyObject* to_python(const Frame<TV>& q) OTHER_EXPORT;
-template<class TV> struct FromPython<Frame<TV> >{OTHER_EXPORT static Frame<TV> convert(PyObject* object);};
-template<class TV> bool frames_check(PyObject* object) OTHER_EXPORT;
+template<class TV> OTHER_CORE_EXPORT PyObject* to_python(const Frame<TV>& q);
+template<class TV> struct FromPython<Frame<TV> >{OTHER_CORE_EXPORT static Frame<TV> convert(PyObject* object);};
+template<class TV> OTHER_CORE_EXPORT bool frames_check(PyObject* object);
 
 template<class TV>
 class Frame
@@ -66,7 +66,7 @@ public:
 
     TV operator*(const TV& v) const
     {return t+r*v;}
-    
+
     void invert()
     {*this=inverse();}
 

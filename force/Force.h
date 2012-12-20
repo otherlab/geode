@@ -3,7 +3,7 @@
 //#####################################################################
 //
 // Abstract base class for solids forces
-// 
+//
 //#####################################################################
 #pragma once
 
@@ -14,15 +14,15 @@ namespace other{
 template<class TV>
 class Force:public Object {
 public:
-  OTHER_DECLARE_TYPE
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
   typedef typename TV::Scalar T;
   enum {d=TV::m};
 
 protected:
-  Force() OTHER_EXPORT;
+OTHER_CORE_EXPORT Force();
 public:
-  ~Force() OTHER_EXPORT;
+OTHER_CORE_EXPORT ~Force();
 
   virtual void update_position(Array<const TV> X,bool definite)=0;
   virtual T elastic_energy() const=0;
