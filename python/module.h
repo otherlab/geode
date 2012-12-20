@@ -86,7 +86,11 @@ struct Scope {
   OTHER_CORE_EXPORT ~Scope();
 };
 
+#ifdef OTHER_PYTHON
 #define OTHER_WRAP(name) extern void wrap_##name();wrap_##name();
+#else
+#define OTHER_WRAP(name)
+#endif
 
 }
 }

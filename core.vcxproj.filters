@@ -1157,9 +1157,6 @@
     <ClCompile Include="python\function.cpp">
       <Filter>python\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="python\module.cpp">
-      <Filter>python\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="python\numpy.cpp">
       <Filter>python\Source Files</Filter>
     </ClCompile>
@@ -1336,6 +1333,12 @@
     </ClCompile>
     <ClCompile Include="vector\Vector.cpp">
       <Filter>vector\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\module.cpp">
+      <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility\resource.cpp">
+      <Filter>utility\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
