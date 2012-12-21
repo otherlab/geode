@@ -15,8 +15,6 @@
 #define NO_IMPORT_ARRAY
 #endif
 
-//extern OTHER_CORE_EXPORT void **PY_ARRAY_UNIQUE_SYMBOL;
-
 #include <numpy/arrayobject.h>
 #include <other/core/array/Array.h>
 #include <other/core/array/IndirectArray.h>
@@ -29,10 +27,17 @@ typedef Py_intptr_t npy_intp;
 
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_dimension_mismatch());
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_not_owned());
-OTHER_CORE_EXPORT void OTHER_NORETURN(throw_array_conversion_error(PyObject* object,int flags,int rank_range,PyArray_Descr* descr));
-OTHER_CORE_EXPORT size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num); // Returns total data size in bytes
-OTHER_CORE_EXPORT void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int type_num,void* data);
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr));
+OTHER_CORE_EXPORT void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray_Descr* descr);
+OTHER_CORE_EXPORT size_t fill_numpy_header(Array<uint8_t>& header, int rank, const npy_intp* dimensions, int type_num); // Returns total data size in bytes
+OTHER_CORE_EXPORT void write_numpy(const string& filename, int rank, const npy_intp* dimensions, int type_num, void* data);
+
+// Export wrappers around numpy api functions so that other libraries don't need the PY_ARRAY_UNIQUE_SYMBOL, which can't be portably exported.
 OTHER_CORE_EXPORT bool is_numpy_array(PyObject* o);
+OTHER_CORE_EXPORT PyArray_Descr* numpy_descr_from_type(int type_num);
+OTHER_CORE_EXPORT PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context);
+OTHER_CORE_EXPORT PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj);
+OTHER_CORE_EXPORT PyTypeObject* numpy_array_type();
 
 // Stay compatible with old versions of numpy
 #ifndef NPY_ARRAY_WRITEABLE
@@ -109,7 +114,7 @@ template<class T,int d> struct NumpyScalar<RawArray<T,d> >:public NumpyScalar<T>
 template<class T> struct NumpyScalar<NdArray<T> >:public NumpyScalar<T>{};
 
 // NumpyDescr
-template<class T> struct NumpyDescr{static PyArray_Descr* descr(){return PyArray_DescrFromType(NumpyScalar<T>::value);}};
+template<class T> struct NumpyDescr{static PyArray_Descr* descr(){return numpy_descr_from_type(NumpyScalar<T>::value);}};
 template<class T> struct NumpyDescr<const T>:public NumpyDescr<T>{};
 template<class T,int d> struct NumpyDescr<Vector<T,d> >:public NumpyDescr<T>{};
 template<class T,int m,int n> struct NumpyDescr<Matrix<T,m,n> >:public NumpyDescr<T>{};
@@ -118,7 +123,7 @@ template<class T,int d> struct NumpyDescr<RawArray<T,d> >:public NumpyDescr<T>{}
 template<class T> struct NumpyDescr<NdArray<T> >:public NumpyDescr<T>{};
 
 // NumpyArrayType
-template<class T> struct NumpyArrayType{static PyTypeObject* type(){return &PyArray_Type;}};
+template<class T> struct NumpyArrayType{static PyTypeObject* type(){return numpy_array_type();}};
 template<class T> struct NumpyArrayType<const T>:public NumpyArrayType<T>{};
 template<class T,int d> struct NumpyArrayType<Vector<T,d> >:public NumpyArrayType<T>{};
 template<class T,int d> struct NumpyArrayType<Array<T,d> >:public NumpyArrayType<T>{};
@@ -240,7 +245,7 @@ to_numpy(const TV& x) {
   numpy_info(x,data,dimensions.data());
 
   // Make a new numpy array and copy the vector into it
-  PyObject* numpy = PyArray_NewFromDescr(NumpyArrayType<TV>::type(),NumpyDescr<TV>::descr(),rank,dimensions.data(),0,0,0,0);
+  PyObject* numpy = numpy_new_from_descr(NumpyArrayType<TV>::type(),NumpyDescr<TV>::descr(),rank,dimensions.data(),0,0,0,0);
   if (!numpy) return 0;
   *(TV*)PyArray_DATA((PyArrayObject*)numpy) = x;
 
@@ -265,7 +270,7 @@ to_numpy(TArray& array) {
     throw_not_owned();
 
   // wrap the existing array as a numpy array without copying data
-  PyObject* numpy = PyArray_NewFromDescr(NumpyArrayType<TArray>::type(),NumpyDescr<TArray>::descr(),rank,dimensions.data(),0,data,NPY_ARRAY_CARRAY,0);
+  PyObject* numpy = numpy_new_from_descr(NumpyArrayType<TArray>::type(),NumpyDescr<TArray>::descr(),rank,dimensions.data(),0,data,NPY_ARRAY_CARRAY,0);
   if (!numpy) return 0;
   PyArray_ENABLEFLAGS((PyArrayObject*)numpy,NPY_ARRAY_C_CONTIGUOUS);
   if (TArray::is_const) PyArray_CLEARFLAGS((PyArrayObject*)numpy, NPY_ARRAY_WRITEABLE);
@@ -285,7 +290,7 @@ from_numpy(PyObject* object) { // Borrows reference to object
 
   // convert object to an array with the correct type and rank
   static const int rank = NumpyRank<TV>::value;
-  PyObject* array = PyArray_FromAny(object,NumpyDescr<TV>::descr(),rank,rank,NPY_ARRAY_CARRAY_RO|NPY_ARRAY_FORCECAST,0);
+  PyObject* array = numpy_from_any(object,NumpyDescr<TV>::descr(),rank,rank,NPY_ARRAY_CARRAY_RO|NPY_ARRAY_FORCECAST,0);
   if (!array) throw_python_error();
 
   // ensure appropriate dimensions
@@ -329,22 +334,20 @@ from_numpy(PyObject* object) { // borrows reference to object
   PyArray_Descr* const descr = NumpyDescr<TArray>::descr();
   const int min_rank = rank_range<0?-rank_range-1:rank_range,max_rank=rank_range<0?100:rank_range;
 
-  if (PyArray_Check(object)) {
+  if (is_numpy_array(object)) {
     // Already a numpy array: require an exact match to avoid hidden performance issues
-    int rank = PyArray_NDIM((PyArrayObject*)object);
-    if (!PyArray_CHKFLAGS((PyArrayObject*)object,flags) || min_rank>rank || rank>max_rank || !PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object), descr))
-      throw_array_conversion_error(object,flags,rank_range,descr);
-    if (!numpy_shape_match(mpl::identity<TArray>(),rank,PyArray_DIMS((PyArrayObject*)object)))
+    check_numpy_conversion(object,flags,rank_range,descr);
+    if (!numpy_shape_match(mpl::identity<TArray>(),PyArray_NDIM((PyArrayObject*)object),PyArray_DIMS((PyArrayObject*)object)))
       throw_dimension_mismatch();
     return from_numpy_helper(mpl::identity<TArray>(),object);
   } else if (!TArray::is_const)
-    throw_type_error(object, &PyArray_Type);
+    throw_type_error(object,numpy_array_type());
 
-  // if we're converting to a const array, and the input isn't already numpy, allow any matching nested sequence
-  PyObject* array = PyArray_FromAny(object,descr,min_rank,max_rank,flags,0);
+  // If we're converting to a const array, and the input isn't already numpy, allow any matching nested sequence
+  PyObject* array = numpy_from_any(object,descr,min_rank,max_rank,flags,0);
   if(!array) throw_python_error();
 
-  // ensure appropriate dimension
+  // Ensure appropriate dimension
   int rank = PyArray_NDIM((PyArrayObject*)array);
   if (!numpy_shape_match(mpl::identity<TArray>(),rank,PyArray_DIMS((PyArrayObject*)array))) {
     Py_DECREF(array);
