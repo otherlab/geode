@@ -57,6 +57,8 @@ template<class F> static inline const F& curry(const F& f) {
     typename boost::result_of<S consts>::type operator()() const { return f args; } \
     template<class R0> typename boost::result_of<S(OTHER_REMOVE_PARENS(consts),R0&&)>::type operator()(R0&& r0) const { return f(OTHER_REMOVE_PARENS(args),r0); } \
     template<class R0,class R1> typename boost::result_of<S(OTHER_REMOVE_PARENS(consts),R0&&,R1&&)>::type operator()(R0&& r0,R1&& r1) const { return f(OTHER_REMOVE_PARENS(args),r0,r1); } \
+    template<class R0,class R1,class R2> typename boost::result_of<S(OTHER_REMOVE_PARENS(consts),R0&&,R1&&,R2&&)>::type operator()(R0&& r0,R1&& r1,R2&& r2) const { return f(OTHER_REMOVE_PARENS(args),r0,r1,r2); } \
+    template<class R0,class R1,class R2,class R3> typename boost::result_of<S(OTHER_REMOVE_PARENS(consts),R0&&,R1&&,R2&&,R3&&)>::type operator()(R0&&r0,R1&&r1,R2&&r2,R3&&r3) const { return f(OTHER_REMOVE_PARENS(args),r0,r1,r2,r3); } \
   }; \
   \
   template<class F,OTHER_REMOVE_PARENS(ARGS)> static inline Curry##n<F,OTHER_REMOVE_PARENS(Args)> curry(const F& f,OTHER_REMOVE_PARENS(Argsargs)) { \
