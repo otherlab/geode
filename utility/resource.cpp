@@ -44,7 +44,7 @@ static string executable_path() {
   OTHER_ASSERT(!_NSGetExecutablePath(large.data(),&size)); 
   return large.data();
 #elif defined(__linux__)
-  for (size_t n=128;;n*=2) {
+  for (ssize_t n=128;;n*=2) {
     Array<char> path(n,false);
     ssize_t m = readlink("/proc/self/exe",path.data(),n-1);
     if (m<0)

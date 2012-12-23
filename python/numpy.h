@@ -9,7 +9,7 @@
 #include <other/core/utility/config.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
-#define NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 #ifndef OTHER_IMPORT_NUMPY
 #define NO_IMPORT_ARRAY

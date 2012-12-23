@@ -76,7 +76,9 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
   char letter;
   switch (type_num) {
     #define CASE(T,K) case NPY_##T:bits=NPY_BITSOF_##T;letter=NPY_##K##LTR;break;
+    #ifndef NPY_BITSOF_BYTE
     #define NPY_BITSOF_BYTE 8
+    #endif
     #define NPY_BITSOF_UBYTE 8
     #define NPY_BITSOF_USHORT NPY_BITSOF_SHORT
     #define NPY_BITSOF_UINT NPY_BITSOF_INT
