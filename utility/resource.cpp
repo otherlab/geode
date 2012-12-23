@@ -1,5 +1,4 @@
 // Locate extra resource files (textures, etc.) at runtime
-#include <vector>
 
 #include <other/core/utility/resource.h>
 #include <other/core/array/Array.h>
@@ -16,14 +15,13 @@
 namespace other {
 
 // Grab a path to the current executable
-static string executable_path() 
-{
+static string executable_path() {
 #if defined(_WIN32)
 
 #if defined(_UNICODE) || defined(UNICODE)
-    typedef std::wstring str;
+  typedef std::wstring str;
 #else
-    typedef std::string str;
+  typedef std::string str;
 #endif
   str path(MAX_PATH, 0);
   LPTSTR buffer = const_cast<LPTSTR>(path.data());
