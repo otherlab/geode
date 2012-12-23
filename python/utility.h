@@ -14,6 +14,10 @@ template<class T> static inline Ref<> to_python_check(const T& o) {
   return steal_ref_check(to_python(o));
 }
 
+template<class T> static inline bool python_has_field(const T& o, const char* name) {
+  return PyObject_HasAttrString(&*to_python_check(o),name)!=0;
+}
+
 template<class T> static inline Ref<> python_field(const T& o, const char* name) {
   return steal_ref_check(PyObject_GetAttrString(&*to_python_check(o),name));
 }
