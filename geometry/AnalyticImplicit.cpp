@@ -87,6 +87,8 @@ template<int d> static void wrap_box_helper() {
     .OTHER_FIELD(min)
     .OTHER_FIELD(max)
     .OTHER_METHOD(sizes)
+    .OTHER_METHOD(clamp)
+    .OTHER_METHOD(center)
     .template method<Box<TV>(Box<TV>::*)(T)const>("thickened",&Self::thickened)
     .template method<void(Box<TV>::*)(const TV&)>("enlarge",&Self::enlarge)
     ;
