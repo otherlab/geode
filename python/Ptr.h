@@ -14,7 +14,7 @@
 #include <other/core/python/config.h>
 #include <other/core/python/new.h>
 #include <other/core/python/Ref.h>
-namespace other{
+namespace other {
 
 using std::ostream;
 
@@ -22,6 +22,7 @@ template<class T> // T=PyObject
 class Ptr {
   OTHER_NEW_FRIEND
   template<class S> friend class Ptr;
+  template<class S> friend class Ref;
 
   T* self; // may be null
   PyObject* owner_; // may be null
@@ -111,29 +112,12 @@ public:
     owner_ = 0;
   }
 
-  bool operator==(const Ptr& o) const {
-    return self==o.self;
-  }
-
-  bool operator!=(const Ptr& o) const {
-    return self!=o.self;
-  }
-
-  bool operator<(const Ptr& o) const {
-    return self<o.self;
-  }
-
-  bool operator>(const Ptr& o) const {
-    return self>o.self;
-  }
-
-  bool operator<=(const Ptr& o) const {
-    return self<=o.self;
-  }
-
-  bool operator>=(const Ptr& o) const {
-    return self>=o.self;
-  }
+  bool operator==(const Ptr& o) const { return self==o.self; }
+  bool operator!=(const Ptr& o) const { return self!=o.self; }
+  bool operator< (const Ptr& o) const { return self< o.self; }
+  bool operator> (const Ptr& o) const { return self> o.self; }
+  bool operator<=(const Ptr& o) const { return self<=o.self; }
+  bool operator>=(const Ptr& o) const { return self>=o.self; }
 };
 
 template<class T> static inline Ref<T> ref(Ptr<T>& ptr) {
