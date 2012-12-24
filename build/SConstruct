@@ -527,7 +527,10 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   if darwin:
     bundle = env.LoadableModule(name,source=[],LIBS=lib)
     env.Depends('.',env.Install(env['PREFIX_LIB'],bundle))
-  if windows and 0:
+  elif posix and env['has_python']:
+    # Make a name.so -> libname.so symlink for python use
+    env.Depends(',',env.Command(os.path.join(env['PREFIX_LIB'],name+'.so'),[],['ln -sf lib%s.so $TARGET'%name]))
+  elif windows and 0:
     projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=cpps,variant=env['type'].capitalize(),buildtarget=lib,auto_build_solution=0))
   return lib
 
