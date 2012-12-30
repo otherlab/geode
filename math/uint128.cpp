@@ -56,6 +56,14 @@ uint128_t FromPython<uint128_t>::convert(PyObject* object) {
 }
 
 static std::vector<uint128_t> uint128_test(uint128_t x,uint128_t y) {
+  // Test shifts
+  static const int shifts[] = {0,1,63,64,65,127};
+  for (const int s : shifts) {
+    const auto p = uint128_t(1)<<s;
+    OTHER_ASSERT((x<<s)==x*p);
+    OTHER_ASSERT(((x>>s)<<s)==(x&~(p-1)));
+  }
+  // Test other operations
   std::vector<uint128_t> r;
   r.push_back((uint64_t)-7);
   r.push_back(-7);

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <other/core/python/forward.h>
+#include <boost/type_traits/is_integral.hpp>
 #include <boost/static_assert.hpp>
 #include <stdint.h>
 namespace other {
@@ -43,6 +44,14 @@ private:
     :lo(lo),hi(hi) {}
 public:
 
+  bool operator==(uint128_t x) const {
+    return lo==x.lo && hi==x.hi;
+  }
+
+  bool operator!=(uint128_t x) const {
+    return lo!=x.lo || hi!=x.hi;
+  }
+
   uint128_t operator+(uint128_t x) const {
     uint64_t l = lo+x.lo;
     return uint128_t(hi+x.hi+(l<lo),l);
@@ -60,11 +69,11 @@ public:
   }
 
   uint128_t operator<<(unsigned b) const {
-    return b==64?uint128_t(lo,0):uint128_t((hi<<b)+(lo>>(64-b)),(lo<<b));
+    return b==0?*this:b<64?uint128_t(hi<<b|lo>>(64-b),lo<<b):uint128_t(lo<<(b-64),0);
   }
 
   uint128_t operator>>(unsigned b) const {
-    return b==64?uint128_t(0,hi):uint128_t(hi>>b,(lo>>b)+(hi<<(64-b)));
+    return b==0?*this:b<64?uint128_t(hi>>b,lo>>b|hi<<(64-b)):uint128_t(0,hi>>(b-64));
   }
 
   uint128_t& operator<<=(unsigned b) {
@@ -89,6 +98,10 @@ public:
     return uint128_t(hi|x.hi,lo|x.lo);
   }
 
+  uint128_t operator~() const {
+    return uint128_t(~hi,~lo);
+  }
+
   uint128_t& operator++() { // prefix
     uint64_t l = lo;
     lo++;
@@ -102,11 +115,13 @@ public:
     return save;
   }
 
-  template<class I> friend static inline I cast_uint128(const uint128_t& n) {
-    BOOST_STATIC_ASSERT((boost::is_integral<I>::value && sizeof(I)<=8));
-    return I(n.lo);
-  }
+  template<class I> friend inline I cast_uint128(const uint128_t& n);
 };
+
+template<class I> inline I cast_uint128(const uint128_t& n) {
+  BOOST_STATIC_ASSERT((boost::is_integral<I>::value && sizeof(I)<=8));
+  return I(n.lo);
+}
 
 #endif
 
