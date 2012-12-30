@@ -183,6 +183,7 @@ OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,FaceHandle)
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,FaceHandle)
 
+#ifdef OTHER_PYTHON
 namespace {
 // for vector conversions
 template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
@@ -197,6 +198,7 @@ template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
 template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
 template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
 }
+#endif
 
 }
 
