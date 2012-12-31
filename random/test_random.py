@@ -126,6 +126,17 @@ def test_permute():
       y = random_permute(n,key,x)
       assert x==random_unpermute(n,key,y)
       assert y<n
+  # For small n, we check that all permutations are realized
+  fac = 1
+  for n in 1,2,3,4,5:
+    fac *= n
+    perms = set()
+    for key in xrange(int(1+10*fac*log(fac))):
+      perm = tuple(random_permute(n,key,i) for i in xrange(n))
+      for i,pi in enumerate(perm):
+        assert i==random_unpermute(n,key,pi)
+      perms.add(perm)
+    assert len(perms)==fac
 
 if __name__=='__main__':
   test_permute()
