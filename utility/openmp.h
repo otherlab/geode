@@ -32,7 +32,7 @@ inline Range<int> partition_loop(const int loop_steps) {
 
 // Inverse of partition_loop: map an index to the thread that owns it
 inline int partition_loop_inverse(const int loop_steps, const int threads, const int index) {
-  OTHER_ASSERT(threads>0);
+  OTHER_ASSERT(threads>0 && (unsigned)index<(unsigned)loop_steps);
   const int steps_per_thread = loop_steps/threads, // Round down, so some threads will get one more step
             extra_steps = loop_steps%threads, // The first extra_steps threads will get one extra step
             threshold = (steps_per_thread+1)*extra_steps; // Before this point, all threads have an extra step
