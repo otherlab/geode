@@ -60,45 +60,45 @@ OTHER_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObje
 #define OTHER_DEFINE_TYPE(...) \
   PyTypeObject __VA_ARGS__::pytype = { \
     PyObject_HEAD_INIT(&PyType_Type) \
-    0,                                        /* ob_size */\
-    "other_default_name:" __FILE__,           /* tp_name */\
-    sizeof(PyObject)+sizeof(__VA_ARGS__),     /* tp_basicsize */\
-    0,                                        /* tp_itemsize */\
-    Class<__VA_ARGS__>::dealloc,              /* tp_dealloc */\
-    0,                                        /* tp_print */\
-    0,                                        /* tp_getattr */\
-    0,                                        /* tp_setattr */\
-    0,                                        /* tp_compare */\
-    0,                                        /* tp_repr */\
-    0,                                        /* tp_as_number */\
-    0,                                        /* tp_as_sequence */\
-    0,                                        /* tp_as_mapping */\
-    0,                                        /* tp_hash  */\
-    0,                                        /* tp_call */\
-    0,                                        /* tp_str */\
-    0,                                        /* tp_getattro */\
-    0,                                        /* tp_setattro */\
-    0,                                        /* tp_as_buffer */\
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */\
-    "Wrapped C++ class",                      /* tp_doc */\
-    0,                                        /* tp_traverse */\
-    0,                                        /* tp_clear */\
-    0,                                        /* tp_richcompare */\
-    0,                                        /* tp_weaklistoffset */\
-    0,                                        /* tp_iter */\
-    0,                                        /* tp_iternext */\
-    0,                                        /* tp_methods */\
-    0,                                        /* tp_members */\
-    0,                                        /* tp_getset */\
-    OTHER_BASE_PYTYPE(__VA_ARGS__),           /* tp_base */\
-    0,                                        /* tp_dict */\
-    0,                                        /* tp_descr_get */\
-    0,                                        /* tp_descr_set */\
-    0,                                        /* tp_dictoffset */\
-    other::trivial_init,                      /* tp_init */\
-    other::simple_alloc,                      /* tp_alloc */\
-    0,                                        /* tp_new */\
-    free,                                     /* tp_free */\
+    0,                                           /* ob_size */\
+    "other_default_name:" __FILE__,              /* tp_name */\
+    sizeof(other::PyObject)+sizeof(__VA_ARGS__), /* tp_basicsize */\
+    0,                                           /* tp_itemsize */\
+    other::Class<__VA_ARGS__>::dealloc,          /* tp_dealloc */\
+    0,                                           /* tp_print */\
+    0,                                           /* tp_getattr */\
+    0,                                           /* tp_setattr */\
+    0,                                           /* tp_compare */\
+    0,                                           /* tp_repr */\
+    0,                                           /* tp_as_number */\
+    0,                                           /* tp_as_sequence */\
+    0,                                           /* tp_as_mapping */\
+    0,                                           /* tp_hash  */\
+    0,                                           /* tp_call */\
+    0,                                           /* tp_str */\
+    0,                                           /* tp_getattro */\
+    0,                                           /* tp_setattro */\
+    0,                                           /* tp_as_buffer */\
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,    /* tp_flags */\
+    "Wrapped C++ class",                         /* tp_doc */\
+    0,                                           /* tp_traverse */\
+    0,                                           /* tp_clear */\
+    0,                                           /* tp_richcompare */\
+    0,                                           /* tp_weaklistoffset */\
+    0,                                           /* tp_iter */\
+    0,                                           /* tp_iternext */\
+    0,                                           /* tp_methods */\
+    0,                                           /* tp_members */\
+    0,                                           /* tp_getset */\
+    OTHER_BASE_PYTYPE(__VA_ARGS__),              /* tp_base */\
+    0,                                           /* tp_dict */\
+    0,                                           /* tp_descr_get */\
+    0,                                           /* tp_descr_set */\
+    0,                                           /* tp_dictoffset */\
+    other::trivial_init,                         /* tp_init */\
+    other::simple_alloc,                         /* tp_alloc */\
+    0,                                           /* tp_new */\
+    free,                                        /* tp_free */\
   };
 
 template<class T> static PyObject* str_wrapper(PyObject* self) {
