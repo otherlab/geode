@@ -516,7 +516,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   if windows:
     all_libraries.append(name)
     for l in lib:
-      if l.name[-4:]=='.dll':
+      if l.name[-4:] in ['.dll','.pyd']:
         env.Install(env['PREFIX_BIN'],l)
       elif not no_exports:
         env.Install(env['PREFIX_LIB'],l)
