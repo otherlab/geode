@@ -22,7 +22,10 @@ namespace python {
 
 static std::vector<PyObject*> modules;
 
-Scope::Scope(PyObject* module) {
+Module::Module(const char* name) {
+  auto module = Py_InitModule3(name,0,0);
+  if (!module)
+    throw_python_error();
   modules.push_back(module);
 }
 
@@ -104,4 +107,5 @@ void wrap_python() {
 
   python::add_object("real",(PyObject*)PyArray_DescrFromType(NumpyScalar<real>::value));
 #endif
+
 }

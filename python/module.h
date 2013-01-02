@@ -26,23 +26,23 @@ namespace python {
 #ifdef _WIN32
 #define MODINIT PyMODINIT_FUNC
 #else
-#define MODINIT PyMODINIT_FUNC OTHER_CORE_EXPORT 
+#define MODINIT PyMODINIT_FUNC OTHER_EXPORT 
 #endif
 
+struct Module {
+  OTHER_CORE_EXPORT Module(char const *name);
+};
 
 #define OTHER_PYTHON_MODULE(name) \
   static void Init_Helper_##name(); \
   MODINIT init##name(); \
   MODINIT init##name() { \
-    PyObject* module = Py_InitModule3(#name,0,0); \
-    if (module) { \
-      try { \
-        ::other::python::Scope scope(module); \
-        ::other::python::import_core(); \
-        Init_Helper_##name(); \
-      } catch(std::exception& error) { \
-        ::other::set_python_exception(error); \
-      } \
+    try { \
+      ::other::python::Module module(#name); \
+      ::other::python::import_core(); \
+      Init_Helper_##name(); \
+    } catch(std::exception& error) { \
+      ::other::set_python_exception(error); \
     } \
   } \
   static void Init_Helper_##name()
