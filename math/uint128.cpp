@@ -4,11 +4,23 @@
 #include <other/core/math/uint128.h>
 #include <other/core/python/stl.h>
 #include <other/core/python/module.h>
+#include <other/core/utility/format.h>
 #include <boost/static_assert.hpp>
 #include <iostream>
 namespace other{
 
 using std::cout;
+
+string str(uint128_t n) {
+  const auto lo = cast_uint128<uint64_t>(n),
+             hi = cast_uint128<uint64_t>(n>>64);
+  // For now, we lazily produce hexadecimal to avoid having to divide.
+  return hi ? format("0x%llx%016llx",hi,lo) : format("0x%llx",lo);
+}
+
+ostream& operator<<(ostream& output, uint128_t n) {
+  return output << str(n);
+}
 
 #ifdef OTHER_PYTHON
 
@@ -87,5 +99,6 @@ void wrap_uint128() {
   if (!p64) throw_python_error();
 
   OTHER_FUNCTION(uint128_test)
+  OTHER_FUNCTION_2(uint128_str_test,static_cast<string(*)(uint128_t)>(str))
 #endif
 }

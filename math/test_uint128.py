@@ -24,3 +24,5 @@ def test_uint128():
     assert r[5]==(x*y)&m128
     assert r[6]==(x<<5)&m128
     assert r[7]==x>>7
+  for x in 0,19731,74599465401539225308381206871:
+    assert uint128_str_test(x)=='0x%x'%x
