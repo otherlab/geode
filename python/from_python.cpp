@@ -2,6 +2,7 @@
 // Function from_python
 //#####################################################################
 #include <other/core/python/from_python.h>
+#include <other/core/utility/format.h>
 namespace other {
 
 #ifdef OTHER_PYTHON
@@ -49,15 +50,17 @@ int FromPython<unsigned int>::convert(PyObject* object) {
 
 unsigned long long FromPython<unsigned long long>::convert(PyObject* object) {
   unsigned long long i = PyInt_AsUnsignedLongLongMask(object);
-  if (i==(unsigned long long)-1 && PyErr_Occurred()) throw_python_error();
+  if (i==(unsigned long long)-1 && PyErr_Occurred())
+    throw_python_error();
   // Check that the conversion was exact
   PyObject* y = PyLong_FromUnsignedLongLong(i);
   if (!y) throw_python_error();
   int eq = PyObject_RichCompareBool(object,y,Py_EQ);
   Py_DECREF(y);
-  if (eq<0) throw_python_error();
+  if (eq<0)
+    throw_python_error();
   if (!eq) {
-    PyErr_Format(PyExc_TypeError,"expected unsigned long long, got %llu",i);
+    PyErr_SetString(PyExc_TypeError,format("expected unsigned long long, got %s",from_python<const char*>(steal_ref_check(PyObject_Str(object)))).c_str());
     throw_python_error();
   }
   return i;

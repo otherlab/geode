@@ -116,7 +116,30 @@ def test_distributions():
     assert X.dtype==int32 and all(lo<=X) and all(X<hi)
     test('int %d %d'%(lo,hi),scipy.stats.randint(lo,hi),arange(lo,hi-1)+.5,X)
 
+def test_permute():
+  # Note: This tests only that random_permute(n,_) is a valid permutation, not for pseudorandomness.
+  numpy.random.seed(7810131)
+  for n in 1025,14710134,2**32,2**32+1,2**64-1:
+    key = threefry(18371,n)
+    xs = numpy.fromstring(numpy.random.bytes(8*16),dtype=uint64)%n
+    for x in xs:
+      y = random_permute(n,key,x)
+      assert x==random_unpermute(n,key,y)
+      assert y<n
+  # For small n, we check that all permutations are realized
+  fac = 1
+  for n in 1,2,3,4,5:
+    fac *= n
+    perms = set()
+    for key in xrange(int(1+10*fac*log(fac))):
+      perm = tuple(random_permute(n,key,i) for i in xrange(n))
+      for i,pi in enumerate(perm):
+        assert i==random_unpermute(n,key,pi)
+      perms.add(perm)
+    assert len(perms)==fac
+
 if __name__=='__main__':
+  test_permute()
   test_bits()
   test_distributions()
   test_sobol()

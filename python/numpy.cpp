@@ -26,6 +26,22 @@ bool is_numpy_array(PyObject* o) {
   return PyArray_Check(o);
 }
 
+PyArray_Descr* numpy_descr_from_type(int type_num) {
+  return PyArray_DescrFromType(type_num);
+}
+
+PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context) {
+  return PyArray_FromAny(op,dtype,min_depth,max_depth,requirements,context);
+}
+
+PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj) {
+  return PyArray_NewFromDescr(subtype,descr,nd,dims,strides,data,flags,obj);
+}
+
+PyTypeObject* numpy_array_type() {
+  return &PyArray_Type;
+}
+
 void throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
   if (!PyArray_Check(object))
     PyErr_Format(PyExc_TypeError, "expected numpy array, got %s", object->ob_type->tp_name);
@@ -47,13 +63,22 @@ void throw_array_conversion_error(PyObject* object, int flags, int rank_range, P
   throw PythonError();
 }
 
+void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
+  const int rank = PyArray_NDIM((PyArrayObject*)object);
+  const int min_rank = rank_range<0?-rank_range-1:rank_range,max_rank=rank_range<0?100:rank_range;
+  if (!PyArray_CHKFLAGS((PyArrayObject*)object,flags) || min_rank>rank || rank>max_rank || !PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object),descr))
+    throw_array_conversion_error(object,flags,rank_range,descr);
+}
+
 size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num) {
   // Get dtype info
   int bits;
   char letter;
   switch (type_num) {
     #define CASE(T,K) case NPY_##T:bits=NPY_BITSOF_##T;letter=NPY_##K##LTR;break;
+    #ifndef NPY_BITSOF_BYTE
     #define NPY_BITSOF_BYTE 8
+    #endif
     #define NPY_BITSOF_UBYTE 8
     #define NPY_BITSOF_USHORT NPY_BITSOF_SHORT
     #define NPY_BITSOF_UINT NPY_BITSOF_INT

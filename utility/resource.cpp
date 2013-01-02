@@ -17,12 +17,24 @@ namespace other {
 // Grab a path to the current executable
 static string executable_path() {
 #if defined(_WIN32)
-  for (size_t n=128;;n*=2) {
-    Array<char> path(n,false);
-    size_t m = GetModuleFileName(0,path.data(),n-1);
-    if (m < n-1)
-      return path.data();
-  }
+
+#if defined(_UNICODE) || defined(UNICODE)
+  typedef std::wstring str;
+#else
+  typedef std::string str;
+#endif
+  str path(MAX_PATH, 0);
+  LPTSTR buffer = const_cast<LPTSTR>(path.data());
+  size_t m = GetModuleFileName(0, buffer, MAX_PATH-1);
+#if defined(_UNICODE) || defined(UNICODE)
+#pragma message("Need to verify if non-ASCII characters are handled as UTF-8")
+  const str::value_type* start = path.data();
+  const std::string result(start, start + m + 1);
+#else
+  const str result(path);
+#endif
+  return result.data();
+
 #elif defined(__APPLE__)
   char small[128];
   uint32_t size = sizeof(small)-1;
@@ -32,7 +44,7 @@ static string executable_path() {
   OTHER_ASSERT(!_NSGetExecutablePath(large.data(),&size)); 
   return large.data();
 #elif defined(__linux__)
-  for (size_t n=128;;n*=2) {
+  for (ssize_t n=128;;n*=2) {
     Array<char> path(n,false);
     ssize_t m = readlink("/proc/self/exe",path.data(),n-1);
     if (m<0)

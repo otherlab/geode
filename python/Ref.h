@@ -132,29 +132,20 @@ public:
     std::swap(owner_,ref.owner_);
   }
 
-  bool operator==(const Ref& o) const {
-    return self==o.self;
-  }
+  bool operator==(const Ref& o) const { return self==o.self; }
+  bool operator!=(const Ref& o) const { return self!=o.self; }
+  bool operator< (const Ref& o) const { return self< o.self; }
+  bool operator> (const Ref& o) const { return self> o.self; }
+  bool operator<=(const Ref& o) const { return self<=o.self; }
+  bool operator>=(const Ref& o) const { return self>=o.self; }
 
-  bool operator!=(const Ref& o) const {
-    return self!=o.self;
-  }
-
-  bool operator<(const Ref& o) const {
-    return self<o.self;
-  }
-
-  bool operator>(const Ref& o) const {
-    return self>o.self;
-  }
-
-  bool operator<=(const Ref& o) const {
-    return self<=o.self;
-  }
-
-  bool operator>=(const Ref& o) const {
-    return self>=o.self;
-  }
+  // Merging these with the above would cause unnecessary referencing counting activity
+  bool operator==(const Ptr<T>& o) const { return self==o.self; }
+  bool operator!=(const Ptr<T>& o) const { return self!=o.self; }
+  bool operator< (const Ptr<T>& o) const { return self< o.self; }
+  bool operator> (const Ptr<T>& o) const { return self> o.self; }
+  bool operator<=(const Ptr<T>& o) const { return self<=o.self; }
+  bool operator>=(const Ptr<T>& o) const { return self>=o.self; }
 
   Ref<typename boost::remove_const<T>::type> const_cast_() const {
     typedef typename boost::remove_const<T>::type S;

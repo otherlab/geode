@@ -178,7 +178,7 @@ def ahash(*args):
 
 def homogeneous_times(A,b):
   y = Matrix(A[...,:-1])*b+A[...,-1]
-  return y[...,:-1]/y[...,-1,None]
+  return asarray(y[...,:-1]/y[...,-1,None])
 
 from . import (Rotation,Frame)
 from .Frame import Frames

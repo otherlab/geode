@@ -283,11 +283,6 @@ public:
     return other::clamp(location,min,max);
   }
 
-  T clamp(const T& location) const {
-    BOOST_STATIC_ASSERT(d==1);
-    return clamp(TV(location)).x;
-  }
-
   void project_points_onto_line(const TV& direction, T& line_min, T& line_max) const {
     line_min = line_max = dot(direction,min);
     TV e = direction*(max-min);
