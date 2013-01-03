@@ -29,7 +29,7 @@ Module::Module(const char* name) {
   modules.push_back(module);
 }
 
-Scope::~Scope() {
+Module::~Module() {
   modules.pop_back();
 }
 

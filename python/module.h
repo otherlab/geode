@@ -31,6 +31,7 @@ namespace python {
 
 struct Module {
   OTHER_CORE_EXPORT Module(char const *name);
+  OTHER_CORE_EXPORT ~Module();
 };
 
 #define OTHER_PYTHON_MODULE(name) \
@@ -80,11 +81,6 @@ template<class Function> static inline void function(const char* name, Function 
 #define OTHER_OVERLOADED_FUNCTION_2(type,name,function_) ::other::python::function(name,(type)function_);
 
 #define OTHER_OVERLOADED_FUNCTION(type,function_) OTHER_OVERLOADED_FUNCTION_2(type,#function_,function_);
-
-struct Scope {
-  OTHER_CORE_EXPORT Scope(PyObject* module);
-  OTHER_CORE_EXPORT ~Scope();
-};
 
 #ifdef OTHER_PYTHON
 #define OTHER_WRAP(name) extern void wrap_##name();wrap_##name();
