@@ -3,7 +3,7 @@
 //#####################################################################
 #include <other/core/geometry/BoxScalar.h>
 #include <other/core/python/exceptions.h>
-#include <other/core/structure/tuple.h>
+#include <other/core/structure/Tuple.h>
 #include <other/core/vector/Vector.h>
 namespace other {
 
