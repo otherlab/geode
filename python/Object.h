@@ -56,10 +56,11 @@ template<class T> struct GetSelf {
   }
 };
 
+struct ObjectUnusable {};
+
 // Conversion from T& for python types
-template<class T> static inline
-typename boost::enable_if<boost::is_base_of<Object,T>,PyObject*>::type
-to_python(T& value) {
+template<class T> static inline PyObject*
+to_python(T& value, typename boost::enable_if<boost::is_base_of<Object,T>,ObjectUnusable>::type unusable=ObjectUnusable()) {
   PyObject* object = (PyObject*)&value-1;
   OTHER_INCREF(object);
   return object;
