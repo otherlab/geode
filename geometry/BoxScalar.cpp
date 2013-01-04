@@ -3,21 +3,19 @@
 //#####################################################################
 #include <other/core/geometry/BoxScalar.h>
 #include <other/core/python/exceptions.h>
+#include <other/core/structure/tuple.h>
+#include <other/core/vector/Vector.h>
 namespace other {
 
 #ifdef OTHER_PYTHON
 
 template<class T> PyObject* to_python(const Box<T>& self) {
-  const char* format=boost::is_same<T,float>::value?"ff":"dd";
-  return Py_BuildValue(format,self.min,self.max);
+  return to_python(tuple(self.min,self.max));
 }
 
 template<class T> Box<T> FromPython<Box<T> >::convert(PyObject* object) {
-  Box<T> self;
-  const char* format = boost::is_same<T,float>::value?"ff":"dd";
-  if (PyArg_ParseTuple(object,format,&self.min,&self.max))
-    return self;
-  throw_python_error();
+  const auto extents = from_python<Tuple<T,T>>(object);
+  return Box<T>(extents.x,extents.y);
 }
 
 #define INSTANTIATE(T) \
@@ -25,6 +23,8 @@ template<class T> Box<T> FromPython<Box<T> >::convert(PyObject* object) {
   template OTHER_CORE_EXPORT Box<T> FromPython<Box<T> >::convert(PyObject*);
 INSTANTIATE(float)
 INSTANTIATE(double)
+INSTANTIATE(int)
+INSTANTIATE(int64_t)
 
 #endif
 

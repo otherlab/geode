@@ -52,6 +52,7 @@ template<> struct FromPython<int>{OTHER_CORE_EXPORT static int convert(PyObject*
 template<> struct FromPython<unsigned int>{OTHER_CORE_EXPORT static int convert(PyObject* object);};
 template<> struct FromPython<long>{OTHER_CORE_EXPORT static long convert(PyObject* object);};
 template<> struct FromPython<unsigned long>{OTHER_CORE_EXPORT static unsigned long convert(PyObject* object);};
+template<> struct FromPython<long long>{OTHER_CORE_EXPORT static long long convert(PyObject* object);};
 template<> struct FromPython<unsigned long long>{OTHER_CORE_EXPORT static unsigned long long convert(PyObject* object);};
 template<> struct FromPython<float>{OTHER_CORE_EXPORT static float convert(PyObject* object);};
 template<> struct FromPython<double>{OTHER_CORE_EXPORT static double convert(PyObject* object);};
