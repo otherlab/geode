@@ -1,6 +1,16 @@
 // Path convenience functions
 
 #include <other/core/utility/path.h>
+#include <other/core/utility/format.h>
+
+#ifdef _WIN32
+#define WINDOWS_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
+#include <stdexcept>
+#include <iostream>
+
 namespace other {
 namespace path {
 
@@ -16,9 +26,13 @@ string join(const string& p0, const string& p1, const string& p2, const string& 
   return join(join(p0,p1),join(p2,p3));
 }
 
+// WARNING: These do not work for escaped directory separators
 string extension(const string& path) {
   for (int i=path.size()-1;i>=0;i--) {
-    if (is_sep(path[i]))
+    // we stop if we're at the beginning, or at the first directory separator
+    // this will treat filenames that begin with a '.' (and have no other '.')
+    // as having no extension
+    if (!i || is_sep(path[i-1]))
       break;
     if (path[i]=='.')
       return path.substr(i);
@@ -27,13 +41,10 @@ string extension(const string& path) {
 }
 
 string remove_extension(const string& path) {
-  for (int i=path.size()-1;i>=0;i--) {
-    if (is_sep(path[i])) 
-      break;
-    if (path[i]=='.')
-      return path.substr(0,i); 
-  }
-  return path;
+  string ext = extension(path);
+  if (ext.empty())
+    return path;
+  return path.substr(0,path.size()-ext.size());
 }
 
 string basename(const string& path) {
@@ -48,6 +59,24 @@ string dirname(const string& path) {
     if (is_sep(path[i]))
       return path.substr(0,i);
   return string();
+}
+
+void copy_file(const string &from, const string &to) {
+  int ret = 0;
+#ifdef _WIN32
+  bool fail_if_exists = false;
+  if (!CopyFileW(from.c_str(), to.c_str(), fail_if_exists)) {
+    ret = GetLastError();
+  }
+#else
+  // WARNING: the file names are not escaped, so this is a severe security risk.
+  string cmd = format("cp '%s' '%s'", from, to);
+  std::cout << "running shell command: " << cmd << std::endl;
+  ret = system(cmd.c_str());
+#endif
+
+  if (ret)
+    throw std::runtime_error(format("error %d while copying '%s' to '%s'.", ret, from, to));
 }
 
 }
