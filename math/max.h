@@ -5,15 +5,19 @@
 
 #include <other/core/utility/config.h>
 #include <algorithm>
+#ifdef __SSE__
 #include <xmmintrin.h>
+#endif
 namespace other {
 
 #undef max
 using ::std::max;
 
 // Forward declarations required by clang
+#ifdef __SSE__
 inline __m128 max(__m128 a, __m128 b);
 inline __m128i max(__m128i a, __m128i b);
+#endif
 
 template<class T> inline T max(const T a,const T b,const T c) {
   return max(a,max(b,c));

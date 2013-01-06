@@ -1,6 +1,9 @@
 //#####################################################################
 // Header blas
 //#####################################################################
+// On Mac, we can't include Accelerate.h unless __SSE__ is available
+#if !defined(__APPLE__) || defined(__SSE__)
+
 #ifndef __blas_wrap_iterating__
 #ifndef __blas_wrap_h__
 #define __blas_wrap_h__
@@ -24,6 +27,8 @@ extern "C" {
 #include <other/core/geometry/Box.h>
 #include <boost/preprocessor/cat.hpp>
 namespace other{
+
+#define OTHER_BLAS
 
 template<class T> OTHER_CORE_EXPORT int ilaenv(int ispec,const char* name,const char* opts,int m,int n);
 template<> struct FromPython<CBLAS_TRANSPOSE>{OTHER_CORE_EXPORT static CBLAS_TRANSPOSE convert(PyObject* object);};
@@ -509,4 +514,5 @@ WRAP(void omatcopy(CBLAS_TRANSPOSE trans,T alpha,Subarray<const T,2> A,Subarray<
 
 #endif
 
+#endif
 #endif

@@ -69,8 +69,10 @@ options(
   ('Wconversion','warn about various conversion issues',0),
   ('hidden','make symbols invisible by default',0),
   ('openmp','use openmp',1),
+  ('syntax','check syntax only',0),
   ('has_latex','true if latex is available',0),
   ('thread_safe','use thread safe reference counting in pure C++ code',0),
+  ('sse','Use SSE if available',1),
   ('skip','list of modules to skip',[]),
   ('skip_programs','Build libraries only',0),
   ('BASE','Standard base directory for headers and libraries',env['BASE']),
@@ -277,12 +279,15 @@ elif env['CXX'].endswith('icc') or env['CXX'].endswith('icpc'):
     else: env.Append(CXXFLAGS=' -O3')
   env.Append(CXXFLAGS=' -w -vec-report0 -Wall -Winit-self -Woverloaded-virtual',LINKFLAGS=' -w')
 else: # assume g++...
+  gcc = True
   # machine flags
-  if env['arch']=='athlon': machine_flags=' -march=athlon-xp -msse'
-  elif env['arch']=='nocona': machine_flags=' -march=nocona -msse2'
-  elif env['arch']=='opteron': machine_flags=' -march=opteron -msse3'
-  elif env['arch']=='powerpc': machine_flags=' -msse3'
-  elif env['arch']=='native': machine_flags=' -march=native -mtune=native'
+  def ifsse(s):
+    return s if env['sse'] else ' -mno-sse'
+  if env['arch']=='athlon': machine_flags=' -march=athlon-xp '+ifsse('-msse')
+  elif env['arch']=='nocona': machine_flags=' -march=nocona '+ifsse('-msse2')
+  elif env['arch']=='opteron': machine_flags=' -march=opteron '+ifsse('-msse3')
+  elif env['arch']=='powerpc': machine_flags=' '+ifsse('-msse3')
+  elif env['arch']=='native': machine_flags=' -march=native -mtune=native '+ifsse('')
   else: machine_flags=''
   env.Append(CXXFLAGS=machine_flags)
   # type specific flags
@@ -303,6 +308,14 @@ else: # assume g++...
 # Optionally warn about conversion issues
 if env['Wconversion']:
   env.Append(CXXFLAGS='-Wconversion -Wno-sign-conversion')
+
+# Optionally stop after syntax checking
+if env['syntax']:
+  assert clang or gcc
+  env.Append(CXXFLAGS='-fsyntax-only')
+  # Don't rebuild files if syntax checking succeeds the first time
+  for rule in 'CXXCOM','SHCXXCOM':
+    env[rule] += ' && touch $TARGET'
 
 # Use c++0x
 if not windows:
