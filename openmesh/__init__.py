@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from other.core import *
-if is_windows():
+import platform
+if platform.system()=='Windows':
   import other_all as other_core
 else:
   import other_core

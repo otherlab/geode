@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-import other.core
 from numpy import *
-if other.core.is_windows():
+import platform
+if platform.system()=='Windows':
   from other_all import *
   from other_all import _set_nested_array
 else:

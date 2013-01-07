@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from other.core.utility import *
+from other.core import *
 from numpy import random
 import base64
 

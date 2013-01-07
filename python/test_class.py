@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from other.core.python import Object,ClassTest
+from other.core import Object,ClassTest
 
 def test_field():
   c=ClassTest(Object()) 
