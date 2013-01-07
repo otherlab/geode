@@ -3,10 +3,12 @@
 
 #include <other/core/math/copysign.h>
 #include <other/core/math/isfinite.h>
+#include <boost/type_traits/is_fundamental.hpp>
+#include <iostream>
+
+#ifdef __SSE__
 #include <xmmintrin.h>
 #include <emmintrin.h>
-#include <iostream>
-#include <boost/type_traits/is_fundamental.hpp>
 namespace other {
 
 // Declaring these is legal on Windows, and they already exist for clang/gcc.
@@ -140,3 +142,4 @@ static inline void transpose(__m128i& i0, __m128i& i1, __m128i& i2, __m128i& i3)
 }
 
 }
+#endif

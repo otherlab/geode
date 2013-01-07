@@ -20,7 +20,7 @@ string format_helper(const char* format,...) {
   char small[64];
   int n = vsnprintf(small,sizeof(small)-1,format,marker);
   va_end(marker);
-  if (unsigned(n) < sizeof(small))
+  if (unsigned(n) < sizeof(small)-1)
     return small;
 
 #ifdef _WIN32
@@ -32,8 +32,8 @@ string format_helper(const char* format,...) {
 #endif
 
   // Retry using the exact buffer size
+  string large(n+1,'\0');
   va_start(marker,format);
-  string large(n,'\0');
   vsnprintf(&large[0],n+1,format,marker);
   va_end(marker);
   return large;
