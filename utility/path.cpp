@@ -64,8 +64,8 @@ string dirname(const string& path) {
 void copy_file(const string &from, const string &to) {
   int ret = 0;
 #ifdef _WIN32
-  bool fail_if_exists = false;
-  if (!CopyFileW(from.c_str(), to.c_str(), fail_if_exists)) {
+  BOOL fail_if_exists = FALSE;
+  if (!CopyFileA(from.c_str(), to.c_str(), fail_if_exists)) {
     ret = GetLastError();
   }
 #else
