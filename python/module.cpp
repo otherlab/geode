@@ -20,20 +20,9 @@ using namespace other;
 namespace other {
 namespace python {
 
-static std::vector<PyObject*> modules;
-
-Module::Module(const char* name) {
-  auto module = Py_InitModule3(name,0,0);
-  if (!module)
-    throw_python_error();
-  modules.push_back(module);
-}
-
-Module::~Module() {
-  modules.pop_back();
-}
-
 #ifdef OTHER_PYTHON
+
+static std::vector<PyObject*> modules;
 
 static PyObject* module() {
   if (modules.empty())
@@ -41,15 +30,28 @@ static PyObject* module() {
   return modules.back();
 }
 
-void import_core() {
+static void import_core() {
   char* name = PyModule_GetName(module());
   if (!name) throw_python_error();
-  if (strcmp(name,"other_core")){
-    PyObject* python_str=PyString_FromString("other.core");
+  if (strcmp(name,"other_core")) {
+    PyObject* python_str = PyString_FromString("other.core");
     if (!python_str) throw_python_error();
     PyObject* python = PyImport_Import(python_str);
     Py_DECREF(python_str);
-    if (!python) throw_python_error();}
+    if (!python) throw_python_error();
+  }
+}
+
+Module::Module(const char* name) {
+  auto module = Py_InitModule3(name,0,0);
+  if (!module)
+    throw_python_error();
+  modules.push_back(module);
+  import_core();
+}
+
+Module::~Module() {
+  modules.pop_back();
 }
 
 void add_object(const char* name, PyObject* object) {
@@ -63,7 +65,6 @@ template<class TC> static TC convert_test(const TC& c) {
 
 #else // non-python stubs
 
-void import_core() {}
 void add_object(const char* name, PyObject* object) {}
 
 #endif
@@ -107,5 +108,4 @@ void wrap_python() {
 
   python::add_object("real",(PyObject*)PyArray_DescrFromType(NumpyScalar<real>::value));
 #endif
-
 }
