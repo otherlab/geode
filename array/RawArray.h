@@ -370,6 +370,12 @@ public:
       flat[k++] = source(i,j,ij);
   }
 
+  Array<Element,3> copy() const {
+    Array<Element,3> copy;
+    copy.copy(*this);
+    return copy;
+  }
+
   Vector<int,3> sizes() const {
     return Vector<int,3>(m,n,mn);
   }
@@ -473,6 +479,12 @@ public:
       flat[f++] = source(i,j,k,l);
   }
 
+  Array<Element,4> copy() const {
+    Array<Element,4> copy;
+    copy.copy(*this);
+    return copy;
+  }
+
   const Vector<int,4>& sizes() const {
     return shape;
   }
@@ -515,7 +527,6 @@ public:
     return *this;
   }
 };
-
 
 template<class T, int d> static inline RawArray<T,d> &flat(RawArray<T,d> &A) {
   return A.flat;
