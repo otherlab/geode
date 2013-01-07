@@ -5,6 +5,7 @@
 #include <other/core/math/isfinite.h>
 #include <boost/type_traits/is_fundamental.hpp>
 #include <iostream>
+
 #ifdef __SSE__
 #include <xmmintrin.h>
 #include <emmintrin.h>
