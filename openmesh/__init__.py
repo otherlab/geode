@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 
-import other_core
-from other_core import *
+from other.core import *
+if is_windows():
+  import other_all as other_core
+else:
+  import other_core
 from numpy import inf
 
 def decimate(mesh, max_collapses=(1<<31)-1, max_angle_error=90, max_quadric_error=inf, min_quality=1e-5,min_boundary_dot=.99):

@@ -8,10 +8,9 @@
 #######################################################################
 from __future__ import (division,absolute_import)
 
-from other_core import *
-
+from other.core import *
 from numpy import *
-from other.core.python import real
+from other_core import real
 
 from .Matrix import Matrix
 

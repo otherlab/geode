@@ -35,27 +35,24 @@ struct Module {
 };
 
 #define OTHER_PYTHON_MODULE(name) \
-  static void Init_Helper_##name(); \
+  OTHER_EXPORT void other_init_helper_##name(); \
   MODINIT init##name(); \
   MODINIT init##name() { \
     try { \
       ::other::python::Module module(#name); \
-      ::other::python::import_core(); \
-      Init_Helper_##name(); \
+      other_init_helper_##name(); \
     } catch(std::exception& error) { \
       ::other::set_python_exception(error); \
     } \
   } \
-  static void Init_Helper_##name()
+  void other_init_helper_##name()
 
 #else // non-python stub
 
 #define OTHER_PYTHON_MODULE(name) \
-  static OTHER_UNUSED void Init_Helper_##name()
+  void other_init_helper_##name()
 
 #endif
-
-OTHER_CORE_EXPORT void import_core();
 
 // Steal reference to object and add it to the current module
 OTHER_CORE_EXPORT void add_object(const char* name, other::PyObject* object);

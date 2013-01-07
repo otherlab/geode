@@ -5,7 +5,6 @@ from . import Log
 import os
 
 import other_core
-from other_core import *
 
 def curry(f,*a,**k):
   def g(*a2,**k2):
