@@ -1,7 +1,7 @@
 //#####################################################################
 // Module openmesh
 //#####################################################################
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 using namespace other;
 
 void wrap_openmesh() {

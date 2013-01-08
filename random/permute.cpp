@@ -3,7 +3,7 @@
 #include <other/core/random/permute.h>
 #include <other/core/random/counter.h>
 #include <other/core/math/integer_log.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
 
 // For details, see

@@ -3,7 +3,7 @@
 //#####################################################################
 #include <other/core/utility/Log.h>
 #include <other/core/utility/openmp.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <vector>
 namespace other {
 

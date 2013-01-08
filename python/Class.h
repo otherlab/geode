@@ -28,7 +28,7 @@
 #pragma once
 
 #include <other/core/python/config.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/python/Object.h>
 #include <other/core/utility/Enumerate.h>
 #ifdef OTHER_PYTHON

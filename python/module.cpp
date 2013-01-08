@@ -2,23 +2,13 @@
 // Module Python
 //#####################################################################
 #include <other/core/utility/config.h>
-//#define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
-//extern "C" {
-//#ifdef _WIN32
-//extern void** PY_ARRAY_UNIQUE_SYMBOL;
-//#else
-//OTHER_CORE_EXPORT extern void** PY_ARRAY_UNIQUE_SYMBOL;
-//#endif
-//}
 #define OTHER_IMPORT_NUMPY
 #include <other/core/python/module.h>
 #include <other/core/python/enum.h>
 #include <other/core/python/numpy.h>
 #include <other/core/python/stl.h>
-using namespace other;
-
+#include <other/core/python/wrap.h>
 namespace other {
-namespace python {
 
 #ifdef OTHER_PYTHON
 
@@ -31,6 +21,10 @@ static PyObject* module() {
 }
 
 static void import_core() {
+#ifdef _WIN32
+  // On windows, all code is compiled into a single python module, so there's nothing else to import
+  return;
+#else
   char* name = PyModule_GetName(module());
   if (!name) throw_python_error();
   if (strcmp(name,"other_core")) {
@@ -40,9 +34,10 @@ static void import_core() {
     Py_DECREF(python_str);
     if (!python) throw_python_error();
   }
+#endif
 }
 
-Module::Module(const char* name) {
+void module_push(const char* name) {
   auto module = Py_InitModule3(name,0,0);
   if (!module)
     throw_python_error();
@@ -50,26 +45,30 @@ Module::Module(const char* name) {
   import_core();
 }
 
-Module::~Module() {
+void module_pop() {
   modules.pop_back();
-}
-
-void add_object(const char* name, PyObject* object) {
-  if (!object) throw PythonError();
-  PyModule_AddObject(module(),name,object);
 }
 
 template<class TC> static TC convert_test(const TC& c) {
   return c;
 }
 
-#else // non-python stubs
+namespace python {
 
-void add_object(const char* name, PyObject* object) {}
-
-#endif
+void add_object(const char* name, PyObject* object) {
+  if (!object) throw PythonError();
+  PyModule_AddObject(module(),name,object);
+}
 
 }
+
+#else // non-python stubs
+
+namespace python {
+void add_object(const char* name, PyObject* object) {}
+}
+
+#endif
 
 enum EnumTest { EnumTestA, EnumTestB };
 OTHER_DEFINE_ENUM(EnumTest,OTHER_CORE_EXPORT)

@@ -5,7 +5,7 @@
 #include <OpenMesh/Tools/Decimater/ModNormalFlippingT.hh>
 #include <OpenMesh/Tools/Decimater/ModBaseT.hh>
 #include <other/core/geometry/Triangle3d.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
 
 typedef real T;

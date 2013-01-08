@@ -2,7 +2,7 @@
 
 #include <other/core/geometry/platonic.h>
 #include <other/core/mesh/TriangleSubdivision.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/vector/normalize.h>
 namespace other {
 

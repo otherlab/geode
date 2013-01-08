@@ -1,7 +1,7 @@
 #include <other/core/value/ConstValue.h>
-#include <other/core/python/module.h>
 #include <other/core/python/function.h>
 #include <other/core/python/Ptr.h>
+#include <other/core/python/wrap.h>
 using namespace other;
 
 void wrap_const_value() {

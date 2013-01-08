@@ -2,9 +2,13 @@
 
 from __future__ import absolute_import
 from . import Log
+import platform
 import os
 
-import other_core
+if platform.system()=='Windows':
+  import other_all as other_core
+else:
+  import other_core
 
 def curry(f,*a,**k):
   def g(*a2,**k2):

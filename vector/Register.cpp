@@ -3,7 +3,7 @@
 //#####################################################################
 #include <other/core/array/RawArray.h>
 #include <other/core/array/Array2d.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/vector/Register.h>
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/DiagonalMatrix.h>

@@ -6,7 +6,7 @@
 #include <other/core/vector/Matrix.h>
 #include <other/core/vector/Rotation.h>
 #include <other/core/python/numpy.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other{
 
 typedef real T;

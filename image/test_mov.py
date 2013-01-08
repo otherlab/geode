@@ -4,7 +4,7 @@ from __future__ import division
 
 import tempfile
 from numpy import *
-from other.core.image import MovWriter
+from other.core import MovWriter
 
 def test_mov(filename=None):
     if not filename:

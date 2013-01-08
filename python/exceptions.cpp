@@ -2,7 +2,7 @@
 // File Exceptions
 //#####################################################################
 #include <other/core/python/exceptions.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/utility/tr1.h>
 namespace other{
 

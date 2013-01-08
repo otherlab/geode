@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import division
-
-from numpy import *
-from other.core.python import real
-from other.core.vector import *
-from other.core.geometry import *
+from other.core import *
 
 def test_box_tree():
   random.seed(10098331)

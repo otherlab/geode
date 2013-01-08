@@ -2,9 +2,8 @@
 
 #include <limits>
 #include <other/core/python/Class.h>
-#include <other/core/python/module.h>
 #include <other/core/python/numpy.h>
-
+#include <other/core/python/wrap.h>
 namespace other {
 
 using std::numeric_limits;

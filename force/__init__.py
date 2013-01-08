@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from other.core import *
-from ..python import Object
 from ..vector import magnitudes, relative_error, maxabs, SolidMatrixStructure, SolidMatrix
 from .. import real
 from numpy import array, random, zeros_like, tensordot, empty_like, ndarray, asarray, int32, ascontiguousarray

@@ -1,5 +1,5 @@
 //#####################################################################
-// Header Module
+// Header module
 //#####################################################################
 //
 // Macro to declare a python module initialization function.  This does two things:
@@ -13,37 +13,37 @@
 #pragma once
 
 #include <other/core/python/config.h>
-#include <other/core/python/exceptions.h>
 #include <other/core/utility/config.h>
-#ifdef OTHER_PYTHON
-#include <other/core/python/wrap_function.h>
-#endif
+#include <stdexcept>
 namespace other {
-namespace python {
 
 #ifdef OTHER_PYTHON
+
+OTHER_CORE_EXPORT void module_push(const char* name);
+OTHER_CORE_EXPORT void module_pop();
+
+// Defined in core/python/exceptions.cpp, but declared here to minimize includes.
+OTHER_CORE_EXPORT void set_python_exception(const std::exception& error);
 
 #ifdef _WIN32
-#define MODINIT PyMODINIT_FUNC
+#define OTHER_MODINIT PyMODINIT_FUNC
+#define OTHER_EXPORT_HELPER OTHER_EXPORT
 #else
-#define MODINIT PyMODINIT_FUNC OTHER_EXPORT 
+#define OTHER_MODINIT PyMODINIT_FUNC OTHER_EXPORT 
+#define OTHER_EXPORT_HELPER static
 #endif
 
-struct Module {
-  OTHER_CORE_EXPORT Module(char const *name);
-  OTHER_CORE_EXPORT ~Module();
-};
-
 #define OTHER_PYTHON_MODULE(name) \
-  OTHER_EXPORT void other_init_helper_##name(); \
-  MODINIT init##name(); \
-  MODINIT init##name() { \
+  OTHER_EXPORT_HELPER void other_init_helper_##name(); \
+  OTHER_MODINIT init##name(); \
+  OTHER_MODINIT init##name() { \
     try { \
-      ::other::python::Module module(#name); \
+      ::other::module_push(#name); \
       other_init_helper_##name(); \
-    } catch(std::exception& error) { \
+    } catch(const std::exception& error) { \
       ::other::set_python_exception(error); \
     } \
+    ::other::module_pop(); \
   } \
   void other_init_helper_##name()
 
@@ -54,36 +54,12 @@ struct Module {
 
 #endif
 
-// Steal reference to object and add it to the current module
-OTHER_CORE_EXPORT void add_object(const char* name, other::PyObject* object);
-
-template<class T> static inline void add_object(const char* name, const T& object) {
-#ifdef OTHER_PYTHON
-  add_object(name,to_python(object));
-#endif
-}
-
-template<class Function> static inline void function(const char* name, Function function) {
-#ifdef OTHER_PYTHON
-  add_object(name,wrap_function(name,function));
-#endif
-}
-
-#define OTHER_OBJECT(name) ::other::python::add_object(#name,name);
-#define OTHER_OBJECT_2(name,object) ::other::python::add_object(#name,object);
-
-#define OTHER_FUNCTION(name) ::other::python::function(#name,name);
-#define OTHER_FUNCTION_2(name,f) ::other::python::function(#name,f);
-
-#define OTHER_OVERLOADED_FUNCTION_2(type,name,function_) ::other::python::function(name,(type)function_);
-
-#define OTHER_OVERLOADED_FUNCTION(type,function_) OTHER_OVERLOADED_FUNCTION_2(type,#function_,function_);
-
+#ifndef OTHER_WRAP
 #ifdef OTHER_PYTHON
 #define OTHER_WRAP(name) extern void wrap_##name();wrap_##name();
 #else
 #define OTHER_WRAP(name)
 #endif
+#endif
 
-}
 }

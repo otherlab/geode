@@ -1,6 +1,6 @@
 #include <other/core/image/color_utils.h>
 #include <other/core/array/NdArray.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
   
 Vector<real,3> hsv_to_rgb(Vector<real,3> cin) {    

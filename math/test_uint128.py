@@ -1,4 +1,4 @@
-from other.core.math import *
+from other.core import *
 from numpy import *
 
 def test_uint128():

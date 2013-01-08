@@ -2,7 +2,7 @@
 
 #include <other/core/utility/resource.h>
 #include <other/core/array/Array.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/python/utility.h>
 #if defined(_WIN32)
 #define WINDOWS_MEAN_AND_LEAN

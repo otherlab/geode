@@ -8,11 +8,16 @@
 #######################################################################
 from __future__ import (division,absolute_import)
 
-from other.core import *
+import platform
 from numpy import *
-from other_core import real
-
+if platform.system()=='Windows':
+  import other_all as other_core
+  from other_all import *
+else: 
+  import other_core
+  from other_core import *
 from .Matrix import Matrix
+other_core._set_matrix_type(Matrix)
 
 # Rename some numpy functions to be more like C++
 from numpy import (square as sqr, arctan2 as atan2, arcsin as asin, arccos as acos, arctan as atan)

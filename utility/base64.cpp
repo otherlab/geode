@@ -1,7 +1,7 @@
 // Base 64 encoding and decoding
 
 #include <other/core/utility/base64.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
 
 static inline char encode(uint8_t x) {

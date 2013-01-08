@@ -25,7 +25,7 @@ def test_sobol():
       im[cell[0],cell[1],i] = 0
 
   file = '/tmp/sobol.png'
-  Image.write(file,im.astype(python.real))
+  Image.write(file,im.astype(real))
   hash = hashlib.sha1(open(file).read()).hexdigest()
   assert hash=='1492d817fdb75a6de90bf174dbd05d222f42676d'
 

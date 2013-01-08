@@ -4,8 +4,8 @@
 #include <other/core/value/Prop.h>
 #include <other/core/value/convert.h>
 #include <other/core/python/Class.h>
-#include <other/core/python/module.h>
 #include <other/core/python/stl.h>
+#include <other/core/python/wrap.h>
 #include <other/core/utility/const_cast.h>
 #include <iostream>
 namespace other {

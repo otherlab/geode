@@ -70,8 +70,14 @@ typedef double real;
 
 #else // _WIN32
 
+#ifndef OTHER_SINGLE_LIB
 #define OTHER_EXPORT __declspec(dllexport)
 #define OTHER_IMPORT __declspec(dllimport)
+#else
+// These should be defined to be empty, but Windows complains about empty macro arguments.
+#define OTHER_EXPORT __declspec()
+#define OTHER_IMPORT __declspec()
+#endif
 
 #define OTHER_HIDDEN
 #define OTHER_UNUSED

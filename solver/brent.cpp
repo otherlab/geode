@@ -8,8 +8,8 @@
 // *****END NOTICE************
 
 #include <other/core/solver/brent.h>
-#include <other/core/python/module.h>
 #include <other/core/python/function.h>
+#include <other/core/python/wrap.h>
 #include <other/core/math/copysign.h>
 
 

@@ -3,7 +3,7 @@
 //#####################################################################
 #include <other/core/math/uint128.h>
 #include <other/core/python/stl.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/utility/format.h>
 #include <boost/static_assert.hpp>
 #include <iostream>

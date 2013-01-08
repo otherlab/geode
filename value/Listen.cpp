@@ -1,9 +1,8 @@
 #include "Listen.h"
 #include <other/core/python/Class.h>
-#include <other/core/python/module.h>
 #include <other/core/python/function.h>
-
-namespace other{
+#include <other/core/python/wrap.h>
+namespace other {
 
 OTHER_DEFINE_TYPE(Listen)
 
@@ -22,7 +21,6 @@ void Listen::input_changed() const {
 }
 
 }
-
 using namespace other;
 
 void wrap_listen(){
@@ -30,4 +28,3 @@ void wrap_listen(){
   Class<Self>("Listen");
   python::function("listen",static_cast<Ref<Listen>(*)(const Ref<const ValueBase>&,const function<void()>&)>(&listen));
 }
-
