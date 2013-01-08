@@ -29,6 +29,23 @@ typedef Vector<real,2> TV2;
 
 OTHER_DEFINE_TYPE(TriMesh)
 
+#ifdef OTHER_PYTHON
+namespace {
+// for vector conversions
+template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::VertexHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::EdgeHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::HalfedgeHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::FaceHandle>:public mpl::true_{};
+
+template<> struct NumpyScalar<OpenMesh::BaseHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::VertexHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
+}
+#endif
+
 OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,VertexHandle)
 OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
 OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,FaceHandle)
