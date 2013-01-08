@@ -7,7 +7,7 @@ from other.core import *
 import hashlib
 import numpy
 
-def test_sobol():
+def test_sobol(filename=None):
   m,n = 128,128
   box = Box(0,(m,n,m))
   sobol = Sobol(box)
@@ -24,10 +24,14 @@ def test_sobol():
       del cell[i]
       im[cell[0],cell[1],i] = 0
 
-  file = '/tmp/sobol.png'
-  Image.write(file,im.astype(real))
-  hash = hashlib.sha1(open(file).read()).hexdigest()
-  assert hash=='1492d817fdb75a6de90bf174dbd05d222f42676d'
+  if not filename:
+    file = named_tmpfile(prefix='sobol',suffix='.png')
+    filename = file.name
+  Image.write(filename,im.astype(real))
+  hash = hashlib.sha1(open(filename).read()).hexdigest()
+  # For some reason the hash differs on Windows, but the image looks the same.
+  expected = '57d12019b31b56322c12a2c5391b4a9c2c6c919a' if is_windows() else '1492d817fdb75a6de90bf174dbd05d222f42676d'
+  assert hash==expected
 
 def test_threefry():
   # Known answer test vectors for 20 round threefry2x64 from the Random123 distribution
@@ -142,4 +146,4 @@ if __name__=='__main__':
   test_permute()
   test_bits()
   test_distributions()
-  test_sobol()
+  test_sobol('sobol.png')

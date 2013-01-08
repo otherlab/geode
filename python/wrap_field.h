@@ -48,13 +48,15 @@ set_wrapper(PyObject* self, PyObject* value, void* offset) {
 
 template<class T,class B,class S> PyObject*
 wrap_field(const char* name, const S B::* field) { // const fields
-  size_t offset = (char*)&((*(typename GetSelf<T>::type*)0).*field)-(char*)0;
+  // On windows, .* sends null pointers to null pointers, so we use 64 instead.
+  size_t offset = (char*)&((*(typename GetSelf<T>::type*)64).*field)-(char*)64;
   return wrap_field_helper(&T::pytype,name,offset,get_wrapper<T,S>,0);
 }
 
 template<class T,class B,class S> typename boost::disable_if<boost::is_const<S>,PyObject*>::type
 wrap_field(const char* name, S B::* field) { // nonconst fields
-  size_t offset = (char*)&((*(typename GetSelf<T>::type*)0).*field)-(char*)0;
+  // On windows, .* sends null pointers to null pointers, so we use 64 instead.
+  size_t offset = (char*)&((*(typename GetSelf<T>::type*)64).*field)-(char*)64;
   return wrap_field_helper(&T::pytype,name,offset,get_wrapper<T,S>,set_wrapper<T,S>);
 }
 

@@ -142,7 +142,7 @@ void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int 
   size_t data_size = fill_numpy_header(header,rank,dimensions,type_num);
 
   // Write npy file
-  FILE* file = fopen(filename.c_str(),"w");
+  FILE* file = fopen(filename.c_str(),"wb");
   if(!file) throw OSError("Can't open "+filename+" for writing");
   fwrite(header.data(),1,header.size(),file);
   fwrite(data,1,data_size,file);

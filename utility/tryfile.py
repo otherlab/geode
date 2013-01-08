@@ -293,7 +293,7 @@ def read(filename):
 
   """
   # Read header
-  file = open(filename)
+  file = open(filename,'rb')
   if file.read(4)!=signature:
     raise IOError('bad signature')
   header_size = read_uint(file)
@@ -343,7 +343,7 @@ def write(filename,value):
   tree = atom.to_str()
 
   # Write header
-  file = open(filename,'w')
+  file = open(filename,'wb')
   file.write(signature)
   tree_size = len(tree)
   data_size = atom.data_size

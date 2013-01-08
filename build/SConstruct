@@ -646,6 +646,7 @@ OTHER_PYTHON_MODULE(other_all) {
   env = env.Clone(SHLIBSUFFIX='.pyd',shared=1)
   for use in all_uses:
     env[use] = 1
-  library(env,os.path.join(env['variant_build'],'other_all'),
-          [lib[0].name[:-4] for lib in all_libs],
-          extra=(modules.path,),skip_all=True,no_exports=True)
+  other_all = library(env,os.path.join(env['variant_build'],'other_all'),
+                      [lib[0].name[:-4] for lib in all_libs],
+                      extra=(modules.path,),skip_all=True,no_exports=True)
+  env.Alias('py',other_all)
