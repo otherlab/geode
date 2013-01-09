@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from other.core import *
 from ..vector import magnitudes, relative_error, maxabs, SolidMatrixStructure, SolidMatrix
-from .. import real
 from numpy import array, random, zeros_like, tensordot, empty_like, ndarray, asarray, int32, ascontiguousarray
 
 def edge_springs(mesh,mass,X,stiffness,damping_ratio):

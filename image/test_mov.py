@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import division
-
 from other.core import *
 
 def test_mov(filename=None):

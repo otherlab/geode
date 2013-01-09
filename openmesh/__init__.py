@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from other.core import *
-if is_windows():
+import platform
+if platform.system()=='Windows':
   from other_all import decimate_py
 else:
   from other_core import decimate_py
