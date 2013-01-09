@@ -195,6 +195,6 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
 using namespace other;
 
 void wrap_decimate() {
-  OTHER_FUNCTION(decimate)
+  OTHER_FUNCTION_2(decimate_py,decimate)
 }
 #endif // USE_OPENMESH

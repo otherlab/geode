@@ -92,5 +92,5 @@ void wrap_resource() {
   helper() = path::dirname(from_python<string>(argv0));
 #endif
   OTHER_FUNCTION(resource_path)
-  OTHER_FUNCTION_2(resource,static_cast<string(*)(const string&)>(resource))
+  OTHER_FUNCTION_2(resource_py,static_cast<string(*)(const string&)>(resource))
 }

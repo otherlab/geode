@@ -7,9 +7,9 @@ import tempfile
 import os
 
 if platform.system()=='Windows':
-  import other_all as other_core
+  from other_all import resource_py
 else:
-  import other_core
+  from other_core import resource_py
 
 def curry(f,*a,**k):
   def g(*a2,**k2):
@@ -19,7 +19,7 @@ def curry(f,*a,**k):
   return g
 
 def resource(*paths):
-  return other_core.resource(os.path.join(*paths)) 
+  return resource_py(os.path.join(*paths)) 
 
 class _NamedTmpFile(object):
   def __init__(self,name,delete):
