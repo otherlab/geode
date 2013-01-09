@@ -68,6 +68,8 @@ typedef double real;
 #  define OTHER_NOEXCEPT
 #endif
 
+#define OTHER_ALIGNED(n) __attribute__((aligned(n)))
+
 #else // _WIN32
 
 #ifndef OTHER_SINGLE_LIB
@@ -92,6 +94,7 @@ typedef double real;
 #define OTHER_COLD
 #define OTHER_FORMAT
 #define OTHER_EXPECT(value,expect) (value)
+#define OTHER_ALIGNED(n) __declspec(align(n))
 
 #endif
 

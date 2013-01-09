@@ -13,6 +13,7 @@
 #include <other/core/python/forward.h>
 #include <other/core/utility/config.h>
 #include <boost/mpl/assert.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <stdlib.h>
 namespace other {
@@ -21,11 +22,11 @@ namespace mpl = boost::mpl;
 
 struct Buffer {
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
-  OTHER_PY_OBJECT_HEAD // contains a reference count and a pointer to the type object
-  char data[1]; // should be size zero, but Windows would complain
+  OTHER_PY_OBJECT_HEAD // Contains a reference count and a pointer to the type object
+  OTHER_ALIGNED(16) char data[1]; // Use 16 byte alignment for SSE purposes.  Should be data[0], but Windows would complain.
 
 private:
-  Buffer(); // should never be called
+  Buffer(); // Should never be called
   Buffer(const Buffer&);
   void operator=(const Buffer&);
 public:
@@ -34,9 +35,16 @@ public:
   new_(const int m) {
 #ifndef _WIN32
     BOOST_MPL_ASSERT((boost::has_trivial_destructor<T>));
+    Buffer* self = (Buffer*)malloc(16+m*sizeof(T));
+#else
+    // Windows doesn't guarantee 16 byte alignment, so use _aligned_malloc
+    Buffer* self = (Buffer*)_aligned_malloc(16+m*sizeof(T),16);
 #endif
-    Buffer* self = (Buffer*)malloc(sizeof(PyObject)+m*sizeof(T));
     return OTHER_PY_OBJECT_INIT(self,&pytype);
   }
 };
+
+// Check alignment constraints
+BOOST_STATIC_ASSERT(offsetof(Buffer,data)==16);
+
 }
