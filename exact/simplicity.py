@@ -359,6 +359,126 @@ class Block(object):
     cache(e,name,predefined=predefined)
     return code
 
+class CPPFunction:
+  def __init__(self,name,parameter_string,body,return_type):
+    self.name = name
+    self.parameter_string = parameter_string
+    self.body = body
+    self.return_type = return_type
+  
+  def signature_string(self):
+    # Build cpp function signature for this object
+    return '%s %s(%s)'% (self.return_type, self.name, self.parameter_string)
+  
+  def implementation_lines(self):
+    # Build cpp function body for this object
+    result = []
+    result.append(self.signature_string() + ' {')
+    result += ['  ' + line for line in self.body]
+    result.append('}\n')
+    return result
+
+class SimulatedSimplicityContext:
+  def __init__(self,args,d):
+    self.args = args
+    self.arg_dims = d
+    self.symbol_table = [(sympy.symbols(a+c),'%s.%c'%(a,c)) for a in args for c in 'xyz'[:d]]
+    
+  def standardize(self,e):
+    # Map expression into sympy poly
+    return sympy.Poly(e,tuple(v for v,s in self.symbol_table),domain=sympy.ZZ)
+
+  def expand_with_symbols(self, fn):
+    # evaluate expression with this objects symbols
+    V = numpy.array
+    X = [V([self.symbol_table[i*self.arg_dims+j][0] for j in xrange(self.arg_dims)]) for i in xrange(len(self.args))]
+    return fn(*X)
+
+  def expand_epsilons(self, fn):
+    # When constant term is zero; add a different shift variable to each coordinate and expand as a polynomial.
+    with scope('expand'):
+      # degrees = set(map(sum,standardize(constant).monoms()))
+      # info('degrees = %s'%list(degrees))
+      # assert len(degrees)==1
+      # degree, = degrees
+
+      E = tuple(sympy.symbols('e%s'%v[0]) for v in self.symbol_table)
+      ER = SymbolicPolynomialRing(E,self.standardize)
+      E = ER.singletons()
+      V = numpy.array
+      Xe = [V([self.symbol_table[i*self.arg_dims+j][0]+E[i*self.arg_dims+j] for j in xrange(self.arg_dims)]) for i in xrange(len(self.args))]
+      expansion = fn(*Xe).filter()
+      # assert expansion.homogeneous()==degree
+      return expansion
+
+  def print_info(self):
+    # Debugging function
+    info('n = %d'%len(self.args))
+    info('d = %d'%self.arg_dims)
+    info('args = %s'%' '.join(self.args))
+
+  def make_cpp_argument_list(self):
+    # Generate argument list for cpp source files
+    return ', '.join('const int %si, const Vector<float,%d> %s'%(a,self.arg_dims,a) for a in self.args)
+
+  def implement_interval_function(self, name, e):
+    # Create C++ function for evaluating expressions using interval arithmetic
+    symbolic_expansion = self.expand_with_symbols(e)
+    block = Block(self.standardize,dict((v,'Interval(%s)'%s) for v,s in self.symbol_table),mul=None)
+    body = ['Interval result;'] + block.compute(name,symbolic_expansion,predefined=True) + ['return result;']
+    return CPPFunction(name,self.make_cpp_argument_list(),body,'Interval')
+
+  def implement_integer_function(self, name, e):
+    # Create C++ function for evaluating expressions using integer arithmetic
+    symbolic_expansion = self.expand_with_symbols(e)
+    block = Block(self.standardize,dict((v,'Interval::Int(%s)'%str(v)) for v,_ in self.symbol_table),mul='mul')
+    body = ['Interval::Int result;'] + block.compute(name,symbolic_expansion,predefined=True) + ['return result;']
+    return CPPFunction(name,self.make_cpp_argument_list,body,'Interval::Int')
+
+  def implement_perturbed_function(self, name, e):
+    with scope('implement_polynomial_terms for %s' % name):
+      expansion = self.expand_epsilons(e)
+      unique_coefficients = set(expansion.terms.values())
+      info('%d unique_coefficients:' % len(unique_coefficients))
+      coef_to_id = {}
+      for i,c in enumerate(unique_coefficients):
+        coef_to_id[c] = i 
+        info('[%d]: %s' % (i, str(c)))
+
+      info('expansion: %s' % str(expansion))
+      info('polynomial with %d terms:' % len(expansion.terms))
+      for (exponents,coefficient) in expansion.terms.iteritems():
+        info("[%s]: %d" % (str(exponents), coef_to_id[coefficient]))
+
+      n = len(self.args)
+      d = self.arg_dims
+      
+      permutations = sorted(all_permutations(range(n)),key=permutation_id)
+      sequences = [None]*len(permutations)
+      unordered = [(coef_to_id[c],numpy.asarray(deg).reshape(n,d)) for deg,c in expansion.terms.iteritems()]
+      weights = numpy.int64(n)**numpy.arange(n*d).reshape(n,d)
+      for ip,p in enumerate(permutations):
+        info('%d/%d : %s'%(ip,len(permutations),p))
+        inv_p = numpy.empty(len(p),dtype=int)
+        inv_p[numpy.asarray(p)] = numpy.arange(len(p))
+        # Sort monomials in lexicographic order using the reversed unpermuted order of the variables (since later variables are smaller)
+        ordered = sorted(unordered,key=lambda m:numpy.tensordot(weights,m[1][inv_p]))
+        # We'll need to compute until we hit a trivial nonzero
+        sequence = [] # [coef_id for coef_id,exponents in ordered]
+        seen = set()
+        for (coef_id,exponents) in ordered:
+          if coef_id in seen:
+            continue # We already know this coefficient is zero, so skip
+          sequence.append((coef_id,exponents))
+          if exponents == zeros:
+            break
+          seen.add(i)
+        else:
+          raise NotImplemented('No monomials with constant coefficients: need to test the entire coefficient system for solvability')
+        info(str(sequence))
+        sequences[ip] = sequence
+
+
 class Compiler(object):
   def __init__(self):
     self.header_lines = []
@@ -372,223 +492,185 @@ class Compiler(object):
   def source(self,*lines):
     self.source_lines.extend(lines)
 
-  def compile(self,predicate,d):
+  def add_function(self, cpp_function):
+    self.forwards += [cpp_function.signature_string() + ';']
+    self.bodies.append(cpp_function.implementation_lines())
+
+  def interval_body(self,C,n,d,standardize,constant):
+    '''
+    C = sympy symbol table
+    n = number of arguments
+    d = dimension of each argument
+    standardize = converter from expression to sympy.Poly
+    '''
+    body = []
+    # Evaluate constant term with interval arithmetic
+    with scope('interval'):
+      body.append('  // Evaluate with interval arithmetic first')
+      body.append('  Interval filter;')
+      body.append('  {')
+      block = Block(standardize,dict((v,'Interval(%s)'%s) for v,s in C),mul=None)
+      body.append('\n'.join('    '+s for s in block.compute('filter',constant,predefined=True)))
+      body.append('    if (OTHER_EXPECT(!filter.contains_zero(),true))\n      return filter.certainly_positive();')
+      body.append('  }\n')
+    return body
+
+  def constant_body(self,C,n,d,standardize,constant):
+    # Evaluate constant term with integer arithmetic
+    body = []
+    with scope('constant'):
+      body.append('  // Fall back to integer arithmetic.  First we reevaluate the constant term.')
+      body.append('  const Interval::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
+      body.append('  assert(%s);'%' && '.join('%s==%s'%(v,s) for v,s in C))
+      block = Block(standardize,dict((v,str(v)) for v,_ in C),mul='mul')
+      body.append('\n'.join('  '+s for s in block.compute('pred',constant)))
+      body.append('  assert(filter.contains(pred));')
+      body.append('  if (OTHER_EXPECT(bool(pred),true))\n    return pred>0;\n')
+    return body
+
+  def degenerate_body(self,C,n,d,standardize,constant,predicate,args):
+    body = []
+    block = Block(standardize,dict((v,str(v)) for v,_ in C),mul='mul')
+    body.append('  // Compute input permutation')
+    body.append('  int order[%d] = {%s};'%(n,','.join('%si'%a for a in args)))
+    body.append('  const int permutation = permutation_id(%d,order);\n'%n)
+
+    body.append('  // Losslessly cast to integers')
+    body.append('  OTHER_UNUSED const Interval::Int %s;\n'%', '.join('%s(%s)'%(v,s) for v,s in C))
+
+    # For now, the only simplification we do is to replace integers with +-1
+    def simplify(e):
+      if sympy.S(e).is_Number:
+        return numpy.sign(e)
+      return e
+    coefficients = map(simplify,expansion.terms.values())
+
+    # Assign a unique-up-to-sign id to each coefficient in the expansion
+    coef_to_id = Values(standardize) # Map from coefficient to (id,sign)
+    coef_to_id[1] = (0,1)
+    id_to_coef = [1]
+    for coef in coefficients:
+      if coef in coef_to_id:
+        pass
+      elif -coef in coef_to_id:
+        i,s = coef_to_id[-coef]
+        coef_to_id[coef] = i,-s
+      else:
+        assert not sympy.S(coef).is_Number
+        coef_to_id[coef] = len(id_to_coef),1 
+        id_to_coef.append(coef)
+
+    info('coefficients = %d, unique = %d'%(len(coefficients),len(id_to_coef)))
+    body.append(('  // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand\n'
+                +'  // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.\n'
+                +'  // Each coordinate gets a unique infinitesimal, each infinitely smaller than the last, so cancellation\n'
+                +'  // of all of them together is impossible.  In total, the error polynomial has %d terms, of which %d are\n'
+                +'  // unique (up to sign), but it usually suffices to evaluate only a few.\n')
+                %(len(coefficients),len(id_to_coef)))
+    # In the degenerate case, the result depends on the ordering of the input arguments.  Thus, we loop over each
+    # possible permutation and compute the necessary sequence of terms to evaluate.
+    with scope('analyze'):
+      permutations = sorted(all_permutations(range(n)),key=permutation_id)
+      sequences = [None]*len(permutations)
+      unordered = [(coef_to_id[simplify(c)],numpy.asarray(deg).reshape(n,d)) for deg,c in expansion.terms.iteritems() if any(deg)]
+      weights = numpy.int64(n)**numpy.arange(n*d).reshape(n,d)
+      for ip,p in enumerate(permutations):
+        info('%d/%d : %s'%(ip,len(permutations),p))
+        inv_p = numpy.empty(len(p),dtype=int)
+        inv_p[numpy.asarray(p)] = numpy.arange(len(p))
+        # Sort monomials in lexicographic order using the reversed unpermuted order of the variables (since later variables are smaller)
+        ordered = sorted(unordered,key=lambda m:numpy.tensordot(weights,m[1][inv_p]))
+        # We'll need to compute until we hit a trivial nonzero
+        sequence = []
+        seen = set()
+        for (i,s),_ in ordered:
+          if i in seen:
+            continue # We already know this coefficient is zero, so skip
+          sequence.append((i,s))
+          if i==0:
+            break
+          seen.add(i)
+        else:
+          raise NotImplemented('No monomials with constant coefficients: need to test the entire coefficient system for solvability')
+        sequences[ip] = sequence
+
+    with scope('generate'):
+      if 0 and len(sequences)==1:
+        body.append('  // All permutations produce the same predicate up to sign, so evaluation is straightforward.')
+        for i,exp in enumerate(sequences[0]):
+          if exp.is_Number:
+            body.append('  return %sflip;'%('!' if exp.is_positive() else ''))
+          else:
+            term = 'term%d'%i
+            body.append('\n'.join('  '+s for s in block.compute(term,exp)))
+            body.append('  if (%s) return flip^(%s>0);'%(term,term))
+      else:
+        body.append('  // Different permutations produce different predicates.  To reduce code size,\n' \
+                   +'  // we use lookup tables and a switch statement.  I.e., a tiny bytecode interpreter.')
+        terms = {0:0} # Map from unique coefficient id to its position in the switch statement
+        tables = []
+        with scope('terms'):
+          for sequence in sequences:
+            table = []
+            for i,s in sequence:
+              if i not in terms:
+                terms[i] = len(terms)
+              table.append(2*terms[i]+(s<0))
+            tables.append(table)
+        body.append('  '+integer_table('starts',numpy.hstack([0,numpy.cumsum(map(len,tables))[:-1]])))
+        body.append('  '+integer_table('terms',[t for table in tables for t in table]))
+        body.append('  for (int i=starts[permutation];;i++) {')
+        body.append('    const bool f = terms[i]&1;')
+        body.append('    switch (terms[i]>>1) {')
+        info('cases = %d'%len(terms))
+        with scope('switch'):
+          for c,i in sorted((c,i) for i,c in terms.iteritems()):
+            e = id_to_coef[i]
+            info('case %d = %s'%(c,e))
+            if sympy.S(e).is_Number:
+              assert e==1
+              body.append('      case %d:'%c)
+              body.append('        return !f;')
+            else:
+              body.append('      case %d: {'%c)
+              # We can reuse variables from the constant term, but not between any two cases in the switch statement.'
+              body.append('\n'.join('        '+s for s in block.copy().compute('term',e)))
+              body.append('        if (term) return f^(term>0); break; }')
+        body.append('      default:\n        OTHER_UNREACHABLE();\n    }\n  }')
+    return body
+
+  def compile_predicate(self,predicate,d):
     name = predicate.__name__
     with scope('predicate %s'%name):
       body = []
       with scope('setup'):
         # Set up the symbolic space
         args = inspect.getargspec(predicate)[0]
-        n = len(args)
-        info('n = %d'%n)
-        info('d = %d'%d)
-        info('args = %s'%' '.join(args))
-        C = [(sympy.symbols(a+c),'%s.%c'%(a,c)) for a in args for c in 'xyz'[:d]]
-        def standardize(e):
-          return sympy.Poly(e,tuple(v for v,s in C),domain=sympy.ZZ)
-        V = numpy.array
-
+        function = SimulatedSimplicityRational(args,d,predicate)
+        
         # Function header
         for line in predicate.__doc__.split('\n'):
           if line:
             line = '// '+line.strip()
             self.header(line)
-            self.header(line)
-        parameters = ', '.join('const int %si, const Vector<float,%d> %s'%(a,d,a) for a in args)
-        signature = 'bool %s(%s)'%(name,parameters)
+
         degenerate_signature = 'static bool %s_degenerate(%s)'%(name,parameters)
         self.header('%s OTHER_EXPORT;\n'%signature)
         self.forwards.append(degenerate_signature+' OTHER_COLD OTHER_NEVER_INLINE;')
         body.append('%s {'%signature)
-
-      # Evaluate constant term with interval arithmetic
-      with scope('interval'):
+        V = numpy.array
         X = [V([C[i*d+j][0] for j in xrange(d)]) for i in xrange(n)]
         constant = predicate(*X)
-        degrees = set(map(sum,standardize(constant).monoms()))
-        info('degrees = %s'%list(degrees))
-        assert len(degrees)==1
-        degree, = degrees
-        body.append('  // Evaluate with interval arithmetic first')
-        body.append('  Interval filter;')
-        body.append('  {')
-        block = Block(standardize,dict((v,'Interval(%s)'%s) for v,s in C),mul=None)
-        body.append('\n'.join('    '+s for s in block.compute('filter',constant,predefined=True)))
-        body.append('    if (OTHER_EXPECT(!filter.contains_zero(),true))\n      return filter.certainly_positive();')
-        body.append('  }\n')
-
-      # Evaluate constant term with integer arithmetic
-      with scope('constant'):
-        body.append('  // Fall back to integer arithmetic.  First we reevaluate the constant term.')
-        body.append('  const Interval::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
-        body.append('  assert(%s);'%' && '.join('%s==%s'%(v,s) for v,s in C))
-        block = Block(standardize,dict((v,str(v)) for v,_ in C),mul='mul')
-        body.append('\n'.join('  '+s for s in block.compute('pred',constant)))
-        body.append('  assert(filter.contains(pred));')
-        body.append('  if (OTHER_EXPECT(bool(pred),true))\n    return pred>0;\n')
-
+      
+      body += self.interval_body(C,n,d,standardize,constant)
+      body += self.constant_body(C,n,d,standardize,constant)
       body.append('  // The constant term is exactly zero, so fall back to simulation of simplicity.')
       body.append('  return %s_degenerate(%s);'%(name,','.join('%si,%s'%(s,s) for s in args)))
       body.append('}\n')
 
       # Start degenerate function
       body.append(degenerate_signature+' {')
-
-      body.append('  // Compute input permutation')
-      body.append('  int order[%d] = {%s};'%(n,','.join('%si'%a for a in args)))
-      body.append('  const int permutation = permutation_id(%d,order);\n'%n)
-
-      body.append('  // Losslessly cast to integers')
-      body.append('  OTHER_UNUSED const Interval::Int %s;\n'%', '.join('%s(%s)'%(v,s) for v,s in C))
-
-      # Constant term is zero; add a different shift variable to each coordinate and expand as a polynomial.
-      with scope('expand'):
-        E = tuple(sympy.symbols('e%s'%v[0]) for v in C)
-        ER = SymbolicPolynomialRing(E,standardize)
-        E = ER.singletons()
-        V = numpy.array
-        Xe = [V([C[i*d+j][0]+E[i*d+j] for j in xrange(d)]) for i in xrange(n)]
-        expansion = predicate(*Xe).filter()
-        assert expansion.homogeneous()==degree
-
-      # For now, the only simplification we do is to replace integers with +-1
-      def simplify(e):
-        if sympy.S(e).is_Number:
-          return numpy.sign(e)
-        return e
-      coefficients = map(simplify,expansion.terms.values())
-
-      # Assign a unique-up-to-sign id to each coefficient in the expansion
-      coef_to_id = Values(standardize) # Map from coefficient to (id,sign)
-      coef_to_id[1] = (0,1)
-      id_to_coef = [1]
-      for coef in coefficients:
-        if coef in coef_to_id:
-          pass
-        elif -coef in coef_to_id:
-          i,s = coef_to_id[-coef]
-          coef_to_id[coef] = i,-s
-        else:
-          assert not sympy.S(coef).is_Number
-          coef_to_id[coef] = len(id_to_coef),1 
-          id_to_coef.append(coef)
-
-      info('coefficients = %d, unique = %d'%(len(coefficients),len(id_to_coef)))
-      body.append(('  // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand\n'
-                  +'  // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.\n'
-                  +'  // Each coordinate gets a unique infinitesimal, each infinitely smaller than the last, so cancellation\n'
-                  +'  // of all of them together is impossible.  In total, the error polynomial has %d terms, of which %d are\n'
-                  +'  // unique (up to sign), but it usually suffices to evaluate only a few.\n')
-                  %(len(coefficients),len(id_to_coef)))
-
-      if 0:
-        # From here on out, the result will depend on the ordering of the input arguments.  However, some of
-        # these permutations produce the same answer with a possible sign flip.  Therefore, we organize the
-        # set of all permutations into equivalence classes.
-        with scope('permutations'):
-          # Determine which permutations are identical or sign flipped versions of other permutations
-          permutations = all_permutations(range(n))
-          info('permutations = %d'%len(permutations))
-          with scope('partition'):
-            versions = Values(standardize) # Map from expression to the representative permutation that generated it
-            representatives = {} # If representatives[p] = q,s, f(X[p]) = s*f(X[q])
-            for p in permutations:
-              info('classifying p = %s'%(p,))
-              pred = predicate(*subset(X,p))
-              try:
-                representatives[p] = versions[pred],1
-              except KeyError:
-                try:
-                  representatives[p] = versions[-pred],-1
-                except KeyError:
-                  w = versions[pred] = len(versions),p
-                  representatives[p] = w,1
-            kinds = len(set(representatives.values()))
-            info('distinct permutations = %d, kinds = %d'%(len(versions),kinds))
-          # Generate table lookup code to map a permutation to its representative
-          with scope('generate'):
-            body.append('  // Determine which class of permutations we\'re in.  The lookup table is 2*representative+negate.')
-            body.append('  // There %s %d different representative permutation%s, or %d counting differences in sign.'%('are' if len(versions)>1 else 'is',len(versions),'s' if len(versions)>1 else '',kinds))
-            table = numpy.repeat(-1,factorial(n))
-            for p in permutations:
-              (r,_),s = representatives[p]
-              table[selection_sort(list(p))] = 2*r+(s<0)
-            body.append('  '+integer_table('canonicalize',table))
-            body.append('  const int canonical = canonicalize[permutation];')
-            if len(versions)>1:
-              body.append('  const int representative = canonical>>1;')
-            body.append('  const bool flip = canonical&1;\n')
-
-      # In the degenerate case, the result depends on the ordering of the input arguments.  Thus, we loop over each
-      # possible permutation and compute the necessary sequence of terms to evaluate.
-      with scope('analyze'):
-        permutations = sorted(all_permutations(range(n)),key=permutation_id)
-        sequences = [None]*len(permutations)
-        unordered = [(coef_to_id[simplify(c)],numpy.asarray(deg).reshape(n,d)) for deg,c in expansion.terms.iteritems() if any(deg)]
-        weights = numpy.int64(n)**numpy.arange(n*d).reshape(n,d)
-        for ip,p in enumerate(permutations):
-          info('%d/%d : %s'%(ip,len(permutations),p))
-          inv_p = numpy.empty(len(p),dtype=int)
-          inv_p[numpy.asarray(p)] = numpy.arange(len(p))
-          # Sort monomials in lexicographic order using the reversed unpermuted order of the variables (since later variables are smaller)
-          ordered = sorted(unordered,key=lambda m:numpy.tensordot(weights,m[1][inv_p]))
-          # We'll need to compute until we hit a trivial nonzero
-          sequence = []
-          seen = set()
-          for (i,s),_ in ordered:
-            if i in seen:
-              continue # We already know this coefficient is zero, so skip
-            sequence.append((i,s))
-            if i==0:
-              break
-            seen.add(i)
-          else:
-            raise NotImplemented('No monomials with constant coefficients: need to test the entire coefficient system for solvability')
-          sequences[ip] = sequence
-
-      with scope('generate'):
-        if 0 and len(sequences)==1:
-          body.append('  // All permutations produce the same predicate up to sign, so evaluation is straightforward.')
-          for i,exp in enumerate(sequences[0]):
-            if exp.is_Number:
-              body.append('  return %sflip;'%('!' if exp.is_positive() else ''))
-            else:
-              term = 'term%d'%i
-              body.append('\n'.join('  '+s for s in block.compute(term,exp)))
-              body.append('  if (%s) return flip^(%s>0);'%(term,term))
-        else:
-          body.append('  // Different permutations produce different predicates.  To reduce code size,\n' \
-                     +'  // we use lookup tables and a switch statement.  I.e., a tiny bytecode interpreter.')
-          terms = {0:0} # Map from unique coefficient id to its position in the switch statement
-          tables = []
-          with scope('terms'):
-            for sequence in sequences:
-              table = []
-              for i,s in sequence:
-                if i not in terms:
-                  terms[i] = len(terms)
-                table.append(2*terms[i]+(s<0))
-              tables.append(table)
-          body.append('  '+integer_table('starts',numpy.hstack([0,numpy.cumsum(map(len,tables))[:-1]])))
-          body.append('  '+integer_table('terms',[t for table in tables for t in table]))
-          body.append('  for (int i=starts[permutation];;i++) {')
-          body.append('    const bool f = terms[i]&1;')
-          body.append('    switch (terms[i]>>1) {')
-          info('cases = %d'%len(terms))
-          with scope('switch'):
-            for c,i in sorted((c,i) for i,c in terms.iteritems()):
-              e = id_to_coef[i]
-              info('case %d = %s'%(c,e))
-              if sympy.S(e).is_Number:
-                assert e==1
-                body.append('      case %d:'%c)
-                body.append('        return !f;')
-              else:
-                body.append('      case %d: {'%c)
-                # We can reuse variables from the constant term, but not between any two cases in the switch statement.'
-                body.append('\n'.join('        '+s for s in block.copy().compute('term',e)))
-                body.append('        if (term) return f^(term>0); break; }')
-          body.append('      default:\n        OTHER_UNREACHABLE();\n    }\n  }')
+      body += self.degenerate_body(C,n,d,standardize,constant,predicate,args)
       body.append('}\n')
       self.bodies.append(body)
 
@@ -627,12 +709,20 @@ if __name__=='__main__':
   compiler.source(warning+'\n#include <other/core/exact/predicates.h>\n#include <other/core/exact/Interval.h>\n#include <other/core/exact/Exact.h>\n'
     +'#include <other/core/exact/permutation_id.h>\n#include <algorithm>\nnamespace other {\n\nusing exact::mul;\nusing std::lower_bound;\n')
 
+  test_fn = triangle_oriented
+  test_name = test_fn.__name__
+  ssc = SimulatedSimplicityContext(inspect.getargspec(test_fn)[0], 2)
+  
+  compiler.add_function(ssc.implement_interval_function("interval_%s" % test_name, test_fn))
+  compiler.add_function(ssc.implement_integer_function("integer_%s" % test_name, test_fn))
+
+  ssc.implement_perturbed_function("degenerate_%s" % test_name, test_fn)
   # Compile predicates
-  compiler.compile(rightwards,2)
-  compiler.compile(upwards,2)
-  compiler.compile(triangle_oriented,2)
-  compiler.compile(segment_directions_oriented,2)
-  compiler.compile(segment_intersections_ordered_helper,2)
+  # compiler.compile(rightwards,2)
+  # compiler.compile(upwards,2)
+  # compiler.compile(triangle_oriented,2)
+  # compiler.compile(segment_directions_oriented,2)
+  # compiler.compile(segment_intersections_ordered_helper,2)
 
   # Finalize
   compiler.source('// Forward declare degeneracy handling routines')
@@ -645,5 +735,5 @@ if __name__=='__main__':
 
   # Write files
   os.chdir(os.path.dirname(sys.argv[0]))
-  open('predicates.h','w').write('\n'.join(compiler.header_lines)+'\n')
-  open('predicates.cpp','w').write('\n'.join(compiler.source_lines)+'\n')
+  open('new_predicates.h','w').write('\n'.join(compiler.header_lines)+'\n')
+  open('new_predicates.cpp','w').write('\n'.join(compiler.source_lines)+'\n')
