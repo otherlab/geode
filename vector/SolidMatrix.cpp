@@ -15,12 +15,12 @@ namespace other{
 typedef real T;
 
 OTHER_DEFINE_TYPE(SolidMatrixStructure)
-template<> OTHER_DEFINE_TYPE(SolidMatrixBase<Vector<T,2> >)
-template<> OTHER_DEFINE_TYPE(SolidMatrixBase<Vector<T,3> >)
-template<> OTHER_DEFINE_TYPE(SolidMatrix<Vector<T,2> >)
-template<> OTHER_DEFINE_TYPE(SolidMatrix<Vector<T,3> >)
-template<> OTHER_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,2> >)
-template<> OTHER_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,3> >)
+template<> OTHER_DEFINE_TYPE(SolidMatrixBase<Vector<T,2>>)
+template<> OTHER_DEFINE_TYPE(SolidMatrixBase<Vector<T,3>>)
+template<> OTHER_DEFINE_TYPE(SolidMatrix<Vector<T,2>>)
+template<> OTHER_DEFINE_TYPE(SolidMatrix<Vector<T,3>>)
+template<> OTHER_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,2>>)
+template<> OTHER_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,3>>)
 
 SolidMatrixStructure::
 SolidMatrixStructure(int n)
@@ -81,7 +81,7 @@ SolidMatrix(const SolidMatrixStructure& structure)
     int i,j;s.get(i,j);
     sparse_j(i,--lengths[i]) = j;
   }
-  const_cast_(sparse_A) = NestedArray<Matrix<T,d> >::zeros_like(sparse_j);
+  const_cast_(sparse_A) = NestedArray<Matrix<T,d>>::zeros_like(sparse_j);
   for (int i=0;i<sparse_j.size();i++) {
     sort(sparse_j[i]);
     OTHER_ASSERT(sparse_j.size(i) && sparse_j(i,0)==i); // ensure diagonal exists
@@ -220,7 +220,7 @@ entry(int i,int j) const
                :sparse_A(j,find_entry(j,i)).transposed();
 }
 
-template<class TV> Tuple<Array<int>,Array<int>,Array<typename TV::Scalar> > SolidMatrix<TV>::
+template<class TV> Tuple<Array<int>,Array<int>,Array<typename TV::Scalar>> SolidMatrix<TV>::
 entries() const
 {
     OTHER_ASSERT(valid() && !outers.size());
@@ -322,10 +322,10 @@ dense() const
   return scalar_view_own(dense.flat).reshape_own(3*n,3*n);
 }
 
-template<class TV> Ref<SolidDiagonalMatrix<TV> > SolidMatrix<TV>::
+template<class TV> Ref<SolidDiagonalMatrix<TV>> SolidMatrix<TV>::
 inverse_block_diagonal() const {
   OTHER_ASSERT(!outers.size());
-  Ref<SolidDiagonalMatrix<TV> > diagonal = new_<SolidDiagonalMatrix<TV> >(size(),false);
+  Ref<SolidDiagonalMatrix<TV>> diagonal = new_<SolidDiagonalMatrix<TV>>(size(),false);
   for(int i=0;i<size();i++)
     diagonal->A[i] = assume_symmetric(sparse_A(i,0)).inverse();
   return diagonal;
@@ -352,29 +352,30 @@ inner_product(RawArray<const TV> x,RawArray<const TV> y) const {
   return sum;
 }
 
-template class SolidMatrixBase<Vector<T,2> >;
-template class SolidMatrixBase<Vector<T,3> >;
-template class SolidMatrix<Vector<T,2> >;
-template class SolidMatrix<Vector<T,3> >;
-template class SolidDiagonalMatrix<Vector<T,2> >;
-template class SolidDiagonalMatrix<Vector<T,3> >;
+template class SolidMatrixBase<Vector<T,2>>;
+template class SolidMatrixBase<Vector<T,3>>;
+template class SolidMatrix<Vector<T,2>>;
+template class SolidMatrix<Vector<T,3>>;
+template class SolidDiagonalMatrix<Vector<T,2>>;
+template class SolidDiagonalMatrix<Vector<T,3>>;
 
 }
 using namespace other;
 
 template<int d> static void wrap_helper() {
-  {typedef SolidMatrixBase<Vector<T,d> > Self;
+  {typedef SolidMatrixBase<Vector<T,d>> Self;
   Class<Self>(d==2?"SolidMatrixBase2d":"SolidMatrixBase3d")
     .OTHER_METHOD(multiply)
     ;}
 
-  {typedef SolidMatrix<Vector<T,d> > Self;
+  {typedef SolidMatrix<Vector<T,d>> Self;
   Class<Self>(d==2?"SolidMatrix2d":"SolidMatrix3d")
     .OTHER_INIT(const SolidMatrixStructure&)
     .OTHER_METHOD(copy)
     .OTHER_METHOD(size)
     .OTHER_METHOD(zero)
     .OTHER_METHOD(scale)
+    .method("add_entry",static_cast<void(Self::*)(int,int,const Matrix<T,d>&)>(&Self::add_entry))
     .OTHER_METHOD(add_scalar)
     .OTHER_METHOD(add_diagonal_scalars)
     .OTHER_METHOD(add_partial_scalar)
@@ -385,7 +386,7 @@ template<int d> static void wrap_helper() {
     .OTHER_METHOD(dense)
     ;}
 
-  {typedef SolidDiagonalMatrix<Vector<T,d> > Self;
+  {typedef SolidDiagonalMatrix<Vector<T,d>> Self;
   Class<Self>(d==2?"SolidDiagonalMatrix2d":"SolidDiagonalMatrix3d")
     .OTHER_METHOD(inner_product)
     ;}
