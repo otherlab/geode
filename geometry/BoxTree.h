@@ -33,7 +33,6 @@ public:
   const Array<int> p; // index permutation
   const Array<const Range<int>> ranges;
   const Array<Box<TV> > boxes;
-  mutable Array<int> traversal_buffer; // for use during tree traversals
 
 protected:
   OTHER_CORE_EXPORT BoxTree(RawArray<const TV> geo,int leaf_size);

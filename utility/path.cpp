@@ -111,7 +111,7 @@ void copy_file(const string &from, const string &to) {
 #else
   // WARNING: the file names are not escaped, so this is a severe security risk.
   string cmd = format("cp '%s' '%s'", from, to);
-  std::cout << "running shell command: " << cmd << std::endl;
+  //std::cout << "running shell command: " << cmd << std::endl;
   ret = system(cmd.c_str());
 #endif
 
