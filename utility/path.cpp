@@ -2,6 +2,7 @@
 
 #include <other/core/utility/path.h>
 #include <other/core/utility/format.h>
+#include <other/core/python/exceptions.h>
 
 #ifdef _WIN32
 #define WINDOWS_LEAN_AND_MEAN
@@ -13,6 +14,45 @@
 
 namespace other {
 namespace path {
+
+string shell_quote(const string& s) {
+#ifdef _WIN32
+  std::string result = "\"";
+  for(const char c : s) {
+    if(c <= 0x1f || c >= 0x7f)
+      throw RuntimeError(format("no support for escaping non-printable character 0x%X", (unsigned int)c));
+
+    switch(c) {
+      case '"':
+        result += "\\\"";
+        break;
+      case '%':
+        result += "%%";
+        break;
+      default:
+        result += c;
+    }
+  }
+  result += "\"";
+  return result;
+#else
+  std::string result = "'";
+  for(const char c : s) {
+    if(c <= 0x1f || c >= 0x7f)
+      throw RuntimeError(format("no support for escaping non-printable character 0x%X", (unsigned int)c));
+    
+    switch(c) {
+      case '\'':
+        result += "'\\''";
+        break;
+      default:
+        result += c;
+    }
+  }
+  result += '\"';
+  return result;
+#endif
+}
 
 string join(const string& p, const string& q) {
   return p+sep+q;
@@ -76,7 +116,7 @@ void copy_file(const string &from, const string &to) {
 #endif
 
   if (ret)
-    throw std::runtime_error(format("error %d while copying '%s' to '%s'.", ret, from, to));
+    throw IOError(format("error %d while copying '%s' to '%s'.", ret, from, to));
 }
 
 }
