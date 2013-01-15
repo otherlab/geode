@@ -174,9 +174,11 @@ LogClass::~LogClass() {
 }
 
 void cache_initial_output() {
-  log_file = tmpfile();
-  if (!log_file) OTHER_FATAL_ERROR("Couldn't create temporary log file");
-  log_file_temporary = true;
+  if (!log_file) {
+    log_file = tmpfile();
+    if (!log_file) OTHER_FATAL_ERROR("Couldn't create temporary log file");
+    log_file_temporary = true;
+  }
 }
 
 ostream& cout_Helper() {
