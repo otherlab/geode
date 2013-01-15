@@ -18,10 +18,10 @@ template<> OTHER_DEFINE_TYPE(Springs<Vector<real,3> >)
 
 template<class TV> Springs<TV>::
 Springs(Array<const Vector<int,2> > springs,Array<const T> mass,Array<const TV> X,NdArray<const T> stiffness,NdArray<const T> damping_ratio)
-    :springs(springs),resist_compression(true),off_axis_damping(0),nodes(X.size()),mass(mass),info(springs.size(),false)
+    :springs(springs),resist_compression(true),off_axis_damping(0),nodes_(X.size()),mass(mass),info(springs.size(),false)
 {
-    OTHER_ASSERT(!springs.size() || scalar_view(springs).max()<nodes);
-    OTHER_ASSERT(mass.size()==nodes);
+    OTHER_ASSERT(!springs.size() || scalar_view(springs).max()<nodes_);
+    OTHER_ASSERT(mass.size()==nodes_);
     OTHER_ASSERT(stiffness.rank()==0 || (stiffness.rank()==1 && stiffness.shape[0]==springs.size()));
     OTHER_ASSERT(damping_ratio.rank()==0 || (damping_ratio.rank()==1 && damping_ratio.shape[0]==springs.size()));
 
@@ -46,10 +46,14 @@ restlengths() const
     return info.template project<T,&SpringInfo<TV>::restlength>().copy();
 }
 
+template<class TV> int Springs<TV>::nodes() const {
+  return nodes_;
+}
+
 template<class TV> void Springs<TV>::
 structure(SolidMatrixStructure& structure) const
 {
-    OTHER_ASSERT(structure.size()>=nodes);
+    OTHER_ASSERT(structure.size()>=nodes_);
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j);
         structure.add_entry(i,j);}
@@ -58,7 +62,7 @@ structure(SolidMatrixStructure& structure) const
 template<class TV> void Springs<TV>::
 update_position(Array<const TV> X_,bool definite)
 {
-    OTHER_ASSERT(X_.size()==nodes);
+    OTHER_ASSERT(X_.size()==nodes_);
     X=X_;
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j);
@@ -79,7 +83,7 @@ update_position(Array<const TV> X_,bool definite)
 template<class TV> void Springs<TV>::
 add_frequency_squared(RawArray<T> frequency_squared) const
 {
-    OTHER_ASSERT(frequency_squared.size()==nodes);
+    OTHER_ASSERT(frequency_squared.size()==nodes_);
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j);
         const SpringInfo<TV>& I=info[s];
@@ -108,7 +112,7 @@ elastic_energy() const
 template<class TV> void Springs<TV>::
 add_elastic_force(RawArray<TV> F) const
 {
-    OTHER_ASSERT(F.size()==nodes);
+    OTHER_ASSERT(F.size()==nodes_);
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j);
         const SpringInfo<TV>& I=info[s];
@@ -119,8 +123,8 @@ add_elastic_force(RawArray<TV> F) const
 template<class TV> void Springs<TV>::
 add_elastic_differential(RawArray<TV> dF,RawArray<const TV> dX) const
 {
-    OTHER_ASSERT(dF.size()==nodes);
-    OTHER_ASSERT(dX.size()==nodes);
+    OTHER_ASSERT(dF.size()==nodes_);
+    OTHER_ASSERT(dX.size()==nodes_);
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j); 
         const SpringInfo<TV>& I=info[s];
@@ -132,7 +136,7 @@ add_elastic_differential(RawArray<TV> dF,RawArray<const TV> dX) const
 template<class TV> void Springs<TV>::
 add_elastic_gradient(SolidMatrix<TV>& matrix) const
 {
-    OTHER_ASSERT(matrix.size()==nodes);
+    OTHER_ASSERT(matrix.size()==nodes_);
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j);
         const SpringInfo<TV>& I=info[s];
@@ -145,7 +149,7 @@ add_elastic_gradient(SolidMatrix<TV>& matrix) const
 template<class TV> void Springs<TV>::
 add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,m> > dFdX) const
 {
-    OTHER_ASSERT(dFdX.size()==nodes);
+    OTHER_ASSERT(dFdX.size()==nodes_);
     for(int s=0;s<springs.size();s++){
         int i,j;springs[s].get(i,j); 
         const SpringInfo<TV>& I=info[s];
@@ -156,7 +160,7 @@ add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,m> > dFdX) const
 template<class TV> T Springs<TV>::
 damping_energy(RawArray<const TV> V) const
 {
-    OTHER_ASSERT(V.size()==nodes);
+    OTHER_ASSERT(V.size()==nodes_);
     T energy=0;
     if (!off_axis_damping)
       for(int s=0;s<springs.size();s++){
@@ -176,8 +180,8 @@ damping_energy(RawArray<const TV> V) const
 template<class TV> void Springs<TV>::
 add_damping_force(RawArray<TV> force,RawArray<const TV> V) const
 {
-    OTHER_ASSERT(V.size()==nodes);
-    OTHER_ASSERT(force.size()==nodes);
+    OTHER_ASSERT(V.size()==nodes_);
+    OTHER_ASSERT(force.size()==nodes_);
     if (!off_axis_damping)
       for(int s=0;s<springs.size();s++){
           int i,j;springs[s].get(i,j);
@@ -197,7 +201,7 @@ add_damping_force(RawArray<TV> force,RawArray<const TV> V) const
 template<class TV> void Springs<TV>::
 add_damping_gradient(SolidMatrix<TV>& matrix) const
 {
-    OTHER_ASSERT(matrix.size()==nodes);
+    OTHER_ASSERT(matrix.size()==nodes_);
     if (!off_axis_damping)
       for(int s=0;s<springs.size();s++){
           int i,j;springs[s].get(i,j);
