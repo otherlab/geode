@@ -384,14 +384,16 @@ def make_array(a):
         break
     else:
       raise TypeError("unregistered dtype '%s'"%a.dtype)
-  return ''.join([uint_to_str(i) for i in (dtype,len(a.shape))+a.shape]+[a.tostring()])
+  # Convert numpy array to little endian buffer, flipping endianness if necessary
+  return ''.join([uint_to_str(i) for i in (dtype,len(a.shape))+a.shape]+[a.astype(a.dtype.newbyteorder('<')).tostring()])
 
 def parse_array(data,version):
   file = StringIO(data)
   dtype = int_to_dtype[read_uint(file)]
   rank = read_uint(file)
   shape = [read_uint(file) for _ in xrange(rank)]
-  array = (numpy.frombuffer(data,dtype=dtype,offset=file.tell()) if numpy.product(shape) else numpy.empty(0,dtype)).reshape(shape)
+  # Convert little endian buffer to a numpy array, flipping endianness if necessary
+  array = (numpy.frombuffer(data,dtype=dtype.newbyteorder('<'),offset=file.tell()).astype(dtype) if numpy.product(shape) else numpy.empty(0,dtype)).reshape(shape)
   return numpy.require(array,requirements='a')
 
 register_leaf('array',numpy.ndarray,make_array,parse_array)
