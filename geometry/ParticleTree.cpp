@@ -88,6 +88,46 @@ intersection(const Shape& shape, Array<int>& hits) const {
   intersection_helper(*this,shape,hits,0);
 }
 
+template<class TV> static void closest_point_helper(const ParticleTree<TV>& self, TV point, int& index, T& sqr_distance, int node) {
+  if (!self.is_leaf(node)) {
+    Vector<T,2> bounds(self.boxes[2*node+1].sqr_distance_bound(point),
+                       self.boxes[2*node+2].sqr_distance_bound(point));
+    int c = bounds.argmin();
+    if (bounds[c]<sqr_distance)
+      closest_point_helper(self,point,index,sqr_distance,2*node+1+c);
+    if (bounds[1-c]<sqr_distance)
+      closest_point_helper(self,point,index,sqr_distance,2*node+2-c);
+  } else
+    for (int t : self.prims(node)) {
+      T sqr_d = sqr_magnitude(point-self.X[t]);
+      if (sqr_distance>sqr_d) {
+        sqr_distance = sqr_d;
+        index = t;
+      }
+    }
+}
+
+template<class TV> TV ParticleTree<TV>::
+closest_point(TV point, int& index, T max_distance) const {
+  OTHER_ASSERT(nodes());
+  index = -1;
+  T sqr_distance = sqr(max_distance);
+  closest_point_helper(*this,point,index,sqr_distance,0);
+  if (index == -1) {
+    TV x;
+    x.fill(inf);
+    return x;
+  } else
+    return X[index];
+}
+
+template<class TV> TV ParticleTree<TV>::
+closest_point(TV point, T max_distance) const {
+  int index;
+  return closest_point(point, index, max_distance);
+}
+
+
 #define INSTANTIATE(d) \
   template class ParticleTree<Vector<T,d>>; \
   template OTHER_CORE_EXPORT void ParticleTree<Vector<T,d>>::intersection(const Box<Vector<T,d>>&,Array<int>&) const; \
