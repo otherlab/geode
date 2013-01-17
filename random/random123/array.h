@@ -160,12 +160,20 @@ inline R123_CUDA_DEVICE value_type assemble_from_u32(uint32_t *p32){
         }                                                               \
         return *this;                                                   \
     }                                                                   \
-    R123_CUDA_DEVICE size_t assembly_count() const{ return _N*((3+sizeof(value_type))/4); } \
-    R123_CUDA_DEVICE void assemble(uint32_t *p32){                      \
+    /* seed(SeedSeq) would be a constructor if having a constructor */  \
+    /* didn't cause headaches with defaults */                          \
+    template <typename SeedSeq>                                         \
+    R123_CUDA_DEVICE static r123array##_N##x##W seed(SeedSeq &ss){      \
+        r123array##_N##x##W ret;                                        \
+        const size_t Ngen = _N*((3+sizeof(value_type))/4);              \
+        uint32_t u32[Ngen];                                             \
+        uint32_t *p32 = &u32[0];                                        \
+        ss.generate(&u32[0], &u32[Ngen]);                               \
         for(size_t i=0; i<_N; ++i){                                     \
-            v[i] = assemble_from_u32<value_type>(p32);                  \
+            ret.v[i] = assemble_from_u32<value_type>(p32);              \
             p32 += (3+sizeof(value_type))/4;                            \
         }                                                               \
+        return ret;                                                     \
     }                                                                   \
 protected:                                                              \
     R123_CUDA_DEVICE r123array##_N##x##W& incr_carefully(R123_ULONG_LONG n){ \
@@ -240,14 +248,14 @@ struct r123arrayextractable<uint8_t>{
 
 #define CXXOVERLOADS(_N, W, T)                                          \
                                                                         \
-std::ostream& operator<<(std::ostream& os, const r123array##_N##x##W& a){   \
+inline std::ostream& operator<<(std::ostream& os, const r123array##_N##x##W& a){   \
     os << r123arrayinsertable<T>(a.v[0]);                                  \
     for(size_t i=1; i<_N; ++i)                                          \
         os << " " << r123arrayinsertable<T>(a.v[i]);                       \
     return os;                                                          \
 }                                                                       \
                                                                         \
-std::istream& operator>>(std::istream& is, r123array##_N##x##W& a){         \
+inline std::istream& operator>>(std::istream& is, r123array##_N##x##W& a){         \
     for(size_t i=0; i<_N; ++i){                                         \
         r123arrayextractable<T> x(a.v[i]);                                 \
         is >> x;                                                        \

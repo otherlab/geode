@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define GNUC_VERSION (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__)
 
-#if !defined(__x86_64__) && !defined(__i386__)
-#  error "This code has only been tested on x86 platforms."
+#if !defined(__x86_64__) && !defined(__i386__) && !defined(__powerpc__)
+#  error "This code has only been tested on x86 and powerpc platforms."
 #include <including_a_nonexistent_file_will_stop_some_compilers_from_continuing_with_a_hopeless_task>
 { /* maybe an unbalanced brace will terminate the compilation */
  /* Feel free to try the Random123 library on other architectures by changing
@@ -68,8 +68,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define R123_BUILTIN_EXPECT(expr,likely) __builtin_expect(expr,likely)
 #endif
 
-#ifndef R123_USE_CXX0X
-#define R123_USE_CXX0X 1 // other requires C++11 now
+/* According to the C++0x standard, we should be able to test the numeric
+   value of __cplusplus == 199701L for C++98, __cplusplus == 201103L for C++0x
+   But gcc has had an open bug  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=1773
+   since early 2001, which was finally fixed in 4.7 (early 2012).  For
+   earlier versions, the only way  to detect whether --std=c++0x was requested
+   on the command line is to look a t the __GCC_EXPERIMENTAL_CXX0X__ pp-symbol.
+*/
+#define GNU_CXX11 (__cplusplus>=201103L || (GNUC_VESRSION<40700 && defined(__GCC_EXPERIMENTAL_CXX0X__) ))
+
+#ifndef R123_USE_CXX11_UNRESTRICTED_UNIONS
+#define R123_USE_CXX11_UNRESTRICTED_UNIONS ((GNUC_VERSION >= 40600) && GNU_CXX11)
+#endif
+
+#ifndef R123_USE_CXX11_STATIC_ASSERT
+#define R123_USE_CXX11_STATIC_ASSERT ((GNUC_VERSION >= 40300) && GNU_CXX11)
+#endif
+
+#ifndef R123_USE_CXX11_CONSTEXPR
+#define R123_USE_CXX11_CONSTEXPR ((GNUC_VERSION >= 40600) && GNU_CXX11)
+#endif
+
+#ifndef R123_USE_CXX11_EXPLICIT_CONVERSIONS
+#define R123_USE_CXX11_EXPLICIT_CONVERSIONS ((GNUC_VERSION >= 40500) && GNU_CXX11)
+#endif
+
+#ifndef R123_USE_CXX11_RANDOM
+#define R123_USE_CXX11_RANDOM ((GNUC_VERSION>=40500) && GNU_CXX11)
+#endif
+
+#ifndef R123_USE_CXX11_TYPE_TRAITS
+#define R123_USE_CXX11_TYPE_TRAITS ((GNUC_VERSION>=40400) && GNU_CXX11)
 #endif
 
 #ifndef R123_USE_AES_NI
@@ -106,10 +135,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
-#ifndef R123_USE_STD_RANDOM
-#define R123_USE_STD_RANDOM (R123_USE_CXX0X && GNUC_VERSION>=40500)
-#endif
-
 #ifndef R123_USE_AES_OPENSSL
 /* There isn't really a good way to tell at compile time whether
    openssl is available.  Without a pre-compilation configure-like
@@ -136,7 +161,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifndef R123_USE_X86INTRIN_H
-#define R123_USE_X86INTRIN_H (GNUC_VERSION >= 40402)
+#define R123_USE_X86INTRIN_H ((defined(__x86_64__)||defined(__i386__)) && GNUC_VERSION >= 40402)
 #endif
 
 #ifndef R123_USE_IA32INTRIN_H

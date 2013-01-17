@@ -101,13 +101,15 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
     #undef CASE
     default: throw ValueError("Unknown dtype");
   }
-  int bytes = bits/8;
+  const int bytes = bits/8;
 
   // Endianness
 #if defined(BOOST_LITTLE_ENDIAN)
   const char endian = '<';
 #elif defined(BOOST_BIG_ENDIAN)
   const char endian = '>';
+#else
+#error "Unknown endianness"
 #endif
 
   // Construct header
@@ -131,6 +133,10 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
   OTHER_ASSERT((len&15)==0);
   uint16_t header_len = uint16_t(len-10);
   OTHER_ASSERT(header_len==len-10);
+#ifdef BOOST_BIG_ENDIAN
+  // Switch header_len to little endian
+  swap(((char*)&header_len)[0],((char*)&header_len)[1]);
+#endif
   memcpy(base+8,&header_len,2);
   header.resize(len);
   return bytes*total_size;

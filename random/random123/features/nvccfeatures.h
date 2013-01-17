@@ -71,6 +71,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define R123_USE_GNU_UINT128 0
 #endif
 
+#ifndef R123_ULONG_LONG
+// uint64_t, which is what we'd get without this, is
+// not the same as unsigned long long
+#define R123_ULONG_LONG unsigned long long
+#endif
+
 #ifndef R123_THROW
 // No exceptions in CUDA, at least upto 4.0
 #define R123_THROW(x)    R123_ASSERT(0)

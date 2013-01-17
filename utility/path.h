@@ -39,5 +39,9 @@ OTHER_CORE_EXPORT string dirname(const string& path);
 
 OTHER_CORE_EXPORT void copy_file(const string &from_path, const string &to_path);
 
+// Add quotes and escape any special characters to make safe for use as shell argument
+// Can throw a RuntimeError if the string contains any non-printable characters 
+OTHER_CORE_EXPORT string shell_quote(const string& s);
+
 }
 }

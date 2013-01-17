@@ -165,9 +165,10 @@ external('zlib',flags=['USE_ZLIB'],libs=['z'])
 external('libjpeg',flags=['USE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
 external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=['/usr/X11/include'],libpath=['/usr/X11/lib'], requires=['zlib'] if windows else [])
 external('openexr',flags=['USE_OPENEXR'],libs=['IlmImf','Half','Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
-external('atlas',libs=['cblas','lapack','atlas'])
-external('openblas',libs=['lapack','blas'])
-external('accelerate',default=1,frameworks=['Accelerate'])
+external('atlas',flags=['OTHER_BLAS'],libs=['cblas','lapack','atlas'])
+external('openblas',flags=['OTHER_BLAS'],libs=['lapack','blas'])
+if darwin:
+  external('accelerate',default=1,flags=['OTHER_BLAS'],frameworks=['Accelerate'])
 if windows:
   external('shellapi',default=windows,libs=['Shell32.lib'])
 if windows:
@@ -257,7 +258,7 @@ if env['type']!='release': program_suffix+='_'+env['type']
 else: executable_suffix=''
 
 # Compiler flags
-clang = bool(re.search(r'\bclang\b',env['CXX']))
+clang = bool(re.search(r'clang\b',env['CXX']))
 if windows:
   def ifsse(s):
     return s if env['sse'] else ''
@@ -287,11 +288,11 @@ else: # assume g++...
   # machine flags
   def ifsse(s):
     return s if env['sse'] else ' -mno-sse'
-  if env['arch']=='athlon': machine_flags=' -march=athlon-xp '+ifsse('-msse')
-  elif env['arch']=='nocona': machine_flags=' -march=nocona '+ifsse('-msse2')
-  elif env['arch']=='opteron': machine_flags=' -march=opteron '+ifsse('-msse3')
-  elif env['arch']=='powerpc': machine_flags=' '+ifsse('-msse3')
-  elif env['arch']=='native': machine_flags=' -march=native -mtune=native '+ifsse('')
+  if env['arch']=='athlon':    machine_flags = ' -march=athlon-xp '+ifsse('-msse')
+  elif env['arch']=='nocona':  machine_flags = ' -march=nocona '+ifsse('-msse2')
+  elif env['arch']=='opteron': machine_flags = ' -march=opteron '+ifsse('-msse3')
+  elif env['arch']=='powerpc': machine_flags = ''
+  elif env['arch']=='native':  machine_flags = ' -march=native -mtune=native '+ifsse('')
   else: machine_flags=''
   env.Append(CXXFLAGS=machine_flags)
   # type specific flags

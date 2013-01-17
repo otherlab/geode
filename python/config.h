@@ -26,41 +26,32 @@ typedef SSIZE_T ssize_t;
 #undef interface
 #undef small
 #endif
-
 #endif
 
 #endif
-
 
 namespace other {
 
 #if OTHER_THREAD_SAFE
+#ifdef __GNUC__
 
 // See http://en.wikipedia.org/wiki/Fetch-and-add
-static inline int fetch_and_add(int* n, int dn) {
-  asm volatile( 
-    "lock; xaddl %%eax, %2;"
-    : "=a" (dn) // output
-    : "a" (dn), "m" (*n) // input
-    :"memory");
-  // Return the old value of n
-  return dn;
+template<class T> static inline T fetch_and_add(T* n, T dn) {
+  return __sync_fetch_and_add(n,dn);
 }
 
+#else
+#error "Don't know atomic fetch and add for this compiler"
+#endif
 #else // non-threadsafe
 
-static inline int fetch_and_add(int* n, int dn) {
-  const int old = *n;
+template<class T> static inline T fetch_and_add(T* n, T dn) {
+  const T old = *n;
   *n += dn;
   return old;
 }
 
 #endif
-
-// Treat *n as little endian and assume everything beyond 32 bits is zero
-static inline int hack_fetch_and_add(ssize_t* n, int dn) {
-  return fetch_and_add((int*)n,dn);
-}
 
 }
 
@@ -113,11 +104,11 @@ using ::PyTypeObject;
 // Use atomics to ensure thread safety in pure C++ code
 
 #define OTHER_INCREF(op) \
-  ((void)other::hack_fetch_and_add(&((PyObject*)(op))->ob_refcnt,1))
+  ((void)other::fetch_and_add(&((PyObject*)(op))->ob_refcnt,1l))
 #define OTHER_XINCREF(op) do { \
   if (op) OTHER_INCREF(op); } while (false)
 #define OTHER_DECREF(op) do { \
-  if (other::hack_fetch_and_add(&((PyObject*)(op))->ob_refcnt,-1)==1)\
+  if (other::fetch_and_add(&((PyObject*)(op))->ob_refcnt,-1l)==1)\
     OTHER_PY_DEALLOC(op); } while(false)
 #define OTHER_XDECREF(op) do { \
   if (op) OTHER_DECREF(op); } while (false)
