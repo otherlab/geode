@@ -32,6 +32,7 @@ def test_try():
          'g':5}
   tryfile.write(file,value)
   check(value,tryfile.read(file))
+  check(value,tryfile.unpack(tryfile.pack(value)))
 
 def test_version_1():
   file = dir.strpath+'/1.try' 
