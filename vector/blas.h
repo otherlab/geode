@@ -358,6 +358,9 @@ WRAP(void gelsy(Subarray<T,2> A,RawArray<T> b,Array<T>& work)) // solves A^T x =
 
 DECLARE(gelsd,int*,int*,int*,T*,int*,T*,int*,T*,T*,int*,T*,int*,int*,int*)
 
+// if iwork is zero size, we will call gelsd in workspace query mode.
+// This function will then resize work to be the proper size.
+// Nothing else will have been done, so you have to call this function again.
 WRAP(void gelsd(Subarray<T,2> A,RawArray<T> b,Array<T>& work,Array<int>& iwork)) // solves A^T x = b
 {
     int m=A.m,n=A.n;OTHER_ASSERT(max(m,n)==b.size() && n==b.size());
