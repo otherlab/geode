@@ -61,7 +61,7 @@ OTHER_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObje
   PyTypeObject __VA_ARGS__::pytype = { \
     PyObject_HEAD_INIT(&PyType_Type) \
     0,                                           /* ob_size */\
-    "other_default_name:" __FILE__,              /* tp_name */\
+    "other_default_name:" __FILE__ ":" #__VA_ARGS__, /* tp_name */\
     sizeof(other::PyObject)+sizeof(__VA_ARGS__), /* tp_basicsize */\
     0,                                           /* tp_itemsize */\
     other::Class<__VA_ARGS__>::dealloc,          /* tp_dealloc */\
