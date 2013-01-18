@@ -13,7 +13,7 @@ namespace other {
 using std::string;
 using std::ostream;
 
-#if defined(__GNUC__) && defined(__x86_64__)
+#if defined(__GNUC__) && defined(__LP64__)
 
 // Use the native integer type if possible
 typedef __uint128_t uint128_t;
