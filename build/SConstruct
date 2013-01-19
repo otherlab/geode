@@ -72,6 +72,7 @@ options(
   ('syntax','check syntax only',0),
   ('has_latex','true if latex is available',0),
   ('thread_safe','use thread safe reference counting in pure C++ code',0),
+  ('optimizations','override default optimization settings','<default>'),
   ('sse','Use SSE if available',1),
   ('skip','list of modules to skip',[]),
   ('skip_programs','Build libraries only',0),
@@ -298,12 +299,13 @@ else: # assume g++...
   # type specific flags
   if env['type']=='optdebug': env.Append(CXXFLAGS=' -g3')
   if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
-    optimization_flags=''
-    if env['arch']=='pentium4': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
-    elif env['arch']=='pentium3': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
-    elif env['arch']=='opteron': optimization_flags+=' -O2'
-    elif env['arch'] in ('nocona','native','powerpc'): optimization_flags+=' -O3 -funroll-loops'
-    env.Append(CXXFLAGS=optimization_flags)
+    optimizations = env['optimizations']
+    if optimizations=='<default>':
+      if   env['arch']=='pentium4': optimizations = '-O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
+      elif env['arch']=='pentium3': optimizations = '-O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
+      elif env['arch']=='opteron':  optimizations = '-O2'
+      elif env['arch'] in ('nocona','native','powerpc'): optimizations = '-O3 -funroll-loops'
+    env.Append(CXXFLAGS=optimizations)
     if not clang:
       env.Append(LINKFLAGS=' -dead_strip')
     if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
