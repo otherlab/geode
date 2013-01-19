@@ -92,11 +92,11 @@ static Tuple<T,T,int> brent_helper(const function<T(T)>& f, T a, T x, T b, T fx,
   const T cg = (3-sqrt(5))/2;
   T deltax = 0;
   int iter = 0;
+  T rat = 0; // This zero value is never used, since the first time around we do rat = cg*deltax.
   while (iter < maxiter) {
     const T xmid = .5*(a+b);
     if (abs(x-xmid) <= 2*xtol-.5*(b - a)) // Check for convergence
       break;
-    T rat;
     if (abs(deltax) <= xtol) { // Do a golden section step
       deltax = x>=xmid?a-x:b-x;
       rat = cg*deltax;
