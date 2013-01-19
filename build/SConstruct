@@ -302,10 +302,10 @@ else: # assume g++...
     if env['arch']=='pentium4': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
     elif env['arch']=='pentium3': optimization_flags+=' -O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
     elif env['arch']=='opteron': optimization_flags+=' -O2'
-    elif env['arch'] in ('nocona','native'): optimization_flags+=' -O3 -funroll-loops'
-    elif env['arch']=='powerpc': optimization_flags+=' -O2'
+    elif env['arch'] in ('nocona','native','powerpc'): optimization_flags+=' -O3 -funroll-loops'
     env.Append(CXXFLAGS=optimization_flags)
-    env.Append(LINKFLAGS=' -dead_strip')
+    if not clang:
+      env.Append(LINKFLAGS=' -dead_strip')
     if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
   elif env['type']=='debug': env.Append(CXXFLAGS=' -g',LINKFLAGS=' -g')
   env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
@@ -322,9 +322,9 @@ if env['syntax']:
   for rule in 'CXXCOM','SHCXXCOM':
     env[rule] += ' && touch $TARGET'
 
-# Use c++0x
+# Use c++11
 if not windows:
-  env.Append(CXXFLAGS=' -std=c++0x')
+  env.Append(CXXFLAGS=' -std=c++11')
 
 # Hide symbols by default if desired
 if env['hidden']:
