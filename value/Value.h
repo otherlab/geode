@@ -75,7 +75,7 @@ public:
     return 0;
   }
 
-  OTHER_CORE_EXPORT void signal() const ;
+  OTHER_CORE_EXPORT void signal() const;
 
   virtual void dump(int indent) const = 0;
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
@@ -84,7 +84,7 @@ public:
   OTHER_CORE_EXPORT ValueBase& set_name(const string& n);
 
 private:
-  OTHER_CORE_EXPORT void pull() const ;
+  OTHER_CORE_EXPORT void pull() const;
 
   virtual void update() const = 0;
   static inline void signal_pending();
