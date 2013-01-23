@@ -31,13 +31,13 @@ private:
 protected:
   PolygonMesh(Array<const int> counts, Array<const int> vertices);
 public:
+  ~PolygonMesh();
 
   int nodes() const {
     return node_count;
   }
 
-  ~PolygonMesh();
-OTHER_CORE_EXPORT Ref<SegmentMesh> segment_mesh() const;
-OTHER_CORE_EXPORT Ref<TriangleMesh> triangle_mesh() const;
+  OTHER_CORE_EXPORT Ref<SegmentMesh> segment_mesh() const;
+  OTHER_CORE_EXPORT Ref<TriangleMesh> triangle_mesh() const;
 };
 }
