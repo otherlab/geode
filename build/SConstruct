@@ -170,11 +170,11 @@ external('openblas',flags=['OTHER_BLAS'],libs=['lapack','blas'])
 if darwin:
   external('accelerate',default=1,flags=['OTHER_BLAS'],frameworks=['Accelerate'])
 if windows:
-  external('shellapi',default=windows,libs=['Shell32.lib'])
-if windows:
-  external('mkl',flags=['USE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
+  external('mkl',flags=['OTHER_BLAS','USE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
 else:
-  external('mkl',flags=['USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+  external('mkl',flags=['OTHER_BLAS','USE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+if windows:
+  external('shellapi',default=windows,libs=['Shell32.lib'])
 
 # Automatic python configuration
 def configure_python():
