@@ -13,8 +13,7 @@ def test_sobol(filename=None):
   sobol = Sobol(box)
   print box
 
-  im = tile(1,(m,n,3))
-
+  im = tile(1,(m,n,3)).astype(uint8)
   count = m*n//100*10
   for _ in range(count):
     X = sobol.vector()
@@ -24,13 +23,10 @@ def test_sobol(filename=None):
       del cell[i]
       im[cell[0],cell[1],i] = 0
 
-  if not filename:
-    file = named_tmpfile(prefix='sobol',suffix='.png')
-    filename = file.name
-  Image.write(filename,im.astype(real))
-  hash = hashlib.sha1(open(filename).read()).hexdigest()
-  # For some reason the hash differs on Windows, but the image looks the same.
-  expected = '57d12019b31b56322c12a2c5391b4a9c2c6c919a' if is_windows() else '1492d817fdb75a6de90bf174dbd05d222f42676d'
+  if filename:
+    Image.write(filename,im.astype(real))
+  hash = hashlib.sha1(im.tostring()).hexdigest()
+  expected = '9b80b2a496d0bf4e5aeb001a87fd64528b712784'
   assert hash==expected
 
 def test_threefry():

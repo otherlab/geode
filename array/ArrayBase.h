@@ -30,6 +30,7 @@
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <iostream>
+#include <limits>
 namespace other{
 
 template<class T,class TArray> class ArrayBase;

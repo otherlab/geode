@@ -5,6 +5,7 @@ from __future__ import absolute_import
 import sys
 from numpy import *
 from other.core.array import *
+from other.core.utility import *
 import py
 
 def test_basic():
@@ -55,11 +56,16 @@ def test_mismatch():
   a = array([1.,2,3])
   py.test.raises(TypeError,array_test,a,-1)
 
-def test_write(tmpdir):
+def test_write(filename=None):
   random.seed(1731031)
   data = random.randn(10,7)
-  filename = str(tmpdir.join('array.npy'))
+  if filename is None:
+    file = named_tmpfile(suffix='.npy')
+    filename = file.name
   header = array_write_test(filename,data)
   data2 = load(filename)
   assert all(data==data2)
   assert header.tostring()==open(filename).read(len(header))
+
+if __name__=='__main__':
+  test_write('array.npy')

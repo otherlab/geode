@@ -303,5 +303,6 @@ void wrap_mov()
         .OTHER_INIT(const string&,int)
         .OTHER_METHOD(add_frame)
         .OTHER_METHOD(write_footer)
+        .OTHER_METHOD(enabled)
         ;
 }
