@@ -247,6 +247,7 @@ template<class TV,int d> static void wrap_helper() {
     .OTHER_FIELD(mesh)
     .OTHER_FIELD(X)
     .OTHER_METHOD(update)
+    .OTHER_OVERLOADED_METHOD(TV(Self::*)(TV,T)const, closest_point)
     ;
 }
 
