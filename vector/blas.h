@@ -361,14 +361,43 @@ DECLARE(gelsd,int*,int*,int*,T*,int*,T*,int*,T*,T*,int*,T*,int*,int*,int*)
 // if iwork is zero size, we will call gelsd in workspace query mode.
 // This function will then resize work to be the proper size.
 // Nothing else will have been done, so you have to call this function again.
+// b.n must be equal to max(A.m,A.n). If A.m > A.n, only the first A.n rows
+// contain the solution, the rest contain residuals.
 WRAP(void gelsd(Subarray<T,2> A,RawArray<T> b,Array<T>& work,Array<int>& iwork)) // solves A^T x = b
 {
-    int m=A.m,n=A.n;OTHER_ASSERT(max(m,n)==b.size() && n==b.size());
+    int m=A.m,n=A.n;OTHER_ASSERT(max(m,n)==b.size());
     int one=1,ldb=max(1,b.size()),lwork=work.size(),info;
     if(!lwork){work.resize(1);iwork.resize(1);lwork=-1;}
     Array<T> s(max(1,min(m,n)),false);T rcond;int rank;
     BC(gelsd)(&n,&m,&one,A.data(),const_cast<int*>(&A.stride),b.data(),&ldb,s.data(),&rcond,&rank,work.data(),&lwork,iwork.data(),&info);
     if(lwork<0){work.resize(max(1,(int)work[0]));iwork.resize(max(1,(int)iwork[0]));}
+    if (info)
+      std::cout << "error in gelsd: " << info << std::endl;
+}
+
+// if iwork is zero size, we will call gelsd in workspace query mode.
+// This function will then resize work to be the proper size.
+// Nothing else will have been done, so you have to call this function again.
+WRAP(void gelsd(Subarray<T,2> A,Array<T,2>b,Array<T>& work,Array<int>& iwork)) // solves A^T X^T = B^T for all columns of X and B
+{
+    int m=A.m,n=A.n;
+    OTHER_ASSERT(max(m,n)==b.n);
+    int nrhs=b.m, ldb=b.n, lwork=work.size(), info;
+    if(!lwork) {
+        work.resize(1);
+        iwork.resize(1);
+        lwork=-1;
+    }
+    Array<T> s(min(m,n),false);
+    T rcond;
+    int rank;
+    BC(gelsd)(&n,&m,&nrhs,A.data(),const_cast<int*>(&A.stride),b.data(),&ldb,s.data(),&rcond,&rank,work.data(),&lwork,iwork.data(),&info);
+    if (lwork<0) {
+      work.resize((int)work[0]);
+      iwork.resize((int)iwork[0]);
+    }
+    if (info)
+      std::cout << "error in gelsd: " << info << std::endl;
 }
 
 WRAP(void axpy(int n,T alpha,const T* x,T* y)) // y = ax + y

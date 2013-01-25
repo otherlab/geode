@@ -5,6 +5,7 @@
 using namespace other;
 
 void wrap_geometry() {
+  OTHER_WRAP(polygon)
   OTHER_WRAP(implicit)
   OTHER_WRAP(frame_implicit)
   OTHER_WRAP(analytic_implicit)

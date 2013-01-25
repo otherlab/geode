@@ -273,7 +273,7 @@ const_field(S T::* field) {
   OTHER_METHOD_2(#method_,method_)
 
 #define OTHER_OVERLOADED_METHOD_2(type,name,method_) \
-  method< type >(name,&Self::method_)
+  method(name,static_cast<type>(&Self::method_))
 
 #define OTHER_OVERLOADED_METHOD(type,method_) \
   OTHER_OVERLOADED_METHOD_2(type,#method_,method_)

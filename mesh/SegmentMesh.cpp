@@ -24,12 +24,16 @@ const int SegmentMesh::d;
 SegmentMesh::SegmentMesh(Array<const Vector<int,2> > elements)
   : vertices(scalar_view_own(elements))
   , elements(elements)
-  , node_count(0) {
+  , node_count(compute_node_count()) {}
+
+int SegmentMesh::compute_node_count() const {
   // Assert validity and compute counts
+  int c = 0;
   for (int i=0;i<vertices.size();i++) {
     OTHER_ASSERT(vertices[i]>=0);
-    const_cast_(node_count) = max(node_count,vertices[i]+1);
+    c = max(c,vertices[i]+1);
   }
+  return c;
 }
 
 SegmentMesh::~SegmentMesh() {}
@@ -79,7 +83,7 @@ const Tuple<NestedArray<const int>,NestedArray<const int>>& SegmentMesh::polygon
     // Store results
     polygons_ = tuple(NestedArray<const int>::copy(closed),NestedArray<const int>::copy(open));
   }
-  return polygons_; 
+  return polygons_;
 }
 
 NestedArray<const int> SegmentMesh::neighbors() const {
@@ -97,7 +101,7 @@ NestedArray<const int> SegmentMesh::neighbors() const {
     // Sort and remove duplicates if necessary
     bool need_copy = false;
     for(int i=0;i<nodes();i++) {
-      RawArray<int> n = neighbors_[i]; 
+      RawArray<int> n = neighbors_[i];
       sort(n);
       int* last = std::unique(n.begin(),n.end());
       if(last!=n.end())
@@ -131,7 +135,7 @@ NestedArray<const int> SegmentMesh::incident_elements() const {
 Array<const Vector<int,2> > SegmentMesh::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
-    NestedArray<const int> incident = incident_elements(); 
+    NestedArray<const int> incident = incident_elements();
     for (int s=0;s<elements.size();s++) {
       Vector<int,2> seg = elements[s];
       for (int i=0;i<2;i++) {
@@ -141,7 +145,7 @@ Array<const Vector<int,2> > SegmentMesh::adjacent_elements() const {
             goto found;
           }
         adjacent_elements_[s][i] = -1;
-        found:; 
+        found:;
       }
     }
   }

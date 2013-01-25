@@ -35,7 +35,9 @@ private:
   mutable Tuple<NestedArray<const int>,NestedArray<const int>> polygons_;
 
 protected:
-OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
+  OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
+
+  int compute_node_count() const;
 public:
   ~SegmentMesh();
 

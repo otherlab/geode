@@ -223,6 +223,10 @@ Vector<real,3> TriMesh::centroid() const {
   return c/s;
 }
 
+Vector<real,3> TriMesh::centroid(FaceHandle fh) const {
+  return triangle(fh).center();
+}
+
 real TriMesh::mean_edge_length() const {
 
   real result = 0;
@@ -346,7 +350,7 @@ vector<FaceHandle> TriMesh::incident_faces(VertexHandle vh) const {
 EdgeHandle TriMesh::common_edge(FaceHandle fh, FaceHandle fh2) const {
   for (ConstFaceHalfedgeIter e = cfh_iter(fh); e; ++e)
     if (opposite_face_handle(e) == fh2)
-      return edge_handle(e);
+      return edge_handle(e.handle());
   return TriMesh::InvalidEdgeHandle;
 }
 
@@ -454,6 +458,16 @@ vector<FaceHandle> TriMesh::triangle_fan(vector<VertexHandle> const &ring, Verte
 
   return fh;
 }
+
+vector<FaceHandle> TriMesh::select_faces(boost::function<bool(FaceHandle)> pr) const {
+  vector<FaceHandle> result;
+  for (FaceHandle fh : face_handles()) {
+    if (pr(fh))
+      result.push_back(fh);
+  }
+  return result;
+}
+
 
 Ref<TriMesh> TriMesh::extract_faces(vector<FaceHandle> const &faces,
                                     unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const {
@@ -1500,6 +1514,8 @@ template class PolyMeshT<AttribKernelT<FinalMeshItemsT<other::MeshTraits,true>,T
 }
 */
 
+#include <other/core/python/function.h>
+
 using namespace other;
 
 void wrap_trimesh() {
@@ -1516,6 +1532,8 @@ void wrap_trimesh() {
 
   typedef void (TriMesh::*v_Method_r_vec3)(real, const Vector<real, 3>&);
   typedef void (TriMesh::*v_Method_vec3_vec3)(Vector<real, 3>, const Vector<real, 3>&);
+
+  typedef Ref<TriMesh> (TriMesh::*Mesh_CMethod_vfh)(vector<FaceHandle> const &faces) const;
 
   Class<Self>("TriMesh")
     .OTHER_INIT()
@@ -1545,6 +1563,10 @@ void wrap_trimesh() {
     .OTHER_METHOD(shortest_path)
     .OTHER_METHOD(elements)
     .OTHER_METHOD(invert)
+    .OTHER_METHOD(to_vertex_handle)
+    .OTHER_METHOD(from_vertex_handle)
+    .OTHER_METHOD(select_faces)
+    .OTHER_OVERLOADED_METHOD(Mesh_CMethod_vfh, extract_faces)
     .OTHER_METHOD_2("X",X_python)
     .OTHER_METHOD_2("set_X",set_X_python)
     .OTHER_METHOD(set_vertex_normals)
@@ -1561,6 +1583,13 @@ void wrap_trimesh() {
     .OTHER_OVERLOADED_METHOD(real(Self::*)()const,area)
     .OTHER_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)
     .OTHER_OVERLOADED_METHOD_2(v_Method_vec3_vec3, "scale_anisotropic", scale)
+    .OTHER_METHOD(transform)
+    .OTHER_METHOD(translate)
+    .OTHER_METHOD(boundary_loops)
+    .OTHER_OVERLOADED_METHOD(typename OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
+    .OTHER_OVERLOADED_METHOD(typename Self::Normal (Self::*)(FaceHandle)const, normal)
+    .OTHER_OVERLOADED_METHOD(typename Self::TV(Self::*)()const, centroid)
+    .OTHER_OVERLOADED_METHOD_2(typename Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
     ;
 }
 

@@ -49,6 +49,8 @@
 #include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
 
+#include <boost/function.hpp>
+
 #ifdef USE_OPENMESH
 
 namespace other {
@@ -300,6 +302,9 @@ public:
   // area weighted centroid
   OTHER_CORE_EXPORT Vector<real,3> centroid() const;
 
+  // centroid of a face (convenience function)
+  OTHER_CORE_EXPORT Vector<real,3> centroid(FaceHandle fh) const;
+
   OTHER_CORE_EXPORT real mean_edge_length() const;
 
   // get a triangle area
@@ -350,6 +355,7 @@ public:
   inline EdgeHandle edge_handle(HalfedgeHandle he) const {
     return OTriMesh::edge_handle(he);
   }
+
   inline HalfedgeHandle halfedge_handle(VertexHandle ve) const {
     return OTriMesh::halfedge_handle(ve);
   }
@@ -382,7 +388,6 @@ public:
   inline Normal normal(VertexHandle vh) const {
     return OTriMesh::normal(vh);
   }
-
   inline Normal normal(FaceHandle fh) const {
     return OTriMesh::normal(fh);
   }
@@ -402,6 +407,9 @@ public:
 
   // make a triangle fan
   OTHER_CORE_EXPORT vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
+
+  // select a set of faces based on a predicate
+  OTHER_CORE_EXPORT vector<FaceHandle> select_faces(boost::function<bool(FaceHandle)> pr) const;
 
   // extract a set of faces as a new mesh and store vertex correspondence: id2id[old] = new
   OTHER_CORE_EXPORT Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces,
