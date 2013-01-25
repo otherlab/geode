@@ -1,6 +1,9 @@
 #include <other/core/geometry/Cylinder.h>
 #include <other/core/vector/magnitude.h>
 #include <other/core/vector/normalize.h>
+#include <other/core/geometry/AnalyticImplicit.h>
+#include <other/core/python/from_python.h>
+#include <other/core/python/to_python.h>
 namespace other {
 
 typedef real T;
@@ -64,7 +67,7 @@ TV Cylinder::surface(const TV& X) const {
   const T rp = r-radius,
           hp = max(-h,h-height);
   return hp>0 && rp>0 ? base.x0+clamp(h,(T)0,height)*base.n+radius*dr // outside
-       : hp>rp ? X+((2*h<=height?0:height)-h)*base.n // close to end caps 
+       : hp>rp ? X+((2*h<=height?0:height)-h)*base.n // close to end caps
        : X+(radius-r)*dr; // close to infinite cylinder
 }
 
@@ -104,11 +107,11 @@ ostream& operator<<(ostream& output, const Cylinder& cylinder) {
 }
 
 PyObject* to_python(const Cylinder& cylinder) {
-  OTHER_NOT_IMPLEMENTED();
+  return to_python(new_<AnalyticImplicit<Cylinder>>(cylinder));
 }
 
 Cylinder FromPython<Cylinder>::convert(PyObject* object) {
-  OTHER_NOT_IMPLEMENTED();
+  return from_python<AnalyticImplicit<Cylinder>&>(object);
 }
 
 }
