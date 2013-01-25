@@ -6,7 +6,7 @@
 #include <other/core/python/numpy.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/utility/process.h>
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
 #include <other/core/vector/blas.h>
 #include <mkl_trans.h>
 #endif
@@ -26,7 +26,7 @@ transpose() {
   }
 }
 
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
 template<> void RawArray<float,2>::transpose() {
   imatcopy(1,*this);
   swap(n,m);
@@ -44,7 +44,7 @@ template<class T> Array<typename boost::remove_const<T>::type,2> RawArray<T,2>::
   return A;
 }
 
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
 template<> Array<float,2> RawArray<float,2>::transposed() const {
   Array<Element,2> A(n,m,false);
   omatcopy(CblasTrans,1,*this,A);
@@ -116,7 +116,7 @@ template<class T> void RawArray<T,2>::permute_columns(RawArray<const int> p,int 
 }
 
 real frobenius_norm(RawArray<const real,2> A) {
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
   return nrm2(A.flat);
 #else
   return A.flat.sqr_magnitude();
@@ -130,7 +130,7 @@ real infinity_norm(RawArray<const real,2> A) {
   return norm;
 }
 
-#if !(defined(USE_MKL) && defined(_WIN32))
+#if !(defined(OTHER_BLAS) && defined(USE_MKL) && defined(_WIN32))
 template void RawArray<float,2>::transpose();
 template void RawArray<double,2>::transpose();
 template Array<float,2> RawArray<float,2>::transposed() const;

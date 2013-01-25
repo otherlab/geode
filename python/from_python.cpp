@@ -8,10 +8,8 @@ namespace other {
 #ifdef OTHER_PYTHON
 
 bool FromPython<bool>::convert(PyObject* object) {
-  // Accept only bool/int to avoid confusion
-  if (!PyInt_Check(object))
-      throw_type_error(object,&PyInt_Type);
-  return PyInt_AS_LONG(object)!=0;
+  // Accept only exact integers to avoid confusion
+  return FromPython<long>::convert(object)!=0; 
 }
 
 long FromPython<long>::convert(PyObject* object) {
