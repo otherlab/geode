@@ -16,17 +16,19 @@ namespace other {
 namespace mpl = boost::mpl;
 using std::exception;
 
-OTHER_CORE_EXPORT void set_argument_count_error(int desired,PyObject* args,PyObject* kwds);
-OTHER_CORE_EXPORT void handle_constructor_error(PyObject* self,const exception& error);
+OTHER_CORE_EXPORT void set_argument_count_error(int desired, PyObject* args, PyObject* kwds);
+OTHER_CORE_EXPORT void handle_constructor_error(PyObject* self, const exception& error);
 
 #ifdef OTHER_VARIADIC
 
 // wrapped_constructor
 
 template<class T,class... Args> static PyObject*
-wrapped_constructor(PyTypeObject* type,PyObject* args,PyObject* kwds) {
+wrapped_constructor(PyTypeObject* type, PyObject* args, PyObject* kwds) {
   const int desired = sizeof...(Args);
-  if (PyTuple_GET_SIZE(args)!=desired || (kwds && PyDict_Size(kwds))) {
+  const int nargs = PyTuple_GET_SIZE(args);
+  // Require exact match if we're constructing T, otherwise extra arguments are fine
+  if (type==&T::pytype ? nargs!=desired || (kwds && PyDict_Size(kwds)) : nargs<desired) {
     set_argument_count_error(desired,args,kwds);
     return 0;
   }
@@ -61,9 +63,11 @@ template<class T,class Args> struct WrapConstructor;
 
 #define OTHER_WRAP_CONSTRUCTOR_2(n,CARGS,CArgs,Args) \
   template<class T OTHER_REMOVE_PARENS(CARGS)> struct WrapConstructor<T,Types<OTHER_REMOVE_PARENS(Args)>> { \
-    static PyObject* wrap(PyTypeObject* type,PyObject* args,PyObject* kwds) { \
+    static PyObject* wrap(PyTypeObject* type, PyObject* args, PyObject* kwds) { \
       const int desired = n; \
-      if (PyTuple_GET_SIZE(args)!=desired || (kwds && PyDict_Size(kwds))) { \
+      const int nargs = PyTuple_GET_SIZE(args); \
+      /* Require exact match if we're constructing T, otherwise extra arguments are fine */ \
+      if (type==&T::pytype ? nargs!=desired || (kwds && PyDict_Size(kwds)) : nargs<desired) { \
         set_argument_count_error(desired,args,kwds); \
         return 0; \
       } \
