@@ -66,14 +66,10 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
     if (a.shape.size()==1 && a.shape[0]==4)
       return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
-    throw TypeError(format("don't know how to make a vector property of shape %s",str(a.shape)));
-  }
-  if (value == Py_None) {
-    return new_<Prop<Ref<>>>(n, ref(*value));
   }
 
-  // We don't understand the value, so complain
-  throw TypeError(format("we don't know how to make a property of type '%s'",value->ob_type->tp_name));
+  // default to some python object
+  return new_<Prop<Ref<>>>(n, ref(*value));
 }
 #endif
 
