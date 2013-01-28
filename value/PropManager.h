@@ -11,7 +11,7 @@
 #include <vector>
 namespace other {
 
-class PropManager: public Object {
+class PropManager : public Object {
 public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
 
@@ -19,67 +19,49 @@ public:
   Props items;
   vector<string> order;
 
-private:
+protected:
   OTHER_CORE_EXPORT PropManager();
 public:
   ~PropManager();
 
+  // Add an existing property if the name or new, or return the existing one.
   OTHER_CORE_EXPORT PropBase& add(PropBase& prop);
 
-  template<class T> Prop<T>& add(PropRef<T> prop) {
+  template<class T> Prop<T>& add(const PropRef<T>& prop) {
     return static_cast<Prop<T>&>(add(prop.self));
   }
 
-  // Add an uninitialized property (default constructor is used), which will be flagged as
-  // 'required' when passed to the parser.
-  template<class T> Prop<T>& add(string const &name) {
-    return add(name, T(), true, false);
+  // Add a new property with the given type and default
+  template<class T> Prop<T>& add(const string& name, const T& default_) {
+    return add(PropRef<T>(name,default_));
   }
 
-  template<class T> Prop<T>& add(string const &name, T const &default_,  bool required=false, bool hidden=false) {
-    PropRef<T> prop(name,default_);
-    prop->hidden = hidden;
-    prop->required = required;
-    return add(prop);
+  // Get a property by name, throwing an exception if none is found or the type doesn't match
+  OTHER_CORE_EXPORT PropBase& get(const string& name) const;
+  OTHER_CORE_EXPORT PropBase& get(const string& name, const type_info& type) const;
+
+  // Get a property by name, return 0 if none is found.  If type is specified, throw an exception if the type doesn't match.
+  OTHER_CORE_EXPORT PropBase* get_ptr(const string& name) const;
+  OTHER_CORE_EXPORT PropBase* get_ptr(const string& name, const type_info& type) const;
+
+  // Get a property by name, throwing an exception if none is found (or not the right type)
+  template<class T> Prop<T>& get(const string& name) const {
+    return static_cast<Prop<T>&>(get(name,typeid(T)));
   }
 
-  // Turn char* to string
-  OTHER_CORE_EXPORT Prop<string>& add(string const &name, const char* default_,  bool required=false, bool hidden=false);
-
-  // Gets a property by name, throwing an exception if none found
-  OTHER_CORE_EXPORT PropBase& get(string const &name) const ;
-
-  // Gets a property by name, throwing an exception if none found (or not the right type)
-  template<class T> Prop<T>& get(string const &name) const {
-    Props::const_iterator it = items.find(name);
-    if (it == items.end()) {
-      throw KeyError(format("No property named '%s' exists", name));
-    } else {
-      if(Prop<T>* p = it->second->cast<T>())
-        return *p;
-      else
-        throw TypeError(format("Property '%s' accessed with type %s, but has type %s", name,typeid(T).name(),it->second->type().name()));
-    }
-  }
-
-  template<class T> Prop<T>& get_or_add(string const &name, T const &default_) {
-    Props::const_iterator it = items.find(name);
-    if (it == items.end()) {
-      return add(name, default_);
-    } else {
-      if(Prop<T>* p = it->second->cast<T>())
-        return *p;
-      else
-        throw TypeError(format("Property '%s' accessed with type %s, but has type %s", name,typeid(T).name(),it->second->type().name()));
-    }
+  template<class T> Prop<T>& get_or_add(const string& name, const T& default_) {
+    if (auto prop = get_ptr(name,typeid(T)))
+      return static_cast<Prop<T>&>(*prop);
+    return add(name,default_);
   }
 
   // Turn char* to string
-  OTHER_CORE_EXPORT Prop<string>& get_or_add(string const &name, const char* default_);
+  OTHER_CORE_EXPORT Prop<string>& add(const string& name, const char* default_);
+  OTHER_CORE_EXPORT Prop<string>& get_or_add(const string& name, const char* default_);
 
 #ifdef OTHER_PYTHON
-  PropBase& add_python(string const &name, PyObject* default_);
-  PropBase& get_or_add_python(string const &name, PyObject* default_);
+  PropBase& add_python(const string& name, PyObject* default_);
+  PropBase& get_or_add_python(const string& name, PyObject* default_);
 #endif
 };
 

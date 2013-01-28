@@ -68,13 +68,10 @@ public:
   }
 
   template<class T> const Value<T>* cast() const {
-    const type_info &goal = typeid(T),
-                    &self = type();
-    if (goal==self || !strcmp(goal.name(),self.name())) // Use string comparison to avoid symbol visibility issues
-      return static_cast<const Value<T>*>(this);
-    return 0;
+    return is_type(typeid(T)) ? static_cast<const Value<T>*>(this) : 0;
   }
 
+  OTHER_CORE_EXPORT bool is_type(const type_info& type) const;
   OTHER_CORE_EXPORT void signal() const;
 
   virtual void dump(int indent) const = 0;

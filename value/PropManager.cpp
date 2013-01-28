@@ -1,7 +1,5 @@
 #include <other/core/value/PropManager.h>
-#include <other/core/python/Ref.h>
 #include <other/core/python/Class.h>
-#include <other/core/python/repr.h>
 #include <other/core/python/stl.h>
 namespace other {
 
@@ -9,10 +7,9 @@ using std::pair;
 using std::cout;
 using std::endl;
 
-  OTHER_DEFINE_TYPE(PropManager)
+OTHER_DEFINE_TYPE(PropManager)
 
 PropManager::PropManager() {}
-
 PropManager::~PropManager() {}
 
 PropBase& PropManager::add(PropBase& prop) {
@@ -31,41 +28,62 @@ PropBase& PropManager::add(PropBase& prop) {
     throw TypeError(format("Property '%s' accessed with type %s, but has type %s",name,new_type.name(),old_type.name()));
   if (!prop.same_default(*it->second))
     throw ValueError(format("Trying to add property '%s' with default %s, but old default was %s",name,prop.value_str(true),it->second->value_str(true)));
-  return *it->second;
-}
-
-Prop<string>& PropManager::add(string const &name, const char* default_,  bool required, bool hidden) {
-  return add(name,string(default_),required,hidden);
-}
-
-Prop<string>& PropManager::get_or_add(string const &name, const char* default_) {
-  return get_or_add(name,string(default_));
-}
-
-PropBase& PropManager::get(string const &name) const {
-  auto it = items.find(name);
-  if (it == items.end())
-    throw KeyError(format("No property named '%s' exists", name));
   return it->second;
 }
 
+PropBase* PropManager::get_ptr(const string& name) const {
+  const auto it = items.find(name);
+  if (it==items.end())
+    return 0;
+  return &*it->second;
+}
+
+PropBase& PropManager::get(const string& name) const {
+  if (auto value = get_ptr(name))
+    return *value;
+  throw KeyError(format("No value named '%s' exists", name));
+}
+
+PropBase& PropManager::get(const string& name, const type_info& type) const {
+  if (auto value = get_ptr(name,type))
+    return *value;
+  throw KeyError(format("No value named '%s' exists", name));
+}
+
+PropBase* PropManager::get_ptr(const string& name, const type_info& type) const {
+  if (auto prop = get_ptr(name)) {
+    if (prop->base().is_type(type))
+      return prop;
+    throw TypeError(format("Property '%s' accessed with type %s, but has type %s", name,type.name(),prop->type().name()));
+  }
+  return 0;
+}
+
+Prop<string>& PropManager::add(const string& name, const char* default_) {
+  return add(name,string(default_));
+}
+
+Prop<string>& PropManager::get_or_add(const string& name, const char* default_) {
+  return get_or_add(name,string(default_));
+}
+
 #ifdef OTHER_PYTHON
-PropBase& PropManager::add_python(string const &name, PyObject* default_) {
+PropBase& PropManager::add_python(const string& name, PyObject* default_) {
   return add(make_prop(name,default_));
 }
 
-PropBase& PropManager::get_or_add_python(string const &name, PyObject* default_) {
-  auto it = items.find(name);
-  if (it != items.end()) return it->second;
-  else return add_python(name, default_);
+PropBase& PropManager::get_or_add_python(const string& name, PyObject* default_) {
+  if (auto value = get_ptr(name))
+    return *value;
+  return add_python(name,default_);
 }
 #endif
 
 }
+using namespace other;
 
 void wrap_prop_manager() {
 #ifdef OTHER_PYTHON
-  using namespace other;
   typedef PropManager Self;
   Class<Self>("PropManager")
     .OTHER_INIT()

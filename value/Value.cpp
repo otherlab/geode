@@ -40,6 +40,12 @@ ValueBase::~ValueBase() {
   }
 }
 
+bool ValueBase::is_type(const type_info& type) const {
+  const type_info& self = this->type();
+  // Use string comparison to avoid symbol visibility issues
+  return type==self || !strcmp(type.name(),self.name());
+}
+
 inline void ValueBase::signal_pending() {
   while (pending) {
     Link* next = pending->value_next;
@@ -95,7 +101,7 @@ void ValueBase::pull() const {
 
   // If a node is currently being evaluated, it now depends on us
   if (Action::current)
-    const_cast_(Action::current)->depend_on(*this);
+    Action::current->depend_on(*this);
 
   // Update if necessary
   if (dirty_) {

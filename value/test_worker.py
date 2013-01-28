@@ -6,7 +6,7 @@ from other.core.value.Worker import Worker
 
 def worker_test_factory(props):
   x = props.get('x')
-  y = props.add('y',7)
+  y = props.add('y',5)
   return cache(lambda:x()*y())
 
 def test_worker():

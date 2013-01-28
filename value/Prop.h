@@ -20,7 +20,7 @@
 #include <other/core/vector/Vector.h>
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/scoped_ptr.hpp>
-namespace other{
+namespace other {
 
 using std::string;
 using std::type_info;
@@ -297,13 +297,12 @@ public:
 
 };
 
-template<class T> class PropRef
-{
+template<class T> class PropRef {
 public:
   typedef typename boost::remove_const<T>::type type;
   Ref<typename CopyConst<Prop<type>,T>::type> self;
 
-  PropRef(const string& name,const T& value)
+  PropRef(const string& name, const T& value)
     :self(new_<Prop<T> >(name,value)) {}
   PropRef(typename CopyConst<Prop<type>,T>::type& self)
     :self(other::ref(self)) {}
@@ -331,7 +330,6 @@ public:
     result->set((*this)());
     return result;
   }
-
 };
 
 #ifdef OTHER_PYTHON
