@@ -31,6 +31,8 @@ PyArray_Descr* numpy_descr_from_type(int type_num) {
 }
 
 PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context) {
+  if (op==Py_None) // PyArray_FromAny silently converts None to a singleton nan, which is not cool
+    throw TypeError("expected numpy array, got None");
   return PyArray_FromAny(op,dtype,min_depth,max_depth,requirements,context);
 }
 
