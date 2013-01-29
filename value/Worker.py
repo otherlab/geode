@@ -1,7 +1,8 @@
 '''Values evaluated on separate processes via the multiprocessing module'''
 
-from other.core import Prop,listen
+from other.core import Prop,PropManager,listen
 import multiprocessing
+import traceback
 import errno
 import sys
 
@@ -10,140 +11,185 @@ __all__ = ['Worker']
 QUIT = 'quit'
 NEW_VALUE = 'new value'
 SET_VALUE = 'set value'
-CREATE_NODE = 'create node'
-CREATE_NODE_ACK = 'create node ack'
-PULL_NODE = 'pull node'
+CREATE_VALUE = 'create value'
+PULL_VALUE = 'pull value'
+RUN_JOB = 'run job'
 
-class ValueProxies(object):
+class ValueProxies(PropManager):
   def __init__(self,conn):
     self.conn = conn
-    self.values = {}
-
-  def get(self,name):
-    return self.values[name]
-
-  def add(self,name,default):
-    '''For compatibility with PropManager.  The value must already exist.'''
-    return self.get(name)
+    self.frozen = True
 
   def process(self,tag,data):
     '''Process a message if possible, and return whether we understood it.'''
     if tag==NEW_VALUE:
       name,default = data
-      assert name not in self.values
-      self.values[name] = Prop(name,default)
+      assert not self.contains(name)
+      self.frozen = False
+      try:
+        self.add(name,default)
+      finally:
+        self.frozen = True
     elif tag==SET_VALUE:
       name,value = data
-      self.values[name].set(value)
+      self.get(name).set(value)
     else:
       return False
     return True
 
-def worker_helper(conn,debug):
-  inputs = ValueProxies(conn)
-  nodes = {}
-  listeners = []
-  def process(tag,data):
-    if tag==CREATE_NODE:
-      name,factory = data
-      assert name not in nodes
-      node = nodes[name] = factory(inputs)
-      if debug:
-        print 'worker: send new value %s'%name
-      conn.send((NEW_VALUE,(name,None)))
-      def push():
-        value = None if node.dirty() else node()
-        if debug:
-          print 'worker: send push %s, %s'%(name,value)
-        conn.send((SET_VALUE,(name,value)))
-      listeners.append(listen(node,push))
-      if debug:
-        print 'worker: send create node ack %s'%name
-      conn.send((CREATE_NODE_ACK,name))
-    elif tag==PULL_NODE:
-      name = data
-      node = nodes[name]
-      node()
-    else:
-      return inputs.process(tag,data)
-    return True
-  while 1:
-    tag,data = conn.recv()
-    if debug:
-      print 'worker: recv %s, %s'%(tag,data)
-    if tag==QUIT:
-      return
-    elif not process(tag,data):
-      raise ValueError("Unknown tag '%s'"%tag)
+class Connection(object):
+  def __init__(self,side,conn,debug=False):
+    self.side = side
+    self.conn = conn
+    self.debug = debug
+    self.inputs = ValueProxies(conn)
+    self.outputs = {}
+    self.listeners = []
+
+  def add_output(self,name,value):
+    assert name not in self.outputs
+    self.outputs[name] = value
+    if self.debug:
+      print '%s: send new value %s'%(self.side,name)
+    val = None if value.dirty() else value()
+    self.conn.send((NEW_VALUE,(name,val)))
+    def push():
+      val = None if value.dirty() else value()
+      if self.debug:
+        print '%s: send push %s, %s'%(self.side,name,val)
+      self.conn.send((SET_VALUE,(name,val)))
+    self.listeners.append(listen(value,push))
+
+  def process(self,timeout=0,count=0):
+    '''Check for incoming messages from the master.'''
+    while self.conn.poll(timeout):
+      tag,data = self.conn.recv()
+      if self.debug:
+        print '%s: recv %s, %s'%(self.side,tag,data)
+      if tag==QUIT:
+        sys.exit()
+      elif tag==CREATE_VALUE:
+        name,factory = data
+        value = factory(self.inputs)
+        self.add_output(name,value)
+      elif tag==PULL_VALUE:
+        name = data
+        node = self.outputs[name]
+        node()
+      elif tag==RUN_JOB:
+        # Execute function with connection and given extra arguments
+        f,args,kwargs = data
+        f(self,*args,**kwargs)
+      elif not self.inputs.process(tag,data):
+        raise ValueError("Unknown tag '%s'"%tag)
+      count -= 1
+      if not count:
+        break
+
+def worker_main(conn,debug):
+  conn = Connection('worker',conn,debug=debug)
+  conn.process(timeout=None)
 
 class Worker(object):
-  def __init__(self,props,debug=False):
+  def __init__(self,debug=False,quit_timeout=1.):
+    '''Create a new worker process with two way communication via Value objects.
+    The worker blocks until told to launch values or jobs.'''
     self.debug = debug
+    self.inside_with = False
     self.conn,child_conn = multiprocessing.Pipe()
-    self.worker = multiprocessing.Process(target=worker_helper,args=(child_conn,debug))
+    self.worker = multiprocessing.Process(target=worker_main,args=(child_conn,debug))
     self.outputs = ValueProxies(self.conn)
     self.worker.start()
     self.listeners = []
-    for name in props.order:
-      self.add_input(name,props.get(name))
-    self.crash_timeout = .05
-    self.inside_with = False
+    self.crashed = False
+    self.quit_timeout = quit_timeout
 
   def __enter__(self):
     self.inside_with = True
     return self
 
   def __exit__(self,*args):
+    if self.debug:
+      print 'master: send quit'
+    # First try telling to the process to quit peacefully
+    self.conn.send((QUIT,()))
     self.inside_with = False
-    self.worker.terminate()
-    try: # See http://stackoverflow.com/questions/1238349/python-multiprocessing-exit-error
-      self.worker.join()
-    except OSError,e:
-      if e.errno != errno.EINTR:
-        raise
+    # See http://stackoverflow.com/questions/1238349/python-multiprocessing-exit-error for why we need this loop.
+    while 1:
+      try:
+        self.worker.join(self.quit_timeout)
+        if not self.worker.is_alive():
+          return
+        # If the peaceful method doesn't work, use force
+        self.worker.terminate()
+        self.quit_timeout = None
+      except OSError,e:
+        if e.errno != errno.EINTR:
+          raise
+
+  def add_props(self,props):
+    for name in props.order:
+      self.add_input(name,props.get(name))
 
   def add_input(self,name,value):
+    assert self.inside_with
+    if self.debug:
+      print 'master: send new value %s, %s'%(name,value())
+    self.conn.send((NEW_VALUE,(name,value())))
     def changed():
       if self.debug:
         print 'master: send set value %s, %s'%(name,value())
       self.conn.send((SET_VALUE,(name,value())))
     self.listeners.append(listen(value,changed))
-    if self.debug:
-      print 'master: send new value %s, %s'%(name,value())
-    self.conn.send((NEW_VALUE,(name,value())))
 
   def process(self,timeout=0,count=0):
     '''Check for incoming messages from the worker.'''
     assert self.inside_with
-    while self.conn.poll(timeout):
-      tag,data = self.conn.recv()
-      if self.debug:
-        print 'master: recv %s, %s'%(tag,data)
-      if not self.outputs.process(tag,data):
-        raise ValueError("Unknown tag '%s'"%tag)
-      count -= 1
-      if not count:
-        break
-
-  def create(self,name,factory):
-    assert self.inside_with
-    '''Create a node on the worker and wait for acknowledgement.'''
-    if self.debug:
-      print 'master: send create node %s'%name
-    self.conn.send((CREATE_NODE,(name,factory)))
-    while self.worker.is_alive():
-      while self.conn.poll(self.crash_timeout):
+    remaining = 1e10 if timeout is None else timeout
+    while 1:
+      # Polling without hanging if the worker process dies
+      if remaining<0:
+        return # Ran out of time
+      if not self.worker.is_alive():
+        self.crashed = True
+        raise IOError('worker process crashed')
+      # Don't wait for too long in order to detect crashes
+      pause = min(remaining,.21)
+      if self.conn.poll(pause):
+        # Process message
         tag,data = self.conn.recv()
         if self.debug:
           print 'master: recv %s, %s'%(tag,data)
-        if tag==CREATE_NODE_ACK:
-          assert data==name
-          return self.outputs.get(name)
-        elif not self.outputs.process(tag,data):
+        if not self.outputs.process(tag,data):
           raise ValueError("Unknown tag '%s'"%tag)
-    raise RuntimeError("failed to create node '%s'"%name)
+        count -= 1
+        if not count:
+          return # Hit message limit
+      elif not pause:
+        break
+      remaining -= pause
+
+  def wait_for_output(self,name):
+    while not self.outputs.contains(name):
+      self.process(timeout=None,count=1)
+    return self.outputs.get(name)
+
+  def create(self,name,factory):
+    '''Create a node on the worker and wait for acknowledgement.'''
+    assert self.inside_with
+    if self.debug:
+      print 'master: send create node %s'%name
+    self.conn.send((CREATE_VALUE,(name,factory)))
+    return self.wait_for_output(name)
 
   def pull(self,name):
     if self.debug:
       print 'master: send pull node %s'%name
-    self.conn.send((PULL_NODE,name))
+    self.conn.send((PULL_VALUE,name))
+
+  def run(self,f,*args,**kwargs):
+    '''Execute f(conn,*args,**kwargs) on the worker process.
+    If f is long running, it should periodically call conn.process(...).'''
+    if self.debug:
+      print 'master: send run job %s'%f
+    self.conn.send((RUN_JOB,(f,args,kwargs)))

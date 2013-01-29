@@ -18,6 +18,7 @@ public:
   typedef unordered_map<string,Ref<PropBase>> Props;
   Props items;
   vector<string> order;
+  bool frozen; // Set to true to make temporarily immutable
 
 protected:
   OTHER_CORE_EXPORT PropManager();
@@ -35,6 +36,9 @@ public:
   template<class T> Prop<T>& add(const string& name, const T& default_) {
     return add(PropRef<T>(name,default_));
   }
+
+  // Check if a property exists
+  OTHER_CORE_EXPORT bool contains(const string& name) const;
 
   // Get a property by name, throwing an exception if none is found or the type doesn't match
   OTHER_CORE_EXPORT PropBase& get(const string& name) const;

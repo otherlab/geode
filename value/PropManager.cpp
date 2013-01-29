@@ -9,7 +9,9 @@ using std::endl;
 
 OTHER_DEFINE_TYPE(PropManager)
 
-PropManager::PropManager() {}
+PropManager::PropManager()
+  : frozen(false) {}
+
 PropManager::~PropManager() {}
 
 PropBase& PropManager::add(PropBase& prop) {
@@ -18,6 +20,8 @@ PropBase& PropManager::add(PropBase& prop) {
     throw ValueError(format("prop name '%s' contains a dash; use an underscore instead",name));
   Props::iterator it = items.find(name);
   if (it == items.end()) {
+    if (frozen)
+      throw TypeError(format("prop manager is frozen, can't create new property '%s'",name));
     items.insert(make_pair(name,ref(prop)));
     order.push_back(name);
     return prop;
@@ -29,6 +33,10 @@ PropBase& PropManager::add(PropBase& prop) {
   if (!prop.same_default(*it->second))
     throw ValueError(format("Trying to add property '%s' with default %s, but old default was %s",name,prop.value_str(true),it->second->value_str(true)));
   return it->second;
+}
+
+bool PropManager::contains(const string& name) const {
+  return items.count(name);
 }
 
 PropBase* PropManager::get_ptr(const string& name) const {
@@ -91,8 +99,10 @@ void wrap_prop_manager() {
     .method("get",static_cast<PropBase&(Self::*)(const string&)const>(&Self::get))
     .OTHER_METHOD_2("add",add_python)
     .OTHER_METHOD_2("get_or_add",get_or_add_python)
+    .OTHER_METHOD(contains)
     .OTHER_CONST_FIELD(items)
     .OTHER_CONST_FIELD(order)
+    .OTHER_FIELD(frozen)
     ;
 #endif
 }
