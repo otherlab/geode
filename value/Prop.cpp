@@ -59,17 +59,22 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       if (frames_check<TV3>(value))
         return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
     }
-    NdArray<const real> a = from_python<NdArray<const real>>(value);
-    if (a.shape.size()==1 && a.shape[0]==2)
-      return new_<Prop<TV2>>(n,vec(a[0],a[1]));
-    if (a.shape.size()==1 && a.shape[0]==3)
-      return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
-    if (a.shape.size()==1 && a.shape[0]==4)
-      return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+    try {
+      NdArray<const real> a = from_python<NdArray<const real>>(value);
+      if (a.shape.size()==1 && a.shape[0]==2)
+        return new_<Prop<TV2>>(n,vec(a[0],a[1]));
+      if (a.shape.size()==1 && a.shape[0]==3)
+        return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
+      if (a.shape.size()==1 && a.shape[0]==4)
+        return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+    } catch (const exception&) {
+      // If the NdArray conversion fails, squelch the error and fall back to our default
+      PyErr_Clear();
+    }
   }
 
-  // default to some python object
-  return new_<Prop<Ref<>>>(n, ref(*value));
+  // Default to a property containing an arbitrary python object
+  return new_<Prop<Ref<>>>(n,ref(*value));
 }
 #endif
 
