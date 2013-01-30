@@ -9,6 +9,7 @@ import sys
 __all__ = ['Worker']
 
 QUIT = 'quit'
+QUIT_ACK = 'quit ack'
 NEW_VALUE = 'new value'
 SET_VALUE = 'set value'
 CREATE_VALUE = 'create value'
@@ -67,6 +68,7 @@ class Connection(object):
       if self.debug:
         print '%s: recv %s, %s'%(self.side,tag,data)
       if tag==QUIT:
+        self.conn.send((QUIT_ACK,()))
         sys.exit()
       elif tag==CREATE_VALUE:
         name,factory = data
@@ -90,6 +92,9 @@ def worker_main(conn,debug):
   conn = Connection('worker',conn,debug=debug)
   conn.process(timeout=None)
 
+class QuitAck(BaseException):
+  pass
+
 class Worker(object):
   def __init__(self,debug=False,quit_timeout=1.):
     '''Create a new worker process with two way communication via Value objects.
@@ -109,23 +114,27 @@ class Worker(object):
     return self
 
   def __exit__(self,*args):
-    if self.debug:
-      print 'master: send quit'
-    # First try telling to the process to quit peacefully
-    self.conn.send((QUIT,()))
-    self.inside_with = False
-    # See http://stackoverflow.com/questions/1238349/python-multiprocessing-exit-error for why we need this loop.
-    while 1:
+    def safe_join(timeout):
+      # See http://stackoverflow.com/questions/1238349/python-multiprocessing-exit-error for why we need this try block.
       try:
-        self.worker.join(self.quit_timeout)
-        if not self.worker.is_alive():
-          return
-        # If the peaceful method doesn't work, use force
-        self.worker.terminate()
-        self.quit_timeout = None
+        self.worker.join(timeout)
       except OSError,e:
         if e.errno != errno.EINTR:
           raise
+    if self.debug:
+      print 'master: send quit'
+    # First try telling the process to quit peacefully
+    self.conn.send((QUIT,()))
+    # Wait a little while for a quit acnkowledgement.  This is necessary for clean shutdown.
+    try:
+      self.process(timeout=self.quit_timeout)
+    except QuitAck:
+      pass
+    # Attempt to join with the child process peacefully
+    safe_join(self.quit_timeout)
+    # If the peaceful method doesn't work, use force
+    self.worker.terminate()
+    safe_join(None) 
 
   def add_props(self,props):
     for name in props.order:
@@ -160,6 +169,8 @@ class Worker(object):
         tag,data = self.conn.recv()
         if self.debug:
           print 'master: recv %s, %s'%(tag,data)
+        if tag==QUIT_ACK:
+          raise QuitAck()
         if not self.outputs.process(tag,data):
           raise ValueError("Unknown tag '%s'"%tag)
         count -= 1
