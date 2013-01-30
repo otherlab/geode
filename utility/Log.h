@@ -25,6 +25,7 @@ OTHER_CORE_EXPORT void push_scope(const string& name);
 OTHER_CORE_EXPORT void pop_scope();
 OTHER_CORE_EXPORT void copy_to_file(const string& filename,const bool append);
 
+OTHER_CORE_EXPORT bool initialized();
 OTHER_CORE_EXPORT void configure(const string& root_name, const bool suppress_cout=false, const bool suppress_timing=false,const int verbosity_level=1<<30);
 OTHER_CORE_EXPORT void cache_initial_output();
 OTHER_CORE_EXPORT void finish();

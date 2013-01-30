@@ -191,6 +191,10 @@ ostream& cerr_Helper() {
   return *helper.object;
 }
 
+bool initialized() {
+  return bool(private_instance);
+}
+
 void configure(const string& root_name_input, const bool suppress_cout_input, const bool suppress_timing_input, const int verbosity_level_input) {
   root_name = root_name_input;
   suppress_cout = suppress_cout_input;
