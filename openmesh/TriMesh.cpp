@@ -1421,7 +1421,8 @@ vector<Ref<TriMesh> > TriMesh::nested_components() const{
     real cur_volume = volumes[id];
     if(cur_volume > 0) continue;
     Ray<TV> r(m->triangle(FaceHandle(0)).center(),m->normal(FaceHandle(0))*-1);
-    vector<Ray<TV> > results = tree->intersections(r,thicken);
+    auto ints = tree->intersections(r,thicken);
+    vector<Ray<TV> > results(ints.begin(),ints.end());
     vector<pair<real,int> > ts;
     vector<int> hits(meshes.size(),0); //potentially overkill
     //aggregate hits

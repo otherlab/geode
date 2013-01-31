@@ -32,8 +32,9 @@ public:
 
   OTHER_CORE_EXPORT void update(); // Call whenever X changes
   OTHER_CORE_EXPORT bool intersection(Ray<TV>& ray, T thickness_over_two) const;
-  OTHER_CORE_EXPORT std::vector<Ray<TV> > intersections(Ray<TV>& ray,T thickness_over_two) const;
+  OTHER_CORE_EXPORT Array<Ray<TV> > intersections(Ray<TV>& ray,T thickness_over_two) const;
   OTHER_CORE_EXPORT void intersection(const Sphere<TV>& sphere, Array<int>& hits) const;
+  OTHER_CORE_EXPORT void intersections(const Plane<T>& plane, Array<Segment<TV>>& result) const;
   OTHER_CORE_EXPORT bool inside(TV point) const;
   OTHER_CORE_EXPORT bool inside_given_closest_point(TV point, int simplex, Vector<T,d+1> weights) const;
   OTHER_CORE_EXPORT TV closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance=inf) const; // simplex=-1 if nothing is found
