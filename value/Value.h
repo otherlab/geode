@@ -5,7 +5,7 @@
 
 #include <other/core/value/forward.h>
 #include <other/core/python/Object.h>
-#include <other/core/python/to_python.h>
+#include <other/core/python/try_convert.h>
 #include <other/core/python/ExceptionValue.h>
 #include <other/core/utility/Optional.h>
 #include <other/core/vector/Vector.h>
@@ -151,7 +151,7 @@ public:
 #ifdef OTHER_PYTHON
   PyObject* get_python() const {
     pull();
-    return to_python(*value);
+    return try_to_python(*value);
   }
 #endif
 

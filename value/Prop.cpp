@@ -143,6 +143,19 @@ PropBase& prop_from_python(PyObject* object, const type_info& goal) {
   throw TypeError(format("expected Prop<%s>, got Prop<%s>",goal.name(),self.type().name()));
 }
 
+namespace {
+struct Unusable {
+  bool operator==(Unusable) const { return true; }
+  friend ostream& operator<<(ostream& output, Unusable) { return output; }
+};
+}
+
+// A Prop with a non-python convertible type
+static Ref<PropBase> unusable_prop_test() {
+  BOOST_STATIC_ASSERT(has_to_python_base<int>::value);
+  return new_<Prop<Unusable>>("unusable",Unusable());
+}
+
 #endif
 
 }
@@ -151,5 +164,6 @@ using namespace other;
 void wrap_prop() {
 #ifdef OTHER_PYTHON
   OTHER_FUNCTION_2(Prop,make_prop)
+  OTHER_FUNCTION(unusable_prop_test)
 #endif
 }

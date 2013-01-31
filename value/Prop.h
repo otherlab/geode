@@ -8,8 +8,7 @@
 #include <other/core/math/clamp.h>
 #include <other/core/python/Ref.h>
 #include <other/core/python/Ptr.h>
-#include <other/core/python/from_python.h>
-#include <other/core/python/to_python.h>
+#include <other/core/python/try_convert.h>
 #include <other/core/python/stl.h>
 #include <other/core/structure/forward.h>
 #include <other/core/utility/CopyConst.h>
@@ -230,15 +229,15 @@ public:
 #ifdef OTHER_PYTHON
 
   void set(PyObject* value_) {
-    set(from_python<T>(value_));
+    set(try_from_python<T>(value_));
   }
 
   void set_allowed_python(PyObject* values){
-    set_allowed(from_python<vector<T> >(values));
+    set_allowed(try_from_python<vector<T>>(values));
   }
 
   PyObject* allowed_python() const {
-    return to_python(allowed);
+    return try_to_python(allowed);
   }
 
   void set_min_python(PyObject* m){
@@ -254,7 +253,7 @@ public:
   }
 
   PyObject* default_python() const {
-    return to_python(default_);
+    return try_to_python(default_);
   }
 
 #endif
