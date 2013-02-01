@@ -118,9 +118,10 @@ void ValueBase::pull() const {
 }
 
 // For testing purposes
-ValueRef<int> value_test(ValueRef<int> value) {
+static ValueRef<int> value_test(ValueRef<int> value) {
   return value;
 }
+static void value_ptr_test(Ptr<Value<int>> value) {}
 
 bool ValueBase::is_prop() const {
   return dynamic_cast<const PropBase*>(this)!=0;
@@ -197,5 +198,6 @@ void wrap_value_base() {
     ;
 
   OTHER_FUNCTION(value_test)
+  OTHER_FUNCTION(value_ptr_test)
 #endif
 }

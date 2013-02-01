@@ -67,6 +67,9 @@ def test_convert():
   y = cache(f) 
   yt = value_test(y)
   assert yt()==4
+  value_ptr_test(x)
+  value_ptr_test(y)
+  value_ptr_test(None)
 
 def test_diamond():
   n = Prop('n',2)
