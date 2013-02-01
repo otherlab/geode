@@ -103,10 +103,10 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 
 # External libraries
 externals = {}
-def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],copy=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False):
+def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],copy=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False,callback=None):
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
-         'has':has,'hide':hide}
+         'has':has,'hide':hide,'callback':callback}
 
   Help('\n')
   options(
@@ -123,7 +123,8 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
     (name+'_cxxflags','Compiler flags for '+name,0),
     (name+'_linkflags','Linker flags for '+name,0),
     (name+'_requires','Required libraries for '+name,0),
-    (name+'_pkgconfig','pkg-config names for '+name,0))
+    (name+'_pkgconfig','pkg-config names for '+name,0),
+    (name+'_callback','Arbitrary environment modification callback for '+name,0))
 
   # Is this external library available?
   if env['has_'+name]:
@@ -156,6 +157,7 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],l
   if env[name+'_cxxflags']!=0: lib['cxxflags'] = env[name+'_cxxflags']
   if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
   if env[name+'_copy']!=0: lib['copy'] = env[name+'_copy']
+  if env[name+'_callback']!=0: lib['callback'] = env[name+'_callback']
 
 # Predefined external libraries
 external('python',default=1,frameworks=['Python'],flags=['OTHER_PYTHON'])
@@ -445,7 +447,10 @@ def link_flags(env):
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
         env_link.PrependUnique(CPPDEFINES=lib['flags'])
-      if lib.has_key('rpath'): env_link.PrependUnique(RPATH=lib['rpath'])
+      if lib.has_key('rpath'):
+        env_link.PrependUnique(RPATH=lib['rpath'])
+      if lib['callback'] is not None:
+        lib['callback'](env_link)
   return env_link
 
 # Copy necessary files into bin (necessary for dlls on windows)
@@ -464,7 +469,6 @@ def copy_files(env):
 
 # Convert sources into objects
 def objects(env,sources):
-  builder = env.SharedObject if env['shared_objects'] or env['shared'] else env.StaticObject
   def Helper(env,source,libraries):
     if type(source)!=str: return source # assume it's already an object
     cppdefines_reversed = env['CPPDEFINES'][::-1]
@@ -483,10 +487,15 @@ def objects(env,sources):
       (cpppath_hidden_reversed if lib['hide'] else cpppath_reversed).extend(lib['cpppath'][::-1])
       frameworkpath.extend(lib['frameworkpath'])
       frameworks.extend(lib['frameworks'])
-      cxxflags+=lib['cxxflags']
-    return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1], FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
+      cxxflags += lib['cxxflags']
+    return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1],FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
   add_dependencies(env)
   libraries = [externals[name] for name in externals.keys() if env['use_'+name]]
+  for lib in libraries:
+    if lib['callback'] is not None:
+      env = env.Clone()
+      lib['callback'](env)
+  builder = env.SharedObject if env['shared_objects'] or env['shared'] else env.StaticObject
   if type(sources)==list: return [Helper(env,source,libraries) for source in sources]
   else: return Helper(env,sources,libraries)
 
