@@ -5,6 +5,7 @@
 #include <other/core/utility/tr1.h>
 #include <vector>
 #include <deque>
+#include <queue>
 #include <set>
 #include <list>
 #include <map>
@@ -168,6 +169,11 @@ inline std::ostream &operator<<(std::ostream &os, std::vector<T> const &v) {
 template<class T>
 inline std::ostream &operator<<(std::ostream &os, std::set<T> const &v) {
   return print(os, v.begin(), v.end(), '{', '}');
+}
+
+template<class T>
+inline std::ostream &operator<<(std::ostream &os, std::priority_queue<T> const &v) {
+  return print(os, v.begin(), v.end(), '[', ']');
 }
 
 template<class T>
