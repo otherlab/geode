@@ -18,7 +18,7 @@ template<class T> static T convert_helper(const ValueRef<Ptr<>>& value) {
 template<class T> struct FromPython<Ref<const Value<T>>>{static Ref<const Value<T>> convert(PyObject* object) {
   const ValueBase& base = from_python<ValueBase&>(object);
   if (const Value<T>* exact = base.cast<T>())
-    return ref(*exact);
+    return other::ref(*exact); // Avoid boost::ref
   if (const Value<Ptr<>>* python = base.cast<Ptr<>>())
     return cache(convert_helper<T>,ValueRef<Ptr<>>(*python)).self;
   throw TypeError(format("can't convert '%s' to '%s'",typeid(base).name(),typeid(Value<T>).name()));
