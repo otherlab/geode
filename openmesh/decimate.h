@@ -13,10 +13,10 @@ namespace other {
 // edges on the boundary if a point would move more than the max quadric error.
 // Returns the number of vertices collapsed.
 OTHER_CORE_EXPORT int decimate(TriMesh &mesh,
-                               int max_collapses = std::numeric_limits<int>::max(),
-                               double maxangleerror = 90.,
-                               double maxquadricerror = std::numeric_limits<double>::infinity(),
-                               double min_face_quality = 1e-5);
+                               int max_collapses,
+                               double maxangleerror,
+                               double maxquadricerror,
+                               double min_face_quality);
 
 }
 #endif // USE_OPENMESH
