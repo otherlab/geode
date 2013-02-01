@@ -380,6 +380,10 @@ public:
     const T* end() const // for stl
     {return &y+1;}
 
+    T& front() { return x; }
+    const T& front() const { return x; }
+    T& back() { return y; }
+    const T& back() const { return y; }
 //#####################################################################
 };
 

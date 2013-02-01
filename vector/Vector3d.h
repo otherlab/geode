@@ -388,6 +388,11 @@ public:
     const T* end() const // for stl
     {return &z+1;}
 
+    T& front() { return x; }
+    const T& front() const { return x; }
+    T& back() { return z; }
+    const T& back() const { return z; }
+
 //#####################################################################
 };
 
