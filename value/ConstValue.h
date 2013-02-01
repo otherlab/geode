@@ -4,6 +4,7 @@
 #pragma once
 
 #include <other/core/value/Value.h>
+#include <stdio.h>
 namespace other{
 
 template<class T> class ConstValue:public Value<T>

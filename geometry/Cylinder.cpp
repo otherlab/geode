@@ -106,6 +106,8 @@ ostream& operator<<(ostream& output, const Cylinder& cylinder) {
   return output<<cylinder.repr();
 }
 
+#ifdef OTHER_PYTHON
+
 PyObject* to_python(const Cylinder& cylinder) {
   return to_python(new_<AnalyticImplicit<Cylinder>>(cylinder));
 }
@@ -113,5 +115,7 @@ PyObject* to_python(const Cylinder& cylinder) {
 Cylinder FromPython<Cylinder>::convert(PyObject* object) {
   return from_python<AnalyticImplicit<Cylinder>&>(object);
 }
+
+#endif
 
 }

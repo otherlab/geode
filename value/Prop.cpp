@@ -11,6 +11,7 @@
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/Rotation.h>
 #include <iostream>
+#include <stdio.h>
 namespace other{
 
 using std::cout;

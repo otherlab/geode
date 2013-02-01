@@ -11,7 +11,6 @@ extern "C"{
 #ifdef _WIN32
 #undef HAVE_STDDEF_H
 #endif
-#include <stdio.h>
 #include <jpeglib.h>
 }
 #undef HAVE_PROTOTYPES
@@ -26,6 +25,7 @@ extern "C"{
 #include <cassert>
 #include <vector>
 #include <stdlib.h>
+#include <stdio.h>
 namespace other{
 
 OTHER_DEFINE_TYPE(MovWriter)

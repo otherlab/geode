@@ -3,41 +3,43 @@
 //#####################################################################
 #pragma once
 
-#ifdef OTHER_PYTHON
-
 #include <other/core/python/config.h>
 #include <other/core/utility/config.h>
 
+#ifdef OTHER_PYTHON
 #define PY_ARRAY_UNIQUE_SYMBOL _try_python_array_api
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-
 #ifndef OTHER_IMPORT_NUMPY
 #define NO_IMPORT_ARRAY
 #endif
-
 #include <numpy/arrayobject.h>
+#endif
+
 #include <other/core/array/Array.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/python/exceptions.h>
 #include <other/core/utility/const_cast.h>
-
 namespace other {
 
 typedef Py_intptr_t npy_intp;
 
+#ifdef OTHER_PYTHON
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_dimension_mismatch());
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_not_owned());
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr));
 OTHER_CORE_EXPORT void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray_Descr* descr);
+#endif
 OTHER_CORE_EXPORT size_t fill_numpy_header(Array<uint8_t>& header, int rank, const npy_intp* dimensions, int type_num); // Returns total data size in bytes
 OTHER_CORE_EXPORT void write_numpy(const string& filename, int rank, const npy_intp* dimensions, int type_num, void* data);
 
 // Export wrappers around numpy api functions so that other libraries don't need the PY_ARRAY_UNIQUE_SYMBOL, which can't be portably exported.
+#ifdef OTHER_PYTHON
 OTHER_CORE_EXPORT bool is_numpy_array(PyObject* o);
 OTHER_CORE_EXPORT PyArray_Descr* numpy_descr_from_type(int type_num);
 OTHER_CORE_EXPORT PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context);
 OTHER_CORE_EXPORT PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj);
 OTHER_CORE_EXPORT PyTypeObject* numpy_array_type();
+#endif
 
 // Stay compatible with old versions of numpy
 #ifndef NPY_ARRAY_WRITEABLE
@@ -92,6 +94,22 @@ template<class T,int m,int n> struct NumpyIsStatic<Matrix<T,m,n> >:public mpl::b
 template<class T> struct NumpyScalar; // map from primitive types to numpy type ids
 template<class T> struct NumpyScalar<const T>:public NumpyScalar<T>{};
 
+#ifndef OTHER_PYTHON
+// Lifted from numpy/ndarraytypes.h
+enum NPY_TYPES { NPY_BOOL=0,
+                 NPY_BYTE, NPY_UBYTE,
+                 NPY_SHORT, NPY_USHORT,
+                 NPY_INT, NPY_UINT,
+                 NPY_LONG, NPY_ULONG,
+                 NPY_LONGLONG, NPY_ULONGLONG,
+                 NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+                 NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
+                 NPY_OBJECT=17,
+                 NPY_STRING, NPY_UNICODE,
+                 NPY_VOID
+};
+#endif
+
 template<> struct NumpyScalar<bool>{enum {value=NPY_BOOL};};
 template<> struct NumpyScalar<char>{enum {value=NPY_BYTE};};
 template<> struct NumpyScalar<unsigned char>{enum {value=NPY_UBYTE};};
@@ -114,6 +132,7 @@ template<class T,int d> struct NumpyScalar<RawArray<T,d> >:public NumpyScalar<T>
 template<class T> struct NumpyScalar<NdArray<T> >:public NumpyScalar<T>{};
 
 // NumpyDescr
+#ifdef OTHER_PYTHON
 template<class T> struct NumpyDescr{static PyArray_Descr* descr(){return numpy_descr_from_type(NumpyScalar<T>::value);}};
 template<class T> struct NumpyDescr<const T>:public NumpyDescr<T>{};
 template<class T,int d> struct NumpyDescr<Vector<T,d> >:public NumpyDescr<T>{};
@@ -121,14 +140,17 @@ template<class T,int m,int n> struct NumpyDescr<Matrix<T,m,n> >:public NumpyDesc
 template<class T,int d> struct NumpyDescr<Array<T,d> >:public NumpyDescr<T>{};
 template<class T,int d> struct NumpyDescr<RawArray<T,d> >:public NumpyDescr<T>{};
 template<class T> struct NumpyDescr<NdArray<T> >:public NumpyDescr<T>{};
+#endif
 
 // NumpyArrayType
+#ifdef OTHER_PYTHON
 template<class T> struct NumpyArrayType{static PyTypeObject* type(){return numpy_array_type();}};
 template<class T> struct NumpyArrayType<const T>:public NumpyArrayType<T>{};
 template<class T,int d> struct NumpyArrayType<Vector<T,d> >:public NumpyArrayType<T>{};
 template<class T,int d> struct NumpyArrayType<Array<T,d> >:public NumpyArrayType<T>{};
 template<class T,int d> struct NumpyArrayType<RawArray<T,d> >:public NumpyArrayType<T>{};
 template<class T> struct NumpyArrayType<NdArray<T> >:public NumpyArrayType<T>{};
+#endif
 
 // Struct NumpyMinRank/NumpyMaxRank: Extract rank of an array type
 template<class T,class Enable=void> struct NumpyRank;
@@ -234,6 +256,8 @@ template<class T> bool
 numpy_shape_match(mpl::identity<NdArray<T> >, int rank, const npy_intp* dimensions) {
   return numpy_shape_match(mpl::identity<T>(),NumpyRank<T>::value,dimensions+rank-NumpyRank<T>::value);
 }
+
+#ifdef OTHER_PYTHON
 
 // to_numpy for static types
 template<class TV> typename boost::enable_if<NumpyIsStatic<TV>,PyObject*>::type
@@ -359,6 +383,8 @@ from_numpy(PyObject* object) { // borrows reference to object
   return result;
 }
 
+#endif
+
 // Write a numpy-convertible array to an .npy file
 // Note: Unlike other functions in this file, it is safe to call write_numpy without initializing either Python or Numpy.
 template<class TArray> void
@@ -387,4 +413,3 @@ fill_numpy_header(Array<uint8_t>& header,const TArray& array) {
 
 }
 }
-#endif
