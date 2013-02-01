@@ -169,7 +169,7 @@ convert(PyObject* object) {
   if (object==Py_None)
     return Ptr<T>();
   else
-    return ref(FromPython<T&>::convert(object));
+    return FromPython<Ref<T>>::convert(object);
 }};
 
 // Conversion from python to Ptr<PyObject>

@@ -19,6 +19,12 @@
 
 #ifdef OTHER_PYTHON
 
+namespace other {
+// Fix has_to/from_python for stl containers
+template<class T> struct has_to_python<std::vector<T>> : public has_to_python<T> {};
+template<class T> struct has_from_python<std::vector<T>> : public has_from_python<T> {};
+}
+
 // to_python needs to go in the std namespace to make Koenig lookup work
 namespace std {
 

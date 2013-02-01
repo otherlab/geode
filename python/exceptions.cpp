@@ -48,8 +48,8 @@ void throw_type_error(PyObject* object, PyTypeObject* type) {
   throw PythonError();
 }
 
-void unregistered_python_type(PyObject* object, PyTypeObject* type) {
-  PyErr_Format(PyExc_TypeError,"can't convert %s to unregistered type deriving from %s",object->ob_type->tp_name,type->tp_name);
+void unregistered_python_type(PyObject* object, PyTypeObject* type, const type_info& ctype) {
+  PyErr_Format(PyExc_TypeError,"can't convert %s to unregistered type %s deriving from %s",object->ob_type->tp_name,ctype.name(),type->tp_name);
   throw PythonError();
 }
 

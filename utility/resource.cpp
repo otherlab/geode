@@ -12,6 +12,7 @@
 #elif defined(__linux__)
 #include <unistd.h>
 #endif
+#include <errno.h>
 namespace other {
 
 // Grab a path to the current executable

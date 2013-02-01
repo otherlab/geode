@@ -130,7 +130,7 @@ public:
     TV closest_point_on_line(const TV& point) const;
     T distance_from_point_to_line(const TV& point) const;
     TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;
-    bool segment_segment_intersection(const Segment<TV>& segment,const T thickness_over_2=0) const;
+    OTHER_CORE_EXPORT bool segment_segment_intersection(const Segment<TV>& segment,const T thickness_over_2=0) const;
     int segment_segment_interaction(const Segment<TV>& segment,const TV& v1,const TV& v2,const TV& v3,const TV& v4,
         const T interaction_distance,T& distance,TV& normal,T& a,T& b,T& relative_speed,const T small_number=0) const;
     bool intersection(Ray<Vector<T,2> >& ray,const T thickness_over_two) const;

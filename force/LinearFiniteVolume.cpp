@@ -24,7 +24,7 @@ template<class T> inline Vector<T,3> normal(const Matrix<T,3,2>& A) {
 }
 template<class TV,int d> LinearFiniteVolume<TV,d>::
 LinearFiniteVolume(Array<const Vector<int,d+1> > elements,Array<const TV> X_,const T density,const T youngs_modulus,const T poissons_ratio,const T rayleigh_coefficient)
-    :elements(elements),youngs_modulus(youngs_modulus),poissons_ratio(poissons_ratio),rayleigh_coefficient(rayleigh_coefficient),nodes(elements.size()?1+scalar_view(elements).max():0),density(density)
+    :elements(elements),youngs_modulus(youngs_modulus),poissons_ratio(poissons_ratio),rayleigh_coefficient(rayleigh_coefficient),nodes_(elements.size()?1+scalar_view(elements).max():0),density(density)
 {
   update_position(X_,false);
   const_cast_(Dm_inverse) = Array<Matrix<T,d,m> >(elements.size(),false);
@@ -44,9 +44,13 @@ template<class TV,int d> LinearFiniteVolume<TV,d>::
 ~LinearFiniteVolume()
 {}
 
+template<class TV,int d> int LinearFiniteVolume<TV,d>::nodes() const {
+  return nodes_;
+}
+
 template<class TV,int d> void LinearFiniteVolume<TV,d>::
 update_position(Array<const TV> X_,bool definite) {
-  OTHER_ASSERT(X_.size()>=nodes);
+  OTHER_ASSERT(X_.size()>=nodes_);
   X = X_;
   mu_lambda();
 }
@@ -61,7 +65,7 @@ mu_lambda() const {
 
 template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::
 elastic_energy() const {
-  OTHER_ASSERT(X.size()>=nodes);
+  OTHER_ASSERT(X.size()>=nodes_);
   T energy = 0;
   T mu,lambda;mu_lambda().get(mu,lambda);
   T half_lambda = (T).5*lambda;
@@ -74,7 +78,7 @@ elastic_energy() const {
 
 template<class TV,int d> void LinearFiniteVolume<TV,d>::
 add_elastic_force(RawArray<TV> F) const {
-  OTHER_ASSERT(X.size()>=nodes && F.size()==X.size());
+  OTHER_ASSERT(X.size()>=nodes_ && F.size()==X.size());
   T mu,lambda;mu_lambda().get(mu,lambda);
   T two_mu = 2*mu;
   T two_mu_plus_m_lambda = 2*mu+m*lambda;
@@ -87,7 +91,7 @@ add_elastic_force(RawArray<TV> F) const {
 
 template<class TV,int d> void LinearFiniteVolume<TV,d>::
 add_differential_helper(RawArray<TV> dF,RawArray<const TV> dX,T scale) const {
-  OTHER_ASSERT(X.size()>=nodes && dF.size()==X.size() && dX.size()==X.size());
+  OTHER_ASSERT(X.size()>=nodes_ && dF.size()==X.size() && dX.size()==X.size());
   T mu,lambda;(scale*mu_lambda()).get(mu,lambda);
   T two_mu = 2*mu;
   for(int t=0;t<elements.size();t++){
@@ -108,7 +112,7 @@ add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,m> > dFdX) const 
 
 template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::
 damping_energy(RawArray<const TV> V) const {
-  OTHER_ASSERT(X.size()>=nodes);
+  OTHER_ASSERT(X.size()>=nodes_);
   T energy = 0;
   T beta,alpha;(rayleigh_coefficient*mu_lambda()).get(beta,alpha);
   T half_alpha = (T).5*alpha;
@@ -147,7 +151,7 @@ add_frequency_squared(RawArray<T> frequency_squared) const {
 
 template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::
 strain_rate(RawArray<const TV> V) const {
-  OTHER_ASSERT(V.size()>=nodes);
+  OTHER_ASSERT(V.size()>=nodes_);
   T strain_rate=0;
   for(int t=0;t<elements.size();t++)
     strain_rate=max(strain_rate,(Ds(V,t)*Dm_inverse[t]).maxabs());

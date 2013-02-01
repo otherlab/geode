@@ -127,6 +127,10 @@ strain_rate(RawArray<const TV> V) const {
   return strain_rate;
 }
 
+int LinearFiniteVolumeHex::nodes() const {
+  return strain->nodes;
+}
+
 void LinearFiniteVolumeHex::
 structure(SolidMatrixStructure& structure) const {
   OTHER_NOT_IMPLEMENTED();

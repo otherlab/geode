@@ -21,7 +21,7 @@ public:
   T youngs_modulus;
   T poissons_ratio;
   T rayleigh_coefficient;
-  const int nodes;
+  const int nodes_;
   const T density;
   const Array<const Matrix<T,d,m> > Dm_inverse;
 private:
@@ -50,6 +50,7 @@ public:
   void add_frequency_squared(RawArray<T> frequency_squared) const;
   T strain_rate(RawArray<const TV> V) const;
 
+  int nodes() const;
   void structure(SolidMatrixStructure& structure) const;
   void add_elastic_gradient(SolidMatrix<TV>& matrix) const;
   void add_damping_gradient(SolidMatrix<TV>& matrix) const;

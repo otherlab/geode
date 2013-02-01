@@ -10,6 +10,7 @@ else:
   import other_core
 
 configure = other_core.log_configure
+initialized = other_core.log_initialized
 cache_initial_output = other_core.log_cache_initial_output
 copy_to_file = other_core.log_copy_to_file
 finish = other_core.log_finish

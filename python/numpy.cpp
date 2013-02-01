@@ -1,12 +1,16 @@
 //#####################################################################
 // Numpy interface functions
 //#####################################################################
-#ifdef OTHER_PYTHON
 #include <other/core/python/numpy.h>
-#include <numpy/npy_common.h>
 #include <boost/detail/endian.hpp>
 #include <boost/cstdint.hpp>
+#include <stdio.h>
+#ifdef OTHER_PYTHON
+#include <numpy/npy_common.h>
+#endif
 namespace other {
+
+#ifdef OTHER_PYTHON
 
 #ifndef NPY_ARRAY_ALIGNED
 #define NPY_ARRAY_ALIGNED NPY_ALIGNED
@@ -31,6 +35,8 @@ PyArray_Descr* numpy_descr_from_type(int type_num) {
 }
 
 PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context) {
+  if (op==Py_None) // PyArray_FromAny silently converts None to a singleton nan, which is not cool
+    throw TypeError("expected numpy array, got None");
   return PyArray_FromAny(op,dtype,min_depth,max_depth,requirements,context);
 }
 
@@ -69,6 +75,30 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
   if (!PyArray_CHKFLAGS((PyArrayObject*)object,flags) || min_rank>rank || rank>max_rank || !PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object),descr))
     throw_array_conversion_error(object,flags,rank_range,descr);
 }
+
+#else // !defined(OTHER_PYTHON)
+
+// Modified from numpy/npy_common.h
+typedef unsigned char npy_bool;
+#define NPY_BITSOF_BOOL (sizeof(npy_bool)*CHAR_BIT)
+#define NPY_BITSOF_CHAR (sizeof(char)*CHAR_BIT)
+#define NPY_BITSOF_SHORT (sizeof(short)*CHAR_BIT)
+#define NPY_BITSOF_INT (sizeof(int)*CHAR_BIT)
+#define NPY_BITSOF_LONG (sizeof(long)*CHAR_BIT)
+#define NPY_BITSOF_LONGLONG (sizeof(long long)*CHAR_BIT)
+#define NPY_BITSOF_FLOAT (sizeof(float)*CHAR_BIT)
+#define NPY_BITSOF_DOUBLE (sizeof(double)*CHAR_BIT)
+#define NPY_BITSOF_LONGDOUBLE (sizeof(long double)*CHAR_BIT)
+
+// Lifted from numpy/ndarraytypes.h
+enum NPY_TYPECHAR { NPY_GENBOOLLTR ='b',
+                    NPY_SIGNEDLTR = 'i',
+                    NPY_UNSIGNEDLTR = 'u',
+                    NPY_FLOATINGLTR = 'f',
+                    NPY_COMPLEXLTR = 'c'
+};
+
+#endif
 
 size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num) {
   // Get dtype info
@@ -156,4 +186,3 @@ void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int 
 }
 
 }
-#endif

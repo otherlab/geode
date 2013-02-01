@@ -64,7 +64,7 @@ template<> struct FromPython<char>{OTHER_CORE_EXPORT static char convert(PyObjec
 template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T> >::type>{static T&
 convert(PyObject* object) {
   if (!boost::is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
-    unregistered_python_type(object,&T::pytype);
+    unregistered_python_type(object,&T::pytype,typeid(T));
   if (!PyObject_IsInstance(object,(PyObject*)&T::pytype))
     throw_type_error(object,&T::pytype);
   return *(T*)(object+1);
@@ -86,5 +86,11 @@ template<class T> struct FromPython<const T> : public FromPython<T>{};
 template<class T> struct FromPython<shared_ptr<T> >{static shared_ptr<T> convert(PyObject* object) {
   OTHER_NOT_IMPLEMENTED();
 }};
+
+#ifdef OTHER_PYTHON
+template<class T,class enable=void> struct has_from_python_base : public mpl::false_ {};
+template<class T> struct has_from_python_base<T,typename First<void,decltype(from_python<T>(0))>::type> : public mpl::true_ {};
+template<class T> struct has_from_python : public has_from_python_base<T> {};
+#endif
 
 }

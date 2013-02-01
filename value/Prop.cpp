@@ -11,6 +11,7 @@
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/Rotation.h>
 #include <iostream>
+#include <stdio.h>
 namespace other{
 
 using std::cout;
@@ -59,17 +60,22 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       if (frames_check<TV3>(value))
         return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
     }
-    NdArray<const real> a = from_python<NdArray<const real>>(value);
-    if (a.shape.size()==1 && a.shape[0]==2)
-      return new_<Prop<TV2>>(n,vec(a[0],a[1]));
-    if (a.shape.size()==1 && a.shape[0]==3)
-      return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
-    if (a.shape.size()==1 && a.shape[0]==4)
-      return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+    try {
+      NdArray<const real> a = from_python<NdArray<const real>>(value);
+      if (a.shape.size()==1 && a.shape[0]==2)
+        return new_<Prop<TV2>>(n,vec(a[0],a[1]));
+      if (a.shape.size()==1 && a.shape[0]==3)
+        return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
+      if (a.shape.size()==1 && a.shape[0]==4)
+        return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+    } catch (const exception&) {
+      // If the NdArray conversion fails, squelch the error and fall back to our default
+      PyErr_Clear();
+    }
   }
 
-  // default to some python object
-  return new_<Prop<Ref<>>>(n, ref(*value));
+  // Default to a property containing an arbitrary python object
+  return new_<Prop<Ref<>>>(n,ref(*value));
 }
 #endif
 
@@ -138,6 +144,19 @@ PropBase& prop_from_python(PyObject* object, const type_info& goal) {
   throw TypeError(format("expected Prop<%s>, got Prop<%s>",goal.name(),self.type().name()));
 }
 
+namespace {
+struct Unusable {
+  bool operator==(Unusable) const { return true; }
+  friend ostream& operator<<(ostream& output, Unusable) { return output; }
+};
+}
+
+// A Prop with a non-python convertible type
+static Ref<PropBase> unusable_prop_test() {
+  BOOST_STATIC_ASSERT(has_to_python_base<int>::value);
+  return new_<Prop<Unusable>>("unusable",Unusable());
+}
+
 #endif
 
 }
@@ -146,5 +165,6 @@ using namespace other;
 void wrap_prop() {
 #ifdef OTHER_PYTHON
   OTHER_FUNCTION_2(Prop,make_prop)
+  OTHER_FUNCTION(unusable_prop_test)
 #endif
 }

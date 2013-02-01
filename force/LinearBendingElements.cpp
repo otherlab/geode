@@ -83,6 +83,10 @@ LinearBendingElements(const Mesh& mesh,Array<const TV> X)
 template<class TV> LinearBendingElements<TV>::
 ~LinearBendingElements() {}
 
+template<class TV> int LinearBendingElements<TV>::nodes() const {
+  return mesh->nodes();
+}
+
 template<class TV> void LinearBendingElements<TV>::
 update_position(Array<const TV> X_,bool definite) {
   // Not much to do since our stiffness matrix is constant

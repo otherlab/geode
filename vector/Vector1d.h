@@ -312,6 +312,10 @@ public:
     const T* end() const // for stl
     {return &x+1;}
 
+    T& front() { return x; }
+    const T& front() const { return x; }
+    T& back() { return x; }
+    const T& back() const { return x; }
 //#####################################################################
 };
 

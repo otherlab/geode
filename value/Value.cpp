@@ -40,6 +40,12 @@ ValueBase::~ValueBase() {
   }
 }
 
+bool ValueBase::is_type(const type_info& type) const {
+  const type_info& self = this->type();
+  // Use string comparison to avoid symbol visibility issues
+  return type==self || !strcmp(type.name(),self.name());
+}
+
 inline void ValueBase::signal_pending() {
   while (pending) {
     Link* next = pending->value_next;
@@ -95,7 +101,7 @@ void ValueBase::pull() const {
 
   // If a node is currently being evaluated, it now depends on us
   if (Action::current)
-    const_cast_(Action::current)->depend_on(*this);
+    Action::current->depend_on(*this);
 
   // Update if necessary
   if (dirty_) {
@@ -112,9 +118,10 @@ void ValueBase::pull() const {
 }
 
 // For testing purposes
-ValueRef<int> value_test(ValueRef<int> value) {
+static ValueRef<int> value_test(ValueRef<int> value) {
   return value;
 }
+static void value_ptr_test(Ptr<Value<int>> value) {}
 
 bool ValueBase::is_prop() const {
   return dynamic_cast<const PropBase*>(this)!=0;
@@ -191,5 +198,6 @@ void wrap_value_base() {
     ;
 
   OTHER_FUNCTION(value_test)
+  OTHER_FUNCTION(value_ptr_test)
 #endif
 }

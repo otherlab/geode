@@ -52,4 +52,7 @@ struct null {
 #define OTHER_REMOVE_PARENS_HELPER(...) __VA_ARGS__
 #define OTHER_REMOVE_PARENS(arg) OTHER_REMOVE_PARENS_HELPER arg
 
+// Print a type at compile time
+#define OTHER_PRINT_TYPE(...) typedef typename other::Types<__VA_ARGS__>::_print _print;
+
 }

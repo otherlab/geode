@@ -55,6 +55,29 @@ template<class TV,int d> void SimplexTree<TV,d>::update() {
   update_nonleaf_boxes();
 }
 
+static void intersection_helper(const SimplexTree<Vector<T,3>,2>& self, const Plane<T>& p, int node, Array<Segment<Vector<T,3>>>& results) {
+  if (p.intersection<Zero>(self.boxes[node])) {
+    if (!self.is_leaf(node)) {
+      intersection_helper(self,p,2*node+1,results);
+      intersection_helper(self,p,2*node+2,results);
+    } else
+      for (int t : self.prims(node)){
+        Segment<Vector<T,3>> seg;
+        if(self.simplices[t].intersection(p,seg))
+          results.append(seg);
+      }
+  }
+}
+
+template<class TV,int d> void SimplexTree<TV,d>::intersections(const Plane<T>& plane, Array<Segment<TV>>& result) const {
+  OTHER_NOT_IMPLEMENTED();
+}
+
+template<> void SimplexTree<Vector<T,3>,2>::intersections(const Plane<T>& plane, Array<Segment<Vector<T,3>>>& result) const {
+  result.clear();
+  intersection_helper(*this,plane,0,result);
+}
+
 template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, T thickness_over_two, int node) {
   if (self.boxes[node].lazy_intersects(ray,thickness_over_two)) {
     if (!self.is_leaf(node)) {
@@ -100,7 +123,7 @@ template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>
   }
 }
 
-template<class TV,int d> static void multi_intersection_helper(const SimplexTree<TV,d>& self,Ray<TV>& ray,T thickness_over_two,int node, std::vector<Ray<TV> >& results) {
+template<class TV,int d> static void multi_intersection_helper(const SimplexTree<TV,d>& self,Ray<TV>& ray,T thickness_over_two,int node, Array<Ray<TV> >& results) {
   if(self.boxes[node].lazy_intersects(ray,thickness_over_two)){
     if(!self.is_leaf(node)){
       multi_intersection_helper(self,ray,thickness_over_two,2*node+1,results);
@@ -110,20 +133,20 @@ template<class TV,int d> static void multi_intersection_helper(const SimplexTree
         Ray<TV> copy = ray;
         if(self.simplices[t].intersection(copy,thickness_over_two)){
           copy.aggregate_id=t;
-          results.push_back(copy);
+          results.append(copy);
         }
       }
     }
   }
 }
 
-template<> void multi_intersection_helper(const SimplexTree<Vector<T,2>,2>& self, Ray<Vector<T,2>>& ray, T thickness_over_two, int node, std::vector<Ray<Vector<T,2> > >& results) { OTHER_NOT_IMPLEMENTED(); }
-template<> void multi_intersection_helper(const SimplexTree<Vector<T,3>,1>& self, Ray<Vector<T,3>>& ray, T thickness_over_two, int node, std::vector<Ray<Vector<T,3> > >& results) { OTHER_NOT_IMPLEMENTED(); }
+template<> void multi_intersection_helper(const SimplexTree<Vector<T,2>,2>& self, Ray<Vector<T,2>>& ray, T thickness_over_two, int node, Array<Ray<Vector<T,2> > >& results) { OTHER_NOT_IMPLEMENTED(); }
+template<> void multi_intersection_helper(const SimplexTree<Vector<T,3>,1>& self, Ray<Vector<T,3>>& ray, T thickness_over_two, int node, Array<Ray<Vector<T,3> > >& results) { OTHER_NOT_IMPLEMENTED(); }
 
 
-template<class TV,int d> std::vector<Ray<TV> > SimplexTree<TV,d>::
+template<class TV,int d> Array<Ray<TV> > SimplexTree<TV,d>::
 intersections(Ray<TV>& ray,T thickness_over_two) const {
-  std::vector<Ray<TV> > results;
+  Array<Ray<TV> > results;
   multi_intersection_helper(*this,ray,thickness_over_two,0,results);
   return results;
 }

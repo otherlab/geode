@@ -358,6 +358,11 @@ public:
     const T* end() const // for stl
     {return &w+1;}
 
+    T& front() { return x; }
+    const T& front() const { return x; }
+    T& back() { return w; }
+    const T& back() const { return w; }
+
 //#####################################################################
 };
 

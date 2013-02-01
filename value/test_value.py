@@ -15,6 +15,19 @@ def test_prop():
     p.set(v)
     assert p()==v
     assert not p.dirty()
+  
+def test_unusable():
+  unusable = unusable_prop_test()
+  try:
+    unusable()
+    assert False
+  except TypeError:
+    pass
+  try:
+    unusable.set(None)
+    assert False
+  except TypeError:
+    pass
 
 def test_compute():
   x = Prop('x',4)
@@ -54,6 +67,9 @@ def test_convert():
   y = cache(f) 
   yt = value_test(y)
   assert yt()==4
+  value_ptr_test(x)
+  value_ptr_test(y)
+  value_ptr_test(None)
 
 def test_diamond():
   n = Prop('n',2)

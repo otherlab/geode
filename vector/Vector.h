@@ -389,6 +389,11 @@ public:
     const T* end() const // for stl
     {return array+d;}
 
+    T& front() { return array[0]; }
+    const T& front() const { return array[0]; }
+    T& back() { return array[d-1]; }
+    const T& back() const { return array[d-1]; }
+
 //#####################################################################
 };
 

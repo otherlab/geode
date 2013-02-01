@@ -23,6 +23,7 @@
 namespace other {
 
 using std::string;
+using std::type_info;
 
 OTHER_CORE_EXPORT void set_python_exception(const std::exception& error);
 OTHER_CORE_EXPORT void register_python_exception(const std::type_info& type,PyObject* pytype);
@@ -30,9 +31,9 @@ OTHER_CORE_EXPORT void register_python_exception(const std::type_info& type,PyOb
 // Exception throwing functions to reduce code bloat
 #ifdef OTHER_PYTHON
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_python_error()); // python error must already be set
-OTHER_CORE_EXPORT void OTHER_NORETURN(throw_type_error(PyObject* object,PyTypeObject* type));
-OTHER_CORE_EXPORT void OTHER_NORETURN(unregistered_python_type(PyObject* object,PyTypeObject* type));
-OTHER_CORE_EXPORT void OTHER_NORETURN(throw_arity_mismatch(const int expected,const ssize_t got));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_type_error(PyObject* object, PyTypeObject* type));
+OTHER_CORE_EXPORT void OTHER_NORETURN(unregistered_python_type(PyObject* object, PyTypeObject* type, const type_info& ctype));
+OTHER_CORE_EXPORT void OTHER_NORETURN(throw_arity_mismatch(const int expected, const ssize_t got));
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_no_keyword_args(PyObject* kwargs));
 #else
 OTHER_CORE_EXPORT void OTHER_NORETURN(throw_no_python());

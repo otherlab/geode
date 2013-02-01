@@ -18,8 +18,9 @@ public:
     OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef Object Base;
 
-    Array<const Vector<int,d+1> > elements;
-    Array<UpperTriangularMatrix<T,d> > Dm_inverse;
+    const int nodes;
+    const Array<const Vector<int,d+1> > elements;
+    const Array<UpperTriangularMatrix<T,d> > Dm_inverse;
 
 protected:
     StrainMeasure(Array<const Vector<int,d+1> > elements,RawArray<const TV> X);

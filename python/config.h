@@ -10,6 +10,7 @@
 #include <Python.h>
 #endif
 #else
+#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef _WIN32 
@@ -130,6 +131,8 @@ struct PyTypeObject {
 struct PyObject {
   OTHER_PY_OBJECT_HEAD
 };
+
+typedef intptr_t Py_intptr_t;
 
 }
 #endif
