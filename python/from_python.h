@@ -20,6 +20,7 @@
 #include <other/core/python/exceptions.h>
 #include <other/core/python/Object.h>
 #include <other/core/utility/config.h>
+#include <other/core/utility/validity.h>
 #include <boost/type_traits/is_base_of.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <string>
@@ -88,9 +89,8 @@ template<class T> struct FromPython<shared_ptr<T> >{static shared_ptr<T> convert
 }};
 
 #ifdef OTHER_PYTHON
-template<class T,class enable=void> struct has_from_python_base : public mpl::false_ {};
-template<class T> struct has_from_python_base<T,typename First<void,decltype(from_python<T>(0))>::type> : public mpl::true_ {};
-template<class T> struct has_from_python : public has_from_python_base<T> {};
+// Declare has_from_python<T>
+OTHER_VALIDITY_CHECKER(has_from_python,T,from_python<T>(0))
 #endif
 
 }

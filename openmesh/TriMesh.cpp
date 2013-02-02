@@ -1587,10 +1587,10 @@ void wrap_trimesh() {
     .OTHER_METHOD(transform)
     .OTHER_METHOD(translate)
     .OTHER_METHOD(boundary_loops)
-    .OTHER_OVERLOADED_METHOD(typename OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
-    .OTHER_OVERLOADED_METHOD(typename Self::Normal (Self::*)(FaceHandle)const, normal)
-    .OTHER_OVERLOADED_METHOD(typename Self::TV(Self::*)()const, centroid)
-    .OTHER_OVERLOADED_METHOD_2(typename Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
+    .OTHER_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
+    .OTHER_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
+    .OTHER_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
+    .OTHER_OVERLOADED_METHOD_2(Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
     ;
 }
 

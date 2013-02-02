@@ -17,6 +17,7 @@
 #include <other/core/python/forward.h>
 #include <other/core/utility/debug.h>
 #include <other/core/utility/forward.h>
+#include <other/core/utility/validity.h>
 #include <boost/utility/declval.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_enum.hpp>
@@ -106,9 +107,8 @@ to_python(char value) {
   return PyString_FromString(s);
 }
 
-template<class T,class enable=void> struct has_to_python_base : public mpl::false_ {};
-template<class T> struct has_to_python_base<T,typename First<void,decltype(to_python(boost::declval<const T&>()))>::type> : public mpl::true_ {};
-template<class T> struct has_to_python : public has_to_python_base<T> {};
+// Declare has_to_python<T>
+OTHER_VALIDITY_CHECKER(has_to_python,T,to_python(*(T*)0))
 
 #endif
 

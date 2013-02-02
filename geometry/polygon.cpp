@@ -564,6 +564,8 @@ using namespace other;
 #include <other/core/python/stl.h>
 
 void wrap_polygon() {
+  // Typedefs needed for windows
+  typedef other::Polygon Polygon;
   typedef Box<Vector<real,2> > (*poly_bounding_box_ftype)(Polygon const &);
   typedef Box<Vector<real,2> > (*polys_bounding_box_ftype)(Polygons const &);
   typedef real (*polygon_area_ftype)(Polygon const &);

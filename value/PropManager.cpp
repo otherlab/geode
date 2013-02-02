@@ -36,7 +36,7 @@ PropBase& PropManager::add(PropBase& prop) {
 }
 
 bool PropManager::contains(const string& name) const {
-  return items.count(name);
+  return items.count(name)!=0;
 }
 
 PropBase* PropManager::get_ptr(const string& name) const {

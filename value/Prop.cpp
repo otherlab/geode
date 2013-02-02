@@ -153,7 +153,7 @@ struct Unusable {
 
 // A Prop with a non-python convertible type
 static Ref<PropBase> unusable_prop_test() {
-  BOOST_STATIC_ASSERT(has_to_python_base<int>::value);
+  BOOST_MPL_ASSERT((has_to_python<int>));
   return new_<Prop<Unusable>>("unusable",Unusable());
 }
 
