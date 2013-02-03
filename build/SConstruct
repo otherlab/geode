@@ -255,10 +255,6 @@ if env['cache']!='':
 # Variant build setup
 env['variant_build'] = os.path.join('build',env['arch'],env['type'])
 env.VariantDir(env['variant_build'],'.',duplicate=0)
-program_suffix = ''
-if env['arch']!=env['default_arch']: program_suffix+='_'+env['arch']
-if env['type']!='release': program_suffix+='_'+env['type']
-else: executable_suffix=''
 
 # Compiler flags
 clang = bool(re.search(r'clang\b',env['CXX']))
@@ -359,7 +355,7 @@ if env['openmp']:
 # Configure MPI if it exists
 try:
   mpi = externals['mpi']
-  if not (mpi['cxxflags'] or mpi['linkflags'] or mpi['libs']):
+  if env['mpicc'] and not (mpi['cxxflags'] or mpi['linkflags'] or mpi['libs']):
     for flags,stage in ('linkflags','link'),('cxxflags','compile'):
       mpi[flags] = ' '+subprocess.Popen([env['mpicc'],'--showme:%s'%stage],stdout=subprocess.PIPE).communicate()[0].strip()
     all_flags = mpi['linkflags'].strip().split()
