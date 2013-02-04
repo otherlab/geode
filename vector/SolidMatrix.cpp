@@ -24,9 +24,8 @@ template<> OTHER_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,3>>)
 
 SolidMatrixStructure::
 SolidMatrixStructure(int n)
-    :n(n)
-{
-    OTHER_ASSERT(n>=0);
+  : n(n) {
+  OTHER_ASSERT(n>=0);
 }
 
 SolidMatrixStructure::
@@ -43,25 +42,23 @@ copy() const {
 }
 
 void SolidMatrixStructure::
-add_entry(int i,int j)
-{
-    OTHER_ASSERT(unsigned(i)<unsigned(n) && unsigned(j)<unsigned(n));
-    if (i!=j)
-      sparse.set(vec(i,j).sorted());
+add_entry(int i,int j) {
+  OTHER_ASSERT(unsigned(i)<unsigned(n) && unsigned(j)<unsigned(n));
+  if (i!=j)
+    sparse.set(vec(i,j).sorted());
 }
 
 void SolidMatrixStructure::
-add_outer(int m,Array<const int> nodes)
-{
-    OTHER_ASSERT(m>=1);
-    if(nodes.size())
-        OTHER_ASSERT(0<=nodes.min() && nodes.max()<n);
-    outers.push_back(tuple(m,nodes));
+add_outer(int m,Array<const int> nodes) {
+  OTHER_ASSERT(m>=1);
+  if (nodes.size())
+    OTHER_ASSERT(0<=nodes.min() && nodes.max()<n);
+  outers.push_back(tuple(m,nodes));
 }
 
 template<class TV> SolidMatrixBase<TV>::
 SolidMatrixBase(int n)
-  :n(n) {}
+  : n(n) {}
 
 template<class TV> SolidMatrixBase<TV>::
 ~SolidMatrixBase() {}
@@ -117,71 +114,64 @@ copy() const {
 }
 
 template<class TV> bool SolidMatrix<TV>::
-valid() const
-{
-    return next_outer==(int)outers.size();
+valid() const {
+  return next_outer==(int)outers.size();
 }
 
 template<class TV> void SolidMatrix<TV>::
-zero()
-{
-    sparse_A.flat.zero();
-    next_outer = 0;
+zero() {
+  sparse_A.flat.zero();
+  next_outer = 0;
 }
 
 template<class TV> inline int SolidMatrix<TV>::
-find_entry(int i,int j) const
-{
-    assert(i<=j);
-    RawArray<const int> row_j = sparse_j[i];
-    for(int k=0;k<row_j.size();k++)
-        if(row_j[k]==j)
-            return k;
-    throw KeyError(format("SolidMatrix::find_entry: index (%d,%d) doesn't exist",i,j));
+find_entry(int i,int j) const {
+  assert(i<=j);
+  RawArray<const int> row_j = sparse_j[i];
+  for (int k=0;k<row_j.size();k++)
+    if (row_j[k]==j)
+      return k;
+  throw KeyError(format("SolidMatrix::find_entry: index (%d,%d) doesn't exist",i,j));
 }
 
 template<class TV> void SolidMatrix<TV>::
-add_entry(int i,int j,const Matrix<T,d>& a)
-{
-    if(i<=j)
-        sparse_A(i,find_entry(i,j)) += a;
-    else
-        sparse_A(j,find_entry(j,i)) += a.transposed();
-}
-
-template<class TV> void SolidMatrix<TV>::
-add_entry(int i,int j,T a)
-{
-    if(i>j) swap(i,j);
+add_entry(int i,int j,const Matrix<T,d>& a) {
+  if (i<=j)
     sparse_A(i,find_entry(i,j)) += a;
+  else
+    sparse_A(j,find_entry(j,i)) += a.transposed();
 }
 
 template<class TV> void SolidMatrix<TV>::
-add_outer(T B,RawArray<const TV> U)
-{
-    int o = next_outer++;
-    OTHER_ASSERT(o<(int)outers.size());
-    OTHER_ASSERT(outers[o].x.size()==U.size());
-    const_cast_(outers[o].y) = B;
-    if(B)
-        outers[o].z.copy(U);
+add_entry(int i,int j,T a) {
+  if (i>j) swap(i,j);
+  sparse_A(i,find_entry(i,j)) += a;
 }
 
 template<class TV> void SolidMatrix<TV>::
-scale(T s)
-{
-    OTHER_ASSERT(valid());
-    if (s==1)
-      return;
-    else if (s==-1) {
-      sparse_A.flat.negate();
-      for(int o=0;o<(int)outers.size();o++)
-          const_cast_(outers[o].y) = -outers[o].y;
-    } else {
-      sparse_A.flat *= s;
-      for(int o=0;o<(int)outers.size();o++)
-          const_cast_(outers[o].y) *= s;
-    }
+add_outer(T B,RawArray<const TV> U) {
+  int o = next_outer++;
+  OTHER_ASSERT(o<(int)outers.size());
+  OTHER_ASSERT(outers[o].x.size()==U.size());
+  const_cast_(outers[o].y) = B;
+  if (B)
+    outers[o].z.copy(U);
+}
+
+template<class TV> void SolidMatrix<TV>::
+scale(T s) {
+  OTHER_ASSERT(valid());
+  if (s==1)
+    return;
+  else if (s==-1) {
+    sparse_A.flat.negate();
+    for (int o=0;o<(int)outers.size();o++)
+        const_cast_(outers[o].y) = -outers[o].y;
+  } else {
+    sparse_A.flat *= s;
+    for (int o=0;o<(int)outers.size();o++)
+        const_cast_(outers[o].y) *= s;
+  }
 }
 
 template<class TV> void SolidMatrix<TV>::
@@ -193,12 +183,11 @@ add_scalar(T s) {
 }
 
 template<class TV> void SolidMatrix<TV>::
-add_diagonal_scalars(RawArray<const T> s)
-{
-    OTHER_ASSERT(valid());
-    OTHER_ASSERT(s.size()==sparse_j.size());
-    for(int i=0;i<sparse_j.size();i++)
-        sparse_A(i,0) += s[i];
+add_diagonal_scalars(RawArray<const T> s) {
+  OTHER_ASSERT(valid());
+  OTHER_ASSERT(s.size()==sparse_j.size());
+  for (int i=0;i<sparse_j.size();i++)
+    sparse_A(i,0) += s[i];
 }
 
 template<class TV> void SolidMatrix<TV>::
@@ -213,77 +202,87 @@ add_partial_scalar(RawArray<const int> nodes, T s) {
 }
 
 template<class TV> typename SolidMatrix<TV>::TMatrix SolidMatrix<TV>::
-entry(int i,int j) const
-{
-    OTHER_ASSERT(valid() && !outers.size());
-    return i<=j?sparse_A(i,find_entry(i,j))
-               :sparse_A(j,find_entry(j,i)).transposed();
+entry(int i,int j) const {
+  OTHER_ASSERT(valid() && !outers.size());
+  return i<=j?sparse_A(i,find_entry(i,j))
+             :sparse_A(j,find_entry(j,i)).transposed();
 }
 
 template<class TV> Tuple<Array<int>,Array<int>,Array<typename TV::Scalar>> SolidMatrix<TV>::
-entries() const
-{
-    OTHER_ASSERT(valid() && !outers.size());
-    Array<int> I,J;
-    Array<T> C;
-    for(int i=0;i<sparse_j.size();i++) for(int k=0;k<sparse_j.size(i);k++){
-        int j = sparse_j(i,k);
-        const Matrix<T,d>& A = sparse_A(i,k);
-        for(int ii=0;ii<d;ii++) for(int jj=0;jj<d;jj++){
-            I.append(d*i+ii);
-            J.append(d*j+jj);
-            C.append(A(ii,jj));}}
-    return tuple(J,I,C);
+entries() const {
+  OTHER_ASSERT(valid() && !outers.size());
+  Array<int> I,J;
+  Array<T> C;
+  for (int i=0;i<sparse_j.size();i++) for(int k=0;k<sparse_j.size(i);k++){
+    int j = sparse_j(i,k);
+    const Matrix<T,d>& A = sparse_A(i,k);
+    for (int ii=0;ii<d;ii++) for(int jj=0;jj<d;jj++){
+      I.append(d*i+ii);
+      J.append(d*j+jj);
+      C.append(A(ii,jj));
+    }
+  }
+  return tuple(J,I,C);
 }
 
 template<class TV> void SolidMatrix<TV>::
-multiply(RawArray<const TV> x,RawArray<TV> y) const
-{
-    OTHER_ASSERT(valid());
-    y.zero();
-    for(int i=0;i<sparse_j.size();i++){
-        y[i] += assume_symmetric(sparse_A(i,0))*x[i];
-        for(int k=1;k<sparse_j.size(i);k++){
-            int j = sparse_j(i,k);
-            const Matrix<T,d>& A = sparse_A(i,k);
-            y[i] += A*x[j];
-            y[j] += A.transpose_times(x[i]);}}
-    for(int o=0;o<(int)outers.size();o++){
-        RawArray<const int> nodes = outers[o].x;
-        T B = outers[o].y;
-        if(!B)
-            continue;
-        RawArray<const TV> U = outers[o].z;
-        T sum = 0;
-        for(int a=0;a<nodes.size();a++)
-            sum += dot(U[a],x[nodes[a]]);
-        sum *= B;
-        for(int a=0;a<nodes.size();a++)
-            y[nodes[a]] += sum*U[a];}
+add_multiply_outers(RawArray<const TV> x, RawArray<TV> y) const {
+  OTHER_ASSERT(valid() && x.size()==size() && y.size()==size());
+  for (int o=0;o<(int)outers.size();o++) {
+    RawArray<const int> nodes = outers[o].x;
+    T B = outers[o].y;
+    if (!B)
+      continue;
+    RawArray<const TV> U = outers[o].z;
+    T sum = 0;
+    for (int a=0;a<nodes.size();a++)
+      sum += dot(U[a],x[nodes[a]]);
+    sum *= B;
+    for (int a=0;a<nodes.size();a++)
+      y[nodes[a]] += sum*U[a];
+  }
+}
+
+template<class TV> void SolidMatrix<TV>::
+multiply(RawArray<const TV> x, RawArray<TV> y) const {
+  y.zero();
+  add_multiply_outers(x,y);
+  for (int i=0;i<sparse_j.size();i++) {
+    y[i] += assume_symmetric(sparse_A(i,0))*x[i];
+    for (int k=1;k<sparse_j.size(i);k++) {
+      int j = sparse_j(i,k);
+      const Matrix<T,d>& A = sparse_A(i,k);
+      y[i] += A*x[j];
+      y[j] += A.transpose_times(x[i]);
+    }
+  }
 }
 
 template<class TV> typename TV::Scalar SolidMatrix<TV>::
-inner_product(RawArray<const TV> x,RawArray<const TV> y) const
-{
-    OTHER_ASSERT(valid());
-    T sum = 0;
-    for(int i=0;i<sparse_j.size();i++){
-        sum += dot(x[i],assume_symmetric(sparse_A(i,0))*y[i]);
-        for(int k=1;k<sparse_j.size(i);k++){
-            int j = sparse_j(i,k);
-            const Matrix<T,d>& A = sparse_A(i,k);
-            sum += dot(x[i],A*y[j])+dot(y[i],A*x[j]);}}
-    for(int o=0;o<(int)outers.size();o++){
-        RawArray<const int> nodes = outers[o].x;
-        T B = outers[o].y;
-        if(!B)
-            continue;
-        RawArray<const TV> U = outers[o].z;
-        T left = 0, right = 0;
-        for(int a=0;a<nodes.size();a++){
-            left  += dot(U[a],x[nodes[a]]);
-            right += dot(U[a],y[nodes[a]]);}
-        sum += B*dot(left,right);}
+inner_product(RawArray<const TV> x, RawArray<const TV> y) const {
+  OTHER_ASSERT(valid() && x.size()==size() && y.size()==size());
+  T sum = 0;
+  for (int i=0;i<sparse_j.size();i++) {
+    sum += dot(x[i],assume_symmetric(sparse_A(i,0))*y[i]);
+    for (int k=1;k<sparse_j.size(i);k++){
+      int j = sparse_j(i,k);
+      const Matrix<T,d>& A = sparse_A(i,k);
+      sum += dot(x[i],A*y[j])+dot(y[i],A*x[j]);
+    }
+  }
+  for (int o=0;o<(int)outers.size();o++) {
+    RawArray<const int> nodes = outers[o].x;
+    T B = outers[o].y;
+    if (!B)
+      continue;
+    RawArray<const TV> U = outers[o].z;
+    T left = 0, right = 0;
+    for (int a=0;a<nodes.size();a++) {
+      left  += dot(U[a],x[nodes[a]]);
+      right += dot(U[a],y[nodes[a]]);
+    }
+    sum += B*dot(left,right);
+  }
   return sum;
 }
 
@@ -299,26 +298,28 @@ diagonal_range() const {
 }
 
 template<class TV> Array<typename TV::Scalar,2> SolidMatrix<TV>::
-dense() const
-{
-    OTHER_ASSERT(valid());
-    int n = sparse_j.size();
-    Array<TMatrix,2> dense(n,n);
-    for(int i=0;i<n;i++){
-        dense(i,i) = sparse_A(i,0);
-        for(int k=1;k<sparse_j.size(i);k++){
-            int j = sparse_j(i,k);
-            const Matrix<T,d>& A = sparse_A(i,k);
-            dense(i,j) = A;
-            dense(j,i) = A.transposed();}}
-    for(int o=0;o<(int)outers.size();o++){
-        RawArray<const int> nodes = outers[o].x;
-        T B = outers[o].y;
-        if(!B)
-            continue;
-        RawArray<const TV> U = outers[o].z;
-        for(int a=0;a<nodes.size();a++) for(int b=0;b<nodes.size();b++)
-            dense(nodes[a],nodes[b]) += outer_product(B*U[a],U[b]);}
+dense() const {
+  OTHER_ASSERT(valid());
+  const int n = sparse_j.size();
+  Array<TMatrix,2> dense(n,n);
+  for (int i=0;i<n;i++){
+    dense(i,i) = sparse_A(i,0);
+    for (int k=1;k<sparse_j.size(i);k++) {
+      int j = sparse_j(i,k);
+      const Matrix<T,d>& A = sparse_A(i,k);
+      dense(i,j) = A;
+      dense(j,i) = A.transposed();
+    }
+  }
+  for (int o=0;o<(int)outers.size();o++) {
+    RawArray<const int> nodes = outers[o].x;
+    T B = outers[o].y;
+    if (!B)
+      continue;
+    RawArray<const TV> U = outers[o].z;
+    for (int a=0;a<nodes.size();a++) for(int b=0;b<nodes.size();b++)
+      dense(nodes[a],nodes[b]) += outer_product(B*U[a],U[b]);
+  }
   return scalar_view_own(dense.flat).reshape_own(3*n,3*n);
 }
 
@@ -333,21 +334,21 @@ inverse_block_diagonal() const {
 
 template<class TV> SolidDiagonalMatrix<TV>::
 SolidDiagonalMatrix(int size,bool initialize)
-  :Base(size),A(size,initialize) {}
+  : Base(size), A(size,initialize) {}
 
 template<class TV> SolidDiagonalMatrix<TV>::
 ~SolidDiagonalMatrix() {}
 
 template<class TV> void SolidDiagonalMatrix<TV>::
 multiply(RawArray<const TV> x,RawArray<TV> y) const {
-  for(int i=0;i<A.size();i++)
+  for (int i=0;i<A.size();i++)
     y[i] = A[i]*x[i];
 }
 
 template<class TV> typename TV::Scalar SolidDiagonalMatrix<TV>::
 inner_product(RawArray<const TV> x,RawArray<const TV> y) const {
   T sum = 0;
-  for(int i=0;i<A.size();i++)
+  for (int i=0;i<A.size();i++)
     sum += dot(x[i],A[i]*y[i]);
   return sum;
 }
@@ -379,6 +380,7 @@ template<int d> static void wrap_helper() {
     .OTHER_METHOD(add_scalar)
     .OTHER_METHOD(add_diagonal_scalars)
     .OTHER_METHOD(add_partial_scalar)
+    .OTHER_METHOD(add_outer)
     .OTHER_METHOD(entries)
     .OTHER_METHOD(inverse_block_diagonal)
     .OTHER_METHOD(inner_product)
