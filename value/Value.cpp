@@ -117,11 +117,13 @@ void ValueBase::pull() const {
     error.throw_();
 }
 
+#ifdef OTHER_PYTHON
 // For testing purposes
 static ValueRef<int> value_test(ValueRef<int> value) {
   return value;
 }
 static void value_ptr_test(Ptr<Value<int>> value) {}
+#endif
 
 bool ValueBase::is_prop() const {
   return dynamic_cast<const PropBase*>(this)!=0;
