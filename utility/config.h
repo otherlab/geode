@@ -34,7 +34,7 @@ typedef double real;
 #define OTHER_NEVER_INLINE __attribute__ ((noinline))
 #define OTHER_PURE __attribute__ ((pure))
 #define OTHER_CONST __attribute__ ((const))
-#define OTHER_COLD __attribute__ ((const))
+#define OTHER_COLD __attribute__ ((cold))
 #define OTHER_FORMAT(type,fmt,list) __attribute__ ((format(type,fmt,list)))
 #define OTHER_EXPECT(value,expect) __builtin_expect((value),expect)
 
