@@ -203,19 +203,6 @@ public:
     Vector normalized() const
     {T mag=magnitude();if(mag) return *this*(1/mag);else return Vector(1,0);}
 
-    Vector rotate_right_90() const
-    {return Vector(y,-x);}
-
-    Vector rotate_left_90() const
-    {return Vector(-y,x);}
-
-    Vector rotate_left_90_times(const int n) const
-    {Vector r(*this);if(n&2) r=-r;
-    return n&1?r.rotate_left_90():r;}
-
-    Vector perpendicular() const
-    {return Vector(-y,x);}
-
     Vector orthogonal_vector() const
     {return Vector(-y,x);}
 
@@ -349,9 +336,6 @@ public:
     {for(int i=0;i<n;i++) v1(i)=(*this)(i);
     for(int i=n;i<2;i++) v2(i-n)=(*this)(i);}
 
-    Matrix<T,1,2> cross_product_matrix() const
-    {Matrix<T,1,2> result;result(0,0)=-y;result(0,1)=x;return result;}
-
     template<class TVector>
     void set_subvector(const int istart,const TVector& v)
     {for(int i=0;i<v.size();i++) (*this)(istart+i)=v[i];}
@@ -470,13 +454,9 @@ template<class T> inline Vector<T,2>
 polar(const T& a) 
 { return Vector<T,2>(cos(a), sin(a)); }
 
-template<class T> inline T
-angle_between(const Vector<T,2>& u,const Vector<T,2>& v)
-{T s=fabs(cross(u,v)),c=dot(u,v);return atan2(s,c);}
-
-template<class T> inline T
-oriented_angle_between(const Vector<T,2>& u,const Vector<T,2>& v)
-{T s=cross(u,v),c=dot(u,v);return atan2(s,c);}
+template<class T> inline T angle_between(const Vector<T,2>& u, const Vector<T,2>& v) {
+  return atan2(cross(u,v),dot(u,v));
+}
 
 template<class T> inline bool
 isfinite(const Vector<T,2>& v)
@@ -496,6 +476,27 @@ template<class T> inline bool all_greater_equal(const Vector<T,2>& v0, const Vec
 
 template<class T> inline bool all_less_equal(const Vector<T,2>& v0, const Vector<T,2>& v1) {
   return v0.x<=v1.x && v0.y<=v1.y;
+}
+
+template<class T> inline Matrix<T,1,2> cross_product_matrix(const Vector<T,2>& v) {
+  Matrix<T,1,2> result;result(0,0)=-v.y;result(0,1)=v.x;return result;
+}
+
+template<class T> inline Vector<T,2> rotate_right_90(const Vector<T,2>& v) {
+  return Vector<T,2>(v.y,-v.x);
+}
+
+template<class T> inline Vector<T,2> rotate_left_90(const Vector<T,2>& v) {
+  return Vector<T,2>(-v.y,v.x);
+}
+
+template<class T> inline Vector<T,2> rotate_left_90_times(const Vector<T,2>& v, const int n) {
+  const Vector<T,2> r = n&2?-v:v;
+  return n&1?rotate_left_90(r):r;
+}
+
+template<class T> inline Vector<T,2> perpendicular(const Vector<T,2>& v) {
+  return Vector<T,2>(-v.y,v.x);
 }
 
 //#####################################################################

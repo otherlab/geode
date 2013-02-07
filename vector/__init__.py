@@ -121,7 +121,12 @@ def cross(u,v):
   return uv
 
 def angle_between(u,v):
-    return atan2(magnitudes(cross(u,v)),dots(u,v))
+  u = asarray(u)
+  v = asarray(v)
+  c = cross(u,v)
+  if u.shape[-1]!=2:
+    c = magnitudes(c)
+  return atan2(c,dots(u,v))
 
 def signed_angle_between(u,v,n):
   c = cross(u,v)
@@ -155,7 +160,6 @@ def maxmag(array,axis=-1):
   a = rollaxis(array,axis,len(s)).reshape(-1,s[axis])
   a = a[arange(a.shape[0]),abs(a).argmax(axis=-1)]
   return a.reshape(s[:axis]+s[axis:][1:])
-
 
 def relative_error(a,b,absolute=1e-30):
     return maxabs(a-b)/max(maxabs(a),maxabs(b),absolute)

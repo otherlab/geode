@@ -7,13 +7,16 @@
 #include <other/core/geometry/forward.h>
 #include <other/core/geometry/Box.h>
 #include <other/core/vector/Vector2d.h>
+#include <other/core/vector/normalize.h>
 namespace other{
 
-template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) 
-{return (x1-x0).normalized().rotate_right_90();}
+template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) {
+  return rotate_right_90(normalized(x1-x0));
+}
 
-template<class TArray> inline typename EnableForSize<2,TArray,typename TArray::Element>::type normal(const TArray& X)
-{return normal(X[0],X[1]);}
+template<class TArray> inline typename EnableForSize<2,TArray,typename TArray::Element>::type normal(const TArray& X) {
+  return normal(X[0],X[1]);
+}
 
 template<class T>
 class Segment<Vector<T,2> >
@@ -57,7 +60,7 @@ public:
     {return (T).5*(x0+x1);}
 
     static TV normal(const TV& x0,const TV& x1) 
-    {return (x1-x0).normalized().rotate_right_90();}
+    {return rotate_right_90(normalized(x1-x0));}
 
     TV normal() const
     {return Segment::normal(x0,x1);}

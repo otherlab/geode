@@ -203,7 +203,7 @@ public:
     {return u.x*v.x/x00;}
 
     Matrix<T,1,2> times_cross_product_matrix(Vector<T,2> v) const
-    {return x00*v.cross_product_matrix();}
+    {return x00*cross_product_matrix(v);}
 
     bool positive_definite() const
     {return x00>0;}

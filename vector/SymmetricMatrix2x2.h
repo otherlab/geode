@@ -162,7 +162,7 @@ public:
     {return *this*A;}
 
     Matrix<T,1,2> cross_product_matrix_times(const Vector<T,2>& v) const
-    {return v.cross_product_matrix()*(*this);}
+    {return cross_product_matrix(v)*(*this);}
 
     Vector<T,2> solve_linear_system(const Vector<T,2>& b) const
     {return SymmetricMatrix(x11,-x10,x00)*b/determinant();}
@@ -294,7 +294,7 @@ solve_eigenproblem(DiagonalMatrix<T,2>& eigenvalues,Matrix<T,2>& eigenvectors) c
     else{eigenvalues.x11=a-m;eigenvalues.x00=eigenvalues.x11?k/eigenvalues.x11:0;}
     small_sort(eigenvalues.x11,eigenvalues.x00); // if order is wrong, matrix is nearly scalar
     eigenvectors.set_column(0,(b>=0?TV(m+b,c):TV(-c,b-m)).normalized());
-    eigenvectors.set_column(1,eigenvectors.column(0).perpendicular());
+    eigenvectors.set_column(1,perpendicular(eigenvectors.column(0)));
 }
 
 template<class T> inline SymmetricMatrix<T,2>

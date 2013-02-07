@@ -33,3 +33,20 @@ def circle_mesh(n,center=0,radius=1):
     return mesh
   theta = 2*pi/n*i
   return mesh,(radius*vstack([cos(theta),sin(theta)])).T.copy() 
+
+def open_cylinder_mesh(x0,x1,radius,n):
+  # TODO: Support subdivisions along the cylinder's length
+  x0 = asarray(x0)
+  x1 = asarray(x1)
+  z = normalized(x1-x0)
+  x = unit_orthogonal_vector(z)
+  y = cross(z,x)
+  i = arange(n)
+  a = 2*pi/n*i
+  circle = radius*(x*cos(a).reshape(-1,1)+y*sin(a).reshape(-1,1))
+  X = concatenate([x0+circle,x1+circle])
+  tris = []
+  for j in i:
+    k = (j+1)%n
+    tris.extend([(j,k,j+n),(k,k+n,j+n)])
+  return TriangleMesh(tris),X
