@@ -85,7 +85,8 @@ template<class TV,class Shape> static void intersection_helper(const ParticleTre
 template<class TV> template<class Shape> void ParticleTree<TV>::
 intersection(const Shape& shape, Array<int>& hits) const {
   hits.clear();
-  intersection_helper(*this,shape,hits,0);
+  if (X.size())
+    intersection_helper(*this,shape,hits,0);
 }
 
 template<class TV> static void closest_point_helper(const ParticleTree<TV>& self, TV point, int& index, T& sqr_distance, int node) {

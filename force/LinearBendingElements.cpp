@@ -39,13 +39,13 @@ template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentMesh& mes
 
 template<class TV> static Ref<SparseMatrix> matrix_helper(const TriangleMesh& mesh,Array<const TV> X) {
   OTHER_ASSERT(mesh.nodes()<=X.size());
-  Array<const Vector<int,4> > quadruples = mesh.bending_quadruples();
+  Array<const Vector<int,4> > quadruples = mesh.bending_tuples();
   Hashtable<Vector<int,2>,T> entries;
   // Compute stiffness matrix.
   // For details see Wardetzky et al., "Discrete Quadratic Curvature energies", Computer Aided Geometric design, 2007.
   // Note that this computation depends only on the lengths of edges in the mesh, not the bend angles between triangles,
   // reflecting the fact that this class assumes a flat bending rest shape.
-  for (Vector<int,4> nodes : mesh.bending_quadruples()) {
+  for (Vector<int,4> nodes : mesh.bending_tuples()) {
     TV X0=X[nodes[0]],X1=X[nodes[1]],X2=X[nodes[2]],X3=X[nodes[3]];
     TV e0=X2-X1,e1=X3-X1,e2=X0-X1,e3=X3-X2,e4=X0-X2; // edge numbering matches Wardetzky et al. p. 16
     T cross01=magnitude(cross(e0,e1)),cross02=magnitude(cross(e0,e2)),

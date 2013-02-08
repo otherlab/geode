@@ -177,7 +177,7 @@ namespace other {
         // find a candidate point
         int i2 = (i + 1) % poly.size();
         Vector<real,2> mid = .5 * (poly[i] + poly[i2]);
-        Vector<real,2> normal = normalized(poly[i2]-poly[i]).rotate_left_90();
+        Vector<real,2> normal = rotate_left_90(normalized(poly[i2]-poly[i]));
         if (negative)
           normal *= -1;
 
@@ -315,7 +315,7 @@ namespace other {
       Vector<real, 2> n0 = s0.normal();
       Vector<real, 2> n1 = s1.normal();
 
-      real angle = -oriented_angle_between(s0.vector().normalized(), s1.vector().normalized());
+      real angle = -angle_between(s0.vector().normalized(), s1.vector().normalized());
 
       if (sign * angle > -minangle) {
 

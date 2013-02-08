@@ -1330,7 +1330,7 @@ real TriMesh::dihedral_angle(HalfedgeHandle e) const {
                t1 = triangle(face_handle(opposite_halfedge_handle(e)));
   TV d = t1.center() - t0.center();
   double abs_theta = acos(min(1.,max(-1.,dot(t0.n,t1.n))));
-  return dot(t1.n-t0.n,d) > 0 ? abs_theta : -abs_theta;
+  return copysign(abs_theta,dot(t1.n-t0.n,d));
 }
 
 // delete a set of faces

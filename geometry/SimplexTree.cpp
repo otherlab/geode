@@ -75,7 +75,8 @@ template<class TV,int d> void SimplexTree<TV,d>::intersections(const Plane<T>& p
 
 template<> void SimplexTree<Vector<T,3>,2>::intersections(const Plane<T>& plane, Array<Segment<Vector<T,3>>>& result) const {
   result.clear();
-  intersection_helper(*this,plane,0,result);
+  if (boxes.size())
+    intersection_helper(*this,plane,0,result);
 }
 
 template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, T thickness_over_two, int node) {
@@ -94,7 +95,8 @@ template<> void intersection_helper(const SimplexTree<Vector<T,2>,2>& self, Ray<
 template<> void intersection_helper(const SimplexTree<Vector<T,3>,1>& self, Ray<Vector<T,3>>& ray, T thickness_over_two, int node) { OTHER_NOT_IMPLEMENTED(); }
 template<class TV,int d> bool SimplexTree<TV,d>::
 intersection(Ray<TV>& ray, T thickness_over_two) const {
-  if(boxes.size() == 0) return false; // No intersections possible for empty trees
+  if (boxes.size() == 0)
+    return false; // No intersections possible for empty trees
   int aggregate_save = ray.aggregate_id;
   ray.aggregate_id = -1;
   intersection_helper(*this,ray,thickness_over_two,0);
@@ -108,7 +110,8 @@ intersection(Ray<TV>& ray, T thickness_over_two) const {
 template<class TV,int d> void SimplexTree<TV,d>::
 intersection(const Sphere<TV>& sphere,Array<int>& hits) const {
   hits.clear();
-  intersection_helper(*this,sphere,hits,0);
+  if (boxes.size())
+    intersection_helper(*this,sphere,hits,0);
 }
 
 template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, const Sphere<TV>& sphere, Array<int>& hits, int node) {
@@ -147,7 +150,8 @@ template<> void multi_intersection_helper(const SimplexTree<Vector<T,3>,1>& self
 template<class TV,int d> Array<Ray<TV> > SimplexTree<TV,d>::
 intersections(Ray<TV>& ray,T thickness_over_two) const {
   Array<Ray<TV> > results;
-  multi_intersection_helper(*this,ray,thickness_over_two,0,results);
+  if (boxes.size())
+    multi_intersection_helper(*this,ray,thickness_over_two,0,results);
   return results;
 }
 
@@ -183,6 +187,8 @@ static inline bool inside_plane(const Triangle<Vector<T,2>>& s, const Vector<T,2
 
 template<class TV,int d> bool SimplexTree<TV,d>::
 inside(TV point) const {
+  if (!boxes.size())
+    return false;
   const T small = sqrt(numeric_limits<T>::epsilon());
   // Fire rays in random directions until we hit either nothing or a pure simplex.
   const T epsilon = small*bounding_box().sizes().max();

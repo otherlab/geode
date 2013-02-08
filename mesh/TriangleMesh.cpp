@@ -23,7 +23,7 @@ const int TriangleMesh::d;
 TriangleMesh::TriangleMesh(Array<const Vector<int,3> > elements)
   : vertices(scalar_view_own(elements))
   , elements(elements)
-  , bending_quadruples_valid(false) {
+  , bending_tuples_valid(false) {
   // Assert validity and compute counts
   node_count = 0;
   for (int i=0;i<vertices.size();i++) {
@@ -110,8 +110,8 @@ Ref<SegmentMesh> TriangleMesh::boundary_mesh() const {
   return ref(boundary_mesh_);
 }
 
-Array<const Vector<int,4> > TriangleMesh::bending_quadruples() const {
-  if (!bending_quadruples_valid) {
+Array<const Vector<int,4> > TriangleMesh::bending_tuples() const {
+  if (!bending_tuples_valid) {
     Hashtable<Vector<int,2>,Array<int> > edge_to_face;
     for (int t=0;t<elements.size();t++) {
       Vector<int,3> nodes = elements[t];
@@ -132,11 +132,11 @@ Array<const Vector<int,4> > TriangleMesh::bending_quadruples() const {
         flipped[a] = tn[(b+1)%3]!=sn[0];
         assert(tn[(b+1)%3]==sn[flipped[a]] && tn[(b+2)%3]==sn[1-flipped[a]]);}
       for (int a=0;a<tris.size();a++) for (int b=a+1;b<tris.size();b++)
-        bending_quadruples_.append(vec(other[a],sn[flipped[a]],sn[1-flipped[a]],other[b]));
+        bending_tuples_.append(vec(other[a],sn[flipped[a]],sn[1-flipped[a]],other[b]));
     }
-    bending_quadruples_valid = true;
+    bending_tuples_valid = true;
   }
-  return bending_quadruples_;
+  return bending_tuples_;
 }
 
 Array<const int> TriangleMesh::nodes_touched() const {
@@ -346,7 +346,7 @@ void wrap_triangle_mesh() {
     .OTHER_METHOD(incident_elements)
     .OTHER_METHOD(adjacent_elements)
     .OTHER_METHOD(boundary_mesh)
-    .OTHER_METHOD(bending_quadruples)
+    .OTHER_METHOD(bending_tuples)
     .OTHER_METHOD(nodes_touched)
     .OTHER_METHOD(area)
     .OTHER_METHOD(volume)

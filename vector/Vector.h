@@ -33,8 +33,10 @@ using boost::common_type;
 
 template<class TArray,class TIndices> class IndirectArray;
 
+#ifdef OTHER_PYTHON
 // Declare blanket to_python for numpy-incompatible vectors
 template<class T,int d> PyObject* to_python(const Vector<T,d>& vector);
+#endif
 
 // Declare the base set of numpy compatible vector conversions
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,int)

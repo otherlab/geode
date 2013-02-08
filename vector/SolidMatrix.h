@@ -129,6 +129,8 @@ public:
     Ref<SolidDiagonalMatrix<TV> > inverse_block_diagonal() const;
     OTHER_CORE_EXPORT Box<T> diagonal_range() const ;
     Array<T,2> dense() const;
+
+    OTHER_CORE_EXPORT void add_multiply_outers(RawArray<const TV> x, RawArray<TV> y) const; // y += A_outers x
 private:
     int find_entry(int i,int j) const;
 };

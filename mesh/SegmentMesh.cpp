@@ -9,6 +9,7 @@
 #include <other/core/utility/const_cast.h>
 #include <other/core/utility/stl.h>
 #include <other/core/vector/convert.h>
+#include <other/core/vector/normalize.h>
 #include <vector>
 namespace other {
 
@@ -157,7 +158,7 @@ Array<TV2> SegmentMesh::element_normals(RawArray<const TV2> X) const {
   Array<TV2> normals(elements.size(),false);
   for (int t=0;t<elements.size();t++) {
     int i,j;elements[t].get(i,j);
-    normals[t] = (X[j]-X[i]).rotate_right_90().normalized();
+    normals[t] = rotate_right_90(normalized(X[j]-X[i]));
   }
   return normals;
 }
@@ -173,6 +174,20 @@ Array<int> SegmentMesh::nonmanifold_nodes(bool allow_boundary) const {
       nonmanifold.append(i);
   }
   return nonmanifold;
+}
+
+Array<const Vector<int,3>> SegmentMesh::bending_tuples() const {
+  if (!bending_tuples_valid) {
+    NestedArray<const int> neighbors = this->neighbors();
+    Array<Vector<int,3>> tuples;
+    for (const int p : range(nodes())) {
+      RawArray<const int> near = neighbors[p];
+      for (int i=0;i<near.size();i++) for(int j=i+1;j<near.size();j++)
+        tuples.append(vec(near[i],p,near[j]));
+    }
+    bending_tuples_ = tuples;
+  }
+  return bending_tuples_;
 }
 
 }
@@ -193,5 +208,6 @@ void wrap_segment_mesh() {
     .OTHER_METHOD(element_normals)
     .OTHER_METHOD(nonmanifold_nodes)
     .OTHER_METHOD(polygons)
+    .OTHER_METHOD(bending_tuples)
     ;
 }
