@@ -2,6 +2,7 @@
 
 #include <other/core/force/CubicHinges.h>
 #include <other/core/array/view.h>
+#include <other/core/math/copysign.h>
 #include <other/core/geometry/Triangle3d.h>
 #include <other/core/python/Class.h>
 #include <other/core/utility/Log.h>
