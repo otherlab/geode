@@ -502,7 +502,7 @@ def objects(env,sources):
 # Recursively list all files beneath a directory
 def files(dir,skip=()):
   for f in os.listdir(dir):
-    if f.startswith('.') or f=='build' or f in skip:
+    if f.startswith('.') or f in ['build', 'Debug', 'Release'] or f in skip:
       continue
     df = os.path.join(dir,f)
     if os.path.isdir(df):
