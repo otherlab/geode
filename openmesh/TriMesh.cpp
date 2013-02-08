@@ -5,6 +5,7 @@
 #include <other/core/utility/prioritize.h>
 #include <other/core/python/Class.h>
 #include <other/core/math/isfinite.h>
+#include <other/core/math/copysign.h>
 #include <other/core/structure/UnionFind.h>
 #include <other/core/geometry/SimplexTree.h>
 #include <other/core/geometry/Ray.h>
