@@ -8,6 +8,7 @@
 //#####################################################################
 #pragma once
 
+#include <other/core/array/alloca.h>
 #include <other/core/array/RawStack.h>
 #include <other/core/array/view.h>
 #include <other/core/geometry/BoxTree.h>
@@ -18,8 +19,7 @@ template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree, V
   if (!tree.nodes())
     return;
   const int internal = tree.leaves.lo;
-  tree.traversal_buffer.resize(tree.depth,false,false);
-  RawStack<int> stack(tree.traversal_buffer);
+  RawStack<int> stack(OTHER_RAW_ALLOCA(tree.depth,int));
   stack.push(0);
   while (stack.size()) {
     int n = stack.pop();
@@ -69,8 +69,8 @@ template<class Visitor,class Thickness,class TV> static void traverse_helper(con
 template<class Visitor,class Thickness,class TV> static void traverse_helper(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, Thickness thickness) {
   if (!tree0.nodes() || !tree1.nodes())
     return;
-  tree0.traversal_buffer.resize(6*max(tree0.depth,tree1.depth),false,false);
-  RawStack<Vector<int,2>> stack(vector_view<2>(tree0.traversal_buffer));
+  const int buffer_size = 3*max(tree0.depth,tree1.depth);
+  RawStack<Vector<int,2>> stack(OTHER_RAW_ALLOCA(buffer_size,Vector<int,2>));
   traverse_helper(tree0,tree1,visitor,stack,0,0,thickness);
 }
 
@@ -78,9 +78,8 @@ template<class Visitor,class Thickness,class TV> static void traverse_helper(con
 template<class Visitor,class Thickness,class TV> static void traverse_helper(const BoxTree<TV>& tree, Visitor&& visitor, Thickness thickness) {
   if (!tree.nodes())
     return;
-  tree.traversal_buffer.resize(6*tree.depth,false,false);
   const int internal = tree.leaves.lo;
-  RawStack<int> stack(tree.traversal_buffer);
+  RawStack<int> stack(OTHER_RAW_ALLOCA(6*tree.depth,int));
   stack.push(0);
   while (stack.size()) {
     int n = stack.pop();

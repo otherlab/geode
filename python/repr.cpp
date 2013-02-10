@@ -2,8 +2,18 @@
 // Function repr
 //#####################################################################
 #include <other/core/python/repr.h>
+#include <other/core/python/from_python.h>
+#include <other/core/utility/format.h>
 #include <cstdio>
-namespace other{
+namespace other {
+
+string repr(PyObject& x) {
+#ifdef OTHER_PYTHON
+  return from_python<string>(steal_ref_check(PyObject_Repr(&x)));
+#else
+  return format("<object of type %s>",x.ob_type->tp_name);
+#endif
+}
 
 string repr(const float x) {
   static char buffer[40];

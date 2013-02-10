@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 
 namespace other {
 
@@ -18,8 +19,9 @@ template<> struct Range<int> {
   struct Iter {
     int i;
     explicit Iter(int i) : i(i) {}
-    bool operator!=(Iter j) { return i != j.i; }
-    void operator++() { i++; }
+    bool operator!=(Iter j) const { return i != j.i; }
+    void operator++() { ++i; }
+    void operator--() { --i; }
     int operator*() const { return i; }
   };
 

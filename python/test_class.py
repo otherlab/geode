@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
-from other.core.python import Object,ClassTest
+from other.core import Object,ClassTest
+
+def test_extra():
+  # Extra arguments should throw exceptions
+  try:
+    ClassTest(Object(),4)
+    assert False
+  except TypeError:
+    pass
 
 def test_field():
   c=ClassTest(Object()) 
@@ -65,11 +73,11 @@ def test_prop():
 
 def test_inherit():
   class A(ClassTest):
-    def __init__(self,o):
+    def __init__(self,o,x):
       d = self.__dict__
-      self.x = 5
+      self.x = x
       self.y = o
-  a = A(Object())
+  a = A(Object(),x=5)
   assert a.x==5
   assert a.prop==17
   assert a.ref is a.y

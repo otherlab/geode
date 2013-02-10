@@ -4,7 +4,7 @@
 #define __STDC_CONSTANT_MACROS
 #include <other/core/random/counter.h>
 #include <other/core/random/random123/threefry.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
 
 uint128_t threefry(uint128_t key, uint128_t ctr) {

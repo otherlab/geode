@@ -1,7 +1,7 @@
 //#####################################################################
 // Module Forces
 //#####################################################################
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 using namespace other;
 
 void wrap_force() {
@@ -16,5 +16,6 @@ void wrap_force() {
   OTHER_WRAP(linear_bending)
   OTHER_WRAP(linear_finite_volume)
   OTHER_WRAP(linear_finite_volume_hex)
+  OTHER_WRAP(cubic_hinges)
   OTHER_WRAP(ether_drag)
 }

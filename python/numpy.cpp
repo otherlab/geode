@@ -1,12 +1,16 @@
 //#####################################################################
 // Numpy interface functions
 //#####################################################################
-#ifdef OTHER_PYTHON
 #include <other/core/python/numpy.h>
-#include <numpy/npy_common.h>
 #include <boost/detail/endian.hpp>
 #include <boost/cstdint.hpp>
+#include <stdio.h>
+#ifdef OTHER_PYTHON
+#include <numpy/npy_common.h>
+#endif
 namespace other {
+
+#ifdef OTHER_PYTHON
 
 #ifndef NPY_ARRAY_ALIGNED
 #define NPY_ARRAY_ALIGNED NPY_ALIGNED
@@ -31,6 +35,8 @@ PyArray_Descr* numpy_descr_from_type(int type_num) {
 }
 
 PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context) {
+  if (op==Py_None) // PyArray_FromAny silently converts None to a singleton nan, which is not cool
+    throw TypeError("expected numpy array, got None");
   return PyArray_FromAny(op,dtype,min_depth,max_depth,requirements,context);
 }
 
@@ -70,6 +76,30 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
     throw_array_conversion_error(object,flags,rank_range,descr);
 }
 
+#else // !defined(OTHER_PYTHON)
+
+// Modified from numpy/npy_common.h
+typedef unsigned char npy_bool;
+#define NPY_BITSOF_BOOL (sizeof(npy_bool)*CHAR_BIT)
+#define NPY_BITSOF_CHAR (sizeof(char)*CHAR_BIT)
+#define NPY_BITSOF_SHORT (sizeof(short)*CHAR_BIT)
+#define NPY_BITSOF_INT (sizeof(int)*CHAR_BIT)
+#define NPY_BITSOF_LONG (sizeof(long)*CHAR_BIT)
+#define NPY_BITSOF_LONGLONG (sizeof(long long)*CHAR_BIT)
+#define NPY_BITSOF_FLOAT (sizeof(float)*CHAR_BIT)
+#define NPY_BITSOF_DOUBLE (sizeof(double)*CHAR_BIT)
+#define NPY_BITSOF_LONGDOUBLE (sizeof(long double)*CHAR_BIT)
+
+// Lifted from numpy/ndarraytypes.h
+enum NPY_TYPECHAR { NPY_GENBOOLLTR ='b',
+                    NPY_SIGNEDLTR = 'i',
+                    NPY_UNSIGNEDLTR = 'u',
+                    NPY_FLOATINGLTR = 'f',
+                    NPY_COMPLEXLTR = 'c'
+};
+
+#endif
+
 size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num) {
   // Get dtype info
   int bits;
@@ -101,13 +131,15 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
     #undef CASE
     default: throw ValueError("Unknown dtype");
   }
-  int bytes = bits/8;
+  const int bytes = bits/8;
 
   // Endianness
 #if defined(BOOST_LITTLE_ENDIAN)
   const char endian = '<';
 #elif defined(BOOST_BIG_ENDIAN)
   const char endian = '>';
+#else
+#error "Unknown endianness"
 #endif
 
   // Construct header
@@ -131,6 +163,10 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
   OTHER_ASSERT((len&15)==0);
   uint16_t header_len = uint16_t(len-10);
   OTHER_ASSERT(header_len==len-10);
+#ifdef BOOST_BIG_ENDIAN
+  // Switch header_len to little endian
+  swap(((char*)&header_len)[0],((char*)&header_len)[1]);
+#endif
   memcpy(base+8,&header_len,2);
   header.resize(len);
   return bytes*total_size;
@@ -142,7 +178,7 @@ void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int 
   size_t data_size = fill_numpy_header(header,rank,dimensions,type_num);
 
   // Write npy file
-  FILE* file = fopen(filename.c_str(),"w");
+  FILE* file = fopen(filename.c_str(),"wb");
   if(!file) throw OSError("Can't open "+filename+" for writing");
   fwrite(header.data(),1,header.size(),file);
   fwrite(data,1,data_size,file);
@@ -150,4 +186,3 @@ void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int 
 }
 
 }
-#endif

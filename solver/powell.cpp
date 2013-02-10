@@ -11,7 +11,7 @@
 #include <other/core/solver/brent.h>
 #include <other/core/array/Array2d.h>
 #include <other/core/python/function.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/utility/curry.h>
 namespace other {
 

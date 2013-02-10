@@ -12,7 +12,7 @@ from numpy import *
 from . import *
 from . import Rotation
 from .Rotation import Rotations
-from other.core.python import real
+real = other_core.real
 
 class Frames(ndarray):
     dtypes = dict((d,dtype([('t','%df%d'%(d,real.itemsize)),('r',Rotations[d].dtype)])) for d in (2,3))
@@ -99,5 +99,4 @@ def from_reals(x):
   d = size_to_d[x.shape[-1]]
   return x.ravel().view(Frames.dtypes[d]).view(Frames).reshape(x.shape[:-1])
 
-import other_core
 other_core._set_frame_type(Frames)

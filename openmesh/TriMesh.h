@@ -49,6 +49,8 @@
 #include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
 
+#include <boost/function.hpp>
+
 #ifdef USE_OPENMESH
 
 namespace other {
@@ -127,8 +129,6 @@ struct vector_traits<other::OVec<T,d> >
 
 }
 
-#include <other/core/python/numpy.h>
-
 namespace other {
 
 template<class T,int d>
@@ -182,23 +182,6 @@ OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,VertexHandle)
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,FaceHandle)
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,FaceHandle)
-
-#ifdef OTHER_PYTHON
-namespace {
-// for vector conversions
-template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::VertexHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::EdgeHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::HalfedgeHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::FaceHandle>:public mpl::true_{};
-
-template<> struct NumpyScalar<OpenMesh::BaseHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::VertexHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
-}
-#endif
 
 }
 
@@ -319,6 +302,9 @@ public:
   // area weighted centroid
   OTHER_CORE_EXPORT Vector<real,3> centroid() const;
 
+  // centroid of a face (convenience function)
+  OTHER_CORE_EXPORT Vector<real,3> centroid(FaceHandle fh) const;
+
   OTHER_CORE_EXPORT real mean_edge_length() const;
 
   // get a triangle area
@@ -369,6 +355,7 @@ public:
   inline EdgeHandle edge_handle(HalfedgeHandle he) const {
     return OTriMesh::edge_handle(he);
   }
+
   inline HalfedgeHandle halfedge_handle(VertexHandle ve) const {
     return OTriMesh::halfedge_handle(ve);
   }
@@ -401,7 +388,6 @@ public:
   inline Normal normal(VertexHandle vh) const {
     return OTriMesh::normal(vh);
   }
-
   inline Normal normal(FaceHandle fh) const {
     return OTriMesh::normal(fh);
   }
@@ -421,6 +407,9 @@ public:
 
   // make a triangle fan
   OTHER_CORE_EXPORT vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
+
+  // select a set of faces based on a predicate
+  OTHER_CORE_EXPORT vector<FaceHandle> select_faces(boost::function<bool(FaceHandle)> pr) const;
 
   // extract a set of faces as a new mesh and store vertex correspondence: id2id[old] = new
   OTHER_CORE_EXPORT Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces,

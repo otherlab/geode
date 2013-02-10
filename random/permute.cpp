@@ -3,7 +3,7 @@
 #include <other/core/random/permute.h>
 #include <other/core/random/counter.h>
 #include <other/core/math/integer_log.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
 
 // For details, see
@@ -21,11 +21,11 @@ static inline uint64_t fe2_encrypt(const int bits, const uint128_t key, const ui
   const int a = bits>>1, b = bits-a; // logs of a,b in the paper
   const uint32_t ma = (uint64_t(1)<<a)-1, // bit masks
                  mb = (uint64_t(1)<<b)-1;
-  uint32_t L = x>>b, R = x&mb;
+  uint32_t L = uint32_t(x>>b), R = x&mb;
   // Three rounds of FE2
-  L = ma&(L+threefry(key,uint64_t(1)<<32|R)); // round 1: s = a
-  R = mb&(R+threefry(key,uint64_t(2)<<32|L)); // round 2: s = b
-  L = ma&(L+threefry(key,uint64_t(3)<<32|R)); // round 3: s = a
+  L = ma&(L+cast_uint128<uint32_t>(threefry(key,uint64_t(1)<<32|R))); // round 1: s = a
+  R = mb&(R+cast_uint128<uint32_t>(threefry(key,uint64_t(2)<<32|L))); // round 2: s = b
+  L = ma&(L+cast_uint128<uint32_t>(threefry(key,uint64_t(3)<<32|R))); // round 3: s = a
   return uint64_t(L)<<b|R;
 }
 
@@ -36,11 +36,11 @@ static inline uint64_t fe2_decrypt(const int bits, const uint128_t key, const ui
   const int a = bits>>1, b = bits-a; // logs of a,b in the paper
   const uint32_t ma = (uint64_t(1)<<a)-1, // bit masks
                  mb = (uint64_t(1)<<b)-1;
-  uint32_t L = x>>b, R = x&mb;
+  uint32_t L = uint32_t(x>>b), R = x&mb;
   // Three rounds of FE2
-  L = ma&(L-threefry(key,uint64_t(3)<<32|R)); // round 3: s = a
-  R = mb&(R-threefry(key,uint64_t(2)<<32|L)); // round 2: s = b
-  L = ma&(L-threefry(key,uint64_t(1)<<32|R)); // round 1: s = a
+  L = ma&(L-cast_uint128<uint32_t>(threefry(key,uint64_t(3)<<32|R))); // round 3: s = a
+  R = mb&(R-cast_uint128<uint32_t>(threefry(key,uint64_t(2)<<32|L))); // round 2: s = b
+  L = ma&(L-cast_uint128<uint32_t>(threefry(key,uint64_t(1)<<32|R))); // round 1: s = a
   return uint64_t(L)<<b|R;
 }
 

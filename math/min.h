@@ -5,15 +5,19 @@
 
 #include <other/core/utility/config.h>
 #include <algorithm>
+#ifdef __SSE__
 #include <xmmintrin.h>
+#endif
 namespace other {
 
 #undef min
 using ::std::min;
 
 // Forward declarations required by clang
+#ifdef __SSE__
 inline __m128 min(__m128 a, __m128 b);
 inline __m128i min(__m128i a, __m128i b);
+#endif
 
 template<class T> inline T min(const T a,const T b,const T c) {
   return min(a,min(b,c));

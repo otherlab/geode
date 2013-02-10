@@ -9,7 +9,7 @@
 
 #define ENABLED 0
 
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 
 #if ! Enabled
 

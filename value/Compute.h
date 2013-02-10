@@ -10,6 +10,7 @@
 #include <other/core/utility/format.h>
 #include <other/core/utility/remove_const_reference.h>
 #include <boost/function.hpp>
+#include <stdio.h>
 namespace other{
 
 using boost::function;

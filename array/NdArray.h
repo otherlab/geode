@@ -10,6 +10,7 @@
 #include <other/core/array/Array.h>
 namespace other {
 
+using std::ostream;
 template<class T> OTHER_CORE_EXPORT PyObject* to_python(const NdArray<T>& array);
 template<class T> struct FromPython<NdArray<T> >{OTHER_CORE_EXPORT static NdArray<T> convert(PyObject* object);};
 
@@ -147,4 +148,9 @@ public:
     return (*this)(I.x,I.y,I.z,I.w);
   }
 };
+
+template<class T> inline ostream& operator<<(ostream& output, const NdArray<T>& a) {
+  return output << "NdArray(shape=" << a.shape << ",flat=" << a.flat << ')';
+}
+
 }

@@ -2,7 +2,7 @@
 
 #include <other/core/utility/resource.h>
 #include <other/core/array/Array.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/python/utility.h>
 #if defined(_WIN32)
 #define WINDOWS_MEAN_AND_LEAN
@@ -12,6 +12,7 @@
 #elif defined(__linux__)
 #include <unistd.h>
 #endif
+#include <errno.h>
 namespace other {
 
 // Grab a path to the current executable
@@ -40,8 +41,8 @@ static string executable_path() {
   uint32_t size = sizeof(small)-1;
   if (!_NSGetExecutablePath(small,&size))
     return small;
-  Array<char> large(size,false); 
-  OTHER_ASSERT(!_NSGetExecutablePath(large.data(),&size)); 
+  Array<char> large(size,false);
+  OTHER_ASSERT(!_NSGetExecutablePath(large.data(),&size));
   return large.data();
 #elif defined(__linux__)
   for (ssize_t n=128;;n*=2) {
@@ -59,6 +60,8 @@ static string executable_path() {
 
 static string& helper() {
   static string path = path::dirname(executable_path());
+  if (path.empty())
+    path = ".";
   return path;
 }
 
@@ -85,10 +88,10 @@ void wrap_resource() {
 #ifdef OTHER_PYTHON
   // Python is active, so set the executable path to the script directory
   Ref<> sys = steal_ref_check(PyImport_ImportModule("sys"));
-  Ref<> argv = python_field(sys,"argv"); 
-  Ref<> argv0 = steal_ref_check(PySequence_GetItem(&*argv,0)); 
+  Ref<> argv = python_field(sys,"argv");
+  Ref<> argv0 = steal_ref_check(PySequence_GetItem(&*argv,0));
   helper() = path::dirname(from_python<string>(argv0));
 #endif
   OTHER_FUNCTION(resource_path)
-  OTHER_FUNCTION_2(resource,static_cast<string(*)(const string&)>(resource))
+  OTHER_FUNCTION_2(resource_py,static_cast<string(*)(const string&)>(resource))
 }

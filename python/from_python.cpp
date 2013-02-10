@@ -8,10 +8,8 @@ namespace other {
 #ifdef OTHER_PYTHON
 
 bool FromPython<bool>::convert(PyObject* object) {
-  // Accept only bool/int to avoid confusion
-  if (!PyInt_Check(object))
-      throw_type_error(object,&PyInt_Type);
-  return PyInt_AS_LONG(object)!=0;
+  // Accept only exact integers to avoid confusion
+  return FromPython<long>::convert(object)!=0; 
 }
 
 long FromPython<long>::convert(PyObject* object) {
@@ -46,6 +44,24 @@ int FromPython<unsigned int>::convert(PyObject* object) {
     throw_python_error();
   }
   return (unsigned int)i;
+}
+
+long long FromPython<long long>::convert(PyObject* object) {
+  long long i = (long long)PyInt_AsUnsignedLongLongMask(object);
+  if (i==-1 && PyErr_Occurred())
+    throw_python_error();
+  // Check that the conversion was exact
+  PyObject* y = PyLong_FromLongLong(i);
+  if (!y) throw_python_error();
+  int eq = PyObject_RichCompareBool(object,y,Py_EQ);
+  Py_DECREF(y);
+  if (eq<0)
+    throw_python_error();
+  if (!eq) {
+    PyErr_SetString(PyExc_TypeError,format("expected long long, got %s",from_python<const char*>(steal_ref_check(PyObject_Str(object)))).c_str());
+    throw_python_error();
+  }
+  return i;
 }
 
 unsigned long long FromPython<unsigned long long>::convert(PyObject* object) {

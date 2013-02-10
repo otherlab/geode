@@ -5,7 +5,7 @@
 
 #include <other/core/value/forward.h>
 #include <other/core/python/Object.h>
-#include <other/core/python/to_python.h>
+#include <other/core/python/try_convert.h>
 #include <other/core/python/ExceptionValue.h>
 #include <other/core/utility/Optional.h>
 #include <other/core/vector/Vector.h>
@@ -68,14 +68,11 @@ public:
   }
 
   template<class T> const Value<T>* cast() const {
-    const type_info &goal = typeid(T),
-                    &self = type();
-    if (goal==self || !strcmp(goal.name(),self.name())) // Use string comparison to avoid symbol visibility issues
-      return static_cast<const Value<T>*>(this);
-    return 0;
+    return is_type(typeid(T)) ? static_cast<const Value<T>*>(this) : 0;
   }
 
-  OTHER_CORE_EXPORT void signal() const ;
+  OTHER_CORE_EXPORT bool is_type(const type_info& type) const;
+  OTHER_CORE_EXPORT void signal() const;
 
   virtual void dump(int indent) const = 0;
   virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
@@ -84,7 +81,7 @@ public:
   OTHER_CORE_EXPORT ValueBase& set_name(const string& n);
 
 private:
-  OTHER_CORE_EXPORT void pull() const ;
+  OTHER_CORE_EXPORT void pull() const;
 
   virtual void update() const = 0;
   static inline void signal_pending();
@@ -154,7 +151,7 @@ public:
 #ifdef OTHER_PYTHON
   PyObject* get_python() const {
     pull();
-    return to_python(*value);
+    return try_to_python(*value);
   }
 #endif
 

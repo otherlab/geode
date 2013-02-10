@@ -4,7 +4,7 @@
 #include <other/core/exact/scope.h>
 #include <other/core/array/sort.h>
 #include <other/core/math/choice.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
 #include <other/core/utility/Log.h>
 #include <tr1/unordered_map>

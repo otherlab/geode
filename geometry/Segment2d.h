@@ -7,13 +7,16 @@
 #include <other/core/geometry/forward.h>
 #include <other/core/geometry/Box.h>
 #include <other/core/vector/Vector2d.h>
+#include <other/core/vector/normalize.h>
 namespace other{
 
-template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) 
-{return (x1-x0).normalized().rotate_right_90();}
+template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) {
+  return rotate_right_90(normalized(x1-x0));
+}
 
-template<class TArray> inline typename EnableForSize<2,TArray,typename TArray::Element>::type normal(const TArray& X)
-{return normal(X[0],X[1]);}
+template<class TArray> inline typename EnableForSize<2,TArray,typename TArray::Element>::type normal(const TArray& X) {
+  return normal(X[0],X[1]);
+}
 
 template<class T>
 class Segment<Vector<T,2> >
@@ -57,7 +60,7 @@ public:
     {return (T).5*(x0+x1);}
 
     static TV normal(const TV& x0,const TV& x1) 
-    {return (x1-x0).normalized().rotate_right_90();}
+    {return rotate_right_90(normalized(x1-x0));}
 
     TV normal() const
     {return Segment::normal(x0,x1);}
@@ -130,7 +133,7 @@ public:
     TV closest_point_on_line(const TV& point) const;
     T distance_from_point_to_line(const TV& point) const;
     TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;
-    bool segment_segment_intersection(const Segment<TV>& segment,const T thickness_over_2=0) const;
+    OTHER_CORE_EXPORT bool segment_segment_intersection(const Segment<TV>& segment,const T thickness_over_2=0) const;
     int segment_segment_interaction(const Segment<TV>& segment,const TV& v1,const TV& v2,const TV& v3,const TV& v4,
         const T interaction_distance,T& distance,TV& normal,T& a,T& b,T& relative_speed,const T small_number=0) const;
     bool intersection(Ray<Vector<T,2> >& ray,const T thickness_over_two) const;

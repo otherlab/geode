@@ -20,6 +20,7 @@
 #include <other/core/python/exceptions.h>
 #include <other/core/python/Object.h>
 #include <other/core/utility/config.h>
+#include <other/core/utility/validity.h>
 #include <boost/type_traits/is_base_of.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <string>
@@ -52,6 +53,7 @@ template<> struct FromPython<int>{OTHER_CORE_EXPORT static int convert(PyObject*
 template<> struct FromPython<unsigned int>{OTHER_CORE_EXPORT static int convert(PyObject* object);};
 template<> struct FromPython<long>{OTHER_CORE_EXPORT static long convert(PyObject* object);};
 template<> struct FromPython<unsigned long>{OTHER_CORE_EXPORT static unsigned long convert(PyObject* object);};
+template<> struct FromPython<long long>{OTHER_CORE_EXPORT static long long convert(PyObject* object);};
 template<> struct FromPython<unsigned long long>{OTHER_CORE_EXPORT static unsigned long long convert(PyObject* object);};
 template<> struct FromPython<float>{OTHER_CORE_EXPORT static float convert(PyObject* object);};
 template<> struct FromPython<double>{OTHER_CORE_EXPORT static double convert(PyObject* object);};
@@ -63,7 +65,7 @@ template<> struct FromPython<char>{OTHER_CORE_EXPORT static char convert(PyObjec
 template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T> >::type>{static T&
 convert(PyObject* object) {
   if (!boost::is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
-    unregistered_python_type(object,&T::pytype);
+    unregistered_python_type(object,&T::pytype,typeid(T));
   if (!PyObject_IsInstance(object,(PyObject*)&T::pytype))
     throw_type_error(object,&T::pytype);
   return *(T*)(object+1);
@@ -85,5 +87,10 @@ template<class T> struct FromPython<const T> : public FromPython<T>{};
 template<class T> struct FromPython<shared_ptr<T> >{static shared_ptr<T> convert(PyObject* object) {
   OTHER_NOT_IMPLEMENTED();
 }};
+
+#ifdef OTHER_PYTHON
+// Declare has_from_python<T>
+OTHER_VALIDITY_CHECKER(has_from_python,T,from_python<T>(0))
+#endif
 
 }

@@ -4,7 +4,7 @@
 #include <other/core/array/Array2d.h>
 #include <other/core/python/numpy.h>
 #include <other/core/vector/Vector.h>
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
 #include <other/core/vector/blas.h>
 #include <mkl_trans.h>
 #endif
@@ -13,7 +13,7 @@ namespace other {
 Array<real,2> identity_matrix(int m,int n) {
   if (n<0) n = m;
   Array<real,2> A(m,n,false);
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
   laset(' ',0,1,A);
 #else
   memset(A.data(),0,m*n*sizeof(real));
@@ -26,7 +26,7 @@ Array<real,2> identity_matrix(int m,int n) {
 template<class T> static inline Array<T,2> dot_helper(Subarray<const T,2> A, Subarray<const T,2> B) {
   OTHER_ASSERT(A.n==B.m);
   Array<T,2> C(A.m,B.n,false);
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
   gemm(1,A,B,0,C);
 #else
   for (int i=0;i<C.m;i++) for (int j=0;j<C.n;j++) {
@@ -44,7 +44,7 @@ Array<double,2> dot(Subarray<const double,2> A,Subarray<const double,2> B){retur
 template<class T> static inline Array<T> dot_helper(Subarray<const T,2> A, RawArray<const T> x) {
   OTHER_ASSERT(A.n==x.size());
   Array<T> y(A.m,false);
-#ifdef USE_MKL
+#if defined(OTHER_BLAS) && defined(USE_MKL)
   gemv(1,A,x,0,y);
 #else
   for (int i=0;i<A.m;i++) {

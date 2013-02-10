@@ -388,6 +388,11 @@ public:
     const T* end() const // for stl
     {return &z+1;}
 
+    T& front() { return x; }
+    const T& front() const { return x; }
+    T& back() { return z; }
+    const T& back() const { return z; }
+
 //#####################################################################
 };
 
@@ -466,9 +471,9 @@ template<class T> inline Vector<T,3>
 cross(const Vector<T,3>& v1,const Vector<T,3>& v2) // 6 mults, 3 adds
 {return Vector<T,3>(v1.y*v2.z-v1.z*v2.y,v1.z*v2.x-v1.x*v2.z,v1.x*v2.y-v1.y*v2.x);}
 
-template<class T> inline T
-angle_between(const Vector<T,3>& u,const Vector<T,3>& v) // 0 .. pi
-{T s=cross(u,v).magnitude(),c=dot(u,v);return atan2(s,c);}
+template<class T> inline T angle_between(const Vector<T,3>& u, const Vector<T,3>& v) { // 0 .. pi
+  return atan2(magnitude(cross(u,v)),dot(u,v));
+}
 
 template<class T> inline T
 det(const Vector<T,3>& u,const Vector<T,3>& v,const Vector<T,3>& w)

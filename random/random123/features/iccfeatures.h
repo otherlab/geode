@@ -82,10 +82,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // where the boolean expression might contain previously-defined R123_SOMETHING_ELSE
 // pp-symbols.
 
-#ifndef R123_USE_CXX0X
-#define R123_USE_CXX0X 0
-#endif
-
 #ifndef R123_USE_SSE4_2
 #ifdef __SSE4_2__
 #define R123_USE_SSE4_2 1
@@ -123,10 +119,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 11.1 onwards.
 //
 #define R123_USE_AES_NI ((__ICC>=1101) && defined(__AES__))
-#endif
-
-#ifndef R123_USE_STD_RANDOM
-#define R123_USE_STD_RANDOM 0
 #endif
 
 #ifndef R123_USE_AES_OPENSSL

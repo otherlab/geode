@@ -41,6 +41,7 @@ public:
   void add_frequency_squared(RawArray<T> frequency_squared) const;
   T strain_rate(RawArray<const TV> V) const;
 
+  int nodes() const;
   void structure(SolidMatrixStructure& structure) const;
   void add_elastic_gradient(SolidMatrix<TV>& matrix) const;
   void add_damping_gradient(SolidMatrix<TV>& matrix) const;

@@ -4,8 +4,8 @@
 #include <other/core/vector/Matrix.h>
 #include <other/core/array/convert.h>
 #include <other/core/python/numpy.h>
-#include <other/core/python/module.h>
-namespace other{
+#include <other/core/python/wrap.h>
+namespace other {
 
 #ifdef OTHER_PYTHON
 

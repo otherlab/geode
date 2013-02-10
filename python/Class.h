@@ -28,7 +28,7 @@
 #pragma once
 
 #include <other/core/python/config.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <other/core/python/Object.h>
 #include <other/core/utility/Enumerate.h>
 #ifdef OTHER_PYTHON
@@ -61,7 +61,7 @@ OTHER_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObje
   PyTypeObject __VA_ARGS__::pytype = { \
     PyObject_HEAD_INIT(&PyType_Type) \
     0,                                           /* ob_size */\
-    "other_default_name:" __FILE__,              /* tp_name */\
+    "other_default_name:" __FILE__ ":" #__VA_ARGS__, /* tp_name */\
     sizeof(other::PyObject)+sizeof(__VA_ARGS__), /* tp_basicsize */\
     0,                                           /* tp_itemsize */\
     other::Class<__VA_ARGS__>::dealloc,          /* tp_dealloc */\
@@ -273,7 +273,7 @@ const_field(S T::* field) {
   OTHER_METHOD_2(#method_,method_)
 
 #define OTHER_OVERLOADED_METHOD_2(type,name,method_) \
-  method< type >(name,&Self::method_)
+  method(name,static_cast<type>(&Self::method_))
 
 #define OTHER_OVERLOADED_METHOD(type,method_) \
   OTHER_OVERLOADED_METHOD_2(type,#method_,method_)

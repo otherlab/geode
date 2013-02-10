@@ -174,9 +174,11 @@ LogClass::~LogClass() {
 }
 
 void cache_initial_output() {
-  log_file = tmpfile();
-  if (!log_file) OTHER_FATAL_ERROR("Couldn't create temporary log file");
-  log_file_temporary = true;
+  if (!log_file) {
+    log_file = tmpfile();
+    if (!log_file) OTHER_FATAL_ERROR("Couldn't create temporary log file");
+    log_file_temporary = true;
+  }
 }
 
 ostream& cout_Helper() {
@@ -187,6 +189,10 @@ ostream& cout_Helper() {
 ostream& cerr_Helper() {
   static InitializationHelper<ostream> helper(new ostream(std::cerr.rdbuf()),cerr_initialized); // Necessary for DLLs to work. Cannot use static class data across dlls
   return *helper.object;
+}
+
+bool initialized() {
+  return bool(private_instance);
 }
 
 void configure(const string& root_name_input, const bool suppress_cout_input, const bool suppress_timing_input, const int verbosity_level_input) {

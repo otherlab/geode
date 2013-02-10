@@ -70,10 +70,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // where the boolean expression might contain previously-defined R123_SOMETHING_ELSE
 // pp-symbols.
 
-#ifndef R123_USE_CXX0X
-#define R123_USE_CXX0X 0
-#endif
-
 #ifndef R123_USE_AES_NI
 #define R123_USE_AES_NI 0
 #endif
@@ -88,10 +84,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef R123_USE_SSE
 #define R123_USE_SSE 0
-#endif
-
-#ifndef R123_USE_STD_RANDOM
-#define R123_USE_STD_RANDOM 0
 #endif
 
 #ifndef R123_USE_AES_OPENSSL

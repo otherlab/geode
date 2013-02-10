@@ -93,7 +93,7 @@ To accomodate multiple frames, a future version may allow several
 
 """
 
-__all__=['read','write','Atom']
+__all__ = 'read write pack unpack Atom'.split()
 
 import sys
 import zlib
@@ -283,17 +283,8 @@ def make_atom(name,value):
   atom.name = name
   return atom
 
-def read(filename):
-  """Read the contents of a .try file in its entirety.
-
-  Return (name,data), where data is the parsed contents of the
-  toplevel tree atom.  The mapping from atom data to python types
-  is dict to dict, array to array, as one would expect.  Unknown
-  atom types are parsed into Atom.
-
-  """
-  # Read header
-  file = open(filename)
+def read_stream(file):
+  '''Read a .try file from an open stream.'''
   if file.read(4)!=signature:
     raise IOError('bad signature')
   header_size = read_uint(file)
@@ -328,22 +319,15 @@ def read(filename):
   data_end = file.tell()
   if data_end-data_start!=data_size:
     raise IOError('expected data size %d, got %d'%(data_size,data_end-data_start))
-
   return result
 
-def write(filename,value):
-  """Write a new .try file in its entirety.
-
-  Data must be a nested tree of dictionaries with scalars or numpy
-  arrays as leaves.
-
-  """
+def write_stream(file,value):
+  '''Write a .try file to an open stream.'''
   # Build atom tree in memory 
   atom = make_atom('',value)
   tree = atom.to_str()
 
   # Write header
-  file = open(filename,'w')
   file.write(signature)
   tree_size = len(tree)
   data_size = atom.data_size
@@ -356,6 +340,32 @@ def write(filename,value):
 
   # Write data
   atom.write_data(file)
+
+def read(filename):
+  '''Read the contents of a .try file in its entirety.
+
+  Return (name,data), where data is the parsed contents of the
+  toplevel tree atom.  The mapping from atom data to python types
+  is dict to dict, array to array, as one would expect.  Unknown
+  atom types are parsed into Atom.'''
+  return read_stream(open(filename,'rb'))
+
+def write(filename,value):
+  '''Write a new .try file in its entirety.
+
+  Data must be a nested tree of dictionaries with scalars or numpy
+  arrays as leaves.'''
+  write_stream(open(filename,'wb'),value)
+
+def unpack(buffer):
+  '''Unpack a string in .try format into data.'''
+  return read_stream(StringIO(buffer))
+
+def pack(value):
+  '''Pack data into a .try format string.'''
+  file = StringIO()
+  write_stream(file,value)
+  return file.getvalue()
 
 ### Dict
 
@@ -384,14 +394,16 @@ def make_array(a):
         break
     else:
       raise TypeError("unregistered dtype '%s'"%a.dtype)
-  return ''.join([uint_to_str(i) for i in (dtype,len(a.shape))+a.shape]+[a.tostring()])
+  # Convert numpy array to little endian buffer, flipping endianness if necessary
+  return ''.join([uint_to_str(i) for i in (dtype,len(a.shape))+a.shape]+[a.astype(a.dtype.newbyteorder('<')).tostring()])
 
 def parse_array(data,version):
   file = StringIO(data)
   dtype = int_to_dtype[read_uint(file)]
   rank = read_uint(file)
   shape = [read_uint(file) for _ in xrange(rank)]
-  array = (numpy.frombuffer(data,dtype=dtype,offset=file.tell()) if numpy.product(shape) else numpy.empty(0,dtype)).reshape(shape)
+  # Convert little endian buffer to a numpy array, flipping endianness if necessary
+  array = (numpy.frombuffer(data,dtype=dtype.newbyteorder('<'),offset=file.tell()).astype(dtype) if numpy.product(shape) else numpy.empty(0,dtype)).reshape(shape)
   return numpy.require(array,requirements='a')
 
 register_leaf('array',numpy.ndarray,make_array,parse_array)

@@ -33,10 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* The gcc features are mostly right.  We just override a few and then include gccfeatures.h */
 
-#ifndef R123_USE_STD_RANDOM
-#define R123_USE_STD_RANDOM 0
-#endif
-
 /* Open64 4.2.3 and 4.2.4 accept the __uint128_t code without complaint
    but produce incorrect code for 64-bit philox.  The MULHILO64_ASM
    seems to work fine */

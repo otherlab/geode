@@ -4,6 +4,13 @@
 #include <other/core/python/Buffer.h>
 using namespace other;
 
+// Must match memory allocation routine in header
+#ifndef _WIN32
+#define free_buffer free
+#else
+#define free_buffer _aligned_free
+#endif
+
 #ifdef OTHER_PYTHON
 
 PyTypeObject Buffer::pytype = {
@@ -12,7 +19,7 @@ PyTypeObject Buffer::pytype = {
     "other.Buffer",             // tp_name
     sizeof(Buffer),             // tp_basicsize
     0,                          // tp_itemsize
-    (destructor)free,           // tp_dealloc
+    (destructor)free_buffer,    // tp_dealloc
     0,                          // tp_print
     0,                          // tp_getattr
     0,                          // tp_setattr
@@ -54,8 +61,8 @@ PyTypeObject Buffer::pytype = {
 #else // non-python stub
 
 PyTypeObject Buffer::pytype = {
-  "other.Buffer",           // tp_name
-  (void(*)(PyObject*))free, // tp_dealloc
+  "other.Buffer",                  // tp_name
+  (void(*)(PyObject*))free_buffer, // tp_dealloc
 };
 
 #endif

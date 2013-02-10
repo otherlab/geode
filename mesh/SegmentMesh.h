@@ -33,9 +33,13 @@ private:
   mutable NestedArray<int> incident_elements_;
   mutable Array<Vector<int,2> > adjacent_elements_;
   mutable Tuple<NestedArray<const int>,NestedArray<const int>> polygons_;
+  mutable bool bending_tuples_valid;
+  mutable Array<Vector<int,3>> bending_tuples_;
 
 protected:
-OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
+  OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
+
+  int compute_node_count() const;
 public:
   ~SegmentMesh();
 
@@ -54,6 +58,7 @@ public:
   OTHER_CORE_EXPORT Array<const Vector<int,2> > adjacent_elements() const; // segment to segments
   OTHER_CORE_EXPORT Array<TV2> element_normals(RawArray<const TV2> X) const;
   OTHER_CORE_EXPORT Array<int> nonmanifold_nodes(bool allow_boundary) const;
+  OTHER_CORE_EXPORT Array<const Vector<int,3>> bending_tuples() const;
 };
 
 }

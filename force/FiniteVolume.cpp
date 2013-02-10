@@ -40,6 +40,10 @@ template<class TV,int d> FiniteVolume<TV,d>::
 ~FiniteVolume()
 {}
 
+template<class TV,int d> int FiniteVolume<TV,d>::nodes() const {
+  return strain->nodes;
+}
+
 template<class TV,int d> void FiniteVolume<TV,d>::
 structure(SolidMatrixStructure& structure) const
 {

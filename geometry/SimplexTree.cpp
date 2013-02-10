@@ -53,6 +53,30 @@ template<class TV,int d> void SimplexTree<TV,d>::update() {
   update_nonleaf_boxes();
 }
 
+static void intersection_helper(const SimplexTree<Vector<real,3>,2>& self, const Plane<real>& p, int node, Array<Segment<Vector<real,3>>>& results) {
+  if (p.intersection<Zero>(self.boxes[node])) {
+    if (!self.is_leaf(node)) {
+      intersection_helper(self,p,2*node+1,results);
+      intersection_helper(self,p,2*node+2,results);
+    } else
+      for (int t : self.prims(node)){
+        Segment<Vector<real,3>> seg;
+        if(self.simplices[t].intersection(p,seg))
+          results.append(seg);
+      }
+  }
+}
+
+template<class TV,int d> void SimplexTree<TV,d>::intersections(const Plane<T>& plane, Array<Segment<TV>>& result) const {
+  OTHER_NOT_IMPLEMENTED();
+}
+
+template<> void SimplexTree<Vector<real,3>,2>::intersections(const Plane<real>& plane, Array<Segment<Vector<real,3>>>& result) const {
+  result.clear();
+  if (boxes.size())
+    intersection_helper(*this,plane,0,result);
+}
+
 template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, typename TV::Scalar thickness_over_two, int node) {
   if (self.boxes[node].lazy_intersects(ray,thickness_over_two)) {
     if (!self.is_leaf(node)) {
@@ -67,7 +91,8 @@ template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>
 
 template<class TV,int d> bool SimplexTree<TV,d>::
 intersection(Ray<TV>& ray, T thickness_over_two) const {
-  if(boxes.size() == 0) return false; // No intersections possible for empty trees
+  if (boxes.size() == 0)
+    return false; // No intersections possible for empty trees
   int aggregate_save = ray.aggregate_id;
   ray.aggregate_id = -1;
   intersection_helper(*this,ray,thickness_over_two,0);
@@ -81,7 +106,8 @@ intersection(Ray<TV>& ray, T thickness_over_two) const {
 template<class TV,int d> void SimplexTree<TV,d>::
 intersection(const Sphere<TV>& sphere,Array<int>& hits) const {
   hits.clear();
-  intersection_helper(*this,sphere,hits,0);
+  if (boxes.size())
+    intersection_helper(*this,sphere,hits,0);
 }
 
 template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, const Sphere<TV>& sphere, Array<int>& hits, int node) {
@@ -96,7 +122,7 @@ template<class TV,int d> static void intersection_helper(const SimplexTree<TV,d>
   }
 }
 
-template<class TV,int d> static void multi_intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, typename TV::Scalar thickness_over_two, int node, std::vector<Ray<TV> >& results) {
+template<class TV,int d> static void multi_intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, typename TV::Scalar thickness_over_two, int node, Array<Ray<TV> >& results) {
   if(self.boxes[node].lazy_intersects(ray,thickness_over_two)){
     if(!self.is_leaf(node)){
       multi_intersection_helper(self,ray,thickness_over_two,2*node+1,results);
@@ -106,7 +132,7 @@ template<class TV,int d> static void multi_intersection_helper(const SimplexTree
         Ray<TV> copy = ray;
         if(self.simplices[t].intersection(copy,thickness_over_two)){
           copy.aggregate_id=t;
-          results.push_back(copy);
+          results.append(copy);
         }
       }
     }
@@ -115,15 +141,14 @@ template<class TV,int d> static void multi_intersection_helper(const SimplexTree
 
 template<> void intersection_helper(const SimplexTree<Vector<real,2>,2>& self, Ray<Vector<real,2>>& ray, real thickness_over_two, int node) { OTHER_NOT_IMPLEMENTED(); }
 template<> void intersection_helper(const SimplexTree<Vector<real,3>,1>& self, Ray<Vector<real,3>>& ray, real thickness_over_two, int node) { OTHER_NOT_IMPLEMENTED(); }
+template<> void multi_intersection_helper(const SimplexTree<Vector<real,2>,2>& self, Ray<Vector<real,2>>& ray, real thickness_over_two, int node, Array<Ray<Vector<real,2> > >& results) { OTHER_NOT_IMPLEMENTED(); }
+template<> void multi_intersection_helper(const SimplexTree<Vector<real,3>,1>& self, Ray<Vector<real,3>>& ray, real thickness_over_two, int node, Array<Ray<Vector<real,3> > >& results) { OTHER_NOT_IMPLEMENTED(); }
 
-template<> void multi_intersection_helper(const SimplexTree<Vector<real,2>,2>& self, Ray<Vector<real,2>>& ray, real thickness_over_two, int node, std::vector<Ray<Vector<real,2> > >& results) { OTHER_NOT_IMPLEMENTED(); }
-template<> void multi_intersection_helper(const SimplexTree<Vector<real,3>,1>& self, Ray<Vector<real,3>>& ray, real thickness_over_two, int node, std::vector<Ray<Vector<real,3> > >& results) { OTHER_NOT_IMPLEMENTED(); }
-
-
-template<class TV,int d> std::vector<Ray<TV> > SimplexTree<TV,d>::
+template<class TV,int d> Array<Ray<TV> > SimplexTree<TV,d>::
 intersections(Ray<TV>& ray,T thickness_over_two) const {
-  std::vector<Ray<TV> > results;
-  multi_intersection_helper(*this,ray,thickness_over_two,0,results);
+  Array<Ray<TV> > results;
+  if (boxes.size())
+    multi_intersection_helper(*this,ray,thickness_over_two,0,results);
   return results;
 }
 
@@ -161,7 +186,8 @@ template<class T> static inline bool inside_plane(const Triangle<Vector<T,2>>& s
 
 template<class TV,int d> bool SimplexTree<TV,d>::
 inside(TV point) const {
-  typedef typename TV::Scalar T;
+  if (!boxes.size())
+    return false;
   const T small = sqrt(numeric_limits<T>::epsilon());
   // Fire rays in random directions until we hit either nothing or a pure simplex.
   const T epsilon = small*bounding_box().sizes().max();
@@ -243,6 +269,7 @@ template class SimplexTree<Vector<real,3>,2>;
 using namespace other;
 
 template<class TV,int d> static void wrap_helper() {
+  typedef typename TV::Scalar T;
   typedef SimplexTree<TV,d> Self;
   static const string name = format("%sTree%dd",(d==1?"Segment":"Triangle"),TV::m);
   Class<Self>(name.c_str())
@@ -250,6 +277,7 @@ template<class TV,int d> static void wrap_helper() {
     .OTHER_FIELD(mesh)
     .OTHER_FIELD(X)
     .OTHER_METHOD(update)
+    .OTHER_OVERLOADED_METHOD(TV(Self::*)(TV,T)const, closest_point)
     ;
 }
 

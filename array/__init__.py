@@ -1,9 +1,13 @@
 from __future__ import absolute_import
 
-import other.core.utility
+import platform
 from numpy import *
-from other_core import *
-from other_core import _set_nested_array
+if platform.system()=='Windows':
+  from other_all import *
+  from other_all import _set_nested_array
+else:
+  from other_core import *
+  from other_core import _set_nested_array
 
 class NestedArray(object):
   """Represents a nested array of arrays using flat storage for efficiency.

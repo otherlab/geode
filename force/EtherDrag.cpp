@@ -17,6 +17,10 @@ EtherDrag(Array<const T> mass, T drag)
 template<class TV> EtherDrag<TV>::
 ~EtherDrag() {}
 
+template<class TV> int EtherDrag<TV>::nodes() const {
+  return mass.size();
+}
+
 template<class TV> void EtherDrag<TV>::
 structure(SolidMatrixStructure& structure) const {}
 

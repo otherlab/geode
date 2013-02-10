@@ -3,10 +3,12 @@
 
 #include <other/core/math/copysign.h>
 #include <other/core/math/isfinite.h>
+#include <boost/type_traits/is_fundamental.hpp>
+#include <iostream>
+
+#ifdef __SSE__
 #include <xmmintrin.h>
 #include <emmintrin.h>
-#include <iostream>
-#include <boost/type_traits/is_fundamental.hpp>
 namespace other {
 
 // Declaring these is legal on Windows, and they already exist for clang/gcc.
@@ -116,7 +118,7 @@ static inline __m128 copysign(__m128 mag, __m128 sign) {
 }
 
 static inline std::ostream& operator<<(std::ostream& os, __m128 a) {
-  float x[4];
+  OTHER_ALIGNED(16) float x[4];
   _mm_store_ps(x,a);
   return os<<'['<<x[0]<<','<<x[1]<<','<<x[2]<<','<<x[3]<<']';
 }
@@ -140,3 +142,4 @@ static inline void transpose(__m128i& i0, __m128i& i1, __m128i& i2, __m128i& i3)
 }
 
 }
+#endif

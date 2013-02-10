@@ -16,7 +16,7 @@
 #include <signal.h>
 #include <execinfo.h>
 #endif
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(__SSE__)
 #include <xmmintrin.h>
 #endif
 
@@ -75,6 +75,7 @@ static void float_exception_handler(int sig_number, siginfo_t* info, void *data)
 }
 
 #ifdef __APPLE__
+#ifdef __SSE__
 
 // feenableexcept and fedisableexcept are not defined, so define them
 
@@ -96,6 +97,12 @@ static void feenableexcept(int flags) {
   _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~flags_to_mask(flags));
 }
 
+#else // No SSE
+
+static void fedisableexcept(int flags) { OTHER_NOT_IMPLEMENTED(); }
+static void feenableexcept(int flags) { OTHER_NOT_IMPLEMENTED(); }
+
+#endif
 #endif
 
 void set_float_exceptions(const int exceptions) {

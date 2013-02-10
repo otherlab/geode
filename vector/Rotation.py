@@ -10,7 +10,7 @@ from __future__ import (division,absolute_import)
 import numpy
 from numpy import *
 from . import *
-from other.core.python import real
+real = other_core.real
 
 class Rotations2d(ndarray):
     d = 2
@@ -204,5 +204,4 @@ def identity(d):
 def random(*shape):
   return from_sv(normalized(numpy.random.randn(*(shape+(4,)))))
 
-import other_core
 other_core._set_rotation_types(Rotations2d,Rotations3d)

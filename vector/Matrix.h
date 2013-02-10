@@ -177,9 +177,6 @@ public:
     Matrix<T,n> normal_equations_matrix() const
     {Matrix<T,n> result;for(int i=0;i<n;i++) for(int j=0;j<n;j++) for(int k=0;k<m;k++) result.x[i][j]+=x[k][i]*x[k][j];return result;}
 
-    Vector<T,n> normal_equations_solve(const Vector<T,m>& b) const
-    {Matrix<T,n> A_transpose_A(normal_equations_matrix());Vector<T,n> A_transpose_b(transpose_times(b));return A_transpose_A.cholesky_solve(A_transpose_b);}
-
     template<class TVector>
     Vector<T,n> solve_linear_system(const TVector& b)
     {return PLU_Solve(b);}

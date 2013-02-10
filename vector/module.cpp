@@ -4,7 +4,7 @@
 #include <other/core/vector/Matrix.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/array/NdArray.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <sstream>
 using namespace other;
 namespace {

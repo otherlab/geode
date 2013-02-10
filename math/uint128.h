@@ -7,9 +7,13 @@
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/static_assert.hpp>
 #include <stdint.h>
+#include <string>
 namespace other {
 
-#if defined(__GNUC__) && defined(__x86_64__)
+using std::string;
+using std::ostream;
+
+#if defined(__GNUC__) && defined(__LP64__)
 
 // Use the native integer type if possible
 typedef __uint128_t uint128_t;
@@ -125,6 +129,8 @@ template<class I> inline I cast_uint128(const uint128_t& n) {
 
 #endif
 
+OTHER_CORE_EXPORT string str(uint128_t n);
+OTHER_CORE_EXPORT ostream& operator<<(ostream& output, uint128_t n);
 OTHER_CORE_EXPORT PyObject* to_python(uint128_t n);
 template<> struct FromPython<uint128_t>{OTHER_CORE_EXPORT static uint128_t convert(PyObject* object);};
 

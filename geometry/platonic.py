@@ -32,4 +32,47 @@ def circle_mesh(n,center=0,radius=1):
   if center is None:
     return mesh
   theta = 2*pi/n*i
-  return mesh,(radius*vstack([cos(theta),sin(theta)])).T.copy() 
+  return mesh,(radius*vstack([cos(theta),sin(theta)])).T.copy()
+
+def open_cylinder_topology(na,nz):
+  '''Construct a open cylinder TriangleMesh with na triangles around and nz along'''
+  i = arange(na)
+  j = arange(nz).reshape(-1,1)
+  tris = empty((nz,na,2,3),dtype=int32)
+  ip = (i+1)%na
+  tris[:,:,0,0] = tris[:,:,1,0] = na*j+ip
+  tris[:,:,0,1] = na*j+i
+  tris[:,:,0,2] = tris[:,:,1,1] = na*(j+1)+i
+  tris[:,:,1,2] = na*(j+1)+ip
+  return TriangleMesh(tris.reshape(-1,3))
+
+def surface_of_revolution(base,axis,radius,height,resolution):
+  '''Construct a surface of revolution with radius and height curves'''
+  shape = broadcast(radius,height).shape
+  assert len(shape)==1
+  x = unit_orthogonal_vector(axis)
+  y = normalized(cross(axis,x))
+  a = 2*pi/resolution*arange(resolution)
+  circle = x*cos(a).reshape(-1,1)-y*sin(a).reshape(-1,1)
+  X = base+radius[...,None,None]*circle+height[...,None,None]*axis
+  return open_cylinder_topology(resolution,shape[0]-1),X.reshape(-1,3)
+
+def open_cylinder_mesh(x0,x1,radius,na,nz=None):
+  '''radius may be a scalar or a 1d array'''
+  radius = asarray(radius)
+  if nz is None:
+    assert radius.ndim<2
+    nz = 1 if radius.ndim==0 else len(radius)-1
+  else:
+    assert radius.shape in ((),(nz+1,))
+  x0 = asarray(x0)
+  x1 = asarray(x1)
+  z = normalized(x1-x0)
+  x = unit_orthogonal_vector(z)
+  y = cross(z,x)
+  i = arange(na)
+  a = 2*pi/na*i
+  circle = x*cos(a).reshape(-1,1)-y*sin(a).reshape(-1,1)
+  height = arange(nz+1)/(nz+1)
+  X = x0+radius[...,None,None]*circle+arange(nz+1).reshape(-1,1,1)/nz*(x1-x0)
+  return open_cylinder_topology(na,nz),X.reshape(-1,3)

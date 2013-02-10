@@ -5,6 +5,7 @@
 #include <other/core/utility/prioritize.h>
 #include <other/core/python/Class.h>
 #include <other/core/math/isfinite.h>
+#include <other/core/math/copysign.h>
 #include <other/core/structure/UnionFind.h>
 #include <other/core/geometry/SimplexTree.h>
 #include <other/core/geometry/Ray.h>
@@ -28,6 +29,23 @@ using std::make_pair;
 typedef Vector<real,2> TV2;
 
 OTHER_DEFINE_TYPE(TriMesh)
+
+#ifdef OTHER_PYTHON
+namespace {
+// for vector conversions
+template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::VertexHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::EdgeHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::HalfedgeHandle>:public mpl::true_{};
+template<> struct NumpyIsScalar<OpenMesh::FaceHandle>:public mpl::true_{};
+
+template<> struct NumpyScalar<OpenMesh::BaseHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::VertexHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
+template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
+}
+#endif
 
 OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,2,VertexHandle)
 OTHER_DEFINE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexHandle)
@@ -206,6 +224,10 @@ Vector<real,3> TriMesh::centroid() const {
   return c/s;
 }
 
+Vector<real,3> TriMesh::centroid(FaceHandle fh) const {
+  return triangle(fh).center();
+}
+
 real TriMesh::mean_edge_length() const {
 
   real result = 0;
@@ -329,7 +351,7 @@ vector<FaceHandle> TriMesh::incident_faces(VertexHandle vh) const {
 EdgeHandle TriMesh::common_edge(FaceHandle fh, FaceHandle fh2) const {
   for (ConstFaceHalfedgeIter e = cfh_iter(fh); e; ++e)
     if (opposite_face_handle(e) == fh2)
-      return edge_handle(e);
+      return edge_handle(e.handle());
   return TriMesh::InvalidEdgeHandle;
 }
 
@@ -437,6 +459,16 @@ vector<FaceHandle> TriMesh::triangle_fan(vector<VertexHandle> const &ring, Verte
 
   return fh;
 }
+
+vector<FaceHandle> TriMesh::select_faces(boost::function<bool(FaceHandle)> pr) const {
+  vector<FaceHandle> result;
+  for (FaceHandle fh : face_handles()) {
+    if (pr(fh))
+      result.push_back(fh);
+  }
+  return result;
+}
+
 
 Ref<TriMesh> TriMesh::extract_faces(vector<FaceHandle> const &faces,
                                     unordered_map<VertexHandle, VertexHandle, Hasher> &id2id) const {
@@ -1299,7 +1331,7 @@ real TriMesh::dihedral_angle(HalfedgeHandle e) const {
                t1 = triangle(face_handle(opposite_halfedge_handle(e)));
   TV d = t1.center() - t0.center();
   double abs_theta = acos(min(1.,max(-1.,dot(t0.n,t1.n))));
-  return dot(t1.n-t0.n,d) > 0 ? abs_theta : -abs_theta;
+  return copysign(abs_theta,dot(t1.n-t0.n,d));
 }
 
 // delete a set of faces
@@ -1390,7 +1422,8 @@ vector<Ref<TriMesh> > TriMesh::nested_components() const{
     real cur_volume = volumes[id];
     if(cur_volume > 0) continue;
     Ray<TV> r(m->triangle(FaceHandle(0)).center(),m->normal(FaceHandle(0))*-1);
-    vector<Ray<TV> > results = tree->intersections(r,thicken);
+    auto ints = tree->intersections(r,thicken);
+    vector<Ray<TV> > results(ints.begin(),ints.end());
     vector<pair<real,int> > ts;
     vector<int> hits(meshes.size(),0); //potentially overkill
     //aggregate hits
@@ -1483,6 +1516,8 @@ template class PolyMeshT<AttribKernelT<FinalMeshItemsT<other::MeshTraits,true>,T
 }
 */
 
+#include <other/core/python/function.h>
+
 using namespace other;
 
 void wrap_trimesh() {
@@ -1499,6 +1534,8 @@ void wrap_trimesh() {
 
   typedef void (TriMesh::*v_Method_r_vec3)(real, const Vector<real, 3>&);
   typedef void (TriMesh::*v_Method_vec3_vec3)(Vector<real, 3>, const Vector<real, 3>&);
+
+  typedef Ref<TriMesh> (TriMesh::*Mesh_CMethod_vfh)(vector<FaceHandle> const &faces) const;
 
   Class<Self>("TriMesh")
     .OTHER_INIT()
@@ -1528,6 +1565,10 @@ void wrap_trimesh() {
     .OTHER_METHOD(shortest_path)
     .OTHER_METHOD(elements)
     .OTHER_METHOD(invert)
+    .OTHER_METHOD(to_vertex_handle)
+    .OTHER_METHOD(from_vertex_handle)
+    .OTHER_METHOD(select_faces)
+    .OTHER_OVERLOADED_METHOD(Mesh_CMethod_vfh, extract_faces)
     .OTHER_METHOD_2("X",X_python)
     .OTHER_METHOD_2("set_X",set_X_python)
     .OTHER_METHOD(set_vertex_normals)
@@ -1544,6 +1585,13 @@ void wrap_trimesh() {
     .OTHER_OVERLOADED_METHOD(real(Self::*)()const,area)
     .OTHER_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)
     .OTHER_OVERLOADED_METHOD_2(v_Method_vec3_vec3, "scale_anisotropic", scale)
+    .OTHER_METHOD(transform)
+    .OTHER_METHOD(translate)
+    .OTHER_METHOD(boundary_loops)
+    .OTHER_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
+    .OTHER_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
+    .OTHER_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
+    .OTHER_OVERLOADED_METHOD_2(Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
     ;
 }
 

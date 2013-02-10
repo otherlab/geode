@@ -5,7 +5,7 @@
 #include <OpenMesh/Tools/Decimater/ModNormalFlippingT.hh>
 #include <OpenMesh/Tools/Decimater/ModBaseT.hh>
 #include <other/core/geometry/Triangle3d.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 namespace other {
 
 typedef real T;
@@ -195,6 +195,6 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
 using namespace other;
 
 void wrap_decimate() {
-  OTHER_FUNCTION(decimate)
+  OTHER_FUNCTION_2(decimate_py,decimate)
 }
 #endif // USE_OPENMESH

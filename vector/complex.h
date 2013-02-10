@@ -37,11 +37,11 @@ template<class T> static inline complex<T> normalized(const complex<T>& c) {
   return n;
 }
 
-template<class T> static inline complex<T> rotated_left_90(const complex<T>& c) {
+template<class T> static inline complex<T> rotate_left_90(const complex<T>& c) {
   return complex<T>(-c.imag(),c.real());
 }
 
-template<class T> static inline complex<T> rotated_right_90(const complex<T>& c) {
+template<class T> static inline complex<T> rotate_right_90(const complex<T>& c) {
   return complex<T>(c.imag(),-c.real());
 }
 

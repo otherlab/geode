@@ -6,6 +6,7 @@
 #include <other/core/vector/Vector.h>
 #include <other/core/math/sqr.h>
 #include <other/core/math/max.h>
+#include <other/core/vector/SymmetricMatrix2x2.h>
 namespace other {
 
 template<class T>

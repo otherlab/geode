@@ -2,6 +2,7 @@
 // Header blas
 //#####################################################################
 #include "blas.h"
+#ifdef OTHER_BLAS
 #include <other/core/python/from_python.h>
 #ifdef USE_MKL
 #define ILAENV ::ilaenv
@@ -13,7 +14,7 @@ extern int ilaenv_(int*,char*,char*,int*,int*,int*,int*);
 }
 #define ILAENV ::ilaenv_
 #endif
-namespace other{
+namespace other {
 
 template<class T> int ilaenv(int ispec,const char* name,const char* opts,int m,int n)
 {
@@ -41,3 +42,4 @@ CBLAS_TRANSPOSE FromPython<CBLAS_TRANSPOSE>::convert(PyObject* object) {
 template int ilaenv<float>(int,const char*,const char*,int,int);
 template int ilaenv<double>(int,const char*,const char*,int,int);
 }
+#endif

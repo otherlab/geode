@@ -34,8 +34,10 @@ def test_consistency():
       normal = shape.normal(X)
       project = X-phi*normal
       phi2 = shape.phi(project)
-      #print 'shape %r, X %s, phi %g'%(shape,sv(X),phi)
-      assert abs(phi2)<small,'%s = %s - %g * %s, %g'%(sv(project),sv(X),phi,sv(normal),phi2)
+      #print 'shape %r, X %s, phi %g, normal %s'%(shape,sv(X),phi,sv(normal))
+      if abs(phi2)>=small:
+        print 'project = %s, X = %s, phi = %g, normal = %s, phi2 = %g, small = %g'%(sv(project),sv(X),phi,sv(normal),phi2,small)
+        assert abs(phi2)<small,'%s = %s - %g * %s, abs(%g) !< %g'%(sv(project),sv(X),phi,sv(normal),phi2,small)
       assert shape.lazy_inside(X)==(phi<=0)
       surface = shape.surface(X)
       assert abs(shape.phi(surface))<small, 'X %s, phi %g, surface %s, surface phi %g'%(sv(X),phi,sv(surface),shape.phi(surface))

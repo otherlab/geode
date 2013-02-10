@@ -34,7 +34,6 @@ typedef double real;
 #define OTHER_NEVER_INLINE __attribute__ ((noinline))
 #define OTHER_PURE __attribute__ ((pure))
 #define OTHER_CONST __attribute__ ((const))
-#define OTHER_COLD __attribute__ ((const))
 #define OTHER_FORMAT(type,fmt,list) __attribute__ ((format(type,fmt,list)))
 #define OTHER_EXPECT(value,expect) __builtin_expect((value),expect)
 
@@ -48,6 +47,12 @@ typedef double real;
 #  define OTHER_ALWAYS_INLINE __attribute__ ((always_inline))
 #else
 #  define OTHER_ALWAYS_INLINE
+#endif
+
+#if !defined(__clang__)
+#  define OTHER_COLD __attribute__ ((cold))
+#else
+#  define OTHER_COLD
 #endif
 
 #if defined(NDEBUG) && !defined(__clang__)
@@ -68,10 +73,18 @@ typedef double real;
 #  define OTHER_NOEXCEPT
 #endif
 
+#define OTHER_ALIGNED(n) __attribute__((aligned(n)))
+
 #else // _WIN32
 
+#ifndef OTHER_SINGLE_LIB
 #define OTHER_EXPORT __declspec(dllexport)
 #define OTHER_IMPORT __declspec(dllimport)
+#else
+// These should be defined to be empty, but Windows complains about empty macro arguments.
+#define OTHER_EXPORT __declspec()
+#define OTHER_IMPORT __declspec()
+#endif
 
 #define OTHER_HIDDEN
 #define OTHER_UNUSED
@@ -86,6 +99,7 @@ typedef double real;
 #define OTHER_COLD
 #define OTHER_FORMAT
 #define OTHER_EXPECT(value,expect) (value)
+#define OTHER_ALIGNED(n) __declspec(align(n))
 
 #endif
 

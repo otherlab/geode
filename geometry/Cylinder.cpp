@@ -1,6 +1,9 @@
 #include <other/core/geometry/Cylinder.h>
 #include <other/core/vector/magnitude.h>
 #include <other/core/vector/normalize.h>
+#include <other/core/geometry/AnalyticImplicit.h>
+#include <other/core/python/from_python.h>
+#include <other/core/python/to_python.h>
 namespace other {
 
 typedef real T;
@@ -23,9 +26,13 @@ TV Cylinder::normal(const TV& X) const {
           h1 = -h0-height,
           h = max(h0,h1),
           sh = h1>h0?1:-1;
-  TV dr = v+h0*base.n;
-  const T r = magnitude(dr);
-  dr = r?dr/r:base.n.unit_orthogonal_vector();
+  // Generate an orthogonal basis for n^perp and use it to compute dr
+  const TV u0 = base.n.unit_orthogonal_vector(),
+           u1 = cross(base.n,u0);
+  Vector<T,2> vu(dot(v,u0),dot(v,u1));
+  const T r = normalize(vu);
+  const TV dr = vu.x*u0+vu.y*u1;
+  // Case analysis
   const T rp = r-radius;
   if (rp>0 && h>0) { // Outside
     T mag = magnitude(vec(rp,h));
@@ -50,13 +57,17 @@ bool Cylinder::lazy_inside(const TV& X) const {
 TV Cylinder::surface(const TV& X) const {
   const TV v = X - base.x0;
   const T h = dot(v,base.n);
-  TV dr = v-h*base.n;
-  const T r = magnitude(dr);
-  dr = r?dr/r:base.n.unit_orthogonal_vector();
+  // Generate an orthogonal basis for n^perp and use it to compute dr
+  const TV u0 = base.n.unit_orthogonal_vector(),
+           u1 = cross(base.n,u0);
+  Vector<T,2> vu(dot(v,u0),dot(v,u1));
+  const T r = normalize(vu);
+  const TV dr = vu.x*u0+vu.y*u1;
+  // Case analysis
   const T rp = r-radius,
           hp = max(-h,h-height);
   return hp>0 && rp>0 ? base.x0+clamp(h,(T)0,height)*base.n+radius*dr // outside
-       : hp>rp ? X+((2*h<=height?0:height)-h)*base.n // close to end caps 
+       : hp>rp ? X+((2*h<=height?0:height)-h)*base.n // close to end caps
        : X+(radius-r)*dr; // close to infinite cylinder
 }
 
@@ -95,12 +106,16 @@ ostream& operator<<(ostream& output, const Cylinder& cylinder) {
   return output<<cylinder.repr();
 }
 
+#ifdef OTHER_PYTHON
+
 PyObject* to_python(const Cylinder& cylinder) {
-  OTHER_NOT_IMPLEMENTED();
+  return to_python(new_<AnalyticImplicit<Cylinder>>(cylinder));
 }
 
 Cylinder FromPython<Cylinder>::convert(PyObject* object) {
-  OTHER_NOT_IMPLEMENTED();
+  return from_python<AnalyticImplicit<Cylinder>&>(object);
 }
+
+#endif
 
 }

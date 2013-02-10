@@ -3,7 +3,7 @@
 //#####################################################################
 #include <other/core/utility/Log.h>
 #include <other/core/utility/openmp.h>
-#include <other/core/python/module.h>
+#include <other/core/python/wrap.h>
 #include <vector>
 namespace other {
 
@@ -37,6 +37,7 @@ using namespace other;
 void wrap_utility() {
   using namespace python;
 
+  function("log_initialized",Log::initialized);
   function("log_configure",Log::configure);
   function("log_cache_initial_output",Log::cache_initial_output);
   function("log_copy_to_file",Log::copy_to_file);

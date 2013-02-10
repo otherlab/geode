@@ -16,6 +16,9 @@
 
 #include <other/core/python/forward.h>
 #include <other/core/utility/debug.h>
+#include <other/core/utility/forward.h>
+#include <other/core/utility/validity.h>
+#include <boost/utility/declval.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_enum.hpp>
 #include <string>
@@ -24,14 +27,15 @@ namespace other {
 
 using std::string;
 using boost::shared_ptr;
+namespace mpl = boost::mpl;
 
 // Conversion for PyObject*
 static inline PyObject*
 to_python(PyObject* value) {
-  OTHER_INCREF(value);
+  OTHER_XINCREF(value); // Allow zero so that wrapped functions can return (PyObject*)0 on error
   return value;
 }
-
+ 
 #ifdef OTHER_PYTHON
 
 // Conversion from bool
@@ -103,10 +107,8 @@ to_python(char value) {
   return PyString_FromString(s);
 }
 
-// This is a dummy conversion for shared ptr, since we don't know how to convert shared ptr to python
-template<class T> static inline PyObject* to_python(const shared_ptr<T>& object) {
-  OTHER_NOT_IMPLEMENTED();
-}
+// Declare has_to_python<T>
+OTHER_VALIDITY_CHECKER(has_to_python,T,to_python(*(T*)0))
 
 #endif
 

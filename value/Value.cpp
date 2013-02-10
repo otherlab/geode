@@ -4,8 +4,8 @@
 #include <other/core/value/Prop.h>
 #include <other/core/value/convert.h>
 #include <other/core/python/Class.h>
-#include <other/core/python/module.h>
 #include <other/core/python/stl.h>
+#include <other/core/python/wrap.h>
 #include <other/core/utility/const_cast.h>
 #include <iostream>
 namespace other {
@@ -38,6 +38,12 @@ ValueBase::~ValueBase() {
     delete link;
     link = next;
   }
+}
+
+bool ValueBase::is_type(const type_info& type) const {
+  const type_info& self = this->type();
+  // Use string comparison to avoid symbol visibility issues
+  return type==self || !strcmp(type.name(),self.name());
 }
 
 inline void ValueBase::signal_pending() {
@@ -95,7 +101,7 @@ void ValueBase::pull() const {
 
   // If a node is currently being evaluated, it now depends on us
   if (Action::current)
-    const_cast_(Action::current)->depend_on(*this);
+    Action::current->depend_on(*this);
 
   // Update if necessary
   if (dirty_) {
@@ -111,10 +117,13 @@ void ValueBase::pull() const {
     error.throw_();
 }
 
+#ifdef OTHER_PYTHON
 // For testing purposes
-ValueRef<int> value_test(ValueRef<int> value) {
+static ValueRef<int> value_test(ValueRef<int> value) {
   return value;
 }
+static void value_ptr_test(Ptr<Value<int>> value) {}
+#endif
 
 bool ValueBase::is_prop() const {
   return dynamic_cast<const PropBase*>(this)!=0;
@@ -191,5 +200,6 @@ void wrap_value_base() {
     ;
 
   OTHER_FUNCTION(value_test)
+  OTHER_FUNCTION(value_ptr_test)
 #endif
 }
