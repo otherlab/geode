@@ -8,6 +8,8 @@
 #include <other/core/vector/Vector3d.h>
 namespace other {
 
+OTHER_EXPORT PyObject* to_python(const Segment<Vector<real,3>>& seg);
+
 template<class T>
 class Segment<Vector<T,3>> {
   typedef Vector<T,3> TV;
@@ -21,11 +23,10 @@ public:
       :x0(x0),x1(x1)
   {}
 
-  template<class TArray>
-  Segment(const TArray& X)
+  template<class TArray> explicit Segment(const TArray& X)
       :x0(X[0]),x1(X[1])
   {
-      BOOST_STATIC_ASSERT(TArray::m==2);
+    BOOST_STATIC_ASSERT(TArray::m==2);
   }
 
   T length() const
