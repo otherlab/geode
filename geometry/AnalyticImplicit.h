@@ -33,6 +33,10 @@ protected:
 public:
   ~AnalyticImplicit();
 
+  T volume() const {
+    return Shape::volume();
+  }
+
   virtual T phi(const TV& X) const;
   virtual TV normal(const TV& X) const;
   virtual TV surface(const TV& X) const;

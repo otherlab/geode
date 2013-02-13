@@ -58,7 +58,7 @@ def surface_of_revolution(base,axis,radius,height,resolution,closed=False):
   '''Construct a surface of revolution with given radius and height curves.
   closed can be either a single bool or an array of two bools (one for each end).
   For each closed end, height should have one more point than radius.'''
-  closed = asarray(closed)
+  closed = asarray(closed,dtype=int32)
   c0,c1 = closed if closed.ndim else (closed,closed)
   assert radius.ndim<=1 and height.ndim<=1
   assert height.size>=1+c0+c1
@@ -91,3 +91,13 @@ def open_cylinder_mesh(x0,x1,radius,na,nz=None):
   height = arange(nz+1)/(nz+1)
   X = x0+radius[...,None,None]*circle+arange(nz+1).reshape(-1,1,1)/nz*(x1-x0)
   return cylinder_topology(na,nz),X.reshape(-1,3)
+
+def capsule_mesh(x0,x1,radius,n=30):
+  x0 = asarray(x0)
+  length,axis = magnitudes_and_normalized(x1-x0)
+  theta = linspace(0,pi/2,(n+1)//2)
+  r = radius*cos(theta[:-1])
+  h = radius*sin(theta)
+  r = hstack([r[::-1],r])
+  h = hstack([-h[::-1],h+length])
+  return surface_of_revolution(x0,axis,r,h,n,closed=True)
