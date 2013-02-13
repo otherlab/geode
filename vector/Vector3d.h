@@ -14,6 +14,7 @@
 #include <other/core/math/min.h>
 #include <other/core/math/sqr.h>
 #include <other/core/math/wrap.h>
+#include <other/core/math/cyclic_shift.h>
 #include <cmath>
 namespace other {
 
@@ -183,7 +184,7 @@ public:
 
     Vector operator&(const T& a) const
     {return Vector(x&a,y&a,z&a);}
-    
+
     Vector operator>>(const int a) const
     {return Vector(x>>a, y>>a, z>>a);}
 
