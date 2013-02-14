@@ -6,6 +6,7 @@
 #include <other/core/python/wrap.h>
 #include <other/core/utility/Log.h>
 #include <other/core/vector/normalize.h>
+#include <other/core/math/copysign.h>
 namespace other {
 
 using Log::cout;
