@@ -71,11 +71,13 @@ template<int d> static void wrap_helper() {
   {typedef AnalyticImplicit<Sphere<TV> > Self;
   Class<Self>(d==2?"Sphere2d":"Sphere3d")
     .OTHER_INIT(TV,T)
+    .OTHER_METHOD(volume)
     ;}
 
   {typedef AnalyticImplicit<Capsule<TV> > Self;
   Class<Self>(d==2?"Capsule2d":"Capsule3d")
     .OTHER_INIT(TV,TV,T)
+    .OTHER_METHOD(volume)
     ;}
 }
 
@@ -89,6 +91,7 @@ template<int d> static void wrap_box_helper() {
     .OTHER_METHOD(sizes)
     .OTHER_METHOD(clamp)
     .OTHER_METHOD(center)
+    .OTHER_METHOD(volume)
     .template method<Box<TV>(Box<TV>::*)(T)const>("thickened",&Self::thickened)
     .template method<void(Box<TV>::*)(const TV&)>("enlarge",&Self::enlarge)
     ;
