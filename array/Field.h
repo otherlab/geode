@@ -68,6 +68,10 @@ public:
   bool valid(Id i) const {
     return flat.valid(i.idx());
   }
+
+  Id append(const T& x) OTHER_ALWAYS_INLINE {
+    return Id(flat.append(x));
+  }
 };
 
 }
