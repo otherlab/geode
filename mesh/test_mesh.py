@@ -50,8 +50,8 @@ def test_boundary_mesh():
   assert all(boundary.elements==[[0,1],[2,0],[1,3],[3,2]])
 
 def test_bending_triples():
-  mesh = SegmentMesh([(7,8),(8,9),(8,10)]
-  assert all(mesh.bending_tuples()==[(7,8,9),(7,8,10)])
+  mesh = SegmentMesh([(7,8),(8,9),(8,10)])
+  assert all(mesh.bending_tuples()==[(7,8,9),(7,8,10),(9,8,10)])
 
 def test_bending_quadruples():
   mesh = TriangleMesh([(0,1,2),(2,1,3)])

@@ -17,5 +17,6 @@ void wrap_openmesh() {
 #ifdef USE_OPENMESH
   OTHER_WRAP(trimesh)
   OTHER_WRAP(decimate)
+  OTHER_WRAP(curvature)
 #endif
 }

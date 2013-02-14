@@ -78,7 +78,7 @@ def test_bending():
   radius = 78
   analytics = [('S_1',circle_mesh(1000,radius=radius),pi/radius,1,1e-5),
                ('S_2',sphere_mesh(3,radius=radius),2*pi,4,.015),
-               ('S_1 x [0,e]',open_cylinder_mesh((0,0,0),(0,0,e),radius=radius,n=100),pi*e/radius,3,2e-4)]
+               ('S_1 x [0,e]',open_cylinder_mesh((0,0,0),(0,0,e),radius=radius,na=100),pi*e/radius,3,2e-4)]
   for name,(mesh,X),known,fudge,tolerance in analytics:
     flat = zeros(len(mesh.bending_tuples()))
     bend = cubic_hinges(mesh,X,stiffness,damping,angles=flat)
