@@ -7,3 +7,5 @@
 *.orig
 *.sublime-project
 *.sublime-workspace
+Debug*/
+Release*/

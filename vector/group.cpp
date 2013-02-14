@@ -1,5 +1,6 @@
 // Various groups
 
+#include <other/core/vector/group.h>
 #include <other/core/vector/Rotation.h>
 namespace other {
 

@@ -5,6 +5,6 @@
 namespace other {
 
 // Rotational symmetries of the cube
-const Rotation<Vector<real,3>> octahedral_group[24];
+extern OTHER_CORE_EXPORT const Rotation<Vector<real,3>> octahedral_group[24];
 
 }
