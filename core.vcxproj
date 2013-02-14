@@ -9,6 +9,10 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseDLL (Otherlab)|Win32">
+      <Configuration>ReleaseDLL (Otherlab)</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="ReleaseDLL|Win32">
       <Configuration>ReleaseDLL</Configuration>
       <Platform>Win32</Platform>
@@ -343,6 +347,7 @@
     <ClCompile Include="image\MovFile.cpp" />
     <ClCompile Include="image\PngFile.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;BUILDING_other_core;USE_LIBPNG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL (Otherlab)|Win32'">WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;BUILDING_other_core;USE_LIBPNG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_LIB;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;BUILDING_other_core;USE_LIBPNG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">WIN32;_DEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;BUILDING_other_core;USE_LIBPNG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_LIB,USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;BUILDING_other_core;USE_LIBPNG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -463,6 +468,13 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL (Otherlab)|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -476,6 +488,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL (Otherlab)|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -595,6 +610,40 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCore.lib;OpenMeshTools.lib;jpeg.lib;zlib.lib;boost_filesystem-vc110-mt-1_51.lib;boost_chrono-vc110-mt-1_51.lib;libpng15.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Release;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\build\Release;$(JPGLIBDIR)\sharedlib\Release;$(OPENMESHDIR)\lib;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
+      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL (Otherlab)|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>__SSE__;WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(PNGLIBDIR);$(PNGLIBDIR)\build;$(ZLIBDIR);$(ZLIBDIR)\build;$(OPENMESHDIR)\src;"$(MKLDIR)\include";$(OTHER)\..;$(BOOSTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Cpp0xSupport>true</Cpp0xSupport>
+      <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <OpenMPSupport>true</OpenMPSupport>
+      <DisableSpecificWarnings>4005;4996;4267;4180</DisableSpecificWarnings>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalOptions>/WL %(AdditionalOptions)</AdditionalOptions>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCore.lib;OpenMeshTools.lib;jpeg.lib;zlib.lib;boost_filesystem-vc110-mt-1_51.lib;boost_chrono-vc110-mt-1_51.lib;libpng15.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Release;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\Release;$(JPEGLIBDIR)\Release;$(OPENMESHDIR)\build\src\OpenMesh\Core\Release;$(OPENMESHDIR)\build\src\OpenMesh\Tools\Release;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
     </Link>
