@@ -9,9 +9,11 @@
 #include <other/core/utility/Log.h>
 namespace other {
 
+#ifdef OTHER_PYTHON
 PyObject* to_python(const Segment<Vector<real,2>>& seg) {
   return to_python(tuple(seg.x0,seg.x1));
 }
+#endif
 
 template<class T> bool Segment<Vector<T,2> >::
 segment_line_intersection(const Vector<T,2>& point_on_line,const Vector<T,2>& normal_of_line,T &interpolation_fraction) const
