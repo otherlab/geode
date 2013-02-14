@@ -144,6 +144,7 @@
     <ClInclude Include="mesh\TriangleMesh.h" />
     <ClInclude Include="mesh\TriangleSubdivision.h" />
     <ClInclude Include="openmesh\color_cast.h" />
+    <ClInclude Include="openmesh\curvature.h" />
     <ClInclude Include="openmesh\decimate.h" />
     <ClInclude Include="openmesh\floodfill.h" />
     <ClInclude Include="openmesh\forward.h" />
@@ -361,6 +362,7 @@
     <ClCompile Include="mesh\SegmentMesh.cpp" />
     <ClCompile Include="mesh\TriangleMesh.cpp" />
     <ClCompile Include="mesh\TriangleSubdivision.cpp" />
+    <ClCompile Include="openmesh\curvature.cpp" />
     <ClCompile Include="openmesh\decimate.cpp" />
     <ClCompile Include="openmesh\module.cpp" />
     <ClCompile Include="openmesh\triangulator.cpp" />
