@@ -32,9 +32,9 @@ string format_helper(const char* format,...) {
 #endif
 
   // Retry using the exact buffer size
-  string large(n+1,'\0');
+  string large(n,'\0');
   va_start(marker,format);
-  vsnprintf(&large[0],n+1,format,marker);
+  vsnprintf(&large[0],n,format,marker);
   va_end(marker);
   return large;
 }
