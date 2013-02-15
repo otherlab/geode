@@ -72,6 +72,23 @@ def surface_of_revolution(base,axis,radius,height,resolution,closed=False):
   X = concatenate(([[base+height[0]*axis]] if c0 else []) + [X.reshape(-1,3)] + ([[base+height[-1]*axis]] if c1 else []))
   return cylinder_topology(resolution,len(height)-1,closed=closed),X
 
+def revolve_around_curve(curve,radius,resolution,tangent=None):
+  '''Construct a surface via variable radius thickening of a curve.
+  For now, the surface is always open on both ends.'''
+  curve = asarray(curve)
+  if tangent is not None:
+    tangent = normalized(tangent)
+  else:
+    tangent = normalized(curve[1:]-curve[:-1])
+    tangent = concatenate([[tangent[0]],normalized(tangent[:-1]+tangent[1:]),[tangent[-1]]])
+  x = unit_orthogonal_vector(tangent)
+  y = cross(x,tangent)
+  roll = atan2(dots(x[:-1],y[1:]),dots(x[:-1],x[1:]))
+  roll = hstack([0,cumsum(roll)])[:,None,None]
+  a = 2*pi/resolution*arange(resolution)[:,None]+roll
+  X = curve.reshape(-1,1,3)+radius[...,None,None]*(x.reshape(-1,1,3)*cos(a)+y.reshape(-1,1,3)*sin(a))
+  return cylinder_topology(resolution,len(curve)-1),X.reshape(-1,3)
+  
 def open_cylinder_mesh(x0,x1,radius,na,nz=None):
   '''radius may be a scalar or a 1d array'''
   radius = asarray(radius)
