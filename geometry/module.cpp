@@ -13,4 +13,5 @@ void wrap_geometry() {
   OTHER_WRAP(particle_tree)
   OTHER_WRAP(simplex_tree)
   OTHER_WRAP(platonic)
+  OTHER_WRAP(thick_shell)
 }
