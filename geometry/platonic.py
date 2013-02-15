@@ -72,22 +72,29 @@ def surface_of_revolution(base,axis,radius,height,resolution,closed=False):
   X = concatenate(([[base+height[0]*axis]] if c0 else []) + [X.reshape(-1,3)] + ([[base+height[-1]*axis]] if c1 else []))
   return cylinder_topology(resolution,len(height)-1,closed=closed),X
 
-def revolve_around_curve(curve,radius,resolution,tangent=None):
+def revolve_around_curve(curve,radius,resolution,tangent=None,closed=False):
   '''Construct a surface via variable radius thickening of a curve.
-  For now, the surface is always open on both ends.'''
+  closed can be either a single bool or an array of two bools (one for each end).
+  For each closed end, height should have one more point than radius.'''
+  closed = asarray(closed,dtype=int32)
+  c0,c1 = closed if closed.ndim else (closed,closed)
   curve = asarray(curve)
+  n = len(curve)
+  assert len(radius)==n-c0-c1
   if tangent is not None:
+    assert len(tangent)==n-c0-c1
     tangent = normalized(tangent)
   else:
     tangent = normalized(curve[1:]-curve[:-1])
-    tangent = concatenate([[tangent[0]],normalized(tangent[:-1]+tangent[1:]),[tangent[-1]]])
+    tangent = concatenate(([] if c0 else [[tangent[0]]]) + [normalized(tangent[:-1]+tangent[1:])] + ([] if c1 else [[tangent[-1]]]))
   x = unit_orthogonal_vector(tangent)
   y = cross(x,tangent)
   roll = atan2(dots(x[:-1],y[1:]),dots(x[:-1],x[1:]))
   roll = hstack([0,cumsum(roll)])[:,None,None]
   a = 2*pi/resolution*arange(resolution)[:,None]+roll
-  X = curve.reshape(-1,1,3)+radius[...,None,None]*(x.reshape(-1,1,3)*cos(a)+y.reshape(-1,1,3)*sin(a))
-  return cylinder_topology(resolution,len(curve)-1),X.reshape(-1,3)
+  X = curve[c0:n-c1,None]+radius[...,None,None]*(x[:,None]*cos(a)+y[:,None]*sin(a))
+  X = concatenate(([[curve[0]]] if c0 else []) + [X.reshape(-1,3)] + ([[curve[-1]]] if c1 else []))
+  return cylinder_topology(resolution,n-1,closed=closed),X
   
 def open_cylinder_mesh(x0,x1,radius,na,nz=None):
   '''radius may be a scalar or a 1d array'''
