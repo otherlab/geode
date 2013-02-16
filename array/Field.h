@@ -72,6 +72,12 @@ public:
   Id append(const T& x) OTHER_ALWAYS_INLINE {
     return Id(flat.append(x));
   }
+
+  Field<Element,Id> copy() const {
+    Field<Element,Id> copy;
+    copy.flat.copy(flat);
+    return copy;
+  }
 };
 
 }
