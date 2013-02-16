@@ -12,8 +12,6 @@
 #include <other/core/array/Array.h>
 namespace other {
 
-template<class T> OTHER_CORE_EXPORT PyObject* to_python(const NestedArray<T>& array);
-template<class T> struct FromPython<NestedArray<T> >{OTHER_CORE_EXPORT static NestedArray<T> convert(PyObject* object);};
 OTHER_CORE_EXPORT Array<int> nested_array_offsets(RawArray<const int> lengths);
 
 template<class T>
@@ -124,5 +122,29 @@ public:
     return ArrayIter<NestedArray>(*this,size());
   }
 };
+
+#ifdef OTHER_PYTHON
+OTHER_CORE_EXPORT PyObject* nested_array_to_python_helper(PyObject* offsets, PyObject* flat);
+OTHER_CORE_EXPORT Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object);
+
+template<class T> PyObject* to_python(const NestedArray<T>& array) {
+  if (PyObject* offsets = to_python(array.offsets)) {
+    if (PyObject* flat = to_python(array.flat))
+      return nested_array_to_python_helper(offsets,flat);
+    else
+      Py_DECREF(offsets);
+  }
+  return 0;
+}
+
+template<class T> struct FromPython<NestedArray<T>>{static NestedArray<T> convert(PyObject* object);};
+template<class T> NestedArray<T> FromPython<NestedArray<T>>::convert(PyObject* object) {
+  const auto fields = nested_array_from_python_helper(object);
+  NestedArray<T> self;
+  self.offsets = from_python<Array<const int>>(fields.x);
+  self.flat = from_python<Array<T>>(fields.y);
+  return self;
+}
+#endif
 
 }
