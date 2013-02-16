@@ -34,6 +34,19 @@ def circle_mesh(n,center=0,radius=1):
   theta = 2*pi/n*i
   return mesh,(radius*vstack([cos(theta),sin(theta)])).T.copy()
 
+def torus_topology(nx,ny):
+  '''Construct a torus TriangleMesh with nx by ny vertices.'''
+  i = ny*arange(nx).reshape(-1,1)
+  j = arange(ny)
+  ip = (i+ny)%(nx*ny)
+  jp = (j+1)%ny
+  tris = empty((nx,ny,2,3),dtype=int32)
+  tris[:,:,0,0] = tris[:,:,1,0] = i+jp
+  tris[:,:,0,1] = i+j
+  tris[:,:,0,2] = tris[:,:,1,1] = ip+j
+  tris[:,:,1,2] = ip+jp
+  return TriangleMesh(tris.reshape(-1,3))
+
 def cylinder_topology(na,nz,closed=False):
   '''Construct a open cylinder TriangleMesh with na triangles around and nz along.
   closed can be either a single bool or an array of two bools (one for each end).'''
