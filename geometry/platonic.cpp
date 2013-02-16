@@ -33,10 +33,20 @@ Tuple<Ref<TriangleMesh>,Array<TV>> sphere_mesh(const int refinements, const TV c
   return mesh_X;
 }
 
+Ref<TriangleMesh> double_torus_mesh() {
+  // This is N_1 from Basudeb Datta and Ashish Kumar Upadhyay, Degree-regular triangulations of the double-torus, originally from
+  // F. H. Lutz, Triangulated manifolds with few vertices and vertex-transitive group actions".
+  static const IV tris[] = {IV(3,5,4),IV(3,9,5),IV(7,9,8),IV(1,5,9),IV(1,9,7),IV(1,11,5),IV(2,8,10),IV(8,9,10),IV(0,10,11),IV(0,11,1),IV(0,1,2),IV(0,2,6),IV(2,10,6),IV(4,6,10),
+                            IV(0,4,10),IV(0,8,4),IV(0,6,8),IV(6,7,8),IV(5,7,6),IV(4,5,6),IV(2,3,4),IV(2,4,8),IV(5,11,7),IV(1,7,3),IV(3,7,11),IV(1,3,2),IV(3,11,9),IV(9,11,10)};
+  static const auto mesh = new_<TriangleMesh>(Array<const IV>(sizeof(tris)/sizeof(IV),tris,&*Ref<>(new_<Object>())));
+  return mesh;
+}
+
 }
 using namespace other;
 
 void wrap_platonic() {
   OTHER_FUNCTION(icosahedron_mesh)
   OTHER_FUNCTION_2(sphere_mesh_py,sphere_mesh)
+  OTHER_FUNCTION(double_torus_mesh)
 }

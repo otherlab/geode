@@ -44,8 +44,15 @@ def test_revolution():
       assert len(mesh.nonmanifold_nodes(True))==0
       assert len(mesh.nonmanifold_nodes(False))==n*(2-c0-c1) 
 
+def test_double_torus():
+  mesh = double_torus_mesh()
+  assert not len(mesh.nonmanifold_nodes(False))
+  mesh.segment_mesh().neighbors()
+  assert all(mesh.segment_mesh().neighbors().sizes()==7)
+
 if __name__=='__main__':
   test_revolution()
   test_icosahedron()
   test_tetrahedron()
   test_sphere()
+  test_double_torus()
