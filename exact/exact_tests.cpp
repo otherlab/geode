@@ -159,12 +159,22 @@ template<int d,class Slow,class Fast,class... Once,class... Twice> void test_pre
   }
 }
 
-template<int d,int n,class Slow,class Fast> void test_predicate(const Fast fast, const Slow slow, const int steps) {
+template<class... SlowArgs,class Fast> void test_predicate(const Fast fast, Expansion slow(SlowArgs...), const int steps) {
+  const int n = sizeof...(SlowArgs);
+  const int d = remove_const_reference<typename First<SlowArgs...>::type>::type::m;
   test_predicate_helper<d>(fast,slow,steps,IRange<n>(),IRange<2*n>());
 }
 
 typedef Expansion E;
 typedef Vector<E,2> EV2;
+
+E slow_rightwards(const EV2& a, const EV2& b) {
+  return b.x-a.x;
+}
+
+E slow_upwards(const EV2& a, const EV2& b) {
+  return b.y-a.y;
+}
 
 E slow_triangle_oriented(const EV2& p0, const EV2& p1, const EV2& p2) {
   return cross(p1-p0,p2-p0);
@@ -183,16 +193,14 @@ E slow_segment_intersections_ordered_helper(const EV2& a0, const EV2& a1, const 
 
 void predicate_tests(const int steps) {
   IntervalScope scope;
-  {
-    Log::Scope scope("triangle_oriented");
-    test_predicate<2,3>(triangle_oriented,slow_triangle_oriented,steps);
-  } {
-    Log::Scope scope("segment_directions_oriented");
-    test_predicate<2,4>(segment_directions_oriented,slow_segment_directions_oriented,steps);
-  } {
-    Log::Scope scope("segment_intersections_ordered_helper");
-    test_predicate<2,6>(segment_intersections_ordered_helper,slow_segment_intersections_ordered_helper,steps);
-  }
+  #define TEST(name) { \
+    Log::Scope scope(#name); \
+    test_predicate(name,slow_##name,steps); }
+  TEST(rightwards)
+  TEST(upwards)
+  TEST(triangle_oriented)
+  TEST(segment_directions_oriented)
+  TEST(segment_intersections_ordered_helper)
 }
 
 }
