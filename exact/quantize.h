@@ -40,7 +40,7 @@ template<class TS,int d> struct Quantizer {
 
   Quantizer(const Box<TVS>& box)
     : center(box.center())
-    , scale(ldexp((TS)1-8*numeric_limits<T>::epsilon(),numeric_limits<T>::digits+1)/box.sizes().max()) // 8 is a bit slack, but no one cares
+    , scale(ldexp((TS)1-8*numeric_limits<T>::epsilon(),numeric_limits<T>::digits+1)/max(box.sizes().max(),T(1e-6))) // 8 is a bit slack, but no one cares
     , inverse(center,1/scale) {}
 
   TV operator()(const TVS& p) const {

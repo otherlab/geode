@@ -5,7 +5,7 @@
 namespace other {
 
 // Map a permutation to a unique integer id in range(n!), destroying the permutation in the process.
-// This function must match the python version in sage/simplicity.
+// This function must match the python version in simplicity.py.
 static inline int permutation_id(const int n, int* p) {
   int id = 0;
   for (int i=0;i<n-1;i++) {

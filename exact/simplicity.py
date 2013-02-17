@@ -26,6 +26,7 @@ The resulting predicates.{h,cpp} are checked into git so that users do not need 
 from __future__ import with_statement
 from collections import defaultdict
 from contextlib import contextmanager
+from polynomial import *
 import inspect
 import sympy
 import numpy
@@ -97,11 +98,6 @@ def smallest_unsigned_integer(bound):
       return 'uint%d_t'%bits
   assert 0
 
-def integer_table_size(table):
-  assert min(table)>=0
-  TI = smallest_unsigned_integer(max(table)+1)
-  return int(TI[3:-2])//8*len(table) # This isn't one of my finest moments
-
 def integer_table(name,table):
   TI = smallest_unsigned_integer(max(table)+1)
   return 'static const %s %s[%d] = {%s};'%(TI,name,len(table),','.join(map(str,table)))
@@ -121,87 +117,6 @@ def triple(u,v,w):
 
 def det(*m):
   return (cross if len(m)==2 else triple)(*m)
-
-### Polynomials that do not expand their coefficients
-
-class SymbolicPolynomialRing(object):
-  def __init__(self,gens,standardize):
-    self.gens = tuple(gens)
-    self.standardize = standardize
-    self.zeros = (0,)*len(self.gens)
-
-  def singletons(self):
-    i = numpy.arange(len(self.gens))
-    return [SymbolicPoly(self,{tuple((i==j).astype(int)):1}) for j in i]
-
-class SymbolicPoly(object):
-  def __init__(self,ring,terms):
-    self.ring = ring
-    self.terms = terms
-
-  def __neg__(self):
-    terms = dict((k,-v) for k,v in self.terms.iteritems())
-    return SymbolicPoly(self.ring,terms)
-
-  def __add__(self,p):
-    terms = defaultdict(lambda:0,self.terms)
-    if isinstance(p,SymbolicPoly):
-      for k,v in p.terms.iteritems():
-        terms[k] += v
-    else:
-      terms[self.ring.zeros] += p
-    return SymbolicPoly(self.ring,terms)
-
-  __radd__ = __add__
-
-  def __sub__(self,p):
-    terms = defaultdict(lambda:0,self.terms)
-    if isinstance(p,SymbolicPoly):
-      for k,v in p.terms.iteritems():
-        terms[k] -= v
-    else:
-      terms[self.ring.zeros] -= p
-    return SymbolicPoly(self.ring,terms)
-
-  def __rsub__(self,p):
-    if isinstance(p,SymbolicPoly):
-      return p-self
-    return -self+p
-
-  def __mul__(self,p):
-    if isinstance(p,SymbolicPoly):
-      terms = defaultdict(lambda:0)
-      for k0,v0 in self.terms.iteritems():
-        for k1,v1 in p.terms.iteritems():
-          terms[tuple(numpy.array(k0)+k1)] += v0*v1
-    else:
-      terms = dict(terms)
-      for k,v in terms.iteritems():
-        terms[k] *= p
-    return SymbolicPoly(self.ring,terms)
-
-  __rmul__ = __mul__
-
-  def homogeneous(self):
-    degrees = set()
-    standardize = self.ring.standardize
-    for k,v in self.terms.iteritems():
-      v = standardize(v)
-      if v:
-        for d in v.monoms():
-          degrees.add(sum(d)+sum(k))
-    assert len(degrees)<=1, 'nonhomogeneous expansion: %s, degrees %s'%(self,list(degrees))
-    if degrees: 
-      return tuple(degrees)[0]
-
-  def filter(self):
-    nonzero = self.ring.standardize
-    return SymbolicPoly(self.ring,dict((k,v) for k,v in self.terms.iteritems() if nonzero(v)))
-
-  def __str__(self):
-    gens = self.ring.gens
-    terms = sorted(self.terms.items())
-    return ' + '.join('(%s)%s'%(v,''.join(('*%s%s'%(g,'^%d'%p if p>1 else '') if p else '') for g,p in zip(gens,d))) for d,v in terms)
 
 ### Code generation
 
