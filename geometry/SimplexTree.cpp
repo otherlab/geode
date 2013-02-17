@@ -236,10 +236,11 @@ template<class TV,int d> static void closest_point_helper(const SimplexTree<TV,d
 
 template<class TV,int d> TV SimplexTree<TV,d>::
 closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) const {
-  OTHER_ASSERT(nodes());
   simplex = -1;
-  T sqr_distance = sqr(max_distance);
-  closest_point_helper<TV,d>(*this,point,simplex,sqr_distance,T(0));
+  if (nodes()) {
+    T sqr_distance = sqr(max_distance);
+    closest_point_helper(*this,point,simplex,sqr_distance,0);
+  }
   if (simplex == -1) {
     TV x;
     x.fill(inf);

@@ -6,11 +6,9 @@
 #include <other/core/geometry/Segment2d.h>
 #include <other/core/geometry/Segment3d.h>
 #include <other/core/vector/magnitude.h>
-namespace other{
+namespace other {
 
-template<class TV>
-class Capsule
-{
+template<class TV> class Capsule {
   typedef typename TV::Scalar T;
   enum Workaround {d=TV::m};
 public:
@@ -20,7 +18,7 @@ public:
   T radius;
 
   Capsule(const TV& x0, const TV& x1, const T radius)
-      :segment(x0,x1),radius(radius) {}
+    : segment(x0,x1), radius(radius) {}
 
   TV normal(const TV& X) const {
     TV N = X-segment.closest_point(X);
@@ -53,7 +51,8 @@ public:
   }
 
   Box<TV> bounding_box() const {
-    return segment.bounding_box().thickened(radius);}
+    return segment.bounding_box().thickened(radius);
+  }
 
   string repr() const {
     return format("Capsule(%s,%s,%s)",tuple_repr(segment.x0),tuple_repr(segment.x1),other::repr(radius));

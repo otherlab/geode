@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 
-from other.core.vector import *
-from other.core.geometry import *
+from __future__ import division
+from other.core import *
 from other.core.random import Sobol
-from math import pi
-
-shapes = [
-  Sphere((1,2),2),
-  Sphere((1,2,3),2),
-  Box((-1,-2),(1,2)),
-  Box((-1,-2,-3),(1,2,3)),
-  Capsule((-.5,-.5),(1,2),1),
-  Capsule((-.5,-.5,-.5),(1,2,3),1),
-  Cylinder(0,(0,0,1),1),
-  Cylinder((-1,-2,-3),(4,2,1),1.5)]
 
 def test_consistency():
-  n=1000
+  random.randn(98183)
+  shapes = [
+    Sphere((1,2),2),
+    Sphere((1,2,3),2),
+    Box((-1,-2),(1,2)),
+    Box((-1,-2,-3),(1,2,3)),
+    Capsule((-.5,-.5),(1,2),1),
+    Capsule((-.5,-.5,-.5),(1,2,3),1),
+    Cylinder(0,(0,0,1),1),
+    Cylinder((-1,-2,-3),(4,2,1),1.5),
+    ThickShell(TriangleMesh([(0,1,2)]),[(0,0,0),(1,0,0),(0,1,0)],(.1,.2,.3)),
+    ThickShell(TriangleMesh([(0,1,2)]),random.randn(3,3),.2*abs(random.randn(3)))]
+  n = 1000
   def sv(x):
     return '[%s]'%','.join(map(str,x))
   for shape in shapes:
@@ -40,13 +41,18 @@ def test_consistency():
         assert abs(phi2)<small,'%s = %s - %g * %s, abs(%g) !< %g'%(sv(project),sv(X),phi,sv(normal),phi2,small)
       assert shape.lazy_inside(X)==(phi<=0)
       surface = shape.surface(X)
+      inner_box.enlarge(surface)
       assert abs(shape.phi(surface))<small, 'X %s, phi %g, surface %s, surface phi %g'%(sv(X),phi,sv(surface),shape.phi(surface))
       surface_phi = magnitude(surface-X)
       assert abs(surface_phi-abs(phi))<small,'%s != %s'%(surface_phi,phi)
       # TODO: test Boundary and Principal_Curvatures
     assert box.lazy_inside(inner_box.min)
     assert box.lazy_inside(inner_box.max)
-    assert max(box.sizes()-inner_box.sizes())<scale/4,'%s != %s'%(box,inner_box)
+    box_error = max(box.sizes()-inner_box.sizes())/scale
+    if box_error>5e-3:
+      print 'box error %g'%box_error
+      print 'box %s, sizes %s, volume %g\ninner box %s, sizes %s, volume %g'%(box,box.sizes(),box.volume(),inner_box,inner_box.sizes(),inner_box.volume())
+      assert False
 
 """
 def test_generate_triangles():

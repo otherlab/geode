@@ -31,62 +31,62 @@ class ConvergenceError(RuntimeError):
     self.x = x
 
 def V(*args):
-    "convenience constructor for vectors: V(1,2,3) is shorter than array([1,2,3])"
-    return array(args)
+  "convenience constructor for vectors: V(1,2,3) is shorter than array([1,2,3])"
+  return array(args)
 
 def cube(x):
   return x*x*x
 
 def dots(u,v):
-    return multiply(u,v).sum(-1)
+  return multiply(u,v).sum(-1)
 
 def clamp(x,xmin,xmax):
   return minimum(xmax,maximum(xmin,x))
 
 def sqr_magnitude(v):
-    return vdot(v,v)
+  return vdot(v,v)
 
 def magnitudes(v):
-    "same as magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
-    return sqrt(sqr(v).sum(-1))
+  "same as magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
+  return sqrt(sqr(v).sum(-1))
 
 def sqr_magnitudes(v):
-    "same as sqr_magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
-    return sqr(v).sum(-1)
+  "same as sqr_magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
+  return sqr(v).sum(-1)
 
 def axis_vector(axis,d=3,dtype=real):
-    v=zeros(d,dtype)
-    v[axis]=1
-    return v
+  v = zeros(d,dtype)
+  v[axis] = 1
+  return v
 
 def magnitudes_and_normalized(v):
-    "returns magnitudes(v),normalized(v), but doesn't compute magnitudes twice"
-    mags=magnitudes(v)
-    result=v/mags[...,newaxis]
-    zeros=mags==0
-    if any(zeros):
-        fallback=axis_vector(0,v.shape[-1])
-        if isinstance(zeros,ndarray):
-            result[zeros]=fallback
-        else:
-            result=fallback
-    return mags,result
+  "returns magnitudes(v),normalized(v), but doesn't compute magnitudes twice"
+  mags = magnitudes(v)
+  result = v/mags[...,newaxis]
+  zeros = mags==0
+  if any(zeros):
+    fallback = axis_vector(0,v.shape[-1])
+    if isinstance(zeros,ndarray):
+      result[zeros] = fallback
+    else:
+      result = fallback
+  return mags,result
 
 def normalized(v):
-    "normalizes a vector or array of vectors"
-    return magnitudes_and_normalized(v)[1]
+  "normalizes a vector or array of vectors"
+  return magnitudes_and_normalized(v)[1]
 
 def projected_orthogonal_to_unit_direction(self,direction):
-    direction = asarray(direction)
-    return self-dots(self,direction)[...,None]*direction
+  direction = asarray(direction)
+  return self-dots(self,direction)[...,None]*direction
 
 def projected_on_unit_direction(self,direction):
-    direction = asarray(direction)
-    return dots(self,direction)[...,None]*direction
+  direction = asarray(direction)
+  return dots(self,direction)[...,None]*direction
 
 def projected(self,direction):
-    direction = asarray(direction)
-    return (dots(self,direction)/sqr_magnitudes(direction))[...,None]*direction
+  direction = asarray(direction)
+  return (dots(self,direction)/sqr_magnitudes(direction))[...,None]*direction
 
 def orthogonal_vector(v):
   v = asarray(v)
@@ -96,15 +96,16 @@ def orthogonal_vector(v):
   o = zeros_like(v)
   o_ = o.reshape(-1,n)
   v_ = v.reshape(-1,n)
-  o_[:,i] =  v_[:,j]
-  o_[:,j] = -v_[:,i]
+  k = arange(len(o_))
+  o_[k,i] =  v_[k,j]
+  o_[k,j] = -v_[k,i]
   return o
 
 def unit_orthogonal_vector(v):
   return normalized(orthogonal_vector(v))
 
 def det(*args):
-    return linalg.det(vstack(args))
+  return linalg.det(vstack(args))
 
 def cross(u,v):
   # The numpy version doesn't always broadcast correctly, so we roll our own cross product routine.
@@ -162,7 +163,7 @@ def maxmag(array,axis=-1):
   return a.reshape(s[:axis]+s[axis:][1:])
 
 def relative_error(a,b,absolute=1e-30):
-    return maxabs(a-b)/max(maxabs(a),maxabs(b),absolute)
+  return maxabs(a-b)/max(maxabs(a),maxabs(b),absolute)
 
 def rotate_right_90(v):
   v = asarray(v)

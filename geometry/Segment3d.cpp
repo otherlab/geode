@@ -4,9 +4,16 @@
 #include <other/core/geometry/Segment3d.h>
 #include <other/core/array/Array.h>
 #include <other/core/math/clamp.h>
+#include <other/core/structure/Tuple.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/utility/Log.h>
 namespace other{
+
+#ifdef OTHER_PYTHON
+PyObject* to_python(const Segment<Vector<real,3>>& seg) {
+  return to_python(tuple(seg.x0,seg.x1));
+}
+#endif
 
 template<class T> Vector<T,3> Segment<Vector<T,3> >::
 closest_point(const Vector<T,3>& point) const

@@ -58,7 +58,6 @@ public:
     for (typename Mesh::ConstVertexFaceIter vf = mesh.cvf_iter(ci.v0); vf; ++vf) {
       if (vf.handle() != ci.fl && vf.handle() != ci.fr) {
         if (modified_face_quality(mesh, vf.handle(), ci.v0, ci.v1) < minquality) {
-          //std::cerr << "not allowing collapse of " << ci.v0 << " -> " << ci.v1 << " because quality " << modified_face_quality(mesh, vf.handle(), ci.v0, ci.v1) << " for face " << get_vertex_handles(mesh, vf.handle()) << " would suck." << std::endl;
           collapse_allowed = false;
           break;
         }
@@ -152,8 +151,6 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
   HModQuadric hModQuadric;
   decimater.add(hModQuadric);
 
-  std::cout << "actual maxquadricerror = "<<maxquadricerror<<std::endl;
-  std::cout << "  box = "<<mesh.bounding_box()<<std::endl;
   if (maxquadricerror == std::numeric_limits<double>::infinity())
     decimater.module(hModQuadric).unset_max_err(); // use only as priority
   else

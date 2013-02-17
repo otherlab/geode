@@ -8,7 +8,9 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/vector/Vector2d.h>
 #include <other/core/vector/normalize.h>
-namespace other{
+namespace other {
+
+OTHER_EXPORT PyObject* to_python(const Segment<Vector<real,2>>& seg);
 
 template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) {
   return rotate_right_90(normalized(x1-x0));
@@ -32,11 +34,10 @@ public:
         :x0(x0),x1(x1)
     {}
 
-    template<class TArray>
-    explicit Segment(const TArray& X)
+    template<class TArray> explicit Segment(const TArray& X)
         :x0(X[0]),x1(X[1])
     {
-        BOOST_STATIC_ASSERT(TArray::m==2);
+      BOOST_STATIC_ASSERT(TArray::m==2);
     }
 
     T length() const

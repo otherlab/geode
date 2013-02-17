@@ -24,7 +24,40 @@ def test_sphere():
   centers = normalized(X[mesh.elements].mean(axis=1))
   assert relative_error(dots(centers,mesh.element_normals(X)),1)<2e-5
 
+def test_revolution():
+  n = 32
+  alpha = linspace(-pi/2,pi/2,n)
+  radius = cos(alpha)
+  height = sin(alpha)
+  for c0 in 0,1:
+    for c1 in 0,1:
+      print '\nclosed = %d %d'%(c0,c1)
+      r = radius[c0:len(radius)-c1]
+      mesh,X = surface_of_revolution(base=0,axis=(0,0,1),radius=r,height=height,resolution=n,closed=(c0,c1))
+      assert mesh.nodes()==len(X)==n*n+(c0+c1)*(1-n)
+      ae = relative_error(mesh.surface_area(X),4*pi)
+      print 'area error = %g'%ae
+      assert ae<5e-3
+      ve = relative_error(mesh.volume(X),4*pi/3)
+      print 'volume error = %g'%ve
+      assert ve<1e-2
+      assert len(mesh.nonmanifold_nodes(True))==0
+      assert len(mesh.nonmanifold_nodes(False))==n*(2-c0-c1) 
+
+def test_torus():
+  mesh = torus_topology(5,7)
+  assert not len(mesh.nonmanifold_nodes(False))
+  assert all(mesh.segment_mesh().neighbors().sizes()==6)
+
+def test_double_torus():
+  mesh = double_torus_mesh()
+  assert not len(mesh.nonmanifold_nodes(False))
+  assert all(mesh.segment_mesh().neighbors().sizes()==7)
+
 if __name__=='__main__':
+  test_revolution()
   test_icosahedron()
   test_tetrahedron()
   test_sphere()
+  test_torus()
+  test_double_torus()

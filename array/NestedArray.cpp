@@ -27,57 +27,38 @@ static void _set_nested_array(PyObject* nested_array) {
   nested_array_type = (PyTypeObject*)nested_array;
 }
 
-template<class T> PyObject* to_python(const NestedArray<T>& array) {
-  OTHER_ASSERT(nested_array_type);
-  bool success = true;
-  if (PyObject* object = nested_array_type->tp_new(nested_array_type,empty_tuple,0)) {
-    if (PyObject* offsets = to_python(array.offsets)) {
-      success &= !PyObject_GenericSetAttr(object,&*offsets_string,offsets);
-      Py_DECREF(offsets);
-      if (PyObject* flat = to_python(array.flat)) {
-        success &= !PyObject_GenericSetAttr(object,&*flat_string,flat);
-        Py_DECREF(flat);
-      }
-      if(success) return object;
-    }
-    Py_DECREF(object);
+PyObject* nested_array_to_python_helper(PyObject* offsets, PyObject* flat) {
+  PyObject* object = 0;
+  if (!nested_array_type) {
+    PyErr_SetString(PyExc_RuntimeError,"_set_nested_array must be called before calling to_python");
+    goto fail;
   }
+  object = nested_array_type->tp_new(nested_array_type,empty_tuple,0);
+  if (!object)
+    goto fail;
+  if (PyObject_GenericSetAttr(object,&*offsets_string,offsets))
+    goto fail;
+  Py_DECREF(offsets);
+  offsets = 0;
+  if (PyObject_GenericSetAttr(object,&*flat_string,flat))
+    goto fail;
+  Py_DECREF(flat);
+  flat = 0;
+  return object;
+fail:
+  Py_XDECREF(offsets);
+  Py_XDECREF(flat);
+  Py_XDECREF(object);
   return 0;
 }
 
-template<class T> NestedArray<T> FromPython<NestedArray<T> >::convert(PyObject* object) {
+Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object) {
   OTHER_ASSERT(nested_array_type);
   if (!PyObject_IsInstance(object,(PyObject*)nested_array_type))
     throw_type_error(object,nested_array_type);
-  NestedArray<T> self;
-  PyObject *offsets=0,*flat=0;
-  try {
-    offsets = PyObject_GetAttr(object,&*offsets_string);
-    if (!offsets) throw_python_error();
-    const_cast<Array<const int>&>(self.offsets) = from_python<Array<const int>>(offsets);
-    flat = PyObject_GetAttr(object,&*flat_string);
-    if (!flat) throw_python_error();
-    const_cast<Array<T>&>(self.flat) = from_python<Array<T>>(flat);
-  } catch (...) {
-    Py_XDECREF(offsets);
-    Py_XDECREF(flat);
-    throw;
-  }
-  Py_DECREF(offsets); 
-  Py_DECREF(flat); 
-  return self;
+  return vec(steal_ref_check(PyObject_GetAttr(object,&*offsets_string)),
+             steal_ref_check(PyObject_GetAttr(object,&*flat_string)));
 }
-
-#define INSTANTIATE_HELPER(...) \
-  template PyObject* to_python<__VA_ARGS__ >(const NestedArray<__VA_ARGS__ >&); \
-  template NestedArray<__VA_ARGS__ > FromPython<NestedArray<__VA_ARGS__ > >::convert(PyObject*);
-#define INSTANTIATE(...) \
-  INSTANTIATE_HELPER(__VA_ARGS__) \
-  INSTANTIATE_HELPER(const __VA_ARGS__)
-INSTANTIATE(int)
-INSTANTIATE(float)
-INSTANTIATE(double)
-INSTANTIATE(Vector<real,2>)
 
 #endif
 }

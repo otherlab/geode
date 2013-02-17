@@ -945,6 +945,9 @@
     <ClInclude Include="vector\VectorPolicy.h">
       <Filter>vector\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="openmesh\curvature.h">
+      <Filter>openmesh\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
@@ -1339,6 +1342,9 @@
     </ClCompile>
     <ClCompile Include="utility\resource.cpp">
       <Filter>utility\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\curvature.cpp">
+      <Filter>openmesh\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

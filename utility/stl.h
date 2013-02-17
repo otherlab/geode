@@ -197,6 +197,10 @@ template<class T> static inline other::Hash hash_reduce(const shared_ptr<T>& p) 
 }
 namespace std {
 
+template<class T, class U> other::Hash hash_reduce(const std::pair<T,U>&s) {
+  return other::Hash(s.first, s.second);
+}
+
 template<class T> other::Hash hash_reduce(const std::set<T>& s) {
   using other::hash_reduce;
   int size = s.size();
