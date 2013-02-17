@@ -12,9 +12,277 @@ using exact::mul;
 using std::lower_bound;
 
 // Forward declare degeneracy handling routines
+static bool incircle_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int a2i, const Vector<float,2> a2, const int bi, const Vector<float,2> b) OTHER_COLD OTHER_NEVER_INLINE;
 static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_COLD OTHER_NEVER_INLINE;
 static bool segment_directions_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) OTHER_COLD OTHER_NEVER_INLINE;
 static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) OTHER_COLD OTHER_NEVER_INLINE;
+
+bool incircle(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int a2i, const Vector<float,2> a2, const int bi, const Vector<float,2> b) {
+  // Evaluate with interval arithmetic first
+  Interval filter;
+  {
+    const auto v0 = Interval(a2.x);
+    const auto v1 = Interval(b.x);
+    const auto v2 = v0-v1;
+    const auto v3 = Interval(a0.y);
+    const auto v4 = Interval(b.y);
+    const auto v5 = v3-v4;
+    const auto v6 = Interval(a1.y);
+    const auto v7 = sqr(v6-v4);
+    const auto v8 = Interval(a1.x);
+    const auto v9 = sqr(v8-v1);
+    const auto v10 = v7+v9;
+    const auto v11 = v6-v4;
+    const auto v12 = Interval(a0.x);
+    const auto v13 = sqr(v12-v1);
+    const auto v14 = sqr(v5);
+    const auto v15 = v13+v14;
+    const auto v16 = v8-v1;
+    const auto v17 = Interval(a2.y);
+    const auto v18 = v17-v4;
+    const auto v19 = sqr(v18);
+    const auto v20 = sqr(v2);
+    const auto v21 = v19+v20;
+    const auto v22 = v12-v1;
+    filter = v2*(v5*v10-v11*v15)+v16*(v18*v15-v5*v21)+v22*(v11*v21-v18*v10);
+    if (OTHER_EXPECT(!filter.contains_zero(),true))
+      return filter.certainly_positive();
+  }
+
+  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), a2x(a2.x), a2y(a2.y), bx(b.x), by(b.y);
+  assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && a2x==a2.x && a2y==a2.y && bx==b.x && by==b.y);
+  const auto v0 = sqr(a1y-by);
+  const auto v1 = sqr(a1x-bx);
+  const auto v2 = sqr(a0x-bx);
+  const auto v3 = sqr(a0y-by);
+  const auto v4 = sqr(a2y-by);
+  const auto v5 = sqr(a2x-bx);
+  const auto pred = mul(a2x-bx,mul(a0y-by,v0+v1)-mul(a1y-by,v2+v3))+mul(a1x-bx,mul(a2y-by,v2+v3)-mul(a0y-by,v4+v5))+mul(a0x-bx,mul(a1y-by,v4+v5)-mul(a2y-by,v0+v1));
+  assert(filter.contains(pred));
+  if (OTHER_EXPECT(bool(pred),true))
+    return pred>0;
+
+  // The constant term is exactly zero, so fall back to simulation of simplicity.
+  return incircle_degenerate(a0i,a0,a1i,a1,a2i,a2,bi,b);
+}
+
+static bool incircle_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int a2i, const Vector<float,2> a2, const int bi, const Vector<float,2> b) {
+  // Compute input permutation
+  int order[4] = {a0i,a1i,a2i,bi};
+  const int permutation = permutation_id(4,order);
+
+  // Losslessly cast to integers
+  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), a2x(a2.x), a2y(a2.y), bx(b.x), by(b.y);
+
+  // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
+  // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.
+  // Each coordinate gets a unique infinitesimal, each infinitely smaller than the last, so cancellation
+  // of all of them together is impossible.  In total, the error polynomial has 161 terms, of which 56 are
+  // unique (up to sign), but it usually suffices to evaluate only a few.
+
+  // Different permutations produce different predicates.  To reduce code size,
+  // we use lookup tables and a switch statement.  I.e., a tiny bytecode interpreter.
+  static const uint16_t starts[24] = {0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,420,440,460};
+  static const uint8_t terms[480] = {2,4,6,8,11,12,14,16,19,20,22,24,26,28,31,32,35,37,39,0,2,4,6,8,11,12,14,16,19,20,22,24,40,43,45,46,49,50,53,1,2,4,6,26,28,31,32,54,56,58,60,48,8,11,12,14,35,37,38,1,2,4,6,26,28,31,32,54,56,58,60,48,40,43,45,46,25,62,65,0,2,4,6,40,43,45,46,66,68,70,72,34,26,28,31,32,25,62,64,1,2,4,6,40,43,45,46,66,68,70,72,34,8,11,12,14,49,50,52,0,8,16,20,2,11,13,22,4,18,6,14,24,26,35,39,74,28,76,31,1,8,16,20,2,11,13,22,4,18,6,14,24,40,49,53,78,43,81,45,0,8,16,20,26,35,39,74,54,82,58,84,42,2,11,13,22,28,76,30,0,8,16,20,26,35,39,74,54,82,58,84,42,40,49,53,78,25,63,65,1,8,16,20,40,49,53,78,66,86,70,88,29,26,35,39,74,25,63,64,0,8,16,20,40,49,53,78,66,86,70,88,29,2,11,13,22,43,81,44,1,26,54,58,8,35,38,84,16,83,20,74,42,2,28,30,60,11,91,13,1,26,54,58,8,35,38,84,16,83,20,74,42,40,25,65,92,49,51,53,0,26,54,58,2,28,30,60,4,57,6,32,48,8,35,38,84,11,91,12,0,26,54,58,2,28,30,60,4,57,6,32,48,40,25,65,92,43,80,45,1,26,54,58,40,25,65,92,66,94,70,96,10,2,28,30,60,43,80,44,0,26,54,58,40,25,65,92,66,94,70,96,10,8,35,38,84,49,51,52,1,40,66,70,8,49,52,88,16,87,20,78,29,26,25,64,96,35,36,39,1,40,66,70,8,49,52,88,16,87,20,78,29,2,43,44,72,11,90,13,0,40,66,70,26,25,64,96,54,95,58,92,10,8,49,52,88,35,36,38,0,40,66,70,26,25,64,96,54,95,58,92,10,2,43,44,72,28,77,30,1,40,66,70,2,43,44,72,4,69,6,46,34,26,25,64,96,28,77,31,0,40,66,70,2,43,44,72,4,69,6,46,34,8,49,52,88,11,90,12,1};
+  for (int i=starts[permutation];;i++) {
+    const bool f = terms[i]&1;
+    switch (terms[i]>>1) {
+      case 0:
+        return !f;
+      case 1: {
+        const auto v6 = 2*a0x;
+        const auto v7 = -2*bx;
+        const auto term = mul(a1y-by,sqr(a2y-by)+sqr(a2x-bx))+mul(mul(a1x-bx,a2y-by),v6+v7)-mul(a2y-by,sqr(a1y-by)+sqr(a1x-bx))-mul(mul(a1y-by,a2x-bx),v6+v7);
+        if (term) return f^(term>0); break; }
+      case 2: {
+        const auto term = mul(a2x-bx,by-a1y)+mul(a1x-bx,a2y-by);
+        if (term) return f^(term>0); break; }
+      case 3: {
+        const auto v6 = 2*a0y;
+        const auto v7 = -2*by;
+        const auto term = mul(a1x-bx,mul(a2y-by,v6+v7)-sqr(a2y-by)-sqr(a2x-bx))+mul(a2x-bx,sqr(a1y-by)+sqr(a1x-bx)-mul(a1y-by,v6+v7));
+        if (term) return f^(term>0); break; }
+      case 4: {
+        const auto v6 = 2*a1x;
+        const auto v7 = -2*bx;
+        const auto term = mul(a2y-by,sqr(a0x-bx)+sqr(a0y-by))+mul(mul(a0y-by,a2x-bx),v6+v7)-mul(a0y-by,sqr(a2y-by)+sqr(a2x-bx))-mul(mul(a0x-bx,a2y-by),v6+v7);
+        if (term) return f^(term>0); break; }
+      case 5: {
+        const auto term = mul(a1x-bx,-2*by+2*a2y)+mul(a0x-bx,2*by+-2*a2y);
+        if (term) return f^(term>0); break; }
+      case 6: {
+        const auto term = a2y-by;
+        if (term) return f^(term>0); break; }
+      case 7: {
+        const auto term = mul(a2x-bx,2*a1x+-2*bx)+mul(a2y-by,2*a0y+-2*by)-sqr(a2y-by)-sqr(a2x-bx);
+        if (term) return f^(term>0); break; }
+      case 8: {
+        const auto term = mul(a0y-by,a2x-bx)+mul(a0x-bx,by-a2y);
+        if (term) return f^(term>0); break; }
+      case 9: {
+        const auto term = bx-a2x;
+        if (term) return f^(term>0); break; }
+      case 10: {
+        const auto v6 = 2*a1y;
+        const auto v7 = -2*by;
+        const auto term = mul(a0x-bx,sqr(a2y-by)+sqr(a2x-bx)-mul(a2y-by,v6+v7))+mul(a2x-bx,mul(a0y-by,v6+v7)-sqr(a0x-bx)-sqr(a0y-by));
+        if (term) return f^(term>0); break; }
+      case 11: {
+        const auto term = mul(a2x-bx,2*bx+-2*a0x)+sqr(a2y-by)+sqr(a2x-bx)-mul(a2y-by,2*a1y+-2*by);
+        if (term) return f^(term>0); break; }
+      case 12: {
+        const auto term = mul(a2x-bx,-2*a0y+2*a1y);
+        if (term) return f^(term>0); break; }
+      case 13: {
+        const auto v6 = -2*bx;
+        const auto v7 = 2*a2x;
+        const auto term = mul(mul(a0x-bx,a1y-by),v6+v7)+mul(a0y-by,sqr(a1y-by)+sqr(a1x-bx))-mul(mul(a0y-by,a1x-bx),v6+v7)-mul(a1y-by,sqr(a0x-bx)+sqr(a0y-by));
+        if (term) return f^(term>0); break; }
+      case 14: {
+        const auto v6 = -2*bx;
+        const auto term = mul(a1y-by,v6+2*a2x)-mul(a1y-by,2*a0x+v6);
+        if (term) return f^(term>0); break; }
+      case 15: {
+        const auto term = a1y-by;
+        if (term) return f^(term>0); break; }
+      case 16: {
+        const auto term = sqr(a1y-by)+sqr(a1x-bx)+mul(a1x-bx,2*bx+-2*a2x)-mul(a1y-by,2*a0y+-2*by);
+        if (term) return f^(term>0); break; }
+      case 17: {
+        const auto term = mul(a1x-bx,2*by+-2*a0y)+mul(a2x-bx,2*a0y+-2*by);
+        if (term) return f^(term>0); break; }
+      case 18: {
+        const auto term = -2*a1x+2*a2x;
+        if (term) return f^(term>0); break; }
+      case 19: {
+        const auto term = by-a0y;
+        if (term) return f^(term>0); break; }
+      case 20: {
+        const auto v6 = 2*bx;
+        const auto v7 = -2*a1x;
+        const auto v8 = -2*a0x;
+        const auto v9 = sqr(a2y-by);
+        const auto v10 = sqr(a2x-bx);
+        const auto v11 = -2*a2x;
+        const auto v12 = sqr(a0x-bx);
+        const auto v13 = sqr(a0y-by);
+        const auto v14 = sqr(a1y-by);
+        const auto v15 = sqr(a1x-bx);
+        const auto term = mul(a2x-bx,mul(a0y-by,v6+v7)-mul(a1y-by,v6+v8))+mul(a0y-by,v9+v10)+mul(a1x-bx,mul(a2y-by,v6+v8)-mul(a0y-by,v6+v11))+mul(a1y-by,v12+v13)+mul(a2y-by,v14+v15)+mul(a0x-bx,mul(a1y-by,v6+v11)-mul(a2y-by,v6+v7))-mul(a1y-by,v9+v10)-mul(a2y-by,v12+v13)-mul(a0y-by,v14+v15);
+        if (term) return f^(term>0); break; }
+      case 21: {
+        const auto term = mul(a0x-bx,-2*a1y+2*a2y);
+        if (term) return f^(term>0); break; }
+      case 22: {
+        const auto term = a2y-a1y;
+        if (term) return f^(term>0); break; }
+      case 23: {
+        const auto v6 = 2*a0y;
+        const auto v7 = -2*by;
+        const auto term = mul(a1y-by,v6+v7)+sqr(a2y-by)+sqr(a2x-bx)-sqr(a1x-bx)-mul(a2y-by,v6+v7)-sqr(a1y-by);
+        if (term) return f^(term>0); break; }
+      case 24: {
+        const auto term = mul(a1x-bx,-2*a2y+2*a0y);
+        if (term) return f^(term>0); break; }
+      case 25: {
+        const auto term = 2*bx+-2*a1x;
+        if (term) return f^(term>0); break; }
+      case 26: {
+        const auto term = a0y-a2y;
+        if (term) return f^(term>0); break; }
+      case 27: {
+        const auto term = mul(a1x-bx,by-a0y)+mul(a0x-bx,a1y-by);
+        if (term) return f^(term>0); break; }
+      case 28: {
+        const auto term = bx-a1x;
+        if (term) return f^(term>0); break; }
+      case 29: {
+        const auto v6 = -2*by;
+        const auto v7 = 2*a2y;
+        const auto term = mul(a0x-bx,mul(a1y-by,v6+v7)-sqr(a1x-bx)-sqr(a1y-by))+mul(a1x-bx,sqr(a0x-bx)+sqr(a0y-by)-mul(a0y-by,v6+v7));
+        if (term) return f^(term>0); break; }
+      case 30: {
+        const auto term = mul(a1x-bx,2*a0x+-2*bx)+mul(a1y-by,-2*by+2*a2y)-sqr(a1x-bx)-sqr(a1y-by);
+        if (term) return f^(term>0); break; }
+      case 31: {
+        const auto term = -2*bx+2*a2x;
+        if (term) return f^(term>0); break; }
+      case 32: {
+        const auto term = a1y-a0y;
+        if (term) return f^(term>0); break; }
+      case 33: {
+        const auto term = mul(a0y-a2y,a1x-bx)+mul(a0x-bx,a2y-a1y)+mul(a1y-a0y,a2x-bx);
+        if (term) return f^(term>0); break; }
+      case 34: {
+        const auto term = a1x-a2x;
+        if (term) return f^(term>0); break; }
+      case 35: {
+        const auto v6 = 2*by;
+        const auto v7 = -2*a1y;
+        const auto v8 = sqr(a0x-bx);
+        const auto v9 = sqr(a0y-by);
+        const auto v10 = sqr(a1x-bx);
+        const auto v11 = sqr(a1y-by);
+        const auto v12 = -2*a2y;
+        const auto v13 = sqr(a2y-by);
+        const auto v14 = sqr(a2x-bx);
+        const auto term = mul(a2x-bx,mul(a0y-by,v6+v7)+v8+v9-v10-v11-mul(a0y-by,v6+v7))+mul(a0x-bx,mul(a1y-by,v6+v12)+v11+v10-v13-v14-mul(a1y-by,v6+v12))+mul(a1x-bx,v13+v14-v8-v9);
+        if (term) return f^(term>0); break; }
+      case 36: {
+        const auto v6 = 2*by;
+        const auto v7 = -2*a2y;
+        const auto term = mul(a1y-by,v6+v7)+mul(a2x-bx,2*a0x+-2*bx)+sqr(a1y-by)+mul(a1x-bx,2*bx+-2*a0x)+sqr(a1x-bx)-sqr(a2y-by)-sqr(a2x-bx)-mul(a1y-by,v6+v7);
+        if (term) return f^(term>0); break; }
+      case 37: {
+        const auto term = mul(a0y-by,2*a1y+-2*by)+mul(a0x-bx,-2*bx+2*a2x)-sqr(a0x-bx)-sqr(a0y-by);
+        if (term) return f^(term>0); break; }
+      case 38: {
+        const auto term = -2*a0x+2*a2x;
+        if (term) return f^(term>0); break; }
+      case 39: {
+        const auto v6 = 2*a1y;
+        const auto v7 = -2*by;
+        const auto term = sqr(a0x-bx)+sqr(a0y-by)+mul(a2y-by,v6+v7)-sqr(a2y-by)-sqr(a2x-bx)-mul(a0y-by,v6+v7);
+        if (term) return f^(term>0); break; }
+      case 40: {
+        const auto term = 2*bx+-2*a0x;
+        if (term) return f^(term>0); break; }
+      case 41: {
+        const auto term = a0x-bx;
+        if (term) return f^(term>0); break; }
+      case 42: {
+        const auto term = sqr(a0x-bx)+mul(a0x-bx,2*bx+-2*a1x)+sqr(a0y-by)-mul(a0y-by,-2*by+2*a2y);
+        if (term) return f^(term>0); break; }
+      case 43: {
+        const auto term = a2x-a0x;
+        if (term) return f^(term>0); break; }
+      case 44: {
+        const auto v6 = 2*by;
+        const auto v7 = -2*a0y;
+        const auto term = mul(a0x-bx,2*a1x+-2*bx)+mul(a2y-by,v6+v7)+sqr(a2y-by)+sqr(a2x-bx)+mul(a2x-bx,2*bx+-2*a1x)-mul(a2y-by,v6+v7)-sqr(a0x-bx)-sqr(a0y-by);
+        if (term) return f^(term>0); break; }
+      case 45: {
+        const auto term = -2*a0x+2*a1x;
+        if (term) return f^(term>0); break; }
+      case 46: {
+        const auto v6 = -2*by;
+        const auto v7 = 2*a2y;
+        const auto term = mul(a0y-by,v6+v7)+sqr(a1y-by)+sqr(a1x-bx)-sqr(a0x-bx)-sqr(a0y-by)-mul(a1y-by,v6+v7);
+        if (term) return f^(term>0); break; }
+      case 47: {
+        const auto term = a0x-a1x;
+        if (term) return f^(term>0); break; }
+      case 48: {
+        const auto v6 = 2*by;
+        const auto v7 = -2*a1y;
+        const auto term = mul(a0y-by,v6+v7)+mul(a0x-bx,2*bx+-2*a2x)+sqr(a0x-bx)+sqr(a0y-by)+mul(a1x-bx,-2*bx+2*a2x)-sqr(a1x-bx)-sqr(a1y-by)-mul(a0y-by,v6+v7);
+        if (term) return f^(term>0); break; }
+      default:
+        OTHER_UNREACHABLE();
+    }
+  }
+}
 
 bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) {
   // Evaluate with interval arithmetic first

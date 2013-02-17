@@ -115,6 +115,10 @@ struct Expansion {
   }
 };
 
+}
+template<> struct IsScalar<Expansion> : public mpl::true_ {};
+namespace {
+
 // Compile time range of integers
 template<int n,class... R> struct IRange : public IRange<n-1,R...,mpl::int_<sizeof...(R)>> {};
 template<class... R> struct IRange<0,R...> : public Types<R...> {};
@@ -167,6 +171,7 @@ template<class... SlowArgs,class Fast> void test_predicate(const Fast fast, Expa
 
 typedef Expansion E;
 typedef Vector<E,2> EV2;
+typedef Vector<E,3> EV3;
 
 E slow_rightwards(const EV2& a, const EV2& b) {
   return b.x-a.x;
@@ -191,6 +196,16 @@ E slow_segment_intersections_ordered_helper(const EV2& a0, const EV2& a1, const 
   return cross(c0-a0,dc)*cross(da,dc)-cross(b0-a0,db)*cross(da,db);
 }
 
+E slow_incircle(const EV2& a0, const EV2& a1, const EV2& a2, const EV2& b) {
+  const auto d0 = a0-b,
+             d1 = a1-b,
+             d2 = a2-b;
+  const EV3 r0(d0,sqr_magnitude(d0)),
+            r1(d1,sqr_magnitude(d1)),
+            r2(d2,sqr_magnitude(d2));
+  return det(r0,r1,r2);
+}
+
 void predicate_tests(const int steps) {
   IntervalScope scope;
   #define TEST(name) { \
@@ -201,6 +216,7 @@ void predicate_tests(const int steps) {
   TEST(triangle_oriented)
   TEST(segment_directions_oriented)
   TEST(segment_intersections_ordered_helper)
+  TEST(incircle)
 }
 
 }

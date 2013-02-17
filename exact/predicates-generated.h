@@ -5,6 +5,9 @@
 #include <other/core/vector/Vector.h>
 namespace other {
 
+// Does b lie inside the circle defined by a0,a1,a2?
+bool incircle(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int a2i, const Vector<float,2> a2, const int bi, const Vector<float,2> b) OTHER_EXPORT;
+
 // Is a 2D triangle positively oriented?
 bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_EXPORT;
 

@@ -112,7 +112,6 @@ def cross(u,v):
   return numpy.cross(u,v)
 
 def triple(u,v,w):
-  a,b,c = m
   return u[0]*cross(v[1:],w[1:])+v[0]*cross(w[1:],u[1:])+w[0]*cross(u[1:],v[1:])
 
 def det(*m):
@@ -120,10 +119,21 @@ def det(*m):
 
 ### Code generation
 
+complexity_base = {'+':-1,'-':-1,'*':-1,'sqr':0,'cube':0}
+
+def complexity(e):
+  if type(e) is tuple:
+    op,args = e
+    return complexity_base[op]+sum(map(complexity,args)) 
+  return e.count_ops()
+
 class Values(object):
+  '''A map from expressions to keys, using standardization to compare expressions.
+  If an expression is assigned two values, the simpler one is kept.'''
+
   def __init__(self,standardize):
-    self.d = {}
     self.standardize = standardize
+    self.d = {}
 
   def __len__(self):
     return len(self.d)
@@ -132,7 +142,10 @@ class Values(object):
     return self.d[self.standardize(k)]
 
   def __setitem__(self,k,v):
-    self.d[self.standardize(k)] = v
+    s = self.standardize(k)
+    old = self.d.setdefault(s,v)
+    if old is not v and complexity(old)>complexity(v):
+      self.d[s] = v 
 
   def __contains__(self,k):
     return self.standardize(k) in self.d
@@ -173,7 +186,7 @@ class Block(object):
     return b
 
   def ensure(self,e):
-    '''Ensure that either e is available'''
+    '''Ensure that expression e is available'''
     values = self.values
     if e in values or e.is_Number:
       return
@@ -524,6 +537,13 @@ def segment_intersections_ordered_helper(a0,a1,b0,b1,c0,c1):
   dc = c1-c0
   return det(c0-a0,dc)*det(da,dc)-det(b0-a0,db)*det(da,db)
 
+def incircle(a0,a1,a2,b):
+  '''Does b lie inside the circle defined by a0,a1,a2?'''
+  def row(a):
+    d = a-b
+    return numpy.hstack([d,dot(d,d)])
+  return det(row(a0),row(a1),row(a2))
+
 ### Top level
 
 if __name__=='__main__':
@@ -534,6 +554,7 @@ if __name__=='__main__':
     +'#include <other/core/exact/permutation_id.h>\n#include <algorithm>\nnamespace other {\n\nusing exact::mul;\nusing std::lower_bound;\n')
 
   # Compile predicates
+  compiler.compile(incircle,2)
   compiler.compile(triangle_oriented,2)
   compiler.compile(segment_directions_oriented,2)
   compiler.compile(segment_intersections_ordered_helper,2)
