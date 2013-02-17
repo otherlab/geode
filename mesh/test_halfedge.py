@@ -54,7 +54,10 @@ def test_construction():
     for key in xrange(5):
       # Mangle the clean mesh using a bunch of edge flips
       mesh = base.copy()
-      random_edge_flips(mesh,1000,key)
+      flips = random_edge_flips(mesh,1000,key)
+      print 'flips = %d'%flips
+      if soup is not nanosphere:
+        assert flips>484
       mesh.assert_consistent()
       tris = mesh.elements()
       random.shuffle(tris)

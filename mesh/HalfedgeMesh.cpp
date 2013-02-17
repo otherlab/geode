@@ -218,10 +218,10 @@ VertexId HalfedgeMesh::split_face(FaceId f) {
 }
 
 bool HalfedgeMesh::is_flip_safe(HalfedgeId e0) const {
-  if (!valid(e0) || !is_boundary(e0))
+  if (!valid(e0) || is_boundary(e0))
     return false;
   const auto e1 = reverse(e0);
-  if (!is_boundary(e1))
+  if (is_boundary(e1))
     return false;
   const auto o0 = src(prev(e0)),
              o1 = src(prev(e1));
@@ -391,13 +391,17 @@ void HalfedgeMesh::dump_internals() const {
   cout << endl;
 }
 
-static void random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint128_t key) {
+static int random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint128_t key) {
+  int flips = 0;
   const auto random = new_<Random>(key);
   for (int a=0;a<attempts;a++) {
     const HalfedgeId e(random->uniform<int>(0,mesh.n_halfedges()));
-    if (mesh.is_flip_safe(e))
+    if (mesh.is_flip_safe(e)) {
       mesh.unsafe_flip_edge(e);
+      flips++;
+    }
   }
+  return flips;
 }
 
 }
