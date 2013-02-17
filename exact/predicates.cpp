@@ -28,7 +28,7 @@ bool rightwards(const int ai, const Vector<float,2> a, const int bi, const Vecto
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
+  OTHER_UNUSED const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
   assert(ax==a.x && ay==a.y && bx==b.x && by==b.y);
   const auto pred = bx-ax;
   assert(filter.contains(pred));
@@ -78,7 +78,7 @@ bool upwards(const int ai, const Vector<float,2> a, const int bi, const Vector<f
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
+  OTHER_UNUSED const Interval::Int ax(a.x), ay(a.y), bx(b.x), by(b.y);
   assert(ax==a.x && ay==a.y && bx==b.x && by==b.y);
   const auto pred = by-ay;
   assert(filter.contains(pred));
@@ -130,7 +130,7 @@ bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, c
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  const Interval::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
+  OTHER_UNUSED const Interval::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
   assert(p0x==p0.x && p0y==p0.y && p1x==p1.x && p1y==p1.y && p2x==p2.x && p2y==p2.y);
   const auto pred = mul(p1x-p0x,p2y-p0y)-mul(p2x-p0x,p1y-p0y);
   assert(filter.contains(pred));
@@ -198,7 +198,7 @@ bool segment_directions_oriented(const int a0i, const Vector<float,2> a0, const 
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
+  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y);
   const auto pred = mul(a1x-a0x,b1y-b0y)-mul(a1y-a0y,b1x-b0x);
   assert(filter.contains(pred));
@@ -278,7 +278,7 @@ bool segment_intersections_ordered_helper(const int a0i, const Vector<float,2> a
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
+  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y && c0x==c0.x && c0y==c0.y && c1x==c1.x && c1y==c1.y);
   const auto pred = mul(mul(a1x-a0x,c1y-c0y)-mul(a1y-a0y,c1x-c0x),mul(c0x-a0x,c1y-c0y)-mul(c0y-a0y,c1x-c0x))-mul(mul(a1x-a0x,b1y-b0y)-mul(a1y-a0y,b1x-b0x),mul(b0x-a0x,b1y-b0y)-mul(b0y-a0y,b1x-b0x));
   assert(filter.contains(pred));

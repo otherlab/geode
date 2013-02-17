@@ -520,7 +520,7 @@ class Compiler(object):
     body = []
     with scope('constant'):
       body.append('  // Fall back to integer arithmetic.  First we reevaluate the constant term.')
-      body.append('  const Interval::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
+      body.append('  OTHER_UNUSED const Interval::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
       body.append('  assert(%s);'%' && '.join('%s==%s'%(v,s) for v,s in C))
       block = Block(standardize,dict((v,str(v)) for v,_ in C),mul='mul')
       body.append('\n'.join('  '+s for s in block.compute('pred',constant)))
