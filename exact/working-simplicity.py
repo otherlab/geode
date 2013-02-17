@@ -347,7 +347,7 @@ class Compiler(object):
       # Evaluate constant term with integer arithmetic
       with scope('constant'):
         body.append('  // Fall back to integer arithmetic.  First we reevaluate the constant term.')
-        body.append('  OTHER_UNUSED const Interval::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
+        body.append('  OTHER_UNUSED const exact::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
         body.append('  assert(%s);'%' && '.join('%s==%s'%(v,s) for v,s in C))
         block = Block(standardize,dict((v,str(v)) for v,_ in C),mul='mul')
         body.append('\n'.join('  '+s for s in block.compute('pred',constant)))
@@ -366,7 +366,7 @@ class Compiler(object):
       body.append('  const int permutation = permutation_id(%d,order);\n'%n)
 
       body.append('  // Losslessly cast to integers')
-      body.append('  OTHER_UNUSED const Interval::Int %s;\n'%', '.join('%s(%s)'%(v,s) for v,s in C))
+      body.append('  OTHER_UNUSED const exact::Int %s;\n'%', '.join('%s(%s)'%(v,s) for v,s in C))
 
       # Constant term is zero; add a different shift variable to each coordinate and expand as a polynomial.
       with scope('expand'):

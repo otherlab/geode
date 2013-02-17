@@ -50,7 +50,7 @@ bool incircle(const int a0i, const Vector<float,2> a0, const int a1i, const Vect
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), a2x(a2.x), a2y(a2.y), bx(b.x), by(b.y);
+  OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), a2x(a2.x), a2y(a2.y), bx(b.x), by(b.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && a2x==a2.x && a2y==a2.y && bx==b.x && by==b.y);
   const auto v0 = sqr(a1y-by);
   const auto v1 = sqr(a1x-bx);
@@ -73,7 +73,7 @@ static bool incircle_degenerate(const int a0i, const Vector<float,2> a0, const i
   const int permutation = permutation_id(4,order);
 
   // Losslessly cast to integers
-  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), a2x(a2.x), a2y(a2.y), bx(b.x), by(b.y);
+  OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), a2x(a2.x), a2y(a2.y), bx(b.x), by(b.y);
 
   // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
   // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.
@@ -296,7 +296,7 @@ bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, c
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  OTHER_UNUSED const Interval::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
+  OTHER_UNUSED const exact::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
   assert(p0x==p0.x && p0y==p0.y && p1x==p1.x && p1y==p1.y && p2x==p2.x && p2y==p2.y);
   const auto pred = mul(p1x-p0x,p2y-p0y)-mul(p2x-p0x,p1y-p0y);
   assert(filter.contains(pred));
@@ -313,7 +313,7 @@ static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0
   const int permutation = permutation_id(3,order);
 
   // Losslessly cast to integers
-  OTHER_UNUSED const Interval::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
+  OTHER_UNUSED const exact::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
 
   // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
   // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.
@@ -364,7 +364,7 @@ bool segment_directions_oriented(const int a0i, const Vector<float,2> a0, const 
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
+  OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y);
   const auto pred = mul(a1x-a0x,b1y-b0y)-mul(a1y-a0y,b1x-b0x);
   assert(filter.contains(pred));
@@ -381,7 +381,7 @@ static bool segment_directions_oriented_degenerate(const int a0i, const Vector<f
   const int permutation = permutation_id(4,order);
 
   // Losslessly cast to integers
-  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
+  OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
 
   // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
   // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.
@@ -444,7 +444,7 @@ bool segment_intersections_ordered_helper(const int a0i, const Vector<float,2> a
   }
 
   // Fall back to integer arithmetic.  First we reevaluate the constant term.
-  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
+  OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y && c0x==c0.x && c0y==c0.y && c1x==c1.x && c1y==c1.y);
   const auto pred = mul(mul(a1x-a0x,c1y-c0y)-mul(a1y-a0y,c1x-c0x),mul(c0x-a0x,c1y-c0y)-mul(c0y-a0y,c1x-c0x))-mul(mul(a1x-a0x,b1y-b0y)-mul(a1y-a0y,b1x-b0x),mul(b0x-a0x,b1y-b0y)-mul(b0y-a0y,b1x-b0x));
   assert(filter.contains(pred));
@@ -461,7 +461,7 @@ static bool segment_intersections_ordered_helper_degenerate(const int a0i, const
   const int permutation = permutation_id(6,order);
 
   // Losslessly cast to integers
-  OTHER_UNUSED const Interval::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
+  OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
 
   // The constant term is zero, so we add infinitesimal shifts to each coordinate in the input, expand
   // the result as a multivariate polynomial, and evaluate one term at a time until we hit a nonzero.

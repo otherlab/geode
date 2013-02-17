@@ -12,7 +12,6 @@ struct Interval {
   // For now, we use single precision arithmetic unconditionally.
   typedef float T;
   typedef T Scalar;
-  typedef int32_t Int;
 
   // We store the interval [a,b] as (-a,b) internally.  With proper arithmetic operations, this
   // allows us to use only FE_UPWARD and avoid switching rounding modes over and over.

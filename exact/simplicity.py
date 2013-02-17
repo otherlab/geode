@@ -359,9 +359,9 @@ class SimulatedSimplicityContext:
   def implement_integer_function(self, name, e):
     # Create C++ function for evaluating expressions using integer arithmetic
     symbolic_expansion = self.expand_with_symbols(e)
-    block = Block(self.standardize,dict((v,'Interval::Int(%s)'%str(v)) for v,_ in self.symbol_table),mul='mul')
-    body = ['Interval::Int result;'] + block.compute(name,symbolic_expansion,predefined=True) + ['return result;']
-    return CPPFunction(name,self.make_cpp_argument_list,body,'Interval::Int')
+    block = Block(self.standardize,dict((v,'exact::Int(%s)'%str(v)) for v,_ in self.symbol_table),mul='mul')
+    body = ['exact::Int result;'] + block.compute(name,symbolic_expansion,predefined=True) + ['return result;']
+    return CPPFunction(name,self.make_cpp_argument_list,body,'exact::Int')
 
   def implement_perturbed_function(self, name, e):
     with scope('implement_polynomial_terms for %s' % name):
@@ -448,7 +448,7 @@ class Compiler(object):
     body = []
     with scope('constant'):
       body.append('  // Fall back to integer arithmetic.  First we reevaluate the constant term.')
-      body.append('  OTHER_UNUSED const Interval::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
+      body.append('  OTHER_UNUSED const exact::Int %s;'%', '.join('%s(%s)'%(v,s) for v,s in C))
       body.append('  assert(%s);'%' && '.join('%s==%s'%(v,s) for v,s in C))
       block = Block(standardize,dict((v,str(v)) for v,_ in C),mul='mul')
       body.append('\n'.join('  '+s for s in block.compute('pred',constant)))
@@ -464,7 +464,7 @@ class Compiler(object):
     body.append('  const int permutation = permutation_id(%d,order);\n'%n)
 
     body.append('  // Losslessly cast to integers')
-    body.append('  OTHER_UNUSED const Interval::Int %s;\n'%', '.join('%s(%s)'%(v,s) for v,s in C))
+    body.append('  OTHER_UNUSED const exact::Int %s;\n'%', '.join('%s(%s)'%(v,s) for v,s in C))
 
     # For now, the only simplification we do is to replace integers with +-1
     def simplify(e):
