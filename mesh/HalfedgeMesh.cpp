@@ -55,6 +55,19 @@ HalfedgeId HalfedgeMesh::halfedge(VertexId v0, VertexId v1) const {
   return HalfedgeId();
 }
 
+HalfedgeId HalfedgeMesh::common_halfedge(FaceId f0, FaceId f1) const {
+  if (f0.valid()) {
+    for (const auto e : halfedges(f0))
+      if (face(reverse(e))==f1)
+        return e;
+  } else if (f1.valid()) {
+    for (const auto e : halfedges(f1))
+      if (face(reverse(e))==f0)
+        return reverse(e);
+  }
+  return HalfedgeId();
+}
+
 VertexId HalfedgeMesh::add_vertex() {
   return vertex_to_edge_.append(HalfedgeId());
 }
@@ -192,10 +205,10 @@ void HalfedgeMesh::add_faces(RawArray<const Vector<int,3>> vs) {
     add_face(Vector<VertexId,3>(v));
 }
 
-VertexId HalfedgeMesh::split_face(FaceId f) {
+void HalfedgeMesh::split_face(const FaceId f, const VertexId c) {
+  OTHER_ASSERT(isolated(c));
   const auto e = halfedges(f);
   const auto v = vertices(f);
-  const auto c = add_vertex();
   const int f_base = face_to_edge_.size();
   const int e_base = halfedges_.size();
   face_to_edge_.flat.resize(f_base+2,false);
@@ -209,11 +222,16 @@ VertexId HalfedgeMesh::split_face(FaceId f) {
   unsafe_link_face(f0,vec(e.x,en0,ep0));
   unsafe_link_face(f1,vec(e.y,en1,ep1));
   unsafe_link_face(f2,vec(e.z,en2,ep2));
-  halfedges_[en0].src = v.x;
-  halfedges_[en1].src = v.y;
-  halfedges_[en2].src = v.z;
+  halfedges_[en0].src = v.y;
+  halfedges_[en1].src = v.z;
+  halfedges_[en2].src = v.x;
   halfedges_[ep0].src = halfedges_[ep1].src = halfedges_[ep2].src = c;
   vertex_to_edge_[c] = ep0;
+}
+
+VertexId HalfedgeMesh::split_face(FaceId f) {
+  const auto c = add_vertex();
+  split_face(f,c);
   return c;
 }
 
@@ -273,6 +291,8 @@ void HalfedgeMesh::assert_consistent() const {
       OTHER_ASSERT(valid(f) && halfedges(f).contains(e));
     else
       OTHER_ASSERT(face(r).valid());
+    const auto ce = common_halfedge(f,face(r));
+    OTHER_ASSERT(ce.valid() && face(ce)==f && face(reverse(ce))==face(r));
   }
 
   // Check that all faces are triangles
@@ -393,15 +413,28 @@ void HalfedgeMesh::dump_internals() const {
 
 static int random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint128_t key) {
   int flips = 0;
-  const auto random = new_<Random>(key);
-  for (int a=0;a<attempts;a++) {
-    const HalfedgeId e(random->uniform<int>(0,mesh.n_halfedges()));
-    if (mesh.is_flip_safe(e)) {
-      mesh.unsafe_flip_edge(e);
-      flips++;
+  if (mesh.n_halfedges()) {
+    const auto random = new_<Random>(key);
+    for (int a=0;a<attempts;a++) {
+      const HalfedgeId e(random->uniform<int>(0,mesh.n_halfedges()));
+      if (mesh.is_flip_safe(e)) {
+        mesh.unsafe_flip_edge(e);
+        flips++;
+      }
     }
   }
   return flips;
+}
+
+static void random_face_splits(HalfedgeMesh& mesh, const int splits, const uint128_t key) {
+  if (mesh.n_faces()) {
+    const auto random = new_<Random>(key);
+    for (int a=0;a<splits;a++) {
+      const FaceId f(random->uniform<int>(0,mesh.n_faces()));
+      const auto v = mesh.split_face(f);
+      OTHER_ASSERT(mesh.face(mesh.halfedge(v))==f);
+    }
+  }
 }
 
 }
@@ -432,4 +465,5 @@ void wrap_halfedge_mesh() {
 
   // For testing purposes
   OTHER_FUNCTION(random_edge_flips)
+  OTHER_FUNCTION(random_face_splits)
 }

@@ -65,6 +65,9 @@ def test_construction():
       partial = HalfedgeMesh()
       partial.add_vertices(soup.nodes())
       check_add_faces(partial,tris)
+      # Check that face splits are safe
+      random_face_splits(mesh,200,key+10)
+      mesh.assert_consistent()
 
 if __name__=='__main__':
   test_construction()

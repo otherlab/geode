@@ -9,6 +9,7 @@ namespace other{
 class PolygonMesh;
 class SegmentMesh;
 class TriangleMesh;
+class HalfedgeMesh;
 
 template<int d> struct SimplexMesh;
 template<> struct SimplexMesh<1>{typedef SegmentMesh type;};

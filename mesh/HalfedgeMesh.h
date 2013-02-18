@@ -130,6 +130,10 @@ public:
   // Find a halfedge between two vertices, or return an invalid id if none exists.
   OTHER_CORE_EXPORT HalfedgeId halfedge(VertexId v0, VertexId v1) const;
 
+  // Find the halfedge between two faces, or return an invalid id if none exists.  The halfedge belongs to the first face.
+  // This function works correctly if the input faces are invalid.
+  OTHER_CORE_EXPORT HalfedgeId common_halfedge(FaceId f0, FaceId f1) const;
+
   // Extract all triangles as a flat array
   Array<Vector<int,3>> elements() const;
 
@@ -155,6 +159,9 @@ public:
 
   // Split a face into three by inserting a new vertex in the center
   OTHER_CORE_EXPORT VertexId split_face(FaceId f);
+
+  // Split a face into three by inserting an existing isolated vertex in the center.  Afterwards, face(halfedge(c))==f.
+  OTHER_CORE_EXPORT void split_face(FaceId f, VertexId c);
 
   // Check whether an edge flip would result in a manifold mesh
   OTHER_CORE_EXPORT bool is_flip_safe(HalfedgeId e) const;
