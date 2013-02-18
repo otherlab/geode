@@ -14,10 +14,11 @@ def test_delaunay(benchmark=False,cgal=False):
     if n<0: continue
     X = random.randn(n,2) if n>0 else zeros((-n,2))
     with Log.scope('delaunay %d'%n):
-      mesh = delaunay_points(X,validate=True)
-      mesh.assert_consistent()
-      assert mesh.n_vertices==abs(n)
-      assert len(mesh.boundary_loops())==1
+      mesh = delaunay_points(X,validate=not benchmark)
+      if not benchmark:
+        mesh.assert_consistent()
+        assert mesh.n_vertices==abs(n)
+        assert len(mesh.boundary_loops())==1
       if 0:
         print 'tris = %s'%compact_str(mesh.elements())
         print 'X = %s'%compact_str(X)
