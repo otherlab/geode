@@ -22,33 +22,10 @@ static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector
 static bool directions_oriented_degenerate(const int d0i, const Vector<float,2> d0, const int d1i, const Vector<float,2> d1) OTHER_COLD OTHER_NEVER_INLINE;
 
 bool incircle(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2, const int p3i, const Vector<float,2> p3) {
-  // Evaluate with interval arithmetic first
-  Interval filter;
-  {
-    const auto v0 = Interval(p1.x);
-    const auto v1 = Interval(p3.x);
-    const auto v2 = Interval(p1.y);
-    const auto v3 = Interval(p3.y);
-    const auto v4 = Interval(p2.x);
-    const auto v5 = v4-v1;
-    const auto v6 = Interval(p0.y);
-    const auto v7 = v6-v3;
-    const auto v8 = Interval(p0.x);
-    const auto v9 = v8-v1;
-    const auto v10 = Interval(p2.y);
-    const auto v11 = v10-v3;
-    const auto v12 = v2-v3;
-    const auto v13 = v0-v1;
-    filter = (esqr(v0-v1)+esqr(v2-v3))*(v5*v7-v9*v11)+(esqr(v5)+esqr(v11))*(v9*v12-v13*v7)+(esqr(v9)+esqr(v7))*(v13*v11-v5*v12);
-    if (OTHER_EXPECT(!filter.contains_zero(),true))
-      return filter.certainly_positive();
-  }
-
-  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y), p3x(p3.x), p3y(p3.y);
   assert(p0x==p0.x && p0y==p0.y && p1x==p1.x && p1y==p1.y && p2x==p2.x && p2y==p2.y && p3x==p3.x && p3y==p3.y);
   const auto pred = emul(esqr(p1x-p3x)+esqr(p1y-p3y),emul(p2x-p3x,p0y-p3y)-emul(p0x-p3x,p2y-p3y))+emul(esqr(p2x-p3x)+esqr(p2y-p3y),emul(p0x-p3x,p1y-p3y)-emul(p1x-p3x,p0y-p3y))+emul(esqr(p0x-p3x)+esqr(p0y-p3y),emul(p1x-p3x,p2y-p3y)-emul(p2x-p3x,p1y-p3y));
-  assert(filter.contains(pred));
   if (OTHER_EXPECT(bool(pred),true))
     return pred>0;
 
@@ -237,21 +214,10 @@ static bool incircle_degenerate(const int p0i, const Vector<float,2> p0, const i
 }
 
 bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) {
-  // Evaluate with interval arithmetic first
-  Interval filter;
-  {
-    const auto v0 = Interval(p0.x);
-    const auto v1 = Interval(p0.y);
-    filter = (Interval(p1.x)-v0)*(Interval(p2.y)-v1)-(Interval(p2.x)-v0)*(Interval(p1.y)-v1);
-    if (OTHER_EXPECT(!filter.contains_zero(),true))
-      return filter.certainly_positive();
-  }
-
-  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
   assert(p0x==p0.x && p0y==p0.y && p1x==p1.x && p1y==p1.y && p2x==p2.x && p2y==p2.y);
   const auto pred = emul(p1x-p0x,p2y-p0y)-emul(p2x-p0x,p1y-p0y);
-  assert(filter.contains(pred));
   if (OTHER_EXPECT(bool(pred),true))
     return pred>0;
 
@@ -307,19 +273,10 @@ static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0
 }
 
 bool segment_directions_oriented(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) {
-  // Evaluate with interval arithmetic first
-  Interval filter;
-  {
-    filter = (Interval(a1.x)-Interval(a0.x))*(Interval(b1.y)-Interval(b0.y))-(Interval(a1.y)-Interval(a0.y))*(Interval(b1.x)-Interval(b0.x));
-    if (OTHER_EXPECT(!filter.contains_zero(),true))
-      return filter.certainly_positive();
-  }
-
-  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y);
   const auto pred = emul(a1x-a0x,b1y-b0y)-emul(a1y-a0y,b1x-b0x);
-  assert(filter.contains(pred));
   if (OTHER_EXPECT(bool(pred),true))
     return pred>0;
 
@@ -369,37 +326,10 @@ static bool segment_directions_oriented_degenerate(const int a0i, const Vector<f
 }
 
 bool segment_intersections_ordered_helper(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) {
-  // Evaluate with interval arithmetic first
-  Interval filter;
-  {
-    const auto v0 = Interval(a1.x);
-    const auto v1 = Interval(a0.x);
-    const auto v2 = v0-v1;
-    const auto v3 = Interval(c1.y);
-    const auto v4 = Interval(c0.y);
-    const auto v5 = v3-v4;
-    const auto v6 = Interval(a1.y);
-    const auto v7 = Interval(a0.y);
-    const auto v8 = v6-v7;
-    const auto v9 = Interval(c1.x);
-    const auto v10 = Interval(c0.x);
-    const auto v11 = v9-v10;
-    const auto v12 = Interval(b1.y);
-    const auto v13 = Interval(b0.y);
-    const auto v14 = v12-v13;
-    const auto v15 = Interval(b1.x);
-    const auto v16 = Interval(b0.x);
-    const auto v17 = v15-v16;
-    filter = (v2*v5-v8*v11)*((v10-v1)*v5-(v4-v7)*v11)-(v2*v14-v8*v17)*((v16-v1)*v14-(v13-v7)*v17);
-    if (OTHER_EXPECT(!filter.contains_zero(),true))
-      return filter.certainly_positive();
-  }
-
-  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y && c0x==c0.x && c0y==c0.y && c1x==c1.x && c1y==c1.y);
   const auto pred = emul(emul(a1x-a0x,c1y-c0y)-emul(a1y-a0y,c1x-c0x),emul(c0x-a0x,c1y-c0y)-emul(c0y-a0y,c1x-c0x))-emul(emul(a1x-a0x,b1y-b0y)-emul(a1y-a0y,b1x-b0x),emul(b0x-a0x,b1y-b0y)-emul(b0y-a0y,b1x-b0x));
-  assert(filter.contains(pred));
   if (OTHER_EXPECT(bool(pred),true))
     return pred>0;
 
@@ -749,19 +679,10 @@ static bool segment_intersections_ordered_helper_degenerate(const int a0i, const
 }
 
 bool segment_to_direction_oriented(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int di, const Vector<float,2> d) {
-  // Evaluate with interval arithmetic first
-  Interval filter;
-  {
-    filter = Interval(d.y)*(Interval(a1.x)-Interval(a0.x))-Interval(d.x)*(Interval(a1.y)-Interval(a0.y));
-    if (OTHER_EXPECT(!filter.contains_zero(),true))
-      return filter.certainly_positive();
-  }
-
-  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), dx(d.x), dy(d.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && dx==d.x && dy==d.y);
   const auto pred = emul(dy,a1x-a0x)-emul(dx,a1y-a0y);
-  assert(filter.contains(pred));
   if (OTHER_EXPECT(bool(pred),true))
     return pred>0;
 
@@ -811,19 +732,10 @@ static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector
 }
 
 bool directions_oriented(const int d0i, const Vector<float,2> d0, const int d1i, const Vector<float,2> d1) {
-  // Evaluate with interval arithmetic first
-  Interval filter;
-  {
-    filter = Interval(d0.x)*Interval(d1.y)-Interval(d0.y)*Interval(d1.x);
-    if (OTHER_EXPECT(!filter.contains_zero(),true))
-      return filter.certainly_positive();
-  }
-
-  // Fall back to integer arithmetic.  First we reevaluate the constant term.
+  // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int d0x(d0.x), d0y(d0.y), d1x(d1.x), d1y(d1.y);
   assert(d0x==d0.x && d0y==d0.y && d1x==d1.x && d1y==d1.y);
   const auto pred = emul(d0x,d1y)-emul(d0y,d1x);
-  assert(filter.contains(pred));
   if (OTHER_EXPECT(bool(pred),true))
     return pred>0;
 
