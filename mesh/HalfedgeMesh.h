@@ -39,6 +39,7 @@ struct OutgoingCirculator;
   static inline ostream& operator<<(ostream& output, Name i) { return output<<i.id; }
 OTHER_DEFINE_ID(VertexId)
 OTHER_DEFINE_ID(HalfedgeId)
+OTHER_DEFINE_ID(EdgeId)
 OTHER_DEFINE_ID(FaceId)
 OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexId)
 
@@ -84,24 +85,28 @@ public:
 
   // Walk around the halfedge structure.  These always succeed given valid ids,
   // but may return invalid ids as a result (e.g., the face of a boundary halfedge).
-  HalfedgeId halfedge(VertexId v)  const { return vertex_to_edge_[v]; }
-  HalfedgeId prev(HalfedgeId e)    const { return halfedges_[e].prev; }
-  HalfedgeId next(HalfedgeId e)    const { return halfedges_[e].next; }
-  HalfedgeId reverse(HalfedgeId e) const { assert(valid(e)); return HalfedgeId(e.id^1); }
-  VertexId   src(HalfedgeId e)     const { return halfedges_[e].src; }
-  VertexId   dst(HalfedgeId e)     const { return src(reverse(e)); }
-  FaceId     face(HalfedgeId e)    const { return halfedges_[e].face; }
-  HalfedgeId halfedge(FaceId f)    const { return face_to_edge_[f]; }
-  HalfedgeId left(HalfedgeId e)    const { return reverse(prev(e)); }
-  HalfedgeId right(HalfedgeId e)   const { return next(reverse(e)); }
+  HalfedgeId halfedge(VertexId v)           const { return vertex_to_edge_[v]; }
+  HalfedgeId prev(HalfedgeId e)             const { return halfedges_[e].prev; }
+  HalfedgeId next(HalfedgeId e)             const { return halfedges_[e].next; }
+  HalfedgeId reverse(HalfedgeId e)          const { assert(valid(e)); return HalfedgeId(e.id^1); }
+  EdgeId     edge(HalfedgeId e)             const { assert(valid(e)); return EdgeId(e.id>>1); }
+  HalfedgeId halfedge(EdgeId e, bool which) const { assert(valid(e)); return HalfedgeId((e.id<<1)|which); }
+  VertexId   src(HalfedgeId e)              const { return halfedges_[e].src; }
+  VertexId   dst(HalfedgeId e)              const { return src(reverse(e)); }
+  FaceId     face(HalfedgeId e)             const { return halfedges_[e].face; }
+  HalfedgeId halfedge(FaceId f)             const { return face_to_edge_[f]; }
+  HalfedgeId left(HalfedgeId e)             const { return reverse(prev(e)); }
+  HalfedgeId right(HalfedgeId e)            const { return next(reverse(e)); }
 
   // Check id validity
   bool valid(VertexId v)   const { return vertex_to_edge_.valid(v); }
   bool valid(HalfedgeId e) const { return halfedges_.valid(e); }
+  bool valid(EdgeId e)     const { return unsigned(e.id<<1)<unsigned(halfedges_.size()); }
   bool valid(FaceId f)     const { return face_to_edge_.valid(f); }
 
   // Check for boundaries
   bool is_boundary(HalfedgeId e) const { return !face(e).valid(); }
+  bool is_boundary(EdgeId e)     const { return is_boundary(halfedge(e,0)) || is_boundary(halfedge(e,1)); }
   bool is_boundary(VertexId v)   const { const auto e = halfedge(v); return !e.valid() || !face(e).valid(); }
   bool isolated(VertexId v)      const { return !halfedge(v).valid(); }
   OTHER_CORE_EXPORT bool has_boundary() const;
@@ -125,6 +130,7 @@ public:
   // Iterate over vertices, edges, or faces
   Range<IdIter<VertexId>>   vertices()  const { return Range<IdIter<VertexId>>  (VertexId(0),  VertexId(  n_vertices())); }
   Range<IdIter<HalfedgeId>> halfedges() const { return Range<IdIter<HalfedgeId>>(HalfedgeId(0),HalfedgeId(n_halfedges())); }
+  Range<IdIter<EdgeId>>     edges()     const { return Range<IdIter<EdgeId>>    (EdgeId(0),    EdgeId(    n_edges())); }
   Range<IdIter<FaceId>>     faces()     const { return Range<IdIter<FaceId>>    (FaceId(0),    FaceId(    n_faces())); }
 
   // Find a halfedge between two vertices, or return an invalid id if none exists.
