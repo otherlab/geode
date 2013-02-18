@@ -359,6 +359,13 @@ bool HalfedgeMesh::is_manifold_with_boundary() const {
   return true;
 }
 
+int HalfedgeMesh::degree(VertexId v) const {
+  int degree = 0;
+  for (OTHER_UNUSED auto _ : outgoing(v))
+    degree++;
+  return degree;
+}
+
 NestedArray<HalfedgeId> HalfedgeMesh::boundary_loops() const {
   NestedArray<HalfedgeId> loops;
   boost::dynamic_bitset<> seen(n_halfedges()); 
@@ -373,6 +380,85 @@ NestedArray<HalfedgeId> HalfedgeMesh::boundary_loops() const {
       loops.offsets.const_cast_().append(loops.flat.size());
     }
   return loops;
+}
+
+void HalfedgeMesh::unsafe_delete_last_vertex() {
+  const VertexId v(n_vertices()-1);
+  // Delete all incident faces
+  while (!isolated(v))
+    unsafe_delete_face(face(reverse(halfedge(v))));
+  // Remove the vertex
+  vertex_to_edge_.flat.pop();
+}
+
+void HalfedgeMesh::unsafe_delete_face(const FaceId f) {
+  // Break halfedges away from this face
+  const auto es = halfedges(f);
+  for (const auto e : es) {
+    halfedges_[e].face = FaceId();
+    vertex_to_edge_[src(e)] = e; // Make sure we know the vertex is now a boundary
+  }
+
+  // Remove unconnected halfedges (higher first to not break as we delete)
+  for (const auto e0 : es.sorted().reversed()) { 
+    const auto e1 = reverse(e0);
+    if (is_boundary(e1)) {
+      // Decouple the halfedge pair from its neighbors
+      const auto v0 = src(e0), v1 = src(e1);
+      const auto p0 = prev(e0), n0 = next(e0),
+                 p1 = prev(e1), n1 = next(e1);
+      if (halfedge(v0)==e0)
+        vertex_to_edge_[v0] = n1!=e0?n1:HalfedgeId();
+      if (halfedge(v1)==e1)
+        vertex_to_edge_[v1] = n0!=e1?n0:HalfedgeId();
+
+      OTHER_ASSERT(halfedge(v0).id<n_halfedges());;
+      OTHER_ASSERT(halfedge(v1).id<n_halfedges());;
+
+      unsafe_link(p0,n1);
+      unsafe_link(p1,n0);
+      // Rename the last halfedge pair to e0,e1
+      const int new_count = n_halfedges()-2;
+      if (e0.id<new_count) {
+        const HalfedgeId e2(new_count+0),
+                         e3(new_count+1);
+        const auto v2 = src(e2), v3 = src(e3);
+        const auto p2 = prev(e2), n2 = next(e2),
+                   p3 = prev(e3), n3 = next(e3);
+        const auto f2 = face(e2), f3 = face(e3);
+        halfedges_[e0] = halfedges_[e2];
+        halfedges_[e1] = halfedges_[e3];
+        unsafe_link(p2,e0);
+        unsafe_link(e0,n2);
+        unsafe_link(p3,e1);
+        unsafe_link(e1,n3);
+        if (f2.valid())
+          face_to_edge_[f2] = e0;
+        if (f3.valid())
+          face_to_edge_[f3] = e1;
+        if (halfedge(v2)==e2)
+          vertex_to_edge_[v2] = e0;
+        if (halfedge(v3)==e3)
+          vertex_to_edge_[v3] = e1;
+      }
+      // Discard the deleted halfedges
+      halfedges_.flat.pop();
+      halfedges_.flat.pop();
+
+      OTHER_ASSERT(halfedge(v0).id<n_halfedges());;
+      OTHER_ASSERT(halfedge(v1).id<n_halfedges());;
+    }
+  }
+
+  // Rename the last face to f
+  if (f.id<n_faces()-1) {
+    const auto es = halfedges(FaceId(n_faces()-1));
+    halfedges_[es.x].face = halfedges_[es.y].face = halfedges_[es.z].face = f;
+    face_to_edge_[f] = es.x;
+  }
+
+  // Remove the delete face
+  face_to_edge_.flat.pop(); 
 }
 
 void HalfedgeMesh::dump_internals() const {
@@ -437,6 +523,18 @@ static void random_face_splits(HalfedgeMesh& mesh, const int splits, const uint1
   }
 }
 
+static void mesh_destruction_test(HalfedgeMesh& mesh, const uint128_t key) {
+  const auto random = new_<Random>(key);
+  while (mesh.n_vertices()) {
+    const int target = random->uniform<int>(0,1+2*mesh.n_faces());
+    if (target<mesh.n_faces())
+      mesh.unsafe_delete_face(FaceId(target));
+    else
+      mesh.unsafe_delete_last_vertex();
+    mesh.assert_consistent();
+  }
+}
+
 }
 using namespace other;
 
@@ -466,4 +564,5 @@ void wrap_halfedge_mesh() {
   // For testing purposes
   OTHER_FUNCTION(random_edge_flips)
   OTHER_FUNCTION(random_face_splits)
+  OTHER_FUNCTION(mesh_destruction_test)
 }

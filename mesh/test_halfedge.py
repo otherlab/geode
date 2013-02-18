@@ -66,8 +66,11 @@ def test_construction():
       partial.add_vertices(soup.nodes())
       check_add_faces(partial,tris)
       # Check that face splits are safe
-      random_face_splits(mesh,200,key+10)
+      random_face_splits(mesh,20,key+10)
       mesh.assert_consistent()
+      # Tear the mesh apart in random order
+      mesh_destruction_test(mesh,key+20)
+      assert mesh.n_vertices==mesh.n_halfedges==mesh.n_faces==0
 
 if __name__=='__main__':
   test_construction()

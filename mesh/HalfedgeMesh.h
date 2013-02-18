@@ -137,6 +137,9 @@ public:
   // Extract all triangles as a flat array
   Array<Vector<int,3>> elements() const;
 
+  // Compute the edge degree of a vertex in O(degree) time.
+  OTHER_CORE_EXPORT int degree(VertexId v) const;
+
   // Compute all boundary loops
   NestedArray<HalfedgeId> boundary_loops() const;
 
@@ -195,6 +198,14 @@ public:
 
   // Flip an edge assuming is_flip_safe(e)
   OTHER_CORE_EXPORT void unsafe_flip_edge(HalfedgeId e);
+
+  // Remove a face from the mesh, shuffling face and halfedge ids in the process.
+  // Vertex ids are untouched, and in particular isolated vertices are not deleted.
+  OTHER_CORE_EXPORT void unsafe_delete_face(FaceId f);
+
+  // Remove the last vertex from the mesh, shuffling face and halfedge ids in the process.
+  // This exists solely to delete sentinel vertices created by Delaunay.
+  OTHER_CORE_EXPORT void unsafe_delete_last_vertex();
 };
 
 // Use only through HalfedgeMesh::outgoing()
