@@ -22,6 +22,15 @@ ostream& operator<<(ostream& output, uint128_t n) {
   return output << str(n);
 }
 
+#if defined(__GNUC__) && defined(__LP64__)
+string str(__int128_t n) {
+  return n<0 ? '-'+str(uint128_t(-n)) : str(uint128_t(n));
+};
+ostream& operator<<(ostream& output, __int128_t n) {
+  return output << str(n);
+}
+#endif
+
 #ifdef OTHER_PYTHON
 
 static PyObject* p64;
