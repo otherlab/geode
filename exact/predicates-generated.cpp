@@ -14,14 +14,14 @@ using exact::ecube;
 using std::lower_bound;
 
 // Forward declare degeneracy handling routines
-static bool incircle_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2, const int p3i, const Vector<float,2> p3) OTHER_COLD OTHER_NEVER_INLINE;
-static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_COLD OTHER_NEVER_INLINE;
-static bool segment_directions_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) OTHER_COLD OTHER_NEVER_INLINE;
-static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) OTHER_COLD OTHER_NEVER_INLINE;
-static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int di, const Vector<float,2> d) OTHER_COLD OTHER_NEVER_INLINE;
-static bool directions_oriented_degenerate(const int d0i, const Vector<float,2> d0, const int d1i, const Vector<float,2> d1) OTHER_COLD OTHER_NEVER_INLINE;
+static bool incircle_degenerate(const int p0i, const Vector<exact::Int,2> p0, const int p1i, const Vector<exact::Int,2> p1, const int p2i, const Vector<exact::Int,2> p2, const int p3i, const Vector<exact::Int,2> p3) OTHER_COLD OTHER_NEVER_INLINE;
+static bool triangle_oriented_degenerate(const int p0i, const Vector<exact::Int,2> p0, const int p1i, const Vector<exact::Int,2> p1, const int p2i, const Vector<exact::Int,2> p2) OTHER_COLD OTHER_NEVER_INLINE;
+static bool segment_directions_oriented_degenerate(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int b0i, const Vector<exact::Int,2> b0, const int b1i, const Vector<exact::Int,2> b1) OTHER_COLD OTHER_NEVER_INLINE;
+static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int b0i, const Vector<exact::Int,2> b0, const int b1i, const Vector<exact::Int,2> b1, const int c0i, const Vector<exact::Int,2> c0, const int c1i, const Vector<exact::Int,2> c1) OTHER_COLD OTHER_NEVER_INLINE;
+static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int di, const Vector<exact::Int,2> d) OTHER_COLD OTHER_NEVER_INLINE;
+static bool directions_oriented_degenerate(const int d0i, const Vector<exact::Int,2> d0, const int d1i, const Vector<exact::Int,2> d1) OTHER_COLD OTHER_NEVER_INLINE;
 
-bool incircle(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2, const int p3i, const Vector<float,2> p3) {
+bool incircle(const int p0i, const Vector<exact::Int,2> p0, const int p1i, const Vector<exact::Int,2> p1, const int p2i, const Vector<exact::Int,2> p2, const int p3i, const Vector<exact::Int,2> p3) {
   // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y), p3x(p3.x), p3y(p3.y);
   assert(p0x==p0.x && p0y==p0.y && p1x==p1.x && p1y==p1.y && p2x==p2.x && p2y==p2.y && p3x==p3.x && p3y==p3.y);
@@ -33,7 +33,7 @@ bool incircle(const int p0i, const Vector<float,2> p0, const int p1i, const Vect
   return incircle_degenerate(p0i,p0,p1i,p1,p2i,p2,p3i,p3);
 }
 
-static bool incircle_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2, const int p3i, const Vector<float,2> p3) {
+static bool incircle_degenerate(const int p0i, const Vector<exact::Int,2> p0, const int p1i, const Vector<exact::Int,2> p1, const int p2i, const Vector<exact::Int,2> p2, const int p3i, const Vector<exact::Int,2> p3) {
   // Compute input permutation
   int order[4] = {p0i,p1i,p2i,p3i};
   const int permutation = permutation_id(4,order);
@@ -213,7 +213,7 @@ static bool incircle_degenerate(const int p0i, const Vector<float,2> p0, const i
   }
 }
 
-bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) {
+bool triangle_oriented(const int p0i, const Vector<exact::Int,2> p0, const int p1i, const Vector<exact::Int,2> p1, const int p2i, const Vector<exact::Int,2> p2) {
   // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int p0x(p0.x), p0y(p0.y), p1x(p1.x), p1y(p1.y), p2x(p2.x), p2y(p2.y);
   assert(p0x==p0.x && p0y==p0.y && p1x==p1.x && p1y==p1.y && p2x==p2.x && p2y==p2.y);
@@ -225,7 +225,7 @@ bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, c
   return triangle_oriented_degenerate(p0i,p0,p1i,p1,p2i,p2);
 }
 
-static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) {
+static bool triangle_oriented_degenerate(const int p0i, const Vector<exact::Int,2> p0, const int p1i, const Vector<exact::Int,2> p1, const int p2i, const Vector<exact::Int,2> p2) {
   // Compute input permutation
   int order[3] = {p0i,p1i,p2i};
   const int permutation = permutation_id(3,order);
@@ -272,7 +272,7 @@ static bool triangle_oriented_degenerate(const int p0i, const Vector<float,2> p0
   }
 }
 
-bool segment_directions_oriented(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) {
+bool segment_directions_oriented(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int b0i, const Vector<exact::Int,2> b0, const int b1i, const Vector<exact::Int,2> b1) {
   // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y);
@@ -284,7 +284,7 @@ bool segment_directions_oriented(const int a0i, const Vector<float,2> a0, const 
   return segment_directions_oriented_degenerate(a0i,a0,a1i,a1,b0i,b0,b1i,b1);
 }
 
-static bool segment_directions_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1) {
+static bool segment_directions_oriented_degenerate(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int b0i, const Vector<exact::Int,2> b0, const int b1i, const Vector<exact::Int,2> b1) {
   // Compute input permutation
   int order[4] = {a0i,a1i,b0i,b1i};
   const int permutation = permutation_id(4,order);
@@ -325,7 +325,7 @@ static bool segment_directions_oriented_degenerate(const int a0i, const Vector<f
   }
 }
 
-bool segment_intersections_ordered_helper(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) {
+bool segment_intersections_ordered_helper(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int b0i, const Vector<exact::Int,2> b0, const int b1i, const Vector<exact::Int,2> b1, const int c0i, const Vector<exact::Int,2> c0, const int c1i, const Vector<exact::Int,2> c1) {
   // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), b0x(b0.x), b0y(b0.y), b1x(b1.x), b1y(b1.y), c0x(c0.x), c0y(c0.y), c1x(c1.x), c1y(c1.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && b0x==b0.x && b0y==b0.y && b1x==b1.x && b1y==b1.y && c0x==c0.x && c0y==c0.y && c1x==c1.x && c1y==c1.y);
@@ -337,7 +337,7 @@ bool segment_intersections_ordered_helper(const int a0i, const Vector<float,2> a
   return segment_intersections_ordered_helper_degenerate(a0i,a0,a1i,a1,b0i,b0,b1i,b1,c0i,c0,c1i,c1);
 }
 
-static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) {
+static bool segment_intersections_ordered_helper_degenerate(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int b0i, const Vector<exact::Int,2> b0, const int b1i, const Vector<exact::Int,2> b1, const int c0i, const Vector<exact::Int,2> c0, const int c1i, const Vector<exact::Int,2> c1) {
   // Compute input permutation
   int order[6] = {a0i,a1i,b0i,b1i,c0i,c1i};
   const int permutation = permutation_id(6,order);
@@ -678,7 +678,7 @@ static bool segment_intersections_ordered_helper_degenerate(const int a0i, const
   }
 }
 
-bool segment_to_direction_oriented(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int di, const Vector<float,2> d) {
+bool segment_to_direction_oriented(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int di, const Vector<exact::Int,2> d) {
   // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int a0x(a0.x), a0y(a0.y), a1x(a1.x), a1y(a1.y), dx(d.x), dy(d.y);
   assert(a0x==a0.x && a0y==a0.y && a1x==a1.x && a1y==a1.y && dx==d.x && dy==d.y);
@@ -690,7 +690,7 @@ bool segment_to_direction_oriented(const int a0i, const Vector<float,2> a0, cons
   return segment_to_direction_oriented_degenerate(a0i,a0,a1i,a1,di,d);
 }
 
-static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int di, const Vector<float,2> d) {
+static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector<exact::Int,2> a0, const int a1i, const Vector<exact::Int,2> a1, const int di, const Vector<exact::Int,2> d) {
   // Compute input permutation
   int order[3] = {a0i,a1i,di};
   const int permutation = permutation_id(3,order);
@@ -731,7 +731,7 @@ static bool segment_to_direction_oriented_degenerate(const int a0i, const Vector
   }
 }
 
-bool directions_oriented(const int d0i, const Vector<float,2> d0, const int d1i, const Vector<float,2> d1) {
+bool directions_oriented(const int d0i, const Vector<exact::Int,2> d0, const int d1i, const Vector<exact::Int,2> d1) {
   // Evaluate constant term with exact integer arithmetic
   OTHER_UNUSED const exact::Int d0x(d0.x), d0y(d0.y), d1x(d1.x), d1y(d1.y);
   assert(d0x==d0.x && d0y==d0.y && d1x==d1.x && d1y==d1.y);
@@ -743,7 +743,7 @@ bool directions_oriented(const int d0i, const Vector<float,2> d0, const int d1i,
   return directions_oriented_degenerate(d0i,d0,d1i,d1);
 }
 
-static bool directions_oriented_degenerate(const int d0i, const Vector<float,2> d0, const int d1i, const Vector<float,2> d1) {
+static bool directions_oriented_degenerate(const int d0i, const Vector<exact::Int,2> d0, const int d1i, const Vector<exact::Int,2> d1) {
   // Compute input permutation
   int order[2] = {d0i,d1i};
   const int permutation = permutation_id(2,order);

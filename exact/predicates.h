@@ -8,12 +8,12 @@ namespace other {
 // Add trivial predicates as inline functions.  Note that infinitesimals come in decreasing order.
 
 // Is b.x > a.x?
-static inline bool rightwards(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) {
+static inline bool rightwards(const int ai, const Vector<exact::Quantized,2> a, const int bi, const Vector<exact::Quantized,2> b) {
   return b.x>a.x || (b.x==a.x && ai>bi);
 }
 
 // Is b.y > a.y?
-static inline bool upwards(const int ai, const Vector<float,2> a, const int bi, const Vector<float,2> b) {
+static inline bool upwards(const int ai, const Vector<exact::Quantized,2> a, const int bi, const Vector<exact::Quantized,2> b) {
   return b.y>a.y || (b.y==a.y && ai>bi);
 }
 

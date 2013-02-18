@@ -15,7 +15,7 @@ namespace other {
 using Log::cout;
 using std::endl;
 typedef Vector<real,2> TV;
-typedef Vector<exact::Real,2> EV;
+typedef Vector<exact::Quantized,2> EV;
 const auto bound = exact::bound;
 
 // Whether to run extremely expensive diagnostics

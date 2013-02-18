@@ -8,9 +8,8 @@
 namespace other {
 
 template<class TS,int d> struct Quantizer {
-  typedef exact::Real T;
   typedef exact::Int Int;
-  typedef Vector<T,d> TV;  // quantized vector type
+  typedef Vector<Int,d> EV;  // quantized vector type
   typedef Vector<TS,d> TVS; // unquantized vector type
 
   struct Inverse {
@@ -20,7 +19,7 @@ template<class TS,int d> struct Quantizer {
     Inverse(TVS center, TS inv_scale)
       : center(center), inv_scale(inv_scale) {}
 
-    TVS operator()(const TV& p) const {
+    TVS operator()(const EV& p) const {
       return center+(inv_scale*TVS(p));
     }
   };
@@ -31,14 +30,11 @@ template<class TS,int d> struct Quantizer {
 
   Quantizer(const Box<TVS>& box)
     : center(box.center())
-    , scale(ldexp((TS)1-8*numeric_limits<T>::epsilon(),numeric_limits<T>::digits+1)/max(TS(1.01)*box.sizes().max(),TS(1e-6))) // 8 is a bit slack, but no one cares
+    , scale(TS(exact::bound)/max(TS(1.01)*box.sizes().max(),TS(1e-6)))
     , inverse(center,1/scale) {}
 
-  TV operator()(const TVS& p) const {
-    TV q(scale*(p-center)); // Transform to 1-2**24 <= q <= 2**24-1
-    for (int i=0;i<d;i++)
-      q[i] = Int(q[i]);
-    return q;
+  EV operator()(const TVS& p) const {
+    return EV(scale*(p-center)); // Transform to 1-2**24 <= q <= 2**24-1
   }
 };
 

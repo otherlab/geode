@@ -11,6 +11,8 @@
  * The result is a number that can be operated on with fast conservative interval arithmetic and
  * also exactly converted to int32_t for exact integer math.  The 1.01 factor gives algorithms a
  * bit of space for sentinel purposes.
+ *
+ * Actually, Delaunay runs 20% faster without the interval steps, so we'll go pure integer for now.
  */
 
 #include <other/core/utility/config.h>
@@ -25,8 +27,16 @@ const int bound = (1<<24)-1;
 // Base integer type for exact arithmetic
 typedef int32_t Int;
 
+// Use pure integer math for now
+#define OTHER_EXACT_INTERVAL_FILTER 0
+
+#if OTHER_EXACT_INTERVAL_FILTER
 // Floating point type for exact arithmetic.  All values used for exact arithmetic will be exact integers.
 typedef float Real;
+typedef Real Quantized;
+#else
+typedef Int Quantized;
+#endif
 
 }
 }

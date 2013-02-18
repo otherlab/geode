@@ -139,7 +139,7 @@ template<int d,class Slow,class Fast,class... Once,class... Twice> void test_pre
     int8_t count = min(random->uniform<int8_t>(1,3*n*d/2),int8_t(n*d));
     for (int i=0;i<count;i++)
       values[i] = (int8_t)random->bits<uint8_t>();
-    Vector<Vector<exact::Real,d>,n> Xf;
+    Vector<Vector<exact::Quantized,d>,n> Xf;
     Vector<Vector<Expansion,d>,n> Xe;
     for (int i=0;i<n;i++)
       for (int j=0;j<d;j++) {
@@ -173,7 +173,7 @@ template<class... SlowArgs,class Fast> void test_predicate(const Fast fast, Expa
 typedef Expansion E;
 typedef Vector<E,2> EV2;
 typedef Vector<E,3> EV3;
-typedef Vector<exact::Real,2> TV2;
+typedef Vector<exact::Quantized,2> TV2;
 
 E slow_rightwards(const EV2& a, const EV2& b) {
   return b.x-a.x;
