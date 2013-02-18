@@ -3,8 +3,12 @@
 
 // Modified from code by Tyson Brochu, 2011
 
+#include <other/core/utility/config.h>
+#include <other/core/python/repr.h>
 #include <fenv.h>
 namespace other {
+
+using std::ostream;
 
 // IMPORTANT: All interval arithmetic must occur within an IntervalScope (see scope.h).
 
@@ -156,6 +160,10 @@ static inline Interval sqr(const Interval x) {
 static inline Interval cube(const Interval x) {
   assert(fegetround() == FE_UPWARD);
   return Interval(-(x.nlo*x.nlo*x.nlo),x.hi*x.hi*x.hi);
+}
+
+static inline ostream& operator<<(ostream& output, const Interval x) {
+  return output << '['<<repr(-x.nlo)<<','<<repr(x.hi)<<']';
 }
 
 }

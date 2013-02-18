@@ -5,8 +5,8 @@
 #include <other/core/vector/Vector.h>
 namespace other {
 
-// Does b lie inside the circle defined by a0,a1,a2?
-bool incircle(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int a2i, const Vector<float,2> a2, const int bi, const Vector<float,2> b) OTHER_EXPORT;
+// Does p3 lie inside the circle defined by p0,p1,p2?  This predicate is antisymmetric.
+bool incircle(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2, const int p3i, const Vector<float,2> p3) OTHER_EXPORT;
 
 // Is a 2D triangle positively oriented?
 bool triangle_oriented(const int p0i, const Vector<float,2> p0, const int p1i, const Vector<float,2> p1, const int p2i, const Vector<float,2> p2) OTHER_EXPORT;
@@ -17,5 +17,11 @@ bool segment_directions_oriented(const int a0i, const Vector<float,2> a0, const 
 // Given segments a,b,c, does intersect(a,b) come before intersect(a,c) on segment a?
 // This predicate answers that question assuming that da,db and da,dc are positively oriented.
 bool segment_intersections_ordered_helper(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int b0i, const Vector<float,2> b0, const int b1i, const Vector<float,2> b1, const int c0i, const Vector<float,2> c0, const int c1i, const Vector<float,2> c1) OTHER_EXPORT;
+
+// Is the rotation from a1-a0 to d positive?  This is needed for sentinel incircle tests.
+bool segment_to_direction_oriented(const int a0i, const Vector<float,2> a0, const int a1i, const Vector<float,2> a1, const int di, const Vector<float,2> d) OTHER_EXPORT;
+
+// Is the rotation from d0 to d1 positive?
+bool directions_oriented(const int d0i, const Vector<float,2> d0, const int d1i, const Vector<float,2> d1) OTHER_EXPORT;
 
 }

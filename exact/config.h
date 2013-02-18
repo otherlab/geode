@@ -13,6 +13,8 @@
  * bit of space for sentinel purposes.
  */
 
+#include <other/core/utility/config.h>
+#include <stdint.h>
 namespace other {
 namespace exact {
 

@@ -1,5 +1,6 @@
 // Unit tests for exact geometric predicates
 
+#include <other/core/exact/config.h>
 #include <other/core/exact/predicates.h>
 #include <other/core/exact/scope.h>
 #include <other/core/array/sort.h>
@@ -138,7 +139,7 @@ template<int d,class Slow,class Fast,class... Once,class... Twice> void test_pre
     int8_t count = min(random->uniform<int8_t>(1,3*n*d/2),int8_t(n*d));
     for (int i=0;i<count;i++)
       values[i] = (int8_t)random->bits<uint8_t>();
-    Vector<Vector<float,d>,n> Xf;
+    Vector<Vector<exact::Real,d>,n> Xf;
     Vector<Vector<Expansion,d>,n> Xe;
     for (int i=0;i<n;i++)
       for (int j=0;j<d;j++) {
@@ -172,6 +173,7 @@ template<class... SlowArgs,class Fast> void test_predicate(const Fast fast, Expa
 typedef Expansion E;
 typedef Vector<E,2> EV2;
 typedef Vector<E,3> EV3;
+typedef Vector<exact::Real,2> TV2;
 
 E slow_rightwards(const EV2& a, const EV2& b) {
   return b.x-a.x;
@@ -208,6 +210,26 @@ E slow_incircle(const EV2& a0, const EV2& a1, const EV2& a2, const EV2& b) {
 
 void predicate_tests(const int steps) {
   IntervalScope scope;
+
+  // Test behavior for large numbers
+  for (const int i : range(24)) {
+    const int bound = 1<<i;
+    const TV2 x0(-bound,-bound),
+              x1( bound,-bound),
+              x2( bound, bound),
+              x3(-bound, bound);
+    if (incircle(0,x0,1,x1,2,x2,3,x3)) {
+      const int small = 1;
+      const EV2 e0(E(0,-small),E(1,-small)),
+                e1(E(2, small),E(3,-small)),
+                e2(E(4, small),E(5, small)),
+                e3(E(6,-small),E(7, small));
+      cout << "slow = "<<slow_incircle(e0,e1,e2,e3)<<endl;
+      OTHER_ASSERT(false);
+    }
+  }
+
+  // Fuzz tests
   #define TEST(name) { \
     Log::Scope scope(#name); \
     test_predicate(name,slow_##name,steps); }
