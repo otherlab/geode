@@ -89,7 +89,7 @@ options(
   ('PREFIX_SHARE','Override path to install resources','$PREFIX_BIN'),
   ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
   ('python','Python executable','python'),
-  ('mpicc','MPI wrapper compiler (used only to extract flags)','mpicc'),
+  ('mpicc','MPI wrapper compiler (used only to extract flags)','<detect>'),
   ('qtdir','Top level Qt dir (autodetect by default)',''))
 assert env['real'] in ('float','double')
 
@@ -352,9 +352,29 @@ if env['openmp']:
   else:
     print>>sys.stderr, 'Warning: clang doesn\'t know how to do OpenMP, so many things will be slower'
 
+# find the right mpicc
+if env['mpicc']=='<detect>':
+  if windows:
+    env.Replace(mpicc='mpicc')
+  else:
+    mpicc_options = ['mpicc','openmpicc']
+    for mpicc in mpicc_options:
+      if subprocess.Popen(['which',mpicc], stdout=subprocess.PIPE).communicate()[0]:
+        env.Replace(mpicc=mpicc)
+        break
+    else:
+      die('no suitable version of mpicc found (tried %s)' % mpicc_options)
+
 # Configure MPI if it exists
 try:
   mpi = externals['mpi']
+  if env['mpicc'] and not mpi['cpppath']:
+    # find mpi.h
+    mpi_include_options = ['/opt/local/include/openmpi', '/usr/local/include/openmpi', '/opt/local/include/mpi', '/usr/local/include/mpi']
+    for dir in mpi_include_options:
+      if os.path.exists(os.path.join(dir, 'mpi.h')):
+        mpi['cpppath'] = dir
+        break
   if env['mpicc'] and not (mpi['cxxflags'] or mpi['linkflags'] or mpi['libs']):
     for flags,stage in ('linkflags','link'),('cxxflags','compile'):
       mpi[flags] = ' '+subprocess.Popen([env['mpicc'],'--showme:%s'%stage],stdout=subprocess.PIPE).communicate()[0].strip()
