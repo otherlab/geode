@@ -247,8 +247,6 @@ Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const boo
     const auto f0 = bsp_search(bsp,X,v);
 
     // Split the face by inserting the new vertex and update the BSP tree accordingly.
-    if (self_check)
-      check_bsp(mesh,bsp,face_to_bsp,X);
     mesh->split_face(f0,v);
     const auto e0 = mesh->halfedge(v),
                e1 = mesh->left(e0),
@@ -297,8 +295,6 @@ Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const boo
       if (self_check)
         assert_delaunay(mesh,X,true);
     }
-    if (self_check)
-      assert_delaunay(mesh,X,true);
     if (self_check)
       assert_delaunay(mesh,X);
   }
