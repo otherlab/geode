@@ -9,6 +9,7 @@
 #include <other/core/mesh/HalfedgeMesh.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/permute.h>
+#include <other/core/utility/interrupts.h>
 #include <other/core/utility/Log.h>
 namespace other {
 
@@ -238,6 +239,7 @@ Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const boo
 
   // Insert all vertices into the mesh in random order, maintaining the Delaunay property
   for (const auto i : range(n)) {
+    check_interrupts();
     // Pick a vertex at random, without replacement
     const VertexId v(random_permute(n,key,i));
 
