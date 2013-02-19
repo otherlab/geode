@@ -8,10 +8,11 @@ import sys
 def test_predicates():
   predicate_tests(4096)
 
-def test_delaunay(benchmark=False,cgal=False):
+def test_delaunay(benchmark=False,cgal=False,degenerate=True):
   random.seed(8711)
   for n in range(3,10)+[50,100,563,1025,2000,-2000]+benchmark*[1<<20,-1<<20]:
-    if n<0: continue
+    if n<0 and not degenerate:
+      continue
     X = random.randn(n,2) if n>0 else zeros((-n,2))
     with Log.scope('delaunay %d'%n):
       mesh = delaunay_points(X,validate=not benchmark)
@@ -32,7 +33,7 @@ def test_delaunay(benchmark=False,cgal=False):
 if __name__=='__main__':
   Log.configure('exact tests',0,0,100)
   if '-b' in sys.argv:
-    test_delaunay(True)
+    test_delaunay(benchmark=True,degenerate=False)
   else:
     test_predicates()
     test_delaunay()

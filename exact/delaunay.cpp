@@ -69,41 +69,30 @@ static inline bool is_sentinel(const EV& x) {
 #define SENTINEL_KEY(i) (is_sentinel(x##i)?-v##i.id:numeric_limits<int>::min())
 #define COMPARATOR(i,j) if (SENTINEL_KEY(i)>SENTINEL_KEY(j)) { swap(v##i,v##j); swap(x##i,x##j); parity ^= 1; }
 
-static inline bool triangle_oriented(const RawField<const EV,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
-  auto x0 = X[v0],
-       x1 = X[v1],
-       x2 = X[v2];
-  const int sentinels = is_sentinel(x0)+is_sentinel(x1)+is_sentinel(x2);
-  if (OTHER_EXPECT(!sentinels,true)) // If we have a nonsentinel triangle, use a normal orientation test
-    return triangle_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
+OTHER_COLD OTHER_CONST static inline bool triangle_oriented_sentinels(VertexId v0, EV x0, VertexId v1, EV x1, VertexId v2, EV x2) {
   // Move large sentinels last
   bool parity = 0;
   COMPARATOR(0,1)
   COMPARATOR(1,2)
   COMPARATOR(0,1)
-  return parity ^ (sentinels==1 ? segment_to_direction_oriented(v0.id,x0,v1.id,x1,v2.id,x2)
-                                :           directions_oriented(         v1.id,x1,v2.id,x2));
+  // Triangle orientation tests reduce to segment vs. direction and direction vs. direction when infinities are involved
+  return parity ^ (!is_sentinel(x1) ? segment_to_direction_oriented(v0.id,x0,v1.id,x1,v2.id,x2)   // one sentinel
+                                    :           directions_oriented(         v1.id,x1,v2.id,x2)); // two or three sentinels
 }
 
-// Test whether an edge is Delaunay
-static inline bool is_delaunay(const HalfedgeMesh& mesh, RawField<const EV,VertexId> X, const HalfedgeId edge) {
-  // Boundary edges belong to the sentinel quad and are always Delaunay.
-  const auto rev = mesh.reverse(edge);
-  if (mesh.is_boundary(rev))
-    return true;
-  // Grab vertices in counterclockwise order
-  auto v0 = mesh.src(edge),
-       v1 = mesh.src(mesh.prev(rev)),
-       v2 = mesh.dst(edge),
-       v3 = mesh.src(mesh.prev(edge));
-  auto x0 = X[v0],
-       x1 = X[v1],
-       x2 = X[v2],
-       x3 = X[v3];
-  const int sentinels = is_sentinel(x0)+is_sentinel(x1)+is_sentinel(x2)+is_sentinel(x3);
-  // If we have a nonsentinel interior edge, perform a normal incircle test
-  if (OTHER_EXPECT(!sentinels,true))
-    return !incircle(v0.id,x0,v1.id,x1,v2.id,x2,v3.id,x3);
+OTHER_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const EV,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
+  const auto x0 = X[v0],
+             x1 = X[v1],
+             x2 = X[v2];
+  // If we have a nonsentinel triangle, use a normal orientation test
+  if (maxabs(x0.x,x1.x,x2.x)!=bound)
+    return triangle_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
+  // Fall back to sentinel case analysis
+  return triangle_oriented_sentinels(v0,x0,v1,x1,v2,x2);
+}
+
+// Test whether an edge containing sentinels is Delaunay
+OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(VertexId v0, EV x0, VertexId v1, EV x1, VertexId v2, EV x2, VertexId v3, EV x3) {
   // Unfortunately, the sentinels need to be at infinity for purposes of Delaunay testing, and our SOS predicates
   // don't support infinities.  Therefore, we need some case analysis.  First, we move all the sentinels to the end,
   // sorted in decreasing order of index.  Different sentinels will be placed at different orders of infinity,
@@ -114,12 +103,34 @@ static inline bool is_delaunay(const HalfedgeMesh& mesh, RawField<const EV,Verte
   COMPARATOR(0,2)
   COMPARATOR(1,3)
   COMPARATOR(1,2)
-  if (sentinels==1) // A finite circle contains infinity iff it is inside out, so we reduce to an orientation test
+  if (!is_sentinel(x2)) // One infinity: A finite circle contains infinity iff it is inside out, so we reduce to an orientation test
     return parity^triangle_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
-  else if (sentinels==2) // The two infinity case is also an orientation test, but with the last point at infinity
+  else if (!is_sentinel(x1)) // Two infinities: also an orientation test, but with the last point at infinity
     return parity^segment_to_direction_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
-  else // And now an orientation test with three points at infinity.  The finite point no longer matters.
+  else // Three infinities: the finite point no longer matters.
     return parity^directions_oriented(v1.id,x1,v2.id,x2);
+}
+
+// Test whether an edge is Delaunay
+OTHER_ALWAYS_INLINE static inline bool is_delaunay(const HalfedgeMesh& mesh, RawField<const EV,VertexId> X, const HalfedgeId edge) {
+  // Boundary edges belong to the sentinel quad and are always Delaunay.
+  const auto rev = mesh.reverse(edge);
+  if (mesh.is_boundary(rev))
+    return true;
+  // Grab vertices in counterclockwise order
+  const auto v0 = mesh.src(edge),
+             v1 = mesh.src(mesh.prev(rev)),
+             v2 = mesh.dst(edge),
+             v3 = mesh.src(mesh.prev(edge));
+  const auto x0 = X[v0],
+             x1 = X[v1],
+             x2 = X[v2],
+             x3 = X[v3];
+  // If we have a nonsentinel interior edge, perform a normal incircle test
+  if (maxabs(x0.x,x1.x,x2.x,x3.x)!=bound)
+    return !incircle(v0.id,x0,v1.id,x1,v2.id,x2,v3.id,x3);
+  // Fall back to sentinel case analysis
+  return is_delaunay_sentinels(v0,x0,v1,x1,v2,x2,v3,x3);
 }
 
 static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const EV,VertexId> X, const VertexId v) {
