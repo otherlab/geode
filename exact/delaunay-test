@@ -14,7 +14,7 @@ vertices = props.add('vertices',100).set_category('delaunay')
 velocity = props.add('velocity',1.).set_category('delaunay')
 frequency = props.add('frequency',1.).set_category('delaunay')
 seed = props.add('seed',1718).set_category('delaunay')
-mode = props.add('mode','well').set_allowed('well circle'.split()).set_category('delaunay')
+mode = props.add('mode','well').set_allowed('well circle degenerate'.split()).set_category('delaunay')
 
 current_time = Prop('time',0.)
 
@@ -30,6 +30,8 @@ def initial():
     x = .999*r[:,None]*polar(2*pi*random.random(n))
     v = velocity()*random.uniform(.1,1,n)[:,None]*polar(2*pi*random.random(n))
     return x,v
+  elif mode()=='degenerate':
+    return 2*pi*random.random(n),1e-7*velocity()*random.randn(n)
 
 @cache
 def colors():
@@ -71,6 +73,9 @@ def current():
     walk(2*t1,-v)
     walk(2*t2,-vp)
     return x
+  elif mode()=='degenerate':
+    a,v = initial()
+    return polar(a+current_time()*v)
 
 @cache
 def delaunay():
