@@ -33,7 +33,8 @@ def test_delaunay(benchmark=False,cgal=False,degenerate=True):
 if __name__=='__main__':
   Log.configure('exact tests',0,0,100)
   if '-b' in sys.argv:
-    test_delaunay(benchmark=True,degenerate=False)
+    cgal = '-c' in sys.argv
+    test_delaunay(benchmark=True,degenerate=False,cgal=cgal)
   else:
     test_predicates()
     test_delaunay()
