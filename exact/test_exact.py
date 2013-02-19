@@ -13,7 +13,7 @@ def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False):
   for n in range(3,10)+[50,100,563,1025,2000,-2000]+benchmark*[1<<20,-1<<20]:
     if n<0 and not origin:
       continue
-    if n>0 and circle: name,X = 'circe',polar(random.uniform(0,2*pi,n))
+    if n>0 and circle: name,X = 'circle',polar(random.uniform(0,2*pi,n))
     elif n>0:          name,X = 'gaussian',random.randn(abs(n),2)
     else:              name,X = 'origin',zeros((-n,2))
     with Log.scope('delaunay %s %d'%(name,n)):
@@ -29,8 +29,8 @@ def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False):
       from other.tim import cgal
       with Log.scope('cgal delaunay %d'%n):
         nf = cgal.cgal_time_delaunay_points(X)
-        if n>0:
-          Log.write('expected %d points, got %d'%(mesh.n_faces,nf))
+        if n>0 and mesh.n_faces!=nf:
+          Log.write('expected %d faces, got %d'%(mesh.n_faces,nf))
 
 if __name__=='__main__':
   Log.configure('exact tests',0,0,100)
