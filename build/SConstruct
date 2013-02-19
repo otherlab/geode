@@ -523,7 +523,8 @@ def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
     #return None
   if env.get('use_qt',0): # Qt gets confused if we only set options on the builder
     env = env.Clone()
-    env.Append(CPPDEFINES=externals['qt']['flags'])
+    qt = externals['qt']
+    env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
 
   # Tell the compiler which library we're building
   env.Append(CPPDEFINES=['BUILDING_' + name])
