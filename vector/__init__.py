@@ -110,16 +110,21 @@ def det(*args):
 def cross(u,v):
   # The numpy version doesn't always broadcast correctly, so we roll our own cross product routine.
   # Unfortunately, it's impossible to make 1D/2D cross products work correctly together with
-  # broadcasting, so stick to 3D for now.
+  # broadcasting, we required either both 2D or both 3D.
   u,v = asarray(u),asarray(v)
-  assert u.shape[-1]==v.shape[-1]==3
-  uv = empty(broadcast(u,v).shape,u.dtype)
-  u0,u1,u2 = u[...,0],u[...,1],u[...,2]
-  v0,v1,v2 = v[...,0],v[...,1],v[...,2]
-  uv[...,0] = u1*v2-u2*v1
-  uv[...,1] = u2*v0-u0*v2
-  uv[...,2] = u0*v1-u1*v0
-  return uv
+  d = u.shape[-1]
+  assert d==v.shape[-1]
+  if d==3:
+    uv = empty(broadcast(u,v).shape,u.dtype)
+    u0,u1,u2 = u[...,0],u[...,1],u[...,2]
+    v0,v1,v2 = v[...,0],v[...,1],v[...,2]
+    uv[...,0] = u1*v2-u2*v1
+    uv[...,1] = u2*v0-u0*v2
+    uv[...,2] = u0*v1-u1*v0
+    return uv
+  elif d==2:
+    return u[...,0]*v[...,1]-u[...,1]*v[...,0]
+  raise ValueError('expected 2D or 3D vectors')
 
 def angle_between(u,v):
   u = asarray(u)

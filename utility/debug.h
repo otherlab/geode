@@ -56,12 +56,12 @@ static inline const char* message(){return 0;}
 static inline const char* message(const char* message){return message;}
 static inline const char* message(const string& message){return message.c_str();}
 
-OTHER_CORE_EXPORT void warn_if_not_overridden(const char* function,const char* file,unsigned int line,const type_info& type);
-OTHER_CORE_EXPORT void warning(const string& message,const char* function,const char* file,unsigned int line);
-OTHER_CORE_EXPORT void OTHER_NORETURN(function_is_not_defined(const char* function,const char* file,unsigned int line,const type_info& type));
-OTHER_CORE_EXPORT void OTHER_NORETURN(not_implemented(const char* function,const char* file,unsigned int line,const char* message));
-OTHER_CORE_EXPORT void OTHER_NORETURN(fatal_error(const char* function,const char* file,unsigned int line,const char* message));
-OTHER_CORE_EXPORT void OTHER_NORETURN(assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message));
+OTHER_CORE_EXPORT void warn_if_not_overridden(const char* function,const char* file,unsigned int line,const type_info& type) OTHER_COLD;
+OTHER_CORE_EXPORT void warning(const string& message,const char* function,const char* file,unsigned int line) OTHER_COLD;
+OTHER_CORE_EXPORT void OTHER_NORETURN(function_is_not_defined(const char* function,const char* file,unsigned int line,const type_info& type)) OTHER_COLD;
+OTHER_CORE_EXPORT void OTHER_NORETURN(not_implemented(const char* function,const char* file,unsigned int line,const char* message)) OTHER_COLD;
+OTHER_CORE_EXPORT void OTHER_NORETURN(fatal_error(const char* function,const char* file,unsigned int line,const char* message)) OTHER_COLD;
+OTHER_CORE_EXPORT void OTHER_NORETURN(assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message)) OTHER_COLD;
 
 // Instead of throwing an exception, call the given function when an error occurs
 #ifdef _WIN32
