@@ -534,6 +534,7 @@ if windows:
 def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   name = os.path.basename(path)
   cpps = []
+  skip = tuple(skip)+tuple(env['skip'])
   candidates = list(files(Dir('.').srcnode().abspath,skip)) if not skip_all else []
   for f in candidates + list(extra):
     if f.endswith('.cpp') or f.endswith('.cc'):
