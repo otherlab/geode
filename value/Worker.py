@@ -25,7 +25,8 @@ class ValueProxies(PropManager):
     '''Process a message if possible, and return whether we understood it.'''
     if tag==NEW_VALUE:
       name,default = data
-      assert not self.contains(name)
+      if self.contains(name):
+        raise RuntimeError("input '%s' already exists on worker process"%name)
       self.frozen = False
       try:
         self.add(name,default)
