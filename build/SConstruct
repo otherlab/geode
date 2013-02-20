@@ -224,7 +224,7 @@ if env['CXX']=='<detect>':
   if windows:
     env.Replace(CXX=default_cxx)
   else:
-    for gcc in 'g++-mp-4.7','g++-4.7','g++-mp-4.6','g++-4.6','g++':
+    for gcc in 'clang++ g++-4.7 g++-4.6 g++'.split():
       if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
         env.Replace(CXX=gcc)
         break
