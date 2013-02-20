@@ -7,5 +7,6 @@
 *.orig
 *.sublime-project
 *.sublime-workspace
+*.vcxproj.user
 Debug*/
 Release*/
