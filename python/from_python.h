@@ -27,10 +27,6 @@
 namespace other {
 
 using std::string;
-} namespace boost { template<class T> class shared_ptr;
-} namespace other {
-
-using boost::shared_ptr;
 
 template<class T> static inline auto from_python(PyObject* object)
   -> decltype(FromPython<T>::convert(object)) {
@@ -81,12 +77,6 @@ template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E
 
 // Conversion to const T
 template<class T> struct FromPython<const T> : public FromPython<T>{};
-
-// TODO: Currently, Value<T> requires T to be Python convertible.  Therefore, we pretend shared_ptr is convertible
-// to allow arbitrary types to be hacked in.  This should be fixed by removing the restriction from Value<T>.
-template<class T> struct FromPython<shared_ptr<T> >{static shared_ptr<T> convert(PyObject* object) {
-  OTHER_NOT_IMPLEMENTED();
-}};
 
 #ifdef OTHER_PYTHON
 // Declare has_from_python<T>

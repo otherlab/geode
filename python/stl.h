@@ -13,6 +13,7 @@
 #include <other/core/python/to_python.h>
 #include <other/core/utility/config.h>
 #include <other/core/utility/tr1.h>
+#include <boost/mpl/and.hpp>
 #include <vector>
 #include <set>
 #include <map>
@@ -23,6 +24,13 @@ namespace other {
 // Fix has_to/from_python for stl containers
 template<class T> struct has_to_python<std::vector<T>> : public has_to_python<T> {};
 template<class T> struct has_from_python<std::vector<T>> : public has_from_python<T> {};
+template<class T,class O> struct has_to_python<std::set<T,O>> : public has_to_python<T> {};
+template<class T,class O> struct has_from_python<std::set<T,O>> : public has_from_python<T> {};
+template<class K,class V,class O> struct has_to_python<std::map<K,V,O>> : public mpl::and_<has_to_python<K>,has_to_python<V>> {};
+template<class K,class V,class O> struct has_from_python<std::map<K,V,O>> : public mpl::and_<has_from_python<K>,has_from_python<V>> {};
+template<class T,class H> struct has_to_python<std::tr1::unordered_set<T,H>> : public has_to_python<T> {};
+template<class T,class H> struct has_from_python<std::tr1::unordered_set<T,H>> : public has_from_python<T> {};
+template<class K,class V,class H> struct has_to_python<std::tr1::unordered_map<K,V,H>> : public mpl::and_<has_from_python<K>,has_from_python<V>> {};
 }
 
 // to_python needs to go in the std namespace to make Koenig lookup work
