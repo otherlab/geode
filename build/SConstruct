@@ -352,7 +352,7 @@ if env['openmp']:
   else:
     print>>sys.stderr, 'Warning: clang doesn\'t know how to do OpenMP, so many things will be slower'
 
-# find the right mpicc
+# Find the right mpicc
 if env['mpicc']=='<detect>':
   if windows:
     env.Replace(mpicc='mpicc')
@@ -363,7 +363,7 @@ if env['mpicc']=='<detect>':
         env.Replace(mpicc=mpicc)
         break
     else:
-      die('no suitable version of mpicc found (tried %s)' % mpicc_options)
+      env.Replace(mpicc='') # If we don't find mpi, hopefully we don't need it
 
 # Configure MPI if it exists
 try:
