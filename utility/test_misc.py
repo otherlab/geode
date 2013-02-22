@@ -30,7 +30,11 @@ def test_partition_loop():
     for count in 0,5,7,71:
       partition_loop_test(count,threads)
 
+def test_format():
+  format_test()
+
 if __name__=='__main__':
   test_partition_loop()
   test_base64()
   test_curry()
+  test_format()
