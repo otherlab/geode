@@ -525,14 +525,14 @@ public:
   OTHER_CORE_EXPORT vector<Ref<TriMesh> > nested_components() const;
 
   // Convenience functions for use in range-based for loops
-  inline Range<HandleIter<VertexIter>> vertex_handles() { return handle_range(vertices_begin(),vertices_end()); }
-  inline Range<HandleIter<ConstVertexIter>> vertex_handles() const { return handle_range(vertices_begin(),vertices_end()); }
-  inline Range<HandleIter<EdgeIter>> edge_handles() { return handle_range(edges_begin(),edges_end()); }
-  inline Range<HandleIter<ConstEdgeIter>> edge_handles() const { return handle_range(edges_begin(),edges_end()); }
-  inline Range<HandleIter<HalfedgeIter>> halfedge_handles() { return handle_range(halfedges_begin(),halfedges_end()); }
-  inline Range<HandleIter<ConstHalfedgeIter>> halfedge_handles() const { return handle_range(halfedges_begin(),halfedges_end()); }
-  inline Range<HandleIter<FaceIter>> face_handles() { return handle_range(faces_begin(),faces_end()); }
-  inline Range<HandleIter<ConstFaceIter>> face_handles() const { return handle_range(faces_begin(),faces_end()); }
+  inline Range<HandleIter<VertexIter>> vertex_handles() { return handle_range(vertices_sbegin(),vertices_end()); }
+  inline Range<HandleIter<ConstVertexIter>> vertex_handles() const { return handle_range(vertices_sbegin(),vertices_end()); }
+  inline Range<HandleIter<EdgeIter>> edge_handles() { return handle_range(edges_sbegin(),edges_end()); }
+  inline Range<HandleIter<ConstEdgeIter>> edge_handles() const { return handle_range(edges_sbegin(),edges_end()); }
+  inline Range<HandleIter<HalfedgeIter>> halfedge_handles() { return handle_range(halfedges_sbegin(),halfedges_end()); }
+  inline Range<HandleIter<ConstHalfedgeIter>> halfedge_handles() const { return handle_range(halfedges_sbegin(),halfedges_end()); }
+  inline Range<HandleIter<FaceIter>> face_handles() { return handle_range(faces_sbegin(),faces_end()); }
+  inline Range<HandleIter<ConstFaceIter>> face_handles() const { return handle_range(faces_sbegin(),faces_end()); }
 };
 
 // Silence OpenMesh output for the scope of this object
