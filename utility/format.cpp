@@ -7,6 +7,9 @@
 #include <cstdarg>
 #include <cstdio>
 
+//These needed so test functions will compile without python
+#include <other/core/utility/debug.h>
+#include <iostream>
 
 // Windows silliness
 #undef small
@@ -69,7 +72,6 @@ static void check_identity_format(const string& t) {
   }
 }
 static void format_test() {
-  //TODO
   const string short_test_string = "this is a test";
   const string digits_62 = "12345678901234567890123456789012345678901234567890123456789012";
   const string digits_63 = "123456789012345678901234567890123456789012345678901234567890123";
