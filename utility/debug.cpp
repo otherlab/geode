@@ -19,7 +19,7 @@ using std::endl;
 using std::flush;
 
 #if defined(__linux__) || defined(__CYGWIN__) || defined(__APPLE__)
-#define BREAKPOINT() kill(getpid(),SIGINT)
+#define BREAKPOINT() raise(SIGINT)
 #else
 #define BREAKPOINT() assert(false)
 #endif
