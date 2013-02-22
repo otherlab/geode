@@ -49,7 +49,7 @@ string shell_quote(const string& s) {
         result += c;
     }
   }
-  result += '\"';
+  result += '\'';
   return result;
 #endif
 }
