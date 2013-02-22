@@ -110,10 +110,11 @@ template<class TV> static void closest_point_helper(const ParticleTree<TV>& self
 
 template<class TV> TV ParticleTree<TV>::
 closest_point(TV point, int& index, T max_distance) const {
-  OTHER_ASSERT(nodes());
   index = -1;
-  T sqr_distance = sqr(max_distance);
-  closest_point_helper(*this,point,index,sqr_distance,0);
+  if (nodes()) {
+    T sqr_distance = sqr(max_distance);
+    closest_point_helper(*this,point,index,sqr_distance,0);
+  }
   if (index == -1) {
     TV x;
     x.fill(inf);
