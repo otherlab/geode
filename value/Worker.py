@@ -1,12 +1,16 @@
 '''Values evaluated on separate processes via the multiprocessing module'''
 
-from other.core import Prop,PropManager,listen
+from other.core import Prop,PropManager,listen,base64_encode
+import multiprocessing.connection
 import multiprocessing
+import subprocess
 import traceback
+import select
 import errno
 import sys
+import os
 
-__all__ = ['Worker']
+__all__ = ['Worker','worker_standalone_main']
 
 QUIT = 'quit'
 QUIT_ACK = 'quit ack'
@@ -47,6 +51,7 @@ class Connection(object):
     self.inputs = ValueProxies(conn)
     self.outputs = {}
     self.listeners = []
+    self.atquits = []
 
   def add_output(self,name,value):
     assert name not in self.outputs
@@ -62,6 +67,10 @@ class Connection(object):
       self.conn.send((SET_VALUE,(name,val)))
     self.listeners.append(listen(value,push))
 
+  def atquit(self,f):
+    '''Run the given function before a normal quit'''
+    self.atquits.append(f)
+
   def process(self,timeout=0,count=0):
     '''Check for incoming messages from the master.'''
     while self.conn.poll(timeout):
@@ -69,6 +78,8 @@ class Connection(object):
       if self.debug:
         print '%s: recv %s, %s'%(self.side,tag,data)
       if tag==QUIT:
+        for f in self.atquits:
+          f()
         self.conn.send((QUIT_ACK,()))
         sys.exit()
       elif tag==CREATE_VALUE:
@@ -93,19 +104,50 @@ def worker_main(conn,debug):
   conn = Connection('worker',conn,debug=debug)
   conn.process(timeout=None)
 
+address = 'localhost',6000
+
+def worker_standalone_main(key):
+  debug = key[0]=='1'
+  conn = multiprocessing.connection.Client(address,authkey=key[1:])
+  worker_main(conn,debug)
+
 class QuitAck(BaseException):
   pass
 
 class Worker(object):
-  def __init__(self,debug=False,quit_timeout=1.):
+  def __init__(self,debug=False,quit_timeout=1.,command=None,accept_timeout=2.):
     '''Create a new worker process with two way communication via Value objects.
-    The worker blocks until told to launch values or jobs.'''
+    The worker blocks until told to launch values or jobs.
+
+    If command is specified, the worker is created using subprocess.Popen(command+[key])
+    and connected to via Listener/Client rather than the normal multiprocessing.Process
+    mechanism.  This avoids strange problems with gdb and mpi on Mac.  The worker should
+    immediately call worker_standalone_main.'''
     self.debug = debug
     self.inside_with = False
-    self.conn,child_conn = multiprocessing.Pipe()
-    self.worker = multiprocessing.Process(target=worker_main,args=(child_conn,debug))
+    self.command = command
+    if command is None:
+      self.conn,child_conn = multiprocessing.Pipe()
+      worker = multiprocessing.Process(target=worker_main,args=(child_conn,debug))
+      worker.start()
+      self.worker_is_alive = worker.is_alive
+      self.worker_join = worker.join
+      self.worker_terminate = worker.terminate
+    else:
+      key = base64_encode(os.urandom(32))
+      worker = self.worker = subprocess.Popen(command+['01'[bool(debug)]+key])
+      listener = multiprocessing.connection.Listener(address,authkey=key)
+      # Ugly hack to avoid blocking forever if client never shows up.
+      # Borrowed from http://stackoverflow.com/questions/357656/proper-way-of-cancelling-accept-and-closing-a-python-processing-multiprocessing
+      listener.fileno = lambda:listener._listener._socket.fileno()
+      r,w,e = select.select((listener,),(),(),accept_timeout)
+      if not r:
+        raise RuntimeError('worker process failed to launch')
+      self.conn = listener.accept()
+      self.worker_is_alive = lambda:worker.poll() is None
+      self.worker_terminate = worker.terminate
+      self.worker_join = lambda timeout:None
     self.outputs = ValueProxies(self.conn)
-    self.worker.start()
     self.listeners = []
     self.crashed = False
     self.quit_timeout = quit_timeout
@@ -118,7 +160,7 @@ class Worker(object):
     def safe_join(timeout):
       # See http://stackoverflow.com/questions/1238349/python-multiprocessing-exit-error for why we need this try block.
       try:
-        self.worker.join(timeout)
+        self.worker_join(timeout)
       except OSError,e:
         if e.errno != errno.EINTR:
           raise
@@ -126,7 +168,7 @@ class Worker(object):
       print 'master: send quit'
     # First try telling the process to quit peacefully
     self.conn.send((QUIT,()))
-    # Wait a little while for a quit acnkowledgement.  This is necessary for clean shutdown.
+    # Wait a little while for a quit acknowledgement.  This is necessary for clean shutdown.
     try:
       self.process(timeout=self.quit_timeout)
     except QuitAck:
@@ -134,8 +176,8 @@ class Worker(object):
     # Attempt to join with the child process peacefully
     safe_join(self.quit_timeout)
     # If the peaceful method doesn't work, use force
-    self.worker.terminate()
-    safe_join(None) 
+    self.worker_terminate()
+    safe_join(None)
 
   def add_props(self,props):
     for name in props.order:
@@ -157,10 +199,10 @@ class Worker(object):
     assert self.inside_with
     remaining = 1e10 if timeout is None else timeout
     while 1:
-      # Polling without hanging if the worker process dies
+      # Poll without hanging if the worker process dies
       if remaining<0:
         return # Ran out of time
-      if not self.worker.is_alive():
+      if not self.worker_is_alive():
         self.crashed = True
         raise IOError('worker process crashed')
       # Don't wait for too long in order to detect crashes
