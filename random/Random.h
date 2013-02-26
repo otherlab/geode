@@ -31,12 +31,15 @@ private:
   uint128_t free_bits;
   real free_gaussian; // If nonzero, a free Gaussian random number
 
+  template<class Int, int N> OTHER_CORE_EXPORT Int n_bits();
 protected:
   OTHER_CORE_EXPORT explicit Random(uint128_t seed);
 public:
   ~Random();
 
   template<class Int> OTHER_CORE_EXPORT Int bits();
+
+  OTHER_CORE_EXPORT bool bit();
 
   template<class S> S uniform(const typename ScalarPolicy<S>::type a,const typename ScalarPolicy<S>::type b) { // in [a,b)
     // Specialized versions for int and real are below
@@ -99,6 +102,9 @@ public:
   template<class TV> OTHER_CORE_EXPORT Rotation<TV> rotation();
   template<class TV> OTHER_CORE_EXPORT Frame<TV> frame(const TV& v0,const TV& v1);
 };
+
+template<> OTHER_CORE_EXPORT bool Random::bits<bool>();
+
 
 // In [a,b)
 template<> OTHER_CORE_EXPORT  int8_t Random::uniform(const   int8_t a, const   int8_t b);
