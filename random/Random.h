@@ -101,7 +101,7 @@ public:
   template<class TV> OTHER_CORE_EXPORT Rotation<TV> rotation();
   template<class TV> OTHER_CORE_EXPORT Frame<TV> frame(const TV& v0,const TV& v1);
 private:
-  template<class Int, int N> OTHER_CORE_EXPORT Int n_bits();
+  template<class Int, int N> Int n_bits();
 };
 
 // In [a,b)
