@@ -1,5 +1,6 @@
 import re
 import sys
+import ast
 import argparse
 from numpy import *
 from other.core import *
@@ -123,8 +124,8 @@ def parse(props,description,positional=[]):
     sv = normalized(f[3:])
     return Frames(f[:3],Rotation.from_sv(sv[0],sv[1:]))
 
-  def convert_vector(s):
-    return fromstring(s,sep=',')
+  def convert_vector(dtype,s):
+    return asarray(ast.literal_eval(s),dtype)
 
   def converter(prop):
     try:
@@ -142,8 +143,7 @@ def parse(props,description,positional=[]):
       assert v.d==3
       return convert_frame3d
     elif t==ndarray:
-      assert len(v.shape)==1
-      return convert_vector
+      return curry(convert_vector,v.dtype)
     elif t==list:
       return convert_list
     else:

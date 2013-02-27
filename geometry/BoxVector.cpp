@@ -8,6 +8,7 @@
 #include <other/core/python/exceptions.h>
 #include <other/core/math/cube.h>
 #include <other/core/utility/format.h>
+#include <other/core/structure/Tuple.h>
 namespace other {
 
 #ifdef OTHER_PYTHON
@@ -16,8 +17,26 @@ template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) {
   return to_python(new_<AnalyticImplicit<Box<Vector<real,d>>>>(box));
 }
 
+template<> PyObject* to_python(const Box<Vector<int,2>>& box) {
+  return to_python(tuple(box.min,box.max));
+}
+
+template<> PyObject* to_python(const Box<Vector<int,3>>& box) {
+  return to_python(tuple(box.min,box.max));
+}
+
 template<class T,int d> Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject* object) {
   return Box<Vector<T,d>>(from_python<AnalyticImplicit<Box<Vector<real,d>>>&>(object));
+}
+
+template<> Box<Vector<int,2>> FromPython<Box<Vector<int,2>>>::convert(PyObject* object) {
+  Tuple<Vector<int,2>,Vector<int,2>> t = from_python<Tuple<Vector<int,2>,Vector<int,2>>>(object);
+  return Box<Vector<int,2>>(t.x,t.y);
+}
+
+template<> Box<Vector<int,3>> FromPython<Box<Vector<int,3>>>::convert(PyObject* object) {
+  Tuple<Vector<int,3>,Vector<int,3>> t = from_python<Tuple<Vector<int,3>,Vector<int,3>>>(object);
+  return Box<Vector<int,3>>(t.x,t.y);
 }
 
 #endif

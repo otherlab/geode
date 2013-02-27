@@ -20,8 +20,8 @@ Random::Random(uint128_t seed)
 
 Random::~Random() {}
 
-template<class Int> Int Random::bits() {
-  const int width = 8*sizeof(Int);
+template<class Int, int N> Int Random::n_bits() {
+  const int width = N;
   if (free_bit_count<width) {
     free_bits = threefry(seed,counter++);
     free_bit_count = 128;
@@ -31,6 +31,11 @@ template<class Int> Int Random::bits() {
   free_bits >>= width;
   return r;
 }
+
+template<class Int> Int Random::bits() { return n_bits<Int, 8*sizeof(Int)>(); }
+template<> bool Random::bits<bool>() { return n_bits<uint8_t, 1>() & 1; }
+
+bool Random::bit() { return bits<bool>(); }
 
 template  uint8_t Random::bits();
 template uint16_t Random::bits();

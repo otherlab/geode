@@ -12,7 +12,7 @@ namespace other {
 
 template<class T> static T convert_helper(const ValueRef<Ptr<>>& value) {
   Ptr<> v = value();
-  return from_python<T>(v ? v.get() : Py_None);
+  return try_from_python<T>(v ? v.get() : Py_None);
 }
 
 template<class T> struct FromPython<Ref<const Value<T>>>{static Ref<const Value<T>> convert(PyObject* object) {

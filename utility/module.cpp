@@ -53,4 +53,5 @@ void wrap_utility() {
 
   OTHER_WRAP(base64)
   OTHER_WRAP(resource)
+  OTHER_WRAP(format)
 }

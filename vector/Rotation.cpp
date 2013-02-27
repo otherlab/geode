@@ -81,12 +81,12 @@ static PyObject* rotation_from_matrix(NdArray<const real> A) {
   if (A.shape[r-1]==2 && A.shape[r-2]==2) {
     NdArray<Rotation<Vector<T,2>>> rs(A.shape.slice_own(0,r-2),false);
     for (const int i : range(rs.flat.size()))
-      rs[i] = Rotation<Vector<T,2>>(Matrix<real,2>(A.flat.slice(4*i,4*(i+1)).reshape(2,2)));
+      rs.flat[i] = Rotation<Vector<T,2>>(Matrix<real,2>(A.flat.slice(4*i,4*(i+1)).reshape(2,2)));
     return to_python(rs);
   } else if (A.shape[r-1]==3 && A.shape[r-2]==3) {
     NdArray<Rotation<Vector<T,3>>> rs(A.shape.slice_own(0,r-2),false);
     for (const int i : range(rs.flat.size()))
-      rs[i] = Rotation<Vector<T,3>>(Matrix<real,3>(A.flat.slice(9*i,9*(i+1)).reshape(3,3)));
+      rs.flat[i] = Rotation<Vector<T,3>>(Matrix<real,3>(A.flat.slice(9*i,9*(i+1)).reshape(3,3)));
     return to_python(rs);
   } else
     throw TypeError(format("expected 2x2 or 3x3 matrices, got shape %s",str(A.shape)));

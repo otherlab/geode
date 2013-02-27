@@ -224,7 +224,7 @@ if env['CXX']=='<detect>':
   if windows:
     env.Replace(CXX=default_cxx)
   else:
-    for gcc in 'g++-mp-4.7','g++-4.7','g++-mp-4.6','g++-4.6','g++':
+    for gcc in 'clang++ g++-4.7 g++-4.6 g++'.split():
       if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
         env.Replace(CXX=gcc)
         break
@@ -352,7 +352,7 @@ if env['openmp']:
   else:
     print>>sys.stderr, 'Warning: clang doesn\'t know how to do OpenMP, so many things will be slower'
 
-# find the right mpicc
+# Find the right mpicc
 if env['mpicc']=='<detect>':
   if windows:
     env.Replace(mpicc='mpicc')
@@ -363,7 +363,7 @@ if env['mpicc']=='<detect>':
         env.Replace(mpicc=mpicc)
         break
     else:
-      die('no suitable version of mpicc found (tried %s)' % mpicc_options)
+      env.Replace(mpicc='') # If we don't find mpi, hopefully we don't need it
 
 # Configure MPI if it exists
 try:
@@ -607,13 +607,12 @@ def program(env,name,cpp=None):
 # Install a (possibly directory) resource
 def resource(env,dir):
   # if dir is a directory, add a dependency for each file found in its subtree
-  def visitor(basedir, dirname, names):
-    reldir = os.path.relpath(dirname, basedir)
-    for name in names:
-      fullname = os.path.join(dirname, name)
-      env.Depends('.', env.Install(os.path.join(env['PREFIX_SHARE'], reldir), fullname))
-
   if os.path.isdir(str(Dir(dir).srcnode())):
+    def visitor(basedir, dirname, names):
+      reldir = os.path.relpath(dirname, basedir)
+      for name in names:
+        fullname = os.path.join(dirname, name)
+        env.Depends('.', env.Install(os.path.join(env['PREFIX_SHARE'], reldir), fullname))
     basedir = str(Dir('.').srcnode())
     os.path.walk(str(Dir(dir).srcnode()), visitor, basedir)
   else:

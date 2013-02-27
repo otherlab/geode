@@ -38,6 +38,8 @@ public:
 
   template<class Int> OTHER_CORE_EXPORT Int bits();
 
+  OTHER_CORE_EXPORT bool bit();
+
   template<class S> S uniform(const typename ScalarPolicy<S>::type a,const typename ScalarPolicy<S>::type b) { // in [a,b)
     // Specialized versions for int and real are below
     S r;fill_uniform(r,a,b);return r;
@@ -98,6 +100,8 @@ public:
   Array<int> uniform_int_py(int lo, int hi, int size);
   template<class TV> OTHER_CORE_EXPORT Rotation<TV> rotation();
   template<class TV> OTHER_CORE_EXPORT Frame<TV> frame(const TV& v0,const TV& v1);
+private:
+  template<class Int, int N> Int n_bits();
 };
 
 // In [a,b)

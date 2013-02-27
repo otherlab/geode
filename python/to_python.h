@@ -22,11 +22,9 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_enum.hpp>
 #include <string>
-namespace boost { template<class T> class shared_ptr;}
 namespace other {
 
 using std::string;
-using boost::shared_ptr;
 namespace mpl = boost::mpl;
 
 // Conversion for PyObject*
