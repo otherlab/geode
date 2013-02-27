@@ -11,12 +11,11 @@
 #include <other/core/utility/remove_const_reference.h>
 #include <boost/function.hpp>
 #include <stdio.h>
-namespace other{
+namespace other {
 
 using boost::function;
 
-template<class T> class OTHER_CORE_CLASS_EXPORT Compute:public Value<T>,public Action
-{
+template<class T> class OTHER_CORE_CLASS_EXPORT Compute : public Value<T>,public Action {
 public:
   OTHER_NEW_FRIEND
   typedef Value<T> Base;
@@ -42,7 +41,7 @@ public:
     Action::dump_dependencies(indent);
   }
 
-  std::vector<Ptr<const ValueBase> > get_dependencies() const {
+  vector<Ptr<const ValueBase>> get_dependencies() const {
     return Action::get_dependencies();
   }
 };

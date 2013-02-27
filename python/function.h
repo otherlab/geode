@@ -62,8 +62,7 @@ template<class R> struct PythonFunctionWrapper {
 #endif
 };
 
-template<> void PythonFunctionWrapper<void>::
-return_(PyObject* r) {
+template<> void PythonFunctionWrapper<void>::return_(PyObject* r) {
   Py_DECREF(r);
 }
 
