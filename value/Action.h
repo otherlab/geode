@@ -12,7 +12,7 @@ using boost::remove_reference;
 
 class OTHER_CORE_CLASS_EXPORT Action {
 private:
-  template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, std::vector<ValueBase const*> const &);
+  template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, vector<ValueBase const*> const &);
   friend class ValueBase;
   mutable ValueBase::Link* inputs_; // linked list of inputs we depend on
   OTHER_CORE_EXPORT static const Action* current; // if nonzero, pulled values link themselves to this automatically
@@ -43,8 +43,8 @@ public:
   // Count inputs
   int inputs() const;
 
-  OTHER_CORE_EXPORT void dump_dependencies(int indent) const ;
-  OTHER_CORE_EXPORT std::vector<Ptr<const ValueBase>> get_dependencies() const ;
+  OTHER_CORE_EXPORT void dump_dependencies(int indent) const;
+  OTHER_CORE_EXPORT vector<Ptr<const ValueBase>> get_dependencies() const;
 
 protected:
   OTHER_CORE_EXPORT void clear_dependencies() const;
@@ -54,29 +54,27 @@ private:
 };
 
 
-// set the ValueRef to the given value, and set its dependencies manually (instead of a cache() or other
+// Set the ValueRef to the given value, and set its dependencies manually (instead of a cache() or other
 // automatic way of determining them. You should know what you're doing. This only works if the ValueRef
 // passed in points to an object which inherits from both Value<T> and Action (such as Compute<T>).
 template<class T>
-void set_value_and_dependencies(ValueRef<T> &value, T const &v, std::vector<ValueBase const*> const &dependencies) {
+void set_value_and_dependencies(ValueRef<T> &value, T const &v, vector<ValueBase const*> const &dependencies) {
 
-  // get the action
-  Action *action = NULL;
+  // Get the action
+  Action *action = 0;
   try {
     action = dynamic_cast<Action*>(&*value);
   } catch (std::bad_cast) {
     throw std::runtime_error("set_value_and_dependencies only works on objects derived from both Action and Value");
   }
 
-  // set new dependencies
+  // Set new dependencies
   action->clear_dependencies();
-  for (ValueBase const *dep : dependencies) {
+  for (ValueBase const *dep : dependencies)
     action->depend_on(*dep);
-  }
 
-  // set the value
+  // Set the value
   value.set_value(v);
 }
-
 
 }

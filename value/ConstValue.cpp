@@ -5,5 +5,5 @@
 using namespace other;
 
 void wrap_const_value() {
-    python::function("const_value",const_value<Ptr<> >);
+  python::function("const_value",const_value<Ptr<> >);
 }
