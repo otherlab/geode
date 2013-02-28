@@ -4,10 +4,11 @@ from numpy import *
 from other.core import *
 import struct
 
-def linear_subdivide(mesh,X):
-  subdivide = TriangleSubdivision(mesh)
-  mesh = subdivide.fine_mesh
-  X = subdivide.linear_subdivide(X)
+def linear_subdivide(mesh,X,steps=1):
+  for _ in xrange(steps):
+    subdivide = TriangleSubdivision(mesh)
+    mesh = subdivide.fine_mesh
+    X = subdivide.linear_subdivide(X)
   return mesh,X
 
 def read_obj(file):
