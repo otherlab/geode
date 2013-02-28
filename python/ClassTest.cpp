@@ -19,6 +19,7 @@ public:
   typedef Object Base;
 
   int field;
+  int attr;
   Ref<Object> ref;
   Ptr<Object> ptr;
   Ref<PyObject> ref2;
@@ -29,7 +30,7 @@ private:
 
 protected:
   ClassTest(Ref<Object> ref)
-    : field(0), ref(ref), ref2(ref), data_(0) {}
+    : field(0), attr(8), ref(ref), ref2(ref), data_(0) {}
 public:
   virtual ~ClassTest() {}
 
@@ -40,6 +41,19 @@ public:
   int prop() const {return 17;}
   int data() const {return data_;}
   void set_data(int d) {data_=d;}
+
+  int getattr(const string& name) {
+    if (name=="attr")
+      return attr;
+    throw AttributeError("getattr");
+  }
+
+  void setattr(const string& name, PyObject* value) {
+    if (name=="attr")
+      attr = from_python<int>(value);
+    else
+      throw AttributeError("setattr");
+  }
 };
 
 const int ClassTest::static_const;
@@ -73,5 +87,7 @@ void wrap_test_class() {
     .OTHER_CALL(int,int)
     .OTHER_GET(prop)
     .OTHER_GETSET(data)
+    .getattr()
+    .setattr()
     ;
 }

@@ -219,6 +219,13 @@ private:
   }
 
   static PyObject* getattro_wrapper(PyObject* self, PyObject* name) {
+    // Try normal field retrieval first
+    if (PyObject* v = PyObject_GenericGetAttr(self,name))
+      return v;
+    else if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+      return 0;
+    PyErr_Clear();
+    // Fall back to custom code
     try {
       return to_python(GetSelf<T>::get(self)->getattr(from_python<const char*>(name)));
     } catch (const exception& error) {
@@ -228,6 +235,13 @@ private:
   }
 
   static int setattro_wrapper(PyObject* self, PyObject* name, PyObject* value) {
+    // Try normal field assignment first
+    if (PyObject_GenericSetAttr(self,name,value)>=0)
+      return 0;
+    else if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+      return -1;
+    PyErr_Clear();
+    // Fall back to custom code
     try {
       GetSelf<T>::get(self)->setattr(from_python<const char*>(name),value);
       return 0;

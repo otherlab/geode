@@ -129,6 +129,7 @@ void wrap_exceptions() {
   register_python_exception<ValueError>(PyExc_ValueError);
   register_python_exception<NotImplementedError>(PyExc_NotImplementedError);
   register_python_exception<AssertionError>(PyExc_AssertionError);
+  register_python_exception<AttributeError>(PyExc_AttributeError);
   register_python_exception<ArithmeticError>(PyExc_ArithmeticError);
   register_python_exception<OverflowError>(PyExc_OverflowError);
   register_python_exception<ZeroDivisionError>(PyExc_ZeroDivisionError);
