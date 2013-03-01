@@ -9,7 +9,7 @@ namespace other {
 static PyObject* empty_tuple = 0;
 
 namespace {
-class ComputePython : public Value<Ptr<>>,public Action {
+class CachePython : public Value<Ptr<>>,public Action {
 public:
   OTHER_DECLARE_TYPE(OTHER_NO_EXPORT)
   typedef ValueBase Base;
@@ -17,7 +17,7 @@ public:
   const Ref<> f;
 
 protected:
-  ComputePython(PyObject* f)
+  CachePython(PyObject* f)
     : f(ref(*f)) {}
 public:
 
@@ -44,14 +44,14 @@ public:
   }
 };
 
-OTHER_DEFINE_TYPE(ComputePython)
+OTHER_DEFINE_TYPE(CachePython)
 }
 
 // We write a special version for python to allow easy introspection
 static Ref<ValueBase> cache_py(PyObject* f) {
   if (!PyCallable_Check(f))
     throw TypeError("cache: argument is not callable");
-  return new_<ComputePython>(f);
+  return new_<CachePython>(f);
 }
 
 #endif
@@ -63,8 +63,8 @@ void wrap_compute() {
   empty_tuple = PyTuple_New(0);
   OTHER_ASSERT(empty_tuple);
 
-  typedef ComputePython Self; 
-  Class<Self>("Compute")
+  typedef CachePython Self;
+  Class<Self>("Cache")
     .OTHER_FIELD(f)
     .OTHER_GET(name)
     ;
