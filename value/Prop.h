@@ -288,12 +288,9 @@ public:
     PropBase::dump(indent);
   }
 
-  std::vector<Ptr<const ValueBase> > get_dependencies() const {
-    std::vector<Ptr<const ValueBase> > result;
-    //result.push_back(ptr(this));
-    return result;
+  vector<Ref<const ValueBase>> dependencies() const {
+    return vector<Ref<const ValueBase>>();
   }
-
 };
 
 template<class T> class PropRef {

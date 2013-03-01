@@ -78,10 +78,10 @@ void Action::dump_dependencies(int indent) const {
     link->value->dump(indent+1);
 }
 
-vector<Ptr<const ValueBase>> Action::get_dependencies() const {
-  vector<Ptr<const ValueBase>> result;
+vector<Ref<const ValueBase>> Action::dependencies() const {
+  vector<Ref<const ValueBase>> result;
   for (ValueBase::Link* link=inputs_; link; link=link->action_next)
-    result.push_back(ptr(link->value));
+    result.push_back(ref(*link->value));
   return result;
 }
 

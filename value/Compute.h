@@ -41,8 +41,8 @@ public:
     Action::dump_dependencies(indent);
   }
 
-  vector<Ptr<const ValueBase>> get_dependencies() const {
-    return Action::get_dependencies();
+  vector<Ref<const ValueBase>> dependencies() const {
+    return Action::dependencies();
   }
 };
 

@@ -75,7 +75,7 @@ public:
   OTHER_CORE_EXPORT void signal() const;
 
   virtual void dump(int indent) const = 0;
-  virtual vector<Ptr<const ValueBase>> get_dependencies() const = 0;
+  virtual vector<Ref<const ValueBase>> dependencies() const = 0;
 
   const string& get_name() const;
   OTHER_CORE_EXPORT ValueBase& set_name(const string& n);

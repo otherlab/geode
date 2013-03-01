@@ -44,7 +44,7 @@ public:
   int inputs() const;
 
   OTHER_CORE_EXPORT void dump_dependencies(int indent) const;
-  OTHER_CORE_EXPORT vector<Ptr<const ValueBase>> get_dependencies() const;
+  OTHER_CORE_EXPORT vector<Ref<const ValueBase>> dependencies() const;
 
 protected:
   OTHER_CORE_EXPORT void clear_dependencies() const;

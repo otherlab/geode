@@ -176,7 +176,7 @@ void wrap_value_base() {
     .OTHER_METHOD(set_name)
     .OTHER_METHOD(dirty)
     .OTHER_METHOD(dump)
-    .OTHER_METHOD(get_dependencies)
+    .OTHER_METHOD(dependencies)
     .OTHER_METHOD(signal)
     .OTHER_METHOD(is_prop)
     // The following work only if the object is a Prop
