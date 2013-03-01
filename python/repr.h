@@ -14,6 +14,7 @@ template<class T> inline string repr(const T& x) {
 }
 
 OTHER_CORE_EXPORT string repr(PyObject& x);
+OTHER_CORE_EXPORT string repr(PyObject* x);
 OTHER_CORE_EXPORT string repr(const float x);
 OTHER_CORE_EXPORT string repr(const double x);
 OTHER_CORE_EXPORT string repr(const long double x);
