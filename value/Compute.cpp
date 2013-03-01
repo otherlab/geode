@@ -42,6 +42,10 @@ public:
   string name() const {
     return from_python<string>(python_field(f,"__name__"));
   }
+
+  string repr() const {
+    return format("cache(%s)",name());
+  }
 };
 
 OTHER_DEFINE_TYPE(CachePython)
@@ -67,6 +71,7 @@ void wrap_compute() {
   Class<Self>("Cache")
     .OTHER_FIELD(f)
     .OTHER_GET(name)
+    .repr()
     ;
 
   OTHER_FUNCTION_2(cache,cache_py)
