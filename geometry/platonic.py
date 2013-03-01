@@ -127,7 +127,11 @@ def open_cylinder_mesh(x0,x1,radius,na,nz=None):
   radius = asarray(radius)
   if nz is None:
     assert radius.ndim<2
-    nz = 1 if radius.ndim==0 else len(radius)-1
+    if radius.ndim:
+      assert len(radius)>1
+      nz = len(radius)-1
+    else:
+      nz = 1
   else:
     assert radius.shape in ((),(nz+1,))
   x0 = asarray(x0)
