@@ -11,6 +11,14 @@ def linear_subdivide(mesh,X,steps=1):
     X = subdivide.linear_subdivide(X)
   return mesh,X
 
+def loop_subdivide(mesh,X,steps=1,corners=zeros(0,dtype=int32)):
+  for _ in xrange(steps):
+    subdivide = TriangleSubdivision(mesh)
+    subdivide.corners = corners
+    mesh = subdivide.fine_mesh
+    X = subdivide.loop_subdivide(X)
+  return mesh,X
+
 def read_obj(file):
   """Parse an obj file into a mesh and associated properties.
   Returns (mesh,props) where mesh is a PolygonMesh, and props is a dictionary containing some of X,normals,texcoord,material,face_normals,face_texcoords
