@@ -31,6 +31,7 @@ typedef double real;
 
 #define OTHER_UNUSED __attribute__ ((unused))
 #define OTHER_NORETURN(declaration) declaration __attribute__ ((noreturn))
+#define OTHER_WARN_UNUSED_RESULT __attribute__ ((warn_unused_result))
 #define OTHER_NEVER_INLINE __attribute__ ((noinline))
 #define OTHER_PURE __attribute__ ((pure))
 #define OTHER_CONST __attribute__ ((const))
@@ -89,6 +90,7 @@ typedef double real;
 #define OTHER_HIDDEN
 #define OTHER_UNUSED
 #define OTHER_NORETURN(declaration) __declspec(noreturn) declaration
+#define OTHER_WARN_UNUSED_RESULT
 #define OTHER_ALWAYS_INLINE
 #define OTHER_FLATTEN
 #define OTHER_NEVER_INLINE
