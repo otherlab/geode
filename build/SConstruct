@@ -103,10 +103,15 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 
 # External libraries
 externals = {}
-def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=[],libpath=[],rpath=0,libs=[],copy=[],frameworkpath=[],frameworks=[],requires=[],pattern=None,has=1,hide=False,callback=None):
+def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,has=1,hide=False,callback=None):
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide,'callback':callback}
+
+  # make sure the empty lists are copied and do not refer to the same object
+  for n in lib:
+    if lib[n] == ():
+      lib[n] = []
 
   Help('\n')
   options(
@@ -439,7 +444,12 @@ env.Append(LIBPATH=[env['PREFIX_LIB']],RPATH=[Dir(env['PREFIX_LIB']).abspath])
 
 # Account for library dependencies
 def add_dependencies(env):
-  libs = [b for a,lib in externals.iteritems() if env['use_'+a] for b in lib['requires']]
+  libs = []
+  for a,lib in externals.iteritems():
+    if env['use_'+a]:
+      libs += lib['requires']
+  #libs = [b for a,lib in externals.iteritems() if env['use_'+a] for b in lib['requires']]
+
   while libs:
     a = libs.pop()
     env['use_'+a] = 1
@@ -537,7 +547,7 @@ def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   skip = tuple(skip)+tuple(env['skip'])
   candidates = list(files(Dir('.').srcnode().abspath,skip)) if not skip_all else []
   for f in candidates + list(extra):
-    if f.endswith('.cpp') or f.endswith('.cc'):
+    if f.endswith('.cpp') or f.endswith('.cc') or f.endswith('.c'):
       cpps.append(f)
   if not cpps:
     print 'Library %s has no input source files.' % name
