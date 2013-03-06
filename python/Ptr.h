@@ -112,12 +112,21 @@ public:
     owner_ = 0;
   }
 
-  bool operator==(const Ptr& o) const { return self==o.self; }
-  bool operator!=(const Ptr& o) const { return self!=o.self; }
-  bool operator< (const Ptr& o) const { return self< o.self; }
-  bool operator> (const Ptr& o) const { return self> o.self; }
-  bool operator<=(const Ptr& o) const { return self<=o.self; }
-  bool operator>=(const Ptr& o) const { return self>=o.self; }
+  template<class S> bool operator==(const Ptr<S>& o) const { return self==o.self; }
+  template<class S> bool operator!=(const Ptr<S>& o) const { return self!=o.self; }
+  template<class S> bool operator< (const Ptr<S>& o) const { return self< o.self; }
+  template<class S> bool operator> (const Ptr<S>& o) const { return self> o.self; }
+  template<class S> bool operator<=(const Ptr<S>& o) const { return self<=o.self; }
+  template<class S> bool operator>=(const Ptr<S>& o) const { return self>=o.self; }
+
+  // Specialize operators to avoid reference counting overhead of converting Ref<T> to Ptr<T>
+  template<class S> bool operator==(const Ref<S>& o) const { return self==o.self; }
+  template<class S> bool operator!=(const Ref<S>& o) const { return self!=o.self; }
+  template<class S> bool operator< (const Ref<S>& o) const { return self< o.self; }
+  template<class S> bool operator> (const Ref<S>& o) const { return self> o.self; }
+  template<class S> bool operator<=(const Ref<S>& o) const { return self<=o.self; }
+  template<class S> bool operator>=(const Ref<S>& o) const { return self>=o.self; }
+
 };
 
 template<class T> static inline Ref<T> ref(Ptr<T>& ptr) {
