@@ -15,8 +15,12 @@ Listen::Listen(Ref<const ValueBase> value, const function<void()>& f)
 Listen::~Listen() {}
 
 void Listen::input_changed() const {
-  Executing e; // register no dependencies during execution
-  f();
+  try {
+    Executing e; // register no dependencies during execution
+    f();
+  } catch (const exception& e) {
+    print_and_clear_exception("Listen: exception in listener callback",e);
+  }
   depend_on(*value);
 }
 

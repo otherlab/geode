@@ -64,8 +64,8 @@ inline void ValueBase::signal_pending() {
     if (!action->executing) {
       try {
         action->input_changed();
-      } catch(const exception& e) {
-        cerr << "ValueBase::pull: squelching an exception thrown by an action: " << e.what() << endl;
+      } catch (const exception& e) {
+        print_and_clear_exception("Value: squelching exception in an Action",e);
       }
     }
   }
