@@ -49,10 +49,12 @@ public:
   }
 
   void setattr(const string& name, PyObject* value) {
+#ifdef OTHER_PYTHON
     if (name=="attr")
       attr = from_python<int>(value);
     else
       throw AttributeError("setattr");
+#endif
   }
 };
 

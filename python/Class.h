@@ -276,6 +276,8 @@ public:
   Class& str() { return *this; }
   Class& repr() { return *this; }
   Class& call() { return *this; }
+  Class& setattr() { return *this; }
+  Class& getattr() { return *this; }
 
   static void dealloc(PyObject* self) {
     ((T*)(self+1))->~T(); // call destructor
