@@ -176,13 +176,13 @@ public:
   Ref<const Value<T>> self;
 
   ValueRef(const Value<T>& value)
-    :self(other::ref(value)) {}
+    : self(other::ref(value)) {}
 
   ValueRef(const PropRef<T>& prop)
-    :self(prop.self) {}
+    : self(prop.self) {}
 
   ValueRef(const PropRef<const T>& prop)
-    :self(prop.self) {}
+    : self(prop.self) {}
 
   const T& operator()() const {
     return (*self)();
@@ -194,6 +194,10 @@ public:
 
   const Value<T>* operator->() const {
     return &*self;
+  }
+
+  operator const Value<T>&() const {
+    return *self;
   }
 };
 

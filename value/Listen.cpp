@@ -6,10 +6,10 @@ namespace other {
 
 OTHER_DEFINE_TYPE(Listen)
 
-Listen::Listen(Ref<const ValueBase> value, const function<void()>& f)
-  : value(value)
+Listen::Listen(const ValueBase& value, const function<void()>& f)
+  : value(ref(value))
   , f(f) {
-  depend_on(*value);
+  depend_on(value);
 }
 
 Listen::~Listen() {}
@@ -24,11 +24,15 @@ void Listen::input_changed() const {
   depend_on(*value);
 }
 
+Ref<Listen> listen(const ValueBase& value, const function<void()>& f) {
+  return new_<Listen>(value,f);
+}
+
 }
 using namespace other;
 
-void wrap_listen(){
+void wrap_listen() {
   typedef Listen Self;
   Class<Self>("Listen");
-  python::function("listen",static_cast<Ref<Listen>(*)(const Ref<const ValueBase>&,const function<void()>&)>(&listen));
+  OTHER_FUNCTION(listen)
 }
