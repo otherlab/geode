@@ -132,20 +132,20 @@ public:
     std::swap(owner_,ref.owner_);
   }
 
-  bool operator==(const Ref& o) const { return self==o.self; }
-  bool operator!=(const Ref& o) const { return self!=o.self; }
-  bool operator< (const Ref& o) const { return self< o.self; }
-  bool operator> (const Ref& o) const { return self> o.self; }
-  bool operator<=(const Ref& o) const { return self<=o.self; }
-  bool operator>=(const Ref& o) const { return self>=o.self; }
+  template<class S> bool operator==(const Ref<S>& o) const { return self==o.self; }
+  template<class S> bool operator!=(const Ref<S>& o) const { return self!=o.self; }
+  template<class S> bool operator< (const Ref<S>& o) const { return self< o.self; }
+  template<class S> bool operator> (const Ref<S>& o) const { return self> o.self; }
+  template<class S> bool operator<=(const Ref<S>& o) const { return self<=o.self; }
+  template<class S> bool operator>=(const Ref<S>& o) const { return self>=o.self; }
 
-  // Merging these with the above would cause unnecessary referencing counting activity
-  bool operator==(const Ptr<T>& o) const { return self==o.self; }
-  bool operator!=(const Ptr<T>& o) const { return self!=o.self; }
-  bool operator< (const Ptr<T>& o) const { return self< o.self; }
-  bool operator> (const Ptr<T>& o) const { return self> o.self; }
-  bool operator<=(const Ptr<T>& o) const { return self<=o.self; }
-  bool operator>=(const Ptr<T>& o) const { return self>=o.self; }
+  // Specialize operators to avoid reference counting overhead of converting Ptr<T> to Ref<T>
+  template<class S> bool operator==(const Ptr<S>& o) const { return self==o.self; }
+  template<class S> bool operator!=(const Ptr<S>& o) const { return self!=o.self; }
+  template<class S> bool operator< (const Ptr<S>& o) const { return self< o.self; }
+  template<class S> bool operator> (const Ptr<S>& o) const { return self> o.self; }
+  template<class S> bool operator<=(const Ptr<S>& o) const { return self<=o.self; }
+  template<class S> bool operator>=(const Ptr<S>& o) const { return self>=o.self; }
 
   Ref<typename boost::remove_const<T>::type> const_cast_() const {
     typedef typename boost::remove_const<T>::type S;

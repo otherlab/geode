@@ -64,8 +64,8 @@ inline void ValueBase::signal_pending() {
     if (!action->executing) {
       try {
         action->input_changed();
-      } catch(const exception& e) {
-        cerr << "ValueBase::pull: squelching an exception thrown by an action: " << e.what() << endl;
+      } catch (const exception& e) {
+        print_and_clear_exception("Value: squelching exception in an Action",e);
       }
     }
   }
@@ -176,7 +176,7 @@ void wrap_value_base() {
     .OTHER_METHOD(set_name)
     .OTHER_METHOD(dirty)
     .OTHER_METHOD(dump)
-    .OTHER_METHOD(get_dependencies)
+    .OTHER_METHOD(dependencies)
     .OTHER_METHOD(signal)
     .OTHER_METHOD(is_prop)
     // The following work only if the object is a Prop

@@ -15,6 +15,10 @@ string repr(PyObject& x) {
 #endif
 }
 
+string repr(PyObject* x) {
+  return x ? repr(*x) : "None";
+}
+
 string repr(const float x) {
   static char buffer[40];
   sprintf(buffer,"%.9g",x);

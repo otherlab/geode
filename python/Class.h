@@ -103,7 +103,7 @@ OTHER_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObje
 
 template<class T> static PyObject* str_wrapper(PyObject* self) {
   try {
-    return to_python(str(*(T*)(self+1)));
+    return to_python(str(*GetSelf<T>::get(self)));
   } catch (const exception& error) {
     set_python_exception(error);
     return 0;
@@ -188,6 +188,16 @@ public:
     return *this;
   }
 
+  Class& getattr() {
+    type->tp_getattro = getattro_wrapper; 
+    return *this;
+  }
+
+  Class& setattr() {
+    type->tp_setattro = setattro_wrapper; 
+    return *this;
+  }
+
   static void dealloc(PyObject* self) {
     ((T*)(self+1))->~T(); // call destructor
     self->ob_type->tp_free(self);
@@ -201,10 +211,43 @@ public:
 private:
   static PyObject* repr_wrapper(PyObject* self) {
     try {
-      return to_python(((T*)(self+1))->repr());
+      return to_python(GetSelf<T>::get(self)->repr());
     } catch (const exception& error) {
       set_python_exception(error);
       return 0;
+    }
+  }
+
+  static PyObject* getattro_wrapper(PyObject* self, PyObject* name) {
+    // Try normal field retrieval first
+    if (PyObject* v = PyObject_GenericGetAttr(self,name))
+      return v;
+    else if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+      return 0;
+    PyErr_Clear();
+    // Fall back to custom code
+    try {
+      return to_python(GetSelf<T>::get(self)->getattr(from_python<const char*>(name)));
+    } catch (const exception& error) {
+      set_python_exception(error);
+      return 0;
+    }
+  }
+
+  static int setattro_wrapper(PyObject* self, PyObject* name, PyObject* value) {
+    // Try normal field assignment first
+    if (PyObject_GenericSetAttr(self,name,value)>=0)
+      return 0;
+    else if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+      return -1;
+    PyErr_Clear();
+    // Fall back to custom code
+    try {
+      GetSelf<T>::get(self)->setattr(from_python<const char*>(name),value);
+      return 0;
+    } catch (const exception& error) {
+      set_python_exception(error);
+      return -1;
     }
   }
 };
@@ -233,6 +276,8 @@ public:
   Class& str() { return *this; }
   Class& repr() { return *this; }
   Class& call() { return *this; }
+  Class& setattr() { return *this; }
+  Class& getattr() { return *this; }
 
   static void dealloc(PyObject* self) {
     ((T*)(self+1))->~T(); // call destructor

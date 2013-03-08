@@ -448,6 +448,7 @@ template<int d> static void wrap_helper() {
     .OTHER_METHOD(angles)
     .OTHER_FIELD(stiffness)
     .OTHER_FIELD(damping)
+    .OTHER_FIELD(simple_hessian)
     ;
 }
 

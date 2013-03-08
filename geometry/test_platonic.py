@@ -44,6 +44,11 @@ def test_revolution():
       assert len(mesh.nonmanifold_nodes(True))==0
       assert len(mesh.nonmanifold_nodes(False))==n*(2-c0-c1) 
 
+def test_grid():
+  mesh = grid_topology(5,7)
+  assert not len(mesh.nonmanifold_nodes(True))
+  assert len(mesh.nonmanifold_nodes(False))==2*(5+7+2)-4
+
 def test_torus():
   mesh = torus_topology(5,7)
   assert not len(mesh.nonmanifold_nodes(False))

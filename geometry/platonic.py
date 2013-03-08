@@ -34,6 +34,19 @@ def circle_mesh(n,center=0,radius=1):
   theta = 2*pi/n*i
   return mesh,(radius*vstack([cos(theta),sin(theta)])).T.copy()
 
+def grid_topology(nx,ny):
+  '''Construct a rectangular grid TriangleMesh with nx+1 by ny+1 vertices.'''
+  i = (ny+1)*arange(nx).reshape(-1,1)
+  j = arange(ny)
+  ip = i+ny+1
+  jp = j+1
+  tris = empty((nx,ny,2,3),dtype=int32)
+  tris[:,:,0,0] = tris[:,:,1,0] = i+jp
+  tris[:,:,0,1] = i+j
+  tris[:,:,0,2] = tris[:,:,1,1] = ip+j
+  tris[:,:,1,2] = ip+jp
+  return TriangleMesh(tris.reshape(-1,3))
+
 def torus_topology(nx,ny):
   '''Construct a torus TriangleMesh with nx by ny vertices.'''
   i = ny*arange(nx).reshape(-1,1)
@@ -114,7 +127,11 @@ def open_cylinder_mesh(x0,x1,radius,na,nz=None):
   radius = asarray(radius)
   if nz is None:
     assert radius.ndim<2
-    nz = 1 if radius.ndim==0 else len(radius)-1
+    if radius.ndim:
+      assert len(radius)>1
+      nz = len(radius)-1
+    else:
+      nz = 1
   else:
     assert radius.shape in ((),(nz+1,))
   x0 = asarray(x0)

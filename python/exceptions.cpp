@@ -4,7 +4,10 @@
 #include <other/core/python/exceptions.h>
 #include <other/core/python/wrap.h>
 #include <other/core/utility/tr1.h>
-namespace other{
+namespace other {
+
+using std::cerr;
+using std::endl;
 
 // map from C++ to python exceptions
 typedef unordered_map<const std::type_info*,PyObject*> ExceptionMap;
@@ -30,6 +33,17 @@ void throw_no_python() {
 
 void register_python_exception(const std::type_info& type,PyObject* pytype) {
   exception_map[&type] = pytype;
+}
+
+void print_and_clear_exception(const string& where, const exception& error) {
+#ifdef OTHER_PYTHON
+  if (typeid(error)==typeid(PythonError)) {
+    cerr << where << ':' << endl;
+    PyErr_Print();
+    return;
+  }
+#endif
+  cerr << where << ": " << typeid(error).name() << ", " << error.what() << endl;
 }
 
 #ifdef OTHER_PYTHON
@@ -109,6 +123,7 @@ INSTANTIATE(TypeError)
 INSTANTIATE(ValueError)
 INSTANTIATE(NotImplementedError)
 INSTANTIATE(AssertionError)
+INSTANTIATE(AttributeError)
 INSTANTIATE(ArithmeticError)
 INSTANTIATE(OverflowError)
 INSTANTIATE(ZeroDivisionError)
@@ -128,6 +143,7 @@ void wrap_exceptions() {
   register_python_exception<ValueError>(PyExc_ValueError);
   register_python_exception<NotImplementedError>(PyExc_NotImplementedError);
   register_python_exception<AssertionError>(PyExc_AssertionError);
+  register_python_exception<AttributeError>(PyExc_AttributeError);
   register_python_exception<ArithmeticError>(PyExc_ArithmeticError);
   register_python_exception<OverflowError>(PyExc_OverflowError);
   register_python_exception<ZeroDivisionError>(PyExc_ZeroDivisionError);

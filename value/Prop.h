@@ -288,29 +288,32 @@ public:
     PropBase::dump(indent);
   }
 
-  std::vector<Ptr<const ValueBase> > get_dependencies() const {
-    std::vector<Ptr<const ValueBase> > result;
-    //result.push_back(ptr(this));
-    return result;
+  vector<Ref<const ValueBase>> dependencies() const {
+    return vector<Ref<const ValueBase>>();
   }
-
 };
 
 template<class T> class PropRef {
 public:
   typedef typename boost::remove_const<T>::type type;
+  typedef typename CopyConst<Prop<type>,T>::type prop_type;
   Ref<typename CopyConst<Prop<type>,T>::type> self;
 
   PropRef(const string& name, const T& value)
-    :self(new_<Prop<T> >(name,value)) {}
-  PropRef(typename CopyConst<Prop<type>,T>::type& self)
-    :self(other::ref(self)) {}
+    : self(new_<Prop<T>>(name,value)) {}
 
-  Prop<type>* operator->() const {
+  PropRef(typename CopyConst<Prop<type>,T>::type& self)
+    : self(other::ref(self)) {}
+
+  prop_type* operator->() const {
     return &*self;
   }
 
-  Prop<type>& operator*() const {
+  prop_type& operator*() const {
+    return *self;
+  }
+
+  operator prop_type&() const {
     return *self;
   }
 
@@ -352,7 +355,7 @@ template<class T> inline std::ostream& operator<<(std::ostream& output, const Pr
 
 template<> struct FromPython<PropBase&> { static PropBase& convert(PyObject* object); };
 
-template<class T> struct FromPython<PropRef<T> > {
+template<class T> struct FromPython<PropRef<T>> {
   static PropRef<T> convert(PyObject* object) {
     return static_cast<Prop<T>&>(prop_from_python(object,typeid(T)));
   }
