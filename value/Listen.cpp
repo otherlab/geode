@@ -34,5 +34,5 @@ using namespace other;
 void wrap_listen() {
   typedef Listen Self;
   Class<Self>("Listen");
-  OTHER_FUNCTION(listen)
+  OTHER_FUNCTION_2(listen, static_cast<Ref<Listen>(*)(const ValueBase&,const function<void()>&)>(listen))
 }

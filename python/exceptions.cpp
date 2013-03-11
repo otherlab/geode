@@ -4,6 +4,7 @@
 #include <other/core/python/exceptions.h>
 #include <other/core/python/wrap.h>
 #include <other/core/utility/tr1.h>
+#include <iostream>
 namespace other {
 
 using std::cerr;
