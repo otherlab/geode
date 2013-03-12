@@ -1,6 +1,7 @@
 #include <other/core/value/Prop.h>
 #include <other/core/value/Listen.h>
 #include <other/core/array/NdArray.h>
+#include <other/core/array/view.h>
 #include <other/core/python/Class.h>
 #include <other/core/python/numpy.h>
 #include <other/core/python/Ptr.h>
@@ -39,6 +40,29 @@ void PropBase::dump(int indent) const {
 // we need a special wrapper class to expose Prop<T> to python.
 
 #ifdef OTHER_PYTHON
+Ref<PropBase> make_prop_shape(const string& n, NdArray<const T> a, RawArray<const int> shape) {
+  const int rank = a.rank();
+  OTHER_ASSERT(rank==shape.size());
+  const int fixed = shape.count_matches(-1);
+  if (shape.slice(0,fixed).count_matches(-1)!=fixed)
+    throw ValueError(format("Prop: -1's in shape must occur at the beginning, got %s",str(shape)));
+  for (int i=fixed;i<rank;i++)
+    if (a.shape[i]!=shape[i])
+      throw ValueError(format("Prop: default shape %s does not match shape specification %s",str(a.shape),str(shape)));
+  if (rank==1 && fixed==0) {
+    if (shape[0]==2) return new_<Prop<TV2>>(n,vec(a[0],a[1]));
+    if (shape[0]==3) return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
+    if (shape[0]==4) return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+  } else if (rank==1 && fixed==1)
+    return new_<Prop<Array<const T>>>(n,a.flat);
+  else if (rank==2 && fixed==1) {
+    if (shape[1]==2) return new_<Prop<Array<const TV2>>>(n,vector_view_own<2>(a.flat));
+    if (shape[1]==3) return new_<Prop<Array<const TV3>>>(n,vector_view_own<3>(a.flat));
+    if (shape[1]==4) return new_<Prop<Array<const TV4>>>(n,vector_view_own<4>(a.flat));
+  }
+  throw NotImplementedError(format("Prop: shape specification %s is not implemented",str(shape)));
+}
+
 Ref<PropBase> make_prop(const string& n, PyObject* value) {
   // If the value has known simple type, make the corresponding property
   if (PyBool_Check(value))
@@ -60,18 +84,14 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       if (frames_check<TV3>(value))
         return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
     }
+    NdArray<const T> a;
     try {
-      NdArray<const real> a = from_python<NdArray<const real>>(value);
-      if (a.shape.size()==1 && a.shape[0]==2)
-        return new_<Prop<TV2>>(n,vec(a[0],a[1]));
-      if (a.shape.size()==1 && a.shape[0]==3)
-        return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
-      if (a.shape.size()==1 && a.shape[0]==4)
-        return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+      a = from_python<NdArray<const T>>(value);
     } catch (const exception&) {
       // If the NdArray conversion fails, squelch the error and fall back to our default
       PyErr_Clear();
     }
+    return make_prop_shape(n,a,a.shape);
   }
 
   // Default to a property containing an arbitrary python object
@@ -164,7 +184,8 @@ using namespace other;
 
 void wrap_prop() {
 #ifdef OTHER_PYTHON
-  OTHER_FUNCTION_2(Prop,make_prop)
+  OTHER_FUNCTION(make_prop)
+  OTHER_FUNCTION(make_prop_shape)
   OTHER_FUNCTION(unusable_prop_test)
 #endif
 }

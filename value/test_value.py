@@ -15,6 +15,24 @@ def test_prop():
     p.set(v)
     assert p()==v
     assert not p.dirty()
+
+def test_array_prop():
+  a = Prop('a',zeros(2),shape=(2,))
+  b = Prop('b',zeros(2),shape=(-1,))
+  c = Prop('c',zeros((2,2)),shape=(-1,2))
+  a.set(ones(2))
+  b.set(ones(7))
+  c.set(ones((7,2)))
+  try:
+    a.set(ones(3))
+    assert False
+  except ValueError:
+    pass
+  try:
+    c.set(ones((2,3)))
+    assert False
+  except ValueError:
+    pass
   
 def test_unusable():
   unusable = unusable_prop_test()
