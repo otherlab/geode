@@ -114,3 +114,16 @@ def test_linear_fvm_hex():
   dX = .1*random.randn(8,3)
   fvm = linear_finite_volume([arange(8)],X,1000)
   force_test(fvm,X+dX,verbose=1)
+
+def test_air_pressure():
+  random.seed(2813)
+  mesh,X = icosahedron_mesh()
+  if 1:
+    X = vstack([random.randn(3),X,random.randn(3)])
+    mesh = TriangleMesh(mesh.elements+1)
+  X2 = X + random.randn(*X.shape)/10
+  for closed in 0,1:
+    for side in 1,-1:
+      print '\nclosed %d, side %d'%(closed,side)
+      air = AirPressure(mesh,X,closed,side)
+      force_test(air,X2,verbose=1) 

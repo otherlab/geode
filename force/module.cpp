@@ -18,4 +18,5 @@ void wrap_force() {
   OTHER_WRAP(linear_finite_volume_hex)
   OTHER_WRAP(cubic_hinges)
   OTHER_WRAP(ether_drag)
+  OTHER_WRAP(air_pressure)
 }
