@@ -74,7 +74,7 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
       dFe = elastic_differential(X+dX/2,dX)
       e = relative_error(dFe,Fe2-Fe0)
       if verbose:
-        print '|dFe| %g, |Fe2| %g, |Fe0| %g'%(maxabs(dFe),maxabs(Fe2),maxabs(Fe0))
+        print '|dFe| %g, |Fe2| %g, |Fe0| %g, |Fe2-Fe0| %g'%(maxabs(dFe),maxabs(Fe2),maxabs(Fe0),maxabs(Fe2-Fe0))
         print 'elastic differential error =',e
       assert e < tolerance
 
