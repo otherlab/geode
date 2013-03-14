@@ -84,7 +84,8 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
       dF = elastic_differential(X,dX)
       e = relative_error(dF,dF2)
       if verbose:
-        print 'elastic gradient force errors = %s',magnitudes(dF-dF2)
+        if len(dF)<10:
+          print 'elastic gradient force errors = %s'%magnitudes(dF-dF2)
         print 'elastic gradient error =',e
       assert e < tolerance
 
