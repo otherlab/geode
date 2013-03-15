@@ -6,9 +6,9 @@
 #include <other/core/exact/scope.h>
 #include <other/core/array/amap.h>
 #include <other/core/array/RawField.h>
-#include <other/core/mesh/HalfedgeMesh.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/permute.h>
+#include <other/core/structure/Tuple.h>
 #include <other/core/utility/interrupts.h>
 #include <other/core/utility/Log.h>
 namespace other {
@@ -113,7 +113,7 @@ OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(VertexId v0, EV 
 }
 
 // Test whether an edge is Delaunay
-OTHER_ALWAYS_INLINE static inline bool is_delaunay(const HalfedgeMesh& mesh, RawField<const EV,VertexId> X, const HalfedgeId edge) {
+template<class Mesh> OTHER_ALWAYS_INLINE static inline bool is_delaunay(const Mesh& mesh, RawField<const EV,VertexId> X, const HalfedgeId edge) {
   // Boundary edges belong to the sentinel quad and are always Delaunay.
   const auto rev = mesh.reverse(edge);
   if (mesh.is_boundary(rev))
@@ -147,7 +147,7 @@ static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const EV,Vert
   return FaceId(~node);
 }
 
-OTHER_UNUSED static void check_bsp(const HalfedgeMesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const EV,VertexId> X_) {
+template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const EV,VertexId> X_) {
   if (self_check) {
     cout << "bsp:\n";
     #define CHILD(c) format("%c%d",(c<0?'f':'n'),(c<0?~c:c))
@@ -171,12 +171,35 @@ OTHER_UNUSED static void check_bsp(const HalfedgeMesh& mesh, RawArray<const Node
     const auto v = mesh.vertices(f);
     if (!is_sentinel(X[v.x]) && !is_sentinel(X[v.y]) && !is_sentinel(X[v.z])) {
       const auto center = X.append((X[v.x]+X[v.y]+X[v.z])/3);
-      if (bsp_search(bsp,X,center)!=f) {
-        cout << "bsp search failed: f "<<f<<", v "<<v<<endl;
+      const auto found = bsp_search(bsp,X,center);
+      if (found!=f) {
+        cout << "bsp search failed: f "<<f<<", v "<<v<<", found "<<found<<endl;
         OTHER_ASSERT(false);
       }
       X.flat.pop();
     }
+  }
+}
+
+OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const EV,VertexId> X, const bool oriented_only=false) {
+  // Verify that all faces are correctly oriented
+  for (const auto f : mesh.faces()) {
+    const auto v = mesh.vertices(f);
+    OTHER_ASSERT(triangle_oriented(X,v.x,v.y,v.z));
+  }
+  if (oriented_only)
+    return;
+  // Verify that all internal edges are Delaunay
+  for (const auto e : mesh.interior_halfedges())
+    if (!mesh.is_boundary(mesh.reverse(e)) && mesh.src(e)<mesh.dst(e))
+      if (!is_delaunay(mesh,X,e))
+        throw RuntimeError(format("non delaunay edge: e%d, v%d v%d",e.id,mesh.src(e).id,mesh.dst(e).id));
+  // Verify that all boundary vertices are convex
+  for (const auto e : mesh.boundary_edges()) {
+    const auto v0 = mesh.src(mesh.prev(e)),
+               v1 = mesh.src(e),
+               v2 = mesh.dst(e);
+    OTHER_ASSERT(triangle_oriented(X,v2,v1,v0));
   }
 }
 
@@ -203,10 +226,18 @@ OTHER_COLD static void assert_delaunay(const HalfedgeMesh& mesh, RawField<const 
   }
 }
 
+static inline void unsafe_flip_edge(CornerMesh& mesh, HalfedgeId& e) {
+  e = mesh.unsafe_flip_edge(e);
+}
+
+static inline void unsafe_flip_edge(HalfedgeMesh& mesh, const HalfedgeId e) {
+  mesh.unsafe_flip_edge(e);
+}
+
 // This routine assumes the sentinel points have already been added
-Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const bool validate) {
+template<class Mesh> Ref<Mesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const bool validate) {
   const int n = X.size()-3;
-  const auto mesh = new_<HalfedgeMesh>();
+  const auto mesh = new_<Mesh>();
   IntervalScope scope;
 
   // Initialize the mesh to a Delaunay triangle containing the sentinels at infinity.
@@ -230,11 +261,12 @@ Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const boo
   face_to_bsp.flat.preallocate(2*n+1); // The exact maximum number of faces
   face_to_bsp.flat.append_assuming_enough_space(vec(0,-1)); // By the time we call set_links, node 0 will be valid
   if (self_check)
-    check_bsp(mesh,bsp,face_to_bsp,X);
+    check_bsp(*mesh,bsp,face_to_bsp,X);
 
   // Allocate a stack to simulate recursion when flipping non-Delaunay edges.
   // Invariant: if edge is on the stack, the other edges of face(edge) are Delaunay.
-  Array<HalfedgeId> stack;
+  // Since halfedge ids change during edge flips in a corner mesh, we store half edges as directed vertex pairs.
+  Array<Tuple<HalfedgeId,Vector<VertexId,2>>> stack;
   stack.preallocate(8);
 
   // Insert all vertices into the mesh in random order, maintaining the Delaunay property
@@ -245,55 +277,61 @@ Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const boo
 
     // Search through the BSP tree to find the containing triangle
     const auto f0 = bsp_search(bsp,X,v);
+    const auto vs = mesh->vertices(f0);
 
     // Split the face by inserting the new vertex and update the BSP tree accordingly.
     mesh->split_face(f0,v);
     const auto e0 = mesh->halfedge(v),
                e1 = mesh->left(e0),
                e2 = mesh->right(e0);
+    assert(mesh->dst(e0)==vs.x);
     const auto f1 = mesh->face(e1),
                f2 = mesh->face(e2);
     int base = bsp.size();
     bsp.resize(base+3,false);
     set_links(bsp,face_to_bsp[f0],base);
-    bsp[base+0] = Node(vec(v,mesh->dst(e0)),base+2,base+1);
-    bsp[base+1] = Node(vec(v,mesh->dst(e1)),~f0.id,~f1.id);
-    bsp[base+2] = Node(vec(v,mesh->dst(e2)),~f1.id,~f2.id);
+    bsp[base+0] = Node(vec(v,vs.x),base+2,base+1);
+    bsp[base+1] = Node(vec(v,vs.y),~f0.id,~f1.id);
+    bsp[base+2] = Node(vec(v,vs.z),~f1.id,~f2.id);
     face_to_bsp[f0] = vec(2*(base+1)+0,-1);
     face_to_bsp.flat.append_assuming_enough_space(vec(2*(base+1)+1,2*(base+2)+0));
     face_to_bsp.flat.append_assuming_enough_space(vec(2*(base+2)+1,-1));
     if (self_check)
-      check_bsp(mesh,bsp,face_to_bsp,X);
+      check_bsp(*mesh,bsp,face_to_bsp,X);
 
     // Fix all non-Delaunay edges
-    stack.resize(3,false,false); 
-    stack[0] = mesh->next(e0);
-    stack[1] = mesh->next(e1);
-    stack[2] = mesh->next(e2);
+    stack.resize(3,false,false);
+    stack[0] = tuple(mesh->next(e0),vec(vs.x,vs.y));
+    stack[1] = tuple(mesh->next(e1),vec(vs.y,vs.z));
+    stack[2] = tuple(mesh->next(e2),vec(vs.z,vs.x));
     if (self_check)
       assert_delaunay(mesh,X,true);
     while (stack.size()) {
-      const auto e = stack.pop();
-      if (!is_delaunay(mesh,X,e)) {
+      const auto evs = stack.pop();
+      auto e = mesh->vertices(evs.x)==evs.y ? evs.x : mesh->halfedge(evs.y.x,evs.y.y);
+      if (e.valid() && !is_delaunay(*mesh,X,e)) {
         // Our mesh is linearly embedded in the plane, so edge flips are always safe
         assert(mesh->is_flip_safe(e));
-        mesh->unsafe_flip_edge(e);
-        OTHER_ASSERT(is_delaunay(mesh,X,e));
+        unsafe_flip_edge(mesh,e);
+        OTHER_ASSERT(is_delaunay(*mesh,X,e));
         // Update the BSP tree for the triangle flip
         const auto f0 = mesh->face(e),
-                   f1 = mesh->face(mesh->reverse(e)); 
+                   f1 = mesh->face(mesh->reverse(e));
         const int node = bsp.append(Node(mesh->vertices(e),~f1.id,~f0.id));
         set_links(bsp,face_to_bsp[f0],node);
         set_links(bsp,face_to_bsp[f1],node);
         face_to_bsp[f0] = vec(2*node+1,-1);
         face_to_bsp[f1] = vec(2*node+0,-1);
         if (self_check)
-          check_bsp(mesh,bsp,face_to_bsp,X);
+          check_bsp(*mesh,bsp,face_to_bsp,X);
         // Recurse to successor edges to e
-        stack.append_elements(vec(mesh->next(e),mesh->prev(mesh->reverse(e))));
+        const auto e0 = mesh->next(e),
+                   e1 = mesh->prev(mesh->reverse(e));
+        stack.append_elements(vec(tuple(e0,mesh->vertices(e0)),
+                                  tuple(e1,mesh->vertices(e1))));
+        if (self_check)
+          assert_delaunay(mesh,X,true);
       }
-      if (self_check)
-        assert_delaunay(mesh,X,true);
     }
     if (self_check)
       assert_delaunay(mesh,X);
@@ -311,7 +349,7 @@ Ref<HalfedgeMesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const boo
   return mesh;
 }
 
-Ref<HalfedgeMesh> delaunay_points(RawArray<const Vector<real,2>> X_, bool validate) {
+template<class Mesh> Ref<Mesh> delaunay_points(RawArray<const Vector<real,2>> X_, bool validate) {
   const int n = X_.size();
   OTHER_ASSERT(n>=3);
 
@@ -325,11 +363,11 @@ Ref<HalfedgeMesh> delaunay_points(RawArray<const Vector<real,2>> X_, bool valida
   X.flat[n+2] = EV(-bound,bound);
 
   // Compute Delaunay triangulation
-  return exact_delaunay_helper(X,validate);
+  return exact_delaunay_helper<Mesh>(X,validate);
 }
 
 // Same as above, but points are already quantized
-Ref<HalfedgeMesh> exact_delaunay_points(RawArray<const EV> X_, bool validate) {
+template<class Mesh> Ref<Mesh> exact_delaunay_points(RawArray<const EV> X_, bool validate) {
   const int n = X_.size();
   OTHER_ASSERT(n>=3);
 
@@ -343,12 +381,13 @@ Ref<HalfedgeMesh> exact_delaunay_points(RawArray<const EV> X_, bool validate) {
   X.flat[n+2] = EV(-bound,bound);
 
   // Compute Delaunay triangulation
-  return exact_delaunay_helper(X,validate);
+  return exact_delaunay_helper<Mesh>(X,validate);
 }
 
 }
 using namespace other;
 
 void wrap_delaunay() {
-  OTHER_FUNCTION_2(delaunay_points_py,delaunay_points)
+  OTHER_FUNCTION_2(delaunay_points_corner,delaunay_points<CornerMesh>)
+  OTHER_FUNCTION_2(delaunay_points_halfedge,delaunay_points<HalfedgeMesh>)
 }

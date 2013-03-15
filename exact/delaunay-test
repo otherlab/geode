@@ -15,6 +15,7 @@ velocity = props.add('velocity',1.).set_category('delaunay')
 frequency = props.add('frequency',1.).set_category('delaunay')
 seed = props.add('seed',1718).set_category('delaunay')
 mode = props.add('mode','well').set_allowed('well circle degenerate'.split()).set_category('delaunay')
+validate = props.add('validate',False).set_category('delaunay')
 
 current_time = Prop('time',0.)
 
@@ -79,7 +80,7 @@ def current():
 
 @cache
 def delaunay():
-  return delaunay_points(current())
+  return delaunay_points(current(),validate=validate())
 
 class DelaunayScene(Scene):
   def render(self,*args):
