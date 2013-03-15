@@ -33,7 +33,31 @@ def test_partition_loop():
 def test_format():
   format_test()
 
+def test_cache_method():
+  class A(object):
+    def __init__(self,x):
+      self.x = Prop('x',x) 
+      self.n = 0
+    @cache_method
+    def f(self):
+      self.n += 1
+      return self.x()
+  a = A(5)
+  b = A(7)
+  assert a.n==b.n==0
+  for i in xrange(2):
+    assert a.f()==5
+    assert b.f()==7
+    assert a.n==b.n==1
+  a.x.set(1)
+  assert a.n==b.n==1
+  assert a.f()==1
+  assert b.f()==7
+  assert a.n==2
+  assert b.n==1
+
 if __name__=='__main__':
+  test_cache_method()
   test_partition_loop()
   test_base64()
   test_curry()

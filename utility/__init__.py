@@ -4,12 +4,13 @@ from __future__ import absolute_import
 from . import Log
 import platform
 import tempfile
+import types
 import os
 
 if platform.system()=='Windows':
-  from other_all import resource_py
+  from other_all import resource_py,cache
 else:
-  from other_core import resource_py
+  from other_core import resource_py,cache
 
 def curry(f,*a,**k):
   def g(*a2,**k2):
@@ -17,6 +18,19 @@ def curry(f,*a,**k):
     k3.update(k2)
     return f(*(a+a2),**k3)
   return g
+
+class cache_method(object):
+  '''Decorator to cache a class method per instance.  The equivalent of 'cache' in the function case.'''
+  def __init__(self,f):
+    self._name = '__'+f.__name__
+    self.f = f
+  def __get__(self,instance,owner):
+    try:
+      return getattr(instance,self._name)
+    except AttributeError:
+      value = cache(types.MethodType(self.f,instance,owner))
+      object.__setattr__(instance,self._name,value)
+      return value
 
 def resource(*paths):
   return resource_py(os.path.join(*paths)) 
