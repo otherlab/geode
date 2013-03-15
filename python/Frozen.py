@@ -19,3 +19,11 @@ class Frozen(object):
       yield
     finally:
       object.__delattr__(self,'_thawed')
+
+class Immutable(Frozen):
+  '''Inheriting from Immutable disallows setting fields except inside a thaw block'''
+  def __setattr__(self,key,value):
+    if hasattr(self,'_thawed'):
+      object.__setattr__(self,key,value)
+    else:
+      raise TypeError("%s is an immutable class; can't set field '%s' outside a thaw block"%(type(self).__name__,key))

@@ -19,6 +19,7 @@ other_core.redefine_assertion_error(AssertionError)
 from .utility import *
 from .array import *
 from .geometry import *
+from .value import Prop
 from .vector import *
 from .mesh import *
 real = other_core.real

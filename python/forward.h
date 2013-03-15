@@ -12,6 +12,8 @@ class Object;
 struct Buffer;
 template<class T=PyObject> class Ref;
 template<class T=PyObject> class Ptr;
+template<class T> struct has_to_python;
+template<class T> struct has_from_python;
 
 template<class T,class Enable=void> struct FromPython; // from_python<T> isn't defined for types by default
 
