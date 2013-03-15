@@ -2,11 +2,10 @@
 // This class represents topology only, not geometry.
 #pragma once
 
+#include <other/core/mesh/ids.h>
 #include <other/core/array/Field.h>
 namespace other {
 
-using std::ostream;
-template<class Id> struct IdIter;
 struct OutgoingCirculator;
 
 // Important invariants:
@@ -17,39 +16,6 @@ struct OutgoingCirculator;
 // 3. If e is a halfedge, either e or reverse(e) is not a boundary.
 // 4. There are no self loops: src(e) != dst(e).
 // 5. Given vertices v0,v1, there is at most one halfedge from v0 to v1.
-
-#define OTHER_DEFINE_ID(Name) \
-  struct Name { \
-    int id; \
-    Name() : id(-1) {} \
-    explicit Name(int id) : id(id) {} \
-    int idx() const { return id; } \
-    bool valid() const { return id>=0; } \
-    bool operator==(Name i) const { return id==i.id; } \
-    bool operator!=(Name i) const { return id!=i.id; } \
-    bool operator< (Name i) const { return id< i.id; } \
-    bool operator<=(Name i) const { return id<=i.id; } \
-    bool operator> (Name i) const { return id> i.id; } \
-    bool operator>=(Name i) const { return id>=i.id; } \
-    explicit operator int() const { return id; } \
-  }; \
-  template<> struct is_packed_pod<Name> : mpl::true_ {}; \
-  static inline PyObject* to_python(Name i) { return to_python(i.id); } \
-  template<> struct FromPython<Name>{static Name convert(PyObject* o) { return Name(FromPython<int>::convert(o)); }}; \
-  static inline ostream& operator<<(ostream& output, Name i) { return output<<i.id; }
-OTHER_DEFINE_ID(VertexId)
-OTHER_DEFINE_ID(HalfedgeId)
-OTHER_DEFINE_ID(EdgeId)
-OTHER_DEFINE_ID(FaceId)
-OTHER_DECLARE_VECTOR_CONVERSIONS(OTHER_CORE_EXPORT,3,VertexId)
-
-template<class Id> struct IdIter {
-  Id i;
-  IdIter(Id i) : i(i) {}
-  void operator++() { i.id++; }
-  bool operator!=(IdIter o) const { return i!=o.i; }
-  Id operator*() const { return i; }
-};
 
 class HalfedgeMesh : public Object {
 public:

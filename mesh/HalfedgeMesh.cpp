@@ -118,8 +118,8 @@ FaceId HalfedgeMesh::add_face(const Vector<VertexId,3> v) {
     add_face_error(v,", one of the edges is interior");
 
   // If a vertex has multiple triangle fan boundaries, there is ambiguity in how the boundary halfedges are linked
-  // together into components.  This arbitrary choice may be incompatible with the new face, so a bit of surgery may
-  // be required to correct the linkage.  We check for all errors before we do any actual surgery so that add_face
+  // together into components.  This arbitrary choice may be incompatible with the new face, in which case surgery
+  // is required to correct the linkage.  We check for all errors before we do any actual surgery so that add_face
   // makes changes only when it succeeds.
   #define PREPARE(a,b,c) \
     const auto c = a.valid() && b.valid() && next(a)!=b ? right_around_dst_to_boundary(*this,b) : HalfedgeId(); \
@@ -128,7 +128,8 @@ FaceId HalfedgeMesh::add_face(const Vector<VertexId,3> v) {
   PREPARE(e0,e1,c0)
   PREPARE(e1,e2,c1)
   PREPARE(e2,e0,c2)
-  // For each pair of adjacent ei,ej, we want next(ei)==ej.  We've already computed ci = the other side of ej's triangle fan.
+  // If we get to this point, all checks have passed, and we can safely add the new face.  For each pair of
+  // adjacent ei,ej, we want next(ei)==ej.  We've already computed ci = the other side of ej's triangle fan.
   // Here is the surgery:
   #define RELINK(a,b,c) \
     if (c.valid()) { \

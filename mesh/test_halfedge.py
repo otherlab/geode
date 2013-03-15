@@ -4,10 +4,11 @@ from __future__ import division
 from other.core import *
 from other.core.geometry.platonic import *
 
-def test_construction():
+def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
   random.seed(813177)
   nanosphere = TriangleMesh([(0,1,2),(0,2,1)])
   print
+  print Mesh.__name__
   for soup in nanosphere,icosahedron_mesh()[0],torus_topology(4,5),double_torus_mesh(),cylinder_topology(5,6):
     # Learn about triangle soup
     n_vertices = soup.nodes()
@@ -22,7 +23,6 @@ def test_construction():
     def check_counts(mesh):
       assert mesh.n_vertices==n_vertices
       assert mesh.n_edges==n_edges
-      assert mesh.n_halfedges==2*n_edges
       assert mesh.n_faces==n_faces
       assert mesh.chi==chi
 
@@ -30,7 +30,7 @@ def test_construction():
       base.assert_consistent()
       for t in tris:
         try:
-          assert mesh.has_boundary()
+          assert mesh.has_boundary() or mesh.has_isolated_vertices()
           mesh.add_face(t)
           mesh.assert_consistent()
         except:
@@ -47,7 +47,7 @@ def test_construction():
       assert all(sort_tris(tris)==sort_tris(mesh.elements()))
 
     # Turn the soup into a halfedge mesh
-    base = HalfedgeMesh()
+    base = Mesh()
     base.add_vertices(soup.nodes())
     check_add_faces(base,soup.elements)
 
@@ -62,7 +62,7 @@ def test_construction():
       tris = mesh.elements()
       random.shuffle(tris)
       # Reconstruct the mangled mesh one triangle at a time
-      partial = HalfedgeMesh()
+      partial = Mesh()
       partial.add_vertices(soup.nodes())
       check_add_faces(partial,tris)
       # Check that face splits are safe
@@ -70,7 +70,14 @@ def test_construction():
       mesh.assert_consistent()
       # Tear the mesh apart in random order
       mesh_destruction_test(mesh,key+20)
-      assert mesh.n_vertices==mesh.n_halfedges==mesh.n_faces==0
+      assert mesh.n_vertices==mesh.n_edges==mesh.n_faces==0
+
+def test_halfedge_construction():
+  construction_test(HalfedgeMesh)
+
+def test_corner_construction():
+  construction_test(CornerMesh,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
 
 if __name__=='__main__':
-  test_construction()
+  test_corner_construction()
+  test_halfedge_construction()

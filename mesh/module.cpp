@@ -10,4 +10,5 @@ void wrap_mesh() {
   OTHER_WRAP(triangle_mesh)
   OTHER_WRAP(triangle_subdivision)
   OTHER_WRAP(halfedge_mesh)
+  OTHER_WRAP(corner_mesh)
 }
