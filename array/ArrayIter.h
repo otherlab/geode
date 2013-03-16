@@ -63,6 +63,10 @@ public:
     return index<other.index; // Assume array==other.array
   }
 
+  bool operator<=(ArrayIter other) {
+    return index<=other.index; // Assume array==other.array
+  }
+
   reference operator*() const {
     return (*array)[index];
   }
