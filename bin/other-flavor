@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if test -n "$1" -a -e "$OTHER/install/$1"; then
-  rm -v -f $OTHER/install/flavor
+  rm -f $OTHER/install/flavor
   ln -sf $1 $OTHER/install/flavor
 elif [ "$1" ]; then
   echo flavor \"$1\" not found.
