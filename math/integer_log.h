@@ -2,7 +2,7 @@
 // Header integer_log
 //#####################################################################
 //
-// Base 2 logarithms of integers and related functions
+// Base 2 logarithms of integers and related functions.  Inexact versions round down.
 //
 //#####################################################################
 #pragma once
