@@ -184,6 +184,9 @@ public:
   // WARNING: The all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
   OTHER_CORE_EXPORT HalfedgeId flip_edge(HalfedgeId e) OTHER_WARN_UNUSED_RESULT;
 
+  // Permute vertices: vertices v becomes vertex permutation[v]
+  OTHER_CORE_EXPORT void permute_vertices(RawArray<const int> permutation, bool check=false);
+
   // Run an expensive internal consistency check.  Safe to call even if the structure arrays are random noise.
   OTHER_CORE_EXPORT void assert_consistent() const;
 

@@ -6,9 +6,12 @@
 #include <other/core/exact/scope.h>
 #include <other/core/array/amap.h>
 #include <other/core/array/RawField.h>
+#include <other/core/math/integer_log.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/permute.h>
+#include <other/core/random/Random.h>
 #include <other/core/structure/Tuple.h>
+#include <other/core/utility/curry.h>
 #include <other/core/utility/interrupts.h>
 #include <other/core/utility/Log.h>
 namespace other {
@@ -17,6 +20,8 @@ using Log::cout;
 using std::endl;
 typedef Vector<real,2> TV;
 typedef Vector<exact::Quantized,2> EV;
+typedef Tuple<EV,int> Point;
+BOOST_STATIC_ASSERT(sizeof(Point)==sizeof(int)+sizeof(EV));
 const auto bound = exact::bound;
 
 // Whether to run extremely expensive diagnostics
@@ -42,6 +47,15 @@ static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u
 // 1. Face split: we destroy one triangle and create three new ones with reference counts 1,2,1.
 // 2. Edge flip: we destroy two triangles and create two new ones, each with a single reference.
 // Thus, it suffices to store two ints per face, one of which is possibly empty (-1).
+//
+// Randomized incremental Delaunay by itself has terrible cache properties, since the mesh is accessed in nearly purely
+// random order.  Therefore, we use the elegant partial randomization idea of
+//
+//    Nina Amenta, Sunghee Choi, Gunter Rote, "Incremental Constructions con BRIO".
+//
+// which randomly assigns vertices into bins of exponentially increasing size, then applies a spatial sort within each bin.
+// The random choice of bin is sufficient to ensure an O(n log n) worst case time, and the spatial sort produces a relatively
+// cache coherent access pattern.
 
 namespace {
 struct Node {
@@ -61,39 +75,39 @@ static inline void set_links(RawArray<Node> bsp, const Vector<int,2> links, cons
     bsp[links.y>>1].children[links.y&1] = node;
 }
 
-static inline bool is_sentinel(const EV& x) {
-  return abs(x.x)==bound;
+static inline bool is_sentinel(const Point& x) {
+  return abs(x.x.x)==bound;
 }
 
 // Different sentinels will be placed at different orders of infinity, with earlier indices further away.
 // These macros are used in the sorting networks below to move large sentinels last
-#define SENTINEL_KEY(i) (is_sentinel(x##i)?-v##i.id:numeric_limits<int>::min())
-#define COMPARATOR(i,j) if (SENTINEL_KEY(i)>SENTINEL_KEY(j)) { swap(v##i,v##j); swap(x##i,x##j); parity ^= 1; }
+#define SENTINEL_KEY(i) (is_sentinel(x##i)?-x##i.y:numeric_limits<int>::min())
+#define COMPARATOR(i,j) if (SENTINEL_KEY(i)>SENTINEL_KEY(j)) { swap(x##i,x##j); parity ^= 1; }
 
-OTHER_COLD OTHER_CONST static inline bool triangle_oriented_sentinels(VertexId v0, EV x0, VertexId v1, EV x1, VertexId v2, EV x2) {
+OTHER_COLD OTHER_CONST static inline bool triangle_oriented_sentinels(Point x0, Point x1, Point x2) {
   // Move large sentinels last
   bool parity = 0;
   COMPARATOR(0,1)
   COMPARATOR(1,2)
   COMPARATOR(0,1)
   // Triangle orientation tests reduce to segment vs. direction and direction vs. direction when infinities are involved
-  return parity ^ (!is_sentinel(x1) ? segment_to_direction_oriented(v0.id,x0,v1.id,x1,v2.id,x2)   // one sentinel
-                                    :           directions_oriented(         v1.id,x1,v2.id,x2)); // two or three sentinels
+  return parity ^ (!is_sentinel(x1) ? segment_to_direction_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x)   // one sentinel
+                                    :           directions_oriented(          x1.y,x1.x,x2.y,x2.x)); // two or three sentinels
 }
 
-OTHER_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const EV,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
+OTHER_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const Point,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
   const auto x0 = X[v0],
              x1 = X[v1],
              x2 = X[v2];
   // If we have a nonsentinel triangle, use a normal orientation test
-  if (maxabs(x0.x,x1.x,x2.x)!=bound)
-    return triangle_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
+  if (maxabs(x0.x.x,x1.x.x,x2.x.x)!=bound)
+    return triangle_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x);
   // Fall back to sentinel case analysis
-  return triangle_oriented_sentinels(v0,x0,v1,x1,v2,x2);
+  return triangle_oriented_sentinels(x0,x1,x2);
 }
 
 // Test whether an edge containing sentinels is Delaunay
-OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(VertexId v0, EV x0, VertexId v1, EV x1, VertexId v2, EV x2, VertexId v3, EV x3) {
+OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(Point x0, Point x1, Point x2, Point x3) {
   // Unfortunately, the sentinels need to be at infinity for purposes of Delaunay testing, and our SOS predicates
   // don't support infinities.  Therefore, we need some case analysis.  First, we move all the sentinels to the end,
   // sorted in decreasing order of index.  Different sentinels will be placed at different orders of infinity,
@@ -105,15 +119,15 @@ OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(VertexId v0, EV 
   COMPARATOR(1,3)
   COMPARATOR(1,2)
   if (!is_sentinel(x2)) // One infinity: A finite circle contains infinity iff it is inside out, so we reduce to an orientation test
-    return parity^triangle_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
+    return parity^triangle_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x);
   else if (!is_sentinel(x1)) // Two infinities: also an orientation test, but with the last point at infinity
-    return parity^segment_to_direction_oriented(v0.id,x0,v1.id,x1,v2.id,x2);
+    return parity^segment_to_direction_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x);
   else // Three infinities: the finite point no longer matters.
-    return parity^directions_oriented(v1.id,x1,v2.id,x2);
+    return parity^directions_oriented(x1.y,x1.x,x2.y,x2.x);
 }
 
 // Test whether an edge is Delaunay
-template<class Mesh> OTHER_ALWAYS_INLINE static inline bool is_delaunay(const Mesh& mesh, RawField<const EV,VertexId> X, const HalfedgeId edge) {
+template<class Mesh> OTHER_ALWAYS_INLINE static inline bool is_delaunay(const Mesh& mesh, RawField<const Point,VertexId> X, const HalfedgeId edge) {
   // Boundary edges belong to the sentinel quad and are always Delaunay.
   const auto rev = mesh.reverse(edge);
   if (mesh.is_boundary(rev))
@@ -128,13 +142,13 @@ template<class Mesh> OTHER_ALWAYS_INLINE static inline bool is_delaunay(const Me
              x2 = X[v2],
              x3 = X[v3];
   // If we have a nonsentinel interior edge, perform a normal incircle test
-  if (maxabs(x0.x,x1.x,x2.x,x3.x)!=bound)
-    return !incircle(v0.id,x0,v1.id,x1,v2.id,x2,v3.id,x3);
+  if (maxabs(x0.x.x,x1.x.x,x2.x.x,x3.x.x)!=bound)
+    return !incircle(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x,x3.y,x3.x);
   // Fall back to sentinel case analysis
-  return is_delaunay_sentinels(v0,x0,v1,x1,v2,x2,v3,x3);
+  return is_delaunay_sentinels(x0,x1,x2,x3);
 }
 
-static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const EV,VertexId> X, const VertexId v) {
+static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Point,VertexId> X, const VertexId v) {
   if (!bsp.size())
     return FaceId(0);
   int iters = 0;
@@ -147,7 +161,7 @@ static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const EV,Vert
   return FaceId(~node);
 }
 
-template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const EV,VertexId> X_) {
+template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Point,VertexId> X_) {
   if (self_check) {
     cout << "bsp:\n";
     #define CHILD(c) format("%c%d",(c<0?'f':'n'),(c<0?~c:c))
@@ -170,7 +184,7 @@ template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArr
       OTHER_ASSERT(bsp[i1/2].children[i1&1]==~f.id);
     const auto v = mesh.vertices(f);
     if (!is_sentinel(X[v.x]) && !is_sentinel(X[v.y]) && !is_sentinel(X[v.z])) {
-      const auto center = X.append((X[v.x]+X[v.y]+X[v.z])/3);
+      const auto center = X.append(tuple((X[v.x].x+X[v.y].x+X[v.z].x)/3,X.size()));
       const auto found = bsp_search(bsp,X,center);
       if (found!=f) {
         cout << "bsp search failed: f "<<f<<", v "<<v<<", found "<<found<<endl;
@@ -181,7 +195,7 @@ template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArr
   }
 }
 
-OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const EV,VertexId> X, const bool oriented_only=false) {
+OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const Point,VertexId> X, const bool oriented_only=false) {
   // Verify that all faces are correctly oriented
   for (const auto f : mesh.faces()) {
     const auto v = mesh.vertices(f);
@@ -203,7 +217,7 @@ OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const EV
   }
 }
 
-OTHER_COLD static void assert_delaunay(const HalfedgeMesh& mesh, RawField<const EV,VertexId> X, const bool oriented_only=false) {
+OTHER_UNUSED OTHER_COLD static void assert_delaunay(const HalfedgeMesh& mesh, RawField<const Point,VertexId> X, const bool oriented_only=false) {
   // Verify that all faces are correctly oriented
   for (const auto f : mesh.faces()) {
     const auto v = mesh.vertices(f);
@@ -234,8 +248,8 @@ static inline void unsafe_flip_edge(HalfedgeMesh& mesh, const HalfedgeId e) {
   mesh.unsafe_flip_edge(e);
 }
 
-// This routine assumes the sentinel points have already been added
-template<class Mesh> Ref<Mesh> exact_delaunay_helper(RawField<const EV,VertexId> X, const bool validate) {
+// This routine assumes the sentinel points have already been added, and processes points in order
+template<class Mesh> static Ref<Mesh> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
   const int n = X.size()-3;
   const auto mesh = new_<Mesh>();
   IntervalScope scope;
@@ -271,9 +285,8 @@ template<class Mesh> Ref<Mesh> exact_delaunay_helper(RawField<const EV,VertexId>
 
   // Insert all vertices into the mesh in random order, maintaining the Delaunay property
   for (const auto i : range(n)) {
+    const VertexId v(i);
     check_interrupts();
-    // Pick a vertex at random, without replacement
-    const VertexId v(random_permute(n,key,i));
 
     // Search through the BSP tree to find the containing triangle
     const auto f0 = bsp_search(bsp,X,v);
@@ -349,39 +362,97 @@ template<class Mesh> Ref<Mesh> exact_delaunay_helper(RawField<const EV,VertexId>
   return mesh;
 }
 
-template<class Mesh> Ref<Mesh> delaunay_points(RawArray<const Vector<real,2>> X_, bool validate) {
-  const int n = X_.size();
-  OTHER_ASSERT(n>=3);
+static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random) {
+  const int n = X.size();
+  if (n<=leaf_size)
+    return;
 
-  // Quantize all input points
-  Field<EV,VertexId> X(n+3,false);
-  X.flat.slice(0,n) = amap(quantizer(bounding_box(X_)),X_);
+  // We determine the subdivision axis using inexact computation, which is okay since neither the result nor
+  // the asymptotic worst case complexity depends upon any properties of the spatial_sort whatsoever.
+  const Box<EV> box = bounding_box(X.project<EV,&Point::x>());
+  const int axis = box.sizes().argmax();
+
+  // Now go back to exact arithmetic to do the partition.
+  #define LESS(i,j) (axis_less(axis,X[i].y,X[i].x,X[j].y,X[j].x))
+
+  // We partition by picking three elements at random, and running partition based on the middle element.
+  int i0 = random.uniform<int>(0,n),
+      i1 = random.uniform<int>(0,n),
+      i2 = random.uniform<int>(0,n);
+  if (!LESS(i0,i1)) swap(i0,i1);
+  if (!LESS(i1,i2)) swap(i1,i2);
+  if (!LESS(i0,i1)) swap(i0,i1);
+  const auto Xmid = X[i1];
+
+  // Perform the partition.  We use the version of partition from wikipedia: http://en.wikipedia.org/wiki/Quicksort#In-place_version
+  int mid = 0;
+  for (const int i : range(n))
+    if (axis_less(axis,X[i].y,X[i].x,Xmid.y,Xmid.x))
+      swap(X[i],X[mid++]);
+
+  // Recursely sort both halves
+  spatial_sort(X.slice(0,mid),leaf_size,random);
+  spatial_sort(X.slice(mid,n),leaf_size,random);
+}
+
+// Prepare a list of points for Delaunay triangulation: randomly assign into logarithmic bins, sort within bins, and add sentinels.
+// For details, see Amenta et al., Incremental Constructions con BRIO.
+template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs& Xin) {
+  const int n = Xin.size();
+  Array<Point> X(n+3,false);
+
+  // Randomly assign input points into bins.  Bin k has 2**k = 1,2,4,8,... and starts at index 2**k-1 = 0,1,3,7,...
+  // We fill points into bins as sequentially as possible to maximize cache coherence.
+  const int bins = integer_log(n);
+  Array<int> bin_counts(bins);
+  #pragma omp parallel for
+  for (int i=0;i<n;i++) {
+    int j = random_permute(n,key,i);
+    const int bin = min(integer_log(j+1),bins-1);
+    j = (1<<bin)-1+bin_counts[bin]++;
+    X[j] = tuple(Xin[i],i);
+  }
+
+  // Spatially sort each bin down to clusters of size 64.
+  const int leaf_size = 64;
+  #pragma omp parallel for
+  for (int bin=0;bin<bins;bin++) {
+    const int start = (1<<bin)-1,
+              end = bin==bins-1?n:start+(1<<bin);
+    assert(bin_counts[bin]==end-start);
+    spatial_sort(X.slice(start,end),leaf_size,new_<Random>(key+bin));
+  }
 
   // Add 3 sentinel points at infinity
-  X.flat[n+0] = EV(-bound,-bound);
-  X.flat[n+1] = EV(bound,0);
-  X.flat[n+2] = EV(-bound,bound);
+  X[n+0] = tuple(EV(-bound,-bound),n+0);
+  X[n+1] = tuple(EV( bound, 0),    n+1);
+  X[n+2] = tuple(EV(-bound, bound),n+2);
+
+  return X;
+}
+
+template<class Mesh,class Inputs> static inline Ref<Mesh> delaunay_helper(const Inputs& Xin, bool validate) {
+  const int n = Xin.size();
+  OTHER_ASSERT(n>=3);
+
+  // Quantize all input points, reorder, and add sentinels
+  Field<const Point,VertexId> X(partially_sorted_shuffle(Xin));
 
   // Compute Delaunay triangulation
-  return exact_delaunay_helper<Mesh>(X,validate);
+  const auto mesh = deterministic_exact_delaunay<Mesh>(X,validate);
+
+  // Undo the vertex permutation
+  mesh->permute_vertices(X.flat.slice(0,n).project<int,&Point::y>().copy());
+  return mesh;
+}
+
+template<class Mesh> Ref<Mesh> delaunay_points(RawArray<const Vector<real,2>> X, bool validate) {
+  return delaunay_helper<Mesh>(amap(quantizer(bounding_box(X)),X),validate);
 }
 
 // Same as above, but points are already quantized
-template<class Mesh> Ref<Mesh> exact_delaunay_points(RawArray<const EV> X_, bool validate) {
-  const int n = X_.size();
-  OTHER_ASSERT(n>=3);
-
-  // Quantize all input points
-  Field<EV,VertexId> X(n+3,false);
-  X.flat.slice(0,n) = X_;
-
-  // Add 3 sentinel points at infinity
-  X.flat[n+0] = EV(-bound,-bound);
-  X.flat[n+1] = EV(bound,0);
-  X.flat[n+2] = EV(-bound,bound);
-
-  // Compute Delaunay triangulation
-  return exact_delaunay_helper<Mesh>(X,validate);
+template<class Mesh> Ref<Mesh> exact_delaunay_points(RawArray<const EV> X, bool validate) {
+  return delaunay_helper<Mesh>(X,validate);
 }
 
 }

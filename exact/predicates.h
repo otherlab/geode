@@ -17,4 +17,9 @@ static inline bool upwards(const int ai, const Vector<exact::Quantized,2> a, con
   return b.y>a.y || (b.y==a.y && ai>bi);
 }
 
+// Is a[i] < b[i]?
+template<int d> static inline bool axis_less(const int axis, const int ai, const Vector<exact::Quantized,d> a, const int bi, const Vector<exact::Quantized,d> b) {
+  return b[axis]>a[axis] || (b[axis]==a[axis] && ai>bi);
+}
+
 }

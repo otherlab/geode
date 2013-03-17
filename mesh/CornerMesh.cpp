@@ -557,6 +557,35 @@ void CornerMesh::dump_internals() const {
   cout << endl;
 }
 
+void CornerMesh::permute_vertices(RawArray<const int> permutation, bool check) {
+  OTHER_ASSERT(n_vertices()==permutation.size());
+  OTHER_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no deleted vertices
+
+  // Permute vertex_to_edge_ out of place
+  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),false);
+  if (check) {
+    new_vertex_to_edge.fill(HalfedgeId(deleted_id));
+    for (const auto v : unsafe_vertices()) {
+      const int pv = permutation[v.id];
+      OTHER_ASSERT(new_vertex_to_edge.valid(pv));
+      new_vertex_to_edge[pv] = vertex_to_edge_[v];
+    }
+    OTHER_ASSERT(!new_vertex_to_edge.contains(HalfedgeId(deleted_id)));
+  } else
+    for (const auto v : unsafe_vertices())
+      new_vertex_to_edge[permutation[v.id]] = vertex_to_edge_[v];
+  vertex_to_edge_.flat = new_vertex_to_edge;
+
+  // The other arrays can be modified in place
+  for (auto& f : faces_.flat)
+    if (f.vertices.x.id!=deleted_id)
+      for (auto& v : f.vertices)
+        v = VertexId(permutation[v.id]);
+  for (auto& b : boundaries_)
+    if (b.src.id!=deleted_id)
+      b.src = VertexId(permutation[b.src.id]);
+}
+
 static int corner_random_edge_flips(CornerMesh& mesh, const int attempts, const uint128_t key) {
   int flips = 0;
   if (mesh.n_faces()) {

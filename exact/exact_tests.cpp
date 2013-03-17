@@ -7,6 +7,7 @@
 #include <other/core/math/choice.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
+#include <other/core/utility/interrupts.h>
 #include <other/core/utility/Log.h>
 #include <tr1/unordered_map>
 #include <vector>
@@ -128,6 +129,7 @@ template<int d,class Slow,class Fast,class... Once,class... Twice> void test_pre
   const int n = sizeof...(Once);
   const auto random = new_<Random>(7381390412879521731);
   for (int step=0;step<steps;step++) {
+    check_interrupts();
     // Generate a random permutation
     Vector<int8_t,n> permutation;
     for (int i=0;i<n;i++)

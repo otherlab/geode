@@ -144,6 +144,9 @@ public:
   // Flip the two triangles adjacent to a given halfedge.  The routines throw an exception if is_flip_safe fails; call unsafe_flip_edge if you've already checked.
   OTHER_CORE_EXPORT void flip_edge(HalfedgeId e);
 
+  // Permute vertices: vertices v becomes vertex permutation[v]
+  OTHER_CORE_EXPORT void permute_vertices(RawArray<const int> permutation, bool check=false);
+
   // Run an expensive internal consistency check.  Safe to call even if the structure arrays are random noise.
   OTHER_CORE_EXPORT void assert_consistent() const;
 
