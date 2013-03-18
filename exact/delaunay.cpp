@@ -249,7 +249,7 @@ static inline void unsafe_flip_edge(HalfedgeMesh& mesh, const HalfedgeId e) {
 }
 
 // This routine assumes the sentinel points have already been added, and processes points in order
-template<class Mesh> static Ref<Mesh> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
+template<class Mesh> OTHER_NEVER_INLINE static Ref<Mesh> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
   const int n = X.size()-3;
   const auto mesh = new_<Mesh>();
   IntervalScope scope;
