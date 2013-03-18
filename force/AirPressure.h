@@ -22,7 +22,7 @@
 //#####################################################################
 #pragma once
 
-#include <other/sim/config.h>
+#include <other/core/utility/config.h>
 #include <other/core/array/Array.h>
 #include <other/core/force/Force.h>
 #include <other/core/vector/Vector.h>
@@ -31,7 +31,7 @@ namespace other{
 
 class AirPressure : public Force<Vector<real,3>> {
 public:
-  OTHER_DECLARE_TYPE(OTHER_SIM_EXPORT)
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef real T;
   typedef Vector<T,3> TV;
   typedef Force<TV> Base;
