@@ -37,7 +37,7 @@ Vector<real,3> rgb_to_hsv(Vector<real,3> const &cin) {
   real delta = max - min;
   if(delta==0){
     //no definable hue, return back-convertable vector
-    return Vector<real,3>(min,min,min);
+    return Vector<real,3>(0.,0.,min);
   }
 
   real const &r = cin[0];
