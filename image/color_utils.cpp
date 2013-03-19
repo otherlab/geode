@@ -2,20 +2,20 @@
 #include <other/core/array/NdArray.h>
 #include <other/core/python/wrap.h>
 namespace other {
-  
-Vector<real,3> hsv_to_rgb(Vector<real,3> cin) {    
+
+Vector<real,3> hsv_to_rgb(Vector<real,3> cin) {
   real s = clamp(cin[1],0.,1.);
   real v = clamp(cin[2],0.,1.);
-  
+
   if (s == 0.0)
     return Vector<real,3>(v,v,v);
-  else {      
+  else {
     real h = fmod(cin[0],1);
     if (h < 0)
       h += 1;
     h *= 6;
     int i = min(5,(int)h);
-    
+
     real f = h - i;
     real p = v*(1.-s);
     real q = v*(1.-(s*f));
@@ -35,16 +35,20 @@ Vector<real,3> rgb_to_hsv(Vector<real,3> const &cin) {
   real min = cin.min();
   real max = cin.max();
   real delta = max - min;
+  if(delta==0){
+    //no definable hue, return back-convertable vector
+    return Vector<real,3>(min,min,min);
+  }
 
   real const &r = cin[0];
   real const &g = cin[1];
   real const &b = cin[2];
-  
+
   Vector<real,3> cout;
   real &h = cout[0];
   real &s = cout[1];
   real &v = cout[2];
-  
+
   v = max;
   if (max == 0) {
     s = 0;
@@ -62,10 +66,10 @@ Vector<real,3> rgb_to_hsv(Vector<real,3> const &cin) {
     if (h < 0)
       h += 1;
   }
-  
+
   return cout;
 }
-  
+
 static inline NdArray<Vector<real,3>> wheel_color_py(NdArray<const real> hues) {
   NdArray<Vector<real,3>> colors(hues.shape,false);
   for (int i=0;i<hues.flat.size();i++)
