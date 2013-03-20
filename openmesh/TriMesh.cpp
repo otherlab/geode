@@ -1027,14 +1027,18 @@ vector<FaceHandle> TriMesh::fill_hole(vector<HalfedgeHandle> const &loop, double
 }
 
 // fill all holes with maximum area given
-void TriMesh::fill_holes(double max_area) {
+int TriMesh::fill_holes(double max_area) {
   vector<vector<HalfedgeHandle> > loops = boundary_loops();
 
+  int nfilled = 0;
   for (auto loop : loops) {
-    fill_hole(loop, max_area);
+    if (!fill_hole(loop, max_area).empty())
+      nfilled++;
   }
 
   garbage_collection();
+
+  return nfilled;
 }
 
 Array<Vector<int,3> > TriMesh::elements() const {

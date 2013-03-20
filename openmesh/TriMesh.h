@@ -474,8 +474,8 @@ public:
   // fill the hole enclosed by the given halfedges, retain the new faces only if the surface area is smaller than max_area
   OTHER_CORE_EXPORT vector<FaceHandle> fill_hole(vector<HalfedgeHandle> const &loop, double max_area = inf);
 
-  // fill all holes with maximum area given
-  OTHER_CORE_EXPORT void fill_holes(double max_area = inf);
+  // fill all holes with maximum area given, returns the number of holes filled
+  OTHER_CORE_EXPORT int fill_holes(double max_area = inf);
 
   OTHER_CORE_EXPORT void add_box(TV min, TV max);
   OTHER_CORE_EXPORT void add_sphere(TV c, real r, int divisions = 30);
