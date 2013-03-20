@@ -401,6 +401,10 @@ public:
   // dihedral angle between incident faces: positive for convex, negative for concave
   OTHER_CORE_EXPORT T dihedral_angle(EdgeHandle e) const;
   OTHER_CORE_EXPORT T dihedral_angle(HalfedgeHandle e) const;
+  OTHER_CORE_EXPORT T cos_dihedral_angle(HalfedgeHandle e) const; // Quick version for when the sign doesn't matter
+
+  // Fast version of calc_sector_angle for interior edges.  The angle is at v1 = to_vertex_handle(e)
+  OTHER_CORE_EXPORT T cos_sector_angle(HalfedgeHandle e) const;
 
   // delete a set of faces
   OTHER_CORE_EXPORT void delete_faces(std::vector<FaceHandle> const &fh);

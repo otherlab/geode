@@ -1334,6 +1334,24 @@ real TriMesh::dihedral_angle(HalfedgeHandle e) const {
   return copysign(abs_theta,dot(t1.n-t0.n,d));
 }
 
+real TriMesh::cos_dihedral_angle(HalfedgeHandle e) const {
+  const TV x1 = point(from_vertex_handle(e)),
+           x2 = point(to_vertex_handle(e)),
+           x0 = point(to_vertex_handle(next_halfedge_handle(e))),
+           x3 = point(to_vertex_handle(next_halfedge_handle(opposite_halfedge_handle(e))));
+  const TV n0 = cross(x2-x1,x0-x1),
+           n1 = cross(x3-x1,x0-x1);
+  return dot(n0,n1)/sqrt(sqr_magnitude(n0)*sqr_magnitude(n1));
+}
+
+real TriMesh::cos_sector_angle(HalfedgeHandle e) const {
+  const auto v0 = from_vertex_handle(e), v1 = to_vertex_handle(e), v2 = to_vertex_handle(next_halfedge_handle(e));
+  const TV x1 = point(v1),
+           e0 = point(v0)-x1,
+           e1 = point(v2)-x1;
+  return dot(e0,e1)/sqrt(sqr_magnitude(e0)*sqr_magnitude(e1));
+}
+
 // delete a set of faces
 void TriMesh::delete_faces(std::vector<FaceHandle> const &fh) {
   for (FaceHandle f : fh) {
