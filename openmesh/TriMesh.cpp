@@ -1367,7 +1367,7 @@ void TriMesh::delete_faces(std::vector<FaceHandle> const &fh) {
 Tuple<int,Array<int> > TriMesh::component_vertex_map() const {
   // Find components
   UnionFind union_find(n_vertices());
-  for (ConstEdgeIter e=edges_begin();e!=edges_end();++e) {
+  for (ConstEdgeIter e=edges_sbegin();e!=edges_end();++e) {
     auto h = halfedge_handle(e,0);
     union_find.merge(from_vertex_handle(h).idx(),to_vertex_handle(h).idx());
   }
