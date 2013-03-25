@@ -43,7 +43,7 @@ public:
     //    char str[2000];
     //    sprintf(str, "Buffer of length %d and size %d\n", m, sizeof(T));
     //    OutputDebugStringA(str);
-    }
+    //}
 #endif
     return OTHER_PY_OBJECT_INIT(self,&pytype);
   }
