@@ -455,6 +455,18 @@ public:
   OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
   OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, VertexHandle start) const;
 
+  // compute edge-connected components around a boundary vertex
+  OTHER_CORE_EXPORT vector<vector<FaceHandle>> surface_components(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges = (unordered_set<EdgeHandle,Hasher>())) const;
+
+  // split a (boundary) vertex in as many vertices as there are edge-connected surface components
+  // do not count exclude_edges as connections
+  OTHER_CORE_EXPORT vector<VertexHandle> split_nonmanifold_vertex(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges = (unordered_set<EdgeHandle,Hasher>()));
+
+  // split an edge in two if the incident faces are only connected through this edge
+  // returns the newly created edges (including the old one). Both end points
+  // have to be boundary vertices for this to happen.
+  OTHER_CORE_EXPORT vector<EdgeHandle> separate_edge(EdgeHandle eh);
+
   // cut the mesh with a plane (negative side will be removed)
   OTHER_CORE_EXPORT void cut(Plane<real> const &p, double epsilon = 1e-4, double area_hack = 0);
 

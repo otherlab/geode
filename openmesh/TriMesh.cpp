@@ -768,6 +768,95 @@ bool TriMesh::cut_local(Plane<real> const &plane, double epsilon) {
 }
 #endif
 
+// compute edge-connected components around a non-manifold (boundary) vertex
+vector<vector<FaceHandle>> TriMesh::surface_components(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges) const {
+  auto incident = incident_faces(vh);
+
+  // map face handles to indices in incident
+  unordered_map<FaceHandle, int, Hasher> fmap;
+  for (auto it = incident.begin(); it != incident.end(); ++it) {
+    fmap[*it] = it-incident.begin();
+  }
+
+  UnionFind union_find(incident.size());
+  for (ConstVertexEdgeIter e = cve_iter(vh); e; ++e) {
+    if (is_boundary(e) || exclude_edges.count(e))
+      continue;
+    auto faces = face_handles(e.handle());
+    assert(fmap.count(faces.x));
+    assert(fmap.count(faces.y));
+    union_find.merge(fmap[faces.x], fmap[faces.y]);
+  }
+
+  // spit out connected components
+  unordered_map<int, vector<FaceHandle>> components;
+  for (auto f : incident) {
+    components[union_find.find(fmap[f])].push_back(f);
+  }
+
+  vector<vector<FaceHandle>> result;
+
+  for (auto c : components) {
+    result.push_back(c.second);
+  }
+
+  return result;
+}
+
+// split a (boundary) vertex in as many vertices as there are edge-connected surface components
+vector<VertexHandle> TriMesh::split_nonmanifold_vertex(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges) {
+  auto components = surface_components(vh, exclude_edges);
+
+  vector<VertexHandle> verts(1,vh);
+  for (int i = 1; i < (int) components.size(); ++i) {
+    VertexHandle v = add_vertex(point(vh));
+
+    for (auto f : components[i]) {
+      auto vhs = vertex_handles(f);
+      delete_face(f);
+      // replace vh with v in vhs
+      if (vhs.x == vh) vhs.x = v;
+      if (vhs.y == vh) vhs.y = v;
+      if (vhs.z == vh) vhs.z = v;
+      add_face(vhs.x, vhs.y, vhs.z);
+    }
+
+    verts.push_back(v);
+  }
+
+  return verts;
+}
+
+// split an edge in two if the incident faces are only connected through this edge
+// returns the newly created edge. Both end points have to be boundary vertices
+// for this to happen.
+vector<EdgeHandle> TriMesh::separate_edge(EdgeHandle eh) {
+
+  // nothing to split if already a boundary edge
+  if (is_boundary(eh)) {
+    return make_vector(EdgeHandle());
+  }
+
+  // we split the edge by splitting each end vertex
+  auto vhs = vertex_handles(eh);
+  unordered_set<EdgeHandle, Hasher> edgeset;
+  edgeset.insert(eh);
+  auto vs0 = split_nonmanifold_vertex(vhs.x, edgeset);
+  auto vs1 = split_nonmanifold_vertex(vhs.y, edgeset);
+
+  // find all vertex pairs that have edges between them and return the edges
+  vector<EdgeHandle> result;
+  for (auto v0 : vs0) {
+    for (auto v1 : vs1) {
+      auto e = edge_handle(v0,v1);
+      if (e.is_valid())
+        result.push_back(e);
+    }
+  }
+
+  return result;
+}
+
 void TriMesh::cut_and_mirror(Plane<real> const &plane, bool mirror, double epsilon, double area_hack) {
   OpenMesh::VPropHandleT<int> vtype;
   add_property(vtype);
