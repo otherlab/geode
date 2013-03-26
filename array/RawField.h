@@ -71,6 +71,12 @@ public:
     flat = source.flat;
     return *this;
   }
+
+  Field<Element,Id> copy() const {
+    Field<Element,Id> copy;
+    copy.flat.copy(flat);
+    return copy;
+  }
 };
 
 }
