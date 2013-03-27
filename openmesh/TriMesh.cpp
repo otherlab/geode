@@ -857,6 +857,28 @@ vector<EdgeHandle> TriMesh::separate_edge(EdgeHandle eh) {
   return result;
 }
 
+// split the mesh along a string of edges. If the edges form loops, this
+// results in two holes per loop. All non-loop connected components create
+// a single hole. Returns all vertices that were split, and all vertices they
+// were split into.
+OTHER_CORE_EXPORT vector<VertexHandle> TriMesh::separate_edges(vector<EdgeHandle> ehs) {
+  unordered_set<EdgeHandle, Hasher> edgeset(ehs.begin(), ehs.end());
+
+  unordered_set<VertexHandle, Hasher> edgeverts;
+  for (auto e : ehs) {
+    auto vhs = vertex_handles(e);
+    edgeverts.insert(vhs.x);
+    edgeverts.insert(vhs.y);
+  }
+
+  vector<VertexHandle> allverts;
+  for (auto v : edgeverts) {
+    extend(allverts, split_nonmanifold_vertex(v, edgeset));
+  }
+  return allverts;
+}
+
+
 void TriMesh::cut_and_mirror(Plane<real> const &plane, bool mirror, double epsilon, double area_hack) {
   OpenMesh::VPropHandleT<int> vtype;
   add_property(vtype);

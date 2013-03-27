@@ -467,6 +467,12 @@ public:
   // have to be boundary vertices for this to happen.
   OTHER_CORE_EXPORT vector<EdgeHandle> separate_edge(EdgeHandle eh);
 
+  // split the mesh along a string of edges. If the edges form loops, this
+  // results in two holes per loop. All non-loop connected components create
+  // a single hole. Returns all vertices that were split, and all vertices they
+  // were split into.
+  OTHER_CORE_EXPORT vector<VertexHandle> separate_edges(vector<EdgeHandle> ehs);
+
   // cut the mesh with a plane (negative side will be removed)
   OTHER_CORE_EXPORT void cut(Plane<real> const &p, double epsilon = 1e-4, double area_hack = 0);
 
