@@ -83,7 +83,7 @@ options(
   ('LIBPATH_EXTRA','',['/usr/local/lib']),
   ('RPATH_EXTRA','',[]),
   ('LIBS_EXTRA','',[]),
-  ('PREFIX','Path to install libraries, binaries, and scripts','$other/install/$type'),
+  ('PREFIX','Path to install libraries, binaries, and scripts','#install/$type'),
   ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
   ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
   ('PREFIX_SHARE','Override path to install resources','$PREFIX_BIN'),
