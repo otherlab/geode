@@ -45,7 +45,7 @@ class Frames(ndarray):
     t = property(t,set_t)
 
     def r(self):
-        return self.view(Rotations[self.d])['r']
+        return self.view(ndarray)['r'].view(Rotations[self.d])
     def set_r(self,r):
         self.view(Rotations[self.d])['r'] = r
     r = property(r,set_r)

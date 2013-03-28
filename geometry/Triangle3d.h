@@ -50,7 +50,7 @@ public:
 
     T quality() const {
       // compute rms edge length
-      real lrms2 = 0.3 * ((x1-x0).sqr_magnitude() + (x2-x0).sqr_magnitude() + (x2-x1).sqr_magnitude());
+      real lrms2 = 1/3. * ((x1-x0).sqr_magnitude() + (x2-x0).sqr_magnitude() + (x2-x1).sqr_magnitude());
       real A = area();
 
       if (A == 0)
@@ -80,6 +80,10 @@ public:
     {TV u=x1_input-x2_input,v=x2_input-x3_input,w=x3_input-x1_input;
     T u2=dot(u,u),v2=dot(v,v),w2=dot(w,w);
     return max(u2,v2,w2)/cross(u,v).magnitude();}
+
+    TV edge_lengths() const {
+      return vec((x2-x1).magnitude(),(x0-x2).magnitude(),(x1-x0).magnitude());
+    }
 
     static T minimum_edge_length(const TV& x0,const TV& x1,const TV& x2)
     {return sqrt(min((x1-x0).sqr_magnitude(),(x2-x0).sqr_magnitude(),(x2-x1).sqr_magnitude()));}
@@ -157,8 +161,8 @@ public:
     {return center(x0,x1,x2);}
 
     TV incenter() const // intersection of angle bisectors
-    {TV edge_lengths((x2-x1).magnitude(),(x0-x2).magnitude(),(x1-x0).magnitude());T perimeter=edge_lengths.x+edge_lengths.y+edge_lengths.z;assert(perimeter>0);
-    return point_from_barycentric_coordinates(edge_lengths/perimeter);}
+    {TV el(edge_lengths());T perimeter=el.x+el.y+el.z;assert(perimeter>0);
+    return point_from_barycentric_coordinates(el/perimeter);}
 
     Box<TV> bounding_box() const
     {return other::bounding_box(x0,x1,x2);}
