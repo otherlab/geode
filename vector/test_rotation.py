@@ -39,6 +39,14 @@ def test_3d():
   r3[0] = r1
   assert all((r1==r3)==[1,0])
   assert allclose(r1.inverse()*r1*x,x)
+  # Test fields
+  assert type(r1.s) is ndarray 
+  assert type(r2.v) is ndarray 
+  assert all(normalized(r2.v)==(0,0,1))
+  r2.v = (0,1,0)
+  assert all(r2.v==(0,1,0))
+  r2.v[:] = (1,0,0)
+  assert all(r2.v==(1,0,0))
 
 def test_from_3d():
   random.seed(12313)
