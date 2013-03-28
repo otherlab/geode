@@ -39,8 +39,8 @@ windows = env['PLATFORM']=='win32'
 if not windows:
   env.Replace(ENV=os.environ)
 
-# Locate other in case we're in a different directory
-env['other'] = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'..' if windows else '../../..'))
+# Locate other.core in case we're in a different directory
+env['othercore'] = os.path.normpath(os.path.join(os.path.realpath(File('#SConstruct').abspath),'../core' if windows else '../..'))
 
 # Default base directory
 if darwin:
@@ -83,7 +83,7 @@ options(
   ('LIBPATH_EXTRA','',['/usr/local/lib']),
   ('RPATH_EXTRA','',[]),
   ('LIBS_EXTRA','',[]),
-  ('PREFIX','Path to install libraries, binaries, and scripts','$other/install/$type'),
+  ('PREFIX','Path to install libraries, binaries, and scripts','#install/$type'),
   ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
   ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
   ('PREFIX_SHARE','Override path to install resources','$PREFIX_BIN'),
@@ -105,7 +105,7 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 externals = {}
 def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,has=1,hide=False,callback=None):
   if name in externals:
-    raise "Trying to redefine the external %s. That's not a good idea." % name
+    raise RuntimeError("Trying to redefine the external %s. That's not a good idea."%name)
 
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
@@ -439,19 +439,15 @@ def toplevel(name,path):
   if env['type']=='msvc':
     return
   path = Dir(path).srcnode().abspath
-  # Make other/build/include if it doesn't exist
-  include = os.path.join(env['other'],'build/include')
+  # Make core/build/include if it doesn't exist
+  include = os.path.join(env['othercore'],'build/include')
   if not os.path.exists(include):
     os.makedirs(include)
   symlink_force(path,os.path.join(include,name))
-  # If we're not under other, symlink us/build/include to other/build/include
-  if not File('#SConstruct').abspath.startswith(env['other']+'/'):
-    symlink_force(include,Dir('#build/include').abspath)
 
 # Library configuration
 if not windows:
-  toplevel('other',env['other'])
-  env.Append(CPPPATH=['#build/include'])
+  env.Append(CPPPATH=[os.path.join(env['othercore'],'build/include')])
 else:
   # Windows doesn't support symlinks
   env.Append(CPPPATH=['#..'])
