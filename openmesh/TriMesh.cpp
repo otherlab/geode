@@ -813,12 +813,17 @@ vector<VertexHandle> TriMesh::split_nonmanifold_vertex(VertexHandle vh, unordere
 
     for (auto f : components[i]) {
       auto vhs = vertex_handles(f);
-      delete_face(f);
+      delete_face(f,false);
       // replace vh with v in vhs
       if (vhs.x == vh) vhs.x = v;
       if (vhs.y == vh) vhs.y = v;
       if (vhs.z == vh) vhs.z = v;
+
       add_face(vhs.x, vhs.y, vhs.z);
+
+      OTHER_ASSERT(!status(vhs.x).deleted());
+      OTHER_ASSERT(!status(vhs.y).deleted());
+      OTHER_ASSERT(!status(vhs.z).deleted());
     }
 
     verts.push_back(v);
@@ -836,7 +841,6 @@ vector<EdgeHandle> TriMesh::separate_edge(EdgeHandle eh) {
   if (is_boundary(eh)) {
     return make_vector(EdgeHandle());
   }
-
   // we split the edge by splitting each end vertex
   auto vhs = vertex_handles(eh);
   unordered_set<EdgeHandle, Hasher> edgeset;
@@ -1074,10 +1078,9 @@ bool TriMesh::has_boundary() const {
 // find boundary loops
 vector<vector<TriMesh::HalfedgeHandle> > TriMesh::boundary_loops() const {
   unordered_set<HalfedgeHandle, Hasher> done;
-
   vector<vector<HalfedgeHandle> >  loops;
-
-  for (ConstHalfedgeIter it = halfedges_sbegin(); it != halfedges_end(); ++it) {
+  for (ConstHalfedgeIter it = halfedges_begin(); it != halfedges_end(); ++it) {
+    if(status(edge_handle(it)).deleted() || status(it).deleted()) continue;
     if (is_boundary(it) && !done.count(it.handle())) {
       loops.push_back(boundary_loop(it.handle()));
       done.insert(loops.back().begin(), loops.back().end());
