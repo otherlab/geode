@@ -43,6 +43,21 @@ public:
   explicit Field(const Array<T>& source)
     : flat(source) {}
 
+  explicit Field(const Hashtable<Id, T>& source) {
+    int m = -1;
+    for (auto const &p : source) {
+      m = max(m, p.key.idx());
+    }
+    if (m == -1) {
+      return;
+    }
+
+    flat.resize(m+1);
+    for (auto const &p : source) {
+      flat[p.key.idx()] = p.data;
+    }
+  }
+
   Field& operator=(const Field<Element,Id>& source) {
     flat = source.flat;
     return *this;
