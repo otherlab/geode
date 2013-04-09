@@ -832,8 +832,9 @@ vector<VertexHandle> TriMesh::split_nonmanifold_vertex(VertexHandle vh, unordere
   auto components = surface_components(vh, exclude_edges);
 
   vector<VertexHandle> verts(1,vh);
+  TV dupe = point(vh);
   for (int i = 1; i < (int) components.size(); ++i) {
-    VertexHandle v = add_vertex(point(vh));
+    VertexHandle v = add_vertex(dupe);
 
     for (auto f : components[i]) {
       auto vhs = vertex_handles(f);
@@ -845,9 +846,9 @@ vector<VertexHandle> TriMesh::split_nonmanifold_vertex(VertexHandle vh, unordere
 
       add_face(vhs.x, vhs.y, vhs.z);
 
-      OTHER_ASSERT(!status(vhs.x).deleted());
-      OTHER_ASSERT(!status(vhs.y).deleted());
-      OTHER_ASSERT(!status(vhs.z).deleted());
+      OTHER_ASSERT(!status(vhs.x).deleted() && vhs.x.is_valid() && isfinite(point(vhs.x)) );
+      OTHER_ASSERT(!status(vhs.y).deleted() && vhs.y.is_valid()  && isfinite(point(vhs.y)) );
+      OTHER_ASSERT(!status(vhs.z).deleted() && vhs.z.is_valid()  && isfinite(point(vhs.z)) );
     }
 
     verts.push_back(v);
