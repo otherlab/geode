@@ -317,6 +317,9 @@ public:
   OTHER_CORE_EXPORT Segment<Vector<real, 3> > segment(EdgeHandle eh) const;
   OTHER_CORE_EXPORT Segment<Vector<real, 3> > segment(HalfedgeHandle heh) const;
 
+  // compute the cotan weight for an edge
+  OTHER_CORE_EXPORT real cotan_weight(EdgeHandle eh) const;
+
   // get the vertex handles incident to the given halfedge
   OTHER_CORE_EXPORT Vector<VertexHandle,2> vertex_handles(HalfedgeHandle heh) const;
 

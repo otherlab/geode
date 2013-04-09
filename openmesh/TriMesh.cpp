@@ -259,6 +259,30 @@ Segment<Vector<real, 3> > TriMesh::segment(HalfedgeHandle heh) const {
   return Segment<Vector<real, 3> >(point(from_vertex_handle(heh)), point(to_vertex_handle(heh)));
 }
 
+real TriMesh::cotan_weight(EdgeHandle eh) const {
+
+  auto he0 = halfedge_handle(eh, 0);
+  auto he1 = halfedge_handle(eh, 1);
+  auto v0 = to_vertex_handle(he0);
+  auto v1 = to_vertex_handle(he1);
+  auto p0 = point(v0);
+  auto p1 = point(v1);
+
+  real weight = 0.;
+
+  auto p2 = point(opposite_vh(he0));
+  auto d0 = (p0 - p2).normalized();
+  auto d1 = (p1 - p2).normalized();
+  weight += 1.0 / tan(acos(std::max(-1., std::min(1., dot(d0,d1)))));
+
+  p2 = point(opposite_vh(he1));
+  d0 = (p0 - p2).normalized();
+  d1 = (p1 - p2).normalized();
+  weight += 1.0 / tan(acos(std::max(-1., std::min(1., dot(d0,d1)))));
+
+  return weight;
+}
+
 Vector<VertexHandle, 2> TriMesh::vertex_handles(HalfedgeHandle heh) const {
   return Vector<VertexHandle,2>(from_vertex_handle(heh),to_vertex_handle(heh));
 }
