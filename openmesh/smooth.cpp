@@ -11,7 +11,7 @@ typedef Vector<real,3> TV;
 
 using std::make_pair;
 
-Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
+Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace, int val) {
   Ref<TriMesh> M = m.copy();
   M->garbage_collection();
 
@@ -44,6 +44,10 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
 
   for (auto v : M->vertex_handles()){
     if(abs(M->point(v).z-bb.center().z) > .3*zz) M->status(v).set_locked(true);
+  }
+
+  for (auto v : m.vertex_handles()){
+    if(abs(m.point(v).z-bb.center().z) > .3*zz) m.status(v).set_locked(true);
   }
 
   Array<VertexHandle> VI;
@@ -137,7 +141,7 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
 
   //cout << min_a << endl;
 
-  Mx U(e,e);
+  Mx U(n,n);
   if(bilaplace) gmm::mult(L,L,U);
   else gmm::mult(gmm::identity_matrix(),L,U);
 
@@ -206,7 +210,7 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
       OTHER_ASSERT(vh.is_valid() && !M->status(vh).locked());
       M->point(vh) = output[i];
     }
-  */
+*/
 
   auto A = gmm::sub_matrix(U, gmm::sub_interval(0, n));
   auto B = gmm::sub_matrix(U, gmm::sub_interval(0, n), gmm::sub_interval(n, e-n));
@@ -218,9 +222,9 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
   gmm::dense_matrix<real> evs(n,n);
   gmm::symmetric_qr_algorithm(A,eig,evs);
 
-  real mx = numeric_limits<real>::infinity();
+  real mx = -numeric_limits<real>::infinity();
   real mn = -mx;
-  int nev = 7;
+  int nev = val;
   for(int i =0; i<n; ++i){
     mx = max(abs(evs(i,nev)),mx);
     mn = min(abs(evs(i,nev)),mn);
@@ -246,12 +250,6 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
     std::vector<double> X(n);
     gmm::iteration iter(10E-12);
 
-    /*
-      vector<double> previ(n);
-      for(int k=0;k<(int)prev.size();++k)
-      previ[k] = prev[k][i];
-    */
-
     int id_offset = n;
     vector<double> y(e-n);
     vector<double> RHS(n);
@@ -275,6 +273,7 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
     OTHER_ASSERT(vh.is_valid() && !M->status(vh).locked());
     M->point(vh) = output[i];
   }
+
 
   return M;
 }
