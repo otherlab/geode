@@ -11,7 +11,7 @@ typedef Vector<real,3> TV;
 
 using std::make_pair;
 
-Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
+Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace, int nev) {
   Ref<TriMesh> M = m.copy();
   M->garbage_collection();
 
@@ -44,6 +44,10 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
 
   for (auto v : M->vertex_handles()){
     if(abs(M->point(v).z-bb.center().z) > .3*zz) M->status(v).set_locked(true);
+  }
+
+  for (auto v : m->vertex_handles()){
+    if(abs(m.point(v).z-bb.center().z) > .3*zz) m.status(v).set_locked(true);
   }
 
   Array<VertexHandle> VI;
@@ -218,9 +222,8 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
   gmm::dense_matrix<real> evs(n,n);
   gmm::symmetric_qr_algorithm(A,eig,evs);
 
-  real mx = numeric_limits<real>::infinity();
-  real mn = -mx;
-  int nev = 7;
+  real mx = 0;
+  real mn = numeric_limits<real>::infinity();
   for(int i =0; i<n; ++i){
     mx = max(abs(evs(i,nev)),mx);
     mn = min(abs(evs(i,nev)),mn);
@@ -229,13 +232,14 @@ Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace) {
   std::cout << "min/max: " << mn << " " << mx << std::endl;
 
   m.request_vertex_colors();
-  for(auto v : m.vertex_handles()){
-    if(!m.status(v).locked()){
+  for (auto v : m.vertex_handles()) {
+    if (!m.status(v).locked()) {
       real e = abs(evs(handle_to_id[v],nev));
       real c = (e-mn)/(mx-mn);
       m.set_color(v,to_byte_color(TV(c,0,1-c)));
+    } else {
+      m.set_color(v,to_byte_color(TV(.5, .5, .5)));
     }
-    else m.set_color(v,to_byte_color(TV(.5, .5, .5)));
   }
 
   gmm::identity_matrix PS;
