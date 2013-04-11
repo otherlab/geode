@@ -16,6 +16,9 @@
 #include <other/core/openmesh/triangulator.h>
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/convert.h>
+#include <other/core/array/NdArray.h>
+
+
 #include <queue>
 #include <iostream>
 namespace other {
