@@ -11,7 +11,7 @@ typedef Vector<real,3> TV;
 
 using std::make_pair;
 
-// split vertices into locked ones (VB) and not locked ones, and compute
+/ split vertices into locked ones (VB) and not locked ones, and compute
 // matrix indices for those vertices
 static void matrix_permutation(TriMesh const &M,
                                unordered_map<int,VertexHandle,Hasher> &id_to_handle,
@@ -36,101 +36,6 @@ static void matrix_permutation(TriMesh const &M,
 
   std::cout << "permute: " << V.size() << " vertices, " << VB.size() << " locked." << std::endl;
 }
-
-// make a laplace matrix for the mesh, where all locked vertices come last
-static Mx laplace_matrix(TriMesh const &M,
-                         unordered_map<VertexHandle,int,Hasher> const &handle_to_id,
-                         bool cotan) {
-
-  // compute a laplace matrix for the mesh, using the given index assignment.
-  // use cotan weights if cotan is true, otherwise use topological weights.
-
-  int e = handle_to_id.size();
-
-  Mx L(e,e);
-
-  for(auto v : M.vertex_handles()) {
-    if (!handle_to_id.count(v))
-      continue;
-
-    int i = handle_to_id.find(v)->second;
-
-    auto neighbors = M.vertex_one_ring(v);
-
-    if (neighbors.empty()) {
-      L(i,i) = 1.;
-      continue;
-    }
-
-    real W=0.;
-
-    // compute area
-    real A=0.;
-    if (cotan) {
-      for(auto ohi = M.cvoh_iter(v);ohi;++ohi){
-        auto fh = M.face_handle(ohi.handle());
-
-        auto p0 = M.point(v);
-        auto p1 = M.point(M.to_vertex_handle(ohi.handle()));
-        auto p2 = M.point(M.from_vertex_handle(M.prev_halfedge_handle(ohi.handle())));
-        auto d0 = p1-p0;
-        auto d1 = p2-p1;
-        auto d2 = p0-p2;
-
-        real m0 = d0.sqr_magnitude();
-        real m2 = d2.sqr_magnitude();
-
-        d0.normalize(); d1.normalize(); d2.normalize();
-
-        real phi20 = acos(max(-1.,min(1.,dot(d0,-d2))));
-        real phi01 = acos(max(-1.,min(1.,dot(-d0,d1))));
-        real phi12 = acos(max(-1.,min(1.,dot(d2,-d1))));
-
-        real obtuse = pi*.5;
-        if(dot(d0,-d2) >=0 && dot(-d0,d1) >= 0 && dot(-d1,d2) >=0){
-          A+=(1/8.) * (m0/tan(phi12) + m2/tan(phi01));
-        }else{
-          real a = M.area(fh);
-          if(phi20 >= obtuse)
-            A+=a/2;
-          else
-            A+=a/4;
-        }
-      }
-    }
-
-    for (auto n : neighbors) {
-      OTHER_ASSERT(n.is_valid() && !M.status(n).deleted());
-      OTHER_ASSERT(handle_to_id.count(n));
-      real w;
-      if (cotan)
-        w = M.cotan_weight(M.edge_handle(M.halfedge_handle(v,n))); // /(2.*A);
-      else
-        w = 1.;
-      L(i,handle_to_id.find(n)->second) = -w;
-      W += w;
-    }
-    L(i,i) = W;
-  }
-
-  return L;
-}
-
-
-Ref<TriMesh> smooth_test(TriMesh &m, bool bilaplace, bool cotan) {
-  auto bb = m.bounding_box();
-  real zz = bb.sizes().z;
-
-  for (auto v : m.vertex_handles()){
-    if (abs(m.point(v).z-bb.center().z)/zz > .4)
-      m.status(v).set_locked(true);
-  }
-
-  return smooth_mesh(m, bilaplace, cotan);
-}
-
-
-
 
 template<class M>
 void color_with_eigenvalue(TriMesh &m, M const &A, int nev,
@@ -167,69 +72,275 @@ void color_with_eigenvalue(TriMesh &m, M const &A, int nev,
   }
 }
 
-
-Ref<TriMesh> smooth_mesh(TriMesh &m, bool bilaplace, bool cotan) {
+Ref<TriMesh> smooth_mesh(TriMesh &m, real t, real lambda, bool bilaplace, int val) {
   Ref<TriMesh> M = m.copy();
   M->garbage_collection();
 
-  unordered_map<int,VertexHandle,Hasher> id_to_handle;
-  unordered_map<VertexHandle,int,Hasher> handle_to_id;
+
+  /*
+  vector<HalfedgeHandle> to_split;
+
+  for(auto f : M->face_handles()){
+      auto p0 = M->point(v);
+      auto p1 = M->point(M->to_vertex_handle(ohi.handle()));
+      auto p2 = M->point(M->from_vertex_handle(M->prev_halfedge_handle(ohi.handle())));
+      auto d0 = p1-p0;
+      auto d1 = p2-p1;
+      auto d2 = p0-p2;
+
+      real m0 = d0.sqr_magnitude();
+      real m2 = d2.sqr_magnitude();
+
+      d0.normalize(); d1.normalize(); d2.normalize();
+
+      real phi20 = acos( max(-1.,min(1.,dot(d0,-d2))) );
+      real phi01 = acos( max(-1.,min(1.,dot(-d0,d1))) );
+      real phi12 = acos(max(-1.,min(1.,dot(d2,-d1))));
+  }
+  */
+
+
+  auto bb = M->bounding_box();
+  real zz = bb.sizes().z;
+
+  for (auto v : M->vertex_handles()){
+    if(abs(M->point(v).z-bb.center().z) > .3*zz) M->status(v).set_locked(true);
+  }
+
+  for (auto v : m.vertex_handles()){
+    if(abs(m.point(v).z-bb.center().z) > .3*zz) m.status(v).set_locked(true);
+  }
+
+  Array<VertexHandle> VI;
   Array<VertexHandle> VB;
 
-  matrix_permutation(M, id_to_handle, handle_to_id, VB);
+  unordered_map<int,VertexHandle,Hasher> id_to_handle;
+  unordered_map<VertexHandle,int,Hasher> handle_to_id;
 
-  int e = handle_to_id.size();
-  int n = e - VB.size();
+  for(auto v : M->vertex_handles()){
+    if(M->status(v).locked()) VB.append(v);
+    else VI.append(v);
+  }
 
-  std::cout << "e = " << e << ", n = " << n << std::endl;
+//  OTHER_ASSERT((int)VI.size() == (int)M->n_vertices());
+  Array<VertexHandle> V(VI);
+  V.append_elements(VB);
 
-  Mx L = laplace_matrix(M, handle_to_id, cotan);
+  for(int i=0; i < (int)V.size(); ++i){
+    id_to_handle.insert(make_pair(i,V[i]));
+    handle_to_id.insert(make_pair(V[i],i));
+  }
 
-  // make a system matrix
-  Mx U(e,e);
-  if (bilaplace)
-    gmm::mult(gmm::transposed(L),L,U);
-  else
-    gmm::mult(gmm::identity_matrix(),L,U);
+  int n = VI.size();
+  int e = V.size();
 
-  // results
   std::vector<TV> output(n);
 
-  // chop up matrix
+  Mx L(e,e);
+  Mx D(e,e);
+
+  real min_a = numeric_limits<real>::infinity();
+
+  for(auto v : M->vertex_handles()){
+    auto neighbors = M->vertex_one_ring(v);
+    OTHER_ASSERT(neighbors.size() && v.is_valid());
+    int i = handle_to_id[v];
+    real W=0.;
+    real A=0.;
+
+    for(auto ohi = M->cvoh_iter(v);ohi;++ohi){
+      auto fh = M->face_handle(ohi.handle());
+
+      auto p0 = M->point(v);
+      auto p1 = M->point(M->to_vertex_handle(ohi.handle()));
+      auto p2 = M->point(M->from_vertex_handle(M->prev_halfedge_handle(ohi.handle())));
+      auto d0 = p1-p0;
+      auto d1 = p2-p1;
+      auto d2 = p0-p2;
+
+      real m0 = d0.sqr_magnitude();
+      real m2 = d2.sqr_magnitude();
+
+      d0.normalize(); d1.normalize(); d2.normalize();
+
+      real phi20 = acos( max(-1.,min(1.,dot(d0,-d2))) );
+      real phi01 = acos( max(-1.,min(1.,dot(-d0,d1))) );
+      real phi12 = acos(max(-1.,min(1.,dot(d2,-d1))));
+
+      real obtuse = pi*.5;
+      if(dot(d0,-d2) >=0 && dot(-d0,d1) >= 0 && dot(-d1,d2) >=0){
+        A+=(1/8.) * (m0/tan(phi12) + m2/tan(phi01));
+      }else{
+        real a = M->area(fh);
+        if(phi20 >= obtuse)
+          A+=a/2;
+        else A+=a/4;
+      }
+
+      /*
+      auto t = M->triangle(fh);
+      auto c = t.point_from_barycentric_coordinates(TV::ones()*(1/3.));
+      A+=cross(d0*.5,(c-p0)).magnitude();
+      */
+    }
+
+    if(A < min_a) min_a = A;
+
+    /*
+    for(auto n : neighbors)
+      A+=M->area(M->face_handle(M->halfedge_handle(v,n)));
+    */
+
+    real DD = 0.;
+    for(auto n : neighbors){
+      OTHER_ASSERT(n.is_valid() && !M->status(n).deleted());
+
+      auto heh = M->halfedge_handle(v,n);
+
+      real d = .5*(M->area(M->face_handle(heh)) + M->area(M->face_handle(M->opposite_halfedge_handle(heh))));
+      real w = .5 * M->cotan_weight(M->edge_handle(heh));///(2.*A);
+      //OTHER_ASSERT(w>=0.);
+      //REAL w = 1.;
+      L(i,handle_to_id[n]) = -w;
+      W+=w;
+      D(i,handle_to_id[n]) = d;
+      DD+=d;
+    }
+    L(i,i) = W;
+    D(i,i) = DD;
+  }
+
+  //cout << min_a << endl;
+
+  Mx UU(e,e);
+  Mx U(e,e);
+  gmm::mult(D,UU,U);
+  if(bilaplace) gmm::mult(L,L,U);
+  else gmm::mult(gmm::identity_matrix(),L,U);
+
+#if 0
+  auto AB_ = gmm::sub_matrix(U, gmm::sub_interval(0, n),gmm::sub_interval(0, e));
+  auto AC_ = gmm::sub_matrix(U, gmm::sub_interval(0, e), gmm::sub_interval(0, n));
+  auto BD_ = gmm::sub_matrix(U, gmm::sub_interval(0, e), gmm::sub_interval(n, e-n));
+
+  Mx AB(n,e);
+  gmm::copy(AB_,AB);
+
+  Mx AC(e,n);
+  gmm::copy(AC_,AC);
+
+  Mx BD(e,e-n);
+  gmm::copy(BD_,BD);
+
+  Mx ABBD(n,e-n);
+  gmm::mult(AB,BD,ABBD);
+
+  Mx ABAC(n,n);
+  gmm::mult(AB,AC,ABAC);
+
+  gmm::identity_matrix PS;
+  gmm::identity_matrix PR;
+
+  std::vector<TV> prev(n);
+  for(auto v : VI){
+    prev[handle_to_id[v]] = M->point(v);
+  }
+
+  for(int i =0; i < 3; ++i){
+    std::vector<double> X(n);
+    gmm::iteration iter(10E-9);
+
+    /*
+    vector<double> previ(n);
+    for(int k=0;k<(int)prev.size();++k)
+      previ[k] = prev[k][i];
+    */
+
+    int id_offset = n;
+    vector<double> y(e);
+    vector<double> RHS(n);
+
+    for(auto v : VB)
+      y[handle_to_id[v]-id_offset] = M->point(v)[i];
+
+    gmm::mult(ABBD,y,RHS);
+    gmm::scale(RHS,-1);
+    gmm::cg(ABAC,X,RHS,PS,PR,iter);
+
+    for(int j=0;j<(int)X.size();++j)
+      output[j][i] = X[j];
+
+  }
+
+  for(int i=0;i<(int)output.size();++i){
+    auto vh = id_to_handle[i];
+    OTHER_ASSERT(vh.is_valid() && !M->status(vh).locked());
+    M->point(vh) = output[i];
+  }
+#endif
+
+#if 1
   auto A = gmm::sub_matrix(U, gmm::sub_interval(0, n));
   auto B = gmm::sub_matrix(U, gmm::sub_interval(0, n), gmm::sub_interval(n, e-n));
 
-  //color_with_eigenvalue(M, A, 0, handle_to_id);
+  if(0){
+    std::vector<real> eig(n);
+    gmm::dense_matrix<real> evs(n,n);
+    gmm::symmetric_qr_algorithm(A,eig,evs);
 
-  // solve for x, y, z
-  for (int i =0; i < 3; ++i) {
+    real mx = -numeric_limits<real>::infinity();
+    real mn = -mx;
+    int nev = val;
+    for(int i =0; i<n; ++i){
+      mx = max(abs(evs(i,nev)),mx);
+      mn = min(abs(evs(i,nev)),mn);
+    }
+
+    std::cout << "min/max: " << mn << " " << mx << std::endl;
+
+    m.request_vertex_colors();
+    for(auto v : m.vertex_handles()){
+      if(!m.status(v).locked()){
+        real e = abs(evs(handle_to_id[v],nev));
+        real c = (e-mn)/(mx-mn);
+        m.set_color(v,to_byte_color(TV(c,0,1-c)));
+      }
+      else m.set_color(v,to_byte_color(TV(.5, .5, .5)));
+    }
+  }
+
+  gmm::identity_matrix PS;
+  gmm::identity_matrix PR;
+
+  for(int i =0; i < 3; ++i){
 
     std::vector<double> X(n);
-    gmm::iteration iter(1e-9);
-    iter.set_maxiter(10000);
+    gmm::iteration iter(10E-12);
 
+    int id_offset = n;
     vector<double> y(e-n);
     vector<double> RHS(n);
 
     for(auto v : VB)
-      y[handle_to_id.find(v)->second - n] = M->point(v)[i];
+      y[handle_to_id[v]-id_offset] = M->point(v)[i];
 
     gmm::mult(B,y,RHS);
     gmm::scale(RHS,-1.);
 
-    gmm::cg(A,X,RHS,gmm::identity_matrix(),gmm::identity_matrix(),iter);
+    gmm::cg(A,X,RHS,PS,PR,iter);
+    //gmm::cg(A,X,previ,PS,PR,iter);
 
     for(int j=0;j<(int)X.size();++j)
       output[j][i] = X[j];
+
   }
 
-  // write result back to M
-  for(int i=0;i<(int)output.size();++i) {
-    OTHER_ASSERT(id_to_handle.count(i));
-    auto vh = id_to_handle.find(i)->second;
+  for(int i=0;i<(int)output.size();++i){
+    auto vh = id_to_handle[i];
     OTHER_ASSERT(vh.is_valid() && !M->status(vh).locked());
     M->point(vh) = output[i];
   }
+#endif
 
   return M;
 }
@@ -240,7 +351,6 @@ using namespace other;
 
 void wrap_smooth() {
   OTHER_FUNCTION(smooth_mesh)
-  OTHER_FUNCTION(smooth_test)
 }
 
 #endif
