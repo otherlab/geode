@@ -13,7 +13,8 @@ using std::make_pair;
 
 #define VORONOI_AREA 1
 
-/ split vertices into locked ones (VB) and not locked ones, and compute
+/*
+// split vertices into locked ones (VB) and not locked ones, and compute
 // matrix indices for those vertices
 static void matrix_permutation(TriMesh const &M,
                                unordered_map<int,VertexHandle,Hasher> &id_to_handle,
@@ -73,6 +74,7 @@ void color_with_eigenvalue(TriMesh &m, M const &A, int nev,
     }
   }
 }
+*/
 
 #ifdef VORONOI_AREA
 static real mixed_voronoi_area(TriMesh const & m, const VertexHandle vh){
