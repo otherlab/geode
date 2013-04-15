@@ -186,7 +186,9 @@ public:
     : flat(source.flat), m(source.m), n(source.n) {}
 
   RawArray(int m, int n, T* data)
-    : flat(m*n,data), m(m), n(n) {}
+    : flat(m*n,data), m(m), n(n) {
+    assert(m>=0 && n>=0);
+  }
 
   const RawArray& operator=(const RawArray& source) const {
     assert(sizes()==source.sizes());
@@ -357,6 +359,11 @@ public:
   RawArray(const RawArray<const Element,3>& source)
     : flat(source.flat), m(source.m), n(source.n), mn(source.mn)
   {}
+
+  RawArray(int m, int n, int mn, T* data)
+    : flat(m*n*mn,data), m(m), n(n), mn(mn) {
+    assert(m>=0 && n>=0 && mn>=0);
+  }
 
   RawArray& operator=(const RawArray& source) const {
     assert(sizes()==source.sizes());
