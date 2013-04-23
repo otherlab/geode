@@ -101,7 +101,7 @@ template<class T,int d> bool Box<Vector<T,d>>::lazy_intersects(const Ray<TV>& ra
 // box_enlargement modifies the bounds of the box -- it's not a thickness
 template<> bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>& ray,T box_enlargement) const {
   BOOST_STATIC_ASSERT(d==2);
-  // This comes from a paper "An efficient and Robust Ray-Box Intersection algorithm" by williams, barrus, morley, and Shirley
+  // This comes from a paper "An efficient and robust ray-box intersection algorithm" by Williams, Barrus, Morley, and Shirley
   // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
   if(!ray.computed_lazy_box_intersection_acceleration_data)
       ray.compute_lazy_box_intersection_acceleration_data();
@@ -117,7 +117,7 @@ template<> bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>& ray,T 
 // box_enlargement modifies the bounds of the box -- it's not a thickness
 template<> bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>& ray,T box_enlargement) const {
   BOOST_STATIC_ASSERT(d==3);
-  // This comes from a paper "An efficient and Robust Ray-Box Intersection algorithm" by williams, barrus, morley, and Shirley
+  // This comes from a paper "An efficient and robust ray-box intersection algorithm" by Williams, Barrus, Morley, and Shirley
   // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
   if(!ray.computed_lazy_box_intersection_acceleration_data)
       ray.compute_lazy_box_intersection_acceleration_data();
