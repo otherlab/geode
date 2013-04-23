@@ -16,7 +16,6 @@ class Ray
 {
 public:
     typedef typename TV::Scalar T;
-    typedef typename TV::template Rebind<int>::type TvInt;
     TV start; // start of the ray where t=0
     TV direction; // direction the ray sweeps out - unit vector
     T t_max; // maximum value of t allowed for the ray
@@ -25,27 +24,22 @@ public:
     Location intersection_location; // indicates what type of intersection happened, LocationUnknown is used if not computed
     Box<TV> bounding_box;
 
-    // used for triangle hierarchy fast lazy_box_intersection 
-    mutable bool computed_lazy_box_intersection_acceleration_data;
-    mutable TV inverse_direction;
-    mutable TvInt direction_is_negative;
-
     Ray()
-        :start(TV()),t_max(numeric_limits<T>::infinity()),aggregate_id(-1),intersection_location(LocationUnknown),computed_lazy_box_intersection_acceleration_data(false)
+        :start(TV()),t_max(numeric_limits<T>::infinity()),aggregate_id(-1),intersection_location(LocationUnknown)
     {
          direction=TV::axis_vector(TV::dimension-1);
     }
 
     Ray(const TV& start_input,const TV& direction_input,const bool already_normalized=false)
-        :start(start_input),direction(direction_input),t_max(numeric_limits<T>::infinity()),aggregate_id(-1),intersection_location(LocationUnknown),computed_lazy_box_intersection_acceleration_data(false)
+        :start(start_input),direction(direction_input),t_max(numeric_limits<T>::infinity()),aggregate_id(-1),intersection_location(LocationUnknown)
     {if(!already_normalized) direction.normalize();}
 
     Ray(const Segment<TV>& segment)
-      :start(segment.x0),direction(segment.vector()),aggregate_id(-1),intersection_location(LocationUnknown),computed_lazy_box_intersection_acceleration_data(false)
+      :start(segment.x0),direction(segment.vector()),aggregate_id(-1),intersection_location(LocationUnknown)
     {t_max=normalize(direction);}
 
     void initialize(const TV& start_input,const TV& direction_input,const bool already_normalized=false)
-    {start=start_input;direction=direction_input;t_max=numeric_limits<T>::infinity();aggregate_id=-1;intersection_location=LocationUnknown;computed_lazy_box_intersection_acceleration_data=false;
+    {start=start_input;direction=direction_input;t_max=numeric_limits<T>::infinity();aggregate_id=-1;intersection_location=LocationUnknown;
     if(!already_normalized) direction.normalize();}
 
     void save_intersection_information(Ray<TV>& storage_ray) const
@@ -70,8 +64,6 @@ public:
     {T length_squared=length_and_direction.sqr_magnitude();
     if(length_squared>0){ray.t_max=sqrt(length_squared);ray.start=start;ray.direction=length_and_direction/ray.t_max;return true;}
     else return false;}
-
-    void compute_lazy_box_intersection_acceleration_data() const;
 };
 
 template<class TV> std::ostream &operator<<(std::ostream &output,const Ray<TV> &ray)

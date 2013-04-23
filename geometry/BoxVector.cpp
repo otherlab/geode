@@ -91,46 +91,6 @@ template<class T,int d> string Box<Vector<T,d>>::repr() const {
   return format("Box(%s,%s)",tuple_repr(min),tuple_repr(max));
 }
 
-// This is a fast routine to do ray box intersections
-// box_enlargement modifies the bounds of the box -- it's not a thickness
-template<class T,int d> bool Box<Vector<T,d>>::lazy_intersects(const Ray<TV>& ray,T box_enlargement) const {
-  OTHER_NOT_IMPLEMENTED();
-}
-
-// This is a fast routine to do ray box intersections
-// box_enlargement modifies the bounds of the box -- it's not a thickness
-template<> bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>& ray,T box_enlargement) const {
-  BOOST_STATIC_ASSERT(d==2);
-  // This comes from a paper "An efficient and robust ray-box intersection algorithm" by Williams, Barrus, Morley, and Shirley
-  // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
-  if(!ray.computed_lazy_box_intersection_acceleration_data)
-      ray.compute_lazy_box_intersection_acceleration_data();
-  Vector<T,2> extremes[2] = {min-box_enlargement,max+box_enlargement};
-  T tmin =                (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  T tmax =                (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  tmin = other::max(tmin, (extremes[  ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  return tmin<=tmax && 0<=tmax && tmin<=ray.t_max;
-}
-
-// This is a fast routine to do ray box intersections
-// box_enlargement modifies the bounds of the box -- it's not a thickness
-template<> bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>& ray,T box_enlargement) const {
-  BOOST_STATIC_ASSERT(d==3);
-  // This comes from a paper "An efficient and robust ray-box intersection algorithm" by Williams, Barrus, Morley, and Shirley
-  // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
-  if(!ray.computed_lazy_box_intersection_acceleration_data)
-      ray.compute_lazy_box_intersection_acceleration_data();
-  Vector<T,3> extremes[2] = {min-box_enlargement,max+box_enlargement};
-  T tmin =                (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  T tmax =                (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  tmin = other::max(tmin, (extremes[  ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  tmin = other::max(tmin, (extremes[  ray.direction_is_negative.z].z-ray.start.z)*ray.inverse_direction.z);
-  tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.z].z-ray.start.z)*ray.inverse_direction.z);
-  return tmin<=tmax && 0<=tmax && tmin<=ray.t_max;
-}
-
 typedef Vector<T,3> TV;
 
 #define INSTANTIATION_HELPER(T,d) \
@@ -144,9 +104,5 @@ typedef Vector<T,3> TV;
 INSTANTIATION_HELPER(T,1)
 INSTANTIATION_HELPER(T,2)
 INSTANTIATION_HELPER(T,3)
-#ifndef _WIN32
-template bool Box<Vector<T,2>>::lazy_intersects(const Ray<Vector<T,2>>&,T) const;
-template bool Box<Vector<T,3>>::lazy_intersects(const Ray<Vector<T,3>>&,T) const;
-#endif
 
 }

@@ -346,7 +346,6 @@ public:
   T phi(const TV& X) const;
   static std::string name();
   string repr() const;
-  bool lazy_intersects(const Ray<TV>& ray,T box_enlargement) const;
 };
 
 }
