@@ -92,7 +92,7 @@ template<> void SimplexTree<Vector<T,3>,2>::intersections(const Plane<T>& plane,
 template<int signs,class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, const T half_thickness) {
   FastRay<TV,signs> fast(ray);
   // If we don't intersect the root box, there's nothing to do
-  const auto root = fast.range(self.boxes[0],half_thickness);
+  const Box<T> root = fast.range(self.boxes[0],half_thickness);
   if (root.min>root.max || root.max<0 || root.min>fast.t_max)
     return;
   const int internal = self.leaves.lo;
