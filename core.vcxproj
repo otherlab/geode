@@ -333,7 +333,6 @@
     <ClCompile Include="geometry\Plane.cpp" />
     <ClCompile Include="geometry\platonic.cpp" />
     <ClCompile Include="geometry\polygon.cpp" />
-    <ClCompile Include="geometry\Ray.cpp" />
     <ClCompile Include="geometry\Segment2d.cpp" />
     <ClCompile Include="geometry\Segment3d.cpp" />
     <ClCompile Include="geometry\SimplexTree.cpp" />

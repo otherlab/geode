@@ -1055,9 +1055,6 @@
     <ClCompile Include="geometry\polygon.cpp">
       <Filter>geometry\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="geometry\Ray.cpp">
-      <Filter>geometry\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="geometry\Segment2d.cpp">
       <Filter>geometry\Source Files</Filter>
     </ClCompile>
