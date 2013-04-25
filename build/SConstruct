@@ -300,7 +300,7 @@ else: # assume g++...
   elif env['arch']=='opteron': machine_flags = ' -march=opteron '+ifsse('-msse3')
   elif env['arch']=='powerpc': machine_flags = ''
   elif env['arch']=='native':  machine_flags = ' -march=native -mtune=native '+ifsse('')
-  else: machine_flags=''
+  else: machine_flags = ''
   env.Append(CXXFLAGS=machine_flags)
   # type specific flags
   if env['type']=='optdebug': env.Append(CXXFLAGS=' -g3')
