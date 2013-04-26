@@ -16,6 +16,9 @@
 #include <other/core/openmesh/triangulator.h>
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/convert.h>
+#include <other/core/array/NdArray.h>
+
+
 #include <queue>
 #include <iostream>
 namespace other {
@@ -257,6 +260,30 @@ Segment<Vector<real, 3> > TriMesh::segment(EdgeHandle eh) const {
 
 Segment<Vector<real, 3> > TriMesh::segment(HalfedgeHandle heh) const {
   return Segment<Vector<real, 3> >(point(from_vertex_handle(heh)), point(to_vertex_handle(heh)));
+}
+
+real TriMesh::cotan_weight(EdgeHandle eh) const {
+
+  auto he0 = halfedge_handle(eh, 0);
+  auto he1 = halfedge_handle(eh, 1);
+  auto v0 = to_vertex_handle(he0);
+  auto v1 = to_vertex_handle(he1);
+  auto p0 = point(v0);
+  auto p1 = point(v1);
+
+  real weight = 0.;
+
+  auto p2 = point(opposite_vh(he0));
+  auto d0 = (p0 - p2).normalized();
+  auto d1 = (p1 - p2).normalized();
+  weight += 1.0 / tan(acos(std::max(-1., std::min(1., dot(d0,d1)))));
+
+  p2 = point(opposite_vh(he1));
+  d0 = (p0 - p2).normalized();
+  d1 = (p1 - p2).normalized();
+  weight += 1.0 / tan(acos(std::max(-1., std::min(1., dot(d0,d1)))));
+
+  return weight;
 }
 
 Vector<VertexHandle, 2> TriMesh::vertex_handles(HalfedgeHandle heh) const {
@@ -768,6 +795,122 @@ bool TriMesh::cut_local(Plane<real> const &plane, double epsilon) {
 }
 #endif
 
+// compute edge-connected components around a non-manifold (boundary) vertex
+vector<vector<FaceHandle>> TriMesh::surface_components(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges) const {
+  auto incident = incident_faces(vh);
+
+  // map face handles to indices in incident
+  unordered_map<FaceHandle, int, Hasher> fmap;
+  for (auto it = incident.begin(); it != incident.end(); ++it) {
+    fmap[*it] = it-incident.begin();
+  }
+
+  UnionFind union_find(incident.size());
+  for (ConstVertexEdgeIter e = cve_iter(vh); e; ++e) {
+    if (is_boundary(e) || exclude_edges.count(e))
+      continue;
+    auto faces = face_handles(e.handle());
+    assert(fmap.count(faces.x));
+    assert(fmap.count(faces.y));
+    union_find.merge(fmap[faces.x], fmap[faces.y]);
+  }
+
+  // spit out connected components
+  unordered_map<int, vector<FaceHandle>> components;
+  for (auto f : incident) {
+    components[union_find.find(fmap[f])].push_back(f);
+  }
+
+  vector<vector<FaceHandle>> result;
+
+  for (auto c : components) {
+    result.push_back(c.second);
+  }
+
+  return result;
+}
+
+// split a (boundary) vertex in as many vertices as there are edge-connected surface components
+vector<VertexHandle> TriMesh::split_nonmanifold_vertex(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges) {
+  auto components = surface_components(vh, exclude_edges);
+
+  vector<VertexHandle> verts(1,vh);
+  TV dupe = point(vh);
+  for (int i = 1; i < (int) components.size(); ++i) {
+    VertexHandle v = add_vertex(dupe);
+
+    for (auto f : components[i]) {
+      auto vhs = vertex_handles(f);
+      delete_face(f,false);
+      // replace vh with v in vhs
+      if (vhs.x == vh) vhs.x = v;
+      if (vhs.y == vh) vhs.y = v;
+      if (vhs.z == vh) vhs.z = v;
+
+      add_face(vhs.x, vhs.y, vhs.z);
+
+      OTHER_ASSERT(!status(vhs.x).deleted() && vhs.x.is_valid() && isfinite(point(vhs.x)) );
+      OTHER_ASSERT(!status(vhs.y).deleted() && vhs.y.is_valid()  && isfinite(point(vhs.y)) );
+      OTHER_ASSERT(!status(vhs.z).deleted() && vhs.z.is_valid()  && isfinite(point(vhs.z)) );
+    }
+
+    verts.push_back(v);
+  }
+
+  return verts;
+}
+
+// split an edge in two if the incident faces are only connected through this edge
+// returns the newly created edge. Both end points have to be boundary vertices
+// for this to happen.
+vector<EdgeHandle> TriMesh::separate_edge(EdgeHandle eh) {
+
+  // nothing to split if already a boundary edge
+  if (is_boundary(eh)) {
+    return make_vector(EdgeHandle());
+  }
+  // we split the edge by splitting each end vertex
+  auto vhs = vertex_handles(eh);
+  unordered_set<EdgeHandle, Hasher> edgeset;
+  edgeset.insert(eh);
+  auto vs0 = split_nonmanifold_vertex(vhs.x, edgeset);
+  auto vs1 = split_nonmanifold_vertex(vhs.y, edgeset);
+
+  // find all vertex pairs that have edges between them and return the edges
+  vector<EdgeHandle> result;
+  for (auto v0 : vs0) {
+    for (auto v1 : vs1) {
+      auto e = edge_handle(v0,v1);
+      if (e.is_valid())
+        result.push_back(e);
+    }
+  }
+
+  return result;
+}
+
+// split the mesh along a string of edges. If the edges form loops, this
+// results in two holes per loop. All non-loop connected components create
+// a single hole. Returns all vertices that were split, and all vertices they
+// were split into.
+OTHER_CORE_EXPORT vector<VertexHandle> TriMesh::separate_edges(vector<EdgeHandle> ehs) {
+  unordered_set<EdgeHandle, Hasher> edgeset(ehs.begin(), ehs.end());
+
+  unordered_set<VertexHandle, Hasher> edgeverts;
+  for (auto e : ehs) {
+    auto vhs = vertex_handles(e);
+    edgeverts.insert(vhs.x);
+    edgeverts.insert(vhs.y);
+  }
+
+  vector<VertexHandle> allverts;
+  for (auto v : edgeverts) {
+    extend(allverts, split_nonmanifold_vertex(v, edgeset));
+  }
+  return allverts;
+}
+
+
 void TriMesh::cut_and_mirror(Plane<real> const &plane, bool mirror, double epsilon, double area_hack) {
   OpenMesh::VPropHandleT<int> vtype;
   add_property(vtype);
@@ -963,10 +1106,9 @@ bool TriMesh::has_boundary() const {
 // find boundary loops
 vector<vector<TriMesh::HalfedgeHandle> > TriMesh::boundary_loops() const {
   unordered_set<HalfedgeHandle, Hasher> done;
-
   vector<vector<HalfedgeHandle> >  loops;
-
-  for (ConstHalfedgeIter it = halfedges_sbegin(); it != halfedges_end(); ++it) {
+  for (ConstHalfedgeIter it = halfedges_begin(); it != halfedges_end(); ++it) {
+    if(status(edge_handle(it)).deleted() || status(it).deleted()) continue;
     if (is_boundary(it) && !done.count(it.handle())) {
       loops.push_back(boundary_loop(it.handle()));
       done.insert(loops.back().begin(), loops.back().end());
@@ -1027,14 +1169,18 @@ vector<FaceHandle> TriMesh::fill_hole(vector<HalfedgeHandle> const &loop, double
 }
 
 // fill all holes with maximum area given
-void TriMesh::fill_holes(double max_area) {
+int TriMesh::fill_holes(double max_area) {
   vector<vector<HalfedgeHandle> > loops = boundary_loops();
 
+  int nfilled = 0;
   for (auto loop : loops) {
-    fill_hole(loop, max_area);
+    if (!fill_hole(loop, max_area).empty())
+      nfilled++;
   }
 
   garbage_collection();
+
+  return nfilled;
 }
 
 Array<Vector<int,3> > TriMesh::elements() const {
@@ -1334,6 +1480,24 @@ real TriMesh::dihedral_angle(HalfedgeHandle e) const {
   return copysign(abs_theta,dot(t1.n-t0.n,d));
 }
 
+real TriMesh::cos_dihedral_angle(HalfedgeHandle e) const {
+  const TV x1 = point(from_vertex_handle(e)),
+           x2 = point(to_vertex_handle(e)),
+           x0 = point(to_vertex_handle(next_halfedge_handle(e))),
+           x3 = point(to_vertex_handle(next_halfedge_handle(opposite_halfedge_handle(e))));
+  const TV n0 = cross(x2-x1,x0-x1),
+           n1 = cross(x3-x1,x0-x1);
+  return dot(n0,n1)/sqrt(sqr_magnitude(n0)*sqr_magnitude(n1));
+}
+
+real TriMesh::cos_sector_angle(HalfedgeHandle e) const {
+  const auto v0 = from_vertex_handle(e), v1 = to_vertex_handle(e), v2 = to_vertex_handle(next_halfedge_handle(e));
+  const TV x1 = point(v1),
+           e0 = point(v0)-x1,
+           e1 = point(v2)-x1;
+  return dot(e0,e1)/sqrt(sqr_magnitude(e0)*sqr_magnitude(e1));
+}
+
 // delete a set of faces
 void TriMesh::delete_faces(std::vector<FaceHandle> const &fh) {
   for (FaceHandle f : fh) {
@@ -1345,7 +1509,7 @@ void TriMesh::delete_faces(std::vector<FaceHandle> const &fh) {
 Tuple<int,Array<int> > TriMesh::component_vertex_map() const {
   // Find components
   UnionFind union_find(n_vertices());
-  for (ConstEdgeIter e=edges_begin();e!=edges_end();++e) {
+  for (ConstEdgeIter e=edges_sbegin();e!=edges_end();++e) {
     auto h = halfedge_handle(e,0);
     union_find.merge(from_vertex_handle(h).idx(),to_vertex_handle(h).idx());
   }

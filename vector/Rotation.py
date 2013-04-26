@@ -105,14 +105,6 @@ class Rotations3d(ndarray):
     def reals(self):
         return frombuffer(self.data,real).reshape(self.shape+(-1,))
 
-    def __eq__(self,x):
-        assert isinstance(x,Rotations3d)
-        return all(self.reals()==x.reals(),axis=-1)
-
-    def __ne__(self,x):
-        assert isinstance(x,Rotations3d)
-        return any(self.reals()!=x.reals(),axis=-1)
-
     def matrix(self):
         m = empty(self.shape+(3,3)).view(Matrix)
         mv = m.reshape(-1,3,3)

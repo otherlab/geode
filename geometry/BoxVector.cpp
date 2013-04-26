@@ -89,57 +89,6 @@ template<class T,int d> string Box<Vector<T,d>>::repr() const {
   return format("Box(%s,%s)",tuple_repr(min),tuple_repr(max));
 }
 
-// This is a fast routine to do ray box intersections
-// box_enlargement modifies the bounds of the box -- it's not a thickness
-template<class T,int d> bool Box<Vector<T,d>>::lazy_intersects(const Ray<TV>& ray,T box_enlargement) const {
-  OTHER_NOT_IMPLEMENTED();
-}
-
-// This is a fast routine to do ray box intersections
-// box_enlargement modifies the bounds of the box -- it's not a thickness
-
-template<class T> bool lazy_intersects_helper_2(const Box<Vector<T,2>>& self, const Ray<Vector<T,2>>& ray,T box_enlargement) {
-  // This comes from a paper "An efficient and Robust Ray-Box Intersection algorithm" by williams, barrus, morley, and Shirley
-  // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
-  if(!ray.computed_lazy_box_intersection_acceleration_data)
-      ray.compute_lazy_box_intersection_acceleration_data();
-  Vector<T,2> extremes[2] = {self.min-box_enlargement,self.max+box_enlargement};
-  T tmin =                (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  T tmax =                (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  tmin = other::max(tmin, (extremes[  ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  return tmin<=tmax && 0<=tmax && tmin<=ray.t_max;
-}
-
-template<> bool Box<Vector<real,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>& ray,Scalar box_enlargement) const { return lazy_intersects_helper_2<Scalar>(*this, ray, box_enlargement); }
-#ifndef OTHER_FLOAT
-template<> bool Box<Vector<float,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>& ray,Scalar box_enlargement) const { return lazy_intersects_helper_2<Scalar>(*this, ray, box_enlargement); }
-#endif
-
-// This is a fast routine to do ray box intersections
-// box_enlargement modifies the bounds of the box -- it's not a thickness
-template<> bool Box<Vector<real,3>>::lazy_intersects(const Ray<Vector<Scalar,3>>& ray,Scalar box_enlargement) const {
-  BOOST_STATIC_ASSERT(d==3);
-  // This comes from a paper "An efficient and Robust Ray-Box Intersection algorithm" by williams, barrus, morley, and Shirley
-  // http://www.cs.utah.edu/~rmorley/pubs/box.pdf
-  if(!ray.computed_lazy_box_intersection_acceleration_data)
-      ray.compute_lazy_box_intersection_acceleration_data();
-  Vector<Scalar,3> extremes[2] = {min-box_enlargement,max+box_enlargement};
-  Scalar tmin =           (extremes[  ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  Scalar tmax =           (extremes[1-ray.direction_is_negative.x].x-ray.start.x)*ray.inverse_direction.x;
-  tmin = other::max(tmin, (extremes[  ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.y].y-ray.start.y)*ray.inverse_direction.y);
-  tmin = other::max(tmin, (extremes[  ray.direction_is_negative.z].z-ray.start.z)*ray.inverse_direction.z);
-  tmax = other::min(tmax, (extremes[1-ray.direction_is_negative.z].z-ray.start.z)*ray.inverse_direction.z);
-  return tmin<=tmax && 0<=tmax && tmin<=ray.t_max;
-}
-
-//template<> bool Box<Vector<real,2>>::lazy_intersects_2<real>(const Ray<Vector<real,2>>& ray,real box_enlargement) const;
-//template<> bool Box<Vector<real,3>>::lazy_intersects_3<real>(const Ray<Vector<real,3>>& ray,real box_enlargement) const;
-//#ifndef OTHER_FLOAT
-//template<> bool Box<Vector<float,2>>::lazy_intersects_2<float>(const Ray<Vector<float,2>>& ray,float box_enlargement) const;
-//#endif
-
 #define INSTANTIATION_HELPER(T,d) \
   template OTHER_CORE_EXPORT string Box<Vector<T,d>>::name(); \
   template OTHER_CORE_EXPORT string Box<Vector<T,d>>::repr() const; \
@@ -153,11 +102,6 @@ INSTANTIATION_HELPER(real,2)
 INSTANTIATION_HELPER(real,3)
 #ifndef OTHER_FLOAT
 INSTANTIATION_HELPER(float,2)
-#endif
-
-#ifndef _WIN32
-template bool Box<Vector<real,2>>::lazy_intersects(const Ray<Vector<Scalar,2>>&,Scalar) const;
-template bool Box<Vector<real,3>>::lazy_intersects(const Ray<Vector<Scalar,3>>&,Scalar) const;
 #endif
 
 }

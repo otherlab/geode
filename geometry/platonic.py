@@ -48,7 +48,9 @@ def grid_topology(nx,ny):
   return TriangleMesh(tris.reshape(-1,3))
 
 def torus_topology(nx,ny):
-  '''Construct a torus TriangleMesh with nx by ny vertices.'''
+  '''Construct a torus TriangleMesh with nx by ny vertices.
+  A matching position array would have shape (nx,ny,3).
+  If you want geometry too, consider using surface_of_revolution with periodic=True.'''
   i = ny*arange(nx).reshape(-1,1)
   j = arange(ny)
   ip = (i+ny)%(nx*ny)
@@ -80,14 +82,16 @@ def cylinder_topology(na,nz,closed=False):
   if c0: tris = maximum(0,tris.ravel()-(na-1))
   return TriangleMesh(tris.reshape(-1,3))
 
-def surface_of_revolution(base,axis,radius,height,resolution,closed=False):
+def surface_of_revolution(base,axis,radius,height,resolution,closed=False,periodic=False):
   '''Construct a surface of revolution with given radius and height curves.
   closed can be either a single bool or an array of two bools (one for each end).
-  For each closed end, height should have one more point than radius.'''
+  For each closed end, height should have one more point than radius.
+  If periodic is true, toroidal topology is used.'''
   closed = asarray(closed,dtype=int32)
   c0,c1 = closed if closed.ndim else (closed,closed)
   assert radius.ndim<=1 and height.ndim<=1
   assert height.size>=1+c0+c1
+  assert not periodic or (not c0 and not c1)
   height = height.reshape(-1)
   axis = asarray(axis)
   x = unit_orthogonal_vector(axis)
@@ -96,7 +100,11 @@ def surface_of_revolution(base,axis,radius,height,resolution,closed=False):
   circle = x*cos(a).reshape(-1,1)-y*sin(a).reshape(-1,1)
   X = base+radius[...,None,None]*circle+height[c0:len(height)-c1,None,None]*axis
   X = concatenate(([[base+height[0]*axis]] if c0 else []) + [X.reshape(-1,3)] + ([[base+height[-1]*axis]] if c1 else []))
-  return cylinder_topology(resolution,len(height)-1,closed=closed),X
+  if periodic:
+    return torus_topology(len(height),resolution),X
+  else:
+    return cylinder_topology(resolution,len(height)-1,closed=closed),X
+
 
 def revolve_around_curve(curve,radius,resolution,tangent=None,closed=False):
   '''Construct a surface via variable radius thickening of a curve.

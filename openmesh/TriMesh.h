@@ -317,6 +317,9 @@ public:
   OTHER_CORE_EXPORT Segment<Vector<real, 3> > segment(EdgeHandle eh) const;
   OTHER_CORE_EXPORT Segment<Vector<real, 3> > segment(HalfedgeHandle heh) const;
 
+  // compute the cotan weight for an edge
+  OTHER_CORE_EXPORT real cotan_weight(EdgeHandle eh) const;
+
   // get the vertex handles incident to the given halfedge
   OTHER_CORE_EXPORT Vector<VertexHandle,2> vertex_handles(HalfedgeHandle heh) const;
 
@@ -401,6 +404,10 @@ public:
   // dihedral angle between incident faces: positive for convex, negative for concave
   OTHER_CORE_EXPORT T dihedral_angle(EdgeHandle e) const;
   OTHER_CORE_EXPORT T dihedral_angle(HalfedgeHandle e) const;
+  OTHER_CORE_EXPORT T cos_dihedral_angle(HalfedgeHandle e) const; // Quick version for when the sign doesn't matter
+
+  // Fast version of calc_sector_angle for interior edges.  The angle is at v1 = to_vertex_handle(e)
+  OTHER_CORE_EXPORT T cos_sector_angle(HalfedgeHandle e) const;
 
   // delete a set of faces
   OTHER_CORE_EXPORT void delete_faces(std::vector<FaceHandle> const &fh);
@@ -451,6 +458,24 @@ public:
   OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
   OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, VertexHandle start) const;
 
+  // compute edge-connected components around a boundary vertex
+  OTHER_CORE_EXPORT vector<vector<FaceHandle>> surface_components(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges = (unordered_set<EdgeHandle,Hasher>())) const;
+
+  // split a (boundary) vertex in as many vertices as there are edge-connected surface components
+  // do not count exclude_edges as connections
+  OTHER_CORE_EXPORT vector<VertexHandle> split_nonmanifold_vertex(VertexHandle vh, unordered_set<EdgeHandle,Hasher> exclude_edges = (unordered_set<EdgeHandle,Hasher>()));
+
+  // split an edge in two if the incident faces are only connected through this edge
+  // returns the newly created edges (including the old one). Both end points
+  // have to be boundary vertices for this to happen.
+  OTHER_CORE_EXPORT vector<EdgeHandle> separate_edge(EdgeHandle eh);
+
+  // split the mesh along a string of edges. If the edges form loops, this
+  // results in two holes per loop. All non-loop connected components create
+  // a single hole. Returns all vertices that were split, and all vertices they
+  // were split into.
+  OTHER_CORE_EXPORT vector<VertexHandle> separate_edges(vector<EdgeHandle> ehs);
+
   // cut the mesh with a plane (negative side will be removed)
   OTHER_CORE_EXPORT void cut(Plane<real> const &p, double epsilon = 1e-4, double area_hack = 0);
 
@@ -470,8 +495,8 @@ public:
   // fill the hole enclosed by the given halfedges, retain the new faces only if the surface area is smaller than max_area
   OTHER_CORE_EXPORT vector<FaceHandle> fill_hole(vector<HalfedgeHandle> const &loop, double max_area = inf);
 
-  // fill all holes with maximum area given
-  OTHER_CORE_EXPORT void fill_holes(double max_area = inf);
+  // fill all holes with maximum area given, returns the number of holes filled
+  OTHER_CORE_EXPORT int fill_holes(double max_area = inf);
 
   OTHER_CORE_EXPORT void add_box(TV min, TV max);
   OTHER_CORE_EXPORT void add_sphere(TV c, real r, int divisions = 30);

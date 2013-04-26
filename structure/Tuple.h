@@ -28,6 +28,8 @@ template<class... Args> static inline Tuple<Args...> tuple(const Args&... args) 
   return Tuple<Args...>(args...);
 }
 
+#ifdef OTHER_PYTHON
+
 template<class Tup,class... Enum> static inline PyObject* tuple_to_python_helper(const Tup& src, Types<Enum...>);
 template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyObject* object, Types<Enum...>);
 
@@ -39,6 +41,7 @@ template<class... Args> struct FromPython<Tuple<Args...>>{static Tuple<Args...> 
   return tuple_from_python_helper<Tuple<Args...>>(object,Enumerate<Args...>());
 }};
 
+#endif
 
 // Tuples of unusual size
 

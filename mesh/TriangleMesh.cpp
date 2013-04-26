@@ -356,5 +356,6 @@ void wrap_triangle_mesh() {
     .OTHER_METHOD(element_normals)
     .OTHER_METHOD(nodes)
     .OTHER_METHOD(nonmanifold_nodes)
+    .OTHER_METHOD(sorted_neighbors)
     ;
 }

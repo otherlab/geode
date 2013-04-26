@@ -22,7 +22,7 @@ template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree, V
   RawStack<int> stack(OTHER_RAW_ALLOCA(tree.depth,int));
   stack.push(0);
   while (stack.size()) {
-    int n = stack.pop();
+    const int n = stack.pop();
     if (visitor.cull(n))
       continue;
     if (n < internal) {
@@ -82,7 +82,7 @@ template<class Visitor,class Thickness,class TV> static void traverse_helper(con
   RawStack<int> stack(OTHER_RAW_ALLOCA(6*tree.depth,int));
   stack.push(0);
   while (stack.size()) {
-    int n = stack.pop();
+    const int n = stack.pop();
     if (visitor.cull(n))
       continue;
     if (n < internal) {
