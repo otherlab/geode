@@ -104,6 +104,6 @@ void wrap_rotation() {
   function("rotation_test_3d",rotation_test<Vector<real,3>>);
   function("rotation_array_test_2d",rotation_array_test<Vector<real,2>>);
   function("rotation_array_test_3d",rotation_array_test<Vector<real,3>>);
-  OTHER_FUNCTION(rotation_from_matrix);
+  OTHER_FUNCTION(rotation_from_matrix)
 #endif
 }
