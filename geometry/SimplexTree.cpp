@@ -365,7 +365,7 @@ template class SimplexTree<Vector<T,3>,2>;
 
 template<int d> static int ray_traversal_test(const SimplexTree<Vector<T,d>,d-1>& tree, const int rays, const T half_thickness) {
   typedef Vector<T,d> TV;
-  const auto box = tree.bounding_box(); 
+  const auto box = tree.bounding_box();
   const auto random = new_<Random>(819371111);
   int hits = 0;
   for (int i=0;i<rays;i++) {
@@ -374,7 +374,7 @@ template<int d> static int ray_traversal_test(const SimplexTree<Vector<T,d>,d-1>
     ray.t_max = 2;
     auto copy = ray;
     const bool hit = tree.intersection(ray,half_thickness);
-    bool slow_hit = false; 
+    bool slow_hit = false;
     for (const auto& simplex : tree.simplices)
       if (simplex.intersection(copy,half_thickness)) {
         slow_hit = true;

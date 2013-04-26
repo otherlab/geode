@@ -64,6 +64,11 @@ public:
     {T length_squared=length_and_direction.sqr_magnitude();
     if(length_squared>0){ray.t_max=sqrt(length_squared);ray.start=start;ray.direction=length_and_direction/ray.t_max;return true;}
     else return false;}
+
+    // for sorting in containers
+    inline bool operator<(Ray<TV> const &r) const {
+      return t_max < r.t_max;
+    }
 };
 
 template<class TV> std::ostream &operator<<(std::ostream &output,const Ray<TV> &ray)
