@@ -333,7 +333,10 @@ if env['syntax']:
 
 # Use c++11
 if not windows:
-  env.Append(CXXFLAGS=' -std=c++11')
+  if darwin:
+    env.Append(CXXFLAGS=' -std=c++11')
+  else: # Ubuntu
+    env.Append(CXXFLAGS=' -std=c++0x')
 
 # Hide symbols by default if desired
 if env['hidden']:
