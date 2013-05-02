@@ -1433,7 +1433,7 @@ real TriMesh::volume() const {
 
   real sum=0;
 
-  for (TriMesh::ConstFaceIter f = faces_begin(); f != faces_end(); ++f) {
+  for (TriMesh::ConstFaceIter f = faces_sbegin(); f != faces_end(); ++f) {
     Triangle<Vector<real, 3> > t = triangle(f);
     sum+=det(t.x0,t.x1,t.x2);
   }
