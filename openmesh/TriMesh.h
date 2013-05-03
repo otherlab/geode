@@ -522,6 +522,7 @@ public:
 
   // Warning: these construct new arrays or copy memory
   OTHER_CORE_EXPORT Array<Vector<int,3> > elements() const;
+  OTHER_CORE_EXPORT Array<Vector<int,2> > segments() const;
   OTHER_CORE_EXPORT Array<Vector<real,3> > X_python() const;
   OTHER_CORE_EXPORT void set_X_python(RawArray<const Vector<real,3>> new_X);
   OTHER_CORE_EXPORT void set_vertex_normals(RawArray<const Vector<real,3>> normals);
@@ -530,6 +531,10 @@ public:
   // Warning: reference goes invalid if the mesh is changed
   OTHER_CORE_EXPORT RawArray<Vector<real,3> > X();
   OTHER_CORE_EXPORT RawArray<const Vector<real,3> > X() const;
+
+  OTHER_CORE_EXPORT Ref<SimplexTree<Vector<real,3>,2>> face_tree() const;
+  OTHER_CORE_EXPORT Ref<SimplexTree<Vector<real,3>,1>> edge_tree() const;
+  OTHER_CORE_EXPORT Ref<ParticleTree<Vector<real,3>>> point_tree() const;
 
   // Warning: reference goes invalid if the mesh is changed
   template<class PropHandle> RawField<typename PropHandle::Value,typename prop_handle_type<PropHandle>::type> prop(PropHandle p) {
