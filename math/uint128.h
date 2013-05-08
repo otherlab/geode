@@ -25,7 +25,11 @@ template<class I> static inline I cast_uint128(const uint128_t& n) {
 #else
 
 class uint128_t {
+#if defined(BOOST_LITTLE_ENDIAN)
   uint64_t lo,hi;
+#elif defined(BOOST_BIG_ENDIAN)
+  uint64_t hi,lo;
+#endif
 public:
   uint128_t()
     :lo(),hi() {}

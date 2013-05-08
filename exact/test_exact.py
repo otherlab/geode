@@ -6,7 +6,7 @@ from other.core.exact import *
 import sys
 
 def test_predicates():
-  predicate_tests(4096)
+  predicate_tests()
 
 def delaunay_test(Mesh,benchmark=False,cgal=False,origin=True,circle=False):
   random.seed(8711)

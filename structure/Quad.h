@@ -14,6 +14,7 @@ namespace other {
 template<class T0,class T1,class T2,class T3>
 class Tuple<T0,T1,T2,T3> {
 public:
+  enum { m = 4 };
   T0 x;T1 y;T2 z;T3 w;
 
   Tuple()

@@ -20,8 +20,7 @@ using Log::cout;
 using std::endl;
 typedef Vector<real,2> TV;
 typedef Vector<exact::Quantized,2> EV;
-typedef Tuple<EV,int> Point;
-BOOST_STATIC_ASSERT(sizeof(Point)==sizeof(int)+sizeof(EV));
+typedef exact::Point2 Point;
 const auto bound = exact::bound;
 
 // Whether to run extremely expensive diagnostics
@@ -76,12 +75,12 @@ static inline void set_links(RawArray<Node> bsp, const Vector<int,2> links, cons
 }
 
 static inline bool is_sentinel(const Point& x) {
-  return abs(x.x.x)==bound;
+  return abs(x.y.x)==bound;
 }
 
 // Different sentinels will be placed at different orders of infinity, with earlier indices further away.
 // These macros are used in the sorting networks below to move large sentinels last
-#define SENTINEL_KEY(i) (is_sentinel(x##i)?-x##i.y:numeric_limits<int>::min())
+#define SENTINEL_KEY(i) (is_sentinel(x##i)?-x##i.x:numeric_limits<int>::min())
 #define COMPARATOR(i,j) if (SENTINEL_KEY(i)>SENTINEL_KEY(j)) { swap(x##i,x##j); parity ^= 1; }
 
 OTHER_COLD OTHER_CONST static inline bool triangle_oriented_sentinels(Point x0, Point x1, Point x2) {
@@ -91,8 +90,8 @@ OTHER_COLD OTHER_CONST static inline bool triangle_oriented_sentinels(Point x0, 
   COMPARATOR(1,2)
   COMPARATOR(0,1)
   // Triangle orientation tests reduce to segment vs. direction and direction vs. direction when infinities are involved
-  return parity ^ (!is_sentinel(x1) ? segment_to_direction_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x)   // one sentinel
-                                    :           directions_oriented(          x1.y,x1.x,x2.y,x2.x)); // two or three sentinels
+  return parity ^ (!is_sentinel(x1) ? segment_to_direction_oriented(x0,x1,x2)   // one sentinel
+                                    :           directions_oriented(   x1,x2)); // two or three sentinels
 }
 
 OTHER_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const Point,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
@@ -100,8 +99,8 @@ OTHER_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const Po
              x1 = X[v1],
              x2 = X[v2];
   // If we have a nonsentinel triangle, use a normal orientation test
-  if (maxabs(x0.x.x,x1.x.x,x2.x.x)!=bound)
-    return triangle_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x);
+  if (maxabs(x0.y.x,x1.y.x,x2.y.x)!=bound)
+    return triangle_oriented(x0,x1,x2);
   // Fall back to sentinel case analysis
   return triangle_oriented_sentinels(x0,x1,x2);
 }
@@ -119,11 +118,11 @@ OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(Point x0, Point 
   COMPARATOR(1,3)
   COMPARATOR(1,2)
   if (!is_sentinel(x2)) // One infinity: A finite circle contains infinity iff it is inside out, so we reduce to an orientation test
-    return parity^triangle_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x);
+    return parity^triangle_oriented(x0,x1,x2);
   else if (!is_sentinel(x1)) // Two infinities: also an orientation test, but with the last point at infinity
-    return parity^segment_to_direction_oriented(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x);
+    return parity^segment_to_direction_oriented(x0,x1,x2);
   else // Three infinities: the finite point no longer matters.
-    return parity^directions_oriented(x1.y,x1.x,x2.y,x2.x);
+    return parity^directions_oriented(x1,x2);
 }
 
 // Test whether an edge is Delaunay
@@ -142,8 +141,8 @@ template<class Mesh> OTHER_ALWAYS_INLINE static inline bool is_delaunay(const Me
              x2 = X[v2],
              x3 = X[v3];
   // If we have a nonsentinel interior edge, perform a normal incircle test
-  if (maxabs(x0.x.x,x1.x.x,x2.x.x,x3.x.x)!=bound)
-    return !incircle(x0.y,x0.x,x1.y,x1.x,x2.y,x2.x,x3.y,x3.x);
+  if (maxabs(x0.y.x,x1.y.x,x2.y.x,x3.y.x)!=bound)
+    return !incircle(x0,x1,x2,x3);
   // Fall back to sentinel case analysis
   return is_delaunay_sentinels(x0,x1,x2,x3);
 }
@@ -184,7 +183,7 @@ template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArr
       OTHER_ASSERT(bsp[i1/2].children[i1&1]==~f.id);
     const auto v = mesh.vertices(f);
     if (!is_sentinel(X[v.x]) && !is_sentinel(X[v.y]) && !is_sentinel(X[v.z])) {
-      const auto center = X.append(tuple((X[v.x].x+X[v.y].x+X[v.z].x)/3,X.size()));
+      const auto center = X.append(tuple(X.size(),(X[v.x].y+X[v.y].y+X[v.z].y)/3));
       const auto found = bsp_search(bsp,X,center);
       if (found!=f) {
         cout << "bsp search failed: f "<<f<<", v "<<v<<", found "<<found<<endl;
@@ -362,20 +361,12 @@ template<class Mesh> OTHER_NEVER_INLINE static Ref<Mesh> deterministic_exact_del
   return mesh;
 }
 
-static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random) {
-  const int n = X.size();
-  if (n<=leaf_size)
-    return;
-
-  // We determine the subdivision axis using inexact computation, which is okay since neither the result nor
-  // the asymptotic worst case complexity depends upon any properties of the spatial_sort whatsoever.
-  const Box<EV> box = bounding_box(X.project<EV,&Point::x>());
-  const int axis = box.sizes().argmax();
-
-  // Now go back to exact arithmetic to do the partition.
-  #define LESS(i,j) (axis_less(axis,X[i].y,X[i].x,X[j].y,X[j].x))
+template<int axis> static inline int spatial_partition(RawArray<Point> X, Random& random) {
+  // We use exact arithmetic to perform the partition, which is important in case many points are coincident
+  #define LESS(i,j) (i!=j && axis_less<axis>(X[i],X[j]))
 
   // We partition by picking three elements at random, and running partition based on the middle element.
+  const int n = X.size();
   int i0 = random.uniform<int>(0,n),
       i1 = random.uniform<int>(0,n),
       i2 = random.uniform<int>(0,n);
@@ -383,13 +374,30 @@ static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random)
   if (!LESS(i1,i2)) swap(i1,i2);
   if (!LESS(i0,i1)) swap(i0,i1);
   const auto Xmid = X[i1];
+  swap(X[i1],X.back());
 
-  // Perform the partition.  We use the version of partition from wikipedia: http://en.wikipedia.org/wiki/Quicksort#In-place_version
+  // Perform the partition.  We use the version of partition from Wikipedia: http://en.wikipedia.org/wiki/Quicksort#In-place_version
   int mid = 0;
-  for (const int i : range(n))
-    if (axis_less(axis,X[i].y,X[i].x,Xmid.y,Xmid.x))
+  for (const int i : range(n-1))
+    if (axis_less<axis>(X[i],Xmid))
       swap(X[i],X[mid++]);
+  return mid;
+}
 
+static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random) {
+  const int n = X.size();
+  if (n<=leaf_size)
+    return;
+
+  // We determine the subdivision axis using inexact computation, which is okay since neither the result nor
+  // the asymptotic worst case complexity depends upon any properties of the spatial_sort whatsoever.
+  const Box<EV> box = bounding_box(X.project<EV,&Point::y>());
+  const int axis = box.sizes().argmax();
+
+  // We use exact arithmetic to perform the partition, which is important in case many points are coincident
+  const int mid = axis==0 ? spatial_partition<0>(X,random)
+                          : spatial_partition<1>(X,random);
+  
   // Recursely sort both halves
   spatial_sort(X.slice(0,mid),leaf_size,random);
   spatial_sort(X.slice(mid,n),leaf_size,random);
@@ -410,7 +418,7 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
     int j = random_permute(n,key,i);
     const int bin = min(integer_log(j+1),bins-1);
     j = (1<<bin)-1+bin_counts[bin]++;
-    X[j] = tuple(Xin[i],i);
+    X[j] = tuple(i,Xin[i]);
   }
 
   // Spatially sort each bin down to clusters of size 64.
@@ -424,9 +432,9 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
   }
 
   // Add 3 sentinel points at infinity
-  X[n+0] = tuple(EV(-bound,-bound),n+0);
-  X[n+1] = tuple(EV( bound, 0),    n+1);
-  X[n+2] = tuple(EV(-bound, bound),n+2);
+  X[n+0] = tuple(n+0,EV(-bound,-bound));
+  X[n+1] = tuple(n+1,EV( bound, 0)    );
+  X[n+2] = tuple(n+2,EV(-bound, bound));
 
   return X;
 }
@@ -442,7 +450,7 @@ template<class Mesh,class Inputs> static inline Ref<Mesh> delaunay_helper(const 
   const auto mesh = deterministic_exact_delaunay<Mesh>(X,validate);
 
   // Undo the vertex permutation
-  mesh->permute_vertices(X.flat.slice(0,n).project<int,&Point::y>().copy());
+  mesh->permute_vertices(X.flat.slice(0,n).project<int,&Point::x>().copy());
   return mesh;
 }
 

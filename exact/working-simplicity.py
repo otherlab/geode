@@ -11,7 +11,7 @@ the original method, see
 
 Unfortunately, the complexity of the expanded shift polynomial is exponential in the complexity
 of the predicate.  Most of the time evaluating only a few terms will suffice, but code generation
-is mandatory if we want to scale to more than a handful of simple predicates.  We use SymPy for
+is mandatory if we want to scale to more than a handful of simple predicates.  We use Sympy for
 most of the necessary symbolic computation, though we also need to roll our own symbolic polynomial
 class to prevent the coefficients from being unnecessarily expanded.
 
@@ -20,7 +20,7 @@ To regenerate the predicate code, run
     cd core/exact
     ./simplicity.py
 
-The resulting predicates.{h,cpp} are checked into git so that users do not need SymPy to compile.
+The resulting predicates.{h,cpp} are checked into git so that users do not need Sympy to compile.
 '''
 
 from __future__ import with_statement

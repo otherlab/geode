@@ -15,6 +15,7 @@ template<class T0,class T1,class T2,class T3,class T4>
 class Tuple<T0,T1,T2,T3,T4>
 {
 public:
+  enum { m = 5 };
   T0 x0;T1 x1;T2 x2;T3 x3;T4 x4;
 
   Tuple()

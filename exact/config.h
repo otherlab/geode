@@ -16,13 +16,16 @@
  */
 
 #include <other/core/utility/config.h>
+#include <other/core/structure/Tuple.h>
+#include <other/core/vector/Vector.h>
 #include <stdint.h>
 namespace other {
 namespace exact {
 
 // Integer values in [-bound,bound] are safely exactly representable.  To allow a bit of
 // slack for algorithms to use, all quantized points will live in roughly [-bound,bound]/1.01.
-const int bound = (1<<24)-1;
+const int log_bound = 24;
+const int bound = (1<<log_bound)-1;
 
 // Base integer type for exact arithmetic
 typedef int32_t Int;
@@ -37,6 +40,17 @@ typedef Real Quantized;
 #else
 typedef Int Quantized;
 #endif
+
+// Like CGAL, GMP assumes that the C++11 standard library exists whenever C++11 does.  This is false for clang.
+#define __GMPXX_USE_CXX11 0
+
+// Typedefs for indexed points
+template<int d> struct Point {
+  typedef Tuple<int,Vector<exact::Int,d>> type;
+  BOOST_STATIC_ASSERT(sizeof(type)==sizeof(int)+d*sizeof(exact::Int));
+};
+typedef typename Point<2>::type Point2;
+typedef typename Point<2>::type Point3;
 
 }
 }

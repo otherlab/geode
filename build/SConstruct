@@ -178,6 +178,7 @@ external('libpng',flags=['USE_LIBPNG'],libs=['png'],pattern=r'PngFile',cpppath=[
 external('openexr',flags=['USE_OPENEXR'],libs=['IlmImf','Half','Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
 external('atlas',flags=['OTHER_BLAS'],libs=['cblas','lapack','atlas'])
 external('openblas',flags=['OTHER_BLAS'],libs=['lapack','blas'])
+external('gmp',flags=['OTHER_GMP'],libs=['gmp','gmpxx'])
 if darwin:
   external('accelerate',default=1,flags=['OTHER_BLAS'],frameworks=['Accelerate'])
 if windows:
