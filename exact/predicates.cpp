@@ -2,11 +2,11 @@
 
 #include <other/core/exact/predicates.h>
 #include <other/core/exact/Exact.h>
+#include <other/core/exact/math.h>
 #include <other/core/exact/perturb.h>
 #include <other/core/array/RawArray.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
-#include <other/core/utility/IRange.h>
 namespace other {
 
 using std::cout;
@@ -21,8 +21,8 @@ typedef Vector<Exact<1>,3> LV3;
 
 template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<exact::Int,d>> a, const Tuple<int,Vector<exact::Int,d>> b) {
   const typename Point<d>::type X[2] = {a,b};
-  struct F { static inline mpz_class eval(RawArray<const Vector<exact::Int,d>> X) {
-    return X[1][axis]-X[0][axis];
+  struct F { static inline Exact<> eval(RawArray<const Vector<exact::Int,d>> X) {
+    return Exact<>(X[1][axis]-X[0][axis]);
   }};
   return perturbed_sign(F::eval,1,RawArray<const typename Point<d>::type>(2,X));
 }
@@ -30,56 +30,6 @@ template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<exact:
 #define IAL(d,axis) template bool axis_less_degenerate<axis,d>(const Tuple<int,Vector<exact::Int,d>>,const Tuple<int,Vector<exact::Int,d>>);
 IAL(2,0) IAL(2,1)
 IAL(3,0) IAL(3,1) IAL(3,2)
-
-// Generic perturbation wrapper
-
-template<class F,int d,class... entries> static mpz_class wrapped_predicate(RawArray<const Vector<exact::Int,d>> X) {
-  typedef Vector<Exact<1>,d> LV;
-  assert(X.size()==sizeof...(entries));
-  return Exact<100>(F::eval(LV(X[entries::value])...).n).n;
-}
-
-template<class F,int d,class... entries> OTHER_ALWAYS_INLINE static inline auto wrap_predicate(Types<entries...>)
-  -> decltype(&wrapped_predicate<F,d,entries...>) {
-  return &wrapped_predicate<F,d,entries...>;
-}
-
-template<class F,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed_predicate(const Args... args) {
-  const int n = sizeof...(Args);
-  const int d = First<Args...>::type::second_type::m;
-  typedef Vector<Exact<1>,d> LV;
-  const int degree = decltype(F::eval(LV(args.y)...))::degree;
-
-  // Evaluate with integers first, hoping for a nonzero
-  if (const int s = sign(F::eval(LV(args.y)...)))
-    return s>0;
-
-  // Fall back to symbolic perturbation
-  const typename Point<d>::type X[n] = {args...};
-  return perturbed_sign(wrap_predicate<F,d>(IRange<sizeof...(Args)>()),degree,RawArray<const typename Point<d>::type>(n,X));
-}
-
-// Geometric utility functions.  These are more general than their equivalents in core/vector: they can operate on tuples with varying precision.
-
-template<class U,class V> static auto edot(const U& u, const V& v)
-  -> typename boost::enable_if_c<U::m==2 && V::m==2, decltype(u.x*v.x+u.y*v.y)>::type {
-  return u.x*v.x+u.y*v.y;
-}
-
-template<class U,class V> static auto edot(const U& u, const V& v)
-  -> typename boost::enable_if_c<U::m==3 && V::m==3, decltype(u.x*v.x+u.y*v.y+u.z*v.z)>::type {
-  return u.x*v.x+u.y*v.y+u.z*v.z;
-}
-  
-template<class U,class V> static auto edet(const U& u, const V& v)
-  -> typename boost::enable_if_c<U::m==2 && V::m==2,decltype(u.x*v.y-u.y*v.x)>::type {
-  return u.x*v.y-u.y*v.x;
-}
-
-template<class U,class V,class W> static auto edet(const U& u, const V& v, const W& w)
-  -> typename boost::enable_if_c<U::m==3 && V::m==3 && W::m==3,decltype(u.x*(v.y*w.z-v.z*w.y)+v.x*(w.y*u.z-w.z*u.y)+w.x*(u.y*v.z-u.z*v.y))>::type {
-  return u.x*(v.y*w.z-v.z*w.y)+v.x*(w.y*u.z-w.z*u.y)+w.x*(u.y*v.z-u.z*v.y);
-}
 
 // Polynomial predicates
 
