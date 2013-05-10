@@ -8,6 +8,7 @@
 #include <other/core/math/copysign.h>
 #include <other/core/structure/UnionFind.h>
 #include <other/core/geometry/SimplexTree.h>
+#include <other/core/geometry/ParticleTree.h>
 #include <other/core/geometry/Ray.h>
 #include <boost/algorithm/string.hpp>
 #include <other/core/utility/path.h>
@@ -1193,6 +1194,16 @@ Array<Vector<int,3> > TriMesh::elements() const {
   return tris;
 }
 
+Array<Vector<int,2> > TriMesh::segments() const {
+  Array<Vector<int,2> > segs;
+  segs.preallocate(n_edges());
+  for (auto eh : edge_handles()) {
+    Vector<VertexHandle, 2> vh = vertex_handles(eh);
+    segs.append(Vector<int,2>(vh[0].idx(),vh[1].idx()));
+  }
+  return segs;
+}
+
 RawArray<const Vector<real,3> > TriMesh::X() const {
   return RawArray<const Vector<real,3> >(n_vertices(),points());
 }
@@ -1433,7 +1444,7 @@ real TriMesh::volume() const {
 
   real sum=0;
 
-  for (TriMesh::ConstFaceIter f = faces_begin(); f != faces_end(); ++f) {
+  for (TriMesh::ConstFaceIter f = faces_sbegin(); f != faces_end(); ++f) {
     Triangle<Vector<real, 3> > t = triangle(f);
     sum+=det(t.x0,t.x1,t.x2);
   }
@@ -1637,6 +1648,18 @@ vector<Ref<TriMesh> > TriMesh::nested_components() const{
   return output;
 }
 
+Ref<SimplexTree<Vector<real,3>,2>> TriMesh::face_tree() const {
+  return new_<SimplexTree<TV,2>>(*new_<TriangleMesh>(elements()),X().copy(),4);
+}
+
+Ref<SimplexTree<Vector<real,3>,1>> TriMesh::edge_tree() const {
+  return new_<SimplexTree<TV,1>>(*new_<SegmentMesh>(segments()),X().copy(),4);
+}
+
+Ref<ParticleTree<Vector<real,3>>> TriMesh::point_tree() const {
+  return new_<ParticleTree<Vector<real,3>>>(X().copy(),4);
+}
+
 OMSilencer::OMSilencer(bool log, bool err, bool out)
   : log_enabled(::omlog().is_enabled())
   , err_enabled(::omerr().is_enabled())
@@ -1752,6 +1775,9 @@ void wrap_trimesh() {
     .OTHER_METHOD(transform)
     .OTHER_METHOD(translate)
     .OTHER_METHOD(boundary_loops)
+    .OTHER_METHOD(face_tree)
+    .OTHER_METHOD(edge_tree)
+    .OTHER_METHOD(point_tree)
     .OTHER_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
     .OTHER_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
     .OTHER_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
