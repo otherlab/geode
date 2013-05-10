@@ -1,6 +1,5 @@
 #ifdef USE_OPENMESH
 #include <other/core/openmesh/decimate.h>
-#include <OpenMesh/Tools/Decimater/DecimaterT.hh>
 #include <OpenMesh/Tools/Decimater/ModQuadricT.hh>
 #include <OpenMesh/Tools/Decimater/ModNormalFlippingT.hh>
 #include <OpenMesh/Tools/Decimater/ModBaseT.hh>
@@ -131,7 +130,8 @@ private:
 
 };
 
-
+template class FaceQualityModule<DecimaterT>;
+template class BoundaryPreservationModule<DecimaterT>;
 
 int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxquadricerror, double min_face_quality) {
 
@@ -139,8 +139,6 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
   mesh.request_face_normals();
   mesh.update_face_normals();
 
-  // Decimater type
-  typedef OpenMesh::Decimater::DecimaterT<TriMesh> DecimaterT;
   DecimaterT decimater(mesh);
 
   // module types

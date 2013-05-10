@@ -1,9 +1,17 @@
 #pragma once
 
 #include <other/core/openmesh/TriMesh.h>
+#include <OpenMesh/Tools/Decimater/DecimaterT.hh>
 
 #ifdef USE_OPENMESH
 namespace other {
+
+// Decimater type
+typedef OpenMesh::Decimater::DecimaterT<TriMesh> DecimaterT;
+
+// these are instantiated for DecimaterT
+template<class Decimater> class FaceQualityModule;
+template<class Decimater> class BoundaryPreservationModule;
 
 // Decimate by collapsing edges, prioritized by quadric error, until no more
 // collapsible edges are found. The angle error is the maximum allowed change
