@@ -30,7 +30,7 @@ static void matrix_permutation(TriMesh const &M,
   }
 
   // first all inside ones, append the boundary at the end
-  V.append_elements(VB);
+  V.extend(VB);
 
   for(int i=0; i < (int)V.size(); ++i){
     id_to_handle.insert(make_pair(i,V[i]));
@@ -136,7 +136,7 @@ Ref<TriMesh> smooth_mesh(TriMesh const &m, real dt, int iters, bool bilaplace) {
   }
 
   Array<VertexHandle> V(VI);
-  V.append_elements(VB);
+  V.extend(VB);
 
   for(int i=0; i < (int)V.size(); ++i){
     id_to_handle.insert(make_pair(i,V[i]));

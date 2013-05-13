@@ -4,8 +4,14 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/AnalyticImplicit.h>
 #include <other/core/geometry/Ray.h>
+#include <other/core/array/NdArray.h>
+#include <other/core/array/NestedArray.h>
+#include <other/core/array/view.h>
 #include <other/core/python/from_python.h>
 #include <other/core/python/exceptions.h>
+#include <other/core/python/numpy.h>
+#include <other/core/python/Ptr.h>
+#include <other/core/python/wrap.h>
 #include <other/core/math/cube.h>
 #include <other/core/utility/format.h>
 #include <other/core/structure/Tuple.h>
@@ -105,4 +111,70 @@ INSTANTIATION_HELPER(T,1)
 INSTANTIATION_HELPER(T,2)
 INSTANTIATION_HELPER(T,3)
 
+#ifdef OTHER_PYTHON
+
+static void bounding_box_py_helper(Array<Box<T>>& box, PyObject* object) {
+  if (const auto array = numpy_from_any(object,NumpyDescr<T>::descr(),0,100,NPY_ARRAY_CARRAY_RO,0)) {
+    // object is a rectangular numpy array
+    const int rank = PyArray_NDIM((PyArrayObject*)array);
+    if (!rank) {
+      OTHER_DECREF(array);
+      throw TypeError("bounding_box: possibly nested array of vectors expected, found a bare scalar");
+    }
+    const int d = PyArray_DIMS((PyArrayObject*)array)[rank-1];
+    if (!box.size())
+      box.resize(d);
+    if (box.size() != d) {
+      OTHER_DECREF(array);
+      throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),d));
+    }
+    const int count = PyArray_SIZE((PyArrayObject*)array)/d;
+    const T* data = (const T*)PyArray_DATA((PyArrayObject*)array);
+    for (int i=0;i<count;i++)
+      for (int j=0;j<d;j++)
+        box[j].enlarge(data[i*d+j]);
+    OTHER_DECREF(array);
+  } else {
+    // object is either badly formed or has irregular dimensions.  Loop over the structure manually.
+    const auto iterator = steal_ref_check(PyObject_GetIter(object));
+    while (const auto item = steal_ptr(PyIter_Next(&*iterator)))
+      bounding_box_py_helper(box,item.get());
+    if (PyErr_Occurred()) // PyIter_Next returns 0 for both done and error, so check what happened
+      throw_python_error();
+  }
+}
+
+static PyObject* bounding_box_py(PyObject* object) {
+  if (is_numpy_array(object)) {
+    const auto array = from_python<NdArray<const T>>(object);
+    OTHER_ASSERT(array.rank()>=2);
+    if (array.shape.back()==2)
+      return to_python(bounding_box(vector_view<2>(array.flat)));
+    else if (array.shape.back()==3)
+      return to_python(bounding_box(vector_view<3>(array.flat)));
+    else
+      throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",array.shape.back()));
+  } else if (is_nested_array(object))
+    return bounding_box_py(&*nested_array_from_python_helper(object).y);
+
+  // object is neither a numpy array nor a NestedArray, so loop over it manually
+  Array<Box<T>> box;
+  bounding_box_py_helper(box,object);
+  if (box.size()==2)
+    return to_python(Box<Vector<T,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
+  else if (box.size()==3)
+    return to_python(Box<Vector<T,3>>(vec(box[0].min,box[1].min,box[2].min),vec(box[0].max,box[1].max,box[2].max)));
+  else
+    throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",box.size()));
+}
+
+#endif
+
+}
+using namespace other;
+
+void wrap_box_vector() {
+#ifdef OTHER_PYTHON
+  OTHER_FUNCTION_2(bounding_box,bounding_box_py)
+#endif
 }

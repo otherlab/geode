@@ -132,6 +132,10 @@ private:
   typedef typename mpl::if_<boost::is_const<T_>,const ElementOfT,ElementOfT>::type TOfT;
 public:
 
+  bool empty() const {
+    return !derived().size();
+  }
+
   template<class TArray1> bool operator==(const TArray1& v) const {
     STATIC_ASSERT_SAME(T,typename TArray1::Element);
     const TArray& self = derived();
@@ -618,11 +622,12 @@ inner_product(const ArrayBase<TM,TArray1>& m_,const ArrayBase<T,TArray2>& a1_,co
 
 template<class T,class TArray> inline std::ostream& operator<<(std::ostream& output, const ArrayBase<T,TArray>& a) {
   const TArray& a_ = a.derived();
-  int m = a_.size();
+  const int m = a_.size();
   output << '[';
-  if (m) {
-    output << a_[0];
-    for (int i=1;i<m;i++) output<<','<<a_[i];
+  for (int i=0;i<m;i++) {
+    if (i)
+      output << ',';
+    output << a_[i];
   }
   return output<<']';
 }

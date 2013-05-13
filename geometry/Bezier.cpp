@@ -33,8 +33,8 @@ template<int d> static Vector<real,d> point(Vector<real,d> v0, Vector<real,d> v1
   return result;
 }
 
-template<int d> vector<Vector<real,d> > Bezier<d>::segment(const InvertableBox& range, int res) const{
-  vector<Vector<real,d> > path;
+template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& range, int res) const{
+  Array<Vector<real,d>> path;
   if(knots.size()<=1) return path;
   Vector<real,d> p1, p2, p3, p4;
   auto it = knots.upper_bound(range.begin);
@@ -59,18 +59,18 @@ template<int d> vector<Vector<real,d> > Bezier<d>::segment(const InvertableBox& 
 
     for(int j=0;j<res;j++){
       real t = j/(real)(res); // [0,1)
-      path.push_back(other::point(p1,p2,p3,p4,t));
+      path.append(other::point(p1,p2,p3,p4,t));
     }
   }
-  path.push_back(end->second->pt);
+  path.append(end->second->pt);
 
   return path;
 }
 
-template<int d> vector<Vector<real,d> > Bezier<d>::alen_segment(const InvertableBox& range, int res) const{
-  vector<Vector<real,d> > path, d_path;
+template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBox& range, int res) const{
+  Array<Vector<real,d>> path, d_path;
   d_path = segment(range,200);
-  real len = polyline_length(d_path);
+  real len = open_polygon_length(d_path);
   real step = len/res;
   real tstep = .001; //TODO: multi-resolution/binary-search?
 
@@ -86,7 +86,7 @@ template<int d> vector<Vector<real,d> > Bezier<d>::alen_segment(const Invertable
   if(it == knots.begin()) it = knots.end();
   it--;
 
-  path.push_back(it->second->pt);
+  path.append(it->second->pt);
   real t = tstep;
   real dst = tstep;
 
@@ -115,14 +115,14 @@ template<int d> vector<Vector<real,d> > Bezier<d>::alen_segment(const Invertable
         if(t>=1) break;
       }
       if(t<1) {
-        path.push_back(pt);
+        path.append(pt);
         dst = 0;
       }
     }
     t-=1;
   } while(it->second != end->second);
 
-  path.push_back(end->second->pt);
+  path.append(end->second->pt);
 
   OTHER_ASSERT(path.size() >= 2 && (int)path.size() == res +1);
   return path;
@@ -167,13 +167,13 @@ template<int d> Vector<real,d> Bezier<d>::tangent(real t) const{
   return (tt.transposed()*AP).transposed().column(0).normalized();
 }
 
-template<int d> vector<Vector<real,d>> Bezier<d>::evaluate(int res) const{
-  if(t_range == Box<real>(0)) return vector<Vector<real,d>>();
+template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(int res) const{
+  if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
   return segment(InvertableBox(t_range.min, t_range.max),res);
 }
 
-template<int d> vector<Vector<real,d>> Bezier<d>::alen_evaluate(int res) const{
-  if(t_range == Box<real>(0)) return vector<Vector<real,d>>();
+template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(int res) const{
+  if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
   return segment(InvertableBox(t_range.min, t_range.max),res);
 }
 
@@ -323,30 +323,30 @@ std::ostream& operator<<(std::ostream& os, const InvertableBox& ib) {
 }
 
 }
-
 using namespace other;
 
-void wrap_knot(){
-  typedef Knot<2> Self;
-  Class<Self>("Knot")
-    .OTHER_INIT()
-    .OTHER_FIELD(pt)
-    .OTHER_FIELD(tangent_in)
-    .OTHER_FIELD(tangent_out)
-    ;
-}
-
 void wrap_bezier() {
-  typedef Bezier<2> Self;
-  Class<Self>("Bezier")
-    .OTHER_INIT()
-    .OTHER_FIELD(knots)
-    .OTHER_METHOD(t_max)
-    .OTHER_METHOD(t_min)
-    .OTHER_METHOD(closed)
-    .OTHER_METHOD(close)
-    .OTHER_METHOD(fuse_ends)
-    .OTHER_METHOD(evaluate)
-    .OTHER_METHOD(append_knot)
-    ;
+  {
+    typedef Knot<2> Self;
+    Class<Self>("Knot")
+      .OTHER_INIT()
+      .OTHER_FIELD(pt)
+      .OTHER_FIELD(tangent_in)
+      .OTHER_FIELD(tangent_out)
+      ;
+  }
+  {
+    typedef Bezier<2> Self;
+    Class<Self>("Bezier")
+      .OTHER_INIT()
+      .OTHER_FIELD(knots)
+      .OTHER_METHOD(t_max)
+      .OTHER_METHOD(t_min)
+      .OTHER_METHOD(closed)
+      .OTHER_METHOD(close)
+      .OTHER_METHOD(fuse_ends)
+      .OTHER_METHOD(evaluate)
+      .OTHER_METHOD(append_knot)
+      ;
+  }
 }

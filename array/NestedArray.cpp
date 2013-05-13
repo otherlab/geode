@@ -52,9 +52,13 @@ fail:
   return 0;
 }
 
-Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object) {
+bool is_nested_array(PyObject* object) {
   OTHER_ASSERT(nested_array_type);
-  if (!PyObject_IsInstance(object,(PyObject*)nested_array_type))
+  return PyObject_IsInstance(object,(PyObject*)nested_array_type);
+}
+
+Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object) {
+  if (!is_nested_array(object))
     throw_type_error(object,nested_array_type);
   return vec(steal_ref_check(PyObject_GetAttr(object,&*offsets_string)),
              steal_ref_check(PyObject_GetAttr(object,&*flat_string)));

@@ -7,12 +7,10 @@
 #include <other/core/python/Ref.h>
 #include <other/core/math/constants.h>
 #include <tr1/unordered_map>
-#include <vector>
 #include <map>
 
 namespace other{
 
-using std::vector;
 using std::map;
 using std::pair;
 using std::make_pair;
@@ -100,10 +98,10 @@ protected:
   OTHER_EXPORT Bezier(const Bezier<d>& b);
 public:
   map<real,Ref<Knot<d>>> knots;
-  OTHER_EXPORT vector<TV> segment(const InvertableBox& range, int res) const ;
-  OTHER_EXPORT vector<TV> alen_segment(const InvertableBox& range, int res) const ;
-  OTHER_EXPORT vector<TV> evaluate(int res) const ;
-  OTHER_EXPORT vector<TV> alen_evaluate(int res) const ;
+  OTHER_EXPORT Array<TV> segment(const InvertableBox& range, int res) const ;
+  OTHER_EXPORT Array<TV> alen_segment(const InvertableBox& range, int res) const ;
+  OTHER_EXPORT Array<TV> evaluate(int res) const ;
+  OTHER_EXPORT Array<TV> alen_evaluate(int res) const ;
   OTHER_EXPORT void append_knot(const TV& pt, TV tin = T(inf)*TV::ones(), TV tout = T(inf)*TV::ones());
   OTHER_EXPORT void insert_knot(const real t) ;
   OTHER_EXPORT Span<d> segment(real t) const ;
