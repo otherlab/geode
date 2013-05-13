@@ -12,14 +12,21 @@
 #include <other/core/array/Array.h>
 namespace other {
 
+using std::ostream;
+OTHER_CORE_EXPORT bool is_nested_array(PyObject* object);
 OTHER_CORE_EXPORT Array<int> nested_array_offsets(RawArray<const int> lengths);
 
-template<class T>
+template<class T,bool frozen> // frozen=true
 class NestedArray {
+  struct Unusable {};
 public:
   typedef typename Array<T>::Element Element;
+  template<class S,bool f> struct Compatible { static const bool value = boost::is_same<Element,typename boost::remove_const<S>::type>::value && boost::is_const<T>::value>=boost::is_const<S>::value; };
 
-  Array<const int> offsets;
+  // When growing an array incrementally via append or extend, set frozen=false to make offsets mutable.
+  typedef Array<typename mpl::if_c<frozen,const int,int>::type> Offsets;
+
+  Offsets offsets;
   Array<T> flat;
 
   NestedArray()
@@ -28,33 +35,43 @@ public:
   NestedArray(RawArray<const int> lengths, bool initialize=true)
     : offsets(nested_array_offsets(lengths)), flat(offsets.back(),initialize) {}
 
-  template<class S> NestedArray(const NestedArray<S>& other) {
-    *this = other;
+  NestedArray(const NestedArray& other)
+    : offsets(other.offsets)
+    , flat(other.flat) {}
+
+  template<class S,bool f> NestedArray(const NestedArray<S,f>& other, typename boost::enable_if<Compatible<S,f>,Unusable>::type unusable=Unusable())
+    : offsets(other.offsets)
+    , flat(other.flat) {}
+
+  // Build from manually constructed offsets and flat arrays
+  NestedArray(const Offsets& offsets, const Array<T>& flat)
+    : offsets(offsets), flat(flat) {
+    assert(offsets.back()==flat.size());
   }
 
   // Note: To convert vector<vector<T>> to a NestedArray, use copy below
 
-  template<class S> NestedArray& operator=(const NestedArray<S>& other) {
+  template<class S,bool f> NestedArray& operator=(const NestedArray<S,f>& other) {
     offsets = other.offsets;
     flat = other.flat;
     return *this;
   }
 
-  template<class S> static NestedArray zeros_like(const NestedArray<S>& other) {
+  template<class S,bool f> static NestedArray zeros_like(const NestedArray<S,f>& other) {
     NestedArray array;
     array.offsets = other.offsets;
     array.flat.resize(array.offsets.back());
     return array;
   }
 
-  template<class S> static NestedArray empty_like(const NestedArray<S>& other) {
+  template<class S,bool f> static NestedArray empty_like(const NestedArray<S,f>& other) {
     NestedArray array;
     array.offsets = other.offsets;
     array.flat.resize(array.offsets.back(),false,false);
     return array;
   }
 
-  template<class S> static NestedArray reshape_like(Array<T> flat,const NestedArray<S>& other) {
+  template<class S,bool f> static NestedArray reshape_like(Array<T> flat,const NestedArray<S,f>& other) {
     OTHER_ASSERT(other.flat.size()==flat.size());
     NestedArray array;
     array.offsets = other.offsets;
@@ -83,6 +100,10 @@ public:
 
   int size(int i) const {
     return offsets[i+1]-offsets[i];
+  }
+
+  bool empty() const {
+    return !size();
   }
 
   bool valid(int i) const {
@@ -121,7 +142,54 @@ public:
   ArrayIter<NestedArray> end() const {
     return ArrayIter<NestedArray>(*this,size());
   }
+
+  NestedArray<T> freeze() const {
+    return NestedArray<T>(offsets,flat);
+  }
+
+  template<class TA> void append(const TA& other) {
+    static_assert(!frozen,"To use append, set frozen=false and eventually call freeze()");
+    offsets.append(offsets.back()+other.size());
+    flat.extend(other);
+  }
+
+  template<class S,bool f> void extend(const NestedArray<S,f>& other) {
+    static_assert(!frozen,"To use extend, set frozen=false and eventually call freeze()");
+    offsets.extend(offsets.back()+other.offsets.slice(1,other.offsets.size()));
+    flat.extend(other.flat);
+  }
 };
+
+template<class T> inline ostream& operator<<(ostream& output, const NestedArray<T>& a) {
+  output << '[';
+  for (int i=0;i<a.size();i++) {
+    if (i)
+      output << ',';
+    output << a[i];
+  }
+  return output<<']';
+}
+
+template<class TA> NestedArray<typename TA::value_type> make_nested(const TA& a0) {
+  NestedArray<typename TA::value_type> nested(asarray(vec((int)a0.size())),false);
+  nested[0] = a0;
+  return nested;
+}
+
+template<class TA> NestedArray<typename TA::value_type> make_nested(const TA& a0, const TA& a1) {
+  NestedArray<typename TA::value_type> nested(asarray(vec((int)a0.size(),(int)a1.size())),false);
+  nested[0] = a0;
+  nested[1] = a1;
+  return nested;
+}
+
+template<class TA> NestedArray<typename TA::value_type::value_type,false> asnested(const TA& a) {
+  return NestedArray<typename TA::value_type::value_type,false>::copy(a);
+}
+
+template<class T,bool frozen> const NestedArray<T,frozen>& asnested(const NestedArray<T,frozen>& a) {
+  return a;
+}
 
 #ifdef OTHER_PYTHON
 OTHER_CORE_EXPORT PyObject* nested_array_to_python_helper(PyObject* offsets, PyObject* flat);
