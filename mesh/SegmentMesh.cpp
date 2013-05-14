@@ -2,7 +2,7 @@
 // Class SegmentMesh
 //#####################################################################
 #include <other/core/mesh/SegmentMesh.h>
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/array/sort.h>
 #include <other/core/array/view.h>
 #include <other/core/python/Class.h>
@@ -39,7 +39,7 @@ int SegmentMesh::compute_node_count() const {
 
 SegmentMesh::~SegmentMesh() {}
 
-const Tuple<NestedArray<const int>,NestedArray<const int>>& SegmentMesh::polygons() const {
+const Tuple<Nested<const int>,Nested<const int>>& SegmentMesh::polygons() const {
   if (nodes() && !polygons_.x.size() && !polygons_.y.size()) {
     const auto incident = incident_elements();
     // Start from each segment, compute the contour that contains it and classify as either closed or open
@@ -82,18 +82,18 @@ const Tuple<NestedArray<const int>,NestedArray<const int>>& SegmentMesh::polygon
       }
     }
     // Store results
-    polygons_ = tuple(NestedArray<const int>::copy(closed),NestedArray<const int>::copy(open));
+    polygons_ = tuple(Nested<const int>::copy(closed),Nested<const int>::copy(open));
   }
   return polygons_;
 }
 
-NestedArray<const int> SegmentMesh::neighbors() const {
+Nested<const int> SegmentMesh::neighbors() const {
   if (nodes() && !neighbors_.size()) {
     Array<int> lengths(nodes());
     for(int s=0;s<elements.size();s++)
       for(int a=0;a<2;a++)
         lengths[elements[s][a]]++;
-    neighbors_ = NestedArray<int>(lengths);
+    neighbors_ = Nested<int>(lengths);
     for(int s=0;s<elements.size();s++) {
       int i,j;elements[s].get(i,j);
       neighbors_(i,neighbors_.size(i)-lengths[i]--) = j;
@@ -110,7 +110,7 @@ NestedArray<const int> SegmentMesh::neighbors() const {
       lengths[i] = int(last-n.begin());
     }
     if (need_copy) {
-      NestedArray<int> copy(lengths);
+      Nested<int> copy(lengths);
       for(int i=0;i<nodes();i++)
         copy[i] = neighbors_[i].slice(0,lengths[i]);
       neighbors_ = copy;
@@ -119,12 +119,12 @@ NestedArray<const int> SegmentMesh::neighbors() const {
   return neighbors_;
 }
 
-NestedArray<const int> SegmentMesh::incident_elements() const {
+Nested<const int> SegmentMesh::incident_elements() const {
   if (nodes() && !incident_elements_.size()) {
     Array<int> lengths(nodes());
     for (int i=0;i<vertices.size();i++)
       lengths[vertices[i]]++;
-    incident_elements_=NestedArray<int>(lengths);
+    incident_elements_=Nested<int>(lengths);
     for (int s=0;s<elements.size();s++) for(int i=0;i<2;i++) {
       int p=elements[s][i];
       incident_elements_(p,incident_elements_.size(p)-lengths[p]--)=s;
@@ -136,7 +136,7 @@ NestedArray<const int> SegmentMesh::incident_elements() const {
 Array<const Vector<int,2> > SegmentMesh::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
-    NestedArray<const int> incident = incident_elements();
+    Nested<const int> incident = incident_elements();
     for (int s=0;s<elements.size();s++) {
       Vector<int,2> seg = elements[s];
       for (int i=0;i<2;i++) {
@@ -165,7 +165,7 @@ Array<TV2> SegmentMesh::element_normals(RawArray<const TV2> X) const {
 
 Array<int> SegmentMesh::nonmanifold_nodes(bool allow_boundary) const {
   Array<int> nonmanifold;
-  NestedArray<const int> incident_elements = this->incident_elements();
+  Nested<const int> incident_elements = this->incident_elements();
   for (int i=0;i<incident_elements.size();i++) {
     RawArray<const int> incident = incident_elements[i];
     if (   incident.size()>2 // Too many segments
@@ -178,7 +178,7 @@ Array<int> SegmentMesh::nonmanifold_nodes(bool allow_boundary) const {
 
 Array<const Vector<int,3>> SegmentMesh::bending_tuples() const {
   if (!bending_tuples_valid) {
-    NestedArray<const int> neighbors = this->neighbors();
+    Nested<const int> neighbors = this->neighbors();
     Array<Vector<int,3>> tuples;
     for (const int p : range(nodes())) {
       RawArray<const int> near = neighbors[p];

@@ -49,12 +49,12 @@ Ref<const SegmentMesh> TriangleMesh::segment_mesh() const {
   return ref(segment_mesh_);
 }
 
-NestedArray<const int> TriangleMesh::incident_elements() const {
+Nested<const int> TriangleMesh::incident_elements() const {
   if (!incident_elements_.size() && nodes()) {
     Array<int> lengths(nodes());
     for (int i=0;i<vertices.size();i++)
       lengths[vertices[i]]++;
-    incident_elements_ = NestedArray<int>(lengths);
+    incident_elements_ = Nested<int>(lengths);
     for (int t=0;t<elements.size();t++) for(int i=0;i<3;i++) {
       int p = elements[t][i];
       incident_elements_(p,incident_elements_.size(p)-lengths[p]--)=t;
@@ -66,7 +66,7 @@ NestedArray<const int> TriangleMesh::incident_elements() const {
 Array<const Vector<int,3> > TriangleMesh::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
-    NestedArray<const int> incident = incident_elements();
+    Nested<const int> incident = incident_elements();
     for (int t=0;t<elements.size();t++) {
       Vector<int,3> tri = elements[t];
       for (int j=0,i=2;j<3;i=j++) {
@@ -150,7 +150,7 @@ Array<const int> TriangleMesh::nodes_touched() const {
   return nodes_touched_;
 }
 
-NestedArray<const int> TriangleMesh::sorted_neighbors() const {
+Nested<const int> TriangleMesh::sorted_neighbors() const {
   if (!sorted_neighbors_.size() && elements.size()) {
     Hashtable<Vector<int,2>,int> next; // next[(i,j)] = k if (i,j,k) is a triangle
     Hashtable<Vector<int,2>,int> prev; // prev[(i,k)] = j if (i,j,k) is a triangle
@@ -162,8 +162,8 @@ NestedArray<const int> TriangleMesh::sorted_neighbors() const {
       prev.set(vec(tri[1],tri[0]),tri[2]);
       prev.set(vec(tri[2],tri[1]),tri[0]);
     }
-    NestedArray<const int> neighbors = segment_mesh()->neighbors();
-    NestedArray<int> sorted_neighbors = NestedArray<int>::empty_like(neighbors);
+    Nested<const int> neighbors = segment_mesh()->neighbors();
+    Nested<int> sorted_neighbors = Nested<int>::empty_like(neighbors);
     Hashtable<Vector<int,2> > done;
     for (int i=0;i<node_count;i++) {
       if (!neighbors.size(i))
@@ -268,7 +268,7 @@ Array<TV3> TriangleMesh::element_normals(RawArray<const TV3> X) const {
 
 Array<int> TriangleMesh::nonmanifold_nodes(bool allow_boundary) const {
   Array<int> nonmanifold;
-  NestedArray<const int> incident_elements = this->incident_elements();
+  Nested<const int> incident_elements = this->incident_elements();
   Array<Vector<int,2> > ring;
   Hashtable<int,Vector<int,2> > neighbors(32); // prev,next for each node in the ring
   const Vector<int,2> none(-1,-1);

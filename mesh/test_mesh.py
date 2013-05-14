@@ -3,7 +3,7 @@
 from __future__ import division
 
 from numpy import *
-from other.core import NestedArray, PolygonMesh, SegmentMesh, TriangleMesh
+from other.core import Nested, PolygonMesh, SegmentMesh, TriangleMesh
 from other.core.geometry.platonic import icosahedron_mesh, sphere_mesh
 from other.core.vector import relative_error
 
@@ -74,8 +74,8 @@ def test_polygons():
   segments = array([(0,0), # degenerate
                     (1,2),(2,3),(3,1), # closed
                     (4,5),(7,6),(6,4),(4,8),(8,9),(9,10)]) # nonmanifold 
-  closed = NestedArray([(0,),(1,2,3)])
-  open = NestedArray([(4,5),(7,6,4),(4,8,9,10)])
+  closed = Nested([(0,),(1,2,3)])
+  open = Nested([(4,5),(7,6,4),(4,8,9,10)])
   def closed_key(p):
     p = asarray(p)
     i = argmin(p) 
