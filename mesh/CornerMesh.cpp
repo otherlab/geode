@@ -2,7 +2,7 @@
 
 #include <other/core/mesh/CornerMesh.h>
 #include <other/core/array/convert.h>
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/python/Class.h>
 #include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
@@ -441,8 +441,8 @@ int CornerMesh::degree(VertexId v) const {
   return degree;
 }
 
-NestedArray<HalfedgeId> CornerMesh::boundary_loops() const {
-  NestedArray<HalfedgeId> loops;
+Nested<HalfedgeId> CornerMesh::boundary_loops() const {
+  Nested<HalfedgeId> loops;
   boost::dynamic_bitset<> seen(boundaries_.size());
   for (const auto start : boundary_edges())
     if (!seen[-1-start.id]) {

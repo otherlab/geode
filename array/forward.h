@@ -24,9 +24,9 @@ template<class T,int d=1> class RawArray;
 template<class T,int d=1> class Subarray;
 template<class T> class NdArray;
 template<class TArray,class TIndices=RawArray<const int> > class IndirectArray;
-class IdentityMap;
+class ARange;
 template<class T> class ConstantMap;
-template<class T> class NestedArray;
+template<class T,bool frozen=true> class Nested;
 template<class T> class NdArray;
 
 template<class T,class Id> class Field;

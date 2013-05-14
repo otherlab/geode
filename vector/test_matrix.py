@@ -46,7 +46,7 @@ def test_conversions():
     check(A,B)
 
 def test_sparse():
-    J=NestedArray([[1,0],[1,0,2],[1,2]],dtype=int32)
+    J=Nested([[1,0],[1,0,2],[1,2]],dtype=int32)
     A=array([-1,2,2,-1,-1,-1,2],dtype=other.core.real)
     M=SparseMatrix(J,A)
     assert M.rows()==M.columns()==3

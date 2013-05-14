@@ -10,7 +10,7 @@
 #pragma once
 
 #include <other/core/array/Array.h>
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/mesh/forward.h>
 #include <other/core/python/Object.h>
 #include <other/core/python/Ptr.h>
@@ -34,11 +34,11 @@ private:
   mutable Ptr<SegmentMesh> segment_mesh_;
   mutable bool bending_tuples_valid;
   mutable Array<Vector<int,4> > bending_tuples_; // i,j,k,l means triangles (i,j,k),(k,j,l)
-  mutable NestedArray<int> incident_elements_;
+  mutable Nested<int> incident_elements_;
   mutable Array<Vector<int,3> > adjacent_elements_;
   mutable Ptr<SegmentMesh> boundary_mesh_;
   mutable Array<int> nodes_touched_;
-  mutable NestedArray<const int> sorted_neighbors_;
+  mutable Nested<const int> sorted_neighbors_;
 
 protected:
 OTHER_CORE_EXPORT TriangleMesh(Array<const Vector<int,3> > elements);
@@ -55,12 +55,12 @@ public:
   }
 
   OTHER_CORE_EXPORT Ref<const SegmentMesh> segment_mesh() const;
-  OTHER_CORE_EXPORT NestedArray<const int> incident_elements() const; // vertices to triangles
+  OTHER_CORE_EXPORT Nested<const int> incident_elements() const; // vertices to triangles
   OTHER_CORE_EXPORT Array<const Vector<int,3> > adjacent_elements() const; // triangles to triangles
   OTHER_CORE_EXPORT Ref<SegmentMesh> boundary_mesh() const;
   OTHER_CORE_EXPORT Array<const Vector<int,4> > bending_tuples() const;
   OTHER_CORE_EXPORT Array<const int> nodes_touched() const;
-  OTHER_CORE_EXPORT NestedArray<const int> sorted_neighbors() const; // vertices to sorted one-ring
+  OTHER_CORE_EXPORT Nested<const int> sorted_neighbors() const; // vertices to sorted one-ring
   OTHER_CORE_EXPORT T area(RawArray<const TV2> X) const;
   OTHER_CORE_EXPORT T volume(RawArray<const TV3> X) const; // assumes a closed surface
   OTHER_CORE_EXPORT T surface_area(RawArray<const TV3> X) const;

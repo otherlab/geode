@@ -114,7 +114,7 @@ public:
     return IndirectArray<const TArray,TIndices&>(derived(),indices);
   }
 
-  IndirectArray<TArray,IdentityMap> prefix(const int prefix_size) const;
+  IndirectArray<TArray,ARange> prefix(const int prefix_size) const;
 
 private:
   typedef typename mpl::if_<boost::is_class<T>,T,Unusable>::type TIfClass;
@@ -131,6 +131,10 @@ private:
   typedef typename mpl::if_<IsVector<T>,ElementOf<T>,mpl::identity<Unusable> >::type::type ElementOfT;
   typedef typename mpl::if_<boost::is_const<T_>,const ElementOfT,ElementOfT>::type TOfT;
 public:
+
+  bool empty() const {
+    return !derived().size();
+  }
 
   template<class TArray1> bool operator==(const TArray1& v) const {
     STATIC_ASSERT_SAME(T,typename TArray1::Element);
@@ -618,11 +622,12 @@ inner_product(const ArrayBase<TM,TArray1>& m_,const ArrayBase<T,TArray2>& a1_,co
 
 template<class T,class TArray> inline std::ostream& operator<<(std::ostream& output, const ArrayBase<T,TArray>& a) {
   const TArray& a_ = a.derived();
-  int m = a_.size();
+  const int m = a_.size();
   output << '[';
-  if (m) {
-    output << a_[0];
-    for (int i=1;i<m;i++) output<<','<<a_[i];
+  for (int i=0;i<m;i++) {
+    if (i)
+      output << ',';
+    output << a_[i];
   }
   return output<<']';
 }
@@ -632,14 +637,14 @@ template<class T,class TArray> static inline Hash hash_reduce(const ArrayBase<T,
 }
 
 }
-#include <other/core/array/IdentityMap.h>
+#include <other/core/array/arange.h>
 #include <other/core/array/ProjectedArray.h>
 #include <other/core/array/Array.h>
 namespace other {
 
-template<class T_,class TArray> inline IndirectArray<TArray,IdentityMap> ArrayBase<T_,TArray>::prefix(const int prefix_size) const {
+template<class T_,class TArray> inline IndirectArray<TArray,ARange> ArrayBase<T_,TArray>::prefix(const int prefix_size) const {
   assert(prefix_size<=derived().size());
-  return IndirectArray<const TArray,IdentityMap>(derived(),IdentityMap(prefix_size));
+  return IndirectArray<const TArray,ARange>(derived(),ARange(prefix_size));
 }
 
 template<class T_,class TArray> inline ProjectedArray<const TArray,IndexProjector> ArrayBase<T_,TArray>::project(const int index) const {

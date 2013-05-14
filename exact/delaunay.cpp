@@ -339,8 +339,8 @@ template<class Mesh> OTHER_NEVER_INLINE static Ref<Mesh> deterministic_exact_del
         // Recurse to successor edges to e
         const auto e0 = mesh->next(e),
                    e1 = mesh->prev(mesh->reverse(e));
-        stack.append_elements(vec(tuple(e0,mesh->vertices(e0)),
-                                  tuple(e1,mesh->vertices(e1))));
+        stack.extend(vec(tuple(e0,mesh->vertices(e0)),
+                         tuple(e1,mesh->vertices(e1))));
         if (self_check)
           assert_delaunay(mesh,X,true);
       }

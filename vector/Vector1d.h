@@ -286,7 +286,7 @@ public:
     Vector<T,2> append(const T& element) const
     {return Vector<T,2>(x,element);}
 
-    template<int d2> Vector<T,1+d2> append_elements(const Vector<T,d2>& elements) const
+    template<int d2> Vector<T,1+d2> extend(const Vector<T,d2>& elements) const
     {Vector<T,1+d2> r;r[0]=x;for(int i=0;i<d2;i++) r[i+1]=elements[i];return r;}
 
     Vector reversed() const

@@ -549,7 +549,7 @@ Ref<TriMesh> TriMesh::inverse_extract_faces(vector<FaceHandle> const &faces) con
   return inverse_extract_faces(faces, id2id);
 }
 
-vector<vector<Vector<real,2>>> TriMesh::silhouette(const Rotation<TV>& rotation) const {
+Nested<TV2> TriMesh::silhouette(const Rotation<TV>& rotation) const {
   OTHER_ASSERT(has_face_normals());
   OTHER_ASSERT(!has_boundary());
   const TV up = rotation.z_axis();
@@ -570,13 +570,14 @@ vector<vector<Vector<real,2>>> TriMesh::silhouette(const Rotation<TV>& rotation)
   }
 
   // Walk loops until we have no edges left
-  vector<vector<TV2>> loops;
+  Array<int> offsets;
+  offsets.append(0);
+  Array<TV2> flat;
   while (unused.size()) {
     // Grab one and walk as far as possible
     const auto start = unused.pop();
     if (!unused_set.erase(start))
       continue;
-    vector<TV2> loop;
     auto edge = start;
     for (;;) {
       auto next = next_halfedge_handle(edge);
@@ -584,14 +585,14 @@ vector<vector<Vector<real,2>>> TriMesh::silhouette(const Rotation<TV>& rotation)
         next = next_halfedge_handle(opposite_halfedge_handle(next));
         assert(edge_handle(next)!=edge_handle(edge)); // Implies something nonmanifold is happening
       }
-      loop.push_back(rotation.inverse_times(point(from_vertex_handle(next))).xy());
+      flat.append(rotation.inverse_times(point(from_vertex_handle(next))).xy());
       if (next==start)
         break;
       edge = next;
     }
-    loops.push_back(loop);
+    offsets.append(flat.size());
   }
-  return loops;
+  return Nested<TV2>(offsets,flat);
 }
 
 unordered_set<HalfedgeHandle, Hasher> TriMesh::boundary_of(vector<FaceHandle> const &faces) const {

@@ -152,7 +152,7 @@ public:
   OTHER_CORE_EXPORT int degree(VertexId v) const;
 
   // Compute all boundary loops
-  NestedArray<HalfedgeId> boundary_loops() const;
+  Nested<HalfedgeId> boundary_loops() const;
 
   // Compute the Euler characteristic.  This is correct only if the mesh has been garbage collected.
   int chi() const {

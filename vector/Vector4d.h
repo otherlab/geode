@@ -317,7 +317,7 @@ public:
     Vector<T,4> append(const T& element) const
     {return Vector<T,5>(x,y,z,w,element);}
 
-    template<int d2> Vector<T,4+d2> append_elements(const Vector<T,d2>& elements) const
+    template<int d2> Vector<T,4+d2> extend(const Vector<T,d2>& elements) const
     {Vector<T,4+d2> r;r[0]=x;r[1]=y;r[2]=z;r[3]=w;for(int i=0;i<d2;i++) r[i+4]=elements[i];return r;}
 
     Vector<T,4> sorted() const

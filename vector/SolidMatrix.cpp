@@ -71,14 +71,14 @@ SolidMatrix(const SolidMatrixStructure& structure)
   lengths.fill(1); // account for diagonal
   for (auto& s : structure.sparse)
     lengths[s.x]++;
-  NestedArray<int> sparse_j(lengths);
+  Nested<int> sparse_j(lengths);
   for (int i=0;i<structure.n;i++)
     sparse_j(i,--lengths[i]) = i;
   for (auto& s : structure.sparse) {
     int i,j;s.get(i,j);
     sparse_j(i,--lengths[i]) = j;
   }
-  const_cast_(sparse_A) = NestedArray<Matrix<T,d>>::zeros_like(sparse_j);
+  const_cast_(sparse_A) = Nested<Matrix<T,d>>::zeros_like(sparse_j);
   for (int i=0;i<sparse_j.size();i++) {
     sort(sparse_j[i]);
     OTHER_ASSERT(sparse_j.size(i) && sparse_j(i,0)==i); // ensure diagonal exists

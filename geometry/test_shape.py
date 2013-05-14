@@ -4,6 +4,19 @@ from __future__ import division
 from other.core import *
 from other.core.random import Sobol
 
+def test_bounding_box():
+  def check(X,min,max):
+    box = bounding_box(X)
+    try:
+      assert all(box.min==min)
+      assert all(box.max==max)
+    except:
+      print 'check failed: X %s, box %s, expected %s %s'%(X,box,min,max)
+      raise
+  check([[4,-2],[-1,5]],[-1,-2],[4,5])
+  check(asarray([[4.,-2],[-1,5]]),[-1,-2],[4,5])
+  check([[[1,2,3],[2,4,2]],[7,-1,-2]],[1,-1,-2],[7,4,3])
+
 def test_consistency():
   random.randn(98183)
   shapes = [
