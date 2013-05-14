@@ -57,7 +57,7 @@ public:
   }
 
 private:
-  static int offset_if_contiguous(const IdentityMap& indices) { // for contiguous indices, we can extract an offset
+  static int offset_if_contiguous(const ARange& indices) { // for contiguous indices, we can extract an offset
     return 0;
   }
 
