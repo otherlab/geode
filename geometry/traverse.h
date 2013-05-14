@@ -98,7 +98,7 @@ template<class Visitor,class Thickness,class TV> static void traverse_helper(con
 
 // Traverse all intersecting pairs of leaf boxes between two hierarchies.  Identical trees are not treated specially.
 // Box/box intersection culling is automatic, but the visitor can add additional culling if desired by returning true from visitor.cull(...).
-template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, real thickness) {
+template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, typename TV::Scalar thickness) {
   OTHER_ASSERT(&tree0 != &tree1); // Identical trees should almost certainly use the dedicated routine below.  We can remove this assertion if an application is found.
   if (thickness)
     traverse_helper(tree0,tree1,visitor,thickness);
@@ -107,7 +107,7 @@ template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree0, 
 }
 
 // Traverse all intersecting pairs of leaf boxes between a hierarchy and itself.
-template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree, Visitor&& visitor, real thickness) {
+template<class Visitor,class TV> static void traverse(const BoxTree<TV>& tree, Visitor&& visitor, typename TV::Scalar thickness) {
   if (thickness)
     traverse_helper(tree,visitor,thickness);
   else
