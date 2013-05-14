@@ -549,7 +549,7 @@ Ref<TriMesh> TriMesh::inverse_extract_faces(vector<FaceHandle> const &faces) con
   return inverse_extract_faces(faces, id2id);
 }
 
-NestedArray<TV2> TriMesh::silhouette(const Rotation<TV>& rotation) const {
+Nested<TV2> TriMesh::silhouette(const Rotation<TV>& rotation) const {
   OTHER_ASSERT(has_face_normals());
   OTHER_ASSERT(!has_boundary());
   const TV up = rotation.z_axis();
@@ -592,7 +592,7 @@ NestedArray<TV2> TriMesh::silhouette(const Rotation<TV>& rotation) const {
     }
     offsets.append(flat.size());
   }
-  return NestedArray<TV2>(offsets,flat);
+  return Nested<TV2>(offsets,flat);
 }
 
 unordered_set<HalfedgeHandle, Hasher> TriMesh::boundary_of(vector<FaceHandle> const &faces) const {

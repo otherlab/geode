@@ -1,7 +1,7 @@
 //#####################################################################
-// Class NestedArray
+// Class Nested
 //#####################################################################
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/python/Class.h>
 namespace other {
 

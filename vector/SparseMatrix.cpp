@@ -34,8 +34,8 @@ sort_rows(SparseMatrix& self)
 }
 
 SparseMatrix::
-SparseMatrix(NestedArray<int> J,Array<T> A)
-    :J(J),A(NestedArray<T>::reshape_like(A,J)),cholesky(false)
+SparseMatrix(Nested<int> J,Array<T> A)
+    :J(J),A(Nested<T>::reshape_like(A,J)),cholesky(false)
 {
     OTHER_ASSERT(!J.flat.size() || J.flat.min()>=0);
     columns_ = J.size()?J.flat.max()+1:0;
@@ -60,8 +60,8 @@ SparseMatrix::SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vect
     lengths[k.key[0]]++;
 
   // Compute offsets
-  const_cast_(J) = NestedArray<int>(lengths);
-  const_cast_(A) = NestedArray<T>::zeros_like(J);
+  const_cast_(J) = Nested<int>(lengths);
+  const_cast_(A) = Nested<T>::zeros_like(J);
 
   // Fill in entries
   for (auto& k : entries) {
@@ -230,7 +230,7 @@ incomplete_cholesky_factorization(const T modified_coefficient,const T zero_tole
 
     Ref<SparseMatrix> CM=new_<SparseMatrix>(Private());
     const_cast_(CM->J)=J;
-    const_cast_(CM->A)=NestedArray<T>::reshape_like(C,J);
+    const_cast_(CM->A)=Nested<T>::reshape_like(C,J);
     CM->diagonal_index=diagonal_index;
     CM->cholesky=true;
     return CM;
@@ -270,7 +270,7 @@ void wrap_sparse_matrix()
 {
     typedef SparseMatrix Self;
     Class<Self>("SparseMatrix")
-        .OTHER_INIT(NestedArray<int>,Array<T>)
+        .OTHER_INIT(Nested<int>,Array<T>)
         .OTHER_METHOD(rows)
         .OTHER_METHOD(columns)
         .OTHER_FIELD(J)

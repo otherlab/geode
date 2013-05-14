@@ -64,7 +64,7 @@ template<class T> static inline Box<typename Array<T>::value_type> bounding_box(
   return bounding_box(RawArray<typename boost::add_const<T>::type>(points));
 }
 
-template<class T> static inline Box<typename boost::remove_const<T>::type> bounding_box(const NestedArray<T>& points) {
+template<class T> static inline Box<typename boost::remove_const<T>::type> bounding_box(const Nested<T>& points) {
   return bounding_box(points.flat);
 }
 

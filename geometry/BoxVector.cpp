@@ -5,7 +5,7 @@
 #include <other/core/geometry/AnalyticImplicit.h>
 #include <other/core/geometry/Ray.h>
 #include <other/core/array/NdArray.h>
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/array/view.h>
 #include <other/core/python/from_python.h>
 #include <other/core/python/exceptions.h>
@@ -157,7 +157,7 @@ static PyObject* bounding_box_py(PyObject* object) {
   } else if (is_nested_array(object))
     return bounding_box_py(&*nested_array_from_python_helper(object).y);
 
-  // object is neither a numpy array nor a NestedArray, so loop over it manually
+  // object is neither a numpy array nor a Nested, so loop over it manually
   Array<Box<T>> box;
   bounding_box_py_helper(box,object);
   if (box.size()==2)

@@ -13,7 +13,7 @@
 #include <other/core/array/Array.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/array/NdArray.h>
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/array/RawArray.h>
 namespace other {
 
@@ -23,8 +23,8 @@ Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<con
   return positions.subset(indices).copy();
 }
 
-NestedArray<Vec2> polygons_from_index_list(RawArray<const Vec2> positions, NestedArray<const int> indices) {
-  NestedArray<Vec2> polys;
+Nested<Vec2> polygons_from_index_list(RawArray<const Vec2> positions, Nested<const int> indices) {
+  Nested<Vec2> polys;
   polys.offsets = indices.offsets;
   polys.flat.copy(positions.subset(indices.flat));
   return polys;
@@ -38,7 +38,7 @@ T polygon_area(RawArray<const Vec2> poly) {
   return .5*area;
 }
 
-T polygon_area(NestedArray<const Vec2> polys) {
+T polygon_area(Nested<const Vec2> polys) {
   T area = 0;
   for (auto poly : polys)
     area += polygon_area(poly);
@@ -99,7 +99,7 @@ bool inside_polygon(RawArray<const Vec2> poly, const Vec2 p) {
 }
 
 // Find a point inside the shape defined by polys, and inside the contour poly
-Vec2 point_inside_polygon_component(RawArray<const Vec2> poly, NestedArray<const Vec2> polys) {
+Vec2 point_inside_polygon_component(RawArray<const Vec2> poly, Nested<const Vec2> polys) {
 
   //std::cout << "point in polygon with " << poly.size() << " vertices, area = " << polygon_area(poly) << ", " << polys.size() << " polygons defining shape. " << std::endl;
 
@@ -480,21 +480,21 @@ Ref<SegmentMesh> nested_array_offsets_to_segment_mesh(RawArray<const int> offset
   return new_<SegmentMesh>(segments);
 }
 
-NestedArray<const Vec2> polygons_from_python(PyObject* object) {
+Nested<const Vec2> polygons_from_python(PyObject* object) {
 #ifdef OTHER_PYTHON
   try {
     const auto polys = from_python<NdArray<const Vec2>>(object);
     if (!polys.rank() || polys.rank()>2)
       throw TypeError(format("polygons_from_python: expected rank 1 or 2 array, got rank %d",polys.rank()));
     const int count = polys.rank()==1?1:polys.shape[0];
-    NestedArray<const Vec2> nested;
-    nested.offsets = (polys.shape.back()*IdentityMap(count+1)).copy();
+    Nested<const Vec2> nested;
+    nested.offsets = (polys.shape.back()*arange(count+1)).copy();
     nested.flat = polys.flat;
     return nested;
   } catch (const exception&) {
     PyErr_Clear();
     // numpy conversion failed, try a nested array
-    return from_python<NestedArray<const Vec2>>(object);
+    return from_python<Nested<const Vec2>>(object);
   }
 #else
   OTHER_NOT_IMPLEMENTED("No python support");

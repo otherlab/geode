@@ -20,7 +20,7 @@ OTHER_DEFINE_TYPE(TriangleSubdivision)
 
 static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh) {
   Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();
-  NestedArray<const int> incident_elements=segments->incident_elements();
+  Nested<const int> incident_elements=segments->incident_elements();
   int offset = coarse_mesh.nodes();
   Array<Vector<int,3> > triangles(4*coarse_mesh.elements.size(),false);
   for (int t=0;t<coarse_mesh.elements.size();t++) {
@@ -132,8 +132,8 @@ Ref<SparseMatrix> TriangleSubdivision::loop_matrix() const {
   Hashtable<Vector<int,2>,T> A;
   int offset = coarse_mesh->nodes();
   RawArray<const Vector<int,2> > segments = coarse_mesh->segment_mesh()->elements;
-  NestedArray<const int> neighbors = coarse_mesh->sorted_neighbors();
-  NestedArray<const int> boundary_neighbors = coarse_mesh->boundary_mesh()->neighbors();
+  Nested<const int> neighbors = coarse_mesh->sorted_neighbors();
+  Nested<const int> boundary_neighbors = coarse_mesh->boundary_mesh()->neighbors();
   unordered_set<int> corners_set(corners.begin(),corners.end());
   // Fill in node weights
   for (int i=0;i<offset;i++){
