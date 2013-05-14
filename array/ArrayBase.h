@@ -114,7 +114,7 @@ public:
     return IndirectArray<const TArray,TIndices&>(derived(),indices);
   }
 
-  IndirectArray<TArray,IdentityMap> prefix(const int prefix_size) const;
+  IndirectArray<TArray,ARange> prefix(const int prefix_size) const;
 
 private:
   typedef typename mpl::if_<boost::is_class<T>,T,Unusable>::type TIfClass;
@@ -637,14 +637,14 @@ template<class T,class TArray> static inline Hash hash_reduce(const ArrayBase<T,
 }
 
 }
-#include <other/core/array/IdentityMap.h>
+#include <other/core/array/arange.h>
 #include <other/core/array/ProjectedArray.h>
 #include <other/core/array/Array.h>
 namespace other {
 
-template<class T_,class TArray> inline IndirectArray<TArray,IdentityMap> ArrayBase<T_,TArray>::prefix(const int prefix_size) const {
+template<class T_,class TArray> inline IndirectArray<TArray,ARange> ArrayBase<T_,TArray>::prefix(const int prefix_size) const {
   assert(prefix_size<=derived().size());
-  return IndirectArray<const TArray,IdentityMap>(derived(),IdentityMap(prefix_size));
+  return IndirectArray<const TArray,ARange>(derived(),ARange(prefix_size));
 }
 
 template<class T_,class TArray> inline ProjectedArray<const TArray,IndexProjector> ArrayBase<T_,TArray>::project(const int index) const {
