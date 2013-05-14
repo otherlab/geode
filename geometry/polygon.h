@@ -5,7 +5,6 @@
 namespace other {
 
 class SegmentMesh;
-typedef Vector<real,2> Vec2;
 
 OTHER_CORE_EXPORT Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<const int> indices);
 OTHER_CORE_EXPORT Nested<Vec2> polygons_from_index_list(RawArray<const Vec2> positions, Nested<const int> indices);
