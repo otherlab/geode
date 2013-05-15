@@ -53,7 +53,7 @@ public:
     {}
 
     template<class T2> explicit Vector(const Vector<T2,1>& vector)
-        :x((T)vector.x)
+        :x(vector.x)
     {}
 
     Vector(const Vector& vector)
