@@ -710,7 +710,7 @@ unordered_map<VertexHandle, double, Hasher> TriMesh::geodesic_distance(vector<Ve
 }
 
 // compute and return the approximate shortest path from one point to another
-vector<VertexHandle> TriMesh::shortest_path(VertexHandle source, VertexHandle sink) const {
+vector<VertexHandle> TriMesh::vertex_shortest_path(VertexHandle source, VertexHandle sink) const {
   unordered_map<VertexHandle, double, Hasher> dist = geodesic_distance(sink, source);
 
   // walk backward from the sink to the source and record the shortest path
@@ -1777,7 +1777,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(add_cylinder)
     .OTHER_METHOD(add_sphere)
     .OTHER_METHOD(add_box)
-    .OTHER_METHOD(shortest_path)
+    .OTHER_METHOD(vertex_shortest_path)
     .OTHER_METHOD(elements)
     .OTHER_METHOD(invert)
     .OTHER_METHOD(to_vertex_handle)

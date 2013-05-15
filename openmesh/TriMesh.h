@@ -478,8 +478,8 @@ public:
   OTHER_CORE_EXPORT unordered_map<VertexHandle, double, Hasher> geodesic_distance(vector<VertexHandle> const &sources,
                                                                 vector<VertexHandle> const &sinks) const;
 
-  // compute and return the approximate shortest path from one point to another
-  OTHER_CORE_EXPORT vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
+  // compute and return the approximate shortest path from one point to another (only through vertices)
+  OTHER_CORE_EXPORT vector<VertexHandle> vertex_shortest_path(VertexHandle source, VertexHandle sink) const;
 
   // compute the closest face to a point by breadth-first search starting at the given vertex/face
   OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
