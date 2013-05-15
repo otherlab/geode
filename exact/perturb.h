@@ -32,7 +32,8 @@ template<class F,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed
   const int n = sizeof...(Args);
   const int d = First<Args...>::type::second_type::m;
   typedef Vector<exact::Exact<1>,d> LV;
-  const int degree = decltype(F::eval(LV(args.y)...))::degree;
+  typedef decltype(F::eval(LV(args.y)...)) Result;
+  const int degree = Result::degree;
 
   // Evaluate with integers first, hoping for a nonzero
   if (const int s = sign(F::eval(LV(args.y)...)))
