@@ -110,7 +110,7 @@ BoxTree(RawArray<const TV> geo,int leaf_size)
   : leaf_size(check_leaf_size(leaf_size))
   , leaves(leaf_range(geo.size(),leaf_size))
   , depth(other::depth(leaves.size()))
-  , p(IdentityMap(geo.size()).copy())
+  , p(arange(geo.size()).copy())
   , ranges(other::ranges(geo.size(),leaf_size))
   , boxes(max(0,leaves.hi),false)
 {
@@ -123,7 +123,7 @@ BoxTree(RawArray<const Box<TV>> geo,int leaf_size)
   : leaf_size(check_leaf_size(leaf_size))
   , leaves(leaf_range(geo.size(),leaf_size))
   , depth(other::depth(leaves.size()))
-  , p(IdentityMap(geo.size()).copy())
+  , p(arange(geo.size()).copy())
   , ranges(other::ranges(geo.size(),leaf_size))
   , boxes(max(0,leaves.hi),false)
 {
@@ -173,7 +173,7 @@ check(RawArray<const TV> X) const {
   count.subset(p) += 1;
   OTHER_ASSERT(count.contains_only(1));
   int culls = 0, leaves = 0;
-  traverse(*this,CheckVisitor<TV>(*this,X,culls,leaves));
+  single_traverse(*this,CheckVisitor<TV>(*this,X,culls,leaves));
   OTHER_ASSERT(culls==boxes.size() && leaves==this->leaves.size());
 }
 

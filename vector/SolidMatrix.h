@@ -15,7 +15,7 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/array/Array2d.h>
 #include <other/core/structure/Hashtable.h>
 #include <other/core/python/Object.h>
@@ -81,8 +81,8 @@ public:
   typedef SolidMatrixBase<TV> Base;
   using Base::size;
 
-  const NestedArray<const int> sparse_j;
-  const NestedArray<TMatrix> sparse_A;
+  const Nested<const int> sparse_j;
+  const Nested<TMatrix> sparse_A;
   const std::vector<Tuple<Array<const int>,T,Array<TV> > > outers; // restricted to m==1 for now
 private:
   int next_outer;

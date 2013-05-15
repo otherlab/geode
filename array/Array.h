@@ -241,7 +241,7 @@ public:
 
   template<class TArray> void copy(const TArray& source) {
     // Copy data from source array even if it is shareable
-    STATIC_ASSERT_SAME(T,typename TArray::Element);
+    STATIC_ASSERT_SAME(T,typename TArray::value_type);
     int source_m = source.size();
     if (max_size_<source_m)
       grow_buffer(source_m,false);
@@ -253,7 +253,7 @@ public:
 
   template<class TArray> void copy(const TArray& source) const {
     // Const, so no resizing allowed
-    STATIC_ASSERT_SAME(T,typename TArray::Element);
+    STATIC_ASSERT_SAME(T,typename TArray::value_type);
     int source_m = source.size();
     assert(m_==source_m);
     if (!same_array(*this,source))
@@ -370,8 +370,8 @@ public:
     return m_-1;
   }
 
-  template<class TArray> void append_elements(const TArray& append_array) {
-    STATIC_ASSERT_SAME(T,typename TArray::Element);
+  template<class TArray> void extend(const TArray& append_array) {
+    STATIC_ASSERT_SAME(T,typename TArray::value_type);
     int append_m = append_array.size(),
         m_new = m_+append_m;
     if (max_size_<m_new)
@@ -387,7 +387,7 @@ public:
   }
 
   template<class TArray> void append_unique_elements(const TArray& append_array) {
-    STATIC_ASSERT_SAME(T,typename TArray::Element);
+    STATIC_ASSERT_SAME(T,typename TArray::value_type);
     int append_m = append_array.size();
     for (int i=0;i<append_m;i++)
       append_unique(append_array(i));
@@ -471,19 +471,19 @@ public:
   }
 };
 
-template<class T,int d> static inline const RawArray<T> as_array(Vector<T,d>& v) {
+template<class T,int d> static inline const RawArray<T> asarray(Vector<T,d>& v) {
   return RawArray<T>(d,v.begin());
 }
 
-template<class T,int d> static inline const RawArray<const T> as_array(const Vector<T,d>& v) {
+template<class T,int d> static inline const RawArray<const T> asarray(const Vector<T,d>& v) {
   return RawArray<const T>(d,v.begin());
 }
 
-template<class T,class A> static inline const RawArray<T> as_array(std::vector<T,A>& v) {
+template<class T,class A> static inline const RawArray<T> asarray(std::vector<T,A>& v) {
   return RawArray<T>(v.size(),&v[0]);
 }
 
-template<class T,class A> static inline const RawArray<const T> as_array(const std::vector<T,A>& v) {
+template<class T,class A> static inline const RawArray<const T> asarray(const std::vector<T,A>& v) {
   return RawArray<const T>(v.size(),&v[0]);
 }
 

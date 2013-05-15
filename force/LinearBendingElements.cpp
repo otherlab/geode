@@ -17,7 +17,7 @@ template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,3> >)
 
 template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentMesh& mesh,Array<const TV> X) {
   OTHER_ASSERT(mesh.nodes()<=X.size());
-  NestedArray<const int> mesh_neighbors = mesh.neighbors();
+  Nested<const int> mesh_neighbors = mesh.neighbors();
   Hashtable<Vector<int,2>,T> entries;
   for(int p=0;p<mesh.nodes();p++) {
     RawArray<const int> neighbors = mesh_neighbors[p];

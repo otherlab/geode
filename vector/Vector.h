@@ -359,7 +359,7 @@ public:
     Vector<T,d+1> append(const T& element) const
     {Vector<T,d+1> r;for(int i=0;i<d;i++) r[i]=(*this)[i];r[d]=element;return r;}
 
-    template<int d2> Vector<T,d+d2> append_elements(const Vector<T,d2>& elements)
+    template<int d2> Vector<T,d+d2> extend(const Vector<T,d2>& elements)
     {Vector<T,d+d2> r;
     for(int i=0;i<d;i++) r[i]=(*this)[i];
     for(int i=0;i<d2;i++) r[i+d]=elements[i];

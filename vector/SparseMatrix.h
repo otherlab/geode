@@ -7,7 +7,7 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/array/NestedArray.h>
+#include <other/core/array/Nested.h>
 #include <other/core/python/Object.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/structure/Hashtable.h>
@@ -20,15 +20,15 @@ public:
     OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
     typedef real T;
 
-    const NestedArray<const int> J;
-    const NestedArray<T> A;
+    const Nested<const int> J;
+    const Nested<T> A;
 private:
     int columns_;
     bool cholesky;
     mutable Array<const int> diagonal_index;
     struct Private{};
 
-    OTHER_CORE_EXPORT SparseMatrix(NestedArray<int> J,Array<T> A); // entries in each row will be sorted
+    OTHER_CORE_EXPORT SparseMatrix(Nested<int> J,Array<T> A); // entries in each row will be sorted
     OTHER_CORE_EXPORT SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vector<int,2>& sizes = (Vector<int,2>(-1,-1)));
     SparseMatrix(Private);
 public:

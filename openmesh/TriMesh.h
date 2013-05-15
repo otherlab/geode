@@ -458,7 +458,7 @@ public:
   OTHER_CORE_EXPORT Ref<TriMesh> inverse_extract_faces(vector<FaceHandle> const &faces) const;
 
   // compute the 2D silhouettes of the mesh as seem from the given rotation (with rotation*(0,0,1) as the normal)
-  OTHER_CORE_EXPORT vector<vector<Vector<real,2>>> silhouette(const Rotation<TV>& rotation) const;
+  OTHER_CORE_EXPORT Nested<Vector<real,2>> silhouette(const Rotation<TV>& rotation) const;
 
   // get the halfedges bounding the given set of faces (for all halfedges, face_handle(he) is in faces)
   OTHER_CORE_EXPORT unordered_set<HalfedgeHandle, Hasher> boundary_of(vector<FaceHandle> const &faces) const;
