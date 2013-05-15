@@ -456,6 +456,27 @@ TriMesh::Normal TriMesh::smooth_normal(FaceHandle fh,
   return n;
 }
 
+unordered_map<VertexHandle, VertexHandle, Hasher> TriMesh::garbage_collection_with_map() {
+  OpenMesh::VPropHandleT<VertexHandle> oldid;
+  add_property(oldid);
+
+  for (auto vh : vertex_handles()) {
+    property(oldid, vh) = vh;
+  }
+
+  garbage_collection();
+
+  unordered_map<VertexHandle, VertexHandle, Hasher> old_to_new;
+
+  for (auto vh : vertex_handles()) {
+    old_to_new[property(oldid,vh)] = vh;
+  }
+
+  remove_property(oldid);
+
+  return old_to_new;
+}
+
 int TriMesh::remove_infinite_vertices() {
   int removed = 0;
   for (auto v : vertex_handles()) {
@@ -1379,6 +1400,12 @@ void TriMesh::transform(Frame<Vector<real, 3> > const &F) {
   }
 }
 
+void TriMesh::transform(Matrix<real, 4> const &M) {
+  for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v) {
+    set_point(v, M.homogeneous_times(point(v)));
+  }
+}
+
 void TriMesh::invert_component(std::vector<FaceHandle> component) {
   // this will fail horribly if the given faces are not a complete component
   // (ie if they have neighbors that are not in the vector)
@@ -1773,7 +1800,7 @@ void wrap_trimesh() {
     .OTHER_OVERLOADED_METHOD(real(Self::*)()const,area)
     .OTHER_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)
     .OTHER_OVERLOADED_METHOD_2(v_Method_vec3_vec3, "scale_anisotropic", scale)
-    .OTHER_METHOD(transform)
+    .OTHER_OVERLOADED_METHOD(void(Self::*)(Matrix<real,4>const&),transform)
     .OTHER_METHOD(translate)
     .OTHER_METHOD(boundary_loops)
     .OTHER_METHOD(face_tree)

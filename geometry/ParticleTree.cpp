@@ -59,7 +59,7 @@ template<class TV> struct DuplicatesVisitor {
 template<class TV> Array<int> ParticleTree<TV>::
 remove_duplicates(T tolerance) const {
   DuplicatesVisitor<TV> visitor(*this,tolerance);
-  traverse(*this,visitor,tolerance);
+  double_traverse(*this,visitor,tolerance);
   Array<int> map(X.size(),false);
   int count=0;
   for(int i=0;i<X.size();i++)

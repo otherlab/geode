@@ -175,7 +175,7 @@ check(RawArray<const TV> X) const {
   count.subset(p) += 1;
   OTHER_ASSERT(count.contains_only(1));
   int culls = 0, leaves = 0;
-  traverse(*this,CheckVisitor<TV>(*this,X,culls,leaves));
+  single_traverse(*this,CheckVisitor<TV>(*this,X,culls,leaves));
   OTHER_ASSERT(culls==boxes.size() && leaves==this->leaves.size());
 }
 

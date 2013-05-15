@@ -85,7 +85,7 @@ template<class TV,int d> void SimplexTree<TV,d>::intersections(const Plane<T>& p
 
 template<> void SimplexTree<Vector<T,3>,2>::intersections(const Plane<T>& plane, Array<Segment<Vector<T,3>>>& results) const {
   results.clear();
-  traverse(*this,PlaneVisitor(*this,plane,results));
+  single_traverse(*this,PlaneVisitor(*this,plane,results));
 }
 
 template<int signs,class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, const T half_thickness) {
@@ -191,7 +191,7 @@ template<class TV,int d> struct SphereVisitor {
 template<class TV,int d> void SimplexTree<TV,d>::
 intersection(const Sphere<TV>& sphere, Array<int>& hits) const {
   hits.clear();
-  traverse(*this,SphereVisitor<TV,d>(*this,sphere,hits));
+  single_traverse(*this,SphereVisitor<TV,d>(*this,sphere,hits));
 }
 
 namespace {
@@ -223,23 +223,23 @@ template<class TV,int signs> struct MultiRayVisitor {
 
 template<class TV> static inline void intersections_dispatch(const SimplexTree<Vector<T,2>,1>& self, const Ray<TV>& ray, const T half_thickness, Array<Ray<TV>>& results) {
   switch (fast_ray_signs(ray)) {
-    case 0: traverse(self,MultiRayVisitor<TV,0>(self,ray,half_thickness,results)); break;
-    case 1: traverse(self,MultiRayVisitor<TV,1>(self,ray,half_thickness,results)); break;
-    case 2: traverse(self,MultiRayVisitor<TV,2>(self,ray,half_thickness,results)); break;
-    case 3: traverse(self,MultiRayVisitor<TV,3>(self,ray,half_thickness,results)); break;
+    case 0: single_traverse(self,MultiRayVisitor<TV,0>(self,ray,half_thickness,results)); break;
+    case 1: single_traverse(self,MultiRayVisitor<TV,1>(self,ray,half_thickness,results)); break;
+    case 2: single_traverse(self,MultiRayVisitor<TV,2>(self,ray,half_thickness,results)); break;
+    case 3: single_traverse(self,MultiRayVisitor<TV,3>(self,ray,half_thickness,results)); break;
   }
 }
 
 template<class TV> static inline void intersections_dispatch(const SimplexTree<Vector<T,3>,2>& self, const Ray<TV>& ray, const T half_thickness, Array<Ray<TV>>& results) {
   switch (fast_ray_signs(ray)) {
-    case 0: traverse(self,MultiRayVisitor<TV,0>(self,ray,half_thickness,results)); break;
-    case 1: traverse(self,MultiRayVisitor<TV,1>(self,ray,half_thickness,results)); break;
-    case 2: traverse(self,MultiRayVisitor<TV,2>(self,ray,half_thickness,results)); break;
-    case 3: traverse(self,MultiRayVisitor<TV,3>(self,ray,half_thickness,results)); break;
-    case 4: traverse(self,MultiRayVisitor<TV,4>(self,ray,half_thickness,results)); break;
-    case 5: traverse(self,MultiRayVisitor<TV,5>(self,ray,half_thickness,results)); break;
-    case 6: traverse(self,MultiRayVisitor<TV,6>(self,ray,half_thickness,results)); break;
-    case 7: traverse(self,MultiRayVisitor<TV,7>(self,ray,half_thickness,results)); break;
+    case 0: single_traverse(self,MultiRayVisitor<TV,0>(self,ray,half_thickness,results)); break;
+    case 1: single_traverse(self,MultiRayVisitor<TV,1>(self,ray,half_thickness,results)); break;
+    case 2: single_traverse(self,MultiRayVisitor<TV,2>(self,ray,half_thickness,results)); break;
+    case 3: single_traverse(self,MultiRayVisitor<TV,3>(self,ray,half_thickness,results)); break;
+    case 4: single_traverse(self,MultiRayVisitor<TV,4>(self,ray,half_thickness,results)); break;
+    case 5: single_traverse(self,MultiRayVisitor<TV,5>(self,ray,half_thickness,results)); break;
+    case 6: single_traverse(self,MultiRayVisitor<TV,6>(self,ray,half_thickness,results)); break;
+    case 7: single_traverse(self,MultiRayVisitor<TV,7>(self,ray,half_thickness,results)); break;
   }
 }
 
