@@ -196,7 +196,6 @@ static inline PyObject* to_python(BaseHandle h) {
   return ::other::to_python(h.idx());
 }
 #endif
-
 }
 
 namespace other {
@@ -224,6 +223,30 @@ template<> struct FromPython<EdgeHandle> {
 template<> struct FromPython<HalfedgeHandle> {
   static HalfedgeHandle convert(PyObject* object) {
     return HalfedgeHandle((unsigned int)from_python<int>(object));
+  }
+};
+
+template<class T> struct FromPython<OpenMesh::VPropHandleT<T>> {
+  static OpenMesh::VPropHandleT<T> convert(PyObject* object) {
+    return OpenMesh::VPropHandleT<T>((unsigned int)from_python<int>(object));
+  }
+};
+
+template<class T> struct FromPython<OpenMesh::HPropHandleT<T>> {
+  static OpenMesh::HPropHandleT<T> convert(PyObject* object) {
+    return OpenMesh::HPropHandleT<T>((unsigned int)from_python<int>(object));
+  }
+};
+
+template<class T> struct FromPython<OpenMesh::FPropHandleT<T>> {
+  static OpenMesh::FPropHandleT<T> convert(PyObject* object) {
+    return OpenMesh::FPropHandleT<T>((unsigned int)from_python<int>(object));
+  }
+};
+
+template<class T> struct FromPython<OpenMesh::EPropHandleT<T>> {
+  static OpenMesh::EPropHandleT<T> convert(PyObject* object) {
+    return OpenMesh::EPropHandleT<T>((unsigned int)from_python<int>(object));
   }
 };
 
@@ -398,6 +421,10 @@ public:
   // get an interpolated normal at any point on the mesh
   OTHER_CORE_EXPORT Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
 
+  // garbage collection, but also returns a map of old to new vertex handles
+  // the map does not contains old vertex handles that have been deleted.
+  OTHER_CORE_EXPORT unordered_map<VertexHandle, VertexHandle, Hasher> garbage_collection_with_map();
+
   // get rid of all infinite or nan vertices (they are simply deleted, along with incident faces)
   OTHER_CORE_EXPORT int remove_infinite_vertices();
 
@@ -507,6 +534,7 @@ public:
   OTHER_CORE_EXPORT void translate(const TV& c);
   OTHER_CORE_EXPORT void rotate(const Rotation<TV>& R, const TV& center=TV());
   OTHER_CORE_EXPORT void transform(const Frame<TV>& F);
+  OTHER_CORE_EXPORT void transform(const Matrix<double,4>&M);
 
   // flip all faces inside out
   OTHER_CORE_EXPORT void invert();
