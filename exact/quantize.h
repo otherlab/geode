@@ -26,15 +26,17 @@ template<class TS,int d> struct Quantizer {
 
   const TVS center;
   const TS scale;
+  const TVS shifted_center;
   const Inverse inverse;
 
   Quantizer(const Box<TVS>& box)
     : center(box.center())
     , scale(TS(exact::bound)/max(TS(1.01)*box.sizes().max(),TS(1e-6)))
+    , shifted_center(center-TS(.5)/scale)
     , inverse(center,1/scale) {}
 
   EV operator()(const TVS& p) const {
-    return EV(scale*(p-center)); // Transform to 1-2**24 <= q <= 2**24-1
+    return EV(floor(scale*(p-shifted_center))); // Transform to 1-2**24 <= q <= 2**24-1
   }
 };
 
