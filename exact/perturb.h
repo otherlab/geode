@@ -15,6 +15,21 @@ namespace other {
 // (2) the index of the value, which is used to look up the fixed perturbation.
 template<int m> OTHER_CORE_EXPORT OTHER_COLD bool perturbed_sign(exact::Exact<>(*const predicate)(RawArray<const Vector<exact::Int,m>>), const int degree, RawArray<const Tuple<int,Vector<exact::Int,m>>> X);
 
+// Given polynomial numerator and denominator functions, evaluate numerator(X+epsilon)/denominator(X+epsilon) rounded to int for the
+// same infinitesimal perturbation epsilon as in perturbed_sign.  The numerator and denominator must be multivariate polynomials of at
+// most the given degree.  The rational function is packed as ratio(X) = concatenate(numerator(X),denominator(X)).  Rounding is to nearest.
+//
+// One key difference from perturbed_sign: the unperturbed ratio is not assumed to be singular; it will be evaluated correctly in all cases.
+//
+// If the rounded result does not fit into the range [-bound,bound] (e.g., if its infinite), an exception is thrown.  This should
+// never happen for appropriately shielded predicates, such as constructing the intersection of two segments once perturbed_sign
+// has verified that they intersect after perturbation.
+template<int m> OTHER_CORE_EXPORT OTHER_COLD Vector<exact::Int,m> perturbed_ratio(Vector<exact::Exact<>,m+1>(*const ratio)(RawArray<const Vector<exact::Int,m>>), const int degree, RawArray<const Tuple<int,Vector<exact::Int,m>>> X);
+
+// The levelth perturbation of point i in R^m.  This is exposed for occasional special purpose use only, or as a convenient
+// pseudorandom generator; normally this routine is called internally by perturbed_sign.
+template<int m> OTHER_CORE_EXPORT Vector<exact::Int,m> perturbation(const int level, const int i);
+
 // Wrap predicate for consumption by perturbed_sign (use only via perturbed_predicate)
 template<class F,int d,class... entries> static exact::Exact<> wrapped_predicate(RawArray<const Vector<exact::Int,d>> X) {
   typedef Vector<exact::Exact<1>,d> LV;

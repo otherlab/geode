@@ -43,7 +43,7 @@ static const bool check = false;
 static const bool verbose = false;
 
 // Our fixed deterministic pseudorandom perturbation sequence
-template<int m> static inline Vector<exact::Int,m> perturbation(const int level, const int i) {
+template<int m> inline Vector<exact::Int,m> perturbation(const int level, const int i) {
   BOOST_STATIC_ASSERT(m<=4);
   BOOST_STATIC_ASSERT(exact::log_bound+1<=32);
   const uint128_t bits = threefry(level,i);
@@ -130,6 +130,17 @@ static inline void mpq_div_si(mpq_t x, long n) {
   mpz_divexact_ui(mpq_numref(x),mpq_numref(x),gcd);
   // Perform the division
   mpz_mul_si(mpq_denref(x),mpq_denref(x),n);
+}
+
+namespace {
+template<class G> struct Destroyer {
+  RawArray<G> values;
+  Destroyer(RawArray<G> values) : values(values) {}
+  ~Destroyer() { for (auto& x : values) clear(&x); }
+
+  void clear(mpz_t x) { mpz_clear(x); }
+  void clear(mpq_t x) { mpq_clear(x); }
+};
 }
 
 // Given the values of a polynomial at every point in the standard "easy corner", solve for the monomial coefficients using divided differences
@@ -288,7 +299,7 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
     OTHER_ASSERT(!sign(predicate(Z)));
   }
 
-  // Check the first perturbation variable with specialized code
+  // Check the first perturbation level with specialized code
   vector<Vector<exact::Int,m>> Y(n); // perturbations
   {
     // Compute the first level of perturbations
@@ -306,6 +317,7 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
       if (verbose)
         cout << "  predicate("<<Z<<") = "<<values[j]<<endl;
     }
+    Destroyer<__mpz_struct> destroyer(values);
 
     // Find an interpolating polynomial, overriding the input with the result.
     scaled_univariate_in_place_interpolating_polynomial(degree,values);
@@ -313,26 +325,16 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
       cout << "  coefs = "<<values<<endl;
 
     // Compute sign
-    int sign = 0;
     for (int j=0;j<degree;j++)
-      if (const int s = mpz_sgn(&values[j])) {
-        sign = s;
-        break;
-      }
-
-    // Free mpz_t memory
-    for (auto& v : values)
-      mpz_clear(&v);
-
-    if (sign)
-      return sign>0;
+      if (const int sign = mpz_sgn(&values[j]))
+        return sign>0;
   }
 
   {
-    // Add one perturbation variable after another until we hit a nonzero polynomial.  Our current implementation duplicates
+    // Add one perturbation level after another until we hit a nonzero polynomial.  Our current implementation duplicates
     // work from one iteration to the next for simplicity, which is fine since the first interation suffices almost always.
     Array<__mpq_struct> values;
-    for (int d=1;;d++) {
+    for (int d=2;;d++) {
       // Compute the next level of perturbations
       Y.resize(d*n);
       for (int i=0;i<n;i++)
@@ -350,6 +352,7 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
         init_set_steal(mpq_numref(&values[j]),predicate(Z).n);
         mpz_init_set_ui(mpq_denref(&values[j]),1);
       }
+      Destroyer<__mpq_struct> destroyer(values);
 
       // Find an interpolating polynomial, overriding the input with the result.
       in_place_interpolating_polynomial(degree,lambda,values);
@@ -367,13 +370,152 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
           }
         }
 
-      // Free mpq_t memory
-      for (auto& v : values)
-        mpq_clear(&v);
-
       // If we find a nonzero sign, we're done!
       if (sign)
         return sign>0;
+    }
+  }
+}
+
+// Cast num/den to an int, rounding towards nearest.  num is destroyed.
+static int snap_div(mpz_t num, mpz_t den) {
+  mpz_mul_2exp(num,num,1); // num *= 2
+  mpz_tdiv_q(num,num,den); // num /= den, rounding towards zero
+  if (!mpz_fits_sint_p(num))
+    goto fail;
+  {
+    const int two_ratio = mpz_get_si(num),
+              ratio = (two_ratio>0?1:-1)*((1+abs(two_ratio))>>1); // Divide by two, rounding odd numbers away from zero
+    if (abs(ratio) > exact::bound)
+      goto fail;
+    return ratio;
+  }
+fail:
+  throw OverflowError(format("perturbed_ratio: overflow in l'Hopital expansion: abs(%s/2) > %d",str(num),exact::bound));
+}
+
+template<int m> Vector<exact::Int,m> perturbed_ratio(Vector<exact::Exact<>,m+1>(*const ratio)(RawArray<const Vector<exact::Int,m>>), const int degree, RawArray<const Tuple<int,Vector<exact::Int,m>>> X) {
+  OTHER_ASSERT(degree<=max_degree);
+  const int n = X.size();
+
+  // In debug mode, check that point indices are all unique
+  OTHER_DEBUG_ONLY( {
+    Hashtable<int> indices;
+    for (int i=0;i<n;i++)
+      OTHER_ASSERT(indices.set(X[i].x));
+  } )
+
+  // Check if the ratio is nonsingular before perturbation
+  const auto Z = OTHER_RAW_ALLOCA(n,Vector<exact::Int,m>);
+  {
+    for (int i=0;i<n;i++)
+      Z[i] = X[i].y;
+    auto R = ratio(Z);
+    if (mpz_sgn(R[m].n)) {
+      Vector<exact::Int,m> result;
+      for (int r=0;r<m;r++)
+        result[r] = snap_div(R[r].n,R[m].n);
+      return result;
+    }
+  }
+
+  // Check the first perturbation level with specialized code
+  vector<Vector<exact::Int,m>> Y(n); // perturbations
+  {
+    // Compute the first level of perturbations
+    for (int i=0;i<n;i++)
+      Y[i] = perturbation<m>(1,X[i].x);
+
+    // Evaluate polynomial at epsilon = 1, ..., degree
+    const auto values = OTHER_RAW_ALLOCA((m+1)*degree,__mpz_struct).reshape(m+1,degree);
+    for (int j=0;j<degree;j++) {
+      for (int i=0;i<n;i++)
+        Z[i] = X[i].y+(j+1)*Y[i];
+      auto R = ratio(Z);
+      for (int r=0;r<=m;r++)
+        init_set_steal(&values(r,j),R[r].n);
+    }
+    Destroyer<__mpz_struct> destroyer(values.flat);
+
+    // Find interpolating polynomials, overriding the input with the result.
+    for (int r=0;r<=m;r++)
+      scaled_univariate_in_place_interpolating_polynomial(degree,values[r]);
+
+    // Find the largest (lowest degree) nonzero denominator coefficient.  If we detect an infinity during this process, explode.
+    for (int j=0;j<degree;j++) {
+      auto& den = values(m,j);
+      if (mpz_sgn(&den)) {
+        // We found a nonzero, now compute the rounded ratio
+        Vector<exact::Int,m> result;
+        for (int r=0;r<m;r++)
+          result[r] = snap_div(&values(r,j),&den);
+        return result;
+      } else
+        for (int r=0;r<m;r++)
+          if (mpz_sgn(&values(r,j)))
+            throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",str(&values(r,j))));
+    }
+  }
+
+  {
+    // Add one perturbation level after another until we hit a nonzero denominator.  Our current implementation duplicates
+    // work from one iteration to the next for simplicity, which is fine since the first interation suffices almost always.
+    Array<__mpq_struct,2> values;
+    for (int d=2;;d++) {
+      // Compute the next level of perturbations
+      Y.resize(d*n);
+      for (int i=0;i<n;i++)
+        Y[(d-1)*n+i] = perturbation<m>(d,X[i].x);
+
+      // Evaluate polynomial at every point in an "easy corner"
+      const auto lambda = monomials(degree,d);
+      values.resize(m+1,lambda.m,false,false);
+      for (int j=0;j<lambda.m;j++) {
+        for (int i=0;i<n;i++)
+          Z[i] = X[i].y+lambda(j,0)*Y[i];
+        for (int v=1;v<d;v++)
+          for (int i=0;i<n;i++)
+            Z[i] += lambda(j,v)*Y[v*n+i];
+        auto R = ratio(Z);
+        for (int r=0;r<=m;r++) {
+          init_set_steal(mpq_numref(&values(r,j)),R[r].n);
+          mpz_init_set_ui(mpq_denref(&values(r,j)),1);
+        }
+      }
+      Destroyer<__mpq_struct> destroyer(values.flat);
+
+      // Find interpolating polynomials, overriding the input with the result.
+      for (int r=0;r<=m;r++)
+        in_place_interpolating_polynomial(degree,lambda,values[r]);
+
+      // Find the largest nonzero denominator coefficient
+      int nonzero = -1;
+      for (int j=0;j<lambda.m;j++)
+        if (mpq_sgn(&values(m,j))) {
+          if (check) // Verify that a term which used to be zero doesn't become nonzero
+            OTHER_ASSERT(lambda(j,d-1));
+          if (nonzero<0 || monomial_less(lambda[nonzero],lambda[j]))
+            nonzero = j;
+        }
+
+      // Verify that numerator coefficients are zero for all large monomials
+      for (int j=0;j<lambda.m;j++)
+        if (nonzero<0 || monomial_less(lambda[nonzero],lambda[j]))
+          for (int r=0;r<m;r++)
+            if (mpq_sgn(&values(r,j)))
+              throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",str(&values(r,j))));
+
+      // If we found a nonzero, compute the result
+      if (nonzero >= 0) {
+        auto& den = values(m,nonzero);
+        Vector<exact::Int,m> result;
+        for (int r=0;r<m;r++) {
+          auto& num = values(r,nonzero);
+          mpq_div(&num,&num,&den); // num /= den 
+          result[r] = snap_div(mpq_numref(&num),mpq_denref(&num));
+        }
+        return result;
+      }
     }
   }
 }
@@ -510,8 +652,14 @@ template<int m> static void perturbed_sign_test() {
     }
 }
 
+// Note: Since perturb_ratio requires the result to fit inside [-exact::bound,exact::bound], it is hard to construct
+// an interesting test function that doesn't have geometric meaning.  Therefore, we don't try, and instead rely on
+// the construction-specific tests in constructions.cpp.
+
 #define INSTANTIATE(m) \
-  template bool perturbed_sign(Exact<>(*const)(RawArray<const Vector<exact::Int,m>>), const int, RawArray<const Tuple<int,Vector<exact::Int,m>>>);
+  template Vector<exact::Int,m> perturbation(const int, const int); \
+  template bool perturbed_sign(Exact<>(*const)(RawArray<const Vector<exact::Int,m>>), const int, RawArray<const Tuple<int,Vector<exact::Int,m>>>); \
+  template Vector<exact::Int,m> perturbed_ratio(Vector<Exact<>,m+1>(*const)(RawArray<const Vector<exact::Int,m>>), const int, RawArray<const Tuple<int,Vector<exact::Int,m>>>);
 INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)

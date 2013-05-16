@@ -26,4 +26,9 @@ template<class U,class V,class W> static auto edet(const U& u, const V& v, const
   return u.x*(v.y*w.z-v.z*w.y)+v.x*(w.y*u.z-w.z*u.y)+w.x*(u.y*v.z-u.z*v.y);
 }
 
+template<class U,class V> static auto emul(const U& s, const Vector<V,2>& v)
+  -> Vector<decltype(s*v.x),2> {
+  return Vector<decltype(s*v.x),2>(s*v.x,s*v.y);
+}
+
 }

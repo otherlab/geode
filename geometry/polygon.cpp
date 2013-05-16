@@ -15,6 +15,7 @@
 #include <other/core/array/NdArray.h>
 #include <other/core/array/Nested.h>
 #include <other/core/array/RawArray.h>
+#include <other/core/array/sort.h>
 namespace other {
 
 typedef real T;
@@ -501,6 +502,32 @@ Nested<const Vec2> polygons_from_python(PyObject* object) {
 #endif
 }
 
+Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
+  // Find the minimal point in each polygon under lexicographic order
+  Array<int> mins(polys.size());
+  for (int p=0;p<polys.size();p++) {
+    const auto poly = polys[p];
+    for (int i=1;i<poly.size();i++)
+      if (lex_less(poly[i],poly[mins[p]]))
+        mins[p] = i;
+  }
+
+  // Sort the polygons
+  Array<int> order = arange(polys.size()).copy();
+  sort(order, [=](int i,int j) { return lex_less(polys(i,mins[i]),polys(j,mins[j])); });
+
+  // Copy into new array
+  Nested<Vec2> new_polys(polys.sizes().subset(order).copy(),false);
+  for (int p=0;p<polys.size();p++) {
+    const int base = mins[order[p]];
+    const auto poly = polys[order[p]];
+    const auto new_poly = new_polys[p];
+    for (int i=0;i<poly.size();i++)
+      new_poly[i] = poly[(i+base)%poly.size()];
+  }
+  return new_polys;   
+}
+
 }
 using namespace other;
 
@@ -512,4 +539,5 @@ using namespace other;
 void wrap_polygon() {
   OTHER_FUNCTION_2(polygon_area,polygon_area_py)
   OTHER_FUNCTION(polygons_from_index_list)
+  OTHER_FUNCTION(canonicalize_polygons)
 }

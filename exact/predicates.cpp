@@ -61,14 +61,31 @@ bool segment_to_direction_oriented(const Point2 a0, const Point2 a1, const Point
   return perturbed_predicate<F>(a0,a1,d);
 }
 
-bool segment_intersections_ordered_helper(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1, const Point2 c0, const Point2 c1) {
-  struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1, const LV2 c0, const LV2 c1) {
-    const auto da = a1-a0,
-               db = b1-b0,
-               dc = c1-c0;
-    return edet(c0-a0,dc)*edet(da,dc)-edet(b0-a0,db)*edet(da,db);
-  }};
-  return perturbed_predicate<F>(a0,a1,b0,b1,c0,c1);
+bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, Point2 b1, Point2 c0, Point2 c1) {
+  bool flip = segment_directions_oriented(a0,a1,b0,b1)
+            ^ segment_directions_oriented(a0,a1,c0,c1);
+  if (b0.x==c0.x || b0.x==c1.x || b1.x==c0.x || b1.x==c1.x) {
+    // Segments b and c share a point: adjust so that b0==b1
+    if (b1.x==c0.x || b1.x==c1.x) { swap(b0,b1); flip ^= 1; }
+    if (b0.x==c1.x)               { swap(c0,c1); flip ^= 1; }
+    struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 bc0, const LV2 b1, const LV2 c1) {
+      const auto da = a1-a0,
+                 db = b1-bc0,
+                 dc = c1-bc0,
+                 d0 = bc0-a0;
+      return edet(d0,dc)*edet(da,db)-edet(d0,db)*edet(da,dc);
+    }};
+    return flip ^ perturbed_predicate<F>(a0,a1,b0,b1,c1);
+  } else {
+    // No common points
+    struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1, const LV2 c0, const LV2 c1) {
+      const auto da = a1-a0,
+                 db = b1-b0,
+                 dc = c1-c0;
+      return edet(c0-a0,dc)*edet(da,db)-edet(b0-a0,db)*edet(da,dc);
+    }};
+    return flip ^ perturbed_predicate<F>(a0,a1,b0,b1,c0,c1);
+  }
 }
 
 bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3) {
@@ -80,6 +97,11 @@ bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3
     return edet(ROW(d0),ROW(d1),ROW(d2));
   }};
   return perturbed_predicate<F>(p0,p1,p2,p3);
+}
+
+bool segments_intersect(const exact::Point2 a0, const exact::Point2 a1, const exact::Point2 b0, const exact::Point2 b1) {
+  return triangle_oriented(a0,a1,b0)!=triangle_oriented(a0,a1,b1)
+      && triangle_oriented(b0,b1,a0)!=triangle_oriented(b0,b1,a1);
 }
 
 // Unit tests.  Warning: These do not check the geometric correctness of the predicates, only properties of exact computation and perturbation.

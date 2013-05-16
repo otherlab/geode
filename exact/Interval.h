@@ -85,9 +85,11 @@ struct Interval {
   Interval operator-() const {
     return Interval(-hi,nlo);
   }
-  
-  static void begin_special_arithmetic();
-  static void end_special_arithmetic();
+
+  // The best estimate of the actual value
+  double center() const {
+    return .5*(hi-nlo);
+  }
 };
 
 static inline bool certainly_opposite_sign(const Interval a, const Interval b) {
@@ -160,6 +162,16 @@ static inline Interval sqr(const Interval x) {
 static inline Interval cube(const Interval x) {
   assert(fegetround() == FE_UPWARD);
   return Interval(-(x.nlo*x.nlo*x.nlo),x.hi*x.hi*x.hi);
+}
+
+// Valid only for intervals that don't contain zero
+static inline Interval inverse(const Interval x) {
+  assert(!x.contains_zero() && fegetround() == FE_UPWARD);
+  Interval s;
+  s.nlo = -1/x.hi;
+  s.hi  = -1/x.nlo;
+  assert(-s.nlo <= s.hi);
+  return s;
 }
 
 static inline ostream& operator<<(ostream& output, const Interval x) {

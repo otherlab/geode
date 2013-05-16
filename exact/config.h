@@ -49,6 +49,8 @@ template<int d> struct Point {
   typedef Tuple<int,Vector<exact::Int,d>> type;
   BOOST_STATIC_ASSERT(sizeof(type)==sizeof(int)+d*sizeof(exact::Int));
 };
+typedef Vector<exact::Int,2> Vec2;
+typedef Vector<exact::Int,3> Vec3;
 typedef typename Point<2>::type Point2;
 typedef typename Point<2>::type Point3;
 

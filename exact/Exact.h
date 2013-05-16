@@ -17,6 +17,7 @@ template<int degree=100> struct Exact;
 
 #define OTHER_SMALL_EXACT(d,type_) \
   template<> struct Exact<d> { \
+    static const bool big = false; \
     static const int degree = d; \
     typedef type_ type; \
     const type n; \
@@ -33,7 +34,7 @@ OTHER_SMALL_EXACT(4,__int128_t)
 
 // Overloaded conversion from small integers to GMP
 
-template<class I> static inline void init_set_steal(mpz_t x, I n) {
+template<class I> static inline void init_set_steal(mpz_t x, const I n) {
   if (sizeof(I)<=sizeof(long))
     mpz_init_set_si(x,long(n));
   else {
@@ -74,6 +75,9 @@ template<int d> struct Exact : public boost::noncopyable {
   template<int k> explicit Exact(const Exact<k>& x, typename boost::enable_if_c<Exact<k>::big,Unusable>::type=Unusable()) {
     mpz_init_set(n,x.n);
   }
+  template<int k> explicit Exact(const Exact<k>& x, typename boost::disable_if_c<Exact<k>::big,Unusable>::type=Unusable()) {
+    init_set_steal(n,x.n);
+  }
 
   template<int k> Exact(Exact<k>&& x) {
     init_set_steal(n,x.n);
@@ -104,6 +108,7 @@ template<int d> static inline int sign(const Exact<d>& x) {
   OTHER_EXACT_LOW_OP(-,a,b,(a>b?a:b))
 OTHER_EXACT_LOW_ADD(1,1)
 OTHER_EXACT_LOW_ADD(2,2)
+OTHER_EXACT_LOW_ADD(3,3)
 OTHER_EXACT_LOW_ADD(4,4)
 #define OTHER_EXACT_LOW_MUL(a,b) OTHER_EXACT_LOW_OP(*,a,b,a+b)
 OTHER_EXACT_LOW_MUL(1,1)

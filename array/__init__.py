@@ -14,7 +14,7 @@ class Nested(object):
   This turns into the template class Nested<T> in C++.
   """
 
-  __slots__=['offsets','flat']
+  __slots__ = ['offsets','flat']
   single_zero = zeros(1,dtype=int32)
 
   def __init__(self,x,dtype=None):
@@ -22,7 +22,7 @@ class Nested(object):
       object.__setattr__(self,"offsets",x.offsets)
       flat = x.flat
     else:
-      object.__setattr__(self,"offsets",hstack([self.single_zero,cumsum([len(y) for y in x],dtype=int32)])) 
+      object.__setattr__(self,"offsets",hstack([self.single_zero,cumsum([len(y) for y in x],dtype=int32)]))
       flat = concatenate(x)
     if dtype is not None:
       flat = flat.astype(dtype)
@@ -72,12 +72,27 @@ class Nested(object):
     return all(self.offsets==other.offsets) and all(self.flat==other.flat)
 
   def __str__(self):
-    return str([list(self[i]) for i in xrange(len(self))]) 
+    return str([list(self[i]) for i in xrange(len(self))])
 
   def __repr__(self):
-    return 'Nested(%s)'%repr([list(self[i]) for i in xrange(len(self))]) 
+    return 'Nested(%s)'%repr([list(self[i]) for i in xrange(len(self))])
 
   def sizes(self):
     return self.offsets[1:]-self.offsets[:-1]
+
+  @staticmethod
+  def concatenate(*args):
+    args = map(Nested,args)
+    if len(args)<=1:
+      return args[0]
+    self = object.__new__(Nested)
+    offsets = [args[0].offsets]
+    flats = [args[0].flat]
+    for a in args[1:]:
+      offsets.append(offsets[-1][-1]+a.offsets[1:])
+      flats.append(a.flat)
+    object.__setattr__(self,'offsets',concatenate(offsets))
+    object.__setattr__(self,'flat',concatenate(flats))
+    return self
 
 _set_nested_array(Nested)

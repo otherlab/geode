@@ -105,7 +105,7 @@ private:
 };
 
 // In [a,b)
-template<> OTHER_CORE_EXPORT  int8_t Random::uniform(const   int8_t a, const   int8_t b);
+template<> OTHER_CORE_EXPORT   int8_t Random::uniform(const   int8_t a, const   int8_t b);
 template<> OTHER_CORE_EXPORT  uint8_t Random::uniform(const  uint8_t a, const  uint8_t b);
 template<> OTHER_CORE_EXPORT  int16_t Random::uniform(const  int16_t a, const  int16_t b);
 template<> OTHER_CORE_EXPORT uint16_t Random::uniform(const uint16_t a, const uint16_t b);

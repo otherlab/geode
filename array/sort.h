@@ -49,13 +49,19 @@ template<class T,class TField> static inline FieldCompare<T,TField> field_compar
   return FieldCompare<T,TField>(field);
 }
 
+template<class TA> static inline bool lex_less(const TA& a0, const TA& a1) {
+  const int m0 = a0.size(),
+            m1 = a1.size(),
+            m = min(m0,m1);
+  for (int i=0;i<m;i++)
+    if (a0[i]!=a1[i])
+      return a0[i]<a1[i];
+  return m0<m1;
+}
+
 struct LexicographicCompare {
-  template<class TArray> bool operator()(const TArray& a1, const TArray& a2) const {
-    int m1 = a1.size(),
-        m2 = a2.size(),
-        m = min(m1,m2);
-    for (int i=0;i<m;i++) if (a1[i]!=a2[i]) return a1[i]<a2[i];
-    return m1<m2;
+  template<class TA> bool operator()(const TA& a0, const TA& a1) const {
+    return lex_less(a0,a1);
   }
 };
 

@@ -2,9 +2,8 @@
 
 #include <other/core/structure/Tuple.h>
 #include <other/core/array/Array.h>
+#include <other/core/mesh/forward.h>
 namespace other {
-
-class SegmentMesh;
 
 OTHER_CORE_EXPORT Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<const int> indices);
 OTHER_CORE_EXPORT Nested<Vec2> polygons_from_index_list(RawArray<const Vec2> positions, Nested<const int> indices);
@@ -39,5 +38,8 @@ template<class TV> static inline Tuple<Ref<SegmentMesh>,Array<TV>> to_segment_me
 
 // Make it easy to overload python functions to work with one or many polygons
 OTHER_CORE_EXPORT Nested<const Vec2> polygons_from_python(PyObject* object);
+
+// Reorder some polygons into canonical form, assuming nondegeneracy.  Primarily for debugging and unit test purposes.
+OTHER_CORE_EXPORT Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys);
 
 }
