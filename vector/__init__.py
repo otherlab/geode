@@ -197,10 +197,11 @@ def homogeneous_times(A,b):
 def compact_str(v):
   '''Stringify a numpy array with no whitespace'''
   def s(a):
-    if a.ndim:
+    try:
       return '[%s]'%','.join(map(s,a))
-    return str(a)
-  return s(asarray(v))
+    except TypeError:
+      return str(a)
+  return s(v)
 
 from . import (Rotation,Frame)
 from .Frame import Frames
