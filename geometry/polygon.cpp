@@ -513,8 +513,17 @@ Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
   }
 
   // Sort the polygons
+  struct Order {
+    Nested<const Vec2> polys;
+    RawArray<const int> mins;
+    Order(Nested<const Vec2> polys, RawArray<const int> mins)
+      : polys(polys), mins(mins) {}
+    bool operator()(int i,int j) const {
+      return lex_less(polys(i,mins[i]),polys(j,mins[j]));
+    }
+  };
   Array<int> order = arange(polys.size()).copy();
-  sort(order, [=](int i,int j) { return lex_less(polys(i,mins[i]),polys(j,mins[j])); });
+  sort(order,Order(polys,mins));
 
   // Copy into new array
   Nested<Vec2> new_polys(polys.sizes().subset(order).copy(),false);
