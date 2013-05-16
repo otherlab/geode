@@ -87,11 +87,11 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
     NdArray<const T> a;
     try {
       a = from_python<NdArray<const T>>(value);
-      return make_prop_shape(n,a,a.shape);
     } catch (const exception&) {
-      // If the conversion fails, squelch the error and fall back to our default
+      // If the NdArray conversion fails, squelch the error and fall back to our default
       PyErr_Clear();
     }
+    return make_prop_shape(n,a,a.shape);
   }
 
   // Default to a property containing an arbitrary python object

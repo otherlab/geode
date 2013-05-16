@@ -19,8 +19,9 @@ string shell_quote(const string& s) {
 #ifdef _WIN32
   std::string result = "\"";
   for(const char c : s) {
-    if(c <= 0x1f || c >= 0x7f)
-      throw RuntimeError(format("no support for escaping non-printable character 0x%X", (unsigned int)c));
+    // UTF-8 encoded strings contain non-ASCII characters, which break this check...
+    //if(c <= 0x1f || c >= 0x7f)
+    //  throw RuntimeError(format("no support for escaping non-printable character 0x%X", (unsigned int)c));
 
     switch(c) {
       case '"':
@@ -38,8 +39,9 @@ string shell_quote(const string& s) {
 #else
   std::string result = "'";
   for(const char c : s) {
-    if(c <= 0x1f || c >= 0x7f)
-      throw RuntimeError(format("no support for escaping non-printable character 0x%X", (unsigned int)c));
+    // UTF-8 encoded strings contain non-ASCII characters, which break this check...
+    //if(c <= 0x1f) // || c >= 0x7f)
+    //  throw RuntimeError(format("no support for escaping non-printable character 0x%X", (unsigned int)c));
     
     switch(c) {
       case '\'':

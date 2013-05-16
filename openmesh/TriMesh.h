@@ -253,7 +253,8 @@ public:
   typedef Vector<T,3> TV;
 
   // add constructors and access functions to make the OpenMesh class more usable
-protected:
+//protected:
+public:
   OTHER_CORE_EXPORT TriMesh();
   OTHER_CORE_EXPORT TriMesh(const TriMesh& m);
   OTHER_CORE_EXPORT TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real,3> > X);
