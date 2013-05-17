@@ -46,7 +46,7 @@
     <ClInclude Include="array\IdentityMap.h" />
     <ClInclude Include="array\IndirectArray.h" />
     <ClInclude Include="array\NdArray.h" />
-    <ClInclude Include="array\NestedArray.h" />
+    <ClInclude Include="array\Nested.h" />
     <ClInclude Include="array\ProjectedArray.h" />
     <ClInclude Include="array\RawArray.h" />
     <ClInclude Include="array\RawField.h" />
@@ -302,7 +302,7 @@
     <ClCompile Include="array\Array2d.cpp" />
     <ClCompile Include="array\module.cpp" />
     <ClCompile Include="array\NdArray.cpp" />
-    <ClCompile Include="array\NestedArray.cpp" />
+    <ClCompile Include="array\Nested.cpp" />
     <ClCompile Include="array\RawArray.cpp" />
     <ClCompile Include="force\ConstitutiveModel.cpp" />
     <ClCompile Include="force\DiagonalizedIsotropicStressDerivative.cpp" />
@@ -321,6 +321,7 @@
     <ClCompile Include="force\StrainMeasure.cpp" />
     <ClCompile Include="force\StrainMeasureHex.cpp" />
     <ClCompile Include="geometry\AnalyticImplicit.cpp" />
+    <ClCompile Include="geometry\Box.cpp" />
     <ClCompile Include="geometry\BoxScalar.cpp" />
     <ClCompile Include="geometry\BoxTree.cpp" />
     <ClCompile Include="geometry\BoxVector.cpp" />

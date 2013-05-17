@@ -288,7 +288,7 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
     } else {
 
       // the arc is possibly split into several segments
-      int segments = abs(angle) / maxangle;
+      int segments = int(abs(angle) / maxangle);
 
       // make the first point
       offset_poly.append(s0.x1 + offset * n0);
