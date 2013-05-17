@@ -52,7 +52,7 @@ template<int d> struct Point {
 typedef Vector<exact::Int,2> Vec2;
 typedef Vector<exact::Int,3> Vec3;
 typedef typename Point<2>::type Point2;
-typedef typename Point<2>::type Point3;
+typedef typename Point<3>::type Point3;
 
 }
 }
