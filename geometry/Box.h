@@ -45,7 +45,7 @@ template<class TV> static inline Box<TV> bounding_box(const TV& p0, const TV& p1
 
 #endif
 
-template<class TArray> OTHER_CORE_EXPORT Box<typename TArray::value_type> bounding_box(const TArray& points) {
+template<class TArray> Box<typename TArray::value_type> bounding_box(const TArray& points) {
   typedef typename TArray::value_type T;
   if (!points.size())
     return Box<T>::empty_box();
@@ -56,9 +56,11 @@ template<class TArray> OTHER_CORE_EXPORT Box<typename TArray::value_type> boundi
 }
 
 // Instantiate common cases in Box.cpp
-extern template Box<real> bounding_box(const RawArray<const real>&);
-extern template Box<Vector<real,2>> bounding_box(const RawArray<const Vector<real,2>>&);
-extern template Box<Vector<real,3>> bounding_box(const RawArray<const Vector<real,3>>&);
+#ifndef WIN32
+extern template OTHER_CORE_EXPORT Box<real> bounding_box(const RawArray<const real>&);
+extern template OTHER_CORE_EXPORT Box<Vector<real,2>> bounding_box(const RawArray<const Vector<real,2>>&);
+extern template OTHER_CORE_EXPORT Box<Vector<real,3>> bounding_box(const RawArray<const Vector<real,3>>&);
+#endif
 
 template<class T> static inline Box<typename Array<T>::value_type> bounding_box(const Array<T>& points) {
   return bounding_box(RawArray<typename boost::add_const<T>::type>(points));

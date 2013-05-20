@@ -87,7 +87,7 @@ Array<Vec2> resample_polygon(RawArray<const Vec2> poly, const T maximum_edge_len
   }
   return fine;
 }
-  
+
 bool inside_polygon(RawArray<const Vec2> poly, const Vec2 p) {
   int count = 0;
   T vfar = 1e3 * bounding_box(poly).sizes().max();
@@ -165,7 +165,7 @@ Array<Vec2> polygon_simplify(RawArray<const Vec2> poly_, const T max_angle_deg, 
   const T mincos = cos(pi/180*max_angle_deg);
   const T sqr_min_length = sqr(max_dist);
   Array<Vec2> poly = poly_.copy();
-  Array<Vec2> tmp; 
+  Array<Vec2> tmp;
 
   // Repeatedly simplify until nothing changes
   for (;;) {
@@ -288,7 +288,7 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
     } else {
 
       // the arc is possibly split into several segments
-      int segments = abs(angle) / maxangle;
+      int segments = int(abs(angle) / maxangle);
 
       // make the first point
       offset_poly.append(s0.x1 + offset * n0);
