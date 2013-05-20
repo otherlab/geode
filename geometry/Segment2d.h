@@ -79,6 +79,10 @@ public:
     if(denominator == 0) return 0; // x0 and x1 are a single point
     else return dot(location-x0,v)/denominator;}
 
+    inline T interpolation_fraction(const TV& location) const {
+      return Segment<TV>::interpolation_fraction(location, x0, x1);
+    }
+
     static TV barycentric_coordinates(const TV& location,const TV& x0,const TV& x1)
     {T t=interpolation_fraction(location,x0,x1);
     return TV(1-t,t);}
