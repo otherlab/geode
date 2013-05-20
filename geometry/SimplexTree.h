@@ -39,6 +39,7 @@ public:
   OTHER_CORE_EXPORT bool inside_given_closest_point(TV point, int simplex, Vector<T,d+1> weights) const;
   OTHER_CORE_EXPORT TV closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance=inf) const; // simplex=-1 if nothing is found
   OTHER_CORE_EXPORT TV closest_point(TV point, T max_distance=inf) const; // return value is infinity if nothing is found
+  OTHER_CORE_EXPORT Tuple<Vector<T,d+1>,int> closest_barycentric(TV point, T max_distance=inf) const;
   OTHER_CORE_EXPORT T distance (TV point, T max_distance=inf) const; // return value is infinity if nothing is found
 };
 
