@@ -442,6 +442,15 @@ TriMesh::Normal TriMesh::normal(EdgeHandle eh) const {
   }
 }
 
+TriMesh::Point TriMesh::point(FaceHandle fh, Vector<real,3> const &bary) const {
+  Vector<VertexHandle, 3> vh = vertex_handles(fh);
+  TriMesh::Point p(0., 0., 0.);
+  for (int i = 0; i < 3; ++i) {
+    p += bary[i] * point(vh[i]);
+  }
+  return p;
+}
+
 TriMesh::Normal TriMesh::smooth_normal(FaceHandle fh,
                                        Vector<real, 3> const &bary) const {
   Vector<VertexHandle, 3> vh = vertex_handles(fh);
@@ -1807,6 +1816,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(edge_tree)
     .OTHER_METHOD(point_tree)
     .OTHER_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
+    .OTHER_OVERLOADED_METHOD_2(OTriMesh::Point (Self::*)(FaceHandle,Vector<real,3>const&)const, "interpolated_point", point)
     .OTHER_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
     .OTHER_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
     .OTHER_OVERLOADED_METHOD_2(Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)

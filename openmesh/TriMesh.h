@@ -418,6 +418,18 @@ public:
     return OTriMesh::normal(fh);
   }
 
+  // re-publish
+  inline Point &point(VertexHandle vh) {
+    return OTriMesh::point(vh);
+  }
+
+  inline Point const &point(VertexHandle vh) const {
+    return OTriMesh::point(vh);
+  }
+
+  // get an interpolated point from a face and barycentric coordinates
+  OTHER_CORE_EXPORT Point point(FaceHandle fh, Vector<real,3> const &bary) const;
+
   // get an interpolated normal at any point on the mesh
   OTHER_CORE_EXPORT Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
 
