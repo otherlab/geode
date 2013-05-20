@@ -95,10 +95,7 @@ public:
 
   // note: to assign a ptr to a ref, ref=ptr.ref()
   Ref& operator=(const Ref& ref) {
-    OTHER_DECREF(owner_);
-    self = ref.self;
-    owner_ = ref.owner_;
-    OTHER_INCREF(owner_);
+    Ref(ref).swap(*this);
     return *this;
   }
 

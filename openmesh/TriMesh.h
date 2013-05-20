@@ -309,6 +309,15 @@ public:
     return prop;
   }
 
+  template<class PropType> PropType get_prop(const string& s) const {
+    PropType result;
+    if(!get_property_handle(result, s)) {
+      OTHER_FATAL_ERROR(format("Could not get property: %s",s));
+    }
+    return result;
+  }
+
+
   // add a bunch of vertices
   OTHER_CORE_EXPORT void add_vertices(RawArray<const TV> X);
 
