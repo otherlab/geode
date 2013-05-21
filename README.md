@@ -20,14 +20,14 @@ and [Tyson Brochu](http://www.cs.ubc.ca/~tbrochu).
 
 Required dependencies:
 
-* [python >= 2.6](http://python.org): A scripting language (Python Software Foundation (PSF) license)
-* [numpy >= 1.5](http://numpy.scipy.org): Efficient multidimensional arrays for Python (BSD license)
 * [boost >= 1.46](http://www.boost.org): Various C++ utility libraries (Boost Software License)
 * [scons >= 2.0](http://www.scons.org): A build system (MIT license)
 * [cblas](http://www.netlib.org/blas/blast-forum/cblas.tgz): C wrappers for BLAS (BSD license)
 
-Optional dependencies:
+Optional dependencies (see below for how to disable these):
 
+* [python >= 2.6](http://python.org): A scripting language (Python Software Foundation (PSF) license)
+* [numpy >= 1.5](http://numpy.scipy.org): Efficient multidimensional arrays for Python (BSD license)
 * [scipy](http://www.scipy.org): Scientific computation for Python (BSD license)
 * [py.test >= 2.1](http://pytest.org): Simple python testing (MIT license)
 * [openexr](http://www.openexr.com): High dynamic range floating point image format (BSD license)
@@ -68,23 +68,31 @@ Ideally, we will improve this part so that everything works more automatically.
         cd $OTHER
         ./core/build/setup
 
-3. Configure build: If desired, edit `config.py` and set any desired options.  For example
+4. Configure build: If desired, edit `config.py` and set any desired options.  For example:
 
         # config.py
         CXX = 'clang++'
         cache = '/tmp/scons-cache'
 
-   Run `scons -h` to get a complete list of available options.
+   The following flags can be used to disable optional components:
 
-4. Build:
+        has_python = 0
+        has_openexr = 0
+        has_libpng = 0
+        has_libjpeg = 0
+        has_openmesh = 0
+
+5. Build:
 
         cd $OTHER
         scons -j5 # optimized build
         scons -j5 type=debug # debug build
 
+   Run `scons -h` to get a complete list of available options.
+
    Libraries and directories will be installed into `$OTHER/install/<variant>`, where <variant> is debug or release.
 
-5. Make a flavor symlink to your desired active variant.
+6. Make a flavor symlink to your desired active variant.
 
         cd $OTHER/install
         ln -s <variant> flavor # <variant> can be debug or release
@@ -106,13 +114,13 @@ Ideally, we will improve this part so that everything works more automatically.
 
         other-flavor <variant>
 
-6. Set up environment variables:
+7. Set up environment variables:
 
         export OTHER=$HOME/otherlab/other
         export PATH=$PATH:$OTHER/install/flavor/bin
         export PYTHONPATH=$PYTHONPATH:$OTHER/..:$OTHER/install/flavor/lib
 
-7. Test:
+8. Test:
 
         cd $OTHER/core
         py.test --version # Need at least 2.1
