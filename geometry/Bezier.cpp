@@ -307,6 +307,7 @@ template struct PointSolve<3>;
 template struct Span<2>;
 template struct Span<3>;
 
+#ifdef OTHER_PYTHON
 
 PyObject* to_python(const InvertableBox& self) {
   return to_python(tuple(self.begin,self.end));
@@ -316,6 +317,8 @@ InvertableBox FromPython<InvertableBox>::convert(PyObject* object) {
   const auto extents = from_python<Tuple<real,real>>(object);
   return InvertableBox(extents.x,extents.y);
 }
+
+#endif
 
 std::ostream& operator<<(std::ostream& os, const InvertableBox& ib) {
   os << "[" << ib.begin << ", " << ib.end << "]";

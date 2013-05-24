@@ -75,6 +75,7 @@ options(
   ('optimizations','override default optimization settings','<default>'),
   ('sse','Use SSE if available',1),
   ('skip','list of modules to skip',[]),
+  ('skip_libs', 'list of libraries to skip', []),
   ('skip_programs','Build libraries only',0),
   ('BASE','Standard base directory for headers and libraries',env['BASE']),
   ('CXXFLAGS_EXTRA','',[]),
@@ -553,6 +554,8 @@ if windows:
   projects = []
 def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   name = os.path.basename(path)
+  if name in env['skip_libs']:
+    return
   cpps = []
   skip = tuple(skip)+tuple(env['skip'])
   candidates = list(files(Dir('.').srcnode().abspath,skip)) if not skip_all else []
@@ -613,6 +616,8 @@ def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
 
 # Build a program
 def program(env,name,cpp=None):
+  if env['skip_programs']:
+    return
   if cpp is None:
     cpp = name + '.cpp'
   env = link_flags(env)
