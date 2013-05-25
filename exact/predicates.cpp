@@ -20,11 +20,11 @@ typedef Vector<Exact<1>,3> LV3;
 // First, a trivial predicate, handled specially so that it can be partially inlined.
 
 template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<exact::Int,d>> a, const Tuple<int,Vector<exact::Int,d>> b) {
-  const typename Point<d>::type X[2] = {a,b};
   struct F { static inline Exact<> eval(RawArray<const Vector<exact::Int,d>> X) {
     return Exact<>(X[1][axis]-X[0][axis]);
   }};
-  return perturbed_sign(F::eval,1,RawArray<const typename Point<d>::type>(2,X));
+  const typename Point<d>::type X[2] = {a,b};
+  return perturbed_sign(F::eval,1,asarray(X));
 }
 
 #define IAL(d,axis) template bool axis_less_degenerate<axis,d>(const Tuple<int,Vector<exact::Int,d>>,const Tuple<int,Vector<exact::Int,d>>);

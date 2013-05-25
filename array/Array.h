@@ -471,6 +471,7 @@ public:
   }
 };
 
+template<class T,int d>   static inline const RawArray<T>       asarray(T (&v)[d])                 { return RawArray<T>(d,v); }
 template<class T,int d>   static inline const RawArray<T>       asarray(Vector<T,d>& v)            { return RawArray<T>(d,v.begin()); }
 template<class T,int d>   static inline const RawArray<const T> asarray(const Vector<T,d>& v)      { return RawArray<const T>(d,v.begin()); }
 template<class T>         static inline const RawArray<T>&      asarray(const RawArray<T>& v)      { return v; }
@@ -479,6 +480,7 @@ template<class T,class A> static inline const RawArray<T>       asarray(std::vec
 template<class T,class A> static inline const RawArray<const T> asarray(const std::vector<T,A>& v) { return RawArray<const T>(v.size(),&v[0]); }
 template<class T,class A> static inline const A&                asarray(const ArrayBase<T,A>& v)   { return v.derived(); }
 
+template<class T,int d>   static inline const RawArray<const T> asconstarray(T (&v)[d])                 { return RawArray<const T>(d,v); }
 template<class T,int d>   static inline const RawArray<const T> asconstarray(const Vector<T,d>& v)      { return RawArray<const T>(d,v.begin()); }
 template<class T>         static inline const RawArray<const T> asconstarray(const RawArray<T>& v)      { return v; }
 template<class T>         static inline const RawArray<const T> asconstarray(const Array<T>& v)         { return v; }

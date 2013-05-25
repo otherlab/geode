@@ -56,7 +56,7 @@ template<class F,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed
 
   // Fall back to symbolic perturbation
   const typename exact::Point<d>::type X[n] = {args...};
-  return perturbed_sign(wrap_predicate<F,d>(IRange<sizeof...(Args)>()),degree,RawArray<const typename exact::Point<d>::type>(n,X));
+  return perturbed_sign(wrap_predicate<F,d>(IRange<sizeof...(Args)>()),degree,asarray(X));
 }
 
 }

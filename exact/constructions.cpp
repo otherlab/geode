@@ -63,7 +63,7 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
     return Vector<Exact<>,3>(Vector<Exact<>,2>(emul(den,a0)+emul(edet(b0-a0,db),da)),Exact<>(den));
   }};
   const Point2 X[4] = {a0,a1,b0,b1};
-  return perturbed_ratio<2>(&F::eval,3,RawArray<const Point2>(4,X));
+  return perturbed_ratio<2>(&F::eval,3,asarray(X));
 }
 
 static bool check_intersection(const IV2 a0, const IV2 a1, const IV2 b0, const IV2 b1, Random& random) {
