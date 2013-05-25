@@ -62,11 +62,11 @@ public:
     {}
 
     explicit Vector(const Vector<T,2>& vector)
-      :x(vector.x),y(vector.y),z(0),w(0)
+      :x(vector.x),y(vector.y),z(),w()
     {}
 
     explicit Vector(const Vector<T,3>& vector)
-      :x(vector.x),y(vector.y),z(vector.z),w(0)
+      :x(vector.x),y(vector.y),z(vector.z),w()
     {}
 
     explicit Vector(const Vector<T,3>& vector, const T& w)
