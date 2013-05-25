@@ -8,14 +8,18 @@
 #include <fenv.h>
 namespace other {
 
+struct Interval;
 using std::ostream;
 
 // IMPORTANT: All interval arithmetic must occur within an IntervalScope (see scope.h).
 
+// Intervals are treated as scalars so that they are preserved through various arithmetic operations
+template<> struct IsScalar<Interval> : public mpl::true_ {};
+
 struct Interval {
-  // For now, we use single precision arithmetic unconditionally.
-  typedef float T;
-  typedef T Scalar;
+  // For now, we use double precision arithmetic unconditionally.  This is particularly important for constructions,
+  // where we want to error range to be better than float precision in most cases.
+  typedef double T;
 
   // We store the interval [a,b] as (-a,b) internally.  With proper arithmetic operations, this
   // allows us to use only FE_UPWARD and avoid switching rounding modes over and over.
@@ -25,13 +29,13 @@ struct Interval {
     : nlo(0), hi(0) {}
 
   Interval(T x)
-    : nlo(-x), hi(x) {}  
+    : nlo(-x), hi(x) {}
 
   Interval(T lo, T hi)
     : nlo(-lo), hi(hi) {
     assert(lo <= hi);
   }
-  
+
   bool contains_zero() const {
     return nlo>=0 && hi>=0;
   }
@@ -74,14 +78,14 @@ struct Interval {
     assert(fegetround() == FE_UPWARD);
     return Interval(-(nlo+x.nlo),hi+x.hi);
   }
-  
+
   Interval operator-(const Interval x) const {
     assert(fegetround() == FE_UPWARD);
     return Interval(-(nlo+x.hi),hi+x.nlo);
   }
-  
+
   Interval operator*(const Interval x) const;
-  
+
   Interval operator-() const {
     return Interval(-hi,nlo);
   }
@@ -128,7 +132,7 @@ inline Interval Interval::operator*(const Interval x) const {
     }
   } else {
     if (d <= 0) {
-      r.nlo = b * nc; 
+      r.nlo = b * nc;
       r.hi  = -na * d;
     } else if (-nc <= 0 && 0 <= d) {
       r.nlo = b * nc;
