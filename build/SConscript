@@ -1,5 +1,6 @@
 Import('env toplevel children')
 
+env = Environment(tools=['default','pdflatex','pdftex'],TARGET_ARCH='x86') # TARGET_ARCH applies only on Windows
 if env['PLATFORM'] != 'posix':
     toplevel('other','.')
 children(env)
