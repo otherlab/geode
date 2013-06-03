@@ -1,4 +1,8 @@
 Import('env toplevel children')
 
-toplevel('other','.')
+#posix = env['PLATFORM']=='posix'
+#darwin = env['PLATFORM']=='darwin'
+#windows = env['PLATFORM']=='win32'
+if not posix:
+    toplevel('other','.')
 children(env)
