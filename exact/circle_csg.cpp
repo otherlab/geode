@@ -87,7 +87,7 @@ struct Vertex {
 }
 
 typedef RawArray<const ExactCircleArc> Arcs;
-typedef RawArray<const Vector<int,2>> Near; // (prev,next) pairs
+typedef RawArray<const int> Next;
 typedef RawArray<const Vertex> Vertices;
 
 // Run a fast interval check, and fall back to a slower exact check if it fails.  If check is true, do both and validate.
@@ -466,11 +466,11 @@ static int horizontal_depth_change(Arcs arcs, const Vertex a, const Vertex b01, 
   }
 }
 
-static Array<Box<EV2>> arc_boxes(Near near, Arcs arcs, RawArray<const Vertex> vertices) {
+static Array<Box<EV2>> arc_boxes(Next next, Arcs arcs, RawArray<const Vertex> vertices) {
   // Build bounding boxes for each arc
   Array<Box<EV2>> boxes(arcs.size(),false);
   for (int i1=0;i1<arcs.size();i1++) {
-    const int i2 = near[i1].y;
+    const int i2 = next[i1];
     const auto v01 = vertices[i1],
                v12 = vertices[i2];
     auto box = bounding_box(v01.inexact,v12.inexact).thickened(2);
@@ -512,37 +512,33 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
 
   // Build a convenience array of (prev,next) pairs to avoid dealing with the nested structure.
   // Also precompute all intersections between connected arcs.
-  Array<Vector<int,2>> near(arcs.size(),false);
-  for (int i=1;i<near.size();i++) {
-    near[i].x = i-1;
-    near[i-1].y = i;
-  }
+  Array<int> next(arcs.size(),false);
+  for (int i=1;i<next.size();i++)
+    next[i-1] = i;
   for (int p=0;p<nested.size();p++) {
     const int lo = nested.offsets[p],
               hi = nested.offsets[p+1];
-    if (lo < hi) {
-      near[lo].x = hi-1;
-      near[hi-1].y = lo;
-    }
+    if (lo < hi)
+      next[hi-1] = lo;
   }
 
   // Precompute all intersections between connected arcs
   Array<Vertex> vertices(arcs.size(),false); // vertices[i] is the start of arcs[i]
-  for (int i1=0;i1<arcs.size();i1++) {
-    const int i0 = near[i1].x;
+  for (int i0=0;i0<arcs.size();i0++) {
+    const int i1 = next[i0];
     vertices[i1] = circle_circle_intersections(arcs,i0,i1)[arcs[i0].left];
   }
 
   // Compute all nontrivial intersections between segments
   struct Intersections {
     const BoxTree<EV2>& tree;
-    Near near;
+    Next next;
     Arcs arcs;
     Vertices vertices;
     Array<Vertex> found;
 
-    Intersections(const BoxTree<EV2>& tree, Near near, Arcs arcs, Vertices vertices)
-      : tree(tree), near(near), arcs(arcs), vertices(vertices) {}
+    Intersections(const BoxTree<EV2>& tree, Next next, Arcs arcs, Vertices vertices)
+      : tree(tree), next(next), arcs(arcs), vertices(vertices) {}
 
     bool cull(const int n) const { return false; }
     bool cull(const int n0, const int box1) const { return false; }
@@ -551,8 +547,8 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
     void leaf(const int n0, const int n1) {
       if (n0 != n1) {
         assert(tree.prims(n0).size()==1 && tree.prims(n1).size()==1);
-        const int i1 = tree.prims(n0)[0], i2 = near[i1].y,
-                  j1 = tree.prims(n1)[0], j2 = near[j1].y;
+        const int i1 = tree.prims(n0)[0], i2 = next[i1],
+                  j1 = tree.prims(n1)[0], j2 = next[j1];
         if (   !(i2==j1 && j2==i1) // If we're looking at the two arcs of a length two contour, there's nothing to do
             && (i1==j2 || i2==j1 || circles_intersect(arcs,i1,j1))) {
           // We can get here even if the two arcs are adjacent, since we may need to detect the other intersection of two adjacent circles.
@@ -568,8 +564,8 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
       }
     }
   };
-  const auto tree = new_<BoxTree<EV2>>(arc_boxes(near,arcs,vertices),1);
-  Intersections pairs(tree,near,arcs,vertices);
+  const auto tree = new_<BoxTree<EV2>>(arc_boxes(next,arcs,vertices),1);
+  Intersections pairs(tree,next,arcs,vertices);
   double_traverse(*tree,pairs);
 
   // Group intersections by segment.  Each pair is added twice: once for each order.
@@ -593,17 +589,17 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
     // Compute the depth of the first point in the contour by firing a ray along the positive x axis.
     struct Depth {
       const BoxTree<EV2>& tree;
-      Near near;
+      Next next;
       Arcs arcs;
       Vertices vertices;
       const Vertex start;
       int depth;
 
-      Depth(const BoxTree<EV2>& tree, Near near, Arcs arcs, Vertices vertices, const int i0, const int i1)
-        : tree(tree), near(near), arcs(arcs), vertices(vertices)
+      Depth(const BoxTree<EV2>& tree, Next next, Arcs arcs, Vertices vertices, const int i0, const int i1)
+        : tree(tree), next(next), arcs(arcs), vertices(vertices)
         , start(vertices[i1])
         // If we intersect no other arcs, the depth depends on the orientation of direction = (1,0) relative to inwards and outwards arcs
-        , depth(local_x_axis_depth(arcs,vertices[i0],start,vertices[near[i1].y])) {}
+        , depth(local_x_axis_depth(arcs,vertices[i0],start,vertices[next[i1]])) {}
 
       bool cull(const int n) const {
         const auto box = tree.boxes(n),
@@ -616,10 +612,10 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
         const int j = tree.prims(n)[0];
         if (start.i0!=j && start.i1!=j)
           depth -= horizontal_depth_change(arcs,start,vertices[j],
-                                                      vertices[near[j].y]);
+                                                      vertices[next[j]]);
       }
     };
-    Depth ray(tree,near,arcs,vertices,poly.back(),poly[0]);
+    Depth ray(tree,next,arcs,vertices,poly.back(),poly[0]);
     single_traverse(*tree,ray);
 
     // Walk around the contour, recording all subarcs at the desired depth
@@ -630,12 +626,12 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
       // Sort intersections along this segment
       if (other.size() > 1) {
         struct PairOrder {
-          Near near;
+          Next next;
           Arcs arcs;
           const Vertex start; // The start of the segment
 
-          PairOrder(Near near, Arcs arcs, Vertex start)
-            : near(near), arcs(arcs)
+          PairOrder(Next next, Arcs arcs, Vertex start)
+            : next(next), arcs(arcs)
             , start(start) {}
 
           bool operator()(const Vertex b0, const Vertex b1) const {
@@ -645,7 +641,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
             return circle_arc_intersects_circle(arcs,start,b1,b0);
           }
         };
-        sort(other,PairOrder(near,arcs,prev));
+        sort(other,PairOrder(next,arcs,prev));
       }
       // Walk through each intersection of this segment, updating delta as we go and remembering the subsegment if it has the right depth
       for (const auto o : other) {
@@ -655,10 +651,10 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
         prev = o.reverse();
       }
       // Advance to the next segment
-      const auto next = vertices[near[i].y];
+      const auto n = vertices[next[i]];
       if (!delta)
-        graph.set(prev,next);
-      prev = next;
+        graph.set(prev,n);
+      prev = n;
     }
   }
 
