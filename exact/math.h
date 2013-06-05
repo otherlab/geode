@@ -16,6 +16,16 @@ template<class U,class V> static auto edot(const U& u, const V& v)
   return u.x*v.x+u.y*v.y+u.z*v.z;
 }
 
+template<class U> static auto esqr_magnitude(const U& u)
+  -> typename boost::enable_if_c<U::m==2,decltype(sqr(u.x)+sqr(u.y))>::type {
+  return sqr(u.x)+sqr(u.y);
+}
+
+template<class U> static auto esqr_magnitude(const U& u)
+  -> typename boost::enable_if_c<U::m==3,decltype(sqr(u.x)+sqr(u.y)+sqr(u.z))>::type {
+  return sqr(u.x)+sqr(u.y)+sqr(u.z);
+}
+
 template<class U,class V> static auto edet(const U& u, const V& v)
   -> typename boost::enable_if_c<U::m==2 && V::m==2,decltype(u.x*v.y-u.y*v.x)>::type {
   return u.x*v.y-u.y*v.x;

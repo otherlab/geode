@@ -7,4 +7,5 @@ void wrap_exact() {
   OTHER_WRAP(constructions)
   OTHER_WRAP(delaunay)
   OTHER_WRAP(polygon_csg)
+  OTHER_WRAP(circle_csg)
 }

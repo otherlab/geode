@@ -4,10 +4,10 @@ import platform
 from numpy import *
 if platform.system()=='Windows':
   from other_all import *
-  from other_all import _set_nested_array
+  import other_all as other_core
 else:
   from other_core import *
-  from other_core import _set_nested_array
+  import other_core
 
 class Nested(object):
   """Represents a nested array of arrays using flat storage for efficiency.
@@ -95,4 +95,5 @@ class Nested(object):
     object.__setattr__(self,'flat',concatenate(flats))
     return self
 
-_set_nested_array(Nested)
+other_core._set_nested_array(Nested)
+other_core._set_recarray_type(recarray)

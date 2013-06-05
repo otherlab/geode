@@ -16,7 +16,7 @@ def test_interpolation():
   for d in xrange(1,5):
     for n in xrange(1,6):
       beta = perturb_monomials(d,n)
-      coefs = random.randint(2*bound,size=len(beta)).astype(int32)-bound
+      coefs = random.randint(2*bound,size=len(beta))-bound
       in_place_interpolating_polynomial_test(d,beta,coefs,False)
 
 def test_perturbed_sign():

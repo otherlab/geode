@@ -4,6 +4,8 @@
 // Modified from code by Tyson Brochu, 2011
 
 #include <other/core/utility/config.h>
+#include <other/core/geometry/forward.h>
+#include <other/core/math/constants.h>
 #include <other/core/python/repr.h>
 #include <fenv.h>
 namespace other {
@@ -36,20 +38,12 @@ struct Interval {
     assert(lo <= hi);
   }
 
+  static Interval full() {
+    return Interval(-inf,inf);
+  }
+
   bool contains_zero() const {
     return nlo>=0 && hi>=0;
-  }
-
-  bool certainly_negative() const {
-    return hi < 0;
-  }
-
-  bool certainly_positive() const {
-    return nlo < 0;
-  }
-
-  bool certainly_zero() const {
-    return !nlo && !hi;
   }
 
   bool contains(T x) const {
@@ -94,11 +88,44 @@ struct Interval {
   double center() const {
     return .5*(hi-nlo);
   }
+
+  Interval thickened(T delta) const {
+    assert(fegetround() == FE_UPWARD);
+    return Interval(-(nlo+delta),hi+delta);
+  }
 };
 
+static inline bool certainly_negative(const Interval x) {
+  return x.hi < 0;
+}
+
+static inline bool certainly_positive(const Interval x) {
+  return x.nlo < 0;
+}
+
+static inline bool certainly_zero(const Interval x) {
+  return !x.nlo && !x.hi;
+}
+
 static inline bool certainly_opposite_sign(const Interval a, const Interval b) {
-  return (a.certainly_negative() && b.certainly_positive())
-      || (a.certainly_positive() && b.certainly_negative());
+  return (certainly_negative(a) && certainly_positive(b))
+      || (certainly_positive(a) && certainly_negative(b));
+}
+
+static inline bool certainly_less(const Interval a, const Interval b) {
+  return a.hi < -b.nlo;
+}
+
+// +-1 if the interval is definitely nonzero, otherwise zero
+static inline int weak_sign(const Interval x) {
+  return certainly_positive(x) ?  1
+       : certainly_negative(x) ? -1
+                               :  0;
+}
+
+static inline Interval operator-(const double x, const Interval y) {
+  assert(fegetround() == FE_UPWARD);
+  return Interval(-(y.hi-x),x+y.nlo);
 }
 
 inline Interval Interval::operator*(const Interval x) const {
@@ -168,6 +195,24 @@ static inline Interval cube(const Interval x) {
   return Interval(-(x.nlo*x.nlo*x.nlo),x.hi*x.hi*x.hi);
 }
 
+// Provide shifts as special functions since they're exact
+OTHER_ALWAYS_INLINE static inline Interval operator<<(const Interval x, const int p) {
+  assert(unsigned(p)<32);
+  const double y = 1<<p;
+  Interval s;
+  s.nlo = y*x.nlo;
+  s.hi  = y*x.hi;
+  return s;
+}
+OTHER_ALWAYS_INLINE static inline Interval operator>>(const Interval x, const int p) {
+  assert(unsigned(p)<32);
+  const double y = 1./(1<<p);
+  Interval s;
+  s.nlo = y*x.nlo;
+  s.hi  = y*x.hi;
+  return s;
+}
+
 // Valid only for intervals that don't contain zero
 static inline Interval inverse(const Interval x) {
   assert(!x.contains_zero() && fegetround() == FE_UPWARD);
@@ -178,8 +223,53 @@ static inline Interval inverse(const Interval x) {
   return s;
 }
 
+// Take the sqrt root of an interval, assuming the true input is nonnegative
+static inline Interval assume_safe_sqrt(const Interval x) {
+  assert(fegetround()==FE_UPWARD);
+  assert(x.hi >= 0);
+  Interval s;
+  // The upper bound is easy
+  s.hi = sqrt(x.hi);
+  // For the lower bound, we multiply by 1-3ep < (1+e)^-2 (rounding towards zero in the multiplication) to avoid switching rounding modes.
+  const double tweak = 1-3*numeric_limits<double>::epsilon();
+  s.nlo = x.nlo>=0 ? 0 : -sqrt(-(tweak*x.nlo));
+  assert(-s.nlo <= s.hi);
+  return s;
+}
+
+static inline string repr(const Interval x) {
+  return format("[%s,%s]",repr(-x.nlo),repr(x.hi));
+}
+
 static inline ostream& operator<<(ostream& output, const Interval x) {
-  return output << '['<<repr(-x.nlo)<<','<<repr(x.hi)<<']';
+  const double c = x.center();
+  return output << x.center() << "+-" << x.hi-c;
+}
+
+// Are all intervals in a vector smaller than threshold?
+template<int m> static inline bool small(const Vector<Interval,m>& xs, const double threshold) {
+  for (auto& x : xs)
+    if (x.nlo+x.hi >= threshold)
+      return false;
+  return true;
+}
+
+// Snap an interval vector to integers, rounding to the best integer guess
+template<int m> static inline Vector<ExactInt,m> snap(const Vector<Interval,m>& xs) {
+  Vector<ExactInt,m> r;
+  for (int i=0;i<m;i++)
+    r[i] = ExactInt(round(xs[i].center()));
+  return r;
+}
+
+// Conservatively expand an integer to an integer box
+template<int m> static inline Box<Vector<ExactInt,m>> snap_box(const Vector<Interval,m>& xs) {
+  Box<Vector<ExactInt,m>> box;
+  for (int i=0;i<m;i++) {
+    box.min[i] = ExactInt(floor(-xs[i].nlo));
+    box.max[i] = ExactInt( ceil( xs[i].hi));
+  }
+  return box;
 }
 
 }

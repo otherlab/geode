@@ -18,27 +18,8 @@ using Log::cout;
 using std::endl;
 using exact::Exact;
 using exact::Point2;
-typedef Vector<exact::Int,2> IV2;
+typedef Vector<ExactInt,2> IV2;
 typedef Vector<Exact<1>,2> LV2;
-
-// If interval computations aren't this close, we fall back to exact computation.
-static const double threshold = 1;
-
-// Are all intervals in a vector small?
-template<int m> static inline bool small(const Vector<Interval,m>& xs) {
-  for (auto& x : xs)
-    if (x.nlo+x.hi >= threshold)
-      return false;
-  return true;
-}
-
-// Compute our best integer guess for the value of an interval vector
-template<int m> static inline Vector<exact::Int,m> snap(const Vector<Interval,m>& xs) {
-  Vector<exact::Int,m> r;
-  for (int i=0;i<m;i++)
-    r[i] = int(round(xs[i].center()));
-  return r;
-}
 
 exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
   // Evaluate conservatively using intervals
@@ -49,13 +30,13 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
     const auto den = edet(da,db);
     if (!den.contains_zero()) {
       const auto r = a0i+edet(b0i-a0i,db)*da*inverse(den);
-      if (small(r))
+      if (small(r,segment_segment_intersection_threshold))
         return snap(r);
     }
   }
 
   // If intervals fail, evaluate and round exactly using symbolic perturbation
-  struct F { static inline Vector<Exact<>,3> eval(RawArray<const IV2> X) {
+  struct F { static Vector<Exact<>,3> eval(RawArray<const IV2> X) {
     const LV2 a0(X[0]), a1(X[1]), b0(X[2]), b1(X[3]);
     const auto da = a1-a0,
                db = b1-b0;
@@ -63,7 +44,7 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
     return Vector<Exact<>,3>(Vector<Exact<>,2>(emul(den,a0)+emul(edet(b0-a0,db),da)),Exact<>(den));
   }};
   const Point2 X[4] = {a0,a1,b0,b1};
-  return perturbed_ratio<2>(&F::eval,3,asarray(X));
+  return perturbed_ratio(&F::eval,3,asarray(X));
 }
 
 static bool check_intersection(const IV2 a0, const IV2 a1, const IV2 b0, const IV2 b1, Random& random) {
@@ -86,23 +67,25 @@ static void construction_tests() {
   // Check a bunch of large random segments
   const auto random = new_<Random>(623189131);
   {
-    const int total = 1024;
+    const int total = 4096;
     int count = 0;
     for (int k=0;k<total;k++)
       count += check_intersection(perturbation<2>(4,k),perturbation<2>(5,k),perturbation<2>(6,k),perturbation<2>(7,k),random);
     // See https://groups.google.com/forum/?fromgroups=#!topic/sci.math.research/kRvImz5RslU
     const double prob = 25./108;
     cout << "random: expected "<<round(prob*total)<<"+-"<<round(sqrt(total*prob*(1-prob)))<<", got "<<count<<endl;
-    OTHER_ASSERT(sqr(count-prob*total)<total*prob*(1-prob)); // Require that we're within one standard deviation, because this is a unit test.
+    OTHER_ASSERT(sqr(count-prob*total)<sqr(3)*total*prob*(1-prob)); // Require that we're within 3 standard deviations.
   }
 
   // Check nearly colinear segments
   for (int k=0;k<32;k++) {
-    const int x1 = random->uniform<int>(-1<<20,1<<20),
-              x0 = random->uniform<int>(-1<<23,x1),
-              x2 = random->uniform<int>(x1,1<<23),
-              dx = random->uniform<int>(-1<<23,1<<23),
-              y  = random->uniform<int>(-1<<20,1<<20);
+    const auto med = exact::bound/16,
+               big = exact::bound/2;
+    const auto x1 = random->uniform<ExactInt>(-med,med),
+               x0 = random->uniform<ExactInt>(-big,x1),
+               x2 = random->uniform<ExactInt>(x1,big),
+               dx = random->uniform<ExactInt>(-big,big),
+               y  = random->uniform<ExactInt>(-med,med);
     IV2 a0(x0,y),
         a1(x2,y),
         b0(x1-dx,y-1),
@@ -117,7 +100,7 @@ static void construction_tests() {
 
   // Check exactly colinear segments
   {
-    const int total = 421;
+    const int total = 450;
     int count = 0;
     for (int k=0;k<total;k++) {
       // Pick a random line with simple rational slope, then choose four random points exactly on this line.
@@ -146,7 +129,7 @@ static void construction_tests() {
       }
     }
     cout << "coincident: count = "<<count<<endl;
-    OTHER_ASSERT(count==8);
+    OTHER_ASSERT(count==13);
   }
 }
 

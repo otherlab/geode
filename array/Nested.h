@@ -160,7 +160,7 @@ public:
   }
 };
 
-template<class T> inline ostream& operator<<(ostream& output, const Nested<T>& a) {
+template<class T,bool f> inline ostream& operator<<(ostream& output, const Nested<T,f>& a) {
   output << '[';
   for (int i=0;i<a.size();i++) {
     if (i)

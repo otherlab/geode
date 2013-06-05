@@ -39,6 +39,7 @@ OTHER_CORE_EXPORT PyArray_Descr* numpy_descr_from_type(int type_num);
 OTHER_CORE_EXPORT PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context);
 OTHER_CORE_EXPORT PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj);
 OTHER_CORE_EXPORT PyTypeObject* numpy_array_type();
+OTHER_CORE_EXPORT PyTypeObject* numpy_recarray_type();
 #endif
 
 // Stay compatible with old versions of numpy

@@ -5,6 +5,7 @@
 #include <other/core/array/IndirectArray.h>
 #include <other/core/array/ProjectedArray.h>
 #include <other/core/array/sort.h>
+#include <other/core/exact/config.h>
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/Sphere.h>
 #include <other/core/geometry/traverse.h>
@@ -14,7 +15,7 @@ namespace other{
 using std::cout;
 using std::endl;
 
-template<> OTHER_DEFINE_TYPE(BoxTree<Vector<int,2>>)
+template<> OTHER_DEFINE_TYPE(BoxTree<Vector<ExactInt,2>>)
 template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,2>>)
 template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,3>>)
 #ifndef OTHER_FLOAT
@@ -196,7 +197,7 @@ any_box_intersection(const Shape& shape) const {
   template class BoxTree<Vector<T,d>>; \
   template OTHER_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Box<Vector<T,d>>&) const; \
   template OTHER_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Sphere<Vector<T,d>>&) const;
-template BoxTree<Vector<int,2>>::BoxTree(RawArray<const Box<Vector<int,2>>>,int);
+template BoxTree<Vector<ExactInt,2>>::BoxTree(RawArray<const Box<Vector<ExactInt,2>>>,int);
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)
 #ifndef OTHER_FLOAT

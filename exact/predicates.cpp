@@ -19,15 +19,15 @@ typedef Vector<Exact<1>,3> LV3;
 
 // First, a trivial predicate, handled specially so that it can be partially inlined.
 
-template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<exact::Int,d>> a, const Tuple<int,Vector<exact::Int,d>> b) {
-  struct F { static inline Exact<> eval(RawArray<const Vector<exact::Int,d>> X) {
+template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<ExactInt,d>> a, const Tuple<int,Vector<ExactInt,d>> b) {
+  struct F { static inline Exact<> eval(RawArray<const Vector<ExactInt,d>> X) {
     return Exact<>(X[1][axis]-X[0][axis]);
   }};
   const typename Point<d>::type X[2] = {a,b};
   return perturbed_sign(F::eval,1,asarray(X));
 }
 
-#define IAL(d,axis) template bool axis_less_degenerate<axis,d>(const Tuple<int,Vector<exact::Int,d>>,const Tuple<int,Vector<exact::Int,d>>);
+#define IAL(d,axis) template bool axis_less_degenerate<axis,d>(const Tuple<int,Vector<ExactInt,d>>,const Tuple<int,Vector<ExactInt,d>>);
 IAL(2,0) IAL(2,1)
 IAL(3,0) IAL(3,1) IAL(3,2)
 
@@ -62,30 +62,15 @@ bool segment_to_direction_oriented(const Point2 a0, const Point2 a1, const Point
 }
 
 bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, Point2 b1, Point2 c0, Point2 c1) {
-  bool flip = segment_directions_oriented(a0,a1,b0,b1)
-            ^ segment_directions_oriented(a0,a1,c0,c1);
-  if (b0.x==c0.x || b0.x==c1.x || b1.x==c0.x || b1.x==c1.x) {
-    // Segments b and c share a point: adjust so that b0==b1
-    if (b1.x==c0.x || b1.x==c1.x) { swap(b0,b1); flip ^= 1; }
-    if (b0.x==c1.x)               { swap(c0,c1); flip ^= 1; }
-    struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 bc0, const LV2 b1, const LV2 c1) {
-      const auto da = a1-a0,
-                 db = b1-bc0,
-                 dc = c1-bc0,
-                 d0 = bc0-a0;
-      return edet(d0,dc)*edet(da,db)-edet(d0,db)*edet(da,dc);
-    }};
-    return flip ^ perturbed_predicate<F>(a0,a1,b0,b1,c1);
-  } else {
-    // No common points
-    struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1, const LV2 c0, const LV2 c1) {
-      const auto da = a1-a0,
-                 db = b1-b0,
-                 dc = c1-c0;
-      return edet(c0-a0,dc)*edet(da,db)-edet(b0-a0,db)*edet(da,dc);
-    }};
-    return flip ^ perturbed_predicate<F>(a0,a1,b0,b1,c0,c1);
-  }
+  struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1, const LV2 c0, const LV2 c1) {
+    const auto da = a1-a0,
+               db = b1-b0,
+               dc = c1-c0;
+    return edet(c0-a0,dc)*edet(da,db)-edet(b0-a0,db)*edet(da,dc);
+  }};
+  return perturbed_predicate<F>(a0,a1,b0,b1,c0,c1)
+       ^ segment_directions_oriented(a0,a1,b0,b1)
+       ^ segment_directions_oriented(a0,a1,c0,c1);
 }
 
 bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3) {
@@ -93,7 +78,7 @@ bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3
     const auto d0 = p0-p3,
                d1 = p1-p3,
                d2 = p2-p3;
-    #define ROW(d) tuple(edot(d,d),d.x,d.y) // Put the quadratic entry first so that subexpressions are lower order
+    #define ROW(d) tuple(esqr_magnitude(d),d.x,d.y) // Put the quadratic entry first so that subexpressions are lower order
     return edet(ROW(d0),ROW(d1),ROW(d2));
   }};
   return perturbed_predicate<F>(p0,p1,p2,p3);
@@ -108,7 +93,7 @@ bool segments_intersect(const exact::Point2 a0, const exact::Point2 a1, const ex
 
 static void predicate_tests() {
   typedef Vector<double,2> TV2;
-  typedef Vector<exact::Int,2> IV2;
+  typedef Vector<ExactInt,2> IV2;
 
   // Compare triangle_oriented and incircle against approximate floating point versions
   struct F {
@@ -131,8 +116,8 @@ static void predicate_tests() {
   }
 
   // Test behavior for large numbers, using the scale invariance and antisymmetry of incircle.
-  for (const int i : range(24)) {
-    const int bound = 1<<i;
+  for (const int i : range(exact::log_bound)) {
+    const auto bound = ExactInt(1)<<i;
     const auto p0 = tuple(0,IV2(-bound,-bound)), // Four points on a circle of radius sqrt(2)*bound
                p1 = tuple(1,IV2( bound,-bound)),
                p2 = tuple(2,IV2( bound, bound)),

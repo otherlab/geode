@@ -19,7 +19,7 @@ namespace other {
 using Log::cout;
 using std::endl;
 typedef Vector<real,2> TV;
-typedef Vector<exact::Quantized,2> EV;
+typedef Vector<ExactInt,2> EV;
 typedef exact::Point2 Point;
 const auto bound = exact::bound;
 
