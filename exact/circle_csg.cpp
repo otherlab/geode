@@ -492,7 +492,7 @@ static Array<Box<EV2>> arc_boxes(Near near, Arcs arcs, RawArray<const Vertex> ve
     int q0 = v01.q1,
         q1 = v12.q0;
     if (q0==q1) {
-      if (arcs[i1].positive != circle_intersections_ordered(arcs,v01.reverse(),v12)) {
+      if (arcs[i1].positive != (circle_intersections_upwards(arcs,v01.reverse(),v12) ^ (v01.q1==1 || v01.q1==2))) {
         // The arc hits all four axes
         box.enlarge(Box<EV2>(arcs[i1].center).thickened(arcs[i1].radius));
       } // The arc stays within one quadrant, the endpoints suffice for the bounding box
