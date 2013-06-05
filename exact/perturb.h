@@ -27,7 +27,7 @@ template<int m> OTHER_CORE_EXPORT OTHER_COLD bool perturbed_sign(exact::Exact<>(
 // never happen for appropriately shielded predicates, such as constructing the intersection of two segments once perturbed_sign
 // has verified that they intersect after perturbation.
 //
-// If take_sqrt is through, an exactly rounded square root is computed.  
+// If take_sqrt is true, an exactly rounded square root is computed.  
 template<int rp,int m> OTHER_CORE_EXPORT OTHER_COLD Vector<ExactInt,rp-1> perturbed_ratio(Vector<exact::Exact<>,rp>(*const ratio)(RawArray<const Vector<ExactInt,m>>),
                                                                                           const int degree, RawArray<const Tuple<int,Vector<ExactInt,m>>> X, const bool take_sqrt=false);
 
