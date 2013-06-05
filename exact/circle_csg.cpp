@@ -283,10 +283,9 @@ quadrants:
   return v;
 }
 
-// Is intersection (a0,a1).y < (b0,b1).y?  If add = true, assume a0=b0 and check whether ((0,a1)+(0,b1)).y > 0.
-// This is degree 20 as written, but can be reduced to 6.
+// Is intersection (a0,a1).y < (b0,b1).y?  This is degree 20 as written, but can be reduced to 6.
 namespace {
-template<bool add> struct UpwardsA { static Exact<5> eval(const LV3 S0, const LV3 S1, const LV3 S2, const LV3 S3) {
+struct UpwardsA { static Exact<5> eval(const LV3 S0, const LV3 S1, const LV3 S2, const LV3 S3) {
   const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy(), c3 = S3.xy();
   const auto r0 = S0.z,    r1 = S1.z,    r2 = S2.z,    r3 = S3.z;
   const auto c01 = c1-c0, c23 = c3-c2;
@@ -294,8 +293,7 @@ template<bool add> struct UpwardsA { static Exact<5> eval(const LV3 S0, const LV
              sqr_c23 = esqr_magnitude(c23);
   const auto alpha01 = sqr_c01+(r0+r1)*(r0-r1),
              alpha23 = sqr_c23+(r2+r3)*(r2-r3);
-  return !add ? small_mul(2,c2.y-c0.y)*sqr_c01*sqr_c23+alpha23*(c23.y*sqr_c01)-alpha01*(c01.y*sqr_c23)
-              : alpha23*(c23.y*sqr_c01)+alpha01*(c01.y*sqr_c23);
+  return small_mul(2,c2.y-c0.y)*sqr_c01*sqr_c23+alpha23*(c23.y*sqr_c01)-alpha01*(c01.y*sqr_c23);
 }};
 template<int i> struct UpwardsB { static Exact<3> eval(const LV3 S0, const LV3 S1, const LV3 S2, const LV3 S3) {
   BOOST_STATIC_ASSERT(i==0 || i==2);
@@ -304,49 +302,36 @@ template<int i> struct UpwardsB { static Exact<3> eval(const LV3 S0, const LV3 S
   return i==0 ? c01.x*esqr_magnitude(c23) // Negated below
               : c23.x*esqr_magnitude(c01);
 }};}
-template<bool add=false> static bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b) {
-  assert(a!=b && a!=b.reverse() && (!add || a.i0==b.i0));
-  return FILTER(add ? a.p().y+b.p().y-(arcs[a.i0].center.y<<1) : b.p().y-a.p().y,
+static bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b) {
+  assert(a!=b && a!=b.reverse());
+  return FILTER(b.p().y-a.p().y,
                 (a.i0==b.i0 && a.i1==b.i1) || (a.i0==b.i1 && a.i1==b.i0) // If we're comparing the two intersections of the same pair of circles, use special code to avoid zero polynomials in perturbation
-                  ? add ?    upwards(aspoint_center(arcs,a.i0),aspoint_center(arcs,a.i1)) == perturbed_predicate<Alpha>(aspoint(arcs,a.i0),aspoint(arcs,a.i1))
-                        : rightwards(aspoint_center(arcs,a.i0),aspoint_center(arcs,a.i1)) ^ a.left
-                  : perturbed_predicate_two_sqrts<UpwardsA<add>,UpwardsB<0>,UpwardsB<2>,Beta<0,1>,Beta<2,3>>(a.left^add?-1:1,b.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b.i0),aspoint(arcs,b.i1)));
-}
-
-// Are the intersections of two circles with a third counterclockwise?  In other words, is the triangle c0,x01,x02 positively oriented?
-// The two intersections are assumed to exist.
-namespace {
-// ai is true if we're the coefficient of the ith sqrt
-template<bool a0,bool a1> struct Ordered { static Exact<6-2*(a0+a1)> eval(const LV3 S0, const LV3 S1, const LV3 S2) {
-  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
-  const auto dc1 = c1-c0, dc2 = c2-c0;
-  return choice<a0>(Alpha::eval(S0,S1),One())
-       * choice<a1>(Alpha::eval(S0,S2),One())
-       * small_mul(a0 && !a1 ? -1 : 1, choice<a0!=a1>(edet(dc1,dc2),edot(dc1,dc2)));
-}};}
-static bool circle_intersections_ordered_helper(Arcs arcs, const Vertex v0, const Vertex v1) {
-  // Perform case analysis based on the two quadrants
-  const int q0 = v0.q0,
-            q1 = v1.q0;
-  switch ((q1-q0)&3) {
-    case 0: return circle_intersections_upwards      (arcs,v0,v1) ^ (q0==1 || q0==2);
-    case 2: return circle_intersections_upwards<true>(arcs,v0,v1) ^ (q0==1 || q0==2);
-    case 3: return false;
-    default: return true; // case 1
-  }
-}
-static bool circle_intersections_ordered(Arcs arcs, const Vertex v0, const Vertex v1) {
-  assert(v0.i0==v1.i0);
-  const Vector<Interval,2> center(arcs[v0.i0].center);
-  return FILTER(cross(v0.p()-center,v1.p()-center),
-                circle_intersections_ordered_helper(arcs,v0,v1));
+                  ? rightwards(aspoint_center(arcs,a.i0),aspoint_center(arcs,a.i1)) ^ a.left
+                  : perturbed_predicate_two_sqrts<UpwardsA,UpwardsB<0>,UpwardsB<2>,Beta<0,1>,Beta<2,3>>(a.left?-1:1,b.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b.i0),aspoint(arcs,b.i1)));
 }
 
 // Does the (a1,b) intersection occur on the piece of a1 between a0 and a2?  a1 and b are assumed to intersect.
 static bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12, const Vertex a1b) {
-  const bool small = circle_intersections_ordered(arcs,a01.reverse(),a12);
-  return !arcs[a01.i1].positive ^ small ^ (   (small^ circle_intersections_ordered(arcs,a01.reverse(),a1b))
-                                           || (small^!circle_intersections_ordered(arcs,a12          ,a1b)));
+  assert(a01.i1==a12.i0 && a12.i0==a1b.i0);
+  const auto a10 = a01.reverse();
+  const bool flip = !arcs[a01.i1].positive;
+  const int q0 = a01.q1,
+            q2 = a12.q0,
+            qb = a1b.q0;
+  const bool qb_down = qb==1 || qb==2;
+  if (q0!=q2) { // a012 starts and ends in different quadrants
+    if (q0==qb)
+      return flip ^ qb_down ^ circle_intersections_upwards(arcs,a10,a1b);
+    else if (q2==qb)
+      return flip ^ qb_down ^ circle_intersections_upwards(arcs,a1b,a12);
+    else
+      return flip ^ (((qb-q0)&3)<((q2-q0)&3));
+  } else { // a012 starts and ends in the same quadrant
+    const bool small = circle_intersections_upwards(arcs,a10,a12) ^ (q0==1 || q0==2);
+    return flip ^ small ^ (   q0!=qb
+                           || (small ^ qb_down ^ circle_intersections_upwards(arcs,a10,a1b))
+                           || (small ^ qb_down ^ circle_intersections_upwards(arcs,a1b,a12)));
+  }
 }
 
 // Does the piece of a1 between a0 and a1 intersect the piece of b1 between b0 and b2?  a1 and b1 are assumed to intersect.
