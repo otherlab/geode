@@ -127,7 +127,7 @@ static inline exact::Point2 aspoint_center(Arcs arcs, const int arc) {
   return tuple(a.index,a.center);
 }
 
-// Do two circles intersect?
+// Do two circles intersect (degree 2)?
 namespace {
 template<bool add> struct Intersect { static inline Exact<2> eval(const LV3 S0, const LV3 S1) {
   const auto c0 = S0.xy(), c1 = S1.xy();
@@ -159,6 +159,7 @@ template<int i,int j> struct Beta { template<class... Args> static Exact<4> eval
 // Which quadrant is in the intersection of two circles in relative to the center of the first?
 // The quadrants are 0 to 3 counterclockwise from positive/positive.
 // This function should be used only from circle_circle_intersections, where it is precomputed as Vertex::q0.
+// As written this is degree 4, but it can be reduced to degree 2 if necessary.
 namespace {
 template<int axis> struct QuadrantA { static Exact<3> eval(const LV3 S0, const LV3 S1) {
   return Alpha::eval(S0,S1)*(axis==0?S1.y-S0.y:S0.x-S1.x);
@@ -190,6 +191,7 @@ static int circle_circle_intersection_quadrant(Arcs arcs, const Vertex v) {
 // Construct both of the intersections of two circular arcs, assuming they do intersect.
 // The two intersections are to the right and the left of the center segment, respectively, so result[left] is correct.
 // The results differ from the true intersections by at most 2.
+// Degrees 3/2 for the nonsqrt part and 6/4 for the part under the sqrt.
 static Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const int arc1) {
   Vector<Vertex,2> v;
   v.x.i0 = v.y.i0 = arc0;
@@ -281,7 +283,8 @@ quadrants:
   return v;
 }
 
-// Is intersection (a0,a1).y < (b0,b1).y?  If add = true, assume a0=b0 and check whether ((0,a1)+(0,b1)).y > 0
+// Is intersection (a0,a1).y < (b0,b1).y?  If add = true, assume a0=b0 and check whether ((0,a1)+(0,b1)).y > 0.
+// This is degree 20 as written, but can be reduced to 6.
 namespace {
 template<bool add> struct UpwardsA { static Exact<5> eval(const LV3 S0, const LV3 S1, const LV3 S2, const LV3 S3) {
   const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy(), c3 = S3.xy();
@@ -354,7 +357,7 @@ static bool circle_arcs_intersect(Arcs arcs, const Vertex a01, const Vertex a12,
       && circle_arc_intersects_circle(arcs,b01,b12,ab.reverse());
 }
 
-// Is the (a0,a1) intersection inside circle b?
+// Is the (a0,a1) intersection inside circle b?  Degree 8, but can be eliminated entirely.
 static bool circle_intersection_inside_circle(Arcs arcs, const Vertex a, const int b) {
   // This predicate has the form
   //   A + B sqrt(Beta<0,1>) < 0
@@ -377,7 +380,7 @@ static bool circle_intersection_inside_circle(Arcs arcs, const Vertex a, const i
                 perturbed_predicate_sqrt<A,B,Beta<0,1>>(a.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b)));
 }
 
-// Is the (a0,a1) intersection to the right of b's center?
+// Is the (a0,a1) intersection to the right of b's center?  Degree 6, but can be eliminated entirely.
 static bool circle_intersection_right_of_center(Arcs arcs, const Vertex a, const int b) {
   // This predicate has the form
   //   (\hat{alpha} c01.x - 2 c02.x c01^2) - c01.y sqrt(Beta<0,1>)
@@ -425,7 +428,7 @@ static int local_x_axis_depth(Arcs arcs, const Vertex a01, const Vertex a12, con
 }
 
 // Count the depth change along the horizontal ray from (a0,a1) to (a0,a1+(inf,0) due to the arc from (b0,b1) to (b1,b2).
-// The change is -1 if we go out of an arc, +1 if we go into an arc.
+// The change is -1 if we go out of an arc, +1 if we go into an arc.  Degree 8 as written, but can be eliminated entirely.
 namespace {
 template<int rsign> struct HorizontalA { static Exact<3> eval(const LV3 S0, const LV3 S1, const LV3 S2) {
   const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
