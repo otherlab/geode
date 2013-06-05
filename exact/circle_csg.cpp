@@ -42,6 +42,7 @@ namespace {
 struct Vertex {
   int i0,i1; // Flat indices of the previous and next circle
   bool left; // True if the intersection is to the left of the (i,j) segment
+  uint8_t q0,q1; // Quadrants relative to i0's center and i1's center, respectively
   EV2 inexact; // The nearly exactly rounded intersect, differing from the exact intersection by at most two.
 
   bool operator==(const Vertex v) const {
@@ -77,6 +78,8 @@ struct Vertex {
     r.i0 = i1;
     r.i1 = i0;
     r.left = !left;
+    r.q0 = q1;
+    r.q1 = q0;
     r.inexact = inexact;
     return r;
   }
@@ -124,6 +127,66 @@ static inline exact::Point2 aspoint_center(Arcs arcs, const int arc) {
   return tuple(a.index,a.center);
 }
 
+// Do two circles intersect?
+namespace {
+template<bool add> struct Intersect { static inline Exact<2> eval(const LV3 S0, const LV3 S1) {
+  const auto c0 = S0.xy(), c1 = S1.xy();
+  const auto r0 = S0.z,    r1 = S1.z;
+  return sqr(add?r1+r0:r1-r0)-esqr_magnitude(c1-c0);
+}};}
+static bool circles_intersect(Arcs arcs, const int arc0, const int arc1) {
+  return     perturbed_predicate<Intersect<true >>(aspoint(arcs,arc0),aspoint(arcs,arc1))
+         && !perturbed_predicate<Intersect<false>>(aspoint(arcs,arc0),aspoint(arcs,arc1));
+}
+
+namespace {
+struct Alpha { static Exact<2> eval(const LV3 S0, const LV3 S1) {
+  const auto c0 = S0.xy(), c1 = S1.xy();
+  const auto r0 = S0.z,    r1 = S1.z;
+  return esqr_magnitude(c1-c0)+(r0+r1)*(r0-r1);
+}};
+template<int i,int j> struct Beta { template<class... Args> static Exact<4> eval(const Args... args) {
+  const auto S = tuple(args...);
+  const auto& Si = S.template get<i>();
+  const auto& Sj = S.template get<j>();
+  const auto c0 = Si.xy(), c1 = Sj.xy();
+  const auto r0 = Si.z,    r1 = Sj.z;
+  const auto sqr_dc = esqr_magnitude(c1-c0);
+  return small_mul(4,sqr(r0))*sqr_dc-sqr(sqr_dc+(r0+r1)*(r0-r1));
+}};
+}
+
+// Which quadrant is in the intersection of two circles in relative to the center of the first?
+// The quadrants are 0 to 3 counterclockwise from positive/positive.
+// This function should be used only from circle_circle_intersections, where it is precomputed as Vertex::q0.
+namespace {
+template<int axis> struct QuadrantA { static Exact<3> eval(const LV3 S0, const LV3 S1) {
+  return Alpha::eval(S0,S1)*(axis==0?S1.y-S0.y:S0.x-S1.x);
+}};
+template<int axis> struct QuadrantB { static Exact<1> eval(const LV3 S0, const LV3 S1) {
+  return S1[axis]-S0[axis]; // dc[axis]
+}};}
+static int circle_circle_intersection_quadrant(Arcs arcs, const Vertex v) {
+  // We must evaluate the predicate
+  //
+  //   cross(e,alpha*dc+beta*dc^perp) > 0
+  //   alpha cross(e,dc) + beta dot(e,dc) > 0
+  //
+  // where e0 = (1,0) and e1 = (0,1).  This has the form
+  //
+  //   A + B sqrt(C) > 0
+  //   A = alpha_hat cross(e,dc)
+  //   B = dot(e,dc)
+  //   C = beta_hat^2
+  //
+  // Compute predicates for both axes
+  const auto center = arcs[v.i0].center;
+  const bool p0 = FILTER(v.p().y-center.y, perturbed_predicate_sqrt<QuadrantA<0>,QuadrantB<0>,Beta<0,1>>(v.left?1:-1,aspoint(arcs,v.i0),aspoint(arcs,v.i1))),
+             p1 = FILTER(center.x-v.p().x, perturbed_predicate_sqrt<QuadrantA<1>,QuadrantB<1>,Beta<0,1>>(v.left?1:-1,aspoint(arcs,v.i0),aspoint(arcs,v.i1)));
+  // Assemble our two predicates into a quadrant
+  return 2*!p0+(p0==p1);
+}
+
 // Construct both of the intersections of two circular arcs, assuming they do intersect.
 // The two intersections are to the right and the left of the center segment, respectively, so result[left] is correct.
 // The results differ from the true intersections by at most 2.
@@ -166,109 +229,56 @@ static Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, c
                      sq = snap(quadratic);
           v.x.inexact = sl-sq;
           v.y.inexact = sl+sq;
-          return v;
+          goto quadrants;
         }
       }
     }
   }
 
-  // If intervals fail, evaluate and round using symbolic perturbation.  For simplicity, we round the sqrt part
-  // separately from the rational part, at the cost of a maximum error of 2.  The full formula is
-  //
-  //   X = FR +- perp(sqrt(FS))
-  #define MOST \
-    const Vector<Exact<1>,2> c0(X[0].xy()), c1(X[1].xy()); \
-    const Exact<1> r0(X[0].z), r1(X[1].z); \
-    const auto dc = c1-c0; \
-    const auto sqr_dc = esqr_magnitude(dc), \
-               two_sqr_dc = small_mul(2,sqr_dc), \
-               alpha_hat = sqr_dc-(r1+r0)*(r1-r0);
-  struct FR { static Vector<Exact<>,3> eval(RawArray<const exact::Vec3> X) {
-    MOST
-    const auto v = emul(two_sqr_dc,c0)+emul(alpha_hat,dc);
-    return Vector<Exact<>,3>(Exact<>(v.x),Exact<>(v.y),Exact<>(two_sqr_dc));
-  }};
-  struct FS { static Vector<Exact<>,3> eval(RawArray<const exact::Vec3> X) {
-    MOST
-    const auto sqr_beta_hat = small_mul(4,sqr(r0))*sqr_dc-sqr(alpha_hat);
-    return Vector<Exact<>,3>(sqr_beta_hat*sqr(dc.x),sqr_beta_hat*sqr(dc.y),sqr(two_sqr_dc));
-  }};
-  #undef MOST
-  const exact::Point3 X[2] = {aspoint(arcs,arc0),aspoint(arcs,arc1)};
-  const auto fr = perturbed_ratio(&FR::eval,3,asarray(X)),
-             fs = rotate_left_90(perturbed_ratio(&FS::eval,6,asarray(X),true)*EV2(axis_less<0>(X[0],X[1])?1:-1,
-                                                                                  axis_less<1>(X[0],X[1])?1:-1));
+  {
+    // If intervals fail, evaluate and round using symbolic perturbation.  For simplicity, we round the sqrt part
+    // separately from the rational part, at the cost of a maximum error of 2.  The full formula is
+    //
+    //   X = FR +- perp(sqrt(FS))
+    #define MOST \
+      const Vector<Exact<1>,2> c0(X[0].xy()), c1(X[1].xy()); \
+      const Exact<1> r0(X[0].z), r1(X[1].z); \
+      const auto dc = c1-c0; \
+      const auto sqr_dc = esqr_magnitude(dc), \
+                 two_sqr_dc = small_mul(2,sqr_dc), \
+                 alpha_hat = sqr_dc-(r1+r0)*(r1-r0);
+    struct FR { static Vector<Exact<>,3> eval(RawArray<const exact::Vec3> X) {
+      MOST
+      const auto v = emul(two_sqr_dc,c0)+emul(alpha_hat,dc);
+      return Vector<Exact<>,3>(Exact<>(v.x),Exact<>(v.y),Exact<>(two_sqr_dc));
+    }};
+    struct FS { static Vector<Exact<>,3> eval(RawArray<const exact::Vec3> X) {
+      MOST
+      const auto sqr_beta_hat = small_mul(4,sqr(r0))*sqr_dc-sqr(alpha_hat);
+      return Vector<Exact<>,3>(sqr_beta_hat*sqr(dc.x),sqr_beta_hat*sqr(dc.y),sqr(two_sqr_dc));
+    }};
+    #undef MOST
+    const exact::Point3 X[2] = {aspoint(arcs,arc0),aspoint(arcs,arc1)};
+    const auto fr = perturbed_ratio(&FR::eval,3,asarray(X)),
+               fs = rotate_left_90(perturbed_ratio(&FS::eval,6,asarray(X),true)*EV2(axis_less<0>(X[0],X[1])?1:-1,
+                                                                                    axis_less<1>(X[0],X[1])?1:-1));
 #if CHECK
-  OTHER_ASSERT(   check_linear.x.thickened(1).contains(fr.x)
-               && check_linear.y.thickened(1).contains(fr.y));
-  OTHER_ASSERT(   check_quadratic.x.thickened(1).contains(fs.x)
-               && check_quadratic.y.thickened(1).contains(fs.y));
+    OTHER_ASSERT(   check_linear.x.thickened(1).contains(fr.x)
+                 && check_linear.y.thickened(1).contains(fr.y));
+    OTHER_ASSERT(   check_quadratic.x.thickened(1).contains(fs.x)
+                 && check_quadratic.y.thickened(1).contains(fs.y));
 #endif
-  v.x.inexact = fr - fs;
-  v.y.inexact = fr + fs;
+    v.x.inexact = fr - fs;
+    v.y.inexact = fr + fs;
+  }
+
+  // Fill in quadrants
+quadrants:
+  v.x.q0 = circle_circle_intersection_quadrant(arcs,v.x);
+  v.x.q1 = circle_circle_intersection_quadrant(arcs,v.x.reverse());
+  v.y.q0 = circle_circle_intersection_quadrant(arcs,v.y);
+  v.y.q1 = circle_circle_intersection_quadrant(arcs,v.y.reverse());
   return v;
-}
-
-// Do two circles intersect?
-namespace {
-template<bool add> struct Intersect { static inline Exact<2> eval(const LV3 S0, const LV3 S1) {
-  const auto c0 = S0.xy(), c1 = S1.xy();
-  const auto r0 = S0.z,    r1 = S1.z;
-  return sqr(add?r1+r0:r1-r0)-esqr_magnitude(c1-c0);
-}};}
-static bool circles_intersect(Arcs arcs, const int arc0, const int arc1) {
-  return     perturbed_predicate<Intersect<true >>(aspoint(arcs,arc0),aspoint(arcs,arc1))
-         && !perturbed_predicate<Intersect<false>>(aspoint(arcs,arc0),aspoint(arcs,arc1));
-}
-
-namespace {
-struct Alpha { static Exact<2> eval(const LV3 S0, const LV3 S1) {
-  const auto c0 = S0.xy(), c1 = S1.xy();
-  const auto r0 = S0.z,    r1 = S1.z;
-  return esqr_magnitude(c1-c0)+(r0+r1)*(r0-r1);
-}};
-template<int i,int j> struct Beta { template<class... Args> static Exact<4> eval(const Args... args) {
-  const auto S = tuple(args...);
-  const auto& Si = S.template get<i>();
-  const auto& Sj = S.template get<j>();
-  const auto c0 = Si.xy(), c1 = Sj.xy();
-  const auto r0 = Si.z,    r1 = Sj.z;
-  const auto sqr_dc = esqr_magnitude(c1-c0);
-  return small_mul(4,sqr(r0))*sqr_dc-sqr(sqr_dc+(r0+r1)*(r0-r1));
-}};
-}
-
-// Which quadrant is in the intersection of two circles in relative to the center of the first?
-// The quadrants are 0 to 3 counterclockwise from positive/positive.
-namespace {
-template<int axis> struct QuadrantA { static Exact<3> eval(const LV3 S0, const LV3 S1) {
-  const auto c0 = S0.xy(), c1 = S1.xy();
-  const auto r0 = S0.z,    r1 = S1.z;
-  const auto dc = c1-c0;
-  return (esqr_magnitude(dc)+(r0+r1)*(r0-r1))*(axis==0?dc.y:-dc.x);
-}};
-template<int axis> struct QuadrantB { static Exact<1> eval(const LV3 S0, const LV3 S1) {
-  return S1[axis]-S0[axis]; // dc[axis]
-}};}
-static int circle_circle_intersection_quadrant(Arcs arcs, const Vertex v) {
-  // We must evaluate the predicate
-  //
-  //   cross(e,alpha*dc+beta*dc^perp) > 0
-  //   alpha cross(e,dc) + beta dot(e,dc) > 0
-  //
-  // where e0 = (1,0) and e1 = (0,1).  This has the form
-  //
-  //   A + B sqrt(C) > 0
-  //   A = alpha_hat cross(e,dc)
-  //   B = dot(e,dc)
-  //   C = beta_hat^2
-  //
-  // Compute predicates for both axes
-  const auto center = arcs[v.i0].center;
-  const bool p0 = FILTER(v.p().y-center.y, perturbed_predicate_sqrt<QuadrantA<0>,QuadrantB<0>,Beta<0,1>>(v.left?1:-1,aspoint(arcs,v.i0),aspoint(arcs,v.i1))),
-             p1 = FILTER(center.x-v.p().x, perturbed_predicate_sqrt<QuadrantA<1>,QuadrantB<1>,Beta<0,1>>(v.left?1:-1,aspoint(arcs,v.i0),aspoint(arcs,v.i1)));
-  // Assemble our two predicates into a quadrant
-  return 2*!p0+(p0==p1);
 }
 
 // Is intersection (a0,a1).y < (b0,b1).y?  If add = true, assume a0=b0 and check whether ((0,a1)+(0,b1)).y > 0
@@ -313,8 +323,8 @@ template<bool a0,bool a1> struct Ordered { static Exact<6-2*(a0+a1)> eval(const 
 }};}
 static bool circle_intersections_ordered_helper(Arcs arcs, const Vertex v0, const Vertex v1) {
   // Perform case analysis based on the two quadrants
-  const int q0 = circle_circle_intersection_quadrant(arcs,v0),
-            q1 = circle_circle_intersection_quadrant(arcs,v1);
+  const int q0 = v0.q0,
+            q1 = v1.q0;
   switch ((q1-q0)&3) {
     case 0: return circle_intersections_upwards      (arcs,v0,v1) ^ (q0==1 || q0==2);
     case 2: return circle_intersections_upwards<true>(arcs,v0,v1) ^ (q0==1 || q0==2);
@@ -394,8 +404,8 @@ static int local_x_axis_depth(Arcs arcs, const Vertex a01, const Vertex a12, con
   // Compute quadrants of both centers and the differentials going in and out of the intersection.
   const bool a1_positive = arcs[a12.i0].positive,
              a2_positive = arcs[a23.i0].positive;
-  const int q1 = circle_circle_intersection_quadrant(arcs,a12),
-            q2 = circle_circle_intersection_quadrant(arcs,a12.reverse()),
+  const int q1 = a12.q0,
+            q2 = a12.q1,
             q_in  = (q1+3+2*a1_positive)&3, // The quadrant of the a1 arc differential pointing towards x12
             q_out = (q2+3+2*a2_positive)&3;
   // Compute the depth contribution due to the neighborhood of (a1,a2).  If we come in below horizontal and leave above the
@@ -451,8 +461,8 @@ static int horizontal_depth_change(Arcs arcs, const Vertex a, const Vertex b01, 
                                                                    : bh_right_of_bc1 ^ !circle_intersection_inside_circle(arcs,a,b1));
   } else {
     // The (b0,b1,b2) arc intersects the horizontal line either zero or two times.  First, we rule out zero times.
-    const int q0 = circle_circle_intersection_quadrant(arcs,b01.reverse()),
-              q2 = circle_circle_intersection_quadrant(arcs,b12),
+    const int q0 = b01.q1,
+              q2 = b12.q0,
               shift = b01_above ? 1 : 3, // Shift so that the vertical axis oriented towards the horizontal line becomes the positive x-axis
               sq0 = (q0+shift)&3,
               sq2 = (q2+shift)&3;
@@ -476,8 +486,8 @@ static Array<Box<EV2>> arc_boxes(Near near, Arcs arcs, RawArray<const Vertex> ve
     const auto v01 = vertices[i1],
                v12 = vertices[i2];
     auto box = bounding_box(v01.inexact,v12.inexact).thickened(2);
-    int q0 = circle_circle_intersection_quadrant(arcs,v01.reverse()),
-        q1 = circle_circle_intersection_quadrant(arcs,v12);
+    int q0 = v01.q1,
+        q1 = v12.q0;
     if (q0==q1) {
       if (arcs[i1].positive != circle_intersections_ordered(arcs,v01.reverse(),v12)) {
         // The arc hits all four axes
