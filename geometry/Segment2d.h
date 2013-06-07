@@ -135,12 +135,12 @@ public:
     bool segment_line_intersection(const TV& point_on_line,const TV& normal_of_line,T &interpolation_fraction) const;
     TV closest_point(const TV& point) const;
     TV closest_point(const TV& point, Vector<T,2>& weights) const;
-    T distance(const TV& point) const; // distance from point to segment
-    T distance(const Segment& segment) const; // distance between segments
+    OTHER_CORE_EXPORT T distance(const TV& point) const; // distance from point to segment
+    OTHER_CORE_EXPORT T distance(const Segment& segment) const; // distance between segments
 
     TV closest_point_on_line(const TV& point) const;
     T distance_from_point_to_line(const TV& point) const;
-    TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;
+    OTHER_CORE_EXPORT TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;
     OTHER_CORE_EXPORT bool segment_segment_intersection(const Segment<TV>& segment,const T thickness_over_2=0) const;
     int segment_segment_interaction(const Segment<TV>& segment,const TV& v1,const TV& v2,const TV& v3,const TV& v4,
         const T interaction_distance,T& distance,TV& normal,T& a,T& b,T& relative_speed,const T small_number=0) const;
