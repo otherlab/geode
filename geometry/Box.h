@@ -56,7 +56,7 @@ template<class TArray> Box<typename TArray::value_type> bounding_box(const TArra
 }
 
 // Instantiate common cases in Box.cpp
-#ifndef WIN32
+#ifndef _WIN32
 extern template OTHER_CORE_EXPORT Box<real> bounding_box(const RawArray<const real>&);
 extern template OTHER_CORE_EXPORT Box<Vector<real,2>> bounding_box(const RawArray<const Vector<real,2>>&);
 extern template OTHER_CORE_EXPORT Box<Vector<real,3>> bounding_box(const RawArray<const Vector<real,3>>&);

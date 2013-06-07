@@ -73,13 +73,13 @@ struct SVGPath
 };
 
 // Parses SVG file from a file, returns linked list of paths.
-struct SVGPath* svgParseFromFile(const char* filename, struct SVGInfo *) OTHER_EXPORT;
+OTHER_CORE_EXPORT struct SVGPath* svgParseFromFile(const char* filename, struct SVGInfo *);
 
 // Parses SVG file from a null terminated string, returns linked list of paths.
-struct SVGPath* svgParse(char* input, struct SVGInfo *) OTHER_EXPORT;
+OTHER_CORE_EXPORT struct SVGPath* svgParse(char* input, struct SVGInfo *);
 
 // Deletes list of paths.
-void svgDelete(struct SVGPath* plist) OTHER_EXPORT;
+OTHER_CORE_EXPORT void svgDelete(struct SVGPath* plist);
 
 #ifdef __cplusplus
 };

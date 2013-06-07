@@ -6,8 +6,7 @@
 #include <other/core/python/stl.h>
 #include <other/core/geometry/polygon.h>
 #include <iostream>
-
-namespace other{
+namespace other {
 
 using std::cout;
 using std::endl;

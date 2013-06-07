@@ -10,7 +10,7 @@
 #include <other/core/vector/normalize.h>
 namespace other {
 
-OTHER_EXPORT PyObject* to_python(const Segment<Vector<real,2>>& seg);
+OTHER_CORE_EXPORT PyObject* to_python(const Segment<Vector<real,2>>& seg);
 
 template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) {
   return rotate_right_90(normalized(x1-x0));

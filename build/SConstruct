@@ -414,11 +414,8 @@ env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
 def make_symlink(src,dst):
   print 'ln -sf %s %s'%(src,dst)
   if windows:
-    # make a symlink
-    if os.path.isdir(src):
-      os.system('mklink /d "%s" "%s"' % (src,dst))
-    else:
-      os.system('mklink "%s" "%s"' % (src,dst))
+    if not os.path.exists(dst):
+      os.system('mklink%s "%s" "%s"'%(' /d' if os.path.isdir(src) else '',dst,src))
   else:
     os.symlink(src,dst)
 
