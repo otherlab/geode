@@ -75,6 +75,7 @@ options(
   ('optimizations','override default optimization settings','<default>'),
   ('sse','Use SSE if available',1),
   ('skip','list of modules to skip',[]),
+  ('skip_libs', 'list of libraries to skip', []),
   ('skip_programs','Build libraries only',0),
   ('BASE','Standard base directory for headers and libraries',env['BASE']),
   ('CXXFLAGS_EXTRA','',[]),
@@ -332,7 +333,10 @@ if env['syntax']:
 
 # Use c++11
 if not windows:
-  env.Append(CXXFLAGS=' -std=c++11')
+  if darwin:
+    env.Append(CXXFLAGS=' -std=c++11')
+  else: # Ubuntu
+    env.Append(CXXFLAGS=' -std=c++0x')
 
 # Hide symbols by default if desired
 if env['hidden']:
@@ -410,11 +414,8 @@ env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
 def make_symlink(src,dst):
   print 'ln -sf %s %s'%(src,dst)
   if windows:
-    # make a symlink
-    if os.path.isdir(src):
-      os.system('mklink /d "%s" "%s"' % (src,dst))
-    else:
-      os.system('mklink "%s" "%s"' % (src,dst))
+    if not os.path.exists(dst):
+      os.system('mklink%s "%s" "%s"'%(' /d' if os.path.isdir(src) else '',dst,src))
   else:
     os.symlink(src,dst)
 
@@ -553,6 +554,8 @@ if windows:
   projects = []
 def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   name = os.path.basename(path)
+  if name in env['skip_libs']:
+    return
   cpps = []
   skip = tuple(skip)+tuple(env['skip'])
   candidates = list(files(Dir('.').srcnode().abspath,skip)) if not skip_all else []
@@ -613,6 +616,8 @@ def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
 
 # Build a program
 def program(env,name,cpp=None):
+  if env['skip_programs']:
+    return
   if cpp is None:
     cpp = name + '.cpp'
   env = link_flags(env)
