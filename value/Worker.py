@@ -135,7 +135,7 @@ class Worker(object):
       self.worker_terminate = worker.terminate
     else:
       key = base64_encode(os.urandom(32))
-      worker = self.worker = subprocess.Popen(command+['01'[bool(debug)]+key])
+      worker = self.worker = subprocess.Popen(command+['01'[bool(debug)]+key],shell=True)
       listener = multiprocessing.connection.Listener(address,authkey=key)
       # Ugly hack to avoid blocking forever if client never shows up.
       # Borrowed from http://stackoverflow.com/questions/357656/proper-way-of-cancelling-accept-and-closing-a-python-processing-multiprocessing
