@@ -1388,7 +1388,7 @@ static void svgParsePoly(struct SVGParser* p, const char** attr, int closeFlag)
 	}
 
   // make last bezier segment if poly is closed only
-  if (closeFlag && sizeof(first)) { // "&& sizeof(first) - to suppress compiler warning about unused variable
+  if (closeFlag && sizeof(first)!=0) { // "&& sizeof(first) - to suppress compiler warning about unused variable
     /* //let bezier.close do this
     svgBezierPoint(p, lerp(1./3., last[0], first[0]), lerp(1./3., last[1], first[1]));
     svgBezierPoint(p, lerp(2./3., last[0], first[0]), lerp(2./3., last[1], first[1]));
