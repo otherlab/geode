@@ -70,6 +70,8 @@ OTHER_CURRY(2,(class A0,class A1),(A0,A1),(const A0 a0;const A1 a1;),(const A0& 
 OTHER_CURRY(3,(class A0,class A1,class A2),(A0,A1,A2),(const A0 a0;const A1 a1;const A2 a2;),(const A0& a0,const A1& a1,const A2& a2),(a0(a0),a1(a1),a2(a2)),(a0,a1,a2),(const A0&,const A1&,const A2&))
 OTHER_CURRY(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3),(const A0 a0;const A1 a1;const A2 a2;const A3 a3;),
   (const A0& a0,const A1& a1,const A2& a2,const A3& a3),(a0(a0),a1(a1),a2(a2),a3(a3)),(a0,a1,a2,a3),(const A0&,const A1&,const A2&,const A3&))
+OTHER_CURRY(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4),(const A0 a0;const A1 a1;const A2 a2;const A3 a3;const A4 a4;),
+  (const A0& a0,const A1& a1,const A2& a2,const A3& a3,const A4& a4),(a0(a0),a1(a1),a2(a2),a3(a3),a4(a4)),(a0,a1,a2,a3,a4),(const A0&,const A1&,const A2&,const A3&,const A4&))
 #undef OTHER_CURRY
 
 #endif
