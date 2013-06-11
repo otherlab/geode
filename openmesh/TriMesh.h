@@ -602,6 +602,7 @@ public:
   // Split a mesh into connected components
   OTHER_CORE_EXPORT vector<Ref<TriMesh> > component_meshes() const;
   OTHER_CORE_EXPORT vector<Ref<TriMesh> > nested_components() const;
+  OTHER_CORE_EXPORT Ref<TriMesh> largest_connected_component() const;
 
   // Convenience functions for use in range-based for loops
   inline Range<HandleIter<VertexIter>> vertex_handles() { return handle_range(vertices_sbegin(),vertices_end()); }

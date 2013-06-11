@@ -1685,6 +1685,21 @@ vector<Ref<TriMesh> > TriMesh::nested_components() const{
   return output;
 }
 
+Ref<TriMesh> TriMesh::largest_connected_component() const {
+  auto components = component_meshes();
+
+  double amax = components[0]->area();
+  Ref<TriMesh> best = components[0];
+  for (int i = 1; i < (int)components.size(); ++i) {
+    double a = components[i]->area();
+    if (a > amax) {
+      amax = a;
+      best = components[i];
+    }
+  }
+  return best;
+}
+
 Ref<SimplexTree<Vector<real,3>,2>> TriMesh::face_tree() const {
   return new_<SimplexTree<TV,2>>(*new_<TriangleMesh>(elements()),X().copy(),4);
 }
@@ -1798,6 +1813,7 @@ void wrap_trimesh() {
     .OTHER_METHOD(set_vertex_normals)
     .OTHER_METHOD(set_vertex_colors)
     .OTHER_METHOD(component_meshes)
+    .OTHER_METHOD(largest_connected_component)
     .OTHER_METHOD(request_vertex_normals)
     .OTHER_METHOD(request_face_normals)
     .OTHER_METHOD(update_face_normals)
