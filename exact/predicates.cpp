@@ -19,15 +19,15 @@ typedef Vector<Exact<1>,3> LV3;
 
 // First, a trivial predicate, handled specially so that it can be partially inlined.
 
-template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<ExactInt,d>> a, const Tuple<int,Vector<ExactInt,d>> b) {
-  struct F { static inline Exact<> eval(RawArray<const Vector<ExactInt,d>> X) {
+template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<Quantized,d>> a, const Tuple<int,Vector<Quantized,d>> b) {
+  struct F { static inline Exact<> eval(RawArray<const Vector<Exact<1>,d>> X) {
     return Exact<>(X[1][axis]-X[0][axis]);
   }};
   const typename Point<d>::type X[2] = {a,b};
   return perturbed_sign(F::eval,1,asarray(X));
 }
 
-#define IAL(d,axis) template bool axis_less_degenerate<axis,d>(const Tuple<int,Vector<ExactInt,d>>,const Tuple<int,Vector<ExactInt,d>>);
+#define IAL(d,axis) template bool axis_less_degenerate<axis,d>(const Tuple<int,Vector<Quantized,d>>,const Tuple<int,Vector<Quantized,d>>);
 IAL(2,0) IAL(2,1)
 IAL(3,0) IAL(3,1) IAL(3,2)
 
@@ -93,7 +93,7 @@ bool segments_intersect(const exact::Point2 a0, const exact::Point2 a1, const ex
 
 static void predicate_tests() {
   typedef Vector<double,2> TV2;
-  typedef Vector<ExactInt,2> IV2;
+  typedef Vector<Quantized,2> QV2;
 
   // Compare triangle_oriented and incircle against approximate floating point versions
   struct F {
@@ -108,7 +108,7 @@ static void predicate_tests() {
   const auto random = new_<Random>(9817241);
   for (int step=0;step<100;step++) {
     #define MAKE(i) \
-      const auto p##i = tuple(i,random->uniform<IV2>(-exact::bound,exact::bound)); \
+      const auto p##i = tuple(i,QV2(random->uniform<Vector<ExactInt,2>>(-exact::bound,exact::bound))); \
       const TV2 x##i(p##i.y);
     MAKE(0) MAKE(1) MAKE(2) MAKE(3)
     OTHER_ASSERT(triangle_oriented(p0,p1,p2)==(F::triangle_oriented(x0,x1,x2)>0));
@@ -118,10 +118,10 @@ static void predicate_tests() {
   // Test behavior for large numbers, using the scale invariance and antisymmetry of incircle.
   for (const int i : range(exact::log_bound)) {
     const auto bound = ExactInt(1)<<i;
-    const auto p0 = tuple(0,IV2(-bound,-bound)), // Four points on a circle of radius sqrt(2)*bound
-               p1 = tuple(1,IV2( bound,-bound)),
-               p2 = tuple(2,IV2( bound, bound)),
-               p3 = tuple(3,IV2(-bound, bound));
+    const auto p0 = tuple(0,QV2(-bound,-bound)), // Four points on a circle of radius sqrt(2)*bound
+               p1 = tuple(1,QV2( bound,-bound)),
+               p2 = tuple(2,QV2( bound, bound)),
+               p3 = tuple(3,QV2(-bound, bound));
     OTHER_ASSERT(!incircle(p0,p1,p2,p3));
     OTHER_ASSERT( incircle(p0,p1,p3,p2));
   }

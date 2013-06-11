@@ -18,8 +18,7 @@ using Log::cout;
 using std::endl;
 using exact::Exact;
 using exact::Point2;
-typedef Vector<ExactInt,2> IV2;
-typedef Vector<Exact<1>,2> LV2;
+typedef Vector<Quantized,2> EV2;
 
 exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
   // Evaluate conservatively using intervals
@@ -36,8 +35,8 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
   }
 
   // If intervals fail, evaluate and round exactly using symbolic perturbation
-  struct F { static Vector<Exact<>,3> eval(RawArray<const IV2> X) {
-    const LV2 a0(X[0]), a1(X[1]), b0(X[2]), b1(X[3]);
+  struct F { static Vector<Exact<>,3> eval(RawArray<const Vector<Exact<1>,2>> X) {
+    const auto a0(X[0]), a1(X[1]), b0(X[2]), b1(X[3]);
     const auto da = a1-a0,
                db = b1-b0;
     const auto den = edet(da,db);
@@ -47,7 +46,7 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
   return perturbed_ratio(&F::eval,3,asarray(X));
 }
 
-static bool check_intersection(const IV2 a0, const IV2 a1, const IV2 b0, const IV2 b1, Random& random) {
+static bool check_intersection(const EV2 a0, const EV2 a1, const EV2 b0, const EV2 b1, Random& random) {
   typedef Vector<double,2> DV;
   const int i = random.bits<uint32_t>();
   const Point2 a0p(i,a0), a1p(i+1,a1), b0p(i+2,b0), b1p(i+3,b1);
@@ -70,7 +69,10 @@ static void construction_tests() {
     const int total = 4096;
     int count = 0;
     for (int k=0;k<total;k++)
-      count += check_intersection(perturbation<2>(4,k),perturbation<2>(5,k),perturbation<2>(6,k),perturbation<2>(7,k),random);
+      count += check_intersection(EV2(perturbation<2>(4,k)),
+                                  EV2(perturbation<2>(5,k)),
+                                  EV2(perturbation<2>(6,k)),
+                                  EV2(perturbation<2>(7,k)),random);
     // See https://groups.google.com/forum/?fromgroups=#!topic/sci.math.research/kRvImz5RslU
     const double prob = 25./108;
     cout << "random: expected "<<round(prob*total)<<"+-"<<round(sqrt(total*prob*(1-prob)))<<", got "<<count<<endl;
@@ -81,12 +83,12 @@ static void construction_tests() {
   for (int k=0;k<32;k++) {
     const auto med = exact::bound/16,
                big = exact::bound/2;
-    const auto x1 = random->uniform<ExactInt>(-med,med),
-               x0 = random->uniform<ExactInt>(-big,x1),
-               x2 = random->uniform<ExactInt>(x1,big),
-               dx = random->uniform<ExactInt>(-big,big),
-               y  = random->uniform<ExactInt>(-med,med);
-    IV2 a0(x0,y),
+    const Quantized x1 = random->uniform<ExactInt>(-med,med),
+                    x0 = random->uniform<ExactInt>(-big,x1),
+                    x2 = random->uniform<ExactInt>(x1,big),
+                    dx = random->uniform<ExactInt>(-big,big),
+                    y  = random->uniform<ExactInt>(-med,med);
+    EV2 a0(x0,y),
         a1(x2,y),
         b0(x1-dx,y-1),
         b1(x1+dx,y+1);
@@ -104,8 +106,8 @@ static void construction_tests() {
     int count = 0;
     for (int k=0;k<total;k++) {
       // Pick a random line with simple rational slope, then choose four random points exactly on this line.
-      const auto base = random->uniform<IV2>(-1000,1000),
-                 slope = random->uniform<IV2>(-15,16);
+      const EV2 base(random->uniform<Vector<ExactInt,2>>(-1000,1000)),
+                slope(random->uniform<Vector<ExactInt,2>>(-15,16));
       const auto ts = random->uniform<Vector<int,4>>(-1000,1000);
       count += check_intersection(base+ts.x*slope,
                                   base+ts.y*slope,
@@ -121,7 +123,7 @@ static void construction_tests() {
     const int total = 48;
     int count = 0;
     for (int k=0;k<total;k++) {
-      const auto p = perturbation<2>(16,k);
+      const auto p = EV2(perturbation<2>(16,k));
       const Point2 a0(k,p), a1(k+1,p), b0(k+2,p), b1(k+3,p);
       if (segments_intersect(a0,a1,b0,b1)) {
         OTHER_ASSERT(segment_segment_intersection(a0,a1,b0,b1)==p);

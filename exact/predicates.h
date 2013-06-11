@@ -5,24 +5,24 @@
 #include <other/core/vector/Vector.h>
 namespace other {
 
-template<int axis,int d> OTHER_CORE_EXPORT OTHER_CONST bool axis_less_degenerate(const Tuple<int,Vector<ExactInt,d>> a, const Tuple<int,Vector<ExactInt,d>> b) OTHER_COLD;
+template<int axis,int d> OTHER_CORE_EXPORT OTHER_CONST bool axis_less_degenerate(const Tuple<int,Vector<Quantized,d>> a, const Tuple<int,Vector<Quantized,d>> b) OTHER_COLD;
 
 // Is a[axis] < b[axis]?
-template<int axis,int d> OTHER_CONST static inline bool axis_less(const Tuple<int,Vector<ExactInt,d>> a, const Tuple<int,Vector<ExactInt,d>> b) {
+template<int axis,int d> OTHER_CONST static inline bool axis_less(const Tuple<int,Vector<Quantized,d>> a, const Tuple<int,Vector<Quantized,d>> b) {
   if (a.y[axis] != b.y[axis])
     return a.y[axis] < b.y[axis];
   return axis_less_degenerate<axis>(a,b);
 }
 
 // Is a.x < b.x?
-static inline bool rightwards(const Tuple<int,Vector<ExactInt,2>> a, const Tuple<int,Vector<ExactInt,2>> b) {
+static inline bool rightwards(const Tuple<int,Vector<Quantized,2>> a, const Tuple<int,Vector<Quantized,2>> b) {
   if (a.y.x != b.y.x)
     return a.y.x < b.y.x;
   return axis_less_degenerate<0>(a,b);
 }
 
 // Is a.y < b.y?
-static inline bool upwards(const Tuple<int,Vector<ExactInt,2>> a, const Tuple<int,Vector<ExactInt,2>> b) {
+static inline bool upwards(const Tuple<int,Vector<Quantized,2>> a, const Tuple<int,Vector<Quantized,2>> b) {
   if (a.y.y != b.y.y)
     return a.y.y < b.y.y;
   return axis_less_degenerate<1>(a,b);

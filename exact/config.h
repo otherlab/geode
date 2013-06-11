@@ -30,6 +30,7 @@ const int64_t bound = (int64_t(1)<<log_bound)-1;
 // Base integer type for exact arithmetic
 #define OTHER_EXACT_INT 64
 typedef int64_t ExactInt;
+typedef double Quantized;
 
 namespace exact {
 
@@ -38,11 +39,11 @@ namespace exact {
 
 // Typedefs for indexed points
 template<int d> struct Point {
-  typedef Tuple<int,Vector<ExactInt,d>> type;
-  BOOST_STATIC_ASSERT(sizeof(type)==sizeof(int)+4+d*sizeof(ExactInt));
+  typedef Tuple<int,Vector<Quantized,d>> type;
+  BOOST_STATIC_ASSERT(sizeof(type)==sizeof(int)+4+d*sizeof(Quantized));
 };
-typedef Vector<ExactInt,2> Vec2;
-typedef Vector<ExactInt,3> Vec3;
+typedef Vector<Quantized,2> Vec2;
+typedef Vector<Quantized,3> Vec3;
 typedef typename Point<2>::type Point2;
 typedef typename Point<3>::type Point3;
 

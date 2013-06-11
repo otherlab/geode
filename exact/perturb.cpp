@@ -267,13 +267,23 @@ template<int m> static bool last_nonzero(const Vector<Exact<>,m>& x) {
   return sign(x.back())!=0;
 }
 
+template<int m> static inline Vector<ExactInt,m> to_exact(const Vector<Quantized,m>& x) {
+  Vector<ExactInt,m> r;
+  for (int i=0;i<m;i++) {
+    r[i] = ExactInt(x[i]);
+    assert(r[i]==x[i]); // Make sure the input is actually quantized
+  }
+  return r;
+}
+
 // Check for identically zero polynomials using randomized polynomial identity testing
-template<class R,int m> static void assert_last_nonzero(R(*const polynomial)(RawArray<const Vector<ExactInt,m>>), RawArray<const Tuple<int,Vector<ExactInt,m>>> X, const char* message) {
+template<class R,int m> static void assert_last_nonzero(R(*const polynomial)(RawArray<const Vector<Exact<1>,m>>), RawArray<const Tuple<int,Vector<Quantized,m>>> X, const char* message) {
+  typedef Vector<Exact<1>,m> EV;
   const int n = X.size();
-  const auto Z = OTHER_RAW_ALLOCA(n,Vector<ExactInt,m>);
+  const auto Z = OTHER_RAW_ALLOCA(n,EV);
   for (const int k : range(20)) {
     for (int i=0;i<n;i++)
-      Z[i] = X[i].y+perturbation<m>(k<<10,X[i].x);
+      Z[i] = EV(to_exact(X[i].y)+perturbation<m>(k<<10,X[i].x));
     if (last_nonzero(polynomial(Z))) // Even a single nonzero means we're all good
       return;
   }
@@ -282,7 +292,8 @@ template<class R,int m> static void assert_last_nonzero(R(*const polynomial)(Raw
   throw AssertionError(format("%s (there is likely a bug in the calling code), X = %s",message,str(X)));
 }
 
-template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vector<ExactInt,m>>), const int degree, RawArray<const Tuple<int,Vector<ExactInt,m>>> X) {
+template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X) {
+  typedef Vector<Exact<1>,m> EV;
   if (check)
     OTHER_WARNING("Expensive consistency checking enabled");
 
@@ -291,10 +302,10 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
     cout << "perturbed_sign:\n  degree = "<<degree<<"\n  X = "<<X<<endl;
 
   // If desired, verify that predicate(X) == 0
-  const auto Z = OTHER_RAW_ALLOCA(n,Vector<ExactInt,m>);
+  const auto Z = OTHER_RAW_ALLOCA(n,EV);
   if (check) {
     for (int i=0;i<n;i++)
-      Z[i] = X[i].y;
+      Z[i] = EV(to_exact(X[i].y));
     OTHER_ASSERT(!sign(predicate(Z)));
   }
 
@@ -311,7 +322,7 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
     const auto values = OTHER_RAW_ALLOCA(degree,__mpz_struct);
     for (int j=0;j<degree;j++) {
       for (int i=0;i<n;i++)
-        Z[i] = X[i].y+(j+1)*Y[i];
+        Z[i] = EV(to_exact(X[i].y)+(j+1)*Y[i]);
       init_set_steal(&values[j],predicate(Z).n);
       if (verbose)
         cout << "  predicate("<<Z<<") = "<<values[j]<<endl;
@@ -344,10 +355,10 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
       values.resize(lambda.m,false,false);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
-          Z[i] = X[i].y+lambda(j,0)*Y[i];
+          Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
         for (int v=1;v<d;v++)
           for (int i=0;i<n;i++)
-            Z[i] += lambda(j,v)*Y[v*n+i];
+            Z[i] += EV(lambda(j,v)*Y[v*n+i]);
         init_set_steal(mpq_numref(&values[j]),predicate(Z).n);
         mpz_init_set_ui(mpq_denref(&values[j]),1);
       }
@@ -399,7 +410,7 @@ static ExactInt mpz_get_exact_int(mpz_t x) {
 }
 
 // Cast num/den to an int, rounding towards nearest.  num is destroyed.
-static ExactInt snap_div(mpz_t num, mpz_t den, const bool take_sqrt) {
+static Quantized snap_div(mpz_t num, mpz_t den, const bool take_sqrt) {
   if (!take_sqrt) {
     mpz_mul_2exp(num,num,1); // num *= 2
     mpz_tdiv_q(num,num,den); // num /= den, rounding towards zero
@@ -431,18 +442,19 @@ static ExactInt snap_div(mpz_t num, mpz_t den, const bool take_sqrt) {
   }
 }
 
-template<int rp,int m> Vector<ExactInt,rp-1> perturbed_ratio(Vector<exact::Exact<>,rp>(*const ratio)(RawArray<const Vector<ExactInt,m>>), const int degree, RawArray<const Tuple<int,Vector<ExactInt,m>>> X, const bool take_sqrt) {
+template<int rp,int m> Vector<Quantized,rp-1> perturbed_ratio(Vector<Exact<>,rp>(*const ratio)(RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt) {
+  typedef Vector<Exact<1>,m> EV;
   const int r = rp-1;
   const int n = X.size();
 
   // Check if the ratio is nonsingular before perturbation
-  const auto Z = OTHER_RAW_ALLOCA(n,Vector<ExactInt,m>);
+  const auto Z = OTHER_RAW_ALLOCA(n,EV);
   {
     for (int i=0;i<n;i++)
-      Z[i] = X[i].y;
+      Z[i] = EV(to_exact(X[i].y));
     auto R = ratio(Z);
     if (mpz_sgn(R[r].n)) {
-      Vector<ExactInt,r> result;
+      Vector<Quantized,r> result;
       for (int k=0;k<r;k++)
         result[k] = snap_div(R[k].n,R[r].n,take_sqrt);
       return result;
@@ -460,7 +472,7 @@ template<int rp,int m> Vector<ExactInt,rp-1> perturbed_ratio(Vector<exact::Exact
     const auto values = OTHER_RAW_ALLOCA((r+1)*degree,__mpz_struct).reshape(r+1,degree);
     for (int j=0;j<degree;j++) {
       for (int i=0;i<n;i++)
-        Z[i] = X[i].y+(j+1)*Y[i];
+        Z[i] = EV(to_exact(X[i].y)+(j+1)*Y[i]);
       auto R = ratio(Z);
       for (int k=0;k<=r;k++)
         init_set_steal(&values(k,j),R[k].n);
@@ -476,7 +488,7 @@ template<int rp,int m> Vector<ExactInt,rp-1> perturbed_ratio(Vector<exact::Exact
       auto& den = values(r,j);
       if (mpz_sgn(&den)) {
         // We found a nonzero, now compute the rounded ratio
-        Vector<ExactInt,r> result;
+        Vector<Quantized,r> result;
         for (int k=0;k<r;k++)
           result[k] = snap_div(&values(k,j),&den,take_sqrt);
         return result;
@@ -502,10 +514,10 @@ template<int rp,int m> Vector<ExactInt,rp-1> perturbed_ratio(Vector<exact::Exact
       values.resize(r+1,lambda.m,false,false);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
-          Z[i] = X[i].y+lambda(j,0)*Y[i];
+          Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
         for (int v=1;v<d;v++)
           for (int i=0;i<n;i++)
-            Z[i] += lambda(j,v)*Y[v*n+i];
+            Z[i] += EV(lambda(j,v)*Y[v*n+i]);
         auto R = ratio(Z);
         for (int k=0;k<=r;k++) {
           init_set_steal(mpq_numref(&values(k,j)),R[k].n);
@@ -538,7 +550,7 @@ template<int rp,int m> Vector<ExactInt,rp-1> perturbed_ratio(Vector<exact::Exact
       // If we found a nonzero, compute the result
       if (nonzero >= 0) {
         auto& den = values(r,nonzero);
-        Vector<ExactInt,r> result;
+        Vector<Quantized,r> result;
         for (int k=0;k<r;k++) {
           auto& num = values(k,nonzero);
           mpq_div(&num,&num,&den); // num /= den 
@@ -652,12 +664,12 @@ template<int m> static void perturbed_sign_test() {
       // Evaluate perturbed sign using our fancy routine
       nasty_degree = degree;
       nasty_index = index;
-      Array<Tuple<int,Vector<ExactInt,m>>> fX(1);
+      Array<Tuple<int,Vector<Quantized,m>>> fX(1);
       fX[0].x = index;
-      const bool fast = perturbed_sign<m>(nasty_predicate<ExactInt>,degree,fX);
+      const bool fast = perturbed_sign<m>(nasty_predicate<Exact<1>>,degree,fX);
       OTHER_ASSERT((degree&1) || fast);
       // Evaluate the series out to several terms using brute force
-      Vector<Exact<>,m> sX;
+      Vector<Exact<>,m> sX[1];
       Array<int> powers(m+1); // Choose powers of 2 to approximate nested infinitesimals
       for (int i=0;i<m;i++)
         powers[i+1] = (degree+1)*powers[i]+128;
@@ -667,17 +679,17 @@ template<int m> static void perturbed_sign_test() {
         if (i) {
           const auto y = perturbation<m>(i,index);
           for (int j=0;j<m;j++) {
-            auto& x = sX[j];
+            auto& x = sX[0][j];
             mpz_set_si(yp,y[j]);
             mpz_mul_2exp(yp,yp,powers.back()-powers[i-1]); // yp = y[j]<<(powers[-1]-powers[i-1])
             mpz_add(x.n,x.n,yp); // x += yp
           }
         }
         // We should be initially zero, and then match the correct sign once nonzero
-        const int slow = sign(nasty_predicate<Exact<>>(RawArray<const Vector<Exact<>,m>>(1,&sX)));
+        const int slow = sign(nasty_predicate<Exact<>>(asarray(sX)));
         if (0) {
           cout << "m "<<m<<", degree "<<degree<<", index "<<index<<", i "<<i<<", fast "<<2*fast-1<<", slow "<<slow<<endl;
-          cout << "  fX = "<<fX[0]<<", sX = "<<sX<<endl;
+          cout << "  fX = "<<fX[0]<<", sX = "<<sX[0]<<endl;
         }
         OTHER_ASSERT(slow==(i<m?0:2*fast-1));
       }
@@ -690,10 +702,10 @@ template<int m> static void perturbed_sign_test() {
 // the construction-specific tests in constructions.cpp.
 
 #define INSTANTIATE_RATIO(r,m) \
-  template Vector<ExactInt,r> perturbed_ratio(Vector<Exact<>,r+1>(*const)(RawArray<const Vector<ExactInt,m>>), const int, RawArray<const Tuple<int,Vector<ExactInt,m>>>, bool);
+  template Vector<Quantized,r> perturbed_ratio(Vector<Exact<>,r+1>(*const)(RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>, bool);
 #define INSTANTIATE(m) \
   template Vector<ExactInt,m> perturbation(const int, const int); \
-  template bool perturbed_sign(Exact<>(*const)(RawArray<const Vector<ExactInt,m>>), const int, RawArray<const Tuple<int,Vector<ExactInt,m>>>); \
+  template bool perturbed_sign(Exact<>(*const)(RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>); \
   INSTANTIATE_RATIO(m,m)
 INSTANTIATE(1)
 INSTANTIATE(2)

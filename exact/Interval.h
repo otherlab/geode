@@ -255,19 +255,19 @@ template<int m> static inline bool small(const Vector<Interval,m>& xs, const dou
 }
 
 // Snap an interval vector to integers, rounding to the best integer guess
-template<int m> static inline Vector<ExactInt,m> snap(const Vector<Interval,m>& xs) {
-  Vector<ExactInt,m> r;
+template<int m> static inline Vector<Quantized,m> snap(const Vector<Interval,m>& xs) {
+  Vector<Quantized,m> r;
   for (int i=0;i<m;i++)
-    r[i] = ExactInt(round(xs[i].center()));
+    r[i] = Quantized(round(xs[i].center()));
   return r;
 }
 
 // Conservatively expand an integer to an integer box
-template<int m> static inline Box<Vector<ExactInt,m>> snap_box(const Vector<Interval,m>& xs) {
-  Box<Vector<ExactInt,m>> box;
+template<int m> static inline Box<Vector<Quantized,m>> snap_box(const Vector<Interval,m>& xs) {
+  Box<Vector<Quantized,m>> box;
   for (int i=0;i<m;i++) {
-    box.min[i] = ExactInt(floor(-xs[i].nlo));
-    box.max[i] = ExactInt( ceil( xs[i].hi));
+    box.min[i] = Quantized(floor(-xs[i].nlo));
+    box.max[i] = Quantized( ceil( xs[i].hi));
   }
   return box;
 }

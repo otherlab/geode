@@ -21,8 +21,8 @@ struct CircleArc {
 // After quantization, we represent circles implicitly by center and radius, plus two boolean flags
 // describing how to connect adjacent arcs.
 struct ExactCircleArc {
-  Vector<ExactInt,2> center;
-  ExactInt radius;
+  Vector<Quantized,2> center;
+  Quantized radius;
   int index; // Index into the symbolic perturbation
   bool positive; // True if the arc is traversed counterclockwise
   bool left; // True if we use the intersection between this arc and the next to the left of the segment joining their centers

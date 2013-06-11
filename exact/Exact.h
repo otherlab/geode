@@ -21,9 +21,10 @@ template<int degree=100> struct Exact;
     static const bool big = false; \
     static const int degree = d; \
     typedef type_ type; \
-    const type n; \
+    type n; \
     explicit Exact(const type n) : n(n) {} \
     template<int a> explicit Exact(const Exact<a> x) : n(x.n) { BOOST_STATIC_ASSERT(a<=d); } \
+    void operator+=(const Exact x) { n += x.n; } \
   }; \
   OTHER_UNUSED static inline int sign(const Exact<d> x) { \
     return x.n<0?-1:x.n==0?0:1; \
@@ -67,7 +68,7 @@ static inline void init_set_steal(mpz_t x, mpz_t y) {
 }
 
 template<int d> struct Exact : public boost::noncopyable {
-  BOOST_STATIC_ASSERT(sizeof(ExactInt)*d>128/8);
+  BOOST_STATIC_ASSERT(sizeof(Quantized)*d>128/8);
   struct Unusable {};
   static const bool big = true;
   static const int degree = d;

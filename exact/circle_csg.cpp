@@ -43,7 +43,7 @@ struct Vertex {
   int i0,i1; // Flat indices of the previous and next circle
   bool left; // True if the intersection is to the left of the (i,j) segment
   uint8_t q0,q1; // Quadrants relative to i0's center and i1's center, respectively
-  EV2 inexact; // The nearly exactly rounded intersect, differing from the exact intersection by at most two.
+  EV2 rounded; // The nearly exactly rounded intersect, differing from the exact intersection by at most two.
 
   bool operator==(const Vertex v) const {
     return i0==v.i0 && i1==v.i1 && left==v.left;
@@ -63,13 +63,13 @@ struct Vertex {
 
   // A conservative interval containing the true intersection
   Vector<Interval,2> p() const {
-    return Vector<Interval,2>(Interval(inexact.x-2,inexact.x+2),
-                              Interval(inexact.y-2,inexact.y+2));
+    return Vector<Interval,2>(Interval(rounded.x-2,rounded.x+2),
+                              Interval(rounded.y-2,rounded.y+2));
   }
 
   // The same as p(), but with a different type
   Box<EV2> box() const {
-    return Box<EV2>(inexact).thickened(2);
+    return Box<EV2>(rounded).thickened(2);
   }
 
   // Reverse the vertex to go from i1 to i0
@@ -80,7 +80,7 @@ struct Vertex {
     r.left = !left;
     r.q0 = q1;
     r.q1 = q0;
-    r.inexact = inexact;
+    r.rounded = rounded;
     return r;
   }
 };
@@ -229,8 +229,8 @@ static Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, c
         if (small(quadratic,1) && !CHECK) {
           const auto sl = snap(linear),
                      sq = snap(quadratic);
-          v.x.inexact = sl-sq;
-          v.y.inexact = sl+sq;
+          v.x.rounded = sl-sq;
+          v.y.rounded = sl+sq;
           goto quadrants;
         }
       }
@@ -249,12 +249,12 @@ static Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, c
       const auto sqr_dc = esqr_magnitude(dc), \
                  two_sqr_dc = small_mul(2,sqr_dc), \
                  alpha_hat = sqr_dc-(r1+r0)*(r1-r0);
-    struct FR { static Vector<Exact<>,3> eval(RawArray<const exact::Vec3> X) {
+    struct FR { static Vector<Exact<>,3> eval(RawArray<const Vector<Exact<1>,3>> X) {
       MOST
       const auto v = emul(two_sqr_dc,c0)+emul(alpha_hat,dc);
       return Vector<Exact<>,3>(Exact<>(v.x),Exact<>(v.y),Exact<>(two_sqr_dc));
     }};
-    struct FS { static Vector<Exact<>,3> eval(RawArray<const exact::Vec3> X) {
+    struct FS { static Vector<Exact<>,3> eval(RawArray<const Vector<Exact<1>,3>> X) {
       MOST
       const auto sqr_beta_hat = small_mul(4,sqr(r0))*sqr_dc-sqr(alpha_hat);
       return Vector<Exact<>,3>(sqr_beta_hat*sqr(dc.x),sqr_beta_hat*sqr(dc.y),sqr(two_sqr_dc));
@@ -270,8 +270,8 @@ static Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, c
     OTHER_ASSERT(   check_quadratic.x.thickened(1).contains(fs.x)
                  && check_quadratic.y.thickened(1).contains(fs.y));
 #endif
-    v.x.inexact = fr - fs;
-    v.y.inexact = fr + fs;
+    v.x.rounded = fr - fs;
+    v.y.rounded = fr + fs;
   }
 
   // Fill in quadrants
@@ -473,7 +473,7 @@ static Array<Box<EV2>> arc_boxes(Next next, Arcs arcs, RawArray<const Vertex> ve
     const int i2 = next[i1];
     const auto v01 = vertices[i1],
                v12 = vertices[i2];
-    auto box = bounding_box(v01.inexact,v12.inexact).thickened(2);
+    auto box = bounding_box(v01.rounded,v12.rounded).thickened(2);
     int q0 = v01.q1,
         q1 = v12.q0;
     if (q0==q1) {
@@ -716,7 +716,7 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
       const auto q = in[i].q;
       // Compute radius, quantize, then compute center from quantized radius to reduce endpoint error
       ExactCircleArc e;
-      e.radius = max(ExactInt(1),ExactInt(round(quant.scale*min(.25*L*abs(q+1/q),max_radius))),ExactInt(ceil(.5*quant.scale*L)));
+      e.radius = max(Quantized(1),Quantized(round(quant.scale*min(.25*L*abs(q+1/q),max_radius))),Quantized(ceil(.5*quant.scale*L)));
       const auto radius = quant.inverse.inv_scale*e.radius;
       const auto center = L ? .5*(x0+x1)+((q>0)^(abs(q)>1)?1:-1)*sqrt(max(0.,sqr(radius/L)-.25))*rotate_left_90(dx) : x0;
       e.center = quant(center);
@@ -749,16 +749,16 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
       bool done = true;
       for (int j=0,i=n-1;j<n;i=j++) {
         const double dc = magnitude(Vector<double,2>(out[i].center-out[j].center));
-        ExactInt &ri = out[i].radius,
-                 &rj = out[j].radius;
+        Quantized &ri = out[i].radius,
+                  &rj = out[j].radius;
         if (ri+rj <= dc) {
-          const auto d = ExactInt(floor((dc-ri-rj)/2+1));
+          const auto d = Quantized(floor((dc-ri-rj)/2+1));
           ri += d;
           rj += d;
           done = false;
         }
         if (abs(ri-rj) >= dc) {
-          (ri<rj?ri:rj) = max(ri,rj)-ExactInt(ceil(dc-1));
+          (ri<rj?ri:rj) = max(ri,rj)-Quantized(ceil(dc-1));
           done = false;
         }
       }
@@ -779,7 +779,7 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
     const auto out = output[p];
     const int n = in.size();
     for (int j=0,i=n-1;j<n;i=j++)
-      out[j].x = quant.inverse(circle_circle_intersections(input.flat,base+i,base+j)[in[i].left].inexact);
+      out[j].x = quant.inverse(circle_circle_intersections(input.flat,base+i,base+j)[in[i].left].rounded);
     for (int j=0,i=n-1;j<n;i=j++) {
       const auto x0 = out[i].x,
                  x1 = out[j].x,

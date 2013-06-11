@@ -10,6 +10,6 @@ namespace other {
 template<class Mesh> OTHER_CORE_EXPORT Ref<Mesh> delaunay_points(RawArray<const Vector<real,2>> X, bool validate=false);
 
 // Compute the exact Delaunay triangulation of a quantized point set
-template<class Mesh> OTHER_CORE_EXPORT Ref<Mesh> exact_delaunay_points(RawArray<const Vector<ExactInt,2>> X, bool validate=false);
+template<class Mesh> OTHER_CORE_EXPORT Ref<Mesh> exact_delaunay_points(RawArray<const Vector<Quantized,2>> X, bool validate=false);
 
 }
