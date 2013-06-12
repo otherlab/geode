@@ -12,9 +12,9 @@
 namespace other {
 
 template<class T0,class T1,class T2>
-class Tuple<T0,T1,T2>
-{
+class Tuple<T0,T1,T2> {
 public:
+  enum { m = 3 };
   T0 x;T1 y;T2 z;
 
   Tuple()

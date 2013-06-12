@@ -34,7 +34,7 @@ public:
     {}
 
     SymmetricMatrix(const DiagonalMatrix<T,3>& matrix)
-        :x00(matrix.x00),x10(0),x20(0),x11(matrix.x11),x21(0),x22(matrix.x22)
+        :x00(matrix.x00),x10(),x20(),x11(matrix.x11),x21(),x22(matrix.x22)
     {}
 
     SymmetricMatrix(const T y00,const T y10,const T y20,const T y11,const T y21,const T y22)

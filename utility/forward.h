@@ -22,10 +22,16 @@ template<class T> struct Hide {
 };
 
 // Return the first type given (for use in SFINAE)
-template<class T0,class T1> struct First {
-  typedef T0 type;
+#ifdef OTHER_VARIADIC
+template<class A0,class... Rest> struct First {
+  typedef A0 type;
 };
-
+#else
+template<class A0,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void,class A6=void,class A7=void,class A8=void,class A9=void> struct First {
+  typedef A0 type;
+ };
+#endif
+ 
 // A list of types
 #ifdef OTHER_VARIADIC
 template<class... Args> struct Types {

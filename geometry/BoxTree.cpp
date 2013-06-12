@@ -23,7 +23,7 @@ template<class T,int d> inline T center(const Vector<T,d>& x, int axis) {
   return x[axis];
 }
 
-template<class T,int d> inline T center(const Box<Vector<T,d> >& box, int axis) {
+template<class T,int d> inline T center(const Box<Vector<T,d>>& box, int axis) {
   return (T).5*(box.min[axis]+box.max[axis]);
 }
 
@@ -190,7 +190,7 @@ any_box_intersection(const Shape& shape) const {
 }
 
 #define INSTANTIATE(T,d) \
-  template class BoxTree<Vector<T,d> >; \
+  template class BoxTree<Vector<T,d>>; \
   template OTHER_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Box<Vector<T,d>>&) const; \
   template OTHER_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Sphere<Vector<T,d>>&) const;
 INSTANTIATE(real,2)

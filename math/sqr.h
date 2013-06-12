@@ -9,7 +9,8 @@
 
 namespace other {
 
-template<class T> static inline T sqr(const T a) {
+template<class T> static inline auto sqr(const T a)
+  -> decltype(a*a) {
   return a*a;
 }
 

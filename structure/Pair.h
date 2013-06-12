@@ -15,6 +15,10 @@ namespace other {
 template<class T0,class T1>
 class Tuple<T0,T1> {
 public:
+  enum { m = 2 };
+  typedef T0 first_type;
+  typedef T1 second_type;
+
   T0 x;
   T1 y;
 

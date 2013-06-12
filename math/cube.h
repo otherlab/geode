@@ -5,7 +5,8 @@
 
 namespace other {
 
-template<class T> static inline T cube(const T a) {
+template<class T> static inline auto cube(const T a)
+  -> decltype(a*a*a) {
   return a*a*a;
 }
 

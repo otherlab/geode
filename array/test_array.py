@@ -4,8 +4,7 @@ from __future__ import absolute_import
 
 import sys
 from numpy import *
-from other.core.array import *
-from other.core.utility import *
+from other.core import *
 import py
 
 def test_basic():

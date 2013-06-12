@@ -160,7 +160,7 @@ public:
   }
 };
 
-template<class T> inline ostream& operator<<(ostream& output, const Nested<T>& a) {
+template<class T,bool f> inline ostream& operator<<(ostream& output, const Nested<T,f>& a) {
   output << '[';
   for (int i=0;i<a.size();i++) {
     if (i)
@@ -190,6 +190,11 @@ template<class TA> Nested<typename First<typename TA::value_type,void>::type::va
 
 template<class T,bool frozen> const Nested<T,frozen>& asnested(const Nested<T,frozen>& a) {
   return a;
+}
+
+template<class T,bool f0,bool f1> Nested<typename boost::remove_const<T>::type,false> concatenate(const Nested<T,f0>& a0, const Nested<T,f1>& a1) {
+  return Nested<typename boost::remove_const<T>::type,false>(concatenate(a0.offsets,a0.offsets.back()+a1.offsets.slice(1,a1.offsets.size())),
+                                                             concatenate(a0.flat,a1.flat));
 }
 
 #ifdef OTHER_PYTHON

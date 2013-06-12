@@ -2,6 +2,7 @@
 // Numpy interface functions
 //#####################################################################
 #include <other/core/python/numpy.h>
+#include <other/core/python/wrap.h>
 #include <boost/detail/endian.hpp>
 #include <boost/cstdint.hpp>
 #include <stdio.h>
@@ -46,6 +47,17 @@ PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int 
 
 PyTypeObject* numpy_array_type() {
   return &PyArray_Type;
+}
+
+static PyTypeObject* recarray = 0;
+PyTypeObject* numpy_recarray_type() {
+  OTHER_ASSERT(recarray);
+  return recarray;
+}
+static void _set_recarray_type(PyObject* type) {
+  OTHER_ASSERT(PyType_Check(type));
+  Py_INCREF(type);
+  recarray = (PyTypeObject*)type;
 }
 
 void throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
@@ -186,3 +198,11 @@ void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int 
 }
 
 }
+using namespace other;
+
+void wrap_numpy() {
+#ifdef OTHER_PYTHON
+  OTHER_FUNCTION(_set_recarray_type)
+#endif
+}
+

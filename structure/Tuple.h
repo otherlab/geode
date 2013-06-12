@@ -51,6 +51,7 @@ template<class T> struct make_reference_const<T&> { typedef const T& type; };
 template<class T0,class T1,class T2,class T3,class T4,class... Rest> class Tuple<T0,T1,T2,T3,T4,Rest...> {
   BOOST_STATIC_ASSERT(sizeof...(Rest)>0);
 public:
+  enum { m = 5+sizeof...(Rest) };
   Tuple<T0,T1,T2,T3,T4> left;
   Tuple<Rest...> right;
 

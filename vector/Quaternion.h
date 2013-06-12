@@ -21,7 +21,7 @@ public:
     TV v;
 
     Quaternion()
-        :s(0) // note that v is also zeroed
+        :s() // note that v is also zeroed
     {}
 
     template<class T2> explicit Quaternion(const Quaternion<T2>& q)

@@ -88,6 +88,7 @@ void wrap_python() {
   OTHER_WRAP(python_function)
   OTHER_WRAP(exceptions)
   OTHER_WRAP(test_class)
+  OTHER_WRAP(numpy)
 
   function("list_convert_test",convert_test<vector<int> >);
   function("set_convert_test",convert_test<unordered_set<int> >);

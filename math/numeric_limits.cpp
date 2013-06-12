@@ -41,15 +41,17 @@ template<> OTHER_DEFINE_TYPE(Limits<float>)
 template<> OTHER_DEFINE_TYPE(Limits<double>)
 }
 
-static PyObject* build_limits(PyObject* dtype) {
-  if (!PyArray_DescrCheck(dtype))
-    throw TypeError(format("expected numpy descriptor, got %s",dtype->ob_type->tp_name));
-  const int type = ((PyArray_Descr*)dtype)->type_num;
+static PyObject* build_limits(PyObject* object) {
+  PyArray_Descr* dtype;
+  if (!PyArray_DescrConverter(object,&dtype))
+    return 0;
+  const Ref<> save = steal_ref(*(PyObject*)dtype);
+  const int type = dtype->type_num;
   switch (type) {
     case NumpyScalar<float>::value:  return to_python(new_<Limits<float>>());
     case NumpyScalar<double>::value: return to_python(new_<Limits<double>>());
     default:
-      Ref<PyObject> s = steal_ref_check(PyObject_Str(dtype));
+      Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));
       throw TypeError(format("numeric_limits unimplemented for type %s",from_python<const char*>(s)));
   }
 }

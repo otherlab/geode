@@ -61,11 +61,11 @@ public:
     {}
 
     template<class T2> explicit Vector(const Vector<T2,3>& vector)
-        :x((T)vector.x),y((T)vector.y),z((T)vector.z)
+        :x(vector.x),y(vector.y),z(vector.z)
     {}
 
     explicit Vector(const Vector<T,2>& vector)
-        :x(vector.x),y(vector.y),z(0)
+        :x(vector.x),y(vector.y),z()
     {}
 
     template<class TVector,class TIndices>
