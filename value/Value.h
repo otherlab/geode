@@ -199,6 +199,16 @@ public:
   operator const Value<T>&() const {
     return *self;
   }
+
+  bool operator==(const ValueRef& v) const {
+    return self == v.self;
+  }
+
+  friend ostream& operator<<(ostream& output,const ValueRef& v){
+    output << "ValueRef(" << v.self->name << ')';
+    return output;
+  }
+
 };
 
 template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {

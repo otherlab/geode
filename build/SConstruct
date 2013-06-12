@@ -75,6 +75,7 @@ options(
   ('optimizations','override default optimization settings','<default>'),
   ('sse','Use SSE if available',1),
   ('skip','list of modules to skip',[]),
+  ('skip_libs', 'list of libraries to skip', []),
   ('skip_programs','Build libraries only',0),
   ('BASE','Standard base directory for headers and libraries',env['BASE']),
   ('CXXFLAGS_EXTRA','',[]),
@@ -274,7 +275,7 @@ if windows:
     env.Append(CXXFLAGS=' /Zi')
   if env['type'] in ('release','optdebug','profile'):
     env.Append(CXXFLAGS=' /O2')
-  env.Append(CXXFLAGS=ifsse('/arch:SSE2') + ' /W3 /wd4996 /wd4267 /wd4180 /EHs',CPPDEFINES=[ifsse('__SSE__'), '_CRT_SECURE_NO_DEPRECATE','NOMINMAX','_USE_MATH_DEFINES'])
+  env.Append(CXXFLAGS=ifsse('/arch:SSE2') + ' /W3 /wd4996 /wd4267 /wd4180 /EHs',LINKFLAGS='/ignore:4221',CPPDEFINES=[ifsse('__SSE__'), '_CRT_SECURE_NO_DEPRECATE','NOMINMAX','_USE_MATH_DEFINES'])
   if env['CXX'].endswith('icl') or env['CXX'].endswith('icl"'):
     env.Append(CXXFLAGS=' /wd2415 /wd597 /wd177')
   if env['type']=='debug':
@@ -333,7 +334,10 @@ if env['syntax']:
 
 # Use c++11
 if not windows:
-  env.Append(CXXFLAGS=' -std=c++11')
+  if darwin:
+    env.Append(CXXFLAGS=' -std=c++11')
+  else: # Ubuntu
+    env.Append(CXXFLAGS=' -std=c++0x')
 
 # Hide symbols by default if desired
 if env['hidden']:
@@ -409,14 +413,13 @@ if darwin:
 env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
 
 def make_symlink(src,dst):
-  print 'ln -sf %s %s'%(src,dst)
   if windows:
-    # make a symlink
-    if os.path.isdir(src):
-      os.system('mklink /d "%s" "%s"' % (src,dst))
-    else:
-      os.system('mklink "%s" "%s"' % (src,dst))
+    if not os.path.exists(dst):
+      cmd = 'mklink%s "%s" "%s"'%(' /d' if os.path.isdir(src) else '',dst,src)
+      print cmd
+      os.system(cmd)
   else:
+    print 'ln -sf %s %s'%(src,dst)
     os.symlink(src,dst)
 
 
@@ -437,21 +440,15 @@ def symlink_force(src,dst):
 
 # Add a directory to the include path under a given name
 def toplevel(name,path):
-  if env['type']=='msvc':
-    return
   path = Dir(path).srcnode().abspath
   # Make core/build/include if it doesn't exist
-  include = os.path.join(env['othercore'],'build/include')
+  include = os.path.join(env['othercore'],'build','include')
   if not os.path.exists(include):
     os.makedirs(include)
   symlink_force(path,os.path.join(include,name))
 
 # Library configuration
-if not windows:
-  env.Append(CPPPATH=[os.path.join(env['othercore'],'build/include')])
-else:
-  # Windows doesn't support symlinks
-  env.Append(CPPPATH=['#..'])
+env.Append(CPPPATH=[os.path.join(env['othercore'],'build','include')])
 env.Append(LIBPATH=[env['PREFIX_LIB']],RPATH=[Dir(env['PREFIX_LIB']).abspath])
 
 # Account for library dependencies
@@ -554,6 +551,8 @@ if windows:
   projects = []
 def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   name = os.path.basename(path)
+  if name in env['skip_libs']:
+    return
   cpps = []
   skip = tuple(skip)+tuple(env['skip'])
   candidates = list(files(Dir('.').srcnode().abspath,skip)) if not skip_all else []
@@ -614,6 +613,8 @@ def library(env,path,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
 
 # Build a program
 def program(env,name,cpp=None):
+  if env['skip_programs']:
+    return
   if cpp is None:
     cpp = name + '.cpp'
   env = link_flags(env)

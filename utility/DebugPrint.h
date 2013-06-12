@@ -36,4 +36,5 @@ OTHER_CORE_EXPORT void debug_print_helper_multiline(const char* prefix,...);
 #define OTHER_PROBE_IF(condition,...) if(condition){OTHER_PROBE(__VA_ARGS__);}else{}
 #define OTHER_PROBE_IF_MULTILINE(condition,...) if(condition){OTHER_PROBE(__VA_ARGS__);}else{}
 
+#define DEBUG_TODO(...)
 }

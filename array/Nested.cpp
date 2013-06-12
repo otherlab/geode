@@ -54,7 +54,7 @@ fail:
 
 bool is_nested_array(PyObject* object) {
   OTHER_ASSERT(nested_array_type);
-  return PyObject_IsInstance(object,(PyObject*)nested_array_type);
+  return PyObject_IsInstance(object,(PyObject*)nested_array_type)!=0;
 }
 
 Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object) {

@@ -25,6 +25,23 @@ public:
   void input_changed() const;
 };
 
+
+class BatchListen : public Object, public Action {
+public:
+  OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
+  typedef Object Base;
+private:
+  vector<Ref<const ValueBase>> values;
+  function<void()> f;
+
+  OTHER_CORE_EXPORT BatchListen(const vector<Ref<const ValueBase>>& values, const function<void()>& f);
+public:
+  ~BatchListen();
+
+  void input_changed() const;
+};
+
 OTHER_CORE_EXPORT Ref<Listen> listen(const ValueBase& value, const function<void()>& f);
+OTHER_CORE_EXPORT Ref<BatchListen> listen(const vector<Ref<const ValueBase>>& values, const function<void()>& f);
 
 }

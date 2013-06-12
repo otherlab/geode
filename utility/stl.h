@@ -27,6 +27,7 @@ template<class T, class U, class H> inline std::ostream &operator<<(std::ostream
 template<class T> inline std::ostream &operator<<(std::ostream &os, std::vector<T> const &v);
 template<class T> inline std::ostream &operator<<(std::ostream &os, std::set<T> const &v);
 template<class T> inline std::ostream &operator<<(std::ostream &os, std::list<T> const &v);
+template<class T> inline std::ostream &operator<<(std::ostream &os, std::deque<T> const &v);
 template<class T, class U> inline std::ostream &operator<<(std::ostream &os, std::map<T,U> const &v);
 
 template<class S> S&& other_forward(typename remove_reference<S>::type& a) OTHER_NOEXCEPT {
@@ -149,6 +150,11 @@ inline std::ostream &print(std::ostream &os, Iterator const &begin, Iterator con
   }
 
   return os << cend;
+}
+
+template<class T>
+inline std::ostream &operator<<(std::ostream &os, std::deque<T> const &v) {
+  return print(os, v.begin(), v.end(), '[', ']');
 }
 
 template<class T,class H>

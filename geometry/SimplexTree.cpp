@@ -348,6 +348,14 @@ closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) co
     return simplices[simplex].closest_point(point,weights);
 }
 
+template<class TV,int d> Tuple<Vector<typename SimplexTree<TV,d>::T,d+1>,int> SimplexTree<TV,d>::
+closest_barycentric(TV point, T max_distance) const {
+  int simplex = -1;
+  Vector<T,d+1> bary;
+  closest_point(point, simplex, bary, max_distance);
+  return tuple(bary,simplex);
+}
+
 template<class TV,int d> TV SimplexTree<TV,d>::
 closest_point(TV point, T max_distance) const {
   int simplex;
@@ -394,6 +402,7 @@ using namespace other;
 template<class TV,int d> static void wrap_helper() {
   typedef typename TV::Scalar T;
   typedef SimplexTree<TV,d> Self;
+  typedef Tuple<Vector<T,d+1>,int> TB;
   static const string name = format("%sTree%dd",(d==1?"Segment":"Triangle"),TV::m);
   Class<Self>(name.c_str())
     .OTHER_INIT(const typename Self::Mesh&,Array<const TV>,int)
@@ -401,6 +410,7 @@ template<class TV,int d> static void wrap_helper() {
     .OTHER_FIELD(X)
     .OTHER_METHOD(update)
     .OTHER_OVERLOADED_METHOD(TV(Self::*)(TV,T)const, closest_point)
+    .OTHER_OVERLOADED_METHOD(TB(Self::*)(TV,T)const, closest_barycentric)
     ;
 }
 

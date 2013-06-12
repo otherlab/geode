@@ -183,8 +183,9 @@ template<class TA> Nested<typename TA::value_type> make_nested(const TA& a0, con
   return nested;
 }
 
-template<class TA> Nested<typename TA::value_type::value_type,false> asnested(const TA& a) {
-  return Nested<typename TA::value_type::value_type,false>::copy(a);
+// we have to put "parentheses" around TA::value_type to prevent MSVC from thinking TA::value_type::value_type is a constructor.
+template<class TA> Nested<typename First<typename TA::value_type,void>::type::value_type,false> asnested(const TA& a) {
+  return Nested<typename First<typename TA::value_type,void>::type::value_type,false>::copy(a);
 }
 
 template<class T,bool frozen> const Nested<T,frozen>& asnested(const Nested<T,frozen>& a) {

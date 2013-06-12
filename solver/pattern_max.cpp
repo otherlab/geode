@@ -1,21 +1,21 @@
-#include <other/core/vector/Vector.h>
-namespace other{
-// Maximize a functional over a sphere using pattern search
-template<class score_t> static double spherical_pattern_maximize(const score_t& score, Vector<real,3>& n, double tol) {
-  static const double da = 2*M_PI/5;
+#include <other/core/solver/pattern_max.h>
+namespace other {
+
+real spherical_pattern_maximize(const function<real(Vector<real,3>)>& score, Vector<real,3>& n, real tol) {
+  static const real da = 2*M_PI/5;
   static const Vector<real,2> dirs[5] = {polar(0.), polar(da), polar(2*da), polar(3*da), polar(4*da)};
-  const double alpha = .5;
-  double step = .2;
-  double dot = score(n);
+  const real alpha = .5;
+  real step = .2;
+  real dot = score(n);
   while (step > tol) {
-    double best_dot = dot;
+    real best_dot = dot;
     Vector<real,3> best_n = n;
     Vector<real,3> orth;
     orth[n.argmin()] = 1;
     Vector<real,3> a = cross(n,orth).normalized(), b = cross(n,a);
     for (int i = 0; i < 5; i++) {
       Vector<real,3> candidate = (n + step*dirs[i].x*a + step*dirs[i].y*b).normalized();
-      double d = score(candidate);
+      real d = score(candidate);
       if (best_dot < d) {
         best_dot = d;
         best_n = candidate;
@@ -29,4 +29,5 @@ template<class score_t> static double spherical_pattern_maximize(const score_t& 
   }
   return dot;
 }
+
 }

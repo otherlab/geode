@@ -198,9 +198,6 @@
     <ClInclude Include="array\NdArray.h">
       <Filter>array\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="array\NestedArray.h">
-      <Filter>array\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="array\ProjectedArray.h">
       <Filter>array\Header Files</Filter>
     </ClInclude>
@@ -948,6 +945,9 @@
     <ClInclude Include="openmesh\curvature.h">
       <Filter>openmesh\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="array\Nested.h">
+      <Filter>array\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
@@ -960,9 +960,6 @@
       <Filter>array\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="array\NdArray.cpp">
-      <Filter>array\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="array\NestedArray.cpp">
       <Filter>array\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="array\RawArray.cpp">
@@ -1342,6 +1339,12 @@
     </ClCompile>
     <ClCompile Include="openmesh\curvature.cpp">
       <Filter>openmesh\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="array\Nested.cpp">
+      <Filter>array\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Box.cpp">
+      <Filter>geometry\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
