@@ -5,6 +5,7 @@ external('gmm',flags=['_SCL_SECURE_NO_DEPRECATE'] if windows else [],cxxflags=' 
 toplevel('gmm','#data/gmm-3.0/gmm')
 
 env = env.Clone(use_libpng=1,use_libjpeg=1,use_openexr=0,use_openmesh=1,use_gmm=1,use_gmp=1)
+
 # Minimal dependencies:
 # env = env.Clone(use_libpng=0,use_libjpeg=0,use_openexr=0,use_openmesh=0,use_python=0)
 library(env,'other_core')

@@ -1368,8 +1368,8 @@ static void svgParsePoly(struct SVGParser* p, const char** attr, int closeFlag)
             if(start){
               svgBezierPoint(p, args[0], args[1]);
               start = false;
-              //first[0] = args[0];
-              //first[1] = args[1];
+              // first[0] = args[0];
+              // first[1] = args[1];
             } else {
               //svgBezierPoint(p, last[0], last[1]);
               svgBezierPoint(p, lerp(1.f/3, last[0], args[0]), lerp(1.f/3, last[1], args[1]));

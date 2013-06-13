@@ -4,8 +4,10 @@ from __future__ import absolute_import
 import platform
 from other.core.array import *
 if platform.system()=='Windows':
+  from other_all import *
   import other_all as other_core
 else:
+  from other_core import *
   import other_core
 
 def delaunay_points(X,Mesh=CornerMesh,validate=False):
@@ -36,6 +38,7 @@ ExactCircleArc = dtype([('center','2i8'),
                         ('positive','b'),
                         ('left','b'),
                         ('_pad','2V')]) # Work around https://github.com/numpy/numpy/issues/2383
+
 other_core._set_circle_arc_dtypes(CircleArc,ExactCircleArc)
 
 def circle_arc_union(*arcs):

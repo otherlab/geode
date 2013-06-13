@@ -114,8 +114,8 @@ INSTANTIATION_HELPER(float,2)
 
 typedef real T;
 
-static void bounding_box_py_helper(Array<Box<T>>& box, PyObject* object) {
-  if (const auto array = numpy_from_any(object,NumpyDescr<T>::descr(),0,100,NPY_ARRAY_CARRAY_RO,0)) {
+static void bounding_box_py_helper(Array<Box<real>>& box, PyObject* object) {
+  if (const auto array = numpy_from_any(object,NumpyDescr<real>::descr(),0,100,NPY_ARRAY_CARRAY_RO,0)) {
     // object is a rectangular numpy array
     const int rank = PyArray_NDIM((PyArrayObject*)array);
     if (!rank) {
@@ -130,7 +130,7 @@ static void bounding_box_py_helper(Array<Box<T>>& box, PyObject* object) {
       throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),d));
     }
     const int count = PyArray_SIZE((PyArrayObject*)array)/d;
-    const T* data = (const T*)PyArray_DATA((PyArrayObject*)array);
+    const real* data = (const real*)PyArray_DATA((PyArrayObject*)array);
     for (int i=0;i<count;i++)
       for (int j=0;j<d;j++)
         box[j].enlarge(data[i*d+j]);
@@ -147,7 +147,7 @@ static void bounding_box_py_helper(Array<Box<T>>& box, PyObject* object) {
 
 static PyObject* bounding_box_py(PyObject* object) {
   if (is_numpy_array(object)) {
-    const auto array = from_python<NdArray<const T>>(object);
+    const auto array = from_python<NdArray<const real>>(object);
     OTHER_ASSERT(array.rank()>=2);
     if (array.shape.back()==2)
       return to_python(bounding_box(vector_view<2>(array.flat)));
@@ -159,12 +159,12 @@ static PyObject* bounding_box_py(PyObject* object) {
     return bounding_box_py(&*nested_array_from_python_helper(object).y);
 
   // object is neither a numpy array nor a Nested, so loop over it manually
-  Array<Box<T>> box;
+  Array<Box<real>> box;
   bounding_box_py_helper(box,object);
   if (box.size()==2)
-    return to_python(Box<Vector<T,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
+    return to_python(Box<Vector<real,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
   else if (box.size()==3)
-    return to_python(Box<Vector<T,3>>(vec(box[0].min,box[1].min,box[2].min),vec(box[0].max,box[1].max,box[2].max)));
+    return to_python(Box<Vector<real,3>>(vec(box[0].min,box[1].min,box[2].min),vec(box[0].max,box[1].max,box[2].max)));
   else
     throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",box.size()));
 }
