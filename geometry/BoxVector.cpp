@@ -20,7 +20,7 @@ namespace other {
 #ifdef OTHER_PYTHON
 
 template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) {
-  return to_python(new_<AnalyticImplicit<Box<Vector<real,d>>>>(box));
+  return to_python(new_<AnalyticImplicit<Box<Vector<T,d>>>>(box));
 }
 
 template<> PyObject* to_python(const Box<Vector<int,2>>& box) {
@@ -32,7 +32,7 @@ template<> PyObject* to_python(const Box<Vector<int,3>>& box) {
 }
 
 template<class T,int d> Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject* object) {
-  return Box<Vector<T,d>>(from_python<AnalyticImplicit<Box<Vector<real,d>>>&>(object));
+  return from_python<AnalyticImplicit<Box<Vector<T,d>>>&>(object);
 }
 
 template<> Box<Vector<int,2>> FromPython<Box<Vector<int,2>>>::convert(PyObject* object) {
@@ -106,13 +106,8 @@ template<class T,int d> string Box<Vector<T,d>>::repr() const {
 INSTANTIATION_HELPER(real,1)
 INSTANTIATION_HELPER(real,2)
 INSTANTIATION_HELPER(real,3)
-#ifndef OTHER_FLOAT
-INSTANTIATION_HELPER(float,2)
-#endif
 
 #ifdef OTHER_PYTHON
-
-typedef real T;
 
 static void bounding_box_py_helper(Array<Box<real>>& box, PyObject* object) {
   if (const auto array = numpy_from_any(object,NumpyDescr<real>::descr(),0,100,NPY_ARRAY_CARRAY_RO,0)) {
