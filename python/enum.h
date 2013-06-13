@@ -25,6 +25,7 @@
 #include <other/core/utility/tr1.h>
 #include <other/core/python/to_python.h>
 #include <boost/mpl/void.hpp>
+#include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/utility/enable_if.hpp>
 namespace other {
 
@@ -42,7 +43,7 @@ template<class E> class PyEnum : public Object {};
   template<> class PyEnum<E> : public Object { \
     typedef int Unused##E; /* E must be unqualified */ \
   public: \
-    OTHER_DECLARE_TYPE(EXPORT) \
+    OTHER_DECLARE_TYPE(EXPORT BOOST_PP_EMPTY()) /* Last bit dodges a Windows compiler bug */ \
     typedef Object Base; \
     EXPORT static unordered_map<int,Ref<PyEnum>> values; \
     const char* name; \

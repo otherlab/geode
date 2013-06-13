@@ -4,13 +4,18 @@
 #pragma once
 
 #include <other/core/utility/config.h>
+#include <other/core/vector/forward.h>
 #ifndef _WIN32
 #include <fenv.h>
 #endif
 namespace other {
 namespace process {
 
+// CPU usage for (user,system)
+OTHER_CORE_EXPORT Vector<double,2> cpu_times();
+
 OTHER_CORE_EXPORT size_t memory_usage();
+OTHER_CORE_EXPORT size_t max_memory_usage();
 
 #ifdef _WIN32
 enum {
@@ -22,7 +27,7 @@ enum {
 };
 #endif
 
-// exceptions should be a combination of FE_DIVBYZERO, FE_INEXACT, FE_INVALID, FE_OVERFLOW, FE_UNDERFLOW
+// Exceptions should be a combination of FE_DIVBYZERO, FE_INEXACT, FE_INVALID, FE_OVERFLOW, FE_UNDERFLOW
 OTHER_CORE_EXPORT void set_float_exceptions(const int exceptions=FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW);
 
 OTHER_CORE_EXPORT void backtrace();

@@ -1,6 +1,6 @@
 '''Values evaluated on separate processes via the multiprocessing module'''
 
-from other.core import Prop,PropManager,listen,base64_encode
+from other.core import Prop,PropManager,listen,base64_encode,is_windows
 import multiprocessing.connection
 import multiprocessing
 import subprocess
@@ -135,7 +135,7 @@ class Worker(object):
       self.worker_terminate = worker.terminate
     else:
       key = base64_encode(os.urandom(32))
-      worker = self.worker = subprocess.Popen(command+['01'[bool(debug)]+key],shell=True)
+      worker = self.worker = subprocess.Popen(command+['01'[bool(debug)]+key],shell=is_windows()) # shell=True is required on Windows, but doesn't work on Mac
       listener = multiprocessing.connection.Listener(address,authkey=key)
       # Ugly hack to avoid blocking forever if client never shows up.
       # Borrowed from http://stackoverflow.com/questions/357656/proper-way-of-cancelling-accept-and-closing-a-python-processing-multiprocessing
