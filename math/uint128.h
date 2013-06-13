@@ -6,6 +6,7 @@
 #include <other/core/python/forward.h>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/detail/endian.hpp>
 #include <stdint.h>
 #include <string>
 namespace other {
@@ -26,11 +27,12 @@ template<class I> static inline I cast_uint128(const uint128_t& n) {
 
 class uint128_t {
 #if defined(BOOST_LITTLE_ENDIAN)
-   uint64_t lo,hi;
+  uint64_t lo,hi;
 #elif defined(BOOST_BIG_ENDIAN)
   uint64_t hi,lo;
 #endif
 public:
+
   uint128_t()
     :lo(),hi() {}
 

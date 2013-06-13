@@ -30,7 +30,6 @@ class Vector<T,1>
 {
     struct Unusable{};
 public:
-    template<class T2> struct Rebind{typedef Vector<T2,1> type;};
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
     typedef T Element;
     typedef T value_type; // for stl
@@ -53,7 +52,7 @@ public:
     {}
 
     template<class T2> explicit Vector(const Vector<T2,1>& vector)
-        :x(vector.x)
+        :x(T(vector.x))
     {}
 
     Vector(const Vector& vector)
