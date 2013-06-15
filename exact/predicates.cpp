@@ -4,6 +4,7 @@
 #include <other/core/exact/Exact.h>
 #include <other/core/exact/math.h>
 #include <other/core/exact/perturb.h>
+#include <other/core/exact/scope.h>
 #include <other/core/array/RawArray.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
@@ -13,8 +14,6 @@ using std::cout;
 using std::endl;
 using exact::Point;
 using exact::Point2;
-typedef Vector<Exact<1>,2> LV2;
-typedef Vector<Exact<1>,3> LV3;
 
 // First, a trivial predicate, handled specially so that it can be partially inlined.
 
@@ -33,35 +32,35 @@ IAL(3,0) IAL(3,1) IAL(3,2)
 // Polynomial predicates
 
 bool triangle_oriented(const Point2 p0, const Point2 p1, const Point2 p2) {
-  struct F { static inline Exact<2> eval(const LV2 p0, const LV2 p1, const LV2 p2) {
+  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV p0, const TV p1, const TV p2) {
     return edet(p1-p0,p2-p0);
   }};
   return perturbed_predicate<F>(p0,p1,p2);
 }
 
 bool directions_oriented(const Point2 d0, const Point2 d1) {
-  struct F { static inline Exact<2> eval(const LV2 d0, const LV2 d1) {
+  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV d0, const TV d1) {
     return edet(d0,d1);
   }};
   return perturbed_predicate<F>(d0,d1);
 }
 
 bool segment_directions_oriented(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
-  struct F { static inline Exact<2> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1) {
+  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1) {
     return edet(a1-a0,b1-b0);
   }};
   return perturbed_predicate<F>(a0,a1,b0,b1);
 }
 
 bool segment_to_direction_oriented(const Point2 a0, const Point2 a1, const Point2 d) {
-  struct F { static inline Exact<2> eval(const LV2 a0, const LV2 a1, const LV2 d) {
+  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV d) {
     return edet(a1-a0,d);
   }};
   return perturbed_predicate<F>(a0,a1,d);
 }
 
 bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, Point2 b1, Point2 c0, Point2 c1) {
-  struct F { static inline Exact<4> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1, const LV2 c0, const LV2 c1) {
+  struct F { template<class TV> static inline PredicateType<4,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0, const TV c1) {
     const auto da = a1-a0,
                db = b1-b0,
                dc = c1-c0;
@@ -73,7 +72,7 @@ bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, 
 }
 
 bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3) {
-  struct F { static inline Exact<4> eval(const LV2 p0, const LV2 p1, const LV2 p2, const LV2 p3) {
+  struct F { template<class TV> static inline PredicateType<4,TV> eval(const TV p0, const TV p1, const TV p2, const TV p3) {
     const auto d0 = p0-p3,
                d1 = p1-p3,
                d2 = p2-p3;
@@ -91,6 +90,7 @@ bool segments_intersect(const exact::Point2 a0, const exact::Point2 a1, const ex
 // Unit tests.  Warning: These do not check the geometric correctness of the predicates, only properties of exact computation and perturbation.
 
 static void predicate_tests() {
+  IntervalScope scope;
   typedef Vector<double,2> TV2;
   typedef Vector<Quantized,2> QV2;
 
