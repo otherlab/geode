@@ -25,4 +25,5 @@ OTHER_PYTHON_MODULE(other_core) {
   OTHER_WRAP(force)
   OTHER_WRAP(solver)
   OTHER_WRAP(openmesh)
+  OTHER_WRAP(svg_to_bezier)
 }

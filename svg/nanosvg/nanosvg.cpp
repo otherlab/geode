@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
-
 #include <iostream>
 
 #ifndef M_PI
@@ -333,7 +332,7 @@ static void svgBezierPoint(struct SVGParser* p, float x, float y)
     p->nbezbuf++;
 }
 
-enum SVGOrigin {svgoUNCLEAR, svgoLINE, svgoHLINE, svgoVLINE, svgoCUBIC, svgoCUBIC_SHORT, svgoQUAD, svgoQUAD_SHORT, svgoRECT, svgoCIRCLE};
+enum SVGOrigin {svgoUNCLEAR, svgoLINE, svgoHLINE, svgoVLINE, svgoCUBIC, svgoCUBIC_SHORT, svgoQUAD, svgoQUAD_SHORT, svgoRECT, svgoCIRCLE, svgoARC};
 
 static void svgBezierOrigin(struct SVGParser *p, enum SVGOrigin o)
 {
@@ -801,10 +800,15 @@ static void cubicBezRec(struct SVGParser* p,
 
 static void cubicBez(struct SVGParser* p,
                      float x1, float y1, float cx1, float cy1,
-                     float cx2, float cy2, float x2, float y2)
+                     float cx2, float cy2, float x2, float y2, SVGOrigin o)
 {
     cubicBezRec(p, x1,y1, cx1,cy1, cx2,cy2, x2,y2, 0);
     svgPathPoint(p, x2, y2);
+
+    svgBezierPoint(p, cx1, cy1);
+    svgBezierPoint(p, cx2, cy2);
+    svgBezierPoint(p, x2, y2);
+    svgBezierOrigin(p, o);
 }
 
 static void quadBezRec(struct SVGParser* p,
@@ -833,15 +837,20 @@ static void quadBezRec(struct SVGParser* p,
     quadBezRec(p, x123,y123, x23,y23, x3,y3, level+1);
 }
 
+static inline float lerp(float t, float a, float b) {
+  return (1-t) * a + t * b;
+}
+
 static void quadBez(struct SVGParser* p,
-                    float x1, float y1, float cx, float cy, float x2, float y2)
+                    float x1, float y1, float cx, float cy, float x2, float y2, SVGOrigin o)
 {
     quadBezRec(p, x1,y1, cx,cy, x2,y2, 0);
     svgPathPoint(p, x2, y2);
-}
 
-static inline float lerp(float t, float a, float b) {
-  return (1-t) * a + t * b;
+    svgBezierPoint(p, lerp(2.f/3, x1, cx), lerp(2.f/3, y1, cy));
+    svgBezierPoint(p, lerp(2.f/3, x2, cx), lerp(2.f/3, y2, cy));
+    svgBezierPoint(p, x2, y2);
+    svgBezierOrigin(p, o);
 }
 
 static void pathMoveTo(struct SVGParser* p, float* cpx, float* cpy, float* args, int rel)
@@ -940,12 +949,7 @@ static void pathCubicBezTo(struct SVGParser* p, float* cpx, float* cpy,
         y2 = args[5];
     }
 
-    cubicBez(p, x1,y1, cx1,cy1, cx2,cy2, x2,y2);
-
-    svgBezierPoint(p, cx1, cy1);
-    svgBezierPoint(p, cx2, cy2);
-    svgBezierPoint(p, x2, y2);
-    svgBezierOrigin(p, svgoCUBIC);
+    cubicBez(p, x1,y1, cx1,cy1, cx2,cy2, x2,y2, svgoCUBIC);
 
     *cpx2 = cx2;
     *cpy2 = cy2;
@@ -978,12 +982,7 @@ static void pathCubicBezShortTo(struct SVGParser* p, float* cpx, float* cpy,
     cx1 = 2*x1 - *cpx2;
     cy1 = 2*y1 - *cpy2;
 
-    cubicBez(p, x1,y1, cx1,cy1, cx2,cy2, x2,y2);
-
-    svgBezierPoint(p, cx1, cy1);
-    svgBezierPoint(p, cx2, cy2);
-    svgBezierPoint(p, x2, y2);
-    svgBezierOrigin(p, svgoCUBIC_SHORT);
+    cubicBez(p, x1,y1, cx1,cy1, cx2,cy2, x2,y2, svgoCUBIC_SHORT);
 
     *cpx2 = cx2;
     *cpy2 = cy2;
@@ -1013,12 +1012,7 @@ static void pathQuadBezTo(struct SVGParser* p, float* cpx, float* cpy,
         y2 = args[3];
     }
 
-    quadBez(p, x1,y1, cx,cy, x2,y2);
-
-    svgBezierPoint(p, lerp(2.f/3, x1, cx), lerp(2.f/3, y1, cy));
-    svgBezierPoint(p, lerp(2.f/3, x2, cx), lerp(2.f/3, y2, cy));
-    svgBezierPoint(p, x2, y2);
-    svgBezierOrigin(p, svgoQUAD);
+    quadBez(p, x1,y1, cx,cy, x2,y2, svgoQUAD);
 
     *cpx2 = cx;
     *cpy2 = cy;
@@ -1027,7 +1021,7 @@ static void pathQuadBezTo(struct SVGParser* p, float* cpx, float* cpy,
 }
 
 static void pathQuadBezShortTo(struct SVGParser* p, float* cpx, float* cpy,
-                                 float* cpx2, float* cpy2, float* args, int rel)
+                               float* cpx2, float* cpy2, float* args, int rel)
 {
     float x1, y1, x2, y2, cx, cy;
 
@@ -1047,15 +1041,91 @@ static void pathQuadBezShortTo(struct SVGParser* p, float* cpx, float* cpy,
     cx = 2*x1 - *cpx2;
     cy = 2*y1 - *cpy2;
 
-    quadBez(p, x1,y1, cx,cy, x2,y2);
-
-    svgBezierPoint(p, lerp(2.f/3, x1, cx), lerp(2.f/3, y1, cy));
-    svgBezierPoint(p, lerp(2.f/3, x2, cx), lerp(2.f/3, y2, cy));
-    svgBezierPoint(p, x2, y2);
-    svgBezierOrigin(p, svgoQUAD_SHORT);
+    quadBez(p, x1,y1, cx,cy, x2,y2, svgoQUAD_SHORT);
 
     *cpx2 = cx;
     *cpy2 = cy;
+    *cpx = x2;
+    *cpy = y2;
+}
+
+static inline float sqr(float x)
+{
+    return x*x;
+}
+
+static inline float angle_between(float ux, float uy, float vx, float vy)
+{
+    return atan2(ux*vy-uy*vx, ux*vx+uy*vy);
+}
+
+static void pathArcTo(struct SVGParser* p, float* cpx, float* cpy, float* args, int rel)
+{
+    // Parse arguments.  For details, see http://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands.
+    float x1 = *cpx;
+    float y1 = *cpy;
+    float rx = fabs(args[0]);
+    float ry = fabs(args[1]);
+    float phi = (float)(M_PI/180)*args[2]; 
+    int large = args[3]!=0;
+    int sweep = args[4]!=0;
+    float x2 = args[5] + rel*x1;
+    float y2 = args[6] + rel*y1;
+
+    // Sanitize inputs as per http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+    if (!rx || !ry)
+    {
+        pathLineTo(p, cpx, cpy, args, rel);
+        return;
+    }
+    float cos_phi = cosf(phi);
+    float sin_phi = sinf(phi);
+    float x1p =  .5*cos_phi*(x1-x2) + .5f*sin_phi*(y1-y2); // Step 1
+    float y1p = -.5*sin_phi*(x1-x2) + .5f*cos_phi*(y1-y2);
+    float sqr_scale = sqr(x1p/rx)+sqr(y1p/ry);
+    if (sqr_scale > 1)
+    {
+      float scale = sqrtf(sqr_scale);
+      rx *= scale;
+      ry *= scale;
+      sqr_scale = 1;
+    }
+
+    // Compute center representation
+    float alpha = (large==sweep?-1:1)*sqrtf(1/sqr_scale-1); // Step 2
+    float cxp =  alpha*rx*y1p/ry;
+    float cyp = -alpha*ry*x1p/rx;
+    float cx = cos_phi*cxp - sin_phi*cyp + .5f*(x1+x2);  // Step 3
+    float cy = sin_phi*cxp + cos_phi*cyp + .5f*(y1+y2);
+    float theta1 = atan2((y1p-cyp)/ry, (x1p-cxp)/rx);
+    float dtheta = angle_between((x1p-cxp)/rx, (y1p-cyp)/ry, (-x1p-cxp)/rx, (-y1p-cyp)/ry);
+    if (sweep)
+    {
+        if (dtheta < 0)
+            dtheta += (float)(2*M_PI);
+    }
+    else
+    {
+        if (dtheta > 0)
+            dtheta -= (float)(2*M_PI);
+    }
+
+    // Split the arc into sections of angle at most slightly over pi/2, then approximate each with a Bezier patch
+    // For details, see Aleksas Riškus, "Approximation of a cubic Bezier curve by circular arcs and vice versa"
+    // or http://hansmuller-flex.blogspot.com/2011/04/approximating-circular-arc-with-cubic.html.
+    int sections = (int)ceilf(fabsf(dtheta)/(float)(M_PI/2)-.001f);
+    if (!sections)
+        sections = 1;
+    float len = 4.f/3*tan(.25f*(dtheta/sections));
+    #define MAP(x,y) (cx+cos_phi*(rx*(x))-sin_phi*(ry*(y))), (cy+sin_phi*(rx*(x))+cos_phi*(ry*(y)))
+    for (int i = 0; i < sections; i++) {
+      float t0 = theta1 + dtheta/sections*i;
+      float t1 = theta1 + dtheta/sections*(i+1);
+      float tx0 = cos(t0), ty0 = sin(t0),
+            tx1 = cos(t1), ty1 = sin(t1);
+      cubicBez(p, MAP(tx0,ty0), MAP(tx0-len*ty0,ty0+len*tx0), MAP(tx1+len*ty1,ty1-len*tx1), MAP(tx1,ty1), svgoARC);
+    }
+
     *cpx = x2;
     *cpy = y2;
 }
@@ -1136,6 +1206,10 @@ static void svgParsePath(struct SVGParser* p, const char** attr)
                             case 'T':
                             case 't':
                                 pathQuadBezShortTo(p, &cpx, &cpy, &cpx2, &cpy2, args, cmd == 's' ? 1 : 0);
+                                break;
+                            case 'A':
+                            case 'a':
+                                pathArcTo(p, &cpx, &cpy, args, cmd == 'a' ? 1 : 0);
                                 break;
                             default:
                                 if (nargs >= 2)
@@ -1264,6 +1338,7 @@ static void svgParseCircle(struct SVGParser* p, const char** attr)
 
     if (r != 0.0f)
     {
+        // With this value, we interpolate the circle every 30 degrees.  See http://www.tinaja.com/glib/ellipse4.pdf.
         float q = 0.551784f;
 
         svgResetPath(p);
@@ -1296,7 +1371,7 @@ static void svgParseCircle(struct SVGParser* p, const char** attr)
         svgBezierPoint(p, cx, cy + r);
         svgBezierOrigin(p, svgoCIRCLE);
 
-        svgBezierPoint(p, cx - r*q, cy);
+        svgBezierPoint(p, cx - r*q, cy + r);
         svgBezierPoint(p, cx - r, cy + r*q);
         svgBezierPoint(p, cx - r, cy);
         svgBezierOrigin(p, svgoCIRCLE);
