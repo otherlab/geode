@@ -487,10 +487,10 @@ template<class T>         static inline const RawArray<const T> asconstarray(con
 template<class T,class A> static inline const RawArray<const T> asconstarray(const std::vector<T,A>& v) { return RawArray<const T>(v.size(),&v[0]); }
 template<class T,class A> static inline const A&                asconstarray(const ArrayBase<T,A>& v)   { return v.derived(); }
 
-template<class T,int d> static inline       Array<T,d>& flat(      Array<T,d>& A) { return A.flat; }
-template<class T>       static inline       Array<T,1>& flat(      Array<T,1>& A) { return A; }
-template<class T,int d> static inline const Array<T,d>& flat(const Array<T,d>& A) { return A.flat; }
-template<class T>       static inline const Array<T,1>& flat(const Array<T,1>& A) { return A; }
+template<class T,int d> static inline       Array<T>& flat(      Array<T,d>& A) { return A.flat; }
+template<class T>       static inline       Array<T>& flat(      Array<T,1>& A) { return A; }
+template<class T,int d> static inline const Array<T>& flat(const Array<T,d>& A) { return A.flat; }
+template<class T>       static inline const Array<T>& flat(const Array<T,1>& A) { return A; }
 
 }
 namespace std{

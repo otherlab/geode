@@ -309,6 +309,15 @@ public:
     return prop;
   }
 
+  template<class PropType> PropType get_prop(const string& s) const {
+    PropType result;
+    if(!get_property_handle(result, s)) {
+      OTHER_FATAL_ERROR(format("Could not get property: %s",s));
+    }
+    return result;
+  }
+
+
   // add a bunch of vertices
   OTHER_CORE_EXPORT void add_vertices(RawArray<const TV> X);
 
@@ -418,6 +427,18 @@ public:
     return OTriMesh::normal(fh);
   }
 
+  // re-publish
+  inline Point &point(VertexHandle vh) {
+    return OTriMesh::point(vh);
+  }
+
+  inline Point const &point(VertexHandle vh) const {
+    return OTriMesh::point(vh);
+  }
+
+  // get an interpolated point from a face and barycentric coordinates
+  OTHER_CORE_EXPORT Point point(FaceHandle fh, Vector<real,3> const &bary) const;
+
   // get an interpolated normal at any point on the mesh
   OTHER_CORE_EXPORT Normal smooth_normal(FaceHandle fh, Vector<real,3> const &bary) const;
 
@@ -478,8 +499,8 @@ public:
   OTHER_CORE_EXPORT unordered_map<VertexHandle, double, Hasher> geodesic_distance(vector<VertexHandle> const &sources,
                                                                 vector<VertexHandle> const &sinks) const;
 
-  // compute and return the approximate shortest path from one point to another
-  OTHER_CORE_EXPORT vector<VertexHandle> shortest_path(VertexHandle source, VertexHandle sink) const;
+  // compute and return the approximate shortest path from one point to another (only through vertices)
+  OTHER_CORE_EXPORT vector<VertexHandle> vertex_shortest_path(VertexHandle source, VertexHandle sink) const;
 
   // compute the closest face to a point by breadth-first search starting at the given vertex/face
   OTHER_CORE_EXPORT FaceHandle local_closest_face(Point const &p, FaceHandle start) const;
@@ -581,6 +602,7 @@ public:
   // Split a mesh into connected components
   OTHER_CORE_EXPORT vector<Ref<TriMesh> > component_meshes() const;
   OTHER_CORE_EXPORT vector<Ref<TriMesh> > nested_components() const;
+  OTHER_CORE_EXPORT Ref<TriMesh> largest_connected_component() const;
 
   // Convenience functions for use in range-based for loops
   inline Range<HandleIter<VertexIter>> vertex_handles() { return handle_range(vertices_sbegin(),vertices_end()); }

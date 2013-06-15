@@ -27,15 +27,17 @@ template<class F,class G> struct Compose {
 
 #else // Unpleasant nonvariadic versions
 
+  struct Unusable {};
+
   #define OTHER_COMPOSE_CALL(ARGS,Argsargs,args) \
-    template<OTHER_REMOVE_PARENS(ARGS)> OTHER_ALWAYS_INLINE auto operator() Argsargs const \
+    OTHER_REMOVE_PARENS(ARGS) OTHER_ALWAYS_INLINE auto operator() Argsargs const \
       -> decltype(f(g args)) { \
       return f(g args); \
     }
-  OTHER_COMPOSE_CALL((),(),())
-  OTHER_COMPOSE_CALL((class A0),(A0&& a0),(a0))
-  OTHER_COMPOSE_CALL((class A0,class A1),(A0&& a0,A1&& a1),(a0,a1))
-  OTHER_COMPOSE_CALL((class A0,class A1,class A2),(A0&& a0,A1&& a1,A2&& a2),(a0,a1,a2))
+  OTHER_COMPOSE_CALL((template<class Unused>),(Unused unused=Unusable()),())
+  OTHER_COMPOSE_CALL((template<class A0>),(A0&& a0),(a0))
+  OTHER_COMPOSE_CALL((template<class A0,class A1>),(A0&& a0,A1&& a1),(a0,a1))
+  OTHER_COMPOSE_CALL((template<class A0,class A1,class A2>),(A0&& a0,A1&& a1,A2&& a2),(a0,a1,a2))
   #undef OTHER_COMPOSE_CALL
 
 #endif

@@ -6,7 +6,6 @@ if platform.system()=='Windows':
   from other_all import *
   import other_all as other_core
 else:
-  from other_core import *
   import other_core
 
 class Nested(object):

@@ -877,8 +877,8 @@ static void pathLineTo(struct SVGParser* p, float* cpx, float* cpy, float* args,
 	}
 	svgPathPoint(p, *cpx, *cpy);
 
-  svgBezierPoint(p, lerp(1./3., oldx, *cpx), lerp(1./3., oldy, *cpy));
-  svgBezierPoint(p, lerp(2./3., oldx, *cpx), lerp(2./3., oldy, *cpy));
+  svgBezierPoint(p, lerp(1.f/3, oldx, *cpx), lerp(1.f/3, oldy, *cpy));
+  svgBezierPoint(p, lerp(2.f/3, oldx, *cpx), lerp(2.f/3, oldy, *cpy));
 
   svgBezierPoint(p, *cpx, *cpy);
   svgBezierOrigin(p, svgoLINE);
@@ -893,8 +893,8 @@ static void pathHLineTo(struct SVGParser* p, float* cpx, float* cpy, float* args
 		*cpx = args[0];
 
 	svgPathPoint(p, *cpx, *cpy);
-  svgBezierPoint(p, lerp(1./3., oldx, *cpx), lerp(1./3., oldy, *cpy));
-  svgBezierPoint(p, lerp(2./3., oldx, *cpx), lerp(2./3., oldy, *cpy));
+  svgBezierPoint(p, lerp(1.f/3, oldx, *cpx), lerp(1.f/3, oldy, *cpy));
+  svgBezierPoint(p, lerp(2.f/3, oldx, *cpx), lerp(2.f/3, oldy, *cpy));
   svgBezierPoint(p, *cpx, *cpy);
   svgBezierOrigin(p, svgoHLINE);
 }
@@ -908,8 +908,8 @@ static void pathVLineTo(struct SVGParser* p, float* cpx, float* cpy, float* args
 		*cpy = args[0];
 	svgPathPoint(p, *cpx, *cpy);
 
-  svgBezierPoint(p, lerp(1./3., oldx, *cpx), lerp(1./3., oldy, *cpy));
-  svgBezierPoint(p, lerp(2./3., oldx, *cpx), lerp(2./3., oldy, *cpy));
+  svgBezierPoint(p, lerp(1.f/3, oldx, *cpx), lerp(1.f/3, oldy, *cpy));
+  svgBezierPoint(p, lerp(2.f/3, oldx, *cpx), lerp(2.f/3, oldy, *cpy));
   svgBezierPoint(p, *cpx, *cpy);
   svgBezierOrigin(p, svgoVLINE);
 }
@@ -1015,8 +1015,8 @@ static void pathQuadBezTo(struct SVGParser* p, float* cpx, float* cpy,
 
 	quadBez(p, x1,y1, cx,cy, x2,y2);
 
-  svgBezierPoint(p, lerp(2./3., x1, cx), lerp(2./3., y1, cy));
-  svgBezierPoint(p, lerp(2./3., x2, cx), lerp(2./3., y2, cy));
+  svgBezierPoint(p, lerp(2.f/3, x1, cx), lerp(2.f/3, y1, cy));
+  svgBezierPoint(p, lerp(2.f/3, x2, cx), lerp(2.f/3, y2, cy));
   svgBezierPoint(p, x2, y2);
   svgBezierOrigin(p, svgoQUAD);
 
@@ -1049,8 +1049,8 @@ static void pathQuadBezShortTo(struct SVGParser* p, float* cpx, float* cpy,
 
 	quadBez(p, x1,y1, cx,cy, x2,y2);
 
-  svgBezierPoint(p, lerp(2./3., x1, cx), lerp(2./3., y1, cy));
-  svgBezierPoint(p, lerp(2./3., x2, cx), lerp(2./3., y2, cy));
+  svgBezierPoint(p, lerp(2.f/3, x1, cx), lerp(2.f/3, y1, cy));
+  svgBezierPoint(p, lerp(2.f/3, x2, cx), lerp(2.f/3, y2, cy));
   svgBezierPoint(p, x2, y2);
   svgBezierOrigin(p, svgoQUAD_SHORT);
 
@@ -1219,23 +1219,23 @@ static void svgParseRect(struct SVGParser* p, const char** attr)
 		svgPathPoint(p, x, y+h);
 
     svgBezierPoint(p, x, y);
-    svgBezierPoint(p, x + 1./3. * w, y);
-    svgBezierPoint(p, x + 2./3. * w, y);
+    svgBezierPoint(p, x + 1.f/3 * w, y);
+    svgBezierPoint(p, x + 2.f/3 * w, y);
     svgBezierPoint(p, x + w, y);
     svgBezierOrigin(p, svgoRECT);
 
-    svgBezierPoint(p, x + w, y + 1./3. * h);
-    svgBezierPoint(p, x + w, y + 2./3. * h);
+    svgBezierPoint(p, x + w, y + 1.f/3 * h);
+    svgBezierPoint(p, x + w, y + 2.f/3 * h);
     svgBezierPoint(p, x + w, y + h);
     svgBezierOrigin(p, svgoRECT);
 
-    svgBezierPoint(p, x + 2./3. * w, y + h);
-    svgBezierPoint(p, x + 1./3. * w, y + h);
+    svgBezierPoint(p, x + 2.f/3 * w, y + h);
+    svgBezierPoint(p, x + 1.f/3 * w, y + h);
     svgBezierPoint(p, x, y + h);
     svgBezierOrigin(p, svgoRECT);
 
-    svgBezierPoint(p, x, y + 2./3. * h);
-    svgBezierPoint(p, x, y + 1./3. * h);
+    svgBezierPoint(p, x, y + 2.f/3 * h);
+    svgBezierPoint(p, x, y + 1.f/3 * h);
     svgBezierPoint(p, x, y);
     svgBezierOrigin(p, svgoRECT);
 
@@ -1264,12 +1264,12 @@ static void svgParseCircle(struct SVGParser* p, const char** attr)
 
 	if (r != 0.0f)
 	{
-    float q = 0.551784;
+    float q = 0.551784f;
 
 		svgResetPath(p);
 
 		da = acosf(r/(r+p->tol))*2;
-		n = (int)ceilf(M_PI*2/da);
+		n = (int)ceilf(float(M_PI*2)/da);
 
 		da = (float)(M_PI*2)/n;
 		for (i = 0; i < n; ++i)
@@ -1330,8 +1330,8 @@ static void svgParseLine(struct SVGParser* p, const char** attr)
 	svgPathPoint(p, x2, y2);
 
   svgBezierPoint(p, x1, y1);
-  svgBezierPoint(p, lerp(1./3., x1, x2), lerp(1./3., y1, y2));
-  svgBezierPoint(p, lerp(2./3., x1, x2), lerp(2./3., y1, y2));
+  svgBezierPoint(p, lerp(1.f/3, x1, x2), lerp(1.f/3, y1, y2));
+  svgBezierPoint(p, lerp(2.f/3, x1, x2), lerp(2.f/3, y1, y2));
   svgBezierPoint(p, x2, y2);
   svgBezierOrigin(p, svgoLINE);
 
@@ -1368,12 +1368,12 @@ static void svgParsePoly(struct SVGParser* p, const char** attr, int closeFlag)
             if(start){
               svgBezierPoint(p, args[0], args[1]);
               start = false;
-              //first[0] = args[0];
-              //first[1] = args[1];
+              // first[0] = args[0];
+              // first[1] = args[1];
             } else {
               //svgBezierPoint(p, last[0], last[1]);
-              svgBezierPoint(p, lerp(1./3., last[0], args[0]), lerp(1./3., last[1], args[1]));
-              svgBezierPoint(p, lerp(2./3., last[0], args[0]), lerp(2./3., last[1], args[1]));
+              svgBezierPoint(p, lerp(1.f/3, last[0], args[0]), lerp(1.f/3, last[1], args[1]));
+              svgBezierPoint(p, lerp(2.f/3, last[0], args[0]), lerp(2.f/3, last[1], args[1]));
               svgBezierPoint(p, args[0], args[1]);
               svgBezierOrigin(p, svgoLINE);
             }
@@ -1387,15 +1387,16 @@ static void svgParsePoly(struct SVGParser* p, const char** attr, int closeFlag)
 		}
 	}
 
+
+  /* //let bezier.close do this
   // make last bezier segment if poly is closed only
-  if (closeFlag) {
-    /* //let bezier.close do this
-    svgBezierPoint(p, lerp(1./3., last[0], first[0]), lerp(1./3., last[1], first[1]));
-    svgBezierPoint(p, lerp(2./3., last[0], first[0]), lerp(2./3., last[1], first[1]));
+  if (closeFlag && sizeof(first)) { // "&& sizeof(first) - to suppress compiler warning about unused variable (also doesn't work, clang wants & here, not &&)
+    svgBezierPoint(p, lerp(1.f/3, last[0], first[0]), lerp(1.f/3, last[1], first[1]));
+    svgBezierPoint(p, lerp(2.f/3, last[0], first[0]), lerp(2.f/3, last[1], first[1]));
     svgBezierPoint(p, first[0], first[1]);
     svgBezierOrigin(p, svgoLINE);
-    */
   }
+  */
 
 	svgCreatePath(p, closeFlag);
 }

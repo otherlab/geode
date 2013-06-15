@@ -48,7 +48,7 @@ void function_is_not_defined(const char* function,const char* file,unsigned int 
   string error=format("%s:%s:%d: Function not defined by %s",file,function,line,type.name());
   if (error_callback) {
     error_callback(error);
-#ifdef WIN32
+#ifdef _WIN32
     throw RuntimeError("error callback returned: "+error);
 #endif
   } else
@@ -59,7 +59,7 @@ void not_implemented(const char* function,const char* file,unsigned int line,con
   string error=format("%s:%s:%d: Not implemented: %s",file,function,line,message?message:"something");
   if (error_callback) {
     error_callback(error);
-#ifdef WIN32
+#ifdef _WIN32
     throw RuntimeError("error callback returned: "+error);
 #endif
   } else
@@ -70,7 +70,7 @@ void fatal_error(const char* function,const char* file,unsigned int line,const c
   string error=format("%s:%s:%d: %s",file,function,line,message?message:"Fatal error");
   if (error_callback) {
     error_callback(error);
-#ifdef WIN32
+#ifdef _WIN32
     throw RuntimeError("error callback returned: "+error);
 #endif
   } else
@@ -89,7 +89,7 @@ void assertion_failed(const char* function,const char* file,unsigned int line,co
   }
   if (error_callback) {
     error_callback(error);
-#ifdef WIN32
+#ifdef _WIN32
     throw RuntimeError("error callback returned: "+error);
 #endif
   } else

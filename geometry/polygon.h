@@ -3,8 +3,8 @@
 #include <other/core/structure/Tuple.h>
 #include <other/core/array/Array.h>
 #include <other/core/mesh/forward.h>
-namespace other {
 
+namespace other {
 OTHER_CORE_EXPORT Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<const int> indices);
 OTHER_CORE_EXPORT Nested<Vec2> polygons_from_index_list(RawArray<const Vec2> positions, Nested<const int> indices);
 

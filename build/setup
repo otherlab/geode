@@ -3,16 +3,25 @@
 
 import os
 import sys
+import platform
 
 build = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
+windows = platform.system()=='Windows'
+
+def make_symlink(src,dst):
+  print 'ln -sf %s %s'%(src,dst)
+  if windows:
+    if not os.path.exists(dst):
+      os.system('mklink%s "%s" "%s"'%(' /d' if os.path.isdir(src) else '',dst,src))
+  else:
+    os.symlink(src,dst)
 
 def link(src,dst=None):
   if not dst:
     dst = os.path.basename(src)
   if not os.path.exists(dst):
     try:
-      print 'ln -s %s %s'%(src,dst)
-      os.symlink(src,dst)
+      make_symlink(src,dst)
     except os.error as e:
       print "Couldn't link %s as %s: %s" %(src,dst,e)
   elif os.path.islink(dst) and os.readlink(dst)==src:
@@ -51,6 +60,6 @@ if os.path.exists('core') and not os.path.exists('SConscript'):
   link(os.path.join(build,'SConscript'))
 
 # Add site_scons symlink
-scons = 'gui/site_scons'
+scons = os.path.join('gui','site_scons')
 if os.path.exists(scons):
   link(scons)

@@ -8,7 +8,7 @@
 #include <other/core/vector/Vector3d.h>
 namespace other {
 
-OTHER_EXPORT PyObject* to_python(const Segment<Vector<real,3>>& seg);
+OTHER_CORE_EXPORT PyObject* to_python(const Segment<Vector<real,3>>& seg);
 
 template<class T>
 class Segment<Vector<T,3>> {

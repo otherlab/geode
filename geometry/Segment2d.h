@@ -1,6 +1,6 @@
 //#####################################################################
-// Class Segment<Vector<T,2> >  
-//##################################################################### 
+// Class Segment<Vector<T,2> >
+//#####################################################################
 #pragma once
 
 #include <other/core/array/forward.h>
@@ -10,7 +10,7 @@
 #include <other/core/vector/normalize.h>
 namespace other {
 
-OTHER_EXPORT PyObject* to_python(const Segment<Vector<real,2>>& seg);
+OTHER_CORE_EXPORT PyObject* to_python(const Segment<Vector<real,2>>& seg);
 
 template<class T> inline Vector<T,2> normal(const Vector<T,2>& x0,const Vector<T,2>& x1) {
   return rotate_right_90(normalized(x1-x0));
@@ -57,10 +57,13 @@ public:
     TV vector() const
     {return x1-x0;}
 
+    TV interpolated(real t) const
+    {return x0 + vector() * t;}
+
     TV center() const
     {return (T).5*(x0+x1);}
 
-    static TV normal(const TV& x0,const TV& x1) 
+    static TV normal(const TV& x0,const TV& x1)
     {return rotate_right_90(normalized(x1-x0));}
 
     TV normal() const
@@ -70,17 +73,21 @@ public:
     static TV normal(const TArray& X)
     {BOOST_STATIC_ASSERT(TArray::m==2);return normal(X(0),X(1));}
 
-    static T interpolation_fraction(const TV& location,const TV& x0,const TV& x1) 
+    static T interpolation_fraction(const TV& location,const TV& x0,const TV& x1)
     {TV v=x1-x0;
     T denominator=dot(v,v);
     if(denominator == 0) return 0; // x0 and x1 are a single point
     else return dot(location-x0,v)/denominator;}
 
-    static TV barycentric_coordinates(const TV& location,const TV& x0,const TV& x1) 
+    inline T interpolation_fraction(const TV& location) const {
+      return Segment<TV>::interpolation_fraction(location, x0, x1);
+    }
+
+    static TV barycentric_coordinates(const TV& location,const TV& x0,const TV& x1)
     {T t=interpolation_fraction(location,x0,x1);
     return TV(1-t,t);}
 
-    static TV clamped_barycentric_coordinates(const TV& location,const TV& x0,const TV& x1) 
+    static TV clamped_barycentric_coordinates(const TV& location,const TV& x0,const TV& x1)
     {TV v=x1-x0;
     T denominator=dot(v,v);
     if(denominator == 0) return TV(1,0); // x0 and x1 are a single point
@@ -105,7 +112,7 @@ public:
     static TV point_from_barycentric_coordinates(const TV& weights,const TArray& X)
     {BOOST_STATIC_ASSERT(TArray::m==2);return weights.x*X(0)+weights.y*X(1);}
 
-    TV point_from_barycentric_coordinates(const T alpha) const 
+    TV point_from_barycentric_coordinates(const T alpha) const
     {return (x1-x0)*alpha+x0;}
 
     template<class TArray>
@@ -128,12 +135,12 @@ public:
     bool segment_line_intersection(const TV& point_on_line,const TV& normal_of_line,T &interpolation_fraction) const;
     TV closest_point(const TV& point) const;
     TV closest_point(const TV& point, Vector<T,2>& weights) const;
-    T distance(const TV& point) const; // distance from point to segment
-    T distance(const Segment& segment) const; // distance between segments
+    OTHER_CORE_EXPORT T distance(const TV& point) const; // distance from point to segment
+    OTHER_CORE_EXPORT T distance(const Segment& segment) const; // distance between segments
 
     TV closest_point_on_line(const TV& point) const;
     T distance_from_point_to_line(const TV& point) const;
-    TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;
+    OTHER_CORE_EXPORT TV shortest_vector_between_segments(const Segment<TV>& segment,T& a,T& b) const;
     OTHER_CORE_EXPORT bool segment_segment_intersection(const Segment<TV>& segment,const T thickness_over_2=0) const;
     int segment_segment_interaction(const Segment<TV>& segment,const TV& v1,const TV& v2,const TV& v3,const TV& v4,
         const T interaction_distance,T& distance,TV& normal,T& a,T& b,T& relative_speed,const T small_number=0) const;
@@ -144,7 +151,7 @@ public:
     bool point_face_interaction(const TV& x,const T interaction_distance,T& distance) const;
     void point_face_interaction_data(const TV& x,T& distance,TV& interaction_normal,TV& weights,const bool perform_attractions) const;
     bool point_face_interaction(const TV& x,const TV& v,const TV& v1,const TV& v2,const T interaction_distance,T& distance,
-            TV& interaction_normal,TV& weights,T& relative_speed,const bool exit_early) const;
+                                TV& interaction_normal,TV& weights,T& relative_speed,const bool exit_early) const;
 };
 
 template<class T> std::ostream &operator<<(std::ostream &output,const Segment<Vector<T,2> > &segment)
