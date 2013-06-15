@@ -4,6 +4,7 @@
 #include <other/core/exact/math.h>
 #include <other/core/array/alloca.h>
 #include <other/core/array/Array2d.h>
+#include <other/core/array/Array3d.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/counter.h>
 #include <other/core/utility/move.h>
@@ -33,8 +34,6 @@ namespace other {
 
 using std::cout;
 using std::endl;
-using exact::Exact;
-using exact::init_set_steal;
 
 // Compile time debugging support
 static const bool check = false;
@@ -120,30 +119,66 @@ static inline bool monomial_less(RawArray<const uint8_t> a, RawArray<const uint8
   return false;
 }
 
-// Faster division of rationals by ints
-static inline void mpq_div_si(mpq_t x, long n) {
-  // Make n relatively prime to numerator(x)
-  const auto gcd = mpz_gcd_ui(0,mpq_numref(x),abs(n));
-  n /= gcd;
-  mpz_divexact_ui(mpq_numref(x),mpq_numref(x),gcd);
-  // Perform the division
-  mpz_mul_si(mpq_denref(x),mpq_denref(x),n);
+/********** Integer arithmetic with manual memory management for speed **********/
+
+static int mpz_sign(RawArray<const mp_limb_t> x) {
+  if (mp_limb_signed_t(x.back())<0)
+    return -1;
+  for (int i=0;i<x.size();i++)
+    if (x[i])
+      return 1;
+  return 0;
 }
 
-namespace {
-template<class G> struct Destroyer {
-  RawArray<G> values;
-  Destroyer(RawArray<G> values) : values(values) {}
-  ~Destroyer() { for (auto& x : values) clear(&x); }
-
-  void clear(mpz_t x) { mpz_clear(x); }
-  void clear(mpq_t x) { mpq_clear(x); }
-};
+static bool mpz_nonzero(RawArray<const mp_limb_t> x) {
+  return !x.contains_only(0);
 }
+
+// x <<= count
+static inline void mpz_lshift(RawArray<mp_limb_t> x, const int count) {
+  assert(0<count && count<int(8*sizeof(mp_limb_t)));
+  mpn_lshift(x.data(),x.data(),x.size(),count);
+}
+
+// x += y
+static inline void mpz_add(RawArray<mp_limb_t> x, RawArray<const mp_limb_t> y) {
+  assert(x.size()==y.size());
+  mpn_add_n(x.data(),x.data(),y.data(),x.size());
+}
+
+// x -= y
+static inline void mpz_sub(RawArray<mp_limb_t> x, RawArray<const mp_limb_t> y) {
+  assert(x.size()==y.size());
+  mpn_sub_n(x.data(),x.data(),y.data(),x.size());
+}
+
+// x *= s
+static inline void mpz_mul_ui(RawArray<mp_limb_t> x, const mp_limb_t s) {
+  mpn_mul_1(x.data(),x.data(),x.size(),s);
+}
+
+// x -= s*y
+static inline void mpz_submul_ui(RawArray<mp_limb_t> x, RawArray<const mp_limb_t> y, const mp_limb_t s) {
+  assert(x.size()==y.size());
+  mpn_submul_1(x.data(),y.data(),x.size(),s);
+}
+
+// x /= s, asserting exact divisibility
+static inline void mpz_div_exact_ui(RawArray<mp_limb_t> x, const mp_limb_t s) {
+  const bool negative = mp_limb_signed_t(x.back())<0;
+  if (negative)
+    mpn_neg(x.data(),x.data(),x.size());
+  OTHER_DEBUG_ONLY(const auto rem =) mpn_divmod_1(x.data(),x.data(),x.size(),s);
+  assert(!rem);
+  if (negative)
+    mpn_neg(x.data(),x.data(),x.size());
+}
+
+/********** Polynomial interpolation **********/
 
 // Given the values of a polynomial at every point in the standard "easy corner", solve for the monomial coefficients using divided differences
 // lambda and A are as in Neidinger.  We assume lambda is partially sorted by total degree.
-static void in_place_interpolating_polynomial(const int degree, const RawArray<const uint8_t,2> lambda, RawArray<__mpq_struct> A) {
+static void in_place_interpolating_polynomial(const int degree, const RawArray<const uint8_t,2> lambda, Subarray<mp_limb_t,2> A) {
   // For now we are lazy, and index using a rectangular helper array mapping multi-indices to flat indices
   const int n = lambda.n;
   Array<int> powers(n+1,false);
@@ -183,8 +218,8 @@ static void in_place_interpolating_polynomial(const int degree, const RawArray<c
       I.y--;
       // Compute divided difference
       const int child = to_flat[from_flat[k]-powers[I.x]];
-      mpq_sub(&A[k],&A[k],&A[child]); // A[k] -= A[child]
-      mpq_div_si(&A[k],lambda(k,I.x)-I.y); // A[k] /= lambda(k,I.x)-I.y
+      mpz_sub(A[k],A[child]); // A[k] -= A[child]
+      mpz_div_exact_ui(A[k],lambda(k,I.x)-I.y); // A[k] /= lambda(k,I.x)-I.y
       // In self check mode, verify that the necessary f[alpha,beta] values were available
       if (check) {
         alpha(k,I.x)--;
@@ -209,45 +244,45 @@ static void in_place_interpolating_polynomial(const int degree, const RawArray<c
   //
   // Note: Since lambda is not ordered with respect to any single variable, it is difficult to take advantage of the sparsity of the superdiagonal of
   // the U_{i,j} (the first j+1 superdiagonal entries are zero).  This appears in the code below as an a > 0 check, as opposed to a sparser loop structure.
-  mpq_t tmp;
-  mpq_init(tmp);
   for (int i=0;i<n;i++) // Expand variable x_i
     for (int j=0;j<degree;j++) // Multiply by U_{i,j}^{-1}
       for (int k=lambda.m-1;k>=0;k--) {
         const int a = lambda(k,i)-1-j;
-        if (a > 0) { // Alo -= a*A[k]
-          mpq_set_si(tmp,a,1);
-          mpq_mul(tmp,tmp,&A[k]);
-          auto& Alo = A[to_flat[from_flat[k]-powers[i]]];
-          mpq_sub(&Alo,&Alo,tmp);
-        }
+        if (a > 0) // Alo -= a*A[k]
+          mpz_submul_ui(A[to_flat[from_flat[k]-powers[i]]],A[k],a);
       }
-  mpq_clear(tmp);
+}
+
+// How many extra limbs are required to scale by d!?
+static int factorial_limbs(const int d) {
+  // Stirling's approximation
+  const double log_factorial_d = 1-d+(d+.5)*log(d);
+  return int(ceil(1/(8*sizeof(mp_limb_t)*log(2))*log_factorial_d));
 }
 
 // A specialized version of in_place_interpolating_polynomial for the univariate case.  The constant term is assumed to be zero.
 // The result is scaled by degree! to avoid the need for rational arithmetic.
-static void scaled_univariate_in_place_interpolating_polynomial(const int degree, RawArray<__mpz_struct> A) {
-  assert(degree==A.size());
+static void scaled_univariate_in_place_interpolating_polynomial(const int degree, Subarray<mp_limb_t,2> A) {
+  assert(degree==A.m);
   // Multiply by the inverse of the lower triangular part.
   // Equivalently, iterate divided differences for degree passes, but skip the divisions to preserve integers.
   // Since pass p would divide by p, skipping them all multiplies the result by degree!.
   for (int pass=1;pass<=degree;pass++) {
     const int lo = max(pass-1,1);
     for (int k=degree-1;k>=lo;k--)
-      mpz_sub(&A[k],&A[k],&A[k-1]); // A[k] -= A[k-1]
+      mpz_sub(A[k],A[k-1]); // A[k] -= A[k-1]
   }
   // Correct for divisions we left out that weren't there, taking care to not overflow unsigned long so that we can use mpz_mul_ui
-  unsigned long factor = 1;
+  mp_limb_t factor = 1;
   for (int k=degree-2;k>=0;k--) {
     if (factor*(k+2)/(k+2)!=factor) {
       // We're about to overflow, so multiply this factor away and reset to one
       for (int i=0;i<=k;i++)
-        mpz_mul_ui(&A[i],&A[i],factor);
+        mpz_mul_ui(A[i],factor);
       factor = 1;
     }
     factor *= k+2;
-    mpz_mul_ui(&A[k],&A[k],factor);
+    mpz_mul_ui(A[k],factor);
   }
 
   // Multiply by the inverse of the special upper triangular part.  The special upper triangular part factors into
@@ -256,16 +291,10 @@ static void scaled_univariate_in_place_interpolating_polynomial(const int degree
   // Additionally, since x(k) = k, and x(0) = 0, U(d) = 1.
   for (int k=0;k<degree;k++) // Multiply by U(k)^{-1}
     for (int i=degree-1;i>k;i--)
-      mpz_submul_ui(&A[i-1],&A[i],i-k); // A[i-1] -= (i-k)*A[i]
+      mpz_submul_ui(A[i-1],A[i],i-k); // A[i-1] -= (i-k)*A[i]
 }
 
-static bool last_nonzero(const Exact<>& x) {
-  return sign(x)!=0;
-}
-
-template<int m> static bool last_nonzero(const Vector<Exact<>,m>& x) {
-  return sign(x.back())!=0;
-}
+/********** Symbolic perturbation **********/
 
 template<int m> static inline Vector<ExactInt,m> to_exact(const Vector<Quantized,m>& x) {
   Vector<ExactInt,m> r;
@@ -276,15 +305,24 @@ template<int m> static inline Vector<ExactInt,m> to_exact(const Vector<Quantized
   return r;
 }
 
+static bool last_nonzero(RawArray<const mp_limb_t> x) {
+  return mpz_nonzero(x);
+}
+
+static bool last_nonzero(RawArray<const mp_limb_t,2> x) {
+  return mpz_nonzero(x[x.m-1]);
+}
+
 // Check for identically zero polynomials using randomized polynomial identity testing
-template<class R,int m> static void assert_last_nonzero(R(*const polynomial)(RawArray<const Vector<Exact<1>,m>>), RawArray<const Tuple<int,Vector<Quantized,m>>> X, const char* message) {
+template<class R,int m> static void assert_last_nonzero(void(*const polynomial)(R,RawArray<const Vector<Exact<1>,m>>), R result, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const char* message) {
   typedef Vector<Exact<1>,m> EV;
   const int n = X.size();
   const auto Z = OTHER_RAW_ALLOCA(n,EV);
   for (const int k : range(20)) {
     for (int i=0;i<n;i++)
       Z[i] = EV(to_exact(X[i].y)+perturbation<m>(k<<10,X[i].x));
-    if (last_nonzero(polynomial(Z))) // Even a single nonzero means we're all good
+    polynomial(result,Z);
+    if (last_nonzero(result)) // Even a single nonzero means we're all good
       return;
   }
   // If we reach this point, the chance of a nonzero nonmalicious polynomial is something like (1e-5)^20 = 1e-100.  Thus, we can safely assume that for the lifetime
@@ -292,7 +330,7 @@ template<class R,int m> static void assert_last_nonzero(R(*const polynomial)(Raw
   throw AssertionError(format("%s (there is likely a bug in the calling code), X = %s",message,str(X)));
 }
 
-template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X) {
+template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X) {
   typedef Vector<Exact<1>,m> EV;
   if (check)
     OTHER_WARNING("Expensive consistency checking enabled");
@@ -303,10 +341,13 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
 
   // If desired, verify that predicate(X) == 0
   const auto Z = OTHER_RAW_ALLOCA(n,EV);
+  const int precision = degree*Exact<1>::ratio;
   if (check) {
     for (int i=0;i<n;i++)
       Z[i] = EV(to_exact(X[i].y));
-    OTHER_ASSERT(!sign(predicate(Z)));
+    const auto R = OTHER_RAW_ALLOCA(precision,mp_limb_t);
+    predicate(R,Z);
+    OTHER_ASSERT(!mpz_nonzero(R));
   }
 
   // Check the first perturbation level with specialized code
@@ -319,32 +360,34 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
       cout << "  Y = "<<Y<<endl;
 
     // Evaluate polynomial at epsilon = 1, ..., degree
-    const auto values = OTHER_RAW_ALLOCA(degree,__mpz_struct);
+    const int scaled_precision = precision+factorial_limbs(degree);
+    const auto values = OTHER_RAW_ALLOCA(degree*scaled_precision,mp_limb_t).reshape(degree,scaled_precision);
+    memset(values.data(),0,sizeof(mp_limb_t)*values.flat.size());
     for (int j=0;j<degree;j++) {
       for (int i=0;i<n;i++)
         Z[i] = EV(to_exact(X[i].y)+(j+1)*Y[i]);
-      init_set_steal(&values[j],predicate(Z).n);
+      predicate(values[j],Z);
       if (verbose)
-        cout << "  predicate("<<Z<<") = "<<values[j]<<endl;
+        cout << "  predicate("<<Z<<") = "<<mpz_str(values[j])<<endl;
     }
-    Destroyer<__mpz_struct> destroyer(values);
 
     // Find an interpolating polynomial, overriding the input with the result.
     scaled_univariate_in_place_interpolating_polynomial(degree,values);
     if (verbose)
-      cout << "  coefs = "<<values<<endl;
+      cout << "  coefs = "<<mpz_str(values)<<endl;
 
     // Compute sign
     for (int j=0;j<degree;j++)
-      if (const int sign = mpz_sgn(&values[j]))
+      if (const int sign = mpz_sign(values[j]))
         return sign>0;
   }
 
   {
     // Add one perturbation level after another until we hit a nonzero polynomial.  Our current implementation duplicates
     // work from one iteration to the next for simplicity, which is fine since the first interation suffices almost always.
-    Array<__mpq_struct> values;
     for (int d=2;;d++) {
+      if (verbose)
+        cout << "  level "<<d<<endl;
       // Compute the next level of perturbations
       Y.resize(d*n);
       for (int i=0;i<n;i++)
@@ -352,17 +395,15 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
 
       // Evaluate polynomial at every point in an "easy corner"
       const auto lambda = monomials(degree,d);
-      values.resize(lambda.m,false,false);
+      const Array<mp_limb_t,2> values(lambda.m,precision,false);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
           Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
         for (int v=1;v<d;v++)
           for (int i=0;i<n;i++)
             Z[i] += EV(lambda(j,v)*Y[v*n+i]);
-        init_set_steal(mpq_numref(&values[j]),predicate(Z).n);
-        mpz_init_set_ui(mpq_denref(&values[j]),1);
+        predicate(values[j],Z);
       }
-      Destroyer<__mpq_struct> destroyer(values);
 
       // Find an interpolating polynomial, overriding the input with the result.
       in_place_interpolating_polynomial(degree,lambda,values);
@@ -371,7 +412,7 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
       int sign = 0;
       int sign_j = -1;
       for (int j=0;j<lambda.m;j++)
-        if (const int s = mpq_sgn(&values[j])) {
+        if (const int s = mpz_sign(values[j])) {
           if (check) // Verify that a term which used to be zero doesn't become nonzero
             OTHER_ASSERT(lambda(j,d-1));
           if (!sign || monomial_less(lambda[sign_j],lambda[j])) {
@@ -386,79 +427,124 @@ template<int m> bool perturbed_sign(Exact<>(*const predicate)(RawArray<const Vec
 
       // If we get through two levels without fixing the degeneracy, run a fast, strict identity test to make sure we weren't handed an impossible problem.
       if (d==2)
-        assert_last_nonzero(predicate,X,"perturbed_sign: identically zero predicate");
+        assert_last_nonzero(predicate,values[0],X,"perturbed_sign: identically zero predicate");
     }
   }
 }
 
-// Convert to an ExactInt or return numeric_limits<ExactInt>::max()/2 on overflow.  We do not compare against exact::bound.
-static ExactInt mpz_get_exact_int(mpz_t x) {
-  BOOST_STATIC_ASSERT(sizeof(ExactInt)<=sizeof(long) || sizeof(long)==4); // Check that we're on a 32-bit or 64-bit machine
-  const auto overflow = numeric_limits<ExactInt>::max()/2;
-  if (sizeof(ExactInt)==sizeof(long))
-    return mpz_fits_slong_p(x) ? ExactInt(mpz_get_si(x))
-                               : overflow;
-  else {
-    if (!mpz_sgn(x))
-      return 0;
-    if (mpz_sizeinbase(x,2) > 8*sizeof(ExactInt)-2)
-      return overflow;
-    ExactInt n;
-    mpz_export(&n,0,-1,sizeof(ExactInt),0,0,x);
-    return n;
-  }
+static inline RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x) {
+  int n = x.size();
+  for (;n>0;n--)
+    if (x[n-1])
+      break;
+  return x.slice(0,n);
 }
 
-// Cast num/den to an int, rounding towards nearest.  num is destroyed.
-static Quantized snap_div(mpz_t num, mpz_t den, const bool take_sqrt) {
-  if (!take_sqrt) {
-    mpz_mul_2exp(num,num,1); // num *= 2
-    mpz_tdiv_q(num,num,den); // num /= den, rounding towards zero
-    const auto two_ratio = mpz_get_exact_int(num),
-               ratio = (two_ratio>0?1:-1)*((1+abs(two_ratio))>>1); // Divide by two, rounding odd numbers away from zero
-    if (abs(ratio) <= exact::bound)
-      return ratio;
-    throw OverflowError(format("perturbed_ratio: overflow in l'Hopital expansion: abs(%s/2) > %d",str(num),exact::bound));
-  } else {
-    if (mpz_sgn(num) && mpz_sgn(num)!=mpz_sgn(den))
+static inline RawArray<mp_limb_t> sqrt_helper(RawArray<mp_limb_t> result, RawArray<const mp_limb_t> x) {
+  const auto s = result.slice(0,(1+x.size())/2);
+  mpn_sqrtrem(s.data(),0,x.data(),x.size());
+  return trim(s);
+}
+
+// Cast num/den to an int, rounding towards nearest.  All inputs are destroyed.  Take a sqrt if desired.
+// The values array must consist of r numerators followed by one denominator.
+static void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const bool take_sqrt) {
+  assert(result.size()+1==values.m);
+
+  // For division, we seek x s.t.
+  //   x-1/2 <= num/den <= x+1/2
+  //   2x-1 <= 2num/den <= 2x+1
+  //   2x-1 <= floor(2num/den) <= 2x+1
+  //   2x <= 1+floor(2num/den) <= 2x+2
+  //   x <= (1+floor(2num/den))//2 <= x+1
+  //   x = (1+floor(2num/den))//2
+
+  // In the sqrt case, we seek a nonnegative integer x s.t.
+  //   x-1/2 <= sqrt(num/den) < x+1/2
+  //   2x-1 <= sqrt(4num/den) < 2x+1
+  // Now the leftmost and rightmost expressions are integral, so we can take floors to get
+  //   2x-1 <= floor(sqrt(4num/den)) < 2x+1
+  // Since sqrt is monotonic and maps integers to integers, floor(sqrt(floor(x))) = floor(sqrt(x)), so
+  //   2x-1 <= floor(sqrt(floor(4num/den))) < 2x+1
+  //   2x <= 1+floor(sqrt(floor(4num/den))) < 2x+2
+  //   x <= (1+floor(sqrt(floor(4num/den))))//2 < x+1
+  //   x = (1+floor(sqrt(floor(4num/den))))//2
+
+  // Thus, both cases look like
+  //   x = (1+f(2**k*num/den))//2
+  // where k = 1 or 2 and f is some truncating integer op (division or division+sqrt).
+
+  // Adjust denominator to be positive
+  const auto raw_den = values[result.size()];
+  const bool den_negative = mp_limb_signed_t(raw_den.back())<0;
+  if (den_negative)
+    mpn_neg(raw_den.data(),raw_den.data(),raw_den.size());
+  const auto den = trim(raw_den);
+  assert(den.size()); // Zero should be prevented by the caller
+
+  // Prepare for divisions
+  const auto q = OTHER_RAW_ALLOCA(values.n-den.size()+1,mp_limb_t),
+             r = OTHER_RAW_ALLOCA(den.size(),mp_limb_t);
+
+  // Compute each component of the result
+  for (int i=0;i<result.size();i++) {
+    // Adjust numerator to be positive
+    const auto num = values[i];
+    const bool num_negative = mp_limb_signed_t(num.back())<0;
+    if (take_sqrt && num_negative!=den_negative && !num.contains_only(0))
       throw RuntimeError("perturbed_ratio: negative value in square root");
-    // We seek a nonnegative integer x s.t.
-    //   x-1/2 <= sqrt(num/den) < x+1/2
-    //   2x-1 <= sqrt(4num/den) < 2x+1
-    // Now the leftmost and rightmost expressions are integral, so we can take floors to get
-    //   2x-1 <= floor(sqrt(4num/den)) < 2x+1
-    // Since sqrt is monotonic and maps integers to integers, floor(sqrt(floor(x))) = floor(sqrt(x)), so
-    //   2x-1 <= floor(sqrt(floor(4num/den))) < 2x+1
-    //   2x <= 1+floor(sqrt(floor(4num/den))) < 2x+2
-    //   x <= (1+floor(sqrt(floor(4num/den))))//2 < x+1
-    //   x = (1+floor(sqrt(floor(4num/den))))//2
-    mpz_mul_2exp(num,num,2); // 4num
-    mpz_tdiv_q(num,num,den); // floor(4num/den)
-    mpz_sqrt(num,num); // floor(sqrt(floor(4num/den)))
-    const auto x = (1+mpz_get_exact_int(num))/2;
-    if (x <= exact::bound)
-      return x;
-    throw OverflowError("perturbed_ratio: overflow in l'Hopital expansion with sqrt");
+    if (num_negative)
+      mpn_neg(num.data(),num.data(),num.size());
+
+    // Add enough bits to allow round-to-nearest computation after performing truncating operations
+    mpn_lshift(num.data(),num.data(),num.size(),take_sqrt?2:1);
+    // Perform division
+    mpn_tdiv_qr(q.data(),r.data(),0,num.data(),num.size(),den.data(),den.size());
+    const auto trim_q = trim(q);
+    if (!trim_q.size()) {
+      result[i] = 0;
+      continue;
+    }
+    // Take sqrt if desired, reusing the num buffer
+    const auto s = take_sqrt ? sqrt_helper(num,trim_q) : trim_q;
+
+    // Verify that result lies in [-exact::bound,exact::bound];
+    const int ratio = sizeof(ExactInt)/sizeof(mp_limb_t);
+    BOOST_STATIC_ASSERT(ratio<=2);
+    if (s.size() > ratio)
+      goto overflow;
+    const auto nn = ratio==2 && s.size()==2 ? s[0]|ExactInt(s[1])<<8*sizeof(mp_limb_t) : s[0];
+    const auto n = (1+nn)/2;
+    if (n > exact::bound)
+      goto overflow;
+
+    // Done!
+    result[i] = (num_negative==den_negative?1:-1)*Quantized(n);
   }
+
+  return;
+  overflow:
+  throw OverflowError("perturbed_ratio: overflow in l'Hopital expansion");
 }
 
-template<int rp,int m> Vector<Quantized,rp-1> perturbed_ratio(Vector<Exact<>,rp>(*const ratio)(RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt) {
+template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt) {
   typedef Vector<Exact<1>,m> EV;
-  const int r = rp-1;
   const int n = X.size();
+  const int r = result.size();
+
+  if (verbose)
+    cout << "perturbed_ratio:\n  degree = "<<degree<<"\n  X = "<<X<<endl;
 
   // Check if the ratio is nonsingular before perturbation
   const auto Z = OTHER_RAW_ALLOCA(n,EV);
+  const int precision = degree*Exact<1>::ratio;
   {
     for (int i=0;i<n;i++)
       Z[i] = EV(to_exact(X[i].y));
-    auto R = ratio(Z);
-    if (mpz_sgn(R[r].n)) {
-      Vector<Quantized,r> result;
-      for (int k=0;k<r;k++)
-        result[k] = snap_div(R[k].n,R[r].n,take_sqrt);
-      return result;
-    }
+    const auto R = OTHER_RAW_ALLOCA((r+1)*precision,mp_limb_t).reshape(r+1,precision);
+    ratio(R,Z);
+    if (mpz_nonzero(R[r]))
+      return snap_divs(result,R,take_sqrt);
   }
 
   // Check the first perturbation level with specialized code
@@ -467,42 +553,41 @@ template<int rp,int m> Vector<Quantized,rp-1> perturbed_ratio(Vector<Exact<>,rp>
     // Compute the first level of perturbations
     for (int i=0;i<n;i++)
       Y[i] = perturbation<m>(1,X[i].x);
+    if (verbose)
+      cout << "  Y = "<<Y<<endl;
 
     // Evaluate polynomial at epsilon = 1, ..., degree
-    const auto values = OTHER_RAW_ALLOCA((r+1)*degree,__mpz_struct).reshape(r+1,degree);
+    const int scaled_precision = precision+factorial_limbs(degree);
+    const auto values = OTHER_RAW_ALLOCA(degree*(r+1)*scaled_precision,mp_limb_t).reshape(degree,r+1,scaled_precision);
     for (int j=0;j<degree;j++) {
       for (int i=0;i<n;i++)
         Z[i] = EV(to_exact(X[i].y)+(j+1)*Y[i]);
-      auto R = ratio(Z);
-      for (int k=0;k<=r;k++)
-        init_set_steal(&values(k,j),R[k].n);
+      ratio(values[j],Z);
+      if (verbose)
+        cout << "  ratio("<<Z<<") = "<<mpz_str(values[j])<<endl;
     }
-    Destroyer<__mpz_struct> destroyer(values.flat);
 
     // Find interpolating polynomials, overriding the input with the result.
-    for (int k=0;k<=r;k++)
-      scaled_univariate_in_place_interpolating_polynomial(degree,values[k]);
+    for (int k=0;k<=r;k++) {
+      scaled_univariate_in_place_interpolating_polynomial(degree,values.sub<1>(k));
+      if (verbose)
+        cout << "  coefs "<<k<<" = "<<mpz_str(values.sub<1>(k))<<endl;
+    }
 
     // Find the largest (lowest degree) nonzero denominator coefficient.  If we detect an infinity during this process, explode.
     for (int j=0;j<degree;j++) {
-      auto& den = values(r,j);
-      if (mpz_sgn(&den)) {
-        // We found a nonzero, now compute the rounded ratio
-        Vector<Quantized,r> result;
+      if (mpz_nonzero(values(j,r))) // We found a nonzero, now compute the rounded ratio
+        return snap_divs(result,values[j],take_sqrt);
+      else
         for (int k=0;k<r;k++)
-          result[k] = snap_div(&values(k,j),&den,take_sqrt);
-        return result;
-      } else
-        for (int k=0;k<r;k++)
-          if (mpz_sgn(&values(k,j)))
-            throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",str(&values(k,j))));
+          if (mpz_nonzero(values(j,k)))
+            throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",mpz_str(values(j,k))));
     }
   }
 
   {
     // Add one perturbation level after another until we hit a nonzero denominator.  Our current implementation duplicates
     // work from one iteration to the next for simplicity, which is fine since the first interation suffices almost always.
-    Array<__mpq_struct,2> values;
     for (int d=2;;d++) {
       // Compute the next level of perturbations
       Y.resize(d*n);
@@ -511,29 +596,24 @@ template<int rp,int m> Vector<Quantized,rp-1> perturbed_ratio(Vector<Exact<>,rp>
 
       // Evaluate polynomial at every point in an "easy corner"
       const auto lambda = monomials(degree,d);
-      values.resize(r+1,lambda.m,false,false);
+      const Array<mp_limb_t,3> values(lambda.m,r+1,precision,false);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
           Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
         for (int v=1;v<d;v++)
           for (int i=0;i<n;i++)
             Z[i] += EV(lambda(j,v)*Y[v*n+i]);
-        auto R = ratio(Z);
-        for (int k=0;k<=r;k++) {
-          init_set_steal(mpq_numref(&values(k,j)),R[k].n);
-          mpz_init_set_ui(mpq_denref(&values(k,j)),1);
-        }
+        ratio(values[j],Z);
       }
-      Destroyer<__mpq_struct> destroyer(values.flat);
 
       // Find interpolating polynomials, overriding the input with the result.
       for (int k=0;k<=r;k++)
-        in_place_interpolating_polynomial(degree,lambda,values[k]);
+        in_place_interpolating_polynomial(degree,lambda,values.sub<1>(k));
 
       // Find the largest nonzero denominator coefficient
       int nonzero = -1;
       for (int j=0;j<lambda.m;j++)
-        if (mpq_sgn(&values(r,j))) {
+        if (mpz_nonzero(values(j,r))) {
           if (check) // Verify that a term which used to be zero doesn't become nonzero
             OTHER_ASSERT(lambda(j,d-1));
           if (nonzero<0 || monomial_less(lambda[nonzero],lambda[j]))
@@ -544,24 +624,16 @@ template<int rp,int m> Vector<Quantized,rp-1> perturbed_ratio(Vector<Exact<>,rp>
       for (int j=0;j<lambda.m;j++)
         if (nonzero<0 || monomial_less(lambda[nonzero],lambda[j]))
           for (int k=0;k<r;k++)
-            if (mpq_sgn(&values(k,j)))
-              throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",str(&values(k,j))));
+            if (mpz_nonzero(values(j,k)))
+              throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",str(values(j,k))));
 
       // If we found a nonzero, compute the result
-      if (nonzero >= 0) {
-        auto& den = values(r,nonzero);
-        Vector<Quantized,r> result;
-        for (int k=0;k<r;k++) {
-          auto& num = values(k,nonzero);
-          mpq_div(&num,&num,&den); // num /= den 
-          result[k] = snap_div(mpq_numref(&num),mpq_denref(&num),take_sqrt);
-        }
-        return result;
-      }
+      if (nonzero >= 0)
+        return snap_divs(result,values[nonzero],take_sqrt);
 
       // If we get through two levels without fixing the degeneracy, run a fast, strict identity test to make sure we weren't handed an impossible problem.
       if (d==2)
-        assert_last_nonzero(ratio,X,"perturbed_ratio: identically zero denominator");
+        assert_last_nonzero(ratio,values[0],X,"perturbed_ratio: identically zero denominator");
     }
   }
 }
@@ -582,114 +654,124 @@ static ExactInt evaluate(RawArray<const uint8_t,2> lambda, RawArray<const ExactI
 }
 
 static void in_place_interpolating_polynomial_test(const int degree, RawArray<const uint8_t,2> lambda, RawArray<const ExactInt> coefs, const bool verbose) {
-  Array<__mpz_struct> values_z(lambda.m,false);
-  Array<__mpq_struct> values_q(lambda.m,false);
-  for (int k=0;k<lambda.m;k++) {
-    init_set_steal(&values_z[k],evaluate(lambda,coefs,lambda[k]));
-    mpq_init(&values_q[k]);
-    mpz_set(mpq_numref(&values_q[k]),&values_z[k]);
-  }
+  const int precision = sizeof(ExactInt)/sizeof(mp_limb_t);
+  const auto values = OTHER_RAW_ALLOCA(lambda.m*precision,mp_limb_t).reshape(lambda.m,precision);
+  for (int k=0;k<lambda.m;k++)
+    mpz_set(values[k],Exact<1>(evaluate(lambda,coefs,lambda[k])));
   if (verbose) {
     cout << "\ndegree = "<<degree<<"\nlambda =";
     for (int k=0;k<lambda.m;k++)
       cout << ' ' << show_monomial(lambda[k]);
-    cout << "\ncoefs = "<<coefs<<"\nvalues = "<<values_z<<endl;
+    cout << "\ncoefs = "<<coefs<<"\nvalues = "<<mpz_str(values)<<endl;
   }
-  in_place_interpolating_polynomial(degree,lambda,values_q);
+  const auto mcoefs = values.copy();
+  in_place_interpolating_polynomial(degree,lambda,mcoefs);
   if (verbose)
-    cout << "result = "<<values_q<<endl;
-  for (int k=0;k<lambda.m;k++)
-    OTHER_ASSERT(!mpq_cmp_si(&values_q[k],coefs[k],1));
+    cout << "result = "<<mpz_str(mcoefs)<<endl;
+  for (int k=0;k<lambda.m;k++) {
+    const Exact<1> c(coefs[k]);
+    OTHER_ASSERT(mcoefs[k]==asarray(c.n));
+  }
 
   // If we're univariate, compare against the specialized routine
   if (degree+1==lambda.m) {
-    for (int j=1;j<=degree;j++)
-      mpz_sub(&values_z[j],&values_z[j],&values_z[0]); // values_z[j] -= values_z[0];
-    scaled_univariate_in_place_interpolating_polynomial(degree,values_z.slice(1,degree+1));
-    unsigned long scale = 1;
+    const auto ucoefs = values.slice(1,degree+1).copy();
+    for (int j=0;j<degree;j++)
+      mpz_sub(ucoefs[j],values[0]); // ucoefs[j] -= values[0];
+    scaled_univariate_in_place_interpolating_polynomial(degree,ucoefs);
+    mp_limb_t scale = 1;
     for (int k=1;k<=degree;k++)
       scale *= k;
-    mpz_mul_ui(&values_z[0],&values_z[0],scale); // values_z[0] *= scale;
     if (verbose)
-      cout << "scale = "<<scale<<", univariate = "<<values_z<<endl;
-    for (int k=0;k<lambda.m;k++) {
-      // Compare scale*values_q[k] with values_z[k]
-      __mpq_struct* vq = &values_q[k];
-      mpz_mul_ui(mpq_numref(vq),mpq_numref(vq),scale);
-      mpq_canonicalize(vq);
-      OTHER_ASSERT(!mpz_cmp(mpq_numref(vq),&values_z[k]) && !mpz_cmp_ui(mpq_denref(vq),1));
+      cout << "scale = "<<scale<<", univariate = "<<mpz_str(ucoefs)<<endl;
+    for (int j=0;j<degree;j++) {
+      // Compare scale*mcoefs[j+1] with ucoefs[j]
+      mpz_mul_ui(mcoefs[j+1],scale);
+      OTHER_ASSERT(mcoefs[j+1]==ucoefs[j]);
     }
   }
+}
 
-  // Free memory
-  for (auto& v : values_z)
-    mpz_clear(&v);
-  for (auto& v : values_q)
-    mpq_clear(&v);
+// Safely expose snap_divs to python for testing purposes
+static Array<Quantized> snap_divs_test(RawArray<mp_limb_t,2> values, const bool take_sqrt) {
+  OTHER_ASSERT(values.m && !values.back().contains_only(0));
+  Array<Quantized> result(values.m-1);
+  snap_divs(result,values,take_sqrt);
+  return result;
 }
 
 // Test against malicious predicates that are zero along 0, 1, or 2 perturbation levels.
 
-static int nasty_index, nasty_degree;
+static int nasty_index, nasty_power;
 
-static Exact<> nasty_pow(Exact<>&& x) {
-  switch (nasty_degree) {
-    case 1: return other::move(x);
-    case 2: return sqr(other::move(x));
-    case 3: return cube(other::move(x));
+template<int d> static void nasty_pow(RawArray<mp_limb_t> result, const Exact<d>& x) {
+  switch (nasty_power) {
+    case 1: mpz_set(result,x);       break;
+    case 2: mpz_set(result,sqr(x));  break;
+    case 3: mpz_set(result,cube(x)); break;
     default: OTHER_FATAL_ERROR();
   };
 }
 
-template<class In> static Exact<> nasty_predicate(RawArray<const Vector<In,1>> X) {
-  return nasty_pow(Exact<>(X[0].x));
+template<class In> static void nasty_predicate(RawArray<mp_limb_t> result, RawArray<const Vector<In,1>> X) {
+  nasty_pow(result,X[0].x);
 }
 
-template<class In> static Exact<> nasty_predicate(RawArray<const Vector<In,2>> X) {
-  typedef Vector<Exact<>,2> EV;
-  return nasty_pow(edet(EV(X[0]),
-                        EV(perturbation<2>(1,nasty_index))));
+template<class In> static void nasty_predicate(RawArray<mp_limb_t> result, RawArray<const Vector<In,2>> X) {
+  typename remove_const_reference<decltype(X[0])>::type p1;
+  for (int i=0;i<2;i++)
+    mpz_set(asarray(p1[i].n),Exact<1>(perturbation<2>(1,nasty_index)[i]));
+  nasty_pow(result,edet(X[0],p1));
 }
 
-template<class In> static Exact<> nasty_predicate(RawArray<const Vector<In,3>> X) {
-  typedef Vector<Exact<>,3> EV;
-  return nasty_pow(edet(EV(X[0]),
-                        EV(perturbation<3>(1,nasty_index)),
-                        EV(perturbation<3>(2,nasty_index))));
+template<class In> static void nasty_predicate(RawArray<mp_limb_t> result, RawArray<const Vector<In,3>> X) {
+  typename remove_const_reference<decltype(X[0])>::type p1,p2;
+  for (int i=0;i<3;i++) {
+    mpz_set(asarray(p1[i].n),Exact<1>(perturbation<3>(1,nasty_index)[i]));
+    mpz_set(asarray(p2[i].n),Exact<1>(perturbation<3>(2,nasty_index)[i]));
+  }
+  nasty_pow(result,edet(X[0],p1,p2));
 }
 
 template<int m> static void perturbed_sign_test() {
-  for (const int degree : vec(1,2,3))
+  for (const int power : vec(1,2,3))
     for (const int index : range(20)) {
+      if (verbose)
+        cout << endl;
       // Evaluate perturbed sign using our fancy routine
-      nasty_degree = degree;
+      nasty_power = power;
       nasty_index = index;
       Array<Tuple<int,Vector<Quantized,m>>> fX(1);
       fX[0].x = index;
-      const bool fast = perturbed_sign<m>(nasty_predicate<Exact<1>>,degree,fX);
-      OTHER_ASSERT((degree&1) || fast);
+      const bool fast = perturbed_sign<m>(nasty_predicate,m*power,fX);
+      OTHER_ASSERT((power&1) || fast);
       // Evaluate the series out to several terms using brute force
-      Vector<Exact<>,m> sX[1];
       Array<int> powers(m+1); // Choose powers of 2 to approximate nested infinitesimals
       for (int i=0;i<m;i++)
-        powers[i+1] = (degree+1)*powers[i]+128;
+        powers[i+1] = (power+1)*powers[i]+128;
       mpz_t yp;
       mpz_init(yp);
+      const int enough = 5120/(8*sizeof(ExactInt));
+      Vector<Exact<enough>,m> sX[1];
       for (int i=0;i<=m+1;i++) {
         if (i) {
-          const auto y = perturbation<m>(i,index);
+          const Vector<Exact<1>,m> y(perturbation<m>(i,index));
           for (int j=0;j<m;j++) {
             auto& x = sX[0][j];
-            mpz_set_si(yp,y[j]);
-            mpz_mul_2exp(yp,yp,powers.back()-powers[i-1]); // yp = y[j]<<(powers[-1]-powers[i-1])
-            mpz_add(x.n,x.n,yp); // x += yp
+            Exact<enough> yp;
+            const int skip = (powers.back()-powers[i-1])/(8*sizeof(mp_limb_t));
+            mpz_set(asarray(yp.n).slice(skip,yp.limbs),y[j]); // yp = y[j]<<(powers[-1]-powers[i-1])
+            x += yp;
           }
         }
         // We should be initially zero, and then match the correct sign once nonzero
-        const int slow = sign(nasty_predicate<Exact<>>(asarray(sX)));
+        Array<mp_limb_t> result(enough*m*power,false);
+        nasty_predicate(result,asconstarray(sX));
+        const int slow = mpz_sign(result);
         if (0) {
-          cout << "m "<<m<<", degree "<<degree<<", index "<<index<<", i "<<i<<", fast "<<2*fast-1<<", slow "<<slow<<endl;
-          cout << "  fX = "<<fX[0]<<", sX = "<<sX[0]<<endl;
+          cout << "m "<<m<<", power "<<power<<", index "<<index<<", i "<<i<<", fast "<<2*fast-1<<", slow "<<slow<<endl;
+          cout << "  fX = "<<fX[0]<<", sX = "<<sX[0]<<" (x = "<<mpz_str(asarray(sX[0].x.n),true)<<')'<<endl;
+          cout << "  sX result = "<<mpz_str(result,true)<<endl;
         }
         OTHER_ASSERT(slow==(i<m?0:2*fast-1));
       }
@@ -697,20 +779,43 @@ template<int m> static void perturbed_sign_test() {
     }
 }
 
-// Note: Since perturb_ratio requires the result to fit inside [-exact::bound,exact::bound], it is hard to construct
-// an interesting test function that doesn't have geometric meaning.  Therefore, we don't try, and instead rely on
-// the construction-specific tests in constructions.cpp.
+// The unit tests in constructions.cpp and circle_csg.cpp are fairly rigorous checks of the geometric validity
+// perturbed ratio to levels 0 and 1, but are unlikely to ever hit perturbation level 2 or higher.  Therefore,
+// we construct and test a malicious predicate guaranteed to hit level 2.
 
-#define INSTANTIATE_RATIO(r,m) \
-  template Vector<Quantized,r> perturbed_ratio(Vector<Exact<>,r+1>(*const)(RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>, bool);
+static void nasty_ratio(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exact<1>,2>> X) {
+  assert(result.m==2 && X.size()==2);
+  typename remove_const_reference<decltype(X[0])>::type p1;
+  for (int i=0;i<2;i++)
+    mpz_set(asarray(p1[i].n),Exact<1>(perturbation<2>(1,nasty_index)[i]));
+  const auto d = edet(X[0],p1);
+  if (nasty_power==1)
+    mpz_set(result[0],d*X[1].x);
+  else
+    mpz_set(result[0],d*sqr(X[1].x));
+  mpz_set(result[1],d);
+}
+
+static void perturbed_ratio_test() {
+  typedef Vector<Quantized,2> EV;
+  for (const int power : vec(1,2))
+    for (const int index : range(20)) {
+      nasty_power = power;
+      nasty_index = index;
+      Vector<const Tuple<int,EV>,2> X(tuple(index,EV()),tuple(index+1,EV(perturbation<2>(7,index+1))));
+      Vector<Quantized,1> result;
+      perturbed_ratio(asarray(result),nasty_ratio,2+power,asarray(X),power==2);
+      OTHER_ASSERT(result.x==(power==1?X.y.y.x:abs(X.y.y.x)));
+    }
+}
+
 #define INSTANTIATE(m) \
   template Vector<ExactInt,m> perturbation(const int, const int); \
-  template bool perturbed_sign(Exact<>(*const)(RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>); \
-  INSTANTIATE_RATIO(m,m)
+  template bool perturbed_sign(void(*const)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>); \
+  template void perturbed_ratio(RawArray<Quantized>,void(*const)(RawArray<mp_limb_t,2>, RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>, bool);
 INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)
-INSTANTIATE_RATIO(2,3)
 
 }
 using namespace other;
@@ -721,4 +826,6 @@ void wrap_perturb() {
   OTHER_FUNCTION_2(perturbed_sign_test_2,perturbed_sign_test<2>)
   OTHER_FUNCTION_2(perturbed_sign_test_3,perturbed_sign_test<3>)
   OTHER_FUNCTION(in_place_interpolating_polynomial_test)
+  OTHER_FUNCTION(snap_divs_test)
+  OTHER_FUNCTION(perturbed_ratio_test)
 }

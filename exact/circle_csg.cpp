@@ -23,7 +23,6 @@ namespace other {
 
 using Log::cout;
 using std::endl;
-using exact::Exact;
 typedef exact::Vec2 EV2;
 typedef Vector<Exact<1>,3> LV3;
 
@@ -248,22 +247,29 @@ static Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, c
       const auto dc = c1-c0; \
       const auto sqr_dc = esqr_magnitude(dc), \
                  two_sqr_dc = small_mul(2,sqr_dc), \
-                 alpha_hat = sqr_dc-(r1+r0)*(r1-r0);
-    struct FR { static Vector<Exact<>,3> eval(RawArray<const Vector<Exact<1>,3>> X) {
+                 alpha_hat = sqr_dc-(r1+r0)*(r1-r0); \
+      assert(result.m==3);
+    struct FR { static void eval(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exact<1>,3>> X) {
       MOST
       const auto v = emul(two_sqr_dc,c0)+emul(alpha_hat,dc);
-      return Vector<Exact<>,3>(Exact<>(v.x),Exact<>(v.y),Exact<>(two_sqr_dc));
+      mpz_set(result[0],v.x);
+      mpz_set(result[1],v.y);
+      mpz_set(result[2],two_sqr_dc);
     }};
-    struct FS { static Vector<Exact<>,3> eval(RawArray<const Vector<Exact<1>,3>> X) {
+    struct FS { static void eval(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exact<1>,3>> X) {
       MOST
       const auto sqr_beta_hat = small_mul(4,sqr(r0))*sqr_dc-sqr(alpha_hat);
-      return Vector<Exact<>,3>(sqr_beta_hat*sqr(dc.x),sqr_beta_hat*sqr(dc.y),sqr(two_sqr_dc));
+      mpz_set(result[0],sqr_beta_hat*sqr(dc.x));
+      mpz_set(result[1],sqr_beta_hat*sqr(dc.y));
+      mpz_set(result[2],sqr(two_sqr_dc));
     }};
     #undef MOST
     const exact::Point3 X[2] = {aspoint(arcs,arc0),aspoint(arcs,arc1)};
-    const auto fr = perturbed_ratio(&FR::eval,3,asarray(X)),
-               fs = rotate_left_90(perturbed_ratio(&FS::eval,6,asarray(X),true)*EV2(axis_less<0>(X[0],X[1])?1:-1,
-                                                                                    axis_less<1>(X[0],X[1])?1:-1));
+    exact::Vec2 fr,fs;
+    perturbed_ratio(asarray(fr),&FR::eval,3,asarray(X));
+    perturbed_ratio(asarray(fs),&FS::eval,6,asarray(X),true);
+    fs = rotate_left_90(fs*EV2(axis_less<0>(X[0],X[1])?1:-1,
+                               axis_less<1>(X[0],X[1])?1:-1));
 #if CHECK
     OTHER_ASSERT(   check_linear.x.thickened(1).contains(fr.x)
                  && check_linear.y.thickened(1).contains(fr.y));

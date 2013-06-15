@@ -16,7 +16,6 @@ namespace other {
 
 using Log::cout;
 using std::endl;
-using exact::Exact;
 using exact::Point2;
 typedef Vector<Quantized,2> EV2;
 
@@ -35,15 +34,21 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
   }
 
   // If intervals fail, evaluate and round exactly using symbolic perturbation
-  struct F { static Vector<Exact<>,3> eval(RawArray<const Vector<Exact<1>,2>> X) {
+  struct F { static void eval(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exact<1>,2>> X) {
     const auto a0(X[0]), a1(X[1]), b0(X[2]), b1(X[3]);
     const auto da = a1-a0,
                db = b1-b0;
     const auto den = edet(da,db);
-    return Vector<Exact<>,3>(Vector<Exact<>,2>(emul(den,a0)+emul(edet(b0-a0,db),da)),Exact<>(den));
+    const auto num = emul(den,a0)+emul(edet(b0-a0,db),da);
+    assert(result.m==3);
+    mpz_set(result[0],num.x);
+    mpz_set(result[1],num.y);
+    mpz_set(result[2],den);
   }};
   const Point2 X[4] = {a0,a1,b0,b1};
-  return perturbed_ratio(&F::eval,3,asarray(X));
+  exact::Vec2 result;
+  perturbed_ratio(asarray(result),&F::eval,3,asarray(X));
+  return result;
 }
 
 static bool check_intersection(const EV2 a0, const EV2 a1, const EV2 b0, const EV2 b1, Random& random) {
@@ -106,7 +111,7 @@ static void construction_tests() {
     int count = 0;
     for (int k=0;k<total;k++) {
       // Pick a random line with simple rational slope, then choose four random points exactly on this line.
-      const EV2 base(random->uniform<Vector<ExactInt,2>>(-1000,1000)),
+      const EV2 base (random->uniform<Vector<ExactInt,2>>(-1000,1000)),
                 slope(random->uniform<Vector<ExactInt,2>>(-15,16));
       const auto ts = random->uniform<Vector<int,4>>(-1000,1000);
       count += check_intersection(base+ts.x*slope,

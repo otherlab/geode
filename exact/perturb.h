@@ -15,7 +15,8 @@ namespace other {
 // (2) the index of the value, which is used to look up the fixed perturbation.
 //
 // Identically zero polynomials are zero regardless of perturbation; these are detected and an exception is thrown.
-template<int m> OTHER_CORE_EXPORT OTHER_COLD bool perturbed_sign(exact::Exact<>(*const predicate)(RawArray<const Vector<exact::Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X);
+// predicate should compute a quantity of type Exact<degree>, then copy it into result with mpz_set.
+template<int m> OTHER_CORE_EXPORT OTHER_COLD bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X);
 
 // Given polynomial numerator and denominator functions, evaluate numerator(X+epsilon)/denominator(X+epsilon) rounded to int for the
 // same infinitesimal perturbation epsilon as in perturbed_sign.  The numerator and denominator must be multivariate polynomials of at
@@ -27,18 +28,19 @@ template<int m> OTHER_CORE_EXPORT OTHER_COLD bool perturbed_sign(exact::Exact<>(
 // never happen for appropriately shielded predicates, such as constructing the intersection of two segments once perturbed_sign
 // has verified that they intersect after perturbation.
 //
-// If take_sqrt is true, an exactly rounded square root is computed.  
-template<int rp,int m> OTHER_CORE_EXPORT OTHER_COLD Vector<Quantized,rp-1> perturbed_ratio(Vector<exact::Exact<>,rp>(*const ratio)(RawArray<const Vector<exact::Exact<1>,m>>),
-                                                                                           const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt=false);
+// If take_sqrt is true, an exactly rounded square root is computed.
+// The r+1 numbers (r numerators and one denominator) should be copied into the result array via r+1 calls to mpz_set.
+template<int m> OTHER_CORE_EXPORT OTHER_COLD void perturbed_ratio(RawArray<Quantized> result, void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>),
+                                                                  const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt=false);
 
 // The levelth perturbation of point i in R^m.  This is exposed for occasional special purpose use only, or as a convenient
 // pseudorandom generator; normally this routine is called internally by perturbed_sign.  perturbation<m+1> starts with perturbation<m>.
 template<int m> OTHER_CORE_EXPORT Vector<ExactInt,m> perturbation(const int level, const int i);
 
 // Wrap predicate for consumption by perturbed_sign (use only via perturbed_predicate)
-template<class F,int d,class... entries> static exact::Exact<> wrapped_predicate(RawArray<const Vector<exact::Exact<1>,d>> X) {
+template<class F,int d,class... entries> static void wrapped_predicate(RawArray<mp_limb_t> result, RawArray<const Vector<Exact<1>,d>> X) {
   assert(X.size()==sizeof...(entries));
-  return exact::Exact<>(F::eval(X[entries::value]...));
+  mpz_set(result,F::eval(X[entries::value]...));
 }
 template<class F,int d,class... entries> OTHER_ALWAYS_INLINE static inline auto wrap_predicate(Types<entries...>)
   -> decltype(&wrapped_predicate<F,d,entries...>) {
@@ -50,7 +52,7 @@ template<class F,int d,class... entries> OTHER_ALWAYS_INLINE static inline auto 
 template<class F,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed_predicate(const Args... args) {
   const int n = sizeof...(Args);
   const int d = First<Args...>::type::second_type::m;
-  typedef Vector<exact::Exact<1>,d> LV;
+  typedef Vector<Exact<1>,d> LV;
   typedef decltype(F::eval(LV(args.y)...)) Result;
   const int degree = Result::degree;
 

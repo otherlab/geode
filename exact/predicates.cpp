@@ -13,15 +13,14 @@ using std::cout;
 using std::endl;
 using exact::Point;
 using exact::Point2;
-using exact::Exact;
 typedef Vector<Exact<1>,2> LV2;
 typedef Vector<Exact<1>,3> LV3;
 
 // First, a trivial predicate, handled specially so that it can be partially inlined.
 
 template<int axis,int d> bool axis_less_degenerate(const Tuple<int,Vector<Quantized,d>> a, const Tuple<int,Vector<Quantized,d>> b) {
-  struct F { static inline Exact<> eval(RawArray<const Vector<Exact<1>,d>> X) {
-    return Exact<>(X[1][axis]-X[0][axis]);
+  struct F { static void eval(RawArray<mp_limb_t> result, RawArray<const Vector<Exact<1>,d>> X) {
+    mpz_set(result,X[1][axis]-X[0][axis]);
   }};
   const typename Point<d>::type X[2] = {a,b};
   return perturbed_sign(F::eval,1,asarray(X));
