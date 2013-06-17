@@ -453,6 +453,7 @@ using namespace other;
 
 void wrap_circle_csg() {
   OTHER_FUNCTION(split_circle_arcs)
+  OTHER_FUNCTION(exact_split_circle_arcs)
   OTHER_FUNCTION(canonicalize_circle_arcs)
   OTHER_FUNCTION_2(circle_arc_area,static_cast<real(*)(Nested<const CircleArc>)>(circle_arc_area))
 #ifdef OTHER_PYTHON

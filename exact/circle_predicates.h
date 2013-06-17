@@ -1,7 +1,7 @@
 #pragma once
+
 #include <other/core/exact/circle_csg.h>
 #include <other/core/exact/Interval.h>
-
 namespace other {
 
 // Unfortunately, circular arc CSG requires a rather large number of predicates, all doing extremely similar things.  In particular,
@@ -79,7 +79,7 @@ static inline exact::Point2 aspoint_center(Arcs arcs, const int arc) {
 bool arcs_from_same_circle(const Arcs& arcs, int i0, int i1);
 
 // Do two circles intersect (degree 2)?
-bool circles_intersect(Arcs arcs, const int arc0, const int arc1);
+OTHER_CORE_EXPORT bool circles_intersect(Arcs arcs, const int arc0, const int arc1);
 
 // Is intersection (a0,a1).y < (b0,b1).y?  This is degree 20 as written, but can be reduced to 6.
 bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b);
@@ -112,4 +112,5 @@ int local_x_axis_depth(Arcs arcs, const Vertex a01, const Vertex a12, const Vert
 // Count the depth change along the horizontal ray from (a0,a1) to (a0,a1+(inf,0) due to the arc from (b0,b1) to (b1,b2).
 // The change is -1 if we go out of an arc, +1 if we go into an arc.  Degree 8 as written, but can be eliminated entirely.
 int horizontal_depth_change(Arcs arcs, const Vertex a, const Vertex b01, const Vertex b12);
+
 } // namespace other
