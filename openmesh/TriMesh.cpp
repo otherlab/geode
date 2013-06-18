@@ -91,7 +91,6 @@ TriMesh &TriMesh::operator=(OTriMesh const &m) {
 
 Ref<TriMesh> TriMesh::copy() const {
   Ref<TriMesh> m = new_<TriMesh>(*this);
-  //m->operator=(dynamic_cast<OTriMesh const &>(*this));
   return m;
 }
 
