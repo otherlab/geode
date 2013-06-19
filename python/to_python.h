@@ -33,7 +33,7 @@ to_python(PyObject* value) {
   OTHER_XINCREF(value); // Allow zero so that wrapped functions can return (PyObject*)0 on error
   return value;
 }
- 
+
 #ifdef OTHER_PYTHON
 
 // Conversion from bool
@@ -107,6 +107,7 @@ to_python(char value) {
 
 // Declare has_to_python<T>
 OTHER_VALIDITY_CHECKER(has_to_python,T,to_python(*(T*)0))
+template<> struct has_to_python<void> : public mpl::true_ {};
 
 #endif
 
