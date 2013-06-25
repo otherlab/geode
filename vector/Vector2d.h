@@ -272,6 +272,9 @@ public:
     static Vector ones()
     {return Vector(1,1);}
 
+    Vector xy() const
+    {return *this;}
+
     Vector<T,1> horizontal_vector() const
     {return Vector<T,1>(x);}
 

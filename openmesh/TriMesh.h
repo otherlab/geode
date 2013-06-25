@@ -45,7 +45,7 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/Plane.h>
 #include <other/core/geometry/Triangle3d.h>
-#include <other/core/geometry/Segment3d.h>
+#include <other/core/geometry/Segment.h>
 #include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
 

@@ -29,6 +29,7 @@ OTHER_CORE_EXPORT bool inside_polygon(RawArray<const Vec2> poly, const Vec2 p);
 // TODO: This is used only by CGAL Delaunay to compute seed points.  Our version won't use approximate seed points once, so this function should be discarded once our version exists.
 OTHER_CORE_EXPORT Vec2 point_inside_polygon_component(RawArray<const Vec2> poly, Nested<const Vec2> polys);
 
+// Warning: Not robust
 OTHER_CORE_EXPORT Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const Vec2> poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.);
 
 // Turn an array of polygons into a SegmentMesh.

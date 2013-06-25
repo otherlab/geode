@@ -4,6 +4,7 @@
 #pragma once
 
 #include <other/core/geometry/Box.h>
+#include <other/core/structure/Tuple.h>
 #include <other/core/vector/Vector.h>
 #include <other/core/vector/Matrix2x2.h>
 namespace other{
@@ -164,12 +165,20 @@ public:
     {assert(check_orientation(a,b,c) && check_orientation(d,c,b));b-=a;c-=a;d-=a;
     return det(b.append(b.sqr_magnitude()),c.append(c.sqr_magnitude()),d.append(d.sqr_magnitude()))>=0;}
 
-OTHER_CORE_EXPORT TV closest_point(const TV& location,Vector<T,3>& weights) const;
-OTHER_CORE_EXPORT TV closest_point(const TV& location) const;
-OTHER_CORE_EXPORT T distance(const TV& location) const;
+    // For templatization purposes
+    static T min_weight(const Vector<T,3>& w) {
+      return w.min();
+    }
+
+    OTHER_CORE_EXPORT Tuple<TV,Vector<T,3>> closest_point(const TV& location) const;
+    OTHER_CORE_EXPORT T distance(const TV& location) const;
 };
 
 template<class T> std::ostream& operator<<(std::ostream& output,const Triangle<Vector<T,2> >& triangle)
 {return output<<triangle.X;}
+
+template<class T> static inline Vector<T,3> barycentric_coordinates(const Triangle<Vector<T,2>>& tri, const Vector<T,2>& p) {
+  return tri.barycentric_coordinates(p);
+}
 
 }

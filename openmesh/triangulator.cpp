@@ -5,8 +5,7 @@
 #include <other/core/mesh/TriangleMesh.h>
 #include <other/core/array/Array.h>
 #include <other/core/utility/stl.h>
-#include <other/core/geometry/Segment2d.h>
-
+#include <other/core/geometry/Segment.h>
 namespace other {
 
 // make a reasonably well-triangulated face from a set of vertices.
