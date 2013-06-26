@@ -5,26 +5,25 @@
 
 #include <other/core/force/ConstitutiveModel.h>
 #include <other/core/force/DiagonalizedStressDerivative.h>
-namespace other{
+namespace other {
 
-template<class T,int d>
-class AnisotropicConstitutiveModel:public ConstitutiveModel<T,d>
-{
+template<class T,int d> class AnisotropicConstitutiveModel : public ConstitutiveModel<T,d> {
 public:
-    typedef ConstitutiveModel<T,d> Base;
+  typedef ConstitutiveModel<T,d> Base;
 
 protected:
-    AnisotropicConstitutiveModel(T failure_threshold=.1)
-        :Base(failure_threshold)
-    {}
+  AnisotropicConstitutiveModel(T failure_threshold=.1)
+    : Base(failure_threshold) {}
 public:
 
-    bool use_isotropic_stress_derivative() const
-    {return false;}
+  bool use_isotropic_stress_derivative() const {
+    return false;
+  }
 
-    virtual T elastic_energy(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const int simplex) const=0;
-    virtual Matrix<T,d> P_From_Strain(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const T scale,const int simplex) const=0;
-    virtual DiagonalizedStressDerivative<T,d> stress_derivative(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const int simplex) const=0;
-    virtual void update_position(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const int simplex){}
+  virtual T elastic_energy(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const int simplex) const=0;
+  virtual Matrix<T,d> P_From_Strain(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const T scale,const int simplex) const=0;
+  virtual DiagonalizedStressDerivative<T,d> stress_derivative(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const int simplex) const=0;
+  virtual void update_position(const DiagonalMatrix<T,d>& F,const Matrix<T,d>& V,const int simplex){}
 };
+
 }

@@ -10,7 +10,7 @@
 #include <other/core/array/Array.h>
 #include <other/core/force/Force.h>
 #include <other/core/vector/Vector.h>
-namespace other{
+namespace other {
 
 template<class TV>
 class EtherDrag:public Force<TV>
