@@ -89,7 +89,7 @@ template<class TV,int d> void LinearFiniteVolume<TV,d>::add_elastic_force(RawArr
     if ((int)m>(int)d)
       strain_plus_one += outer_product(normals[t]);
     SymmetricMatrix<T,m> scaled_stress = Bm_scales[t]*two_mu*strain_plus_one+Bm_scales[t]*(lambda*strain_plus_one.trace()-two_mu_plus_m_lambda);
-    StrainMeasure<TV,d>::distribute_force(F,elements[t],scaled_stress.times_transpose(Dm_inverse[t]));
+    StrainMeasure<T,d>::distribute_force(F,elements[t],scaled_stress.times_transpose(Dm_inverse[t]));
   }
 }
 
@@ -100,7 +100,7 @@ template<class TV,int d> void LinearFiniteVolume<TV,d>::add_differential_helper(
   for (int t=0;t<elements.size();t++) {
     SymmetricMatrix<T,m> d_strain = symmetric_part(Ds(dX,t)*Dm_inverse[t]);
     SymmetricMatrix<T,m> d_scaled_stress = Bm_scales[t]*two_mu*d_strain+Bm_scales[t]*lambda*d_strain.trace();
-    StrainMeasure<TV,d>::distribute_force(dF,elements[t],d_scaled_stress.times_transpose(Dm_inverse[t]));
+    StrainMeasure<T,d>::distribute_force(dF,elements[t],d_scaled_stress.times_transpose(Dm_inverse[t]));
   }
 }
 

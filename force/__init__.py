@@ -8,14 +8,16 @@ def bending_springs(mesh,mass,X,stiffness,damping_ratio):
   springs = ascontiguousarray(mesh.bending_quadruples()[:,(0,3)])
   return Springs(springs,mass,X,stiffness,damping_ratio)
 
-StrainMeasure = {(2,2):StrainMeasure2d,(3,2):StrainMeasureS3d,(3,3):StrainMeasure3d}
+StrainMeasure = {2:StrainMeasure2d,3:StrainMeasure3d}
 FiniteVolume = {(2,2):FiniteVolume2d,(3,2):FiniteVolumeS3d,(3,3):FiniteVolume3d}
 LinearFiniteVolume = {(2,2):LinearFiniteVolume2d,(3,2):LinearFiniteVolumeS3d,(3,3):LinearFiniteVolume3d}
 
-def finite_volume(mesh,density,X,model,plasticity=None,verbose=True):
+def finite_volume(mesh,density,X,model,m=None,plasticity=None,verbose=True):
   elements = mesh.elements if isinstance(mesh,Object) else asarray(mesh,dtype=int32)
-  m,d = asarray(X).shape[1],elements.shape[1]-1
-  strain = StrainMeasure[m,d](elements,X)
+  mx,d = asarray(X).shape[1],elements.shape[1]-1
+  if m is None:
+    m = mx
+  strain = StrainMeasure[d](elements,X)
   if verbose:
     strain.print_altitude_statistics()
   if isinstance(model,dict):

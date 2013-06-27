@@ -25,7 +25,7 @@ template<> OTHER_DEFINE_TYPE(FiniteVolume<Vector<T,2>,2>)
 template<> OTHER_DEFINE_TYPE(FiniteVolume<Vector<T,3>,2>)
 template<> OTHER_DEFINE_TYPE(FiniteVolume<Vector<T,3>,3>)
 
-template<class TV,int d> FiniteVolume<TV,d>::FiniteVolume(StrainMeasure<TV,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity)
+template<class TV,int d> FiniteVolume<TV,d>::FiniteVolume(StrainMeasure<T,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity)
   : strain(ref(strain))
   , density(density)
   , model(ref(model))
@@ -302,7 +302,7 @@ template<int m,int d> static void wrap_helper() {
   typedef FiniteVolume<Vector<T,m>,d> Self;
   static const string name = format("FiniteVolume%s",d==3?"3d":m==3?"S3d":"2d");
   Class<Self>(name.c_str())
-    .OTHER_INIT(StrainMeasure<Vector<T,m>,d>&,T,ConstitutiveModel<T,d>&,Ptr<PlasticityModel<T,d>>)
+    .OTHER_INIT(StrainMeasure<T,d>&,T,ConstitutiveModel<T,d>&,Ptr<PlasticityModel<T,d>>)
     ;
 }
 

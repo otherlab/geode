@@ -19,7 +19,7 @@ public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Force<TV> Base;
 
-  Ref<StrainMeasure<TV,d>> strain;
+  Ref<StrainMeasure<T,d>> strain;
   const T density;
   Ref<ConstitutiveModel<T,d>> model;
   Ptr<PlasticityModel<T,d>> plasticity;
@@ -37,7 +37,7 @@ protected:
 public:
 
 protected:
-  FiniteVolume(StrainMeasure<TV,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity);
+  FiniteVolume(StrainMeasure<T,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity);
 public:
   virtual ~FiniteVolume();
 

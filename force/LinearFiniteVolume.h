@@ -35,7 +35,7 @@ public:
   virtual ~LinearFiniteVolume();
 
   Matrix<T,m,d> Ds(RawArray<const TV> X,const int simplex) const {
-    return StrainMeasure<TV,d>::Ds(X,elements[simplex]);
+    return StrainMeasure<T,d>::Ds(X,elements[simplex]);
   }
 
   Vector<T,2> mu_lambda() const;
