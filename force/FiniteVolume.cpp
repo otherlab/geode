@@ -52,11 +52,11 @@ template<class TV,int d> void FiniteVolume<TV,d>::structure(SolidMatrixStructure
   }
 }
 
-template<int d,int m> static inline typename boost::enable_if_c<m==d,const Matrix<T,d,d>&>::type In_Plane(const Matrix<T,m>& U) {
+template<int d,int m> static inline typename boost::enable_if_c<m==d,const Matrix<T,d,d>&>::type in_plane(const Matrix<T,m>& U) {
   return U;
 }
 
-template<int d> static inline typename boost::enable_if_c<d==2,Matrix<T,3,2>>::type In_Plane(const Matrix<T,3>& U) {
+template<int d> static inline typename boost::enable_if_c<d==2,Matrix<T,3,2>>::type in_plane(const Matrix<T,3>& U) {
   return Matrix<T,3,2>(U.column(0),U.column(1));
 }
 
@@ -75,7 +75,7 @@ template<class TV,int d> void FiniteVolume<TV,d>::update_position(Array<const TV
       (F*plasticity->Fp_inverse(t)).fast_singular_value_decomposition(U[t],Fe_hat[t],V_);
       DiagonalMatrix<T,d> Fe_project_hat;
       if (plasticity->project_Fe(Fe_hat[t],Fe_project_hat)) {
-        plasticity->project_Fp(t,Fe_project_hat.inverse()*In_Plane<d>(U[t]).transpose_times(F));
+        plasticity->project_Fp(t,Fe_project_hat.inverse()*in_plane<d>(U[t]).transpose_times(F));
         (F*plasticity->Fp_inverse[t]).fast_singular_value_decomposition(U[t],Fe_hat[t],V_);
       }
       De_inverse_hat[t] = strain->Dm_inverse[t]*plasticity->Fp_inverse[t]*V_;
@@ -104,12 +104,12 @@ template<class TV,int d> typename TV::Scalar FiniteVolume<TV,d>::elastic_energy(
 template<class TV,int d> void FiniteVolume<TV,d>::add_elastic_force(RawArray<TV> F) const {
   if (anisotropic)
     for (int t=0;t<strain->elements.size();t++) {
-      Matrix<T,m,d> forces = In_Plane<d>(U[t])*anisotropic->P_From_Strain(Fe_hat[t],V[t],Be_scales[t],t).times_transpose(De_inverse_hat[t]);
+      Matrix<T,m,d> forces = in_plane<d>(U[t])*anisotropic->P_From_Strain(Fe_hat[t],V[t],Be_scales[t],t).times_transpose(De_inverse_hat[t]);
       strain->distribute_force(F,t,forces);
     }
   else
     for (int t=0;t<strain->elements.size();t++) {
-      Matrix<T,m,d> forces = In_Plane<d>(U[t])*isotropic->P_From_Strain(Fe_hat[t],Be_scales[t],t).times_transpose(De_inverse_hat[t]);
+      Matrix<T,m,d> forces = in_plane<d>(U[t])*isotropic->P_From_Strain(Fe_hat[t],Be_scales[t],t).times_transpose(De_inverse_hat[t]);
       strain->distribute_force(F,t,forces);
     }
 }
@@ -153,7 +153,7 @@ template<class TV,int d> void FiniteVolume<TV,d>::add_elastic_differential(RawAr
   if (anisotropic && !anisotropic->use_isotropic_stress_derivative())
     for (int t=0;t<strain->elements.size();t++) {
       Matrix<T,m,d> dDs = strain->Ds(dX,t),
-                    Up = In_Plane<d>(U[t]),
+                    Up = in_plane<d>(U[t]),
                     dG = Up*(Be_scales[t]*dP_dFe[t].differential(Up.transpose_times(dDs)*De_inverse_hat[t]).times_transpose(De_inverse_hat[t]));
       strain->distribute_force(dF,t,dG);
     }
@@ -227,7 +227,7 @@ template<class TV,int d> void FiniteVolume<TV,d>::add_elastic_gradient(SolidMatr
 template<class TV,int d> typename TV::Scalar FiniteVolume<TV,d>::damping_energy(RawArray<const TV> V) const {
   T energy = 0;
   for (int t=0;t<strain->elements.size();t++) {
-    Matrix<T,d> Fe_dot_hat = In_Plane<d>(U[t]).transpose_times(strain->Ds(V,t))*De_inverse_hat[t];
+    Matrix<T,d> Fe_dot_hat = in_plane<d>(U[t]).transpose_times(strain->Ds(V,t))*De_inverse_hat[t];
     energy -= Be_scales[t]*model->damping_energy(Fe_hat[t],Fe_dot_hat,t);
   }
   return energy;
@@ -235,7 +235,7 @@ template<class TV,int d> typename TV::Scalar FiniteVolume<TV,d>::damping_energy(
 
 template<class TV,int d> void FiniteVolume<TV,d>::add_damping_force(RawArray<TV> F,RawArray<const TV> V) const {
   for (int t=0;t<strain->elements.size();t++) {
-    Matrix<T,m,d> Up = In_Plane<d>(U[t]);
+    Matrix<T,m,d> Up = in_plane<d>(U[t]);
     Matrix<T,d> Fe_dot_hat = Up.transpose_times(strain->Ds(V,t))*De_inverse_hat[t];
     Matrix<T,m,d> forces = Up*model->P_From_Strain_Rate(Fe_hat[t],Fe_dot_hat,Be_scales[t],t).times_transpose(De_inverse_hat[t]);
     strain->distribute_force(F,t,forces);
@@ -245,7 +245,7 @@ template<class TV,int d> void FiniteVolume<TV,d>::add_damping_force(RawArray<TV>
 template<class TV,int d> void FiniteVolume<TV,d>::add_damping_gradient(SolidMatrix<TV>& matrix) const {
   Matrix<T,m> dGdD[d+1][d+1];
   for (int t=0;t<strain->elements.size();t++) {
-    Matrix<T,m,d> Up = In_Plane<d>(U[t]);
+    Matrix<T,m,d> Up = in_plane<d>(U[t]);
     for (int i=0;i<d;i++)
       for (int j=0;j<m;j++) {
         Matrix<T,m,d> Ds_dot;
