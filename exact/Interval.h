@@ -123,6 +123,19 @@ static inline int weak_sign(const Interval x) {
                                :  0;
 }
 
+static inline Interval min(const Interval& a, const Interval& b) {
+  Interval result;
+  result.hi = min(a.hi, b.hi);
+  result.nlo = max(a.nlo, b.nlo); // result.lo = min(a.lo, a.lo)
+  return result;
+}
+static inline Interval max(const Interval& a, const Interval& b) {
+  Interval result;
+  result.hi = max(a.hi, b.hi);
+  result.nlo = min(a.nlo, b.nlo); // result.lo = max(a.lo, a.lo)
+  return result;
+}
+
 static inline Interval operator-(const double x, const Interval y) {
   assert(fegetround() == FE_UPWARD);
   return Interval(-(y.hi-x),x+y.nlo);

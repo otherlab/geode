@@ -227,11 +227,15 @@ public:
     bool elements_equal() const
     {return x==y;}
 
-    static Vector componentwise_min(const Vector& v1,const Vector& v2)
-    {return Vector(other::min(v1.x,v2.x),other::min(v1.y,v2.y));}
+    static Vector componentwise_min(const Vector& v1,const Vector& v2) {
+      using other::min;
+      return Vector(min(v1.x,v2.x),min(v1.y,v2.y));
+    }
 
-    static Vector componentwise_max(const Vector& v1,const Vector& v2)
-    {return Vector(other::max(v1.x,v2.x),other::max(v1.y,v2.y));}
+    static Vector componentwise_max(const Vector& v1,const Vector& v2) {
+      using other::max;
+      return Vector(max(v1.x,v2.x),max(v1.y,v2.y));
+    }
 
     Vector projected_on_unit_direction(const Vector& direction) const
     {return dot(*this,direction)*direction;}
@@ -301,13 +305,13 @@ public:
     template<class TArray>
     bool contains_all(const TArray& elements) const
     {STATIC_ASSERT_SAME(typename TArray::Element,T);
-    for(int i=0;i<elements.size();i++) if(!contains(elements(i))) return false;
+    for(int i=0;i<elements.size();i++) if(!contains(elements[i])) return false;
     return true;}
 
     template<class TArray>
     bool contains_any(const TArray& elements) const
     {STATIC_ASSERT_SAME(typename TArray::Element,T);
-    for(int i=0;i<elements.size();i++) if(contains(elements(i))) return true;
+    for(int i=0;i<elements.size();i++) if(contains(elements[i])) return true;
     return false;}
 
     Vector<T,1> remove_index(const int index) const
