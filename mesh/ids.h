@@ -44,6 +44,8 @@ template<class Id> struct IdIter {
   void operator++() { i.id++; }
   bool operator!=(IdIter o) const { return i!=o.i; }
   Id operator*() const { return i; }
+  IdIter operator+(int d) const { return Id(i.id+d);}
+  IdIter operator-(int d) const { return Id(i.id-d);}
 };
 
 }
