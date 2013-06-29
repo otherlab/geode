@@ -2,17 +2,17 @@
 #pragma once
 
 #include <other/core/exact/config.h>
-#include <other/core/exact/exact.h>
+#include <other/core/exact/Exact.h>
+#include <other/core/exact/Interval.h>
 #include <other/core/structure/Tuple.h>
 #include <other/core/utility/IRange.h>
 #include <other/core/vector/Vector.h>
 #include <gmp.h>
 namespace other {
 
-// Assuming predicate(X) == 0, evaluate predicate(X+epsilon)>0 for a certain infinitesimal perturbation epsilon.  The predicate
-// must be a multivariate polynomial of at most the given degree.  The permutation chosen is deterministic, independent of the
-// predicate, and guaranteed to work for all possible polynomials.  Each coordinate of the X array contains (1) the value and
-// (2) the index of the value, which is used to look up the fixed perturbation.
+// Evaluate predicate(X+epsilon)>0 for a certain infinitesimal perturbation epsilon.  The predicate must be a multivariate polynomial of at most
+// the given degree.  The permutation chosen is deterministic, independent of the predicate, and guaranteed to work for all possible polynomials.
+// Each coordinate of the X array contains (1) the value and (2) the index of the value, which is used to look up the fixed perturbation.
 //
 // Identically zero polynomials are zero regardless of perturbation; these are detected and an exception is thrown.
 // predicate should compute a quantity of type Exact<degree>, then copy it into result with mpz_set.
@@ -21,8 +21,6 @@ template<int m> OTHER_CORE_EXPORT OTHER_COLD bool perturbed_sign(void(*const pre
 // Given polynomial numerator and denominator functions, evaluate numerator(X+epsilon)/denominator(X+epsilon) rounded to int for the
 // same infinitesimal perturbation epsilon as in perturbed_sign.  The numerator and denominator must be multivariate polynomials of at
 // most the given degree.  The rational function is packed as ratio(X) = concatenate(numerator(X),denominator(X)).  Rounding is to nearest.
-//
-// One key difference from perturbed_sign: the unperturbed ratio is not assumed to be singular; it will be evaluated correctly in all cases.
 //
 // If the rounded result does not fit into the range [-bound,bound] (e.g., if its infinite), an exception is thrown.  This should
 // never happen for appropriately shielded predicates, such as constructing the intersection of two segments once perturbed_sign
@@ -36,6 +34,11 @@ template<int m> OTHER_CORE_EXPORT OTHER_COLD void perturbed_ratio(RawArray<Quant
 // The levelth perturbation of point i in R^m.  This is exposed for occasional special purpose use only, or as a convenient
 // pseudorandom generator; normally this routine is called internally by perturbed_sign.  perturbation<m+1> starts with perturbation<m>.
 template<int m> OTHER_CORE_EXPORT Vector<ExactInt,m> perturbation(const int level, const int i);
+
+// The type of a degree d predicate evaluated on vectors of the given type (see usage in predicates.cpp)
+template<int d,class TV> struct PredicateTypeHelper { typedef typename TV::Scalar type; };
+template<int d,int m> struct PredicateTypeHelper<d,Vector<Exact<1>,m>> { typedef Exact<d> type; };
+template<int d,class TV> using PredicateType = typename PredicateTypeHelper<d,TV>::type;
 
 // Wrap predicate for consumption by perturbed_sign (use only via perturbed_predicate)
 template<class F,int d,class... entries> static void wrapped_predicate(RawArray<mp_limb_t> result, RawArray<const Vector<Exact<1>,d>> X) {
@@ -52,15 +55,14 @@ template<class F,int d,class... entries> OTHER_ALWAYS_INLINE static inline auto 
 template<class F,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed_predicate(const Args... args) {
   const int n = sizeof...(Args);
   const int d = First<Args...>::type::second_type::m;
-  typedef Vector<Exact<1>,d> LV;
-  typedef decltype(F::eval(LV(args.y)...)) Result;
+  typedef decltype(F::eval(Vector<Exact<1>,d>(args.y)...)) Result;
   const int degree = Result::degree;
 
-  // Evaluate with integers first, hoping for a nonzero
-  if (const int s = sign(F::eval(LV(args.y)...)))
+  // Evaluate with conservative interval arithmetic, hoping for a clear nonzero
+  if (const int s = weak_sign(F::eval(Vector<Interval,d>(args.y)...)))
     return s>0;
 
-  // Fall back to symbolic perturbation
+  // Fall back to exact integer evaluation with symbolic perturbation
   const typename exact::Point<d>::type X[n] = {args...};
   return perturbed_sign(wrap_predicate<F,d>(IRange<sizeof...(Args)>()),degree,asarray(X));
 }
@@ -96,7 +98,7 @@ template<class A,class B0,class B1,class C0,class C1> struct TwoSqrtsAlpha { tem
 }};
 template<class A,class B0> struct TwoSqrtsBeta { template<class... Args> static auto eval(const Args... args)
   -> decltype(A::eval(args...)*B0::eval(args...)) {
-  return small_mul(2,A::eval(args...)*B0::eval(args...));
+  return A::eval(args...)*(B0::eval(args...)<<1);
 }};}
 template<class A,class B0,class B1,class C0,class C1,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed_predicate_two_sqrts(const int sign0, const int sign1, const Args... args) {
   assert(abs(sign0)==1 && abs(sign1)==1);

@@ -124,6 +124,13 @@ template<int a> OTHER_PURE static inline Exact<3*a> cube(const Exact<a> x) {
 
 // Multiplication by small constants, assumed to not increase the precision required
 
+template<int a> OTHER_PURE static inline Exact<a> operator<<(const Exact<a> x, const int s) {
+  assert(0<s && s<=3);
+  Exact<a> r(uninit);
+  mpn_lshift(r.n,x.n,x.limbs,s);
+  return r;
+}
+
 template<int a> OTHER_PURE static inline Exact<a> small_mul(const int n, const Exact<a> x) {
   assert(n);
   Exact<a> r(uninit);

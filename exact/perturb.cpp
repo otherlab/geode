@@ -339,15 +339,16 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
   if (verbose)
     cout << "perturbed_sign:\n  degree = "<<degree<<"\n  X = "<<X<<endl;
 
-  // If desired, verify that predicate(X) == 0
+  // Check if the predicate is nonsingular without perturbation
   const auto Z = OTHER_RAW_ALLOCA(n,EV);
   const int precision = degree*Exact<1>::ratio;
-  if (check) {
+  {
     for (int i=0;i<n;i++)
       Z[i] = EV(to_exact(X[i].y));
     const auto R = OTHER_RAW_ALLOCA(precision,mp_limb_t);
     predicate(R,Z);
-    OTHER_ASSERT(!mpz_nonzero(R));
+    if (const int sign = mpz_sign(R))
+      return sign>0;
   }
 
   // Check the first perturbation level with specialized code
