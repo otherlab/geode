@@ -221,4 +221,4 @@ template<class T> Nested<T> FromPython<Nested<T>>::convert(PyObject* object) {
 }
 #endif
 
-}
+} // namespace other
