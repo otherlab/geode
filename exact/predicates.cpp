@@ -72,6 +72,20 @@ bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, 
        ^ segment_directions_oriented(a0,a1,c0,c1);
 }
 
+bool segment_intersection_above(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1, const Point2 c) {
+  struct F { static inline Exact<3> eval(const LV2 a0, const LV2 a1, const LV2 b0, const LV2 b1, const LV2 c0) {
+    const auto da = a1-a0,
+               db = b1-b0;
+               // c1 == c1 + x*delta
+               //dc = [dx, 0];
+    //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y*delta;
+    return (a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y;
+  }};
+  return perturbed_predicate<F>(a0,a1,b0,b1,c)
+       ^ segment_directions_oriented(a0,a1,b0,b1)
+       ^ rightwards(a0,a1);
+}
+
 bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3) {
   struct F { static inline Exact<4> eval(const LV2 p0, const LV2 p1, const LV2 p2, const LV2 p3) {
     const auto d0 = p0-p3,
@@ -83,7 +97,7 @@ bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3
   return perturbed_predicate<F>(p0,p1,p2,p3);
 }
 
-bool segments_intersect(const exact::Point2 a0, const exact::Point2 a1, const exact::Point2 b0, const exact::Point2 b1) {
+bool segments_intersect(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
   return triangle_oriented(a0,a1,b0)!=triangle_oriented(a0,a1,b1)
       && triangle_oriented(b0,b1,a0)!=triangle_oriented(b0,b1,a1);
 }

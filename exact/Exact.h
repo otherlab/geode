@@ -51,7 +51,7 @@ template<int d> static inline int sign(const Exact<d>& x) {
   return 0;
 }
 
-template<int a> OTHER_CONST static inline Exact<a> operator+(const Exact<a> x, const Exact<a> y) {
+template<int a> OTHER_PURE static inline Exact<a> operator+(const Exact<a> x, const Exact<a> y) {
   Exact<a> r(uninit);
   if (r.limbs==1)
     r.n[0] = x.n[0] + y.n[0];
@@ -67,7 +67,7 @@ template<int a> static inline void operator+=(Exact<a>& x, const Exact<a>& y) {
     mpn_add_n(x.n,x.n,y.n,x.limbs);
 }
 
-template<int a> OTHER_CONST static inline Exact<a> operator-(const Exact<a> x, const Exact<a> y) {
+template<int a> OTHER_PURE static inline Exact<a> operator-(const Exact<a> x, const Exact<a> y) {
   Exact<a> r(uninit);
   if (r.limbs==1)
     r.n[0] = x.n[0] - y.n[0]; 
@@ -76,7 +76,7 @@ template<int a> OTHER_CONST static inline Exact<a> operator-(const Exact<a> x, c
   return r;
 }
 
-template<int a,int b> OTHER_CONST static inline Exact<a+b> operator*(const Exact<a> x, const Exact<b> y) {
+template<int a,int b> OTHER_PURE static inline Exact<a+b> operator*(const Exact<a> x, const Exact<b> y) {
   // Perform multiplication as if inputs were unsigned
   Exact<a+b> r(uninit);
   if (a>=b)
@@ -99,7 +99,7 @@ template<int a,int b> OTHER_CONST static inline Exact<a+b> operator*(const Exact
   return r;
 }
 
-template<int a> OTHER_CONST static inline Exact<a> operator-(const Exact<a> x) {
+template<int a> OTHER_PURE static inline Exact<a> operator-(const Exact<a> x) {
   Exact<a> r(uninit);
   if (r.limbs==1)
     r.n[0] = mp_limb_t(-mp_limb_signed_t(x.n[0]));
@@ -108,7 +108,7 @@ template<int a> OTHER_CONST static inline Exact<a> operator-(const Exact<a> x) {
   return r;
 }
 
-template<int a> OTHER_CONST static inline Exact<2*a> sqr(const Exact<a> x) {
+template<int a> OTHER_PURE static inline Exact<2*a> sqr(const Exact<a> x) {
   Exact<2*a> r(uninit);
   mp_limb_t nx[x.limbs];
   const bool negative = mp_limb_signed_t(x.n[x.limbs-1])<0;
@@ -118,13 +118,13 @@ template<int a> OTHER_CONST static inline Exact<2*a> sqr(const Exact<a> x) {
   return r;
 }
 
-template<int a> OTHER_CONST static inline Exact<3*a> cube(const Exact<a> x) {
+template<int a> OTHER_PURE static inline Exact<3*a> cube(const Exact<a> x) {
   return x*sqr(x);
 }
 
 // Multiplication by small constants, assumed to not increase the precision required
 
-template<int a> OTHER_CONST static inline Exact<a> small_mul(const int n, const Exact<a> x) {
+template<int a> OTHER_PURE static inline Exact<a> small_mul(const int n, const Exact<a> x) {
   assert(n);
   Exact<a> r(uninit);
   if (power_of_two(uint32_t(abs(n)))) { // This routine will normally be inlined with constant n, so this check is cheap

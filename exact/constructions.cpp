@@ -68,6 +68,30 @@ static void construction_tests() {
   Log::Scope log("construction tests");
   IntervalScope scope;
 
+  {
+    const Point2 a0(0,EV2(-100.1,   0)),
+                 a1(1,EV2( 100.1,   0)),
+                 b0(2,EV2(   0,-100.1)),
+                 b1(3,EV2(   0, 100.1)),
+
+                 c0(4,EV2( 100.2, 200.1)),
+                 c1(5,EV2( 300.2, 200.1)),
+                 d0(6,EV2( 200.2, 100.1)),
+                 d1(7,EV2( 200.2, 300.1));
+
+    const Point2 e0(8,EV2(-100,  50)),
+                 e1(9,EV2( 100,  50));
+
+    // Check very simple cases where two segments intersect
+    OTHER_ASSERT(segments_intersect(a0,a1,b1,b0));
+    OTHER_ASSERT(segments_intersect(c0,c1,d0,d1));
+    OTHER_ASSERT(segments_intersect(a0,a1,b0,b1));
+
+    // Check very simple case where two segments don't intersect
+    OTHER_ASSERT(!segments_intersect(a0,b0,a1,b1));
+    OTHER_ASSERT(!segments_intersect(a0,a1,e0,e1));
+  }
+
   // Check a bunch of large random segments
   const auto random = new_<Random>(623189131);
   {

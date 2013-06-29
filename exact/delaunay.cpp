@@ -83,7 +83,7 @@ static inline bool is_sentinel(const Point& x) {
 #define SENTINEL_KEY(i) (is_sentinel(x##i)?-x##i.x:numeric_limits<int>::min())
 #define COMPARATOR(i,j) if (SENTINEL_KEY(i)>SENTINEL_KEY(j)) { swap(x##i,x##j); parity ^= 1; }
 
-OTHER_COLD OTHER_CONST static inline bool triangle_oriented_sentinels(Point x0, Point x1, Point x2) {
+OTHER_COLD OTHER_PURE static inline bool triangle_oriented_sentinels(Point x0, Point x1, Point x2) {
   // Move large sentinels last
   bool parity = 0;
   COMPARATOR(0,1)
@@ -106,7 +106,7 @@ OTHER_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const Po
 }
 
 // Test whether an edge containing sentinels is Delaunay
-OTHER_COLD OTHER_CONST static inline bool is_delaunay_sentinels(Point x0, Point x1, Point x2, Point x3) {
+OTHER_COLD OTHER_PURE static inline bool is_delaunay_sentinels(Point x0, Point x1, Point x2, Point x3) {
   // Unfortunately, the sentinels need to be at infinity for purposes of Delaunay testing, and our SOS predicates
   // don't support infinities.  Therefore, we need some case analysis.  First, we move all the sentinels to the end,
   // sorted in decreasing order of index.  Different sentinels will be placed at different orders of infinity,
@@ -413,7 +413,6 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
   // We fill points into bins as sequentially as possible to maximize cache coherence.
   const int bins = integer_log(n);
   Array<int> bin_counts(bins);
-  #pragma omp parallel for
   for (int i=0;i<n;i++) {
     int j = random_permute(n,key,i);
     const int bin = min(integer_log(j+1),bins-1);
@@ -423,7 +422,6 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
 
   // Spatially sort each bin down to clusters of size 64.
   const int leaf_size = 64;
-  #pragma omp parallel for
   for (int bin=0;bin<bins;bin++) {
     const int start = (1<<bin)-1,
               end = bin==bins-1?n:start+(1<<bin);

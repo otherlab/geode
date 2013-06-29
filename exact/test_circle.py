@@ -11,7 +11,7 @@ def random_circle_arcs(n,k):
   arcs.q = random.uniform(-1.5,1.5,size=n*k).reshape(n,k)
   return Nested(arcs)
 
-def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False):
+def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False,jitter=None):
   import pylab
   for p,poly in enumerate(arcs):
     X = poly['x']
@@ -27,7 +27,7 @@ def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False):
     theta = array([2*pi]) if full else 4*atan(q)
     points = center.reshape(-1,1,2)+Rotation.from_angle(theta[:,None]*arange(n+1)/n)*(X-center).reshape(-1,1,2)
     if dots:
-      pylab.plot(X[:,0],X[:,1],'o')
+      pylab.plot(X[:,0],X[:,1],'.')
     if full:
       print 'draw center = %s'%compact_str(center)
       for i,pp in enumerate(points):
@@ -40,6 +40,8 @@ def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False):
         for i in xrange(len(poly)):
           pylab.annotate(str(arcs.offsets[p]+i),points[i,n//2])
       points = concatenate([points.reshape(-1,2),[points[-1,-1]]])
+      if jitter is not None:
+         points += jitter*random.uniform(-1,1,points.shape) # Jitter if you want to be able to differentiate concident points:
       pylab.plot(points[:,0],points[:,1])
 
 def test_circles():
@@ -129,5 +131,21 @@ def test_circles():
         assert allclose(area,circle_arc_area(circle_arc_union(arcs1,arcs1)))
         assert allclose(area,circle_arc_area(circle_arc_intersection(arcs1,arcs1)))
 
+from other_core import *
+
+def debug_offsets():
+  import pylab
+  import time
+  pylab.axes().set_aspect('equal')
+  random.seed(441424)
+  arcs0 = circle_arc_union(random_circle_arcs(1,400))
+  draw_circle_arcs(arcs0)
+  #arcs_off = offset_arcs(arcs0, 0.1)
+  shells = offset_shells(arcs0, 0.1, 10)
+  for s in shells:
+    draw_circle_arcs(s,dots=True)
+  pylab.show()
+
 if __name__=='__main__':
+  #debug_offsets()
   test_circles()

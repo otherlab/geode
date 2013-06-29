@@ -513,9 +513,9 @@ static void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, 
     BOOST_STATIC_ASSERT(ratio<=2);
     if (s.size() > ratio)
       goto overflow;
-    const auto nn = ratio==2 && s.size()==2 ? s[0]|ExactInt(s[1])<<8*sizeof(mp_limb_t) : s[0];
-    const auto n = (1+nn)/2;
-    if (n > exact::bound)
+    const auto nn = ratio==2 && s.size()==2 ? s[0]|ExactInt(s[1])<<8*sizeof(mp_limb_t) : s[0],
+               n = (1+nn)/2;
+    if (uint64_t(n) > uint64_t(exact::bound))
       goto overflow;
 
     // Done!

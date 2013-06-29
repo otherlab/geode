@@ -7,6 +7,9 @@
 #include <other/core/exact/config.h>
 #include <other/core/exact/quantize.h>
 #include <other/core/array/Nested.h>
+
+#include <vector>
+
 namespace other {
 
 // In floating point, we represent circular arcs by the two endpoints x0,x1 and q = 2*sagitta/|x1-x0|.
@@ -27,6 +30,10 @@ struct ExactCircleArc {
   bool positive; // True if the arc is traversed counterclockwise
   bool left; // True if we use the intersection between this arc and the next to the left of the segment joining their centers
 };
+
+// Tweak quantized circles so that they intersect.
+void tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs);
+void tweak_arcs_to_intersect(Nested<ExactCircleArc>& arcs);
 
 // Resolve all intersections between circular arc polygons, and extract the contour with given 
 // Depth starts at 0 at infinity, and increases by 1 when crossing a contour from outside to inside.
@@ -49,7 +56,11 @@ OTHER_CORE_EXPORT real circle_arc_area(RawArray<const CircleArc> arcs);
 OTHER_CORE_EXPORT real circle_arc_area(Nested<const CircleArc> arcs);
 
 // Quantize from approximate to exact representations, taking care to ensure validity of the quantized result.
-OTHER_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<const CircleArc> arcs);
+// If min_bounds isn't empty the Quantizer will use an appropriate scale to work with other features inside of min_bounds
+OTHER_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<const CircleArc> arcs, const Box<Vector<real,2>> min_bounds=Box<Vector<real,2>>::empty_box());
+OTHER_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input);
+
+OTHER_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
 
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const ExactCircleArc& arc);
