@@ -36,6 +36,14 @@ def neo_hookean(youngs_modulus=3e6,poissons_ratio=.475,rayleigh_coefficient=.05,
   return {2:NeoHookean2d(youngs_modulus,poissons_ratio,rayleigh_coefficient,failure_threshold),
           3:NeoHookean3d(youngs_modulus,poissons_ratio,rayleigh_coefficient,failure_threshold)}
 
+def simple_shell(mesh,density,X,stretch=(0,0),shear=0):
+  elements = mesh.elements if isinstance(mesh,Object) else asarray(mesh,dtype=int32)
+  strain = StrainMeasure[2](elements,X)
+  shell = SimpleShell(strain,density)
+  shell.stretch_stiffness = stretch
+  shell.shear_stiffness = shear
+  return shell
+
 LinearBendingElements = {2:LinearBendingElements2d,3:LinearBendingElements3d}
 def linear_bending_elements(mesh,X,stiffness,damping):
   X = asarray(X)

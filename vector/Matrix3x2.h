@@ -207,6 +207,10 @@ public:
     {Matrix<T,3,2> U_;fast_singular_value_decomposition(U_,singular_values,V);
     U=Matrix<T,3>(U_.column(0),U_.column(1),cross(U_.column(0),U_.column(1)));}
 
+    void fast_indefinite_polar_decomposition(Matrix<T,3,3>& Q,SymmetricMatrix<T,2>& S) const
+    {Matrix<T,3,2> Q_;fast_indefinite_polar_decomposition(Q_,S);
+    Q=Matrix<T,3>(Q_.column(0),Q_.column(1),cross(Q_.column(0),Q_.column(1)));}
+
 //#####################################################################
     OTHER_CORE_EXPORT void fast_singular_value_decomposition(Matrix& U,DiagonalMatrix<T,2>& singular_values,Matrix<T,2>& V) const ;
     OTHER_CORE_EXPORT void fast_indefinite_polar_decomposition(Matrix<T,3,2>& Q,SymmetricMatrix<T,2>& S) const ;

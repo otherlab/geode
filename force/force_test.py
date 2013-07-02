@@ -64,7 +64,7 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
     Fe1 = elastic_force(X+dX/2)
     e = relative_error(tensordot(Fe1,dX,axes=2),U0-U2)
     if verbose:
-      print '|Fe1| %g, U0 %g, U2 %g'%(maxabs(Fe1),U0,U2)
+      print '|Fe1| %r, U0 %r, U2 %r'%(maxabs(Fe1),U0,U2)
       print 'elastic force error =',e
     assert e < tolerance
 
@@ -74,7 +74,7 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
       dFe = elastic_differential(X+dX/2,dX)
       e = relative_error(dFe,Fe2-Fe0)
       if verbose:
-        print '|dFe| %g, |Fe2| %g, |Fe0| %g, |Fe2-Fe0| %g'%(maxabs(dFe),maxabs(Fe2),maxabs(Fe0),maxabs(Fe2-Fe0))
+        print '|dFe| %r, |Fe2| %r, |Fe0| %r, |Fe2-Fe0| %r'%(maxabs(dFe),maxabs(Fe2),maxabs(Fe0),maxabs(Fe2-Fe0))
         print 'elastic differential error =',e
       assert e < tolerance
 

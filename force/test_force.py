@@ -53,6 +53,14 @@ def test_fvm_3d():
   fvm = finite_volume([(0,1,2,3)],1000,X,model)
   force_test(fvm,X+dX,verbose=1)
 
+def test_simple_shell():
+  random.seed(12872)
+  X = random.randn(3,3)
+  dX = .1*random.randn(3,3)
+  shell = simple_shell([(0,1,2)],1000,X,stretch=(7,6),shear=3)
+  shell.F_threshold = 1e-7
+  force_test(shell,X+dX,verbose=1)
+
 def test_bending():
   random.seed(7218414)
   stiffness = 7
@@ -127,3 +135,6 @@ def test_air_pressure():
       print '\nclosed %d, side %d'%(closed,side)
       air = AirPressure(mesh,X,closed,side)
       force_test(air,X2,verbose=1) 
+
+if __name__=='__main__':
+  test_simple_shell()
