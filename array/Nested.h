@@ -183,6 +183,14 @@ template<class TA> Nested<typename TA::value_type> make_nested(const TA& a0, con
   return nested;
 }
 
+template<class T> std::vector<std::vector<typename boost::remove_const<T>::type>> as_vectors(Nested<T> const &a) {
+  std::vector<std::vector<typename boost::remove_const<T>::type>> r;
+  for (auto ar : a) {
+    r.push_back(std::vector<T>(ar.begin(), ar.end()));
+  }
+  return r;
+}
+
 // we have to put "parentheses" around TA::value_type to prevent MSVC from thinking TA::value_type::value_type is a constructor.
 template<class TA> Nested<typename First<typename TA::value_type,void>::type::value_type,false> asnested(const TA& a) {
   return Nested<typename First<typename TA::value_type,void>::type::value_type,false>::copy(a);
