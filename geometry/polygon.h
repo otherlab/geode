@@ -3,8 +3,11 @@
 #include <other/core/structure/Tuple.h>
 #include <other/core/array/Array.h>
 #include <other/core/mesh/forward.h>
+#include <other/core/python/Ptr.h>
 
 namespace other {
+
+template<class TV, int d> class SimplexTree;
 
 OTHER_CORE_EXPORT Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<const int> indices);
 OTHER_CORE_EXPORT Nested<Vec2> polygons_from_index_list(RawArray<const Vec2> positions, Nested<const int> indices);
@@ -21,6 +24,10 @@ OTHER_CORE_EXPORT real polygon_length(RawArray<const Vec2> poly);
 
 // Enforce maximum edge length along the polygon
 OTHER_CORE_EXPORT Array<Vec2> resample_polygon(RawArray<const Vec2> poly, double maximum_edge_length);
+
+// check whether the outlines of two polygons intersect (returns false if one is completely inside the other)
+// if p2_tree is NULL, a search tree is created for p2
+OTHER_CORE_EXPORT bool polygon_outlines_intersect(RawArray<const Vec2> p1, RawArray<const Vec2> p2, Ptr<SimplexTree<Vec2,1>> p2_tree = Ptr<>());
 
 // Is the point inside the polygon?  WARNING: Not robust
 OTHER_CORE_EXPORT bool inside_polygon(RawArray<const Vec2> poly, const Vec2 p);

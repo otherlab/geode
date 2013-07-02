@@ -10,15 +10,34 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/Segment.h>
 #include <other/core/mesh/SegmentMesh.h>
+#include <other/core/geometry/SimplexTree.h>
 #include <other/core/array/Array.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/array/NdArray.h>
 #include <other/core/array/Nested.h>
+#include <other/core/geometry/Ray.h>
 #include <other/core/array/RawArray.h>
 #include <other/core/array/sort.h>
 namespace other {
 
 typedef real T;
+
+bool polygon_outlines_intersect(RawArray<const Vec2> p1, RawArray<const Vec2> p2, Ptr<SimplexTree<Vec2,1>> p2_tree) {
+  if (!p2_tree) {
+    auto mesh = to_segment_mesh(make_nested(p2), false);
+    p2_tree = new_<SimplexTree<Vec2,1>>(mesh.x, mesh.y, 4);
+  }
+
+  // walk p1, check for each segment's intersection
+  for (int i = 0, j = p1.size()-1; i < (int)p1.size(); j = i++) {
+    Vec2 dir = p1[i] - p1[j];
+    Ray<Vec2> ray(p1[j], dir);
+    ray.t_max = dir.magnitude();
+    if (p2_tree->intersection(ray, 1e-10))
+      return true;
+  }
+  return false;
+}
 
 Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<const int> indices) {
   return positions.subset(indices).copy();
@@ -228,7 +247,7 @@ Array<Vec2> polygon_simplify(RawArray<const Vec2> poly_, const T max_angle_deg, 
 }
 
 // TODO: Move into Segment.h, possibly merging with other code
-static bool segment_line_intersection(const Segment<Vector<T,2>>& segment, const Vector<T,2>& point_on_line,const Vector<T,2>& normal_of_line, T& interpolation_fraction) { 
+static bool segment_line_intersection(const Segment<Vector<T,2>>& segment, const Vector<T,2>& point_on_line,const Vector<T,2>& normal_of_line, T& interpolation_fraction) {
   const T denominator = dot(segment.x1-segment.x0,normal_of_line);
   if (!denominator) { // Parallel
     interpolation_fraction = FLT_MAX;
@@ -544,7 +563,7 @@ Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
     for (int i=0;i<poly.size();i++)
       new_poly[i] = poly[(i+base)%poly.size()];
   }
-  return new_polys;   
+  return new_polys;
 }
 
 }
