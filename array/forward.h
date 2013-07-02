@@ -55,6 +55,3 @@ template<class T,int d> struct IsContiguousArray<Array<T,d> >:mpl::true_{};
 template<class T,int d> struct IsContiguousArray<RawArray<T,d> >:mpl::true_{};
 
 }
-namespace std {
-template<class T,class A> class vector;
-}
