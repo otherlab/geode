@@ -492,6 +492,12 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
 
 Ref<SegmentMesh> nested_array_offsets_to_segment_mesh(RawArray<const int> offsets, bool open) {
   OTHER_ASSERT(offsets.size() && !offsets[0]); // Not a complete check, but may catch a few bugs
+
+  // empty?
+  if (offsets.back() == 0) {
+    return new_<SegmentMesh>(Array<Vector<int,2>>());
+  }
+
   const int count = offsets.size()-1;
   Array<Vector<int,2>> segments(offsets.back()-count*open,false);
   if (open) {
