@@ -8,9 +8,12 @@
 // 
 // In cloth terminology, we independently penalize weft, warp, and shear deformation.
 // For now, we ignore damping forces.
+//
+// Since SimpleShell is natively anisotropic, Dm cannot be QR-decomposed, and we can't
+// use StrainMeasure<T,2> directly.
 
 #include <other/core/force/Force.h>
-#include <other/core/force/StrainMeasure.h>
+#include <other/core/mesh/TriangleMesh.h>
 #include <other/core/vector/Matrix.h>
 namespace other {
 
@@ -22,18 +25,22 @@ public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Force<TV> Base;
 
-  Ref<const StrainMeasure<T,2>> strain;
   const T density;
   Vector<T,2> stretch_stiffness;
   T shear_stiffness;
   T F_threshold; // Threshold to prevent Hessian blowup for small F
 protected:
+  const int nodes_;
   Array<const TV> X;
   bool definite_;
   struct Info {
-    Matrix<T,3> Q; // 
-    SM2 Fh; // F = Q Fh
+    // Rest state
+    Vector<int,3> nodes;
+    Matrix<T,2> inv_Dm;
     T scale; // -volume
+    // Current state
+    Matrix<T,3> Q; // Rotation from polar decomposition
+    SM2 Fh; // F = Q Fh
     // Differential information
     Vector<T,4> H_planar; // Component of negative Hessian due to existing forces rotating in plane (meaning depends on definite flag)
     SM2 H_nonplanar; // Component of negative Hessian due to existing forces rotating out of the plane
@@ -41,7 +48,7 @@ protected:
   };
   Array<Info> info;
 
-  SimpleShell(const StrainMeasure<T,2>& strain, const T density);
+  SimpleShell(const TriangleMesh& mesh, RawArray<const Vector<T,2>> restX, const T density);
 public:
   virtual ~SimpleShell();
 
@@ -64,7 +71,7 @@ private:
   SM2 stiffness() const;
   SM2 simple_P(const Info& I) const; // Stress pretending that F stays symmetric 2x2
   template<bool definite> SM2 simple_DP(const Info& I) const; // Stress derivative pretending that F stays symmetric 2x2
-  template<bool definite> Matrix<T,3,2> force_differential(const Info& I, const Matrix<T,3,2>& dF, const UpperTriangularMatrix<T,2>& Dm_inverse) const;
+  template<bool definite> Matrix<T,3,2> force_differential(const Info& I, const Matrix<T,3,2>& dDs) const;
   template<bool definite> void update_position_helper();
   template<bool definite> void add_elastic_gradient_helper(SolidMatrix<TV>& matrix) const;
 };

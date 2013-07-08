@@ -45,10 +45,10 @@ template<class TV,int d> int FiniteVolume<TV,d>::nodes() const {
 
 template<class TV,int d> void FiniteVolume<TV,d>::structure(SolidMatrixStructure& structure) const {
   for (int t=0;t<strain->elements.size();t++) {
-    Vector<int,d+1>  nodes = strain->elements[t];
+    Vector<int,d+1> nodes = strain->elements[t];
     for (int i=0;i<nodes.size();i++)
       for (int j=i+1;j<nodes.size();j++)
-        structure.add_entry(i,j);
+        structure.add_entry(nodes[i],nodes[j]);
   }
 }
 

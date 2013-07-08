@@ -1,6 +1,7 @@
 // Specialized finite volume model for in-plane, anisotropic shell forces.
 
 #include <other/core/force/SimpleShell.h>
+#include <other/core/force/StrainMeasure.h>
 #include <other/core/python/Class.h>
 #include <other/core/utility/Log.h>
 #include <other/core/vector/normalize.h>
@@ -14,34 +15,45 @@ using std::endl;
 typedef real T;
 typedef Vector<T,3> TV;
 typedef SymmetricMatrix<T,2> SM2;
+typedef StrainMeasure<T,2> Strain;
+
 OTHER_DEFINE_TYPE(SimpleShell)
 
-SimpleShell::SimpleShell(const StrainMeasure<T,2>& strain, const T density)
-  : strain(ref(strain))
-  , density(density)
+SimpleShell::SimpleShell(const TriangleMesh& mesh, RawArray<const Vector<T,2>> restX, const T density)
+  : density(density)
   , shear_stiffness(0)
   , F_threshold(.1)
+  , nodes_(mesh.nodes())
   , definite_(false) {
-  info.resize(strain.elements.size(),false);
-  for (int t=0;t<strain.elements.size();t++)
-    info[t].scale = -(T)1/2/strain.Dm_inverse[t].determinant();
+  OTHER_ASSERT(mesh.nodes()<=restX.size());
+  info.resize(mesh.elements.size(),false);
+  for (int t=0;t<mesh.elements.size();t++) {
+    auto& I = info[t];
+    I.nodes = mesh.elements[t];
+    const auto Dm = Strain::Ds(restX,I.nodes);
+    const auto det = Dm.determinant();
+    if (det <= 0)
+      throw RuntimeError("SimpleShell: Inverted or degenerate rest state");
+    I.inv_Dm = Dm.inverse();
+    I.scale = -(T)1/2*det;
+  }
 }
 
 SimpleShell::~SimpleShell() {}
 
 int SimpleShell::nodes() const {
-  return strain->nodes;
+  return nodes_;
 }
 
 void SimpleShell::structure(SolidMatrixStructure& structure) const {
-  for (const auto& nodes : strain->elements)
-    for (int i=0;i<nodes.size();i++)
-      for (int j=i+1;j<nodes.size();j++)
-        structure.add_entry(i,j);
+  for (const auto& I : info)
+    for (int i=0;i<I.nodes.size();i++)
+      for (int j=i+1;j<I.nodes.size();j++)
+        structure.add_entry(I.nodes[i],I.nodes[j]);
 }
 
 void SimpleShell::update_position(Array<const TV> X_, bool definite) {
-  OTHER_ASSERT(X_.size() >= strain->nodes);
+  OTHER_ASSERT(X_.size() >= nodes_);
   X = X_;
   definite_ = definite;
   if (definite)
@@ -51,10 +63,9 @@ void SimpleShell::update_position(Array<const TV> X_, bool definite) {
 }
 
 template<bool definite> void SimpleShell::update_position_helper() {
-  for (int t=0;t<strain->elements.size();t++) {
+  for (auto& I : info) {
     // Rotate F to be symmetric
-    auto& I = info[t];
-    strain->F(X,t).fast_indefinite_polar_decomposition(I.Q,I.Fh);
+    (Strain::Ds(X,I.nodes)*I.inv_Dm).fast_indefinite_polar_decomposition(I.Q,I.Fh);
 
     // Precompute as much force differential information as we can.
     // First, evaluate force and force differential pretending that Fh stays symmetric
@@ -149,8 +160,7 @@ static inline Matrix<T,3,2> in_plane(const Matrix<T,3>& Q) {
 }
 
 void SimpleShell::add_elastic_force(RawArray<TV> F) const {
-  for (int t=0;t<strain->elements.size();t++) {
-    const auto& I = info[t];
+  for (const auto& I : info) {
     // Evaluate force pretending that Fh stays symmetric
     const auto Phs = simple_P(I);
     // Account for rotation induced by antisymmetric components of d(Q'F).
@@ -163,15 +173,15 @@ void SimpleShell::add_elastic_force(RawArray<TV> F) const {
                          (T).5*Phs.x10+go,
                          Phs.x11);
     // Apply force
-    const auto forces = in_plane(I.Q)*Ph.times_transpose(strain->Dm_inverse[t]);
-    strain->distribute_force(F,t,forces);
+    const auto forces = in_plane(I.Q)*Ph.times_transpose(I.inv_Dm);
+    Strain::distribute_force(F,I.nodes,forces);
   }
 }
 
-template<bool definite> inline Matrix<T,3,2> SimpleShell::force_differential(const Info& I, const Matrix<T,3,2>& dDs, const UpperTriangularMatrix<T,2>& Dm_inverse) const {
+template<bool definite> inline Matrix<T,3,2> SimpleShell::force_differential(const Info& I, const Matrix<T,3,2>& dDs) const {
   // Rotate dF into polar decomposition space.  Note that dFh is 3x2, not 2x2, since it includes out of plane terms.
   // Then warp fxy,fyx into (scaled) symmetric and nonsymmetric part, respectively
-  Matrix<T,3,2> dFh = I.Q.transpose_times(dDs*Dm_inverse);
+  Matrix<T,3,2> dFh = I.Q.transpose_times(dDs*I.inv_Dm);
   const T dFh_sym = sqrt(.5)*(dFh(0,1)+dFh(1,0));
   dFh(1,0) = sqrt(.5)*(dFh(0,1)-dFh(1,0));
   dFh(0,1) = dFh_sym;
@@ -199,16 +209,16 @@ template<bool definite> inline Matrix<T,3,2> SimpleShell::force_differential(con
   const Matrix<T,3,2> dPh(dP_planar.x,dP_planar.z,dP_nonplanar.x,
                           dP_planar.y,dP_planar.w,dP_nonplanar.y);
   // Unrotate force differential
-  return I.Q*dPh.times_transpose(Dm_inverse);
+  return I.Q*dPh.times_transpose(I.inv_Dm);
 }
 
 void SimpleShell::add_elastic_differential(RawArray<TV> dF, RawArray<const TV> dX) const {
   if (definite_)
-    for (int t=0;t<strain->elements.size();t++)
-      strain->distribute_force(dF,t,force_differential<true >(info[t],strain->Ds(dX,t),strain->Dm_inverse[t]));
+    for (const auto& I : info)
+      Strain::distribute_force(dF,I.nodes,force_differential<true >(I,Strain::Ds(dX,I.nodes)));
   else
-    for (int t=0;t<strain->elements.size();t++)
-      strain->distribute_force(dF,t,force_differential<false>(info[t],strain->Ds(dX,t),strain->Dm_inverse[t]));
+    for (const auto& I : info)
+      Strain::distribute_force(dF,I.nodes,force_differential<false>(I,Strain::Ds(dX,I.nodes)));
 }
 
 void SimpleShell::add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,3>> dFdX) const {
@@ -218,14 +228,12 @@ void SimpleShell::add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T
 template<bool definite> void SimpleShell::add_elastic_gradient_helper(SolidMatrix<TV>& matrix) const {
   const int m = 3, d = 2;
   Matrix<T,m> dGdD[d+1][d+1];
-  for (int t=0;t<strain->elements.size();t++) {
-    const auto& I = info[t];
-    const auto inv_Dm = strain->Dm_inverse[t];
+  for (const auto& I : info) {
     for (int i=0;i<d;i++)
       for (int j=0;j<m;j++) {
         Matrix<T,m,d> dDs;
         dDs(j,i) = 1;
-        Matrix<T,m,d> dG = force_differential<definite>(I,dDs,inv_Dm);
+        Matrix<T,m,d> dG = force_differential<definite>(I,dDs);
         for (int k=0;k<d;k++)
           dGdD[k+1][i+1].set_column(j,dG.column(k));
       }
@@ -238,10 +246,9 @@ template<bool definite> void SimpleShell::add_elastic_gradient_helper(SolidMatri
       sum -= sum_i;
     }
     dGdD[0][0] = sum;
-    Vector<int,d+1> nodes = strain->elements[t];
     for (int j=0;j<d+1;j++)
       for (int i=j;i<d+1;i++)
-        matrix.add_entry(nodes[i],nodes[j],dGdD[i][j]);
+        matrix.add_entry(I.nodes[i],I.nodes[j],dGdD[i][j]);
   }
 }
 
@@ -267,9 +274,9 @@ void SimpleShell::add_damping_gradient(SolidMatrix<TV>& matrix) const {
 void SimpleShell::add_frequency_squared(RawArray<T> frequency_squared) const {
   const T max_stiff = stiffness().maxabs();
   Hashtable<int,T> particle_frequency_squared;
-  for (int t=0;t<strain->elements.size();t++) {
-    const T elastic_squared = max_stiff/(sqr(strain->rest_altitude(t))*density);
-    for (const int n : strain->elements(t)) {
+  for (const auto& I : info) {
+    const T elastic_squared = max_stiff/(sqr(I.inv_Dm.inverse().simplex_minimum_altitude())*density);
+    for (const int n : I.nodes) {
       T& data = particle_frequency_squared.get_or_insert(n);
       data = max(data,elastic_squared);
     }
@@ -280,8 +287,8 @@ void SimpleShell::add_frequency_squared(RawArray<T> frequency_squared) const {
 
 T SimpleShell::strain_rate(RawArray<const TV> V) const {
   T strain_rate = 0;
-  for (int t=0;t<strain->elements.size();t++)
-    strain_rate = max(strain_rate,strain->F(V,t).maxabs());
+  for (const auto& I : info)
+    strain_rate = max(strain_rate,(Strain::Ds(V,I.nodes)*I.inv_Dm).maxabs());
   return strain_rate;
 }
 
@@ -291,7 +298,7 @@ using namespace other;
 void wrap_simple_shell() {
   typedef SimpleShell Self;
   Class<Self>("SimpleShell")
-    .OTHER_INIT(const StrainMeasure<T,2>&,T)
+    .OTHER_INIT(const TriangleMesh&,RawArray<const Vector<T,2>>,T)
     .OTHER_FIELD(density)
     .OTHER_FIELD(stretch_stiffness)
     .OTHER_FIELD(shear_stiffness)
