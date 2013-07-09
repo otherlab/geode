@@ -570,12 +570,14 @@ public:
   OTHER_CORE_EXPORT real area(RawArray<const FaceHandle> faces) const;
 
   // Warning: these construct new arrays or copy memory
-  OTHER_CORE_EXPORT Array<Vector<int,3> > elements() const;
-  OTHER_CORE_EXPORT Array<Vector<int,2> > segments() const;
-  OTHER_CORE_EXPORT Array<Vector<real,3> > X_python() const;
+  OTHER_CORE_EXPORT Array<Vector<int,3>> elements() const;
+  OTHER_CORE_EXPORT Array<Vector<int,2>> segments() const;
+  OTHER_CORE_EXPORT Array<Vector<real,3>> X_python() const;
+  OTHER_CORE_EXPORT Field<Vector<Vector<real,2>,3>,FaceHandle> face_texcoords() const;
   OTHER_CORE_EXPORT void set_X_python(RawArray<const Vector<real,3>> new_X);
   OTHER_CORE_EXPORT void set_vertex_normals(RawArray<const Vector<real,3>> normals);
   OTHER_CORE_EXPORT void set_vertex_colors(RawArray<const Vector<real,3>> colors);
+  OTHER_CORE_EXPORT void set_face_texcoords(RawField<const Vector<Vector<real,2>,3>,FaceHandle> texcoords);
 
   // Warning: reference goes invalid if the mesh is changed
   OTHER_CORE_EXPORT RawArray<Vector<real,3> > X();
