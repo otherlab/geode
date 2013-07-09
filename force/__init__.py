@@ -42,10 +42,10 @@ def simple_shell(mesh,density,Dm=None,X=None,stretch=(0,0),shear=0):
     X = asarray(X)
     assert X.ndim==2 and X.shape[1]==2, 'Expected 2D rest state'
     tris = mesh.elements
-    Dm = X[tris[:,1:]]-X[tris[:,0]].reshape(-1,1,2)
+    Dm = X[tris[:,1:]].swapaxes(1,2)-X[tris[:,0]].reshape(-1,2,1)
   else:
     assert X is None
-  shell = SimpleShell(mesh,Dm,density)
+  shell = SimpleShell(mesh,ascontiguousarray(Dm),density)
   shell.stretch_stiffness = stretch
   shell.shear_stiffness = shear
   return shell
