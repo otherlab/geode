@@ -59,7 +59,7 @@ structure(SolidMatrixStructure& structure) const {
   }
 }
 
-template<class TV> void Springs<TV>::update_position(Array<const TV> X_, bool definite) {
+template<class TV> void Springs<TV>::update_position(Array<const TV> X_, const bool definite) {
   OTHER_ASSERT(X_.size()==nodes_);
   X = X_;
   for (int s=0;s<springs.size();s++) {
@@ -73,7 +73,7 @@ template<class TV> void Springs<TV>::update_position(Array<const TV> X_, bool de
     else {
       I.beta = I.stiffness;
       if (I.length>(definite?I.restlength:(T).01*I.restlength)) {
-        T rotational = I.stiffness*(1-I.restlength/I.length);
+        const T rotational = I.stiffness*(1-I.restlength/I.length);
         I.alpha += rotational;
         I.beta -= rotational;
       }

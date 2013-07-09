@@ -19,22 +19,21 @@ typedef StrainMeasure<T,2> Strain;
 
 OTHER_DEFINE_TYPE(SimpleShell)
 
-SimpleShell::SimpleShell(const TriangleMesh& mesh, RawArray<const Vector<T,2>> restX, const T density)
+SimpleShell::SimpleShell(const TriangleMesh& mesh, RawArray<const Matrix<T,2>> Dm, const T density)
   : density(density)
   , shear_stiffness(0)
   , F_threshold(.1)
   , nodes_(mesh.nodes())
   , definite_(false) {
-  OTHER_ASSERT(mesh.nodes()<=restX.size());
+  OTHER_ASSERT(mesh.elements.size()==Dm.size());
   info.resize(mesh.elements.size(),false);
   for (int t=0;t<mesh.elements.size();t++) {
     auto& I = info[t];
     I.nodes = mesh.elements[t];
-    const auto Dm = Strain::Ds(restX,I.nodes);
-    const auto det = Dm.determinant();
+    const auto det = Dm[t].determinant();
     if (det <= 0)
       throw RuntimeError("SimpleShell: Inverted or degenerate rest state");
-    I.inv_Dm = Dm.inverse();
+    I.inv_Dm = Dm[t].inverse();
     I.scale = -(T)1/2*det;
   }
 }
@@ -88,7 +87,7 @@ template<bool definite> void SimpleShell::update_position_helper() {
                                     +Phs.x11*SM2(sqr(Fhc.x10),-Fhc.x10*Fhc.x00,det+sqr(Fhc.x00))
                                     +Phs.x10*SM2(-Fhc.x10*Fhc.x11,Fhc.x00*Fhc.x11,-Fhc.x10*Fhc.x00));
     if (definite)
-      I.H_nonplanar = -(-I.H_nonplanar.positive_definite_part());
+      I.H_nonplanar = -(-I.H_nonplanar).positive_definite_part();
 
     // Next, the 4x4 in-plane block due to Phs.  Only the row and column of the 2x2 antisymmetric component are nonzero,
     // which amounts to four nonzero entries.  In simple-shell.nb, H_planar is {a,b,c,d}.
@@ -298,7 +297,7 @@ using namespace other;
 void wrap_simple_shell() {
   typedef SimpleShell Self;
   Class<Self>("SimpleShell")
-    .OTHER_INIT(const TriangleMesh&,RawArray<const Vector<T,2>>,T)
+    .OTHER_INIT(const TriangleMesh&,RawArray<const Matrix<T,2>>,T)
     .OTHER_FIELD(density)
     .OTHER_FIELD(stretch_stiffness)
     .OTHER_FIELD(shear_stiffness)

@@ -48,7 +48,7 @@ protected:
   };
   Array<Info> info;
 
-  SimpleShell(const TriangleMesh& mesh, RawArray<const Vector<T,2>> restX, const T density);
+  SimpleShell(const TriangleMesh& mesh, RawArray<const Matrix<T,2>> Dm, const T density);
 public:
   virtual ~SimpleShell();
 

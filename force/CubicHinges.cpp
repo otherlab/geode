@@ -196,7 +196,8 @@ template<class TV> int CubicHinges<TV>::nodes() const {
 template<class TV> void CubicHinges<TV>::update_position(Array<const TV> X_, bool definite) {
   // Not much to do since our stiffness matrix is so simple
   OTHER_ASSERT(X_.size()>=nodes_);
-  OTHER_ASSERT(!definite || simple_hessian);
+  if (definite && !simple_hessian)
+    OTHER_NOT_IMPLEMENTED("Definiteness fix implemented only for the simple_hessian case");
   X = X_;
 }
 

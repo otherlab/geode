@@ -54,13 +54,15 @@ def test_fvm_3d():
   force_test(fvm,X+dX,verbose=1)
 
 def test_simple_shell():
-  random.seed(12872)
-  X = random.randn(3,2)
-  X2 = .1*random.randn(3,3)
-  X2[:,:2] += X
-  shell = simple_shell([(0,1,2)],1000,X,stretch=(7,6),shear=3)
-  shell.F_threshold = 1e-7
-  force_test(shell,X2,verbose=1)
+  for i in 0,1,3,4,7:
+    print '\ni = %d'%i
+    random.seed(12872+i)
+    X = random.randn(3,2)
+    X2 = .1*random.randn(3,3)
+    X2[:,:2] += X
+    shell = simple_shell([(0,1,2)],1000,X=X,stretch=(7,6),shear=3)
+    shell.F_threshold = 1e-7
+    force_test(shell,X2,verbose=1)
 
 def test_bending():
   random.seed(7218414)

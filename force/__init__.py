@@ -36,11 +36,16 @@ def neo_hookean(youngs_modulus=3e6,poissons_ratio=.475,rayleigh_coefficient=.05,
   return {2:NeoHookean2d(youngs_modulus,poissons_ratio,rayleigh_coefficient,failure_threshold),
           3:NeoHookean3d(youngs_modulus,poissons_ratio,rayleigh_coefficient,failure_threshold)}
 
-def simple_shell(mesh,density,X,stretch=(0,0),shear=0):
+def simple_shell(mesh,density,Dm=None,X=None,stretch=(0,0),shear=0):
   mesh = mesh if isinstance(mesh,Object) else TriangleMesh(asarray(mesh,dtype=int32))
-  X = asarray(X)
-  assert X.ndim==2 and X.shape[-1]==2, 'Expected 2D rest state'
-  shell = SimpleShell(mesh,X,density)
+  if Dm is None:
+    X = asarray(X)
+    assert X.ndim==2 and X.shape[1]==2, 'Expected 2D rest state'
+    tris = mesh.elements
+    Dm = X[tris[:,1:]]-X[tris[:,0]].reshape(-1,1,2)
+  else:
+    assert X is None
+  shell = SimpleShell(mesh,Dm,density)
   shell.stretch_stiffness = stretch
   shell.shear_stiffness = shear
   return shell
