@@ -828,7 +828,7 @@ vector<vector<FaceHandle>> TriMesh::surface_components(VertexHandle vh, unordere
   auto incident = incident_faces(vh);
 
   // map face handles to indices in incident
-  unordered_map<FaceHandle, int, Hasher> fmap;
+  unordered_map<FaceHandle, size_t, Hasher> fmap;
   for (auto it = incident.begin(); it != incident.end(); ++it) {
     fmap[*it] = it-incident.begin();
   }

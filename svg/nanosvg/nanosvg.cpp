@@ -1462,7 +1462,6 @@ static void svgParsePoly(struct SVGParser* p, const char** attr, int closeFlag)
         }
     }
 
-
     /* //let bezier.close do this
     // make last bezier segment if poly is closed only
     if (closeFlag && sizeof(first)) { // "&& sizeof(first) - to suppress compiler warning about unused variable (also doesn't work, clang wants & here, not &&)
