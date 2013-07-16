@@ -26,15 +26,15 @@ namespace other {
 
 using std::string;
 namespace mpl = boost::mpl;
+ 
+#ifdef OTHER_PYTHON
 
 // Conversion for PyObject*
 static inline PyObject*
-to_python(PyObject* value) {
-  OTHER_XINCREF(value); // Allow zero so that wrapped functions can return (PyObject*)0 on error
-  return value;
+    to_python(PyObject* value) {
+        OTHER_XINCREF(value); // Allow zero so that wrapped functions can return (PyObject*)0 on error
+        return value;
 }
- 
-#ifdef OTHER_PYTHON
 
 // Conversion from bool
 static inline PyObject*
