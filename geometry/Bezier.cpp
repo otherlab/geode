@@ -68,7 +68,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& ra
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBox& range, int res) const{
 
-  const bool debug = false;
+  const bool debug = true;
 
   if (debug)
     std::cout << "sampling range " << range << " with " << res << " segments." << std::endl;
@@ -87,6 +87,10 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   // pick points on the interior at distance i/n*l for i = 0...n
   Array<Vector<real,d>> samples;
   samples.append(path.front());
+
+  if (total_length == 0)
+    return samples;
+
   real distance = 0;
   real sample_d = samples.size()/(double)res * total_length;
   for (int i = 1; i < (int)path.size()-1; ++i) {
