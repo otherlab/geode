@@ -76,6 +76,15 @@ template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,cons
 template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5,const T& x6)
 {vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);v.push_back(x6);return v;}
 
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5,const T& x6,const T& x7)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);v.push_back(x6);v.push_back(x7);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5,const T& x6,const T& x7,const T& x8)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);v.push_back(x6);v.push_back(x7);v.push_back(x8);return v;}
+
+template<class T> vector<T> make_vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5,const T& x6,const T& x7,const T& x8,const T& x9)
+{vector<T> v;v.push_back(x0);v.push_back(x1);v.push_back(x2);v.push_back(x3);v.push_back(x4);v.push_back(x5);v.push_back(x6);v.push_back(x7);v.push_back(x8);v.push_back(x9);return v;}
+
 #endif
 
 // Add a bunch of elements to an stl container
