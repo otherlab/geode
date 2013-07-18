@@ -38,29 +38,35 @@ template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& ra
   Vector<real,d> p1, p2, p3, p4;
   auto it = knots.upper_bound(range.begin);
   auto end = knots.lower_bound(range.end);
-
   if(end == knots.end()) end--;
   OTHER_ASSERT(it!=knots.end() && end!=knots.end());
   if(it!=knots.begin()) it--;
 
   while(it!=end){
+    //jump across null segment end->beginning for closed
     if(b_closed && it->first == t_max()){
-      if(range.end == t_min() || range.end == t_max()) break;
+      if(range.end == t_min() || range.end == t_max())
+        break;
+
       it = knots.begin();
     }
     p1 = it->second->pt;
     p2 = it->second->tangent_out;
+
     it++;
     if(it == knots.end()) it = knots.begin(); // wrap around at end
 
     p3 = it->second->tangent_in;
     p4 = it->second->pt;
 
-    for(int j=0;j<res;j++){
-      real t = j/(real)(res); // [0,1)
-      path.append(other::point(p1,p2,p3,p4,t));
+    if((p4-p2).magnitude() > 1e-8){
+      for(int j=0;j<res;j++){
+        real t = j/(real)(res); // [0,1)
+        path.append(other::point(p1,p2,p3,p4,t));
+      }
     }
   }
+
   path.append(end->second->pt);
 
   return path;
@@ -71,7 +77,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   const bool debug = true;
 
   if (debug)
-    std::cout << "sampling range " << range << " with " << res << " segments." << std::endl;
+    std::cout << "sampling range " << range << " with " << res << " segments." << " bezier range: " << t_range << std::endl;
 
   Array<Vector<real,d>> path = segment(range,std::max(10*res, 500));
 
@@ -88,21 +94,27 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   Array<Vector<real,d>> samples;
   samples.append(path.front());
 
+  real step = total_length/(double)res;
+
   if (total_length == 0)
     return samples;
 
   real distance = 0;
-  real sample_d = samples.size()/(double)res * total_length;
+  real sample_d = samples.size()*step;
   for (int i = 1; i < (int)path.size()-1; ++i) {
     distance += (path[i-1] - path[i]).magnitude();
     if (distance >= sample_d) {
       if (debug)
         std::cout << "  adding sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
       samples.append(path[i]);
-      sample_d = samples.size()/(double)res * total_length;
+      sample_d = samples.size()*step;
     }
   }
+
   samples.append(path.back());
+
+  if (debug)
+    std::cout << "  samples: " << samples.size() << " res+1: " << res+1 << std::endl;
 
   OTHER_ASSERT(samples.size() >= 2 && samples.size() == res+1);
   return samples;

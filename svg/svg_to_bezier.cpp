@@ -38,7 +38,8 @@ static vector<Ref<Bezier<2> > > svg_paths_to_beziers(const struct SVGPath* plist
     }
     if(   it->closed
        || (it->hasFill && bez.knots.size()>2)) { // SVG implicitly closes filled shapes.  Obey that here, unless we only have two knots.
-      bez.close();
+      auto it = bez.knots.end();--it;
+      (it->second->pt - (--it)->second->pt).magnitude() > 1e-8 ? bez.fuse_ends() : bez.close();
     }
   }
 
