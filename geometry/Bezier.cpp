@@ -38,93 +38,86 @@ template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& ra
   Vector<real,d> p1, p2, p3, p4;
   auto it = knots.upper_bound(range.begin);
   auto end = knots.lower_bound(range.end);
-
   if(end == knots.end()) end--;
   OTHER_ASSERT(it!=knots.end() && end!=knots.end());
   if(it!=knots.begin()) it--;
 
   while(it!=end){
+    //jump across null segment end->beginning for closed
     if(b_closed && it->first == t_max()){
-      if(range.end == t_min() || range.end == t_max()) break;
+      if(range.end == t_min() || range.end == t_max())
+        break;
+
       it = knots.begin();
     }
     p1 = it->second->pt;
     p2 = it->second->tangent_out;
+
     it++;
     if(it == knots.end()) it = knots.begin(); // wrap around at end
 
     p3 = it->second->tangent_in;
     p4 = it->second->pt;
 
-    for(int j=0;j<res;j++){
-      real t = j/(real)(res); // [0,1)
-      path.append(other::point(p1,p2,p3,p4,t));
+    if((p4-p2).magnitude() > 1e-8){
+      for(int j=0;j<res;j++){
+        real t = j/(real)(res); // [0,1)
+        path.append(other::point(p1,p2,p3,p4,t));
+      }
     }
   }
+
   path.append(end->second->pt);
 
   return path;
 }
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBox& range, int res) const{
-  Array<Vector<real,d>> path, d_path;
-  d_path = segment(range,200);
-  real len = open_polygon_length(d_path);
-  real step = len/res;
-  real tstep = .001; //TODO: multi-resolution/binary-search?
 
-  Vector<real,d> p1, p2, p3, p4;
-  auto it = knots.upper_bound(range.begin);
-  auto end = knots.lower_bound(range.end);
-  //Replaced this to support wrapping around: if(end == knots.end()) end--;
-  if(end == knots.end()) end = knots.begin();
+  const bool debug = true;
 
-  OTHER_ASSERT(it!=knots.end() && end!=knots.end());
+  if (debug)
+    std::cout << "sampling range " << range << " with " << res << " segments." << " bezier range: " << t_range << std::endl;
 
-  //Replaced this to support wrapping around: if(it->first != t_min()) it--;
-  if(it == knots.begin()) it = knots.end();
-  it--;
+  Array<Vector<real,d>> path = segment(range,std::max(10*res, 500));
 
-  path.append(it->second->pt);
-  real t = tstep;
-  real dst = tstep;
+  // measure the length of the path
+  real total_length = 0;
+  for (int i = 1; i < (int)path.size(); ++i) {
+    total_length += (path[i-1] - path[i]).magnitude();
+  }
 
-  do {
-    p1 = it->second->pt;
-    p2 = it->second->tangent_out;
-    it++;
-    if(it == knots.end()) {
-      OTHER_ASSERT(range.end < range.begin, "Attempting to wrap around, but range is positive! Likely an infinite loop.");
-      it = knots.begin(); // wrap around if we go past end
-      it++; // and skip past duplicate first knot
+  if (debug)
+    std::cout << "  total length " << total_length << std::endl;
+
+  // pick points on the interior at distance i/n*l for i = 0...n
+  Array<Vector<real,d>> samples;
+  samples.append(path.front());
+
+  real step = total_length/(double)res;
+
+  if (total_length == 0)
+    return samples;
+
+  real distance = 0;
+  real sample_d = samples.size()*step;
+  for (int i = 1; i < (int)path.size()-1; ++i) {
+    distance += (path[i-1] - path[i]).magnitude();
+    if (distance >= sample_d) {
+      if (debug)
+        std::cout << "  adding sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
+      samples.append(path[i]);
+      sample_d = samples.size()*step;
     }
-    OTHER_ASSERT(it != knots.end());
+  }
 
-    p3 = it->second->tangent_in;
-    p4 = it->second->pt;
+  samples.append(path.back());
 
-    TV pt;
-    TV prev = p1;
-    while(t<1){
-      while(dst < step){
-        pt = other::point(p1,p2,p3,p4,t);
-        dst += (pt-prev).magnitude();
-        prev = pt;
-        t+=tstep;
-        if(t>=1) break;
-      }
-      if(t<1) {
-        path.append(pt);
-        dst = 0;
-      }
-    }
-    t-=1;
-  } while(it->second != end->second);
+  if (debug)
+    std::cout << "  samples: " << samples.size() << " res+1: " << res+1 << std::endl;
 
-  path.append(end->second->pt);
-
-  OTHER_ASSERT(path.size() >= 2 && (int)path.size() == res +1);
-  return path;
+  OTHER_ASSERT(samples.size() >= 2 && samples.size() == res+1);
+  return samples;
 }
 
 template<int d> Span<d> Bezier<d>::segment(real t) const{

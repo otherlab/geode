@@ -4,9 +4,8 @@
 #include <other/core/utility/process.h>
 #include <other/core/utility/debug.h>
 #include <other/core/utility/Log.h>
-#include <other/core/math/min.h>
-#include <assert.h>
-#include <iostream>
+#include <other/core/python/wrap.h>
+#include <other/core/vector/Vector.h>
 #include <iomanip>
 #include <stdio.h>
 #include <cstring>
@@ -15,20 +14,50 @@
 #include <sys/resource.h>
 #include <signal.h>
 #include <execinfo.h>
+#else
+#define WINDOWS_LEAN_AND_MEAN
+#include <windows.h>
+#include <psapi.h>
 #endif
-#if defined(__APPLE__) && defined(__SSE__)
+#ifdef __APPLE__
+#include <mach/task.h>
+#include <mach/mach_init.h>
+#ifdef __SSE__
 #include <xmmintrin.h>
 #endif
+#endif
+namespace other {
+namespace process {
 
-namespace other{
-namespace process{
-
+using std::cout;
 using std::endl;
 using std::flush;
 
 #ifdef _WIN32
 
-size_t memory_usage(){OTHER_NOT_IMPLEMENTED();}
+static inline double seconds(const FILETIME& f) {
+  // See http://msdn.microsoft.com/en-us/library/ms724290%28v=vs.85%29.aspx
+  return 100e-9*(f.dwLowDateTime|uint64_t(f.dwHighDateTime)<<32);
+}
+
+Vector<double,2> cpu_times() {
+  FILETIME creation, exit, kernel, user;
+  GetProcessTimes(GetCurrentProcess(),&creation,&exit,&kernel,&user);
+  return vec(seconds(user),seconds(kernel));
+}
+
+size_t memory_usage() {
+  PROCESS_MEMORY_COUNTERS info;
+  GetProcessMemoryInfo(GetCurrentProcess(),&info,sizeof(info));
+  return info.WorkingSetSize;
+}
+
+size_t max_memory_usage() {
+  PROCESS_MEMORY_COUNTERS info;
+  GetProcessMemoryInfo(GetCurrentProcess(),&info,sizeof(info));
+  return info.PeakWorkingSetSize;
+}
+
 void set_float_exceptions(const int exceptions){OTHER_NOT_IMPLEMENTED();}
 void backtrace(){OTHER_NOT_IMPLEMENTED();}
 void set_backtrace(const bool enable){OTHER_NOT_IMPLEMENTED();}
@@ -36,10 +65,25 @@ void block_interrupts(const bool block){OTHER_NOT_IMPLEMENTED();}
 
 #else
 
-#ifdef __linux__
+static inline double seconds(const struct timeval& t) {
+  return t.tv_sec+1e-6*t.tv_usec;
+}
 
-// Recent versions of Linux no longer implement getrusage usefully, so read from /proc/self/statm instead
+Vector<double,2> cpu_times() {
+  struct rusage usage;
+  getrusage(RUSAGE_SELF,&usage);
+  return vec(seconds(usage.ru_utime),seconds(usage.ru_stime));
+}
+
+size_t max_memory_usage() {
+  struct rusage usage;
+  getrusage(RUSAGE_SELF,&usage);
+  return usage.ru_maxrss;
+}
+
 size_t memory_usage() {
+#if defined(__linux__)
+  // Recent versions of Linux no longer implement all of getrusage, so read from /proc/self/statm instead.
   FILE* file = fopen("/proc/self/statm","r");
   if (!file)
     return 0;
@@ -47,18 +91,22 @@ size_t memory_usage() {
   int r = fscanf(file,"%zu",&size);
   fclose(file);
   return r==1?getpagesize()*size:0;
-}
+
+#elif defined(__APPLE__)
+  // Actually, ru_idrss and ru_isrss don't work on Mac either.  See http://miknight.blogspot.com/2005/11/resident-set-size-in-mac-os-x.html.
+  struct task_basic_info info;
+  mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
+  task_info(mach_task_self(),TASK_BASIC_INFO,(task_info_t)&info,&count);
+  return info.resident_size;
 
 #else
-
-// On other versions of posix, we have a convenient portable system call.
-size_t memory_usage() {
+  // On other versions of posix, we hope getrusage actually works.
   struct rusage usage;
   getrusage(RUSAGE_SELF,&usage);
+  cout << "blah = "<<usage.ru_idrss<<" "<<usage.ru_isrss<<endl;
   return usage.ru_idrss+usage.ru_isrss;
-}
-
 #endif
+}
 
 static void float_exception_handler(int sig_number, siginfo_t* info, void *data) {
   if (sig_number!=SIGFPE) OTHER_FATAL_ERROR();
@@ -218,4 +266,12 @@ void set_backtrace(const bool enable) {
 
 #endif
 }
+}
+using namespace other;
+using namespace process;
+
+void wrap_process() {
+  OTHER_FUNCTION(cpu_times)
+  OTHER_FUNCTION(memory_usage)
+  OTHER_FUNCTION(max_memory_usage)
 }

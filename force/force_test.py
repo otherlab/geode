@@ -1,7 +1,7 @@
 from __future__ import absolute_import,division
 from other.core import *
 
-def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,ignore_hessian=False,single_input=None):
+def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,ignore_hessian=False,single_input=None,definite=True):
   '''Test a force's methods against numerical differentiation'''
   try:
     structure = SolidMatrixStructure(len(X))
@@ -38,10 +38,12 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
     force.update_position(X,False)
     force.add_damping_force(F,V)
     return F
-  def elastic_gradient_times(X,dX):
+  def update_elastic_gradient(X,definite=False):
     matrix.zero()
-    force.update_position(X,False)
+    force.update_position(X,definite)
     force.add_elastic_gradient(matrix)
+  def elastic_gradient_times(X,dX):
+    update_elastic_gradient(X)
     F = empty_like(X)
     matrix.multiply(dX,F)
     return F
@@ -64,7 +66,7 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
     Fe1 = elastic_force(X+dX/2)
     e = relative_error(tensordot(Fe1,dX,axes=2),U0-U2)
     if verbose:
-      print '|Fe1| %g, U0 %g, U2 %g'%(maxabs(Fe1),U0,U2)
+      print '|Fe1| %r, U0 %r, U2 %r'%(maxabs(Fe1),U0,U2)
       print 'elastic force error =',e
     assert e < tolerance
 
@@ -74,7 +76,7 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
       dFe = elastic_differential(X+dX/2,dX)
       e = relative_error(dFe,Fe2-Fe0)
       if verbose:
-        print '|dFe| %g, |Fe2| %g, |Fe0| %g, |Fe2-Fe0| %g'%(maxabs(dFe),maxabs(Fe2),maxabs(Fe0),maxabs(Fe2-Fe0))
+        print '|dFe| %r, |Fe2| %r, |Fe0| %r, |Fe2-Fe0| %r'%(maxabs(dFe),maxabs(Fe2),maxabs(Fe0),maxabs(Fe2-Fe0))
         print 'elastic differential error =',e
       assert e < tolerance
 
@@ -88,6 +90,20 @@ def force_test(force,X,dx_scale=1e-5,tolerance=1e-5,iterations=10,verbose=False,
           print 'elastic gradient force errors = %s'%magnitudes(dF-dF2)
         print 'elastic gradient error =',e
       assert e < tolerance
+      # Test definiteness
+      if definite:
+        try:
+          update_elastic_gradient(X,definite=True)
+          A = matrix.dense()
+          w = linalg.eigvalsh(matrix.dense())
+          if verbose:
+            set_printoptions(linewidth=250)
+            if 0:
+              print 'A =\n%s'%A
+            print 'eigenvalues = %s'%sort(w)
+          assert w.max()<=tolerance*maxabs(w)
+        except NotImplementedError:
+          pass
 
     # Test elastic gradient block diagonal
     i = random.randint(len(X))

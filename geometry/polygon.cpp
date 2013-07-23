@@ -8,17 +8,36 @@
 #include <other/core/vector/Vector2d.h>
 #include <other/core/vector/normalize.h>
 #include <other/core/geometry/Box.h>
-#include <other/core/geometry/Segment2d.h>
+#include <other/core/geometry/Segment.h>
 #include <other/core/mesh/SegmentMesh.h>
+#include <other/core/geometry/SimplexTree.h>
 #include <other/core/array/Array.h>
 #include <other/core/array/IndirectArray.h>
 #include <other/core/array/NdArray.h>
 #include <other/core/array/Nested.h>
+#include <other/core/geometry/Ray.h>
 #include <other/core/array/RawArray.h>
 #include <other/core/array/sort.h>
 namespace other {
 
 typedef real T;
+
+bool polygon_outlines_intersect(RawArray<const Vec2> p1, RawArray<const Vec2> p2, Ptr<SimplexTree<Vec2,1>> p2_tree) {
+  if (!p2_tree) {
+    auto mesh = to_segment_mesh(make_nested(p2), false);
+    p2_tree = new_<SimplexTree<Vec2,1>>(mesh.x, mesh.y, 4);
+  }
+
+  // walk p1, check for each segment's intersection
+  for (int i = 0, j = p1.size()-1; i < (int)p1.size(); j = i++) {
+    Vec2 dir = p1[i] - p1[j];
+    Ray<Vec2> ray(p1[j], dir);
+    ray.t_max = dir.magnitude();
+    if (p2_tree->intersection(ray, 1e-10))
+      return true;
+  }
+  return false;
+}
 
 Array<Vec2> polygon_from_index_list(RawArray<const Vec2> positions, RawArray<const int> indices) {
   return positions.subset(indices).copy();
@@ -95,7 +114,7 @@ bool inside_polygon(RawArray<const Vec2> poly, const Vec2 p) {
   Vec2 outside = poly[0] + vec(vfar,vfar); // TODO: make random?
   Segment<Vec2> S(p,outside);
   for (int i = 0, j = poly.size()-1; i < poly.size(); j = i++)
-    count += S.segment_segment_intersection(Segment<Vec2>(poly[i], poly[j]));
+    count += segment_segment_distance(S,simplex(poly[i],poly[j]))==0;
   return count & 1;
 }
 
@@ -227,6 +246,16 @@ Array<Vec2> polygon_simplify(RawArray<const Vec2> poly_, const T max_angle_deg, 
   return poly;
 }
 
+// TODO: Move into Segment.h, possibly merging with other code
+static bool segment_line_intersection(const Segment<Vector<T,2>>& segment, const Vector<T,2>& point_on_line,const Vector<T,2>& normal_of_line, T& interpolation_fraction) {
+  const T denominator = dot(segment.x1-segment.x0,normal_of_line);
+  if (!denominator) { // Parallel
+    interpolation_fraction = FLT_MAX;
+    return false;
+  }
+  interpolation_fraction = dot(point_on_line-segment.x0,normal_of_line)/denominator;
+  return 0<=interpolation_fraction && interpolation_fraction<=1;
+}
 
 Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const Vec2> poly, const T offset, const T maxangle_deg, const T minangle_deg) {
   OTHER_ASSERT(poly.size() > 1);
@@ -269,8 +298,8 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
 
       } else {
 
-        s0l.segment_line_intersection(s1l.x0, n1, t0);
-        s1l.segment_line_intersection(s0l.x0, n0, t1);
+        segment_line_intersection(s0l,s1l.x0, n1, t0);
+        segment_line_intersection(s1l,s0l.x0, n0, t1);
 
         // TODO: walk further here to avoid all local self-intersecions
         if (t0 < 0 || t1 > 1) {
@@ -281,7 +310,7 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
 
       }
 
-      Vec2 p = s0l.point_from_barycentric_coordinates(t0);
+      Vec2 p = s0l.interpolate(t0);
 
       offset_poly.append(p);
       correspondence.append(i);
@@ -370,7 +399,7 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
 
         // check if it conflicts with ci-2,ci-1
         Segment<Vec2> sm2(poly[cim2], poly[cim1]);
-        T d = sm2.distance(p);
+        T d = segment_point_distance(sm2,p);
         if (d < offset) {
           merge = true;
           //std::cout << "point conflicting with last segment " << cim2 << "--" << cim1 << " (d/offset = " << d / offset << "): " << i << " (poly " << ci << ", last " << ilast << ", next " << inext << ", can delete: " << can_delete << ")" << std::endl;
@@ -382,7 +411,7 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
           Segment<Vec2> sl(poly[cil], offset_poly[ilast]);
           Segment<Vec2> st(poly[ci], offset_poly[i]);
 
-          if (cil != ci && sl.segment_segment_intersection(st)) {
+          if (cil != ci && segment_segment_distance(sl,st)==0) { // TODO: Not robust
             // the two connections intersect
             //std::cout << "connectors " << i << "->" << ci << " and " << ilast << "->" << cil << " intersect." << std::endl;
 
@@ -421,7 +450,7 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
 
         // check if it conflicts with ci+1,ci+2
         Segment<Vec2> sp2(poly[cip1], poly[cip2]);
-        T d = sp2.distance(p);
+        T d = segment_point_distance(sp2,p);
         if (d < offset) {
           merge = true;
           //std::cout << "point conflicting with next segment " << cip1 << "--" << cip2 << " (d/offset = " << d / offset << "): " << i << " (poly " << ci << ", last " << ilast << ", next " << inext << ", can delete: " << can_delete << ")" << std::endl;
@@ -463,6 +492,12 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
 
 Ref<SegmentMesh> nested_array_offsets_to_segment_mesh(RawArray<const int> offsets, bool open) {
   OTHER_ASSERT(offsets.size() && !offsets[0]); // Not a complete check, but may catch a few bugs
+
+  // empty?
+  if (offsets.back() == 0) {
+    return new_<SegmentMesh>(Array<Vector<int,2>>());
+  }
+
   const int count = offsets.size()-1;
   Array<Vector<int,2>> segments(offsets.back()-count*open,false);
   if (open) {
@@ -534,7 +569,7 @@ Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
     for (int i=0;i<poly.size();i++)
       new_poly[i] = poly[(i+base)%poly.size()];
   }
-  return new_polys;   
+  return new_polys;
 }
 
 }

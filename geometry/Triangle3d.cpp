@@ -5,7 +5,7 @@
 #include <other/core/array/Array.h>
 #include <other/core/math/constants.h>
 #include <other/core/geometry/Ray.h>
-#include <other/core/geometry/Segment3d.h>
+#include <other/core/geometry/Segment.h>
 #include <other/core/math/lerp.h>
 namespace other{
 
@@ -155,47 +155,40 @@ maximum_edge_length() const
     return max((x1-x0).magnitude(),(x2-x1).magnitude(),(x0-x2).magnitude());
 }
 
-template<class T> Vector<T,3> Triangle<Vector<T,3> >::
-closest_point(const Vector<T,3>& location,Vector<T,3>& weights) const
-{
-    weights=barycentric_coordinates(location);
-    // project closest point to the triangle if it's not already inside it
-    if(weights.x<0){
-        T a23=Segment<TV>::interpolation_fraction(location,x1,x2); // Check edge x1--x2
-        if(a23<0){
-            if(weights.z<0){ // Closest point is on edge x0--x1
-                T a12=clamp<T>(Segment<TV>::interpolation_fraction(location,x0,x1),0,1);weights=Vector<T,3>(1-a12,a12,0);return weights.x*x0+weights.y*x1;}
-            else{weights=Vector<T,3>(0,1,0);return x1;}} // Closest point is x1
-        else if(a23>1){
-            if(weights.y<0){ // Closest point is on edge x0--x2
-                T a13=clamp<T>(Segment<TV>::interpolation_fraction(location,x0,x2),0,1);weights=Vector<T,3>(1-a13,0,a13);return weights.x*x0+weights.z*x2;}
-            else{weights=Vector<T,3>(0,0,1);return x2;}} // Closest point is x2
-        else{weights=Vector<T,3>(0,1-a23,a23);return weights.y*x1+weights.z*x2;}} // Closest point is on edge x1--x2
-    else if(weights.y<0){
-        T a13=Segment<TV>::interpolation_fraction(location,x0,x2); // Check edge x0--x2
-        if(a13<0){
-            if(weights.z<0){ // Closest point is on edge x0--x1
-                T a12=clamp<T>(Segment<TV>::interpolation_fraction(location,x0,x1),0,1);weights=Vector<T,3>(1-a12,a12,0);return weights.x*x0+weights.y*x1;}
-            else{weights=Vector<T,3>(1,0,0);return x0;}} // Closest point is x0
-        else if(a13>1){weights=Vector<T,3>(0,0,1);return x2;} // Closest point is x2
-        else{weights=Vector<T,3>(1-a13,0,a13);return weights.x*x0+weights.z*x2;}} // Closest point is on edge x0--x2
-    else if(weights.z<0){ // Closest point is on edge x0--x1
-        T a12=clamp<T>(Segment<TV>::interpolation_fraction(location,x0,x1),0,1);weights=Vector<T,3>(1-a12,a12,0);return weights.x*x0+weights.y*x1;}
-    return weights.x*x0+weights.y*x1+weights.z*x2; // Point is interior to the triangle
-}
-
-template<class T> Vector<T,3> Triangle<Vector<T,3> >::
+template<class T> Tuple<Vector<T,3>,Vector<T,3>> Triangle<Vector<T,3> >::
 closest_point(const Vector<T,3>& location) const
 {
-    TV weights;
-    return closest_point(location,weights);
+    TV closest;
+    TV weights=barycentric_coordinates(location);
+    // project closest point to the triangle if it's not already inside it
+    if(weights.x<0){
+        T a23=interpolation_fraction(simplex(x1,x2),location); // Check edge x1--x2
+        if(a23<0){
+            if(weights.z<0){ // Closest point is on edge x0--x1
+                T a12=clamp<T>(interpolation_fraction(simplex(x0,x1),location),0,1);weights=Vector<T,3>(1-a12,a12,0);closest=weights.x*x0+weights.y*x1;}
+            else{weights=Vector<T,3>(0,1,0);closest=x1;}} // Closest point is x1
+        else if(a23>1){
+            if(weights.y<0){ // Closest point is on edge x0--x2
+                T a13=clamp<T>(interpolation_fraction(simplex(x0,x2),location),0,1);weights=Vector<T,3>(1-a13,0,a13);closest=weights.x*x0+weights.z*x2;}
+            else{weights=Vector<T,3>(0,0,1);closest=x2;}} // Closest point is x2
+        else{weights=Vector<T,3>(0,1-a23,a23);closest=weights.y*x1+weights.z*x2;}} // Closest point is on edge x1--x2
+    else if(weights.y<0){
+        T a13=interpolation_fraction(simplex(x0,x2),location); // Check edge x0--x2
+        if(a13<0){
+            if(weights.z<0){ // Closest point is on edge x0--x1
+                T a12=clamp<T>(interpolation_fraction(simplex(x0,x1),location),0,1);weights=Vector<T,3>(1-a12,a12,0);closest=weights.x*x0+weights.y*x1;}
+            else{weights=Vector<T,3>(1,0,0);closest=x0;}} // Closest point is x0
+        else if(a13>1){weights=Vector<T,3>(0,0,1);closest=x2;} // Closest point is x2
+        else{weights=Vector<T,3>(1-a13,0,a13);closest=weights.x*x0+weights.z*x2;}} // Closest point is on edge x0--x2
+    else if(weights.z<0){ // Closest point is on edge x0--x1
+        T a12=clamp<T>(interpolation_fraction(simplex(x0,x1),location),0,1);weights=Vector<T,3>(1-a12,a12,0);closest=weights.x*x0+weights.y*x1;}
+    else
+        closest=weights.x*x0+weights.y*x1+weights.z*x2; // Point is interior to the triangle
+    return tuple(closest,weights);
 }
 
-template<class T> T Triangle<Vector<T,3> >::
-distance(const Vector<T,3>& location) const
-{   
-    Vector<T,3> weights,projected_point;
-    projected_point=closest_point(location,weights);return (location-projected_point).magnitude();
+template<class T> T Triangle<Vector<T,3>>::distance(const Vector<T,3>& location) const {   
+    return magnitude(location-closest_point(location).x);
 }
 
 template<class T> T Triangle<Vector<T,3> >::

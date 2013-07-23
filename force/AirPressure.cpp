@@ -65,7 +65,8 @@ void AirPressure::structure(SolidMatrixStructure& structure) const {
 }
 
 void AirPressure::update_position(Array<const TV> X_, bool definite) {
-  OTHER_ASSERT(!definite || skip_rotation_terms);
+  if (definite && !skip_rotation_terms)
+    OTHER_NOT_IMPLEMENTED("Refusing to fix definiteness unless skip_rotation_terms is true");
   OTHER_ASSERT(X_.size()>=mesh->nodes());
   X = X_;
   volume = side*mesh->volume(X);

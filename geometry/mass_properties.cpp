@@ -44,7 +44,7 @@ helper(RawArray<const Vector<int,s> > elements, RawArray<const TV> X) {
     const Vector<int,d+1>& nodes = elements[t];
     Matrix<T,TV::m,d+1> DX;
     for(int i=0;i<nodes.m;i++) DX.set_column(i,X[nodes[i]]-base);
-    T scaled_element_volume = filled?DX.parallelepiped_measure():StrainMeasure<TV,d>::Ds(X,nodes).parallelepiped_measure();
+    T scaled_element_volume = filled?DX.parallelepiped_measure():StrainMeasure<T,d>::Ds(X,nodes).parallelepiped_measure();
     scaled_volume += scaled_element_volume;
     scaled_center_times_volume += scaled_element_volume*DX.column_sum();}
   props.volume = (T)1/Factorial<d+filled>::value*scaled_volume;
@@ -58,7 +58,7 @@ helper(RawArray<const Vector<int,s> > elements, RawArray<const TV> X) {
       const Vector<int,d+1>& nodes = elements[t];
       Matrix<T,TV::m,d+1> DX;
       for(int i=0;i<nodes.m;i++) DX.set_column(i,X[nodes[i]]-props.center);
-      T scaled_element_volume = filled?DX.parallelepiped_measure():StrainMeasure<TV,d>::Ds(X,nodes).parallelepiped_measure();
+      T scaled_element_volume = filled?DX.parallelepiped_measure():StrainMeasure<T,d>::Ds(X,nodes).parallelepiped_measure();
       props.inertia_tensor += scaled_element_covariance(scaled_element_volume,DX);}
   props.inertia_tensor = inertia_tensor_from_covariance((T)1/Factorial<d+2+filled>::value*props.inertia_tensor);
   return props;

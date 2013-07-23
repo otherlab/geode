@@ -2,8 +2,9 @@
 // Class Box<Vector<T,d>>
 //#####################################################################
 //
-// An axis aligned d-dimensional box.  Set are operations are (conservatively) exact,
-// but arithmetic (sum, scalar multiply, etc.) is not.
+// An axis aligned d-dimensional box.  Set operations are (conservatively) exact,
+// but arithmetic (sum, scalar multiply, etc.) is not.  Use Interval if conservative
+// arithmetic is desired.
 //
 //#####################################################################
 #pragma once

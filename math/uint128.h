@@ -6,6 +6,7 @@
 #include <other/core/python/forward.h>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/detail/endian.hpp>
 #include <stdint.h>
 #include <string>
 namespace other {
@@ -31,6 +32,7 @@ class uint128_t {
   uint64_t hi,lo;
 #endif
 public:
+
   uint128_t()
     :lo(),hi() {}
 

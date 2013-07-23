@@ -56,7 +56,6 @@ class Vector
     BOOST_STATIC_ASSERT(d>3);
     struct Unusable{};
 public:
-    template<class T2> struct Rebind{typedef Vector<T2,d> type;};
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
     typedef T Element;
     typedef T value_type; // for stl
@@ -94,7 +93,7 @@ public:
     explicit Vector(const Vector<T2,d2>& v)
     {
         BOOST_STATIC_ASSERT(d2<=d);
-        for(int i=0;i<d2;i++) array[i]=(T)v[i];
+        for(int i=0;i<d2;i++) array[i]=T(v[i]);
         for(int i=d2;i<d;i++) array[i]=T();
     }
 

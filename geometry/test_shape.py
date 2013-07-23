@@ -4,6 +4,11 @@ from __future__ import division
 from other.core import *
 from other.core.random import Sobol
 
+def test_segments():
+  n = 10000
+  segment_tests_2d(n)
+  segment_tests_3d(n)
+
 def test_bounding_box():
   def check(X,min,max):
     box = bounding_box(X)
@@ -18,7 +23,7 @@ def test_bounding_box():
   check([[[1,2,3],[2,4,2]],[7,-1,-2]],[1,-1,-2],[7,4,3])
 
 def test_consistency():
-  random.randn(98183)
+  random.seed(98183)
   shapes = [
     Sphere((1,2),2),
     Sphere((1,2,3),2),
@@ -58,7 +63,7 @@ def test_consistency():
       assert abs(shape.phi(surface))<small, 'X %s, phi %g, surface %s, surface phi %g'%(sv(X),phi,sv(surface),shape.phi(surface))
       surface_phi = magnitude(surface-X)
       assert abs(surface_phi-abs(phi))<small,'%s != %s'%(surface_phi,phi)
-      # TODO: test Boundary and Principal_Curvatures
+      # TODO: test boundary and principal_curvatures
     assert box.lazy_inside(inner_box.min)
     assert box.lazy_inside(inner_box.max)
     box_error = max(box.sizes()-inner_box.sizes())/scale
@@ -87,3 +92,8 @@ def test_generate_triangles():
       dot=dot(shape_normal,surface_normal)
       assert dot>.7,'(%s) . (%s) = %s'%(shape_normal,surface_normal,dot)
 """
+
+if __name__=='__main__':
+  test_segments()
+  test_bounding_box()
+  test_consistency()

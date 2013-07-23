@@ -42,4 +42,5 @@ public:
   // For testing purposes
   Array<TV> elastic_gradient_block_diagonal_times(RawArray<TV> dX) const;
 };
+
 }

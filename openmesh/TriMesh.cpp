@@ -1,6 +1,7 @@
 #ifdef USE_OPENMESH
 #include <other/core/openmesh/TriMesh.h>
 #include <other/core/openmesh/color_cast.h>
+#include <other/core/array/Field.h>
 #include <other/core/array/view.h>
 #include <other/core/utility/prioritize.h>
 #include <other/core/python/Class.h>
@@ -18,10 +19,8 @@
 #include <other/core/vector/Frame.h>
 #include <other/core/vector/convert.h>
 #include <other/core/array/NdArray.h>
-
-
-#include <queue>
 #include <iostream>
+#include <queue>
 namespace other {
 
 using std::map;
@@ -91,7 +90,6 @@ TriMesh &TriMesh::operator=(OTriMesh const &m) {
 
 Ref<TriMesh> TriMesh::copy() const {
   Ref<TriMesh> m = new_<TriMesh>(*this);
-  //m->operator=(dynamic_cast<OTriMesh const &>(*this));
   return m;
 }
 
@@ -170,31 +168,29 @@ void TriMesh::add_faces(RawArray<const Vector<int,3> > faces) {
     add_face(VertexHandle(face.x),VertexHandle(face.y),VertexHandle(face.z));
 }
 
-void TriMesh::add_mesh(TriMesh const &mesh) {
-  int n = n_vertices();
+void TriMesh::add_mesh(const TriMesh& mesh) {
+  // Copy vertices
+  const int n = n_vertices();
   add_vertices(mesh.X());
 
-  // copy per vertex texture coordinates if present in both meshes
-  if (has_vertex_texcoords2D() && mesh.has_vertex_texcoords2D()) {
-    for (TriMesh::ConstVertexIter it = mesh.vertices_sbegin(); it != mesh.vertices_end(); ++it) {
-      set_texcoord2D(vertex_handle(it.handle().idx() + n), mesh.texcoord2D(it));
-    }
-  }
+  // Copy per vertex texture coordinates if present in both meshes
+  if (has_vertex_texcoords2D() && mesh.has_vertex_texcoords2D())
+    for (const auto v : mesh.vertex_handles())
+      set_texcoord2D(vertex_handle(v.idx()+n),mesh.texcoord2D(v));
 
-  // copy vertex colors if present in both meshes
-  if (has_vertex_colors() && mesh.has_vertex_colors()) {
-    for (TriMesh::ConstVertexIter it = mesh.vertices_sbegin(); it != mesh.vertices_end(); ++it) {
-      set_color(vertex_handle(it.handle().idx() + n), mesh.color(it));
-    }
-  }
+  // Copy vertex colors if present in both meshes
+  if (has_vertex_colors() && mesh.has_vertex_colors())
+    for (const auto v : mesh.vertex_handles())
+      set_color(vertex_handle(v.idx()+n),mesh.color(v));
 
-  Array<Vector<int,3> > faces = mesh.elements();
+  // Copy faces
+  add_faces((mesh.elements()+n).copy());
 
-  for (Vector<int,3>& v : faces) {
-    v += n;
-  }
-
-  add_faces(faces);
+  // Copy halfedge texture coordinates if present in both meshes
+  if (has_halfedge_texcoords2D() && mesh.has_halfedge_texcoords2D())
+    for (const auto e : mesh.halfedge_handles())
+      set_texcoord2D(halfedge_handle(VertexHandle(mesh.from_vertex_handle(e).idx()+n),
+                                     VertexHandle(mesh.  to_vertex_handle(e).idx()+n)),mesh.texcoord2D(e));
 }
 
 Box<Vector<real,3> > TriMesh::bounding_box() const {
@@ -832,7 +828,7 @@ vector<vector<FaceHandle>> TriMesh::surface_components(VertexHandle vh, unordere
   auto incident = incident_faces(vh);
 
   // map face handles to indices in incident
-  unordered_map<FaceHandle, int, Hasher> fmap;
+  unordered_map<FaceHandle, size_t, Hasher> fmap;
   for (auto it = incident.begin(); it != incident.end(); ++it) {
     fmap[*it] = it-incident.begin();
   }
@@ -1264,6 +1260,31 @@ void TriMesh::set_vertex_colors(RawArray<const Vector<real,3>> colors) {
   OTHER_ASSERT(colors.size()==(int)n_vertices());
   for (auto v : vertex_handles())
     set_color(v,to_byte_color(colors[v.idx()]));
+}
+
+Field<Vector<Vector<real,2>,3>,FaceHandle> TriMesh::face_texcoords() const {
+  OTHER_ASSERT(has_halfedge_texcoords2D());
+  Field<Vector<Vector<real,2>,3>,FaceHandle> texcoords(n_faces(),false);
+  for (const auto f : face_handles()) {
+    const auto h = halfedge_handles(f);
+    texcoords[f] = Vector<Vector<real,2>,3>(texcoord2D(h.x),
+                                            texcoord2D(h.y),
+                                            texcoord2D(h.z));
+  }
+  return texcoords;
+}
+
+void TriMesh::set_face_texcoords(RawField<const Vector<Vector<real,2>,3>,FaceHandle> texcoords) {
+  OTHER_ASSERT(texcoords.size()==(int)n_faces());
+  request_halfedge_texcoords2D();
+  scalar_view(prop(halfedge_texcoords2D_pph()).flat).fill(inf);
+  for (const auto f : face_handles()) {
+    const auto h = halfedge_handles(f);
+    const auto& tc = texcoords[f];
+    set_texcoord2D(h.x,tc.x);
+    set_texcoord2D(h.y,tc.y);
+    set_texcoord2D(h.z,tc.z);
+  }
 }
 
 void TriMesh::add_box(TV min, TV max) {
@@ -1812,6 +1833,8 @@ void wrap_trimesh() {
     .OTHER_METHOD_2("set_X",set_X_python)
     .OTHER_METHOD(set_vertex_normals)
     .OTHER_METHOD(set_vertex_colors)
+    .OTHER_METHOD(face_texcoords)
+    .OTHER_METHOD(set_face_texcoords)
     .OTHER_METHOD(component_meshes)
     .OTHER_METHOD(largest_connected_component)
     .OTHER_METHOD(request_vertex_normals)
@@ -1821,6 +1844,8 @@ void wrap_trimesh() {
     .OTHER_METHOD(update_normals)
     .OTHER_METHOD(request_face_colors)
     .OTHER_METHOD(request_vertex_colors)
+    .OTHER_METHOD_2("request_face_texcoords",request_halfedge_texcoords2D)
+    .OTHER_METHOD(request_halfedge_texcoords2D)
     .OTHER_OVERLOADED_METHOD(real(Self::*)()const,volume)
     .OTHER_OVERLOADED_METHOD(real(Self::*)()const,area)
     .OTHER_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)

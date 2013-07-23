@@ -58,7 +58,7 @@ public:
     {}
 
     template<class T2> explicit Vector(const Vector<T2,4>& vector)
-      :x(vector.x),y(vector.y),z(vector.z),w(vector.w)
+      :x(T(vector.x)),y(T(vector.y)),z(T(vector.z)),w(T(vector.w))
     {}
 
     explicit Vector(const Vector<T,2>& vector)

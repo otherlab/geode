@@ -16,4 +16,5 @@ void wrap_geometry() {
   OTHER_WRAP(platonic)
   OTHER_WRAP(thick_shell)
   OTHER_WRAP(bezier)
+  OTHER_WRAP(segment)
 }

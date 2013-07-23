@@ -4,8 +4,7 @@
 #include <other/core/geometry/SimplexTree.h>
 #include <other/core/geometry/FastRay.h>
 #include <other/core/geometry/Sphere.h>
-#include <other/core/geometry/Segment2d.h>
-#include <other/core/geometry/Segment3d.h>
+#include <other/core/geometry/Segment.h>
 #include <other/core/geometry/traverse.h>
 #include <other/core/geometry/Triangle2d.h>
 #include <other/core/geometry/Triangle3d.h>
@@ -296,19 +295,20 @@ inside(TV point) const {
     if (!intersection(ray,epsilon))
       return false; // No intersections, so we must be outside
     const Simplex& simplex = simplices[ray.aggregate_id];
-    Vector<T,d+1> w = simplex.barycentric_coordinates(ray.point(ray.t_max));
-    if (w.min() > small)
+    const auto w = barycentric_coordinates(simplex,ray.point(ray.t_max));
+    if (Simplex::min_weight(w) > small)
       return going_out(simplex,dir);
   }
   throw ArithmeticError("SimplexTree::inside: all rays were singular");
 }
 
 template<class TV,int d> bool SimplexTree<TV,d>::
-inside_given_closest_point(TV point, int simplex, Vector<T,d+1> weights) const {
+inside_given_closest_point(TV point, int simplex, Weights weights) const {
   OTHER_ASSERT(mesh->elements.valid(simplex));
   const T small = sqrt(numeric_limits<T>::epsilon());
-  // If the closest point is on a triangle face, we're in luck
-  if (weights.min() > small)
+  // If the closest point is on a triangle face, we're in luck.
+  // TODO: This is not actually robust, since the triangle could have zero size.
+  if (Simplex::min_weight(weights) > small)
     return inside_plane(simplices[simplex],point);
   // Otherwise, fall back to basic inside routine
   return inside(point);
@@ -326,7 +326,7 @@ template<class TV,int d> static void closest_point_helper(const SimplexTree<TV,d
       closest_point_helper<TV,d>(self,point,triangle,sqr_distance,2*node+2-c);
   } else
     for (int t : self.prims(node)) {
-      T sqr_d = sqr_magnitude(point-self.simplices[t].closest_point(point));
+      T sqr_d = sqr_magnitude(point-self.simplices[t].closest_point(point).x);
       if (sqr_distance>sqr_d) {
         sqr_distance = sqr_d;
         triangle = t;
@@ -334,9 +334,8 @@ template<class TV,int d> static void closest_point_helper(const SimplexTree<TV,d
     }
 }
 
-template<class TV,int d> TV SimplexTree<TV,d>::
-closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) const {
-  simplex = -1;
+template<class TV,int d> Tuple<TV,int,typename SimplexTree<TV,d>::Weights> SimplexTree<TV,d>::closest_point(const TV point, const T max_distance) const {
+  int simplex = -1;
   if (nodes()) {
     T sqr_distance = sqr(max_distance);
     closest_point_helper(*this,point,simplex,sqr_distance,0);
@@ -344,29 +343,15 @@ closest_point(TV point, int& simplex, Vector<T,d+1>& weights, T max_distance) co
   if (simplex == -1) {
     TV x;
     x.fill(inf);
-    return x;
-  } else
-    return simplices[simplex].closest_point(point,weights);
+    return tuple(x,-1,Weights());
+  } else {
+    const auto r = simplices[simplex].closest_point(point);
+    return tuple(r.x,simplex,r.y);
+  }
 }
 
-template<class TV,int d> Tuple<Vector<typename SimplexTree<TV,d>::T,d+1>,int> SimplexTree<TV,d>::
-closest_barycentric(TV point, T max_distance) const {
-  int simplex = -1;
-  Vector<T,d+1> bary;
-  closest_point(point, simplex, bary, max_distance);
-  return tuple(bary,simplex);
-}
-
-template<class TV,int d> TV SimplexTree<TV,d>::
-closest_point(TV point, T max_distance) const {
-  int simplex;
-  Vector<T,d+1> weights;
-  return closest_point(point, simplex, weights, max_distance);
-}
-
-template<class TV,int d> typename SimplexTree<TV,d>::T SimplexTree<TV,d>::
-distance(TV point, T max_distance) const {
-  return (point - closest_point(point, max_distance)).magnitude();
+template<class TV,int d> typename SimplexTree<TV,d>::T SimplexTree<TV,d>::distance(const TV point, const T max_distance) const {
+  return magnitude(point-closest_point(point,max_distance).x);
 }
 
 template class SimplexTree<Vector<real,2>,1>;
@@ -401,17 +386,14 @@ template<class T, int d> static int ray_traversal_test(const SimplexTree<Vector<
 using namespace other;
 
 template<class TV,int d> static void wrap_helper() {
-  typedef typename TV::Scalar T;
   typedef SimplexTree<TV,d> Self;
-  typedef Tuple<Vector<T,d+1>,int> TB;
   static const string name = format("%sTree%dd",(d==1?"Segment":"Triangle"),TV::m);
   Class<Self>(name.c_str())
     .OTHER_INIT(const typename Self::Mesh&,Array<const TV>,int)
     .OTHER_FIELD(mesh)
     .OTHER_FIELD(X)
     .OTHER_METHOD(update)
-    .OTHER_OVERLOADED_METHOD(TV(Self::*)(TV,T)const, closest_point)
-    .OTHER_OVERLOADED_METHOD(TB(Self::*)(TV,T)const, closest_barycentric)
+    .OTHER_METHOD(closest_point)
     ;
 }
 

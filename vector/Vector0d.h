@@ -20,7 +20,6 @@ public:
     enum Workaround1 {dimension=0};
     enum Workaround2 {m=0};
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
-    template<class T2> struct Rebind{typedef Vector<T2,0> type;};
     typedef T Element;
 
     Vector()

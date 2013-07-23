@@ -5,7 +5,7 @@
 #include <other/core/python/Class.h>
 #include <other/core/vector/SolidMatrix.h>
 #include <other/core/vector/SymmetricMatrix.h>
-namespace other{
+namespace other {
 
 typedef real T;
 template<> OTHER_DEFINE_TYPE(EtherDrag<Vector<real,3> >)

@@ -17,6 +17,7 @@
 #include <other/core/utility/range.h>
 #include <boost/type_traits/remove_const.hpp>
 #include <iomanip>
+#include <vector>
 namespace other {
 
 template<class T> struct IsArray<RawArray<T> >:public mpl::true_{};

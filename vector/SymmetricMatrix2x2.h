@@ -197,7 +197,7 @@ public:
     else return Vector<T,2>(1,0);}
 
     T maxabs() const
-    {return maxabs(x00,x10,x11);}
+    {return other::maxabs(x00,x10,x11);}
 
     static SymmetricMatrix identity_matrix()
     {return SymmetricMatrix(1,0,1);}

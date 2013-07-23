@@ -6,6 +6,7 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/Plane.h>
 #include <other/core/math/constants.h>
+#include <other/core/structure/Tuple.h>
 namespace other{
 
 template<class T>
@@ -193,6 +194,11 @@ public:
       return angles(x0,x1,x2);
     }
 
+    // For templatization purposes
+    static T min_weight(const Vector<T,3>& w) {
+      return w.min();
+    }
+
     //#####################################################################
     OTHER_CORE_EXPORT void change_size(const T delta);
     OTHER_CORE_EXPORT bool intersection(Plane<T> const &plane, Segment<Vector<T,3>> &result) const;
@@ -204,8 +210,7 @@ public:
     OTHER_CORE_EXPORT bool lazy_planar_point_inside_triangle(const TV& point) const;
     OTHER_CORE_EXPORT T minimum_edge_length() const;
     OTHER_CORE_EXPORT T maximum_edge_length() const;
-    OTHER_CORE_EXPORT TV closest_point(const TV& location,TV& weights) const;
-    OTHER_CORE_EXPORT TV closest_point(const TV& location) const;
+    OTHER_CORE_EXPORT Tuple<TV,TV> closest_point(const TV& location) const; // closest_point,weights
     OTHER_CORE_EXPORT T distance(const TV& location) const; // distance from point to triangle
     OTHER_CORE_EXPORT T minimum_angle() const;
     OTHER_CORE_EXPORT T maximum_angle() const;
@@ -217,5 +222,9 @@ template<class T> std::ostream& operator<<(std::ostream& output,const Triangle<V
 {output<<'['<<triangle.x0<<','<<triangle.x1<<','<<triangle.x2<<']';return output;}
 
 OTHER_CORE_EXPORT bool intersection(const Segment<Vector<real,3> >& segment, const Triangle<Vector<real,3> >& triangle, const real thickness_over_2=0);
+
+template<class T> static inline Vector<T,3> barycentric_coordinates(const Triangle<Vector<T,3>>& tri, const Vector<T,3>& p) {
+  return tri.barycentric_coordinates(p);
+}
 
 }

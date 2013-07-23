@@ -29,6 +29,9 @@
 #include <other/core/vector/Vector.h>
 #include <boost/mpl/assert.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <other/core/utility/const_cast.h>
+#include <vector>
+
 namespace other {
 
 using std::swap;
@@ -268,7 +271,7 @@ private:
     int m_ = this->m_; // teach compiler that m_ is constant
     if (copy_existing_elements)
       for (int i=0;i<m_;i++)
-        ((T*)new_owner->data)[i] = data_[i];
+        ((typename boost::remove_const<T>::type*)new_owner->data)[i] = data_[i];
     OTHER_XDECREF(owner_);
     max_size_ = max_size_new;
     data_ = (T*)new_owner->data;
@@ -371,13 +374,13 @@ public:
   }
 
   template<class TArray> void extend(const TArray& append_array) {
-    STATIC_ASSERT_SAME(T,typename TArray::value_type);
+    STATIC_ASSERT_SAME(typename boost::remove_const<T>::type,typename boost::remove_const<typename TArray::value_type>::type);
     int append_m = append_array.size(),
         m_new = m_+append_m;
     if (max_size_<m_new)
       grow_buffer(m_new);
     for (int i=0;i<append_m;i++)
-      data_[m_+i] = append_array[i];
+      other::const_cast_(data_[m_+i]) = append_array[i];
     m_ = m_new;
   }
 

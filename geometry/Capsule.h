@@ -3,8 +3,8 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/geometry/Segment2d.h>
-#include <other/core/geometry/Segment3d.h>
+#include <other/core/geometry/Segment.h>
+#include <other/core/structure/Tuple.h>
 #include <other/core/vector/magnitude.h>
 namespace other {
 
@@ -21,28 +21,24 @@ public:
     : segment(x0,x1), radius(radius) {}
 
   TV normal(const TV& X) const {
-    TV N = X-segment.closest_point(X);
-    T sphi = magnitude(N);
-    return sphi?N/sphi:(segment.x1-segment.x0).unit_orthogonal_vector();
+    return segment_point_distance_and_normal(segment,X).y;
   }
 
-  bool inside(const TV& X,const T thickness_over_two) const {
-    return sqr_magnitude(X-segment.closest_point(X)) <= sqr(radius-thickness_over_two);
+  bool inside(const TV& X, const T half_thickness) const {
+    return segment_point_distance(segment,X) <= radius-half_thickness;
   }
 
   bool lazy_inside(const TV& X) const {
-    return sqr_magnitude(X-segment.closest_point(X)) <= sqr(radius);
+    return segment_point_distance(segment,X) <= radius;
   }
 
   TV surface(const TV& X) const {
-    TV C = segment.closest_point(X);
-    TV N = X-C;
-    T sphi = magnitude(N);
-    return C + (sphi?radius/sphi*N:radius*(segment.x1-segment.x0).unit_orthogonal_vector());
+    const auto r = segment_point_distance_and_normal(segment,X);
+    return segment.interpolate(r.z)+radius*r.y;
   }
 
   T phi(const TV& X) const {
-    return magnitude(X-segment.closest_point(X))-radius;
+    return segment_point_distance(segment,X)-radius;
   }
 
   T volume() const {

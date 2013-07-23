@@ -4,7 +4,7 @@
 #pragma once
 
 #include <other/core/vector/forward.h>
-namespace other{
+namespace other {
 
 template<class TV> class Springs;
 template<class TV,int d> class FiniteVolume;

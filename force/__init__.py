@@ -8,14 +8,16 @@ def bending_springs(mesh,mass,X,stiffness,damping_ratio):
   springs = ascontiguousarray(mesh.bending_quadruples()[:,(0,3)])
   return Springs(springs,mass,X,stiffness,damping_ratio)
 
-StrainMeasure = {(2,2):StrainMeasure2d,(3,2):StrainMeasureS3d,(3,3):StrainMeasure3d}
+StrainMeasure = {2:StrainMeasure2d,3:StrainMeasure3d}
 FiniteVolume = {(2,2):FiniteVolume2d,(3,2):FiniteVolumeS3d,(3,3):FiniteVolume3d}
 LinearFiniteVolume = {(2,2):LinearFiniteVolume2d,(3,2):LinearFiniteVolumeS3d,(3,3):LinearFiniteVolume3d}
 
-def finite_volume(mesh,density,X,model,plasticity=None,verbose=True):
+def finite_volume(mesh,density,X,model,m=None,plasticity=None,verbose=True):
   elements = mesh.elements if isinstance(mesh,Object) else asarray(mesh,dtype=int32)
-  m,d = asarray(X).shape[1],elements.shape[1]-1
-  strain = StrainMeasure[m,d](elements,X)
+  mx,d = asarray(X).shape[1],elements.shape[1]-1
+  if m is None:
+    m = mx
+  strain = StrainMeasure[d](elements,X)
   if verbose:
     strain.print_altitude_statistics()
   if isinstance(model,dict):
@@ -33,6 +35,20 @@ def linear_finite_volume(mesh,X,density,youngs_modulus=3e6,poissons_ratio=.4,ray
 def neo_hookean(youngs_modulus=3e6,poissons_ratio=.475,rayleigh_coefficient=.05,failure_threshold=.25):
   return {2:NeoHookean2d(youngs_modulus,poissons_ratio,rayleigh_coefficient,failure_threshold),
           3:NeoHookean3d(youngs_modulus,poissons_ratio,rayleigh_coefficient,failure_threshold)}
+
+def simple_shell(mesh,density,Dm=None,X=None,stretch=(0,0),shear=0):
+  mesh = mesh if isinstance(mesh,Object) else TriangleMesh(asarray(mesh,dtype=int32))
+  if Dm is None:
+    X = asarray(X)
+    assert X.ndim==2 and X.shape[1]==2, 'Expected 2D rest state'
+    tris = mesh.elements
+    Dm = X[tris[:,1:]].swapaxes(1,2)-X[tris[:,0]].reshape(-1,2,1)
+  else:
+    assert X is None
+  shell = SimpleShell(mesh,ascontiguousarray(Dm),density)
+  shell.stretch_stiffness = stretch
+  shell.shear_stiffness = shear
+  return shell
 
 LinearBendingElements = {2:LinearBendingElements2d,3:LinearBendingElements3d}
 def linear_bending_elements(mesh,X,stiffness,damping):

@@ -18,6 +18,6 @@ void wrap_openmesh() {
   OTHER_WRAP(trimesh)
   OTHER_WRAP(decimate)
   OTHER_WRAP(curvature)
-  OTHER_WRAP(smooth)
+    //  OTHER_WRAP(smooth)
 #endif
 }

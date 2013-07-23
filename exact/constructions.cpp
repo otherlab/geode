@@ -8,7 +8,7 @@
 #include <other/core/exact/math.h>
 #include <other/core/exact/scope.h>
 #include <other/core/array/RawArray.h>
-#include <other/core/geometry/Segment2d.h>
+#include <other/core/geometry/Segment.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
 #include <other/core/utility/Log.h>

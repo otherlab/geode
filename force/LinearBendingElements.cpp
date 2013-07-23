@@ -6,14 +6,14 @@
 #include <other/core/vector/SolidMatrix.h>
 #include <other/core/vector/SymmetricMatrix.h>
 #include <other/core/python/Class.h>
-namespace other{
+namespace other {
 
 typedef real T;
 using Log::cout;
 using std::endl;
 
-template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,2> >)
-template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,3> >)
+template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,2>>)
+template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,3>>)
 
 template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentMesh& mesh,Array<const TV> X) {
   OTHER_ASSERT(mesh.nodes()<=X.size());
@@ -39,7 +39,7 @@ template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentMesh& mes
 
 template<class TV> static Ref<SparseMatrix> matrix_helper(const TriangleMesh& mesh,Array<const TV> X) {
   OTHER_ASSERT(mesh.nodes()<=X.size());
-  Array<const Vector<int,4> > quadruples = mesh.bending_tuples();
+  Array<const Vector<int,4>> quadruples = mesh.bending_tuples();
   Hashtable<Vector<int,2>,T> entries;
   // Compute stiffness matrix.
   // For details see Wardetzky et al., "Discrete Quadratic Curvature energies", Computer Aided Geometric design, 2007.
@@ -62,9 +62,12 @@ template<class TV> static Ref<SparseMatrix> matrix_helper(const TriangleMesh& me
   return new_<SparseMatrix>(entries);
 }
 
-template<class TV> LinearBendingElements<TV>::
-LinearBendingElements(const Mesh& mesh,Array<const TV> X)
-  :mesh(ref(mesh)),stiffness(0),damping(0),A(matrix_helper(mesh,X)),X(X) {
+template<class TV> LinearBendingElements<TV>::LinearBendingElements(const Mesh& mesh,Array<const TV> X)
+  : mesh(ref(mesh))
+  , stiffness(0)
+  , damping(0)
+  , A(matrix_helper(mesh,X))
+  , X(X) {
   // Print max diagonal element
   T max_diagonal = 0;
   for (int i=0;i<mesh.nodes();i++)
@@ -80,27 +83,23 @@ LinearBendingElements(const Mesh& mesh,Array<const TV> X)
   }
 }
 
-template<class TV> LinearBendingElements<TV>::
-~LinearBendingElements() {}
+template<class TV> LinearBendingElements<TV>::~LinearBendingElements() {}
 
 template<class TV> int LinearBendingElements<TV>::nodes() const {
   return mesh->nodes();
 }
 
-template<class TV> void LinearBendingElements<TV>::
-update_position(Array<const TV> X_,bool definite) {
+template<class TV> void LinearBendingElements<TV>::update_position(Array<const TV> X_,bool definite) {
   // Not much to do since our stiffness matrix is constant
   OTHER_ASSERT(mesh->nodes()<=X_.size());
   X = X_;
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_frequency_squared(RawArray<T> frequency_squared) const {
+template<class TV> void LinearBendingElements<TV>::add_frequency_squared(RawArray<T> frequency_squared) const {
   // We assume edge forces are much stiffer than bending, so our CFL shouldn't matter
 }
 
-template<class TV> typename TV::Scalar LinearBendingElements<TV>::
-strain_rate(RawArray<const TV> V) const {
+template<class TV> typename TV::Scalar LinearBendingElements<TV>::strain_rate(RawArray<const TV> V) const {
   // We assume edge forces are much stiffer than bending, so our CFL shouldn't matter
   return 0;
 }
@@ -118,8 +117,7 @@ template<class TV> static T energy_helper(const SparseMatrix& A,RawArray<const T
   return diagonal/2+offdiagonal;
 }
 
-template<class TV> typename TV::Scalar LinearBendingElements<TV>::
-elastic_energy() const {
+template<class TV> typename TV::Scalar LinearBendingElements<TV>::elastic_energy() const {
   return stiffness?stiffness*energy_helper<TV>(*A,X):0;
 }
 
@@ -139,18 +137,15 @@ template<class TV> static void add_force_helper(const SparseMatrix& A,const T sc
   }
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_elastic_force(RawArray<TV> F) const {
+template<class TV> void LinearBendingElements<TV>::add_elastic_force(RawArray<TV> F) const {
   add_force_helper<TV>(*A,stiffness,F,X);
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_elastic_differential(RawArray<TV> dF,RawArray<const TV> dX) const {
+template<class TV> void LinearBendingElements<TV>::add_elastic_differential(RawArray<TV> dF,RawArray<const TV> dX) const {
   add_force_helper<TV>(*A,stiffness,dF,dX);
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,d> > dFdX) const {
+template<class TV> void LinearBendingElements<TV>::add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,d>> dFdX) const {
   OTHER_ASSERT(A->rows()<=dFdX.size());
   if (!stiffness) return;
   for (int p=0;p<A->rows();p++)
@@ -158,18 +153,15 @@ add_elastic_gradient_block_diagonal(RawArray<SymmetricMatrix<T,d> > dFdX) const 
       dFdX[p] -= stiffness*A->A(p,0);
 }
 
-template<class TV> typename TV::Scalar LinearBendingElements<TV>::
-damping_energy(RawArray<const TV> V) const {
+template<class TV> typename TV::Scalar LinearBendingElements<TV>::damping_energy(RawArray<const TV> V) const {
   return damping?damping*energy_helper<TV>(*A,V):0;
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_damping_force(RawArray<TV> F,RawArray<const TV> V) const {
+template<class TV> void LinearBendingElements<TV>::add_damping_force(RawArray<TV> F,RawArray<const TV> V) const {
   add_force_helper<TV>(*A,damping,F,V);
 }
 
-template<class TV> void LinearBendingElements<TV>::
-structure(SolidMatrixStructure& structure) const {
+template<class TV> void LinearBendingElements<TV>::structure(SolidMatrixStructure& structure) const {
   for (int p=0;p<A->rows();p++) {
     RawArray<const int> J = A->J[p];
     for (int a=1;a<J.size();a++)
@@ -190,18 +182,16 @@ template<class TV> void add_gradient_helper(const SparseMatrix& A,const T scale,
   }
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_elastic_gradient(SolidMatrix<TV>& matrix) const {
+template<class TV> void LinearBendingElements<TV>::add_elastic_gradient(SolidMatrix<TV>& matrix) const {
   add_gradient_helper(*A,stiffness,matrix);
 }
 
-template<class TV> void LinearBendingElements<TV>::
-add_damping_gradient(SolidMatrix<TV>& matrix) const {
+template<class TV> void LinearBendingElements<TV>::add_damping_gradient(SolidMatrix<TV>& matrix) const {
   add_gradient_helper(*A,damping,matrix);
 }
 
-template class LinearBendingElements<Vector<T,2> >;
-template class LinearBendingElements<Vector<T,3> >;
+template class LinearBendingElements<Vector<T,2>>;
+template class LinearBendingElements<Vector<T,3>>;
 }
 using namespace other;
 
@@ -216,6 +206,6 @@ template<int d> static void wrap_helper() {
 }
 
 void wrap_linear_bending() {
-  wrap_helper<2>(); 
-  wrap_helper<3>(); 
+  wrap_helper<2>();
+  wrap_helper<3>();
 }

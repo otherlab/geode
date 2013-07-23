@@ -81,6 +81,8 @@ template<class T> struct FromPython<const T> : public FromPython<T>{};
 #ifdef OTHER_PYTHON
 // Declare has_from_python<T>
 OTHER_VALIDITY_CHECKER(has_from_python,T,from_python<T>(0))
+template<> struct has_from_python<void> : public mpl::true_ {};
+
 #endif
 
 }
