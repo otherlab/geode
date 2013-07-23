@@ -205,4 +205,3 @@ void wrap_numpy() {
   OTHER_FUNCTION(_set_recarray_type)
 #endif
 }
-

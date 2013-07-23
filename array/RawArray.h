@@ -240,6 +240,10 @@ public:
     return Subarray<T>(flat,j,flat.size(),n);
   }
 
+  RawArray<T> back() const {
+    return (*this)[m-1];
+  }
+
   bool valid(const Vector<int,2>& index) const {
     return unsigned(index.x)<unsigned(m) && unsigned(index.y)<unsigned(n);
   }
@@ -401,6 +405,11 @@ public:
     return operator()(index.x,index.y,index.z);
   }
 
+  RawArray<T> operator()(const int i, const int j) const {
+    assert(unsigned(i)<unsigned(m) && unsigned(j)<unsigned(n));
+    return RawArray<T>(mn,data()+(i*n+j)*mn);
+  }
+
   RawArray<T,2> operator[](int i) const {
     assert(unsigned(i)<unsigned(m));
     return RawArray<T,2>(n,mn,data()+i*n*mn);
@@ -437,6 +446,13 @@ public:
   RawArray slice(int imin,int imax) const {
     assert(unsigned(imin)<=unsigned(imax) && unsigned(imax)<=unsigned(m));
     return RawArray(imax-imin,n,mn,data()+imin*n*mn);
+  }
+
+  // Extract a subarray at a fixed value of the given axis
+  template<int axis> Subarray<T,2> sub(const int i) const {
+    BOOST_STATIC_ASSERT(axis<2); // For now, the last dimension of a Subarray must be contiguous
+    assert(unsigned(i)<unsigned(sizes()[axis]));
+    return axis==0 ? (*this)[i] : Subarray<T,2>(m,mn,n*mn,data()+i*mn);
   }
 
   RawArray<const Element,3> const_() const {

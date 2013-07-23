@@ -142,6 +142,9 @@ public:
   Subarray(typename mpl::if_c<is_const,const Subarray<Element,2>&,Unusable>::type source)
     : data_(source.data()), m(source.m), n(source.n), stride(source.stride) {}
 
+  Subarray(const int m, const int n, const int stride, T* data_)
+    : data_(data_), m(m), n(n), stride(stride) {}
+
   const Subarray& operator=(const Subarray& source) const {
     assert(sizes()==source.sizes());
     for (int i=0;i<m;i++) for (int j=0;j<n;j++) data_[i*stride+j] = source(i,j);
@@ -166,6 +169,11 @@ public:
   T& operator()(const Vector<int,2>& index) const {
     assert(unsigned(index.x)<unsigned(m) && unsigned(index.y)<unsigned(n));
     return data_[index.x*stride+index.y];
+  }
+
+  RawArray<T> operator[](const int i) const {
+    assert(unsigned(i)<unsigned(m));
+    return RawArray<T>(n,data_+i*stride);
   }
 
   bool valid(const Vector<int,2>& index) const {

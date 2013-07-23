@@ -29,7 +29,7 @@ template<class Function> static inline void function(const char* name, Function 
 #define OTHER_OBJECT_2(name,object) ::other::python::add_object(#name,object);
 
 #define OTHER_FUNCTION(name) ::other::python::function(#name,name);
-#define OTHER_FUNCTION_2(name,f) ::other::python::function(#name,f);
+#define OTHER_FUNCTION_2(name,...) ::other::python::function(#name,__VA_ARGS__);
 
 #define OTHER_OVERLOADED_FUNCTION_2(type,name,function_) ::other::python::function(name,(type)function_);
 
