@@ -61,7 +61,6 @@ OTHER_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circl
 OTHER_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input);
 
 OTHER_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
-
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const ExactCircleArc& arc);
 

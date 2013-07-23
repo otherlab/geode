@@ -97,6 +97,9 @@ bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12,
 // Degrees 3/2 for the nonsqrt part and 6/4 for the part under the sqrt.
 Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const int arc1);
 
+// Compute a bounding box for the arc between two verticies
+Box<exact::Vec2> arc_box(RawArray<const ExactCircleArc> arcs, const Vertex& v01, const Vertex& v12);
+
 // Precompute all intersections
 // result[i] is the start of arcs[i]
 Array<Vertex> compute_verticies(RawArray<const ExactCircleArc> arcs, RawArray<const int> next);

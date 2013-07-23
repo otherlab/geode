@@ -18,31 +18,6 @@ typedef RawArray<const ExactCircleArc> Arcs;
 typedef RawArray<const int> Next;
 typedef RawArray<const Vertex> Vertices;
 typedef exact::Vec2 EV2;
-static Box<EV2> arc_box(Arcs arcs, const Vertex& v01, const Vertex& v12) {
-  const int i1 = v01.i1;
-  assert(v01.i1 == v12.i0);
-
-  // Probably not worth accounting for, but vertex.box() must be inside Box<EV2>(arcs[i].center).thickened(arcs[i].radius) for i in [vertex.i1,vertex.i2]
-  auto box = bounding_box(v01.rounded,v12.rounded).thickened(Vertex::tolerance());
-  int q0 = v01.q1,
-      q1 = v12.q0;
-  if (q0==q1) {
-    if (arcs[i1].positive != (circle_intersections_upwards(arcs,v01.reverse(),v12) ^ (v01.q1==1 || v01.q1==2))) {
-      // The arc hits all four axes
-      box.enlarge(Box<EV2>(arcs[i1].center).thickened(arcs[i1].radius));
-    } // The arc stays within one quadrant, the endpoints suffice for the bounding box
-  } else {
-    // The arc hits some axes but not others.  Loop around making the necessary bounding box enlargements.
-    if (!arcs[i1].positive)
-      swap(q0,q1);
-    const auto a1 = arcs[i1];
-    while (q0 != q1) {
-      box.enlarge(a1.center+rotate_left_90_times(EV2(a1.radius,0),q0+1));
-      q0 = (q0+1)&3;
-    }
-  }
-  return box;
-}
 
 static Array<Box<EV2>> arc_boxes(Next next, Arcs arcs, RawArray<const Vertex> vertices) {
   // Build bounding boxes for each arc
