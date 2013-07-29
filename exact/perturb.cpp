@@ -262,8 +262,8 @@ static int factorial_limbs(const int d) {
 
 // A specialized version of in_place_interpolating_polynomial for the univariate case.  The constant term is assumed to be zero.
 // The result is scaled by degree! to avoid the need for rational arithmetic.
-static void scaled_univariate_in_place_interpolating_polynomial(const int degree, Subarray<mp_limb_t,2> A) {
-  assert(degree==A.m);
+static void scaled_univariate_in_place_interpolating_polynomial(Subarray<mp_limb_t,2> A) {
+  const int degree = A.m;
   // Multiply by the inverse of the lower triangular part.
   // Equivalently, iterate divided differences for degree passes, but skip the divisions to preserve integers.
   // Since pass p would divide by p, skipping them all multiplies the result by degree!.
@@ -373,7 +373,7 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
     }
 
     // Find an interpolating polynomial, overriding the input with the result.
-    scaled_univariate_in_place_interpolating_polynomial(degree,values);
+    scaled_univariate_in_place_interpolating_polynomial(values);
     if (verbose)
       cout << "  coefs = "<<mpz_str(values)<<endl;
 
@@ -570,7 +570,7 @@ template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const rat
 
     // Find interpolating polynomials, overriding the input with the result.
     for (int k=0;k<=r;k++) {
-      scaled_univariate_in_place_interpolating_polynomial(degree,values.sub<1>(k));
+      scaled_univariate_in_place_interpolating_polynomial(values.sub<1>(k));
       if (verbose)
         cout << "  coefs "<<k<<" = "<<mpz_str(values.sub<1>(k))<<endl;
     }
@@ -679,7 +679,7 @@ static void in_place_interpolating_polynomial_test(const int degree, RawArray<co
     const auto ucoefs = values.slice(1,degree+1).copy();
     for (int j=0;j<degree;j++)
       mpz_sub(ucoefs[j],values[0]); // ucoefs[j] -= values[0];
-    scaled_univariate_in_place_interpolating_polynomial(degree,ucoefs);
+    scaled_univariate_in_place_interpolating_polynomial(ucoefs);
     mp_limb_t scale = 1;
     for (int k=1;k<=degree;k++)
       scale *= k;
