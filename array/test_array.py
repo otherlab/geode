@@ -66,5 +66,8 @@ def test_write(filename=None):
   assert all(data==data2)
   assert header.tostring()==open(filename).read(len(header))
 
+def test_nested():
+  nested_test()
+
 if __name__=='__main__':
   test_write('array.npy')
