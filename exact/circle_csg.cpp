@@ -354,40 +354,6 @@ ostream& operator<<(ostream& output, const ExactCircleArc& arc) {
   return output << format("ExactCircleArc([%d,%d],%d,%c%c)",arc.center.x,arc.center.y,arc.radius,arc.positive?'+':'-',arc.left?'L':'R');
 }
 
-#ifdef OTHER_PYTHON
-
-// Instantiate Python conversions for arrays of circular arcs
-namespace {
-template<> struct NumpyDescr<CircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
-template<> struct NumpyIsStatic<CircleArc>:public mpl::true_{};
-template<> struct NumpyRank<CircleArc>:public mpl::int_<0>{};
-template<> struct NumpyArrayType<CircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
-PyArray_Descr* NumpyDescr<CircleArc>::d;
-template<> struct NumpyDescr<ExactCircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
-template<> struct NumpyIsStatic<ExactCircleArc>:public mpl::true_{};
-template<> struct NumpyRank<ExactCircleArc>:public mpl::int_<0>{};
-template<> struct NumpyArrayType<ExactCircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
-PyArray_Descr* NumpyDescr<ExactCircleArc>::d;
-}
-ARRAY_CONVERSIONS(1,CircleArc)
-ARRAY_CONVERSIONS(1,ExactCircleArc)
-
-static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
-  OTHER_ASSERT(PyArray_DescrCheck(inexact));
-  OTHER_ASSERT(PyArray_DescrCheck(exact));
-  OTHER_ASSERT(((PyArray_Descr*)inexact)->elsize==sizeof(CircleArc));
-  OTHER_ASSERT(((PyArray_Descr*)  exact)->elsize==sizeof(ExactCircleArc));
-  Py_INCREF(inexact);
-  Py_INCREF(  exact);
-  NumpyDescr<     CircleArc>::d = (PyArray_Descr*)inexact;
-  NumpyDescr<ExactCircleArc>::d = (PyArray_Descr*)  exact;
-}
-
-static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
-  const auto e = quantize_circle_arcs(arcs);
-  return unquantize_circle_arcs(e.x,e.y);
-}
-
 // The area between a segment of length 2 and an associated circular sector
 static inline double q_factor(double q) {
   // Economized rational approximation courtesy of Mathematica.  I suppose this is a tiny binary blob?
@@ -446,6 +412,39 @@ Nested<CircleArc> canonicalize_circle_arcs(Nested<const CircleArc> polys) {
   return new_polys;
 }
 
+#ifdef OTHER_PYTHON
+
+// Instantiate Python conversions for arrays of circular arcs
+namespace {
+template<> struct NumpyDescr<CircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
+template<> struct NumpyIsStatic<CircleArc>:public mpl::true_{};
+template<> struct NumpyRank<CircleArc>:public mpl::int_<0>{};
+template<> struct NumpyArrayType<CircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
+PyArray_Descr* NumpyDescr<CircleArc>::d;
+template<> struct NumpyDescr<ExactCircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
+template<> struct NumpyIsStatic<ExactCircleArc>:public mpl::true_{};
+template<> struct NumpyRank<ExactCircleArc>:public mpl::int_<0>{};
+template<> struct NumpyArrayType<ExactCircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
+PyArray_Descr* NumpyDescr<ExactCircleArc>::d;
+}
+ARRAY_CONVERSIONS(1,CircleArc)
+ARRAY_CONVERSIONS(1,ExactCircleArc)
+
+static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
+  OTHER_ASSERT(PyArray_DescrCheck(inexact));
+  OTHER_ASSERT(PyArray_DescrCheck(exact));
+  OTHER_ASSERT(((PyArray_Descr*)inexact)->elsize==sizeof(CircleArc));
+  OTHER_ASSERT(((PyArray_Descr*)  exact)->elsize==sizeof(ExactCircleArc));
+  Py_INCREF(inexact);
+  Py_INCREF(  exact);
+  NumpyDescr<     CircleArc>::d = (PyArray_Descr*)inexact;
+  NumpyDescr<ExactCircleArc>::d = (PyArray_Descr*)  exact;
+}
+
+static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
+  const auto e = quantize_circle_arcs(arcs);
+  return unquantize_circle_arcs(e.x,e.y);
+}
 #endif
 
 } // namespace other

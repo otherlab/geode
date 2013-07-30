@@ -29,8 +29,8 @@ const int deleted_id = numeric_limits<int>::max();
     explicit operator int() const { return id; } \
   }; \
   template<> struct is_packed_pod<Name> : mpl::true_ {}; \
-  static inline PyObject* to_python(Name i) { return to_python(i.id); } \
-  template<> struct FromPython<Name>{static Name convert(PyObject* o) { return Name(FromPython<int>::convert(o)); }}; \
+  OTHER_ONLY_PYTHON(static inline PyObject* to_python(Name i) { return to_python(i.id); }) \
+  OTHER_ONLY_PYTHON(template<> struct FromPython<Name>{static Name convert(PyObject* o) { return Name(FromPython<int>::convert(o)); }};) \
   static inline ostream& operator<<(ostream& output, Name i) { return output<<i.id; }
 OTHER_DEFINE_ID(VertexId)
 OTHER_DEFINE_ID(HalfedgeId)
