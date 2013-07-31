@@ -39,7 +39,7 @@ typedef double real;
 #define OTHER_EXPECT(value,expect) __builtin_expect((value),expect)
 
 #if defined(__GNUC__) && __GNUC__ > 3 && defined(__GNUC_MINOR__) && __GNUC_MINOR__ > 4
-#define OTHER_UNREACHABLE() __builtin_unreachable()
+#define OTHER_UNREACHABLE() ({ OTHER_DEBUG_ONLY(OTHER_FATAL_ERROR();) __builtin_unreachable(); })
 #else
 #define OTHER_UNREACHABLE() OTHER_FATAL_ERROR()
 #endif
