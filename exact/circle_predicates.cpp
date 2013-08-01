@@ -334,8 +334,8 @@ bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12,
 
 // Does the piece of a1 between a0 and a1 intersect the piece of b1 between b0 and b2?  a1 and b1 are assumed to intersect.
 bool circle_arcs_intersect(Arcs arcs, const Vertex a01, const Vertex a12,
-                                             const Vertex b01, const Vertex b12,
-                                             const Vertex ab) {
+                                      const Vertex b01, const Vertex b12,
+                                      const Vertex ab) {
   return circle_arc_intersects_circle(arcs,a01,a12,ab)
       && circle_arc_intersects_circle(arcs,b01,b12,ab.reverse());
 }

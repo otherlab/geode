@@ -71,10 +71,17 @@ static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
         for (const auto ay : circle_horizontal_intersections(arcs.flat,a,y))
           if (circle_arc_contains_horizontal_intersection(arcs.flat,vertices[a],vertices[next[a]],ay)) {
             // Success!  Add this contour our unpruned list
+            const int shift = pruned_arcs.total_size()-arcs.offsets[c];
             pruned_arcs.append(arcs[c]);
-            pruned_vertices.extend(vertices.slice(I));
+            const auto verts = vertices.slice(I);
+            for (auto& v : verts) {
+              v.i0 += shift;
+              v.i1 += shift;
+            }
+            pruned_vertices.extend(verts);
             pruned_boxes.extend(boxes.slice(I));
             pruned_horizontals.append(ay);
+            pruned_horizontals.back().arc += shift;
             goto next_contour;
           }
     next_contour:;
@@ -88,6 +95,10 @@ static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
   info.boxes = pruned_boxes;
   info.horizontals = pruned_horizontals;
   return info;
+}
+
+Nested<const ExactCircleArc> preprune_small_circle_arcs(Nested<const ExactCircleArc> arcs) {
+  return prune_small_contours(arcs).arcs;
 }
 
 Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpruned, const int depth) {
@@ -130,9 +141,8 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
         const int i1 = tree.prims(n0)[0], i2 = next[i1],
                   j1 = tree.prims(n1)[0], j2 = next[j1];
         if (   !(i2==j1 && j2==i1) // If we're looking at the two arcs of a length two contour, there's nothing to do
-            && (i1==j2 || i2==j1 ||
-              (!arcs_from_same_circle(arcs, i1, j1) && circles_intersect(arcs,i1,j1)) // Ignore intersections of arc and itself
-              )) {
+            && (   i1==j2 || i2==j1
+                || (!arcs_from_same_circle(arcs,i1,j1) && circles_intersect(arcs,i1,j1)))) { // Ignore intersections of arc and itself
           // We can get here even if the two arcs are adjacent, since we may need to detect the other intersection of two adjacent circles.
           const auto a01 = vertices[i1],
                      a12 = vertices[i2],
@@ -570,6 +580,7 @@ void wrap_circle_csg() {
   OTHER_FUNCTION(exact_split_circle_arcs)
   OTHER_FUNCTION(canonicalize_circle_arcs)
   OTHER_FUNCTION_2(circle_arc_area,static_cast<real(*)(Nested<const CircleArc>)>(circle_arc_area))
+  OTHER_FUNCTION(preprune_small_circle_arcs)
 #ifdef OTHER_PYTHON
   OTHER_FUNCTION(_set_circle_arc_dtypes)
   OTHER_FUNCTION(circle_arc_quantize_test)

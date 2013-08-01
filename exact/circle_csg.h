@@ -61,6 +61,10 @@ OTHER_CORE_EXPORT real circle_arc_area(Nested<const CircleArc> arcs);
 OTHER_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<const CircleArc> arcs, const Box<Vector<real,2>> min_bounds=Box<Vector<real,2>>::empty_box());
 OTHER_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input);
 
+// exact_split_circle_arcs prunes away contours that are too small to intersect with a horizontal line.  Normally this can be
+// ignored, but we expose it here for use in benchmarking highly degenerate cases.
+OTHER_CORE_EXPORT Nested<const ExactCircleArc> preprune_small_circle_arcs(Nested<const ExactCircleArc> arcs);
+
 OTHER_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const ExactCircleArc& arc);
