@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import with_statement
-from other.core import PropManager,cache
+from other.core import Prop,PropManager,cache
 from other.core.value import Worker
 import sys
 
@@ -9,6 +9,18 @@ def worker_test_factory(props):
   x = props.get('x')
   y = props.add('y',5)
   return cache(lambda:x()*y())
+
+def remote(conn):
+  inputs = conn.inputs
+  x = inputs.get('x')
+  assert x()==7
+  n = Prop('n',-1)
+  done = Prop('done',False)
+  conn.add_output('n',n)
+  conn.add_output('done',done)
+  for i in xrange(10):
+    n.set(i)
+  done.set(True)
 
 def test_worker():
   for command in None,[__file__,'--worker']:
@@ -29,6 +41,14 @@ def test_worker():
       worker.process(timeout=None,count=1)
       assert xy()==7*5
       # Test remote function execution
+      worker.run(remote)
+      n = worker.wait_for_output('n')
+      done = worker.wait_for_output('done')
+      seen = []
+      while not done():
+        worker.process(timeout=None,count=1)
+        seen.append(n())
+      assert seen==range(10)+[9]
 
 if __name__=='__main__':
   if len(sys.argv)==3 and sys.argv[1]=='--worker':

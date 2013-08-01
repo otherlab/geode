@@ -32,6 +32,7 @@ struct ExactCircleArc {
 };
 
 // Tweak quantized circles so that they intersect.
+// WARNING: This is not safe to call if multiple arcs have the same perturbation index (might tweak one copy without tweaking the others)
 void tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs);
 void tweak_arcs_to_intersect(Nested<ExactCircleArc>& arcs);
 

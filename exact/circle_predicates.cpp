@@ -341,45 +341,49 @@ bool circle_arcs_intersect(Arcs arcs, const Vertex a01, const Vertex a12,
 }
 
 // Is the (a0,a1) intersection inside circle b?  Degree 8, but can be eliminated entirely.
+namespace {
+// This predicate has the form
+//   A + B sqrt(Beta<0,1>) < 0
+// where
+struct CircleIntersectionInsideCircle_A { template<class TV> static PredicateType<4,TV> eval(const TV S0, const TV S1, const TV S2) {
+  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
+  const auto r0 = S0.z,    r1 = S1.z,    r2 = S2.z;
+  const auto c01 = c1-c0, c02 = c2-c0;
+  const auto sqr_c01 = esqr_magnitude(c01),
+             sqr_c02 = esqr_magnitude(c02),
+             alpha01 = sqr_c01+(r0+r1)*(r0-r1),
+             alpha02 = sqr_c02+(r0+r2)*(r0-r2);
+  return alpha01*edot(c01,c02)-alpha02*sqr_c01;
+}};
+struct CircleIntersectionInsideCircle_B { template<class TV> static PredicateType<2,TV> eval(const TV S0, const TV S1, const TV S2) {
+  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
+  return edet(c1-c0,c2-c0);
+}};
+}
 bool circle_intersection_inside_circle(Arcs arcs, const Vertex a, const int b) {
-  // This predicate has the form
-  //   A + B sqrt(Beta<0,1>) < 0
-  // where
-  struct A { template<class TV> static PredicateType<4,TV> eval(const TV S0, const TV S1, const TV S2) {
-    const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
-    const auto r0 = S0.z,    r1 = S1.z,    r2 = S2.z;
-    const auto c01 = c1-c0, c02 = c2-c0;
-    const auto sqr_c01 = esqr_magnitude(c01),
-               sqr_c02 = esqr_magnitude(c02),
-               alpha01 = sqr_c01+(r0+r1)*(r0-r1),
-               alpha02 = sqr_c02+(r0+r2)*(r0-r2);
-    return alpha01*edot(c01,c02)-alpha02*sqr_c01;
-  }};
-  struct B { template<class TV> static PredicateType<2,TV> eval(const TV S0, const TV S1, const TV S2) {
-    const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
-    return edet(c1-c0,c2-c0);
-  }};
   return FILTER(sqr(Interval(arcs[b].radius))-sqr_magnitude(a.p()-Vector<Interval,2>(arcs[b].center)),
-                perturbed_predicate_sqrt<A,B,Beta<0,1>>(a.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b)));
+                perturbed_predicate_sqrt<CircleIntersectionInsideCircle_A,CircleIntersectionInsideCircle_B,Beta<0,1>>(a.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b)));
 }
 
 // Is the (a0,a1) intersection to the right of b's center?  Degree 6, but can be eliminated entirely.
+namespace {
+// This predicate has the form
+//   (\hat{alpha} c01.x - 2 c02.x c01^2) - c01.y sqrt(Beta<0,1>)
+struct CircleIntersectionRightOfCenter_A { template<class TV> static PredicateType<3,TV> eval(const TV S0, const TV S1, const TV S2) {
+  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
+  const auto r0 = S0.z,    r1 = S1.z;
+  const auto c01 = c1-c0;
+  const auto sqr_c01 = esqr_magnitude(c01),
+             alpha = sqr_c01+(r0+r1)*(r0-r1);
+  return alpha*c01.x-((c2.x-c0.x)<<1)*sqr_c01;
+}};
+struct CircleIntersectionRightOfCenter_B { template<class TV> static PredicateType<1,TV> eval(const TV S0, const TV S1, const TV S2) {
+  return S1.y-S0.y;
+}};
+}
 bool circle_intersection_right_of_center(Arcs arcs, const Vertex a, const int b) {
-  // This predicate has the form
-  //   (\hat{alpha} c01.x - 2 c02.x c01^2) - c01.y sqrt(Beta<0,1>)
-  struct A { template<class TV> static PredicateType<3,TV> eval(const TV S0, const TV S1, const TV S2) {
-    const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
-    const auto r0 = S0.z,    r1 = S1.z;
-    const auto c01 = c1-c0;
-    const auto sqr_c01 = esqr_magnitude(c01),
-               alpha = sqr_c01+(r0+r1)*(r0-r1);
-    return alpha*c01.x-((c2.x-c0.x)<<1)*sqr_c01;
-  }};
-  struct B { template<class TV> static PredicateType<1,TV> eval(const TV S0, const TV S1, const TV S2) {
-    return S1.y-S0.y;
-  }};
   return FILTER(a.p().x-arcs[b].center.x,
-                perturbed_predicate_sqrt<A,B,Beta<0,1>>(a.left?-1:1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b)));
+                perturbed_predicate_sqrt<CircleIntersectionRightOfCenter_A,CircleIntersectionRightOfCenter_B,Beta<0,1>>(a.left?-1:1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b)));
 }
 
 Array<Vertex> compute_vertices(Arcs arcs, RawArray<const int> next) {

@@ -31,69 +31,78 @@ IAL(3,0) IAL(3,1) IAL(3,2)
 
 // Polynomial predicates
 
+
+namespace {
+struct TriangleOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV p0, const TV p1, const TV p2) {
+  return edet(p1-p0,p2-p0);
+}};}
 bool triangle_oriented(const Point2 p0, const Point2 p1, const Point2 p2) {
-  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV p0, const TV p1, const TV p2) {
-    return edet(p1-p0,p2-p0);
-  }};
-  return perturbed_predicate<F>(p0,p1,p2);
+  return perturbed_predicate<TriangleOriented>(p0,p1,p2);
 }
 
+namespace {
+struct DirectionsOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV d0, const TV d1) {
+  return edet(d0,d1);
+}};}
 bool directions_oriented(const Point2 d0, const Point2 d1) {
-  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV d0, const TV d1) {
-    return edet(d0,d1);
-  }};
-  return perturbed_predicate<F>(d0,d1);
+  return perturbed_predicate<DirectionsOriented>(d0,d1);
 }
 
+namespace {
+struct SegmentDirectionsOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1) {
+  return edet(a1-a0,b1-b0);
+}};}
 bool segment_directions_oriented(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
-  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1) {
-    return edet(a1-a0,b1-b0);
-  }};
-  return perturbed_predicate<F>(a0,a1,b0,b1);
+  return perturbed_predicate<SegmentDirectionsOriented>(a0,a1,b0,b1);
 }
 
+namespace {
+struct SegmentToDirectionOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV d) {
+  return edet(a1-a0,d);
+}};}
 bool segment_to_direction_oriented(const Point2 a0, const Point2 a1, const Point2 d) {
-  struct F { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV d) {
-    return edet(a1-a0,d);
-  }};
-  return perturbed_predicate<F>(a0,a1,d);
+  return perturbed_predicate<SegmentToDirectionOriented>(a0,a1,d);
 }
 
+namespace {
+struct SegmentIntersectionsOrdered { template<class TV> static inline PredicateType<4,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0, const TV c1) {
+  const auto da = a1-a0,
+             db = b1-b0,
+             dc = c1-c0;
+  return edet(c0-a0,dc)*edet(da,db)-edet(b0-a0,db)*edet(da,dc);
+}};}
 bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, Point2 b1, Point2 c0, Point2 c1) {
-  struct F { template<class TV> static inline PredicateType<4,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0, const TV c1) {
-    const auto da = a1-a0,
-               db = b1-b0,
-               dc = c1-c0;
-    return edet(c0-a0,dc)*edet(da,db)-edet(b0-a0,db)*edet(da,dc);
-  }};
-  return perturbed_predicate<F>(a0,a1,b0,b1,c0,c1)
+  return perturbed_predicate<SegmentIntersectionsOrdered>(a0,a1,b0,b1,c0,c1)
        ^ segment_directions_oriented(a0,a1,b0,b1)
        ^ segment_directions_oriented(a0,a1,c0,c1);
 }
 
+namespace {
+struct SegmentIntersectionAbove { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0) {
+  const auto da = a1-a0,
+             db = b1-b0;
+             // c1 == c1 + x*delta
+             //dc = [dx, 0];
+  //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y*delta;
+  return (a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y;
+}};}
 bool segment_intersection_above(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1, const Point2 c) {
-  struct F { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0) {
-    const auto da = a1-a0,
-               db = b1-b0;
-               // c1 == c1 + x*delta
-               //dc = [dx, 0];
-    //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y*delta;
-    return (a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y;
-  }};
-  return perturbed_predicate<F>(a0,a1,b0,b1,c)
+  return perturbed_predicate<SegmentIntersectionAbove>(a0,a1,b0,b1,c)
        ^ segment_directions_oriented(a0,a1,b0,b1)
        ^ rightwards(a0,a1);
 }
 
+#define ROW(d) tuple(esqr_magnitude(d),d.x,d.y) // Put the quadratic entry first so that subexpressions are lower order
+
+namespace {
+struct Incircle { template<class TV> static inline PredicateType<4,TV> eval(const TV p0, const TV p1, const TV p2, const TV p3) {
+  const auto d0 = p0-p3,
+             d1 = p1-p3,
+             d2 = p2-p3;
+  return edet(ROW(d0),ROW(d1),ROW(d2));
+}};}
 bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3) {
-  struct F { template<class TV> static inline PredicateType<4,TV> eval(const TV p0, const TV p1, const TV p2, const TV p3) {
-    const auto d0 = p0-p3,
-               d1 = p1-p3,
-               d2 = p2-p3;
-    #define ROW(d) tuple(esqr_magnitude(d),d.x,d.y) // Put the quadratic entry first so that subexpressions are lower order
-    return edet(ROW(d0),ROW(d1),ROW(d2));
-  }};
-  return perturbed_predicate<F>(p0,p1,p2,p3);
+  return perturbed_predicate<Incircle>(p0,p1,p2,p3);
 }
 
 bool segments_intersect(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {

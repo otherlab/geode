@@ -300,25 +300,31 @@ Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& inpu
 
 // Tweak quantized circles so that they intersect.
 static bool tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs, const int i, const int j) {
-  OTHER_WARNING("TODO: If the same circle is used in multiple arcs, it probably isn't safe to change only one of them!!!!!");
 
   // TODO: For now, we require nonequal centers
   OTHER_ASSERT(arcs[i].center != arcs[j].center);
 
   bool changed = false;
 
-  const double dc = magnitude(Vector<double,2>(arcs[i].center-arcs[j].center));
+  // We want dc = magnitude(Vector<double,2>(arcs[i].center-arcs[j].center))
+  // But we need to use interval arithmetic to ensure the correct result
+  Vector<double,2> delta = (arcs[i].center-arcs[j].center);
+  const Interval dc_interval = assume_safe_sqrt(sqr(Interval(delta.x))+sqr(Interval(delta.y)));
   Quantized &ri = arcs[i].radius,
             &rj = arcs[j].radius;
 
-  if (ri+rj <= dc) {
-    const auto d = Quantized(floor((dc-ri-rj)/2+1));
+  // Conservatively check if circles might be too far apart to intersect (i.e. ri+rj <= dc)
+  if(!certainly_less(dc_interval,Interval(ri)+Interval(rj))) {
+    const auto d_interval = (dc_interval-Interval(ri)-Interval(rj))*Interval(.5);
+    const auto d = Quantized(floor(d_interval.hi + 1)); // Quantize up
     ri += d;
     rj += d;
     changed = true;
   }
-  if (abs(ri-rj) >= dc) {
-    (ri<rj?ri:rj) = max(ri,rj)-Quantized(ceil(dc-1));
+  // Conservatively check if inner circle is too small to intersect (i.e. abs(ri-rj) >= dc)
+  if(!certainly_less(Interval(abs(ri-rj)),dc_interval)) {
+    Quantized& small_r = ri<rj?ri:rj; // We will grow the smaller radius
+    small_r = max(ri,rj)-Quantized(ceil(-dc_interval.nlo-1));
     changed = true;
   }
 
@@ -327,6 +333,7 @@ static bool tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs, const int i, 
 
 // Tweak quantized circles so that they intersect.
 void tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs) {
+  IntervalScope scope;
   const int n = arcs.size();
 
   // Iteratively enlarge radii until we're nondegenerately intersecting.  TODO: Currently, this is worst case O(n^2).
@@ -363,13 +370,18 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
 
   // Quantize and implicitize each arc
   IntervalScope scope;
-  auto output = Nested<ExactCircleArc>::empty_like(input);
+  auto output = Nested<ExactCircleArc,false>();
+  auto out_sources = Array<int>(); // scratch array for tracking origin of merged arcs
+
   for (const int p : range(input.size())) {
     const int base = input.offsets[p];
     const auto in = input[p];
-    const auto out = output[p];
+    out_sources.clear();
+    output.append(Array<ExactCircleArc>()); // Add a zero length array which we will update
+
     const int n = in.size();
-    for (int j=0,i=n-1;j<n;i=j++) {
+    for(int i = 0; i<n; ++i) {
+      const int j = (i+1)%n;
       // Implicitize
       const auto x0 = in[i].x,
                  x1 = in[j].x,
@@ -384,22 +396,41 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
       e.center = quant(center);
       e.index = base+i;
       e.positive = q > 0;
-      e.left = false; // set to false to avoid compiler warning
-      out[i] = e;
+      e.left = false; // Set to false to avoid compiler warning. Actual value set below
+
+      // All output arcs need to intersect their neighbors which will be ensured by calling tweak_arcs_to_intersect
+      // Concentric arcs are ignored since those would be redundent after tweaking
+      if(output.back().empty() || output.flat.back().center != e.center) {
+        out_sources.append(j);
+        output.append_to_back(e);
+      }
     }
+
+    // Filter out back arcs if concentric with front
+    while(output.back().size() > 1 && output.back().front().center == output.back().back().center) {
+      out_sources.pop(); // remove from sources list
+
+      // We want output.back().pop(), but have to edit internal structures in the nested array
+      output.offsets.back() -= 1;
+      output.flat.pop();
+    }
+
+    auto out = output.back();
+    const int out_n = out.size();
+    assert(out_n == out_sources.size());
     // Fill in left flags
-    for (int j=0,i=n-1;j<n;i=j++) {
-      const auto x = in[j].x,
+    for (int j=0,i=out_n-1;j<out_n;i=j++) {
+      const auto x = in[out_sources[i]].x,
                  c0 = quant.inverse(out[i].center),
                  c1 = quant.inverse(out[j].center);
       out[i].left = cross(c1-c0,x-c0)>0;
     }
   }
 
+  auto result = output.freeze();
   // After quantization some pairs of arcs might not intersect so perform (very small) adjustments
-  tweak_arcs_to_intersect(output);
-
-  return tuple(quant,output);
+  tweak_arcs_to_intersect(result);
+  return tuple(quant,result);
 }
 
 Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input) {
@@ -436,40 +467,6 @@ ostream& operator<<(ostream& output, const CircleArc& arc) {
 
 ostream& operator<<(ostream& output, const ExactCircleArc& arc) {
   return output << format("ExactCircleArc([%d,%d],%d,%c%c)",arc.center.x,arc.center.y,arc.radius,arc.positive?'+':'-',arc.left?'L':'R');
-}
-
-#ifdef OTHER_PYTHON
-
-// Instantiate Python conversions for arrays of circular arcs
-namespace {
-template<> struct NumpyDescr<CircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
-template<> struct NumpyIsStatic<CircleArc>:public mpl::true_{};
-template<> struct NumpyRank<CircleArc>:public mpl::int_<0>{};
-template<> struct NumpyArrayType<CircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
-PyArray_Descr* NumpyDescr<CircleArc>::d;
-template<> struct NumpyDescr<ExactCircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
-template<> struct NumpyIsStatic<ExactCircleArc>:public mpl::true_{};
-template<> struct NumpyRank<ExactCircleArc>:public mpl::int_<0>{};
-template<> struct NumpyArrayType<ExactCircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
-PyArray_Descr* NumpyDescr<ExactCircleArc>::d;
-}
-ARRAY_CONVERSIONS(1,CircleArc)
-ARRAY_CONVERSIONS(1,ExactCircleArc)
-
-static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
-  OTHER_ASSERT(PyArray_DescrCheck(inexact));
-  OTHER_ASSERT(PyArray_DescrCheck(exact));
-  OTHER_ASSERT(((PyArray_Descr*)inexact)->elsize==sizeof(CircleArc));
-  OTHER_ASSERT(((PyArray_Descr*)  exact)->elsize==sizeof(ExactCircleArc));
-  Py_INCREF(inexact);
-  Py_INCREF(  exact);
-  NumpyDescr<     CircleArc>::d = (PyArray_Descr*)inexact;
-  NumpyDescr<ExactCircleArc>::d = (PyArray_Descr*)  exact;
-}
-
-static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
-  const auto e = quantize_circle_arcs(arcs);
-  return unquantize_circle_arcs(e.x,e.y);
 }
 
 // The area between a segment of length 2 and an associated circular sector
@@ -530,6 +527,39 @@ Nested<CircleArc> canonicalize_circle_arcs(Nested<const CircleArc> polys) {
   return new_polys;
 }
 
+#ifdef OTHER_PYTHON
+
+// Instantiate Python conversions for arrays of circular arcs
+namespace {
+template<> struct NumpyDescr<CircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
+template<> struct NumpyIsStatic<CircleArc>:public mpl::true_{};
+template<> struct NumpyRank<CircleArc>:public mpl::int_<0>{};
+template<> struct NumpyArrayType<CircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
+PyArray_Descr* NumpyDescr<CircleArc>::d;
+template<> struct NumpyDescr<ExactCircleArc>{static PyArray_Descr* d;static PyArray_Descr* descr(){OTHER_ASSERT(d);Py_INCREF(d);return d;}};
+template<> struct NumpyIsStatic<ExactCircleArc>:public mpl::true_{};
+template<> struct NumpyRank<ExactCircleArc>:public mpl::int_<0>{};
+template<> struct NumpyArrayType<ExactCircleArc>{static PyTypeObject* type(){return numpy_recarray_type();}};
+PyArray_Descr* NumpyDescr<ExactCircleArc>::d;
+}
+ARRAY_CONVERSIONS(1,CircleArc)
+ARRAY_CONVERSIONS(1,ExactCircleArc)
+
+static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
+  OTHER_ASSERT(PyArray_DescrCheck(inexact));
+  OTHER_ASSERT(PyArray_DescrCheck(exact));
+  OTHER_ASSERT(((PyArray_Descr*)inexact)->elsize==sizeof(CircleArc));
+  OTHER_ASSERT(((PyArray_Descr*)  exact)->elsize==sizeof(ExactCircleArc));
+  Py_INCREF(inexact);
+  Py_INCREF(  exact);
+  NumpyDescr<     CircleArc>::d = (PyArray_Descr*)inexact;
+  NumpyDescr<ExactCircleArc>::d = (PyArray_Descr*)  exact;
+}
+
+static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
+  const auto e = quantize_circle_arcs(arcs);
+  return unquantize_circle_arcs(e.x,e.y);
+}
 #endif
 
 } // namespace other
