@@ -17,7 +17,7 @@ struct Vertex {
   uint8_t q0,q1; // Quadrants relative to i0's center and i1's center, respectively
   exact::Vec2 rounded; // The nearly exactly rounded intersect, differing from the exact intersection by at most vertex::tolerance.
 
-  static Quantized tolerance() { return 2; }
+  static const Quantized tolerance() { return 2; }
 
   bool operator==(const Vertex v) const {
     return i0==v.i0 && i1==v.i1 && left==v.left;
@@ -65,7 +65,7 @@ typedef RawArray<const ExactCircleArc> Arcs;
 
 // Cautionary tale: An earlier version of this routine had an option to negate the radius,
 // which was used to reduce code duplication in circles_intersect.  This would have been
-// an absolute disaster, as wouldn't have flipped the sign of the symbolic perturbation.
+// a disaster, as it wouldn't have flipped the sign of the symbolic perturbation.
 static inline exact::Point3 aspoint(Arcs arcs, const int arc) {
   const auto& a = arcs[arc];
   return tuple(a.index,exact::Vec3(a.center,a.radius));
@@ -76,15 +76,16 @@ static inline exact::Point2 aspoint_center(Arcs arcs, const int arc) {
 }
 
 // Check if arcs are both parts of the same circle
-bool arcs_from_same_circle(const Arcs& arcs, int i0, int i1);
+bool arcs_from_same_circle(Arcs arcs, int i0, int i1);
 
 // Do two circles intersect (degree 2)?
 OTHER_CORE_EXPORT bool circles_intersect(Arcs arcs, const int arc0, const int arc1);
 
 // Is intersection (a0,a1).y < (b0,b1).y?  This is degree 20 as written, but can be reduced to 6.
-bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b);
+// If add = true, check whether ((0,a1)+(0,b1)).y > 0.  In both cases, we require a.i0==b.i0.
+template<bool add=false> bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b);
 
-// Does the piece of a1 between a0 and a1 intersect the piece of b1 between b0 and b2?  a1 and b1 are assumed to intersect.
+// Does the piece of a1 between a01 and a12 intersect the piece of b1 between b01 and b12?  a1 and b1 are assumed to intersect at ab.
 bool circle_arcs_intersect(Arcs arcs, const Vertex a01, const Vertex a12,
                                       const Vertex b01, const Vertex b12,
                                       const Vertex ab);
@@ -97,20 +98,57 @@ bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12,
 // Degrees 3/2 for the nonsqrt part and 6/4 for the part under the sqrt.
 Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const int arc1);
 
-// Compute a bounding box for the arc between two verticies
-Box<exact::Vec2> arc_box(RawArray<const ExactCircleArc> arcs, const Vertex& v01, const Vertex& v12);
+// Compute a bounding box for the arc between two vertices
+Box<exact::Vec2> arc_box(Arcs arcs, const Vertex& v01, const Vertex& v12);
 
 // Precompute all intersections
 // result[i] is the start of arcs[i]
-Array<Vertex> compute_verticies(RawArray<const ExactCircleArc> arcs, RawArray<const int> next);
+Array<Vertex> compute_vertices(Arcs arcs, RawArray<const int> next);
 
-// Compute winding(local_outside) - winding(rightwards), where local_outside is immediately outside of a12 and rightwards
-// is far to the right of a12, taking into account only arcs a1 and a2.  Thus, ignoring secondary intersections with arcs a1 and a2,
-// the result will be either 0 or -1, since locally winding(local_outside) = 0 and winding(rightwards) = 0 or 1.
-int local_x_axis_depth(Arcs arcs, const Vertex a01, const Vertex a12, const Vertex a23);
+// An intersection between an arc and a horizontal line
+struct HorizontalVertex {
+  int arc;
+  bool left; // True if the intersection is the left of the *vertical* line through the arc's center
+  uint8_t q0; // Quadrant relative to arc's center
+  Quantized y; // y-coordinate of horizontal line
+  Interval x; // x-coordinate of intersection
 
-// Count the depth change along the horizontal ray from (a0,a1) to (a0,a1+(inf,0) due to the arc from (b0,b1) to (b1,b2).
-// The change is -1 if we go out of an arc, +1 if we go into an arc.  Degree 8 as written, but can be eliminated entirely.
-int horizontal_depth_change(Arcs arcs, const Vertex a, const Vertex b01, const Vertex b12);
+  bool operator==(const HorizontalVertex h) const {
+    assert(y==h.y);
+    return arc==h.arc && left==h.left;
+  }
+
+  bool operator!=(const HorizontalVertex v) const {
+    return !(*this==v);
+  }
+
+  OTHER_UNUSED friend ostream& operator<<(ostream& output, const HorizontalVertex h) {
+    return output<<format("(%d,%s,%c)",h.arc,repr(h.y),h.left?'L':'R');
+  }
+};
+
+// Does a circle intersect a horizontal line?
+bool circle_intersects_horizontal(Arcs arcs, const int arc, const Quantized y);
+
+// Assuming the circle intersects the horizontal line, generate structs for each intersection
+Vector<HorizontalVertex,2> circle_horizontal_intersections(Arcs arcs, const int arc, const Quantized y);
+
+// Does the piece of a1 between a01 and a12 contain the given horizontal intersection?
+bool circle_arc_contains_horizontal_intersection(Arcs arcs, const Vertex a01, const Vertex a12, const HorizontalVertex a1y);
+
+// Are the two horizontal circle intersections in rightwards order?  We require ay.y==by.y.
+bool horizontal_intersections_rightwards(Arcs arcs, const HorizontalVertex ay, const HorizontalVertex by);
+
+// Compute winding(local_outside) - winding(rightwards), where local_outside is immediately outside of h.arc and rightwards
+// is immediately to the right of h.  Thus, the result will be either 0 or -1, since locally winding(local_outside) = 0 and winding(rightwards) = 0 or 1.
+static inline int local_horizontal_depth(Arcs arcs, const HorizontalVertex h) {
+  return -(arcs[h.arc].positive==h.left);
+}
+
+// Count the depth change along the horizontal ray at the given intersection with an arc.
+// The change is -1 if we go out of an arc, +1 if we go into an arc.
+static inline int horizontal_depth_change(Arcs arcs, const HorizontalVertex h) {
+  return arcs[h.arc].positive==h.left ? 1 : -1;
+}
 
 } // namespace other

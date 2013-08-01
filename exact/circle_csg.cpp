@@ -11,13 +11,14 @@
 #include <other/core/python/stl.h>
 #include <other/core/python/wrap.h>
 #include <other/core/structure/Hashtable.h>
-
 namespace other {
 
 typedef RawArray<const ExactCircleArc> Arcs;
 typedef RawArray<const int> Next;
 typedef RawArray<const Vertex> Vertices;
 typedef exact::Vec2 EV2;
+using std::cout;
+using std::endl;
 
 static Array<Box<EV2>> arc_boxes(Next next, Arcs arcs, RawArray<const Vertex> vertices) {
   // Build bounding boxes for each arc
@@ -31,27 +32,83 @@ static Array<Box<EV2>> arc_boxes(Next next, Arcs arcs, RawArray<const Vertex> ve
   return boxes;
 }
 
-Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nested, const int depth) {
+namespace {
+struct Info {
+  Nested<const ExactCircleArc> arcs;
+
+  // The following have one entry per arc
+  Array<const int> next; // arcs.flat[i] is followed by arcs.flat[next[i]]
+  Array<const Vertex> vertices; // vertices[i] is the start of arcs.flat[i]
+  Array<const Box<EV2>> boxes; // Conservative bounding box for arcs.flat[i]
+
+  // For each contour, a horizontal line that intersects it and the (relative) index of an arc it intersects
+  Array<const HorizontalVertex> horizontals;
+};
+}
+
+// Precompute information about a series of arc contours, and 
+static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
+  // Precompute base information
+  const auto next = closed_contours_next(arcs);
+  const auto vertices = compute_vertices(arcs.flat,next);
+  const auto boxes = arc_boxes(next,arcs.flat,vertices);
+
+  // Find horizontal lines through each contour, and prune away contours that don't have any
+  Nested<ExactCircleArc,false> pruned_arcs;
+  Array<Vertex> pruned_vertices;
+  Array<Box<EV2>> pruned_boxes;
+  Array<HorizontalVertex> pruned_horizontals;
+  for (const int c : range(arcs.size())) {
+    const auto I = arcs.range(c);
+    // Compute contour bounding box, and pick horizontal line through the middle
+    Box<EV2> box;
+    for (const auto b : boxes.slice(I))
+      box.enlarge(b);
+    const auto y = Quantized(floor((box.min.y+box.max.y)/2));
+    // Check if the horizontal line hits the contour
+    for (const int a : I)
+      if (circle_intersects_horizontal(arcs.flat,a,y))
+        for (const auto ay : circle_horizontal_intersections(arcs.flat,a,y))
+          if (circle_arc_contains_horizontal_intersection(arcs.flat,vertices[a],vertices[next[a]],ay)) {
+            // Success!  Add this contour our unpruned list
+            pruned_arcs.append(arcs[c]);
+            pruned_vertices.extend(vertices.slice(I));
+            pruned_boxes.extend(boxes.slice(I));
+            pruned_horizontals.append(ay);
+            goto next_contour;
+          }
+    next_contour:;
+  }
+
+  // All done!
+  Info info;
+  info.arcs = pruned_arcs;
+  info.next = closed_contours_next(pruned_arcs);
+  info.vertices = pruned_vertices;
+  info.boxes = pruned_boxes;
+  info.horizontals = pruned_horizontals;
+  return info;
+}
+
+Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpruned, const int depth) {
   // Check input consistency
-  for (const int p : range(nested.size())) {
-    const auto contour = nested[p];
-    if (contour.size()==2 && contour[0].left!=contour[1].left) {
+  for (const int p : range(unpruned.size())) {
+    const auto contour = unpruned[p];
+    if (contour.size()==2 && contour[0].left!=contour[1].left)
       throw RuntimeError(format("exact_split_circle_arcs: contour %d is degenerate of size 2",p));
-    }
     for (const auto& arc : contour)
       OTHER_ASSERT(arc.radius>0,"Radii must be positive so that symbolic perturbation doesn't make them negative");
   }
 
   // Prepare for interval arithmetic
   IntervalScope scope;
-  Arcs arcs = nested.flat;
 
-  // Build a convenience array of (prev,next) pairs to avoid dealing with the nested structure.
-  const Array<const int> next = closed_contours_next(nested);
-
-  // Precompute all intersections between connected arcs
-  const Array<const Vertex> vertices = compute_verticies(arcs, next); // vertices[i] is the start of arcs[i]
-
+  // Prune arcs which don't intersect with horizontal lines
+  auto info = prune_small_contours(unpruned);
+  Arcs arcs = info.arcs.flat;
+  Next next = info.next;
+  Vertices vertices = info.vertices;
+  
   // Compute all nontrivial intersections between segments
   struct Intersections {
     const BoxTree<EV2>& tree;
@@ -89,9 +146,10 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
       }
     }
   };
-  const auto tree = new_<BoxTree<EV2>>(arc_boxes(next,arcs,vertices),1);
+  const auto tree = new_<BoxTree<EV2>>(info.boxes,1);
   Intersections pairs(tree,next,arcs,vertices);
   double_traverse(*tree,pairs);
+  info.boxes.clean_memory();
 
   // Group intersections by segment.  Each pair is added twice: once for each order.
   Array<int> counts(arcs.size());
@@ -109,54 +167,20 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
 
   // Walk all original polygons, recording which subsegments occur in the final result
   Hashtable<Vertex,Vertex> graph; // If u -> v, the output contains the portion of segment j from ij_a to jk_b
-  for (const int p : range(nested.size())) {
-    const auto poly = range(nested.offsets[p],nested.offsets[p+1]);
-    // Compute the depth of the first point in the contour by firing a ray along the positive x axis.
-    struct Depth {
-      const BoxTree<EV2>& tree;
-      Next next;
-      Arcs arcs;
-      Vertices vertices;
-      const Vertex start;
-      int depth;
+  for (const int p : range(info.arcs.size())) {
+    const auto poly = info.arcs.range(p);
 
-      Depth(const BoxTree<EV2>& tree, Next next, Arcs arcs, Vertices vertices, const int i0, const int i1)
-        : tree(tree), next(next), arcs(arcs), vertices(vertices)
-        , start(vertices[i1])
-        // If we intersect no other arcs, the depth depends on the orientation of direction = (1,0) relative to inwards and outwards arcs
-        , depth(local_x_axis_depth(arcs,vertices[i0],start,vertices[next[i1]])) {}
-
-      bool cull(const int n) const {
-        const auto box = tree.boxes(n),
-                   sbox = start.box();
-        return box.max.x<sbox.min.x || box.max.y<sbox.min.y || box.min.y>sbox.max.y;
-      }
-
-      void leaf(const int n) {
-        assert(tree.prims(n).size()==1);
-        const int j = tree.prims(n)[0];
-        if (start.i0!=j && start.i1!=j)
-          depth -= horizontal_depth_change(arcs,start,vertices[j],
-                                                      vertices[next[j]]);
-      }
-    };
-    Depth ray(tree,next,arcs,vertices,poly.back(),poly[0]);
-    single_traverse(*tree,ray);
-
-    // Walk around the contour, recording all subarcs at the desired depth
-    int delta = ray.depth-depth;
-    Vertex prev = vertices[poly[0]];
+    // Sort intersections along each segment
     for (const int i : poly) {
       const auto other = others[i];
       // Sort intersections along this segment
       if (other.size() > 1) {
         struct PairOrder {
-          Next next;
           Arcs arcs;
           const Vertex start; // The start of the segment
 
-          PairOrder(Next next, Arcs arcs, Vertex start)
-            : next(next), arcs(arcs)
+          PairOrder(Arcs arcs, Vertex start)
+            : arcs(arcs)
             , start(start) {}
 
           bool operator()(const Vertex b0, const Vertex b1) const {
@@ -166,21 +190,81 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> nest
             return circle_arc_intersects_circle(arcs,start,b1,b0);
           }
         };
-        sort(other,PairOrder(next,arcs,prev));
+        sort(other,PairOrder(arcs,vertices[i]));
       }
-      // Walk through each intersection of this segment, updating delta as we go and remembering the subsegment if it has the right depth
-      for (const auto o : other) {
-        if (!delta)
-          graph.set(prev,o);
-        delta += o.left ^ arcs[o.i0].positive ^ arcs[o.i1].positive ? -1 : 1;
-        prev = o.reverse();
-      }
-      // Advance to the next segment
-      const auto n = vertices[next[i]];
-      if (!delta)
-        graph.set(prev,n);
-      prev = n;
     }
+
+    // Find which subarc the horizontal line intersects to determine the start point for walking
+    const auto horizontal = info.horizontals[p];
+    const int start = horizontal.arc;
+    int substart = 0;
+    for (;substart<others[start].size();substart++)
+      if (circle_arc_contains_horizontal_intersection(arcs,vertices[start],others(start,substart),horizontal))
+        break;
+
+    // Compute the depth immediately outside our start point by firing a ray along the positive x axis.
+    struct Depth {
+      const BoxTree<EV2>& tree;
+      Next next;
+      Arcs arcs;
+      Vertices vertices;
+      const HorizontalVertex start;
+      const Quantized start_xmin;
+      int depth;
+
+      Depth(const BoxTree<EV2>& tree, Next next, Arcs arcs, Vertices vertices, const HorizontalVertex start)
+        : tree(tree), next(next), arcs(arcs), vertices(vertices)
+        , start(start)
+        , start_xmin(ceil(-start.x.nlo)) // Safe to round up since we'll be comparing against conservative integer boxes
+        // If we intersect no other arcs, the depth depends on the orientation of direction = (1,0) relative to the starting arc
+        , depth(local_horizontal_depth(arcs,start)) {}
+
+      bool cull(const int n) const {
+        const auto box = tree.boxes(n);
+        return box.max.x<start_xmin || box.max.y<start.y || box.min.y>start.y;
+      }
+
+      void leaf(const int n) {
+        assert(tree.prims(n).size()==1);
+        const int j = tree.prims(n)[0];
+        if (circle_intersects_horizontal(arcs,j,start.y))
+          for (const auto h : circle_horizontal_intersections(arcs,j,start.y))
+            if (   start!=h
+                && horizontal_intersections_rightwards(arcs,start,h)
+                && circle_arc_contains_horizontal_intersection(arcs,vertices[j],vertices[next[j]],h))
+              depth -= horizontal_depth_change(arcs,h);
+      }
+    };
+    Depth ray(tree,next,arcs,vertices,horizontal);
+    single_traverse(*tree,ray);
+
+    // Walk around the contour, recording all subarcs at the desired depth
+    int delta = ray.depth-depth;
+    const auto start_vertex = substart ? others(start,substart-1).reverse() : vertices[start];
+    auto prev = start_vertex;
+    int index = start,
+        sub = substart;
+    do {
+      if (sub==others.size(index)) { // Jump to the next segment in the contour
+        index++;
+        if (index==poly.hi)
+          index = poly.lo;
+        sub = 0;
+        const auto next = vertices[index];
+        // Remember this subsegment if it has the right depth, the advance to the next segment
+        if (!delta)
+          graph.set(prev,next);
+        prev = next;
+      } else { // Walk across a new intersection
+        sub++;
+        const auto next = others(index,sub-1);
+        // Remember this subsegment if it has the right depth, the advance to the next segment
+        if (!delta)
+          graph.set(prev,next);
+        delta += next.left ^ arcs[next.i0].positive ^ arcs[next.i1].positive ? -1 : 1; 
+        prev = next.reverse();
+      }
+    } while (prev != start_vertex);
   }
 
   // Walk the graph to produce output polygons

@@ -52,6 +52,4 @@ OTHER_CORE_EXPORT OTHER_PURE bool incircle(const exact::Point2 p0, const exact::
 // Does segment a0,a1 intersect b0,b1?
 OTHER_CORE_EXPORT OTHER_PURE bool segments_intersect(const exact::Point2 a0, const exact::Point2 a1, const exact::Point2 b0, const exact::Point2 b1);
 
-
-
 }

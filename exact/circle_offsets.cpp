@@ -84,7 +84,7 @@ Nested<ExactCircleArc> exact_offset_arcs(const Nested<const ExactCircleArc> nest
   // Compute some preliminary info
   const RawArray<const ExactCircleArc> arcs = nested_arcs.flat;
   const Array<const int> next = closed_contours_next(nested_arcs);
-  const Array<const Vertex> vertices = compute_verticies(arcs, next); // vertices[i] is the start of arcs[i]
+  const Array<const Vertex> vertices = compute_vertices(arcs, next); // vertices[i] is the start of arcs[i]
 
   // offset shape is union of the origional shape and the thickened border
   // for a negative offset the thickened border will need to be negatively oriented

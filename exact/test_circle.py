@@ -29,7 +29,6 @@ def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False,jitter=None):
     if dots:
       pylab.plot(X[:,0],X[:,1],'.')
     if full:
-      print 'draw center = %s'%compact_str(center)
       for i,pp in enumerate(points):
         pylab.plot(pp[:,0],pp[:,1],'--')
         pylab.plot(center[i,0],center[i,1],'+')
@@ -105,6 +104,17 @@ def test_circles():
       print '(k,n,i) (%d,%d,%d)'%(k,n,i)
       random.seed(18183181+1000*k+10*n+i)
       arcs0 = canonicalize_circle_arcs(random_circle_arcs(n,k))
+      if (k,n,i)==None: # Enable to visualize before union
+        print
+        print 'arcs0 = %s'%compact_str(arcs0)
+        import pylab
+        pylab.suptitle('k %d, n %d, i %d'%(k,n,i))
+        if full:
+          draw_circle_arcs(arcs0,full=True,label=label)
+        draw_circle_arcs(arcs0,label=label,dots=dots)
+        #pylab.axhline(y=0.436509,color='r')
+        pylab.axes().set_aspect('equal')
+        pylab.show()
       arcs1 = canonicalize_circle_arcs(circle_arc_union(arcs0))
       error = 0 if n>=40 else inf if correct is None else arc_error(correct,arcs1)
       if error>1e-5:

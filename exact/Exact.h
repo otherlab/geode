@@ -3,6 +3,7 @@
 
 #include <other/core/exact/config.h>
 #include <other/core/array/RawArray.h>
+#include <other/core/math/One.h>
 #include <other/core/math/integer_log.h>
 #include <other/core/utility/move.h>
 #include <boost/detail/endian.hpp>
@@ -167,6 +168,29 @@ OTHER_CORE_EXPORT string mpz_str(Subarray<const mp_limb_t,2> limbs, const bool h
 
 template<int d> static inline ostream& operator<<(ostream& output, const Exact<d>& x) {
   return output << mpz_str(asarray(x.n));
+}
+
+// Overloads to make One work with perturbed_predicate_sqrt and friends
+
+static inline int weak_sign(One) {
+  return 1;
+}
+
+static inline int mpz_set(RawArray<mp_limb_t> x, One) {
+  // We'll never reach here, since the "filter" step always succeeds for One
+  OTHER_UNREACHABLE();
+}
+
+struct SmallShift {
+  int s;
+};
+static inline SmallShift operator<<(One, const int s) {
+  SmallShift r;
+  r.s = s;
+  return r;
+}
+template<class T> static inline T operator*(const T& x, const SmallShift s) {
+  return x<<s.s;
 }
 
 }

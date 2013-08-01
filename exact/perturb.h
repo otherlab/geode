@@ -97,7 +97,7 @@ template<class A,class B0,class B1,class C0,class C1> struct TwoSqrtsAlpha { tem
                                - sqr(B1::eval(args...))*C1::eval(args...);
 }};
 template<class A,class B0> struct TwoSqrtsBeta { template<class... Args> static auto eval(const Args... args)
-  -> decltype(A::eval(args...)*B0::eval(args...)) {
+  -> decltype(A::eval(args...)*(B0::eval(args...)<<1)) {
   return A::eval(args...)*(B0::eval(args...)<<1);
 }};}
 template<class A,class B0,class B1,class C0,class C1,class... Args> OTHER_ALWAYS_INLINE static inline bool perturbed_predicate_two_sqrts(const int sign0, const int sign1, const Args... args) {

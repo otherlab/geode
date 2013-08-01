@@ -572,6 +572,20 @@ Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
   return new_polys;
 }
 
+Array<int> closed_contours_next_from_offsets(RawArray<const int> offsets) {
+  const int n = offsets.back();
+  Array<int> next(n,false);
+  for (const int i : range(1,n))
+    next[i-1] = i;
+  for (const int j : range(offsets.size()-1)) {
+    const int lo = offsets[j],
+              hi = offsets[j+1];
+    if (lo < hi)
+      next[hi-1] = lo;
+  }
+  return next;
+}
+
 }
 using namespace other;
 

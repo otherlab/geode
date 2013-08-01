@@ -141,6 +141,10 @@ static inline Interval operator-(const double x, const Interval y) {
   return Interval(-(y.hi-x),x+y.nlo);
 }
 
+static inline Interval operator+(const double x, const Interval y) {
+  return y+x;
+}
+
 inline Interval Interval::operator*(const Interval x) const {
   assert(fegetround() == FE_UPWARD);
   const T na = nlo,
