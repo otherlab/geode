@@ -76,20 +76,28 @@ static inline exact::Point2 aspoint_center(Arcs arcs, const int arc) {
 }
 
 // Check if arcs are both parts of the same circle
-bool arcs_from_same_circle(Arcs arcs, int i0, int i1);
+static inline bool arcs_from_same_circle(Arcs arcs, const int i0, const int i1) {
+  if (i0 == i1)
+    return true;
+  const auto &a0 = arcs[i0],
+             &a1 = arcs[i1];
+  assert(a0.index!=a1.index || (a0.center==a1.center && a0.radius==a1.radius && a0.positive==a1.positive));
+  return a0.index==a1.index;
+}
 
 // Do two circles intersect (degree 2)?
 OTHER_CORE_EXPORT bool circles_intersect(Arcs arcs, const int arc0, const int arc1);
 
-// Is intersection (a0,a1).y < (b0,b1).y?  This is degree 20 as written, but can be reduced to 6.
-// If add = true, check whether ((0,a1)+(0,b1)).y > 0.  In both cases, we require a.i0==b.i0.
+// Is intersection (a0,a1).y < (b0,b1).y?  We require a0==b0, which allows a degree 8 implementation.
+// If add = true, check whether ((0,a1)+(0,b1)).y > 0.
 template<bool add=false> bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b);
 
-// Does the piece of a1 between a01 and a12 intersect the piece of b1 between b01 and b12?  a1 and b1 are assumed to intersect at ab.
+// Does the piece of a1 between a01 and a12 intersect the piece of b1 between b01 and b12 (degree 6)?  a1 and b1 are assumed to intersect at ab.
 bool circle_arcs_intersect(Arcs arcs, const Vertex a01, const Vertex a12,
                                       const Vertex b01, const Vertex b12,
                                       const Vertex ab);
-// Does the (a1,b) intersection occur on the piece of a1 between a0 and a2?  a1 and b are assumed to intersect.
+
+// Does the (a1,b) intersection occur on the piece of a1 between a0 and a2 (degree 6)?  a1 and b are assumed to intersect.
 bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12, const Vertex a1b);
 
 // Construct both of the intersections of two circular arcs, assuming they do intersect.
@@ -101,8 +109,7 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
 // Compute a bounding box for the arc between two vertices
 Box<exact::Vec2> arc_box(Arcs arcs, const Vertex& v01, const Vertex& v12);
 
-// Precompute all intersections
-// result[i] is the start of arcs[i]
+// Precompute all intersections.  result[i] is the start of arcs[i]
 Array<Vertex> compute_vertices(Arcs arcs, RawArray<const int> next);
 
 // An intersection between an arc and a horizontal line
@@ -127,16 +134,16 @@ struct HorizontalVertex {
   }
 };
 
-// Does a circle intersect a horizontal line?
+// Does a circle intersect a horizontal line (degree 1)?
 bool circle_intersects_horizontal(Arcs arcs, const int arc, const Quantized y);
 
-// Assuming the circle intersects the horizontal line, generate structs for each intersection
+// Assuming the circle intersects the horizontal line, generate structs for each intersection.
 Vector<HorizontalVertex,2> circle_horizontal_intersections(Arcs arcs, const int arc, const Quantized y);
 
-// Does the piece of a1 between a01 and a12 contain the given horizontal intersection?
+// Does the piece of a1 between a01 and a12 contain the given horizontal intersection (degree 3)?
 bool circle_arc_contains_horizontal_intersection(Arcs arcs, const Vertex a01, const Vertex a12, const HorizontalVertex a1y);
 
-// Are the two horizontal circle intersections in rightwards order?  We require ay.y==by.y.
+// Are the two horizontal circle intersections in rightwards order (degree 4)?  We require ay.y==by.y.
 bool horizontal_intersections_rightwards(Arcs arcs, const HorizontalVertex ay, const HorizontalVertex by);
 
 // Compute winding(local_outside) - winding(rightwards), where local_outside is immediately outside of h.arc and rightwards

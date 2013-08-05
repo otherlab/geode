@@ -9,6 +9,8 @@
 namespace other {
 typedef exact::Vec2 EV2;
 typedef Vector<Exact<1>,3> LV3;
+using std::cout;
+using std::endl;
 
 
 // If true, always run both fast and slow tests and compare results
@@ -40,17 +42,6 @@ static bool filter_helper(const Interval fast, const bool slow, const int line) 
 #define FILTER(fast,...) filter_helper(fast,__VA_ARGS__,__LINE__)
 #endif
 
-
-bool arcs_from_same_circle(Arcs arcs, int i0, int i1) {
-  if (i0 == i1)
-    return true;
-  const auto &a0 = arcs[i0],
-             &a1 = arcs[i1];
-  if (a0.index != a1.index)
-    return false;
-  assert(a0.center == a1.center && a0.radius == a1.radius && a0.positive == a1.positive);
-  return true;
-}
 
 // Do two circles intersect (degree 2)?
 namespace {
@@ -242,36 +233,178 @@ Box<exact::Vec2> arc_box(Arcs arcs, const Vertex& v01, const Vertex& v12) {
   return box;
 }
 
-
-// Is intersection (a0,a1).y < (b0,b1).y?  This is degree 20 as written, but can be reduced to 6.
-// If add = true, assume a0=b0 and check whether ((0,a1)+(0,b1)).y > 0.
 namespace {
-template<bool add> struct UpwardsA { template<class TV> static PredicateType<5,TV> eval(const TV S0, const TV S1, const TV S2, const TV S3) {
-  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy(), c3 = S3.xy();
-  const auto r0 = S0.z,    r1 = S1.z,    r2 = S2.z,    r3 = S3.z;
-  const auto c01 = c1-c0, c23 = c3-c2;
-  const auto sqr_c01 = esqr_magnitude(c01),
-             sqr_c23 = esqr_magnitude(c23);
-  const auto alpha01 = sqr_c01+(r0+r1)*(r0-r1),
-             alpha23 = sqr_c23+(r2+r3)*(r2-r3);
-  return !add ? ((c2.y-c0.y)<<1)*sqr_c01*sqr_c23+alpha23*(c23.y*sqr_c01)-alpha01*(c01.y*sqr_c23)
-              : alpha23*(c23.y*sqr_c01)+alpha01*(c01.y*sqr_c23);
+#define UPWARDS_PRELUDE() \
+  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy(); \
+  const auto r0 = S0.z,    r1 = S1.z,    r2 = S2.z; \
+  const auto c01 = c1-c0, c02 = c2-c0; \
+  const auto sqr_c01 = esqr_magnitude(c01), \
+             sqr_c02 = esqr_magnitude(c02); \
+  const auto alpha01 = sqr_c01+(r0+r1)*(r0-r1), \
+             alpha02 = sqr_c02+(r0+r2)*(r0-r2);
+template<bool add> struct UpwardsA { template<class TV> static PredicateType<5,TV> eval(const TV S0, const TV S1, const TV S2) {
+  UPWARDS_PRELUDE()
+  const auto first  = alpha02*(c02.y*sqr_c01),
+             second = alpha01*(c01.y*sqr_c02);
+  return add ? first+second : first-second;
 }};
-template<int i> struct UpwardsB { template<class TV> static PredicateType<3,TV> eval(const TV S0, const TV S1, const TV S2, const TV S3) {
-  BOOST_STATIC_ASSERT(i==0 || i==2);
+template<int i> struct UpwardsB { template<class TV> static PredicateType<3,TV> eval(const TV S0, const TV S1, const TV S2) {
+  BOOST_STATIC_ASSERT(i==1 || i==2);
   const auto c01 = S1.xy()-S0.xy(),
-             c23 = S3.xy()-S2.xy();
-  return i==0 ? c01.x*esqr_magnitude(c23) // Negated below
-              : c23.x*esqr_magnitude(c01);
+             c02 = S2.xy()-S0.xy();
+  return i==1 ? c01.x*esqr_magnitude(c02) // Negated below
+              : c02.x*esqr_magnitude(c01);
+}};
+template<bool add,int i> struct UpwardsDE { template<class TV> static PredicateType<6,TV> eval(const TV S0, const TV S1, const TV S2) {
+  UPWARDS_PRELUDE()
+  // Happily, D/positive and the two factors of E/positive all have quite similar form, so we encode them into the same template here.  From below, the three expressions are
+  //   D/positive =    c02^2 alpha01^2 + c01^2 alpha02^2 +- 2 alpha01 alpha02  c1y c2y            - 4 r0^2 ((c1y c2x)^2 + (c1x c2y)^2 + 2 (c1x c2x)^2)
+  //   E/positive =   (c02^2 alpha01^2 + c01^2 alpha02^2 +- 2 alpha01 alpha02 (c1y c2y - c1x c2x) - 4 r0^2 (c1x c2y + c1y c2x)^2)
+  //                * (c02^2 alpha01^2 + c01^2 alpha02^2 +- 2 alpha01 alpha02 (c1y c2y + c1x c2x) - 4 r0^2 (c1x c2y - c1y c2x)^2)
+  // All three have the form
+  //   second = alpha01*alpha02*2*F
+  //   factor = first +- second - 4*sqr(r0)*G
+  // Mapping D to i = 0 and E to i = 1,2, we get
+  const auto c1x2x = c01.x*c02.x,
+             c1y2y = c01.y*c02.y,
+             c1x2y = c01.x*c02.y,
+             c1y2x = c01.y*c02.x;
+  const auto F = i==0 ? c1y2y
+               : i==1 ? c1y2y-c1x2x
+               :        c1y2y+c1x2x;
+  const auto G = i==0 ? sqr(c1y2x)+sqr(c1x2y)+(sqr(c1x2x)<<1)
+                      : sqr(i==1 ? c1x2y+c1y2x
+                                 : c1x2y-c1y2x);
+  const auto first = sqr_c02*sqr(alpha01)+sqr_c01*sqr(alpha02),
+             second = alpha01*alpha02*(F<<1);
+  return (add?first+second:first-second)-sqr(r0<<1)*G;
+}};
+template<bool add> struct UpwardsF { template<class TV> static PredicateType<8,TV> eval(const TV S0, const TV S1, const TV S2) {
+  UPWARDS_PRELUDE()
+  // F/positive = c01^2 (alpha02 (alpha02 c01^2 +- 2 alpha01 c1y c2y) + (2r0)^2 ((c1x c2y)^2 - (c1y c2x)^2)) - alpha01^2 (c1x^2 - c1y^2) c02^2
+  const auto first  = alpha02*sqr_c01,
+             second = (c01.y<<1)*c02.y*alpha01;
+  return sqr_c01*(alpha02*(add?first+second:first-second)+sqr(r0<<1)*(sqr(c01.x*c02.y)-sqr(c01.y*c02.x)))-sqr(alpha01)*((sqr(c01.x)-sqr(c01.y))*sqr_c02);
 }};}
+template<bool add,class P3> OTHER_ALWAYS_INLINE static inline bool perturbed_upwards(const int sign1, const int sign2, const P3 S0, const P3 S1, const P3 S2) {
+  // This routine is an optimized version of perturbed_predicate_two_sqrts specialized to this particular predicate, taking advantage of polynomial factorization
+  // to reduce the degree from 20 to 6.  This improves on the degree 12 result of Devillers et al., Algebraic methods and arithmetic filtering for exact predicates on circle arcs,
+  // which is possible since our predicate operates on three unique arcs instead of four.
+
+  // Our predicate is a function of three arcs (c0,r0),(c1,r1),(c2,r2).  Let j = 3-i.  Defining
+  //   si = signi
+  //   c01 = c1-c0
+  //   c02 = c2-c0
+  //   alpha0i = c01^2+(r0+ri)(r0-ri) = c0i^2+r0^2-ri^2
+  //   A = alpha02 (c02.y c01^2) +- alpha01 (c01.y c02^2)
+  //   Bi = c0iy c0j^2
+  //   Ci = 4r0^2 c0i^2 - alpha0i^2
+  // our predicate is
+  //   A + s1 B1 sqrt(C1) + s2 B2 sqrt(C2) > 0
+  // Below, we will include si in Bi to get
+  //   A + B1 sqrt(C1) + B2 sqrt(C2) > 0
+  typedef UpwardsA<add> A; // Degree 5
+  typedef UpwardsB<1> B1;  // Degree 3
+  typedef UpwardsB<2> B2;
+  typedef Beta<0,1> C1;    // Degree 4
+  typedef Beta<0,2> C2;
+
+  // First, some consistency checks
+  assert(abs(sign1)==1 && abs(sign2)==1);
+  assert(perturbed_predicate<C1>(S0,S1,S2));
+  assert(perturbed_predicate<C2>(S0,S1,S2));
+
+  // As in the general case, we next check if all three terms have the same sign.  This is degree 5 due to A.
+  const int sA  =        perturbed_predicate<A> (S0,S1,S2) ? 1 : -1,
+            sB1 = sign1*(perturbed_predicate<B1>(S0,S1,S2) ? 1 : -1),
+            sB2 = sign2*(perturbed_predicate<B2>(S0,S1,S2) ? 1 : -1);
+  if (sA==sB1 && sA==sB2)
+    return sA > 0;
+
+  // We now have a choice of what to move to the RHS: B1 sqrt(C1), B2 sqrt(C2), or both.  In order to maximize
+  // speed, we make this choice differently depending on the signs of A, B1, B2.  If B1 and B2 have the same
+  // sign, moving both to the RHS turns out to require only degree 6 predicates, so we do that.  However, if
+  // B1 and B2 have different signs, determining the sign of the RHS after moving both over requires a degree
+  // 10 predicate.  Therefore, we instead move exactly the term which differs from A in sign, which requires
+  // at most degree 8 predicates.
+
+  // If B1 and B2 have the same sign, go the degree 6 route:
+  int sign_flips;
+  if (sB1 == sB2) {
+
+    // Move *both* sqrt terms to the RHS and square once.  Moving both terms is different from perturbed_predicate_two_sqrts, but lets us reach 6 if sB1==sB2.
+    // We use the notation s> to mean > if s>0 and < if s<0.
+    //   A + B1 sqrt(C1) + B2 sqrt(C2) > 0
+    //   A > -B1 sqrt(C1) - B2 sqrt(C2)
+    //   A^2 sA> B1^2 C1 + B2^2 C2 + 2 B1 B2 sqrt(C1 C2)
+    //   A^2 - B1^2 C1 - B2^2 C2 - 2 B1 B2 sqrt(C1 C2) sA> 0
+    //   D - 2 B1 B2 sqrt(C1 C2) sA> 0
+    // where
+    //   D = A^2 - B1^2 C1 - B2^2 C2
+    // D is degree 10 but is a multiple of c01^2 c02^2 as shown in Mathematica.  Removing these unconditionally positive factors and simplifying produces
+    //   D/positive = c02^2 alpha01^2 + c01^2 alpha02^2 +- 2 alpha01 alpha02 c1y c2y - 4 r0^2 ((c1y c2x)^2 + (c1x c2y)^2 + 2 (c1x c2x)^2)
+    typedef UpwardsDE<add,0> D;
+    const int sD = perturbed_predicate<D>(S0,S1,S2) ? 1 : -1;
+    if (sD==-sB1*sB2)
+      return sD*sA > 0;
+
+    // Now we square once more to get our final polynomial:
+    //   D - 2 B1 B2 sqrt(C1 C2) sA> 0
+    //   D sA> 2 B1 B2 sqrt(C1 C2)
+    //   D^2 sAsD> 4 B1^2 B2^2 C1 C2
+    //   D^2 - 4 B1^2 B2^2 C1 C2 sAsD> 0
+    //   E sAsD> 0
+    // where
+    //   E = D^2 - 4 B1^2 B2^2 C1 C2
+    // is degree 20.  E factors into c01^2 c02^2 and two degree 6 factors:
+    //   E/positive =   (c02^2 alpha01^2 + c01^2 alpha02^2 +- 2 alpha01 alpha02 (c1y c2y - c1x c2x) - 4 r0^2 (c1x c2y + c1y c2x)^2)
+    //                * (c02^2 alpha01^2 + c01^2 alpha02^2 +- 2 alpha01 alpha02 (c1y c2y + c1x c2x) - 4 r0^2 (c1x c2y - c1y c2x)^2)
+    sign_flips = sA*sD;
+
+  } else { // sB1 != sB2
+
+    // Define i,j by sA == sBi, sA != sBj.  We have
+    //   A + Bi sqrt(Ci) + Bj sqrt(Cj) > 0
+    //   A + Bi sqrt(Ci) > -Bj sqrt(Cj)
+    //   A^2 + Bi^2 Ci + 2 A Bi sqrt(Ci) sA> Bj^2 Cj
+    //   A^2 + Bi^2 Ci - Bj^2 Cj sA> -2 A Bi sqrt(Ci)
+    //   F sA> -2 A Bi sqrt(Ci)
+    // where
+    //   F = A^2 + Bi^2 Ci - Bj^2 Cj
+    // F has degree 10, but is a multiple of c0j^2, so reduces to degree 8.  If i=1,j=2, we have
+    //   F/positive = c01^2 (alpha02 (alpha02 c01^2 +- 2 alpha01 c1y c2y) + (2r0)^2 ((c1x c2y)^2 - (c1y c2x)^2)) - alpha01^2 (c1x^2 - c1y^2) c02^2
+    typedef UpwardsF<add> F;
+    const int i = sA==sB1 ? 1 : 2;
+    const int sF = perturbed_predicate<F>(S0,i==1?S1:S2,i==1?S2:S1) ? 1 : -1;
+    if (sF == 1)
+      return sF*sA > 0;
+
+    // As before, we square once more to get our final polynomial
+    //   F sA> -2 A Bi sqrt(Ci)
+    //   F^2 sAsF> 4 A^2 Bi^2 Ci
+    //   F^2 - 4 A^2 Bi^2 Ci sAsF> 0
+    //   E sAsF> 0 
+    // since we have
+    //   E = F^2 - 4 A^2 Bi^2 Ci = D^2 - 4 B1^2 B2^2 C1 C2 // The formula for E from above 
+    sign_flips = sA*sF;
+  }
+
+  // The sB1 == sB2 and sB1 != sB2 join up here, since they both use the same E predicate.
+  typedef UpwardsDE<add,1> Ea;
+  typedef UpwardsDE<add,2> Eb;
+  const int sE =    perturbed_predicate<Ea>(S0,S1,S2)
+                 == perturbed_predicate<Eb>(S0,S1,S2) ? 1 : -1;
+  return sE*sign_flips > 0;
+}
+
 template<bool add> bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b) {
   assert(a!=b && a.i0==b.i0);
-  return FILTER(add ? a.p().y+b.p().y-(arcs[a.i0].center.y*2) : b.p().y-a.p().y,
-               (    (arcs_from_same_circle(arcs, a.i0, b.i0) && arcs_from_same_circle(arcs, a.i1, b.i1))
-                 || (arcs_from_same_circle(arcs, a.i0, b.i1) && arcs_from_same_circle(arcs, a.i1, b.i0)))
+  return FILTER(add ? a.p().y+b.p().y-2*arcs[a.i0].center.y : b.p().y-a.p().y,
+               (   arcs_from_same_circle(arcs,a.i1,b.i1)
+                || (arcs_from_same_circle(arcs,a.i0,b.i1) && arcs_from_same_circle(arcs,a.i1,a.i0)))
                   ? add ?    upwards(aspoint_center(arcs,a.i0),aspoint_center(arcs,a.i1)) == perturbed_predicate<Alpha>(aspoint(arcs,a.i0),aspoint(arcs,a.i1))
                         : rightwards(aspoint_center(arcs,a.i0),aspoint_center(arcs,a.i1)) ^ a.left
-                  : perturbed_predicate_two_sqrts<UpwardsA<add>,UpwardsB<0>,UpwardsB<2>,Beta<0,1>,Beta<2,3>>(a.left^add?-1:1,b.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b.i0),aspoint(arcs,b.i1)));
+                  : perturbed_upwards<add>(a.left^add?-1:1,b.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b.i1)));
 }
 
 // // Are the intersections of two circles with a third counterclockwise?  In other words, is the triangle c0,x01,x02 positively oriented?
@@ -285,8 +418,6 @@ template<bool add> bool circle_intersections_upwards(Arcs arcs, const Vertex a, 
 //        * choice<a1>(Alpha::eval(S0,S2),One())
 //        * small_mul(a0 && !a1 ? -1 : 1, choice<a0!=a1>(edet(dc1,dc2),edot(dc1,dc2)));
 // }};
-//
-//
 // }
 // static bool circle_intersections_ordered_helper(Arcs arcs, const Vertex v0, const Vertex v1) {
 //   assert(v0.i0==v1.i0);
