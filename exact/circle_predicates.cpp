@@ -76,7 +76,7 @@ template<int i,int j> struct Beta { template<class... Args> static PredicateType
 // Which quadrant is in the intersection of two circles in relative to the center of the first?
 // The quadrants are 0 to 3 counterclockwise from positive/positive.
 // This function should be used only from circle_circle_intersections, where it is precomputed as Vertex::q0.
-// As written this is degree 4, but it can be reduced to degree 2 if necessary.
+// As written this is degree 6, but it can be reduced to degree 2 if necessary.
 namespace {
 template<int axis> struct QuadrantA { template<class TV> static PredicateType<3,TV> eval(const TV S0, const TV S1) {
   return Alpha::eval(S0,S1)*(axis==0?S1.y-S0.y:S0.x-S1.x);
