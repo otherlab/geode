@@ -98,6 +98,7 @@ static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
 }
 
 Nested<const ExactCircleArc> preprune_small_circle_arcs(Nested<const ExactCircleArc> arcs) {
+  IntervalScope scope;
   return prune_small_contours(arcs).arcs;
 }
 
