@@ -128,6 +128,10 @@ public:
     return flat.slice(offsets[i],offsets[i+1]);
   }
 
+  bool operator==(const Nested& v) const {
+    return (offsets == v.offsets) && (flat == v.flat);
+  }
+
   Nested<Element> copy() const {
     Nested<Element> copy;
     copy.offsets = offsets;
@@ -141,6 +145,14 @@ public:
 
   ArrayIter<Nested> end() const {
     return ArrayIter<Nested>(*this,size());
+  }
+
+  RawArray<T> front() const {
+    return (*this)[0];
+  }
+
+  RawArray<T> back() const {
+    return (*this)[size()-1];
   }
 
   Nested<T> freeze() const {
@@ -157,6 +169,23 @@ public:
     static_assert(!frozen,"To use extend, set frozen=false and eventually call freeze()");
     offsets.extend(offsets.back()+other.offsets.slice(1,other.offsets.size()));
     flat.extend(other.flat);
+  }
+
+  // Append a single element to the last subarray
+  void append_to_back(const T& element) {
+    static_assert(!frozen,"To use append_to_back, set frozen=false and eventually call freeze()");
+    assert(!empty());
+    offsets.back() += 1;
+    flat.append(element);
+  }
+
+  // Extend the last subarray
+  template<class TArray> void extend_back(const TArray& append_array) {
+    static_assert(!frozen,"To use extend_back, set frozen=false and eventually call freeze()");
+    STATIC_ASSERT_SAME(typename boost::remove_const<T>::type,typename boost::remove_const<typename TArray::value_type>::type);
+    assert(!empty());
+    flat.extend(append_array);
+    offsets.back() += append_array.size();
   }
 };
 
@@ -196,8 +225,12 @@ template<class TA> Nested<typename First<typename TA::value_type,void>::type::va
   return Nested<typename First<typename TA::value_type,void>::type::value_type,false>::copy(a);
 }
 
-template<class T,bool frozen> const Nested<T,frozen>& asnested(const Nested<T,frozen>& a) {
+template<class T,bool frozen> static inline const Nested<T,frozen>& asnested(const Nested<T,frozen>& a) {
   return a;
+}
+
+template<class T,bool f> static inline const Nested<T,f>& concatenate(const Nested<T,f>& a0) {
+  return a0;
 }
 
 template<class T,bool f0,bool f1> Nested<typename boost::remove_const<T>::type,false> concatenate(const Nested<T,f0>& a0, const Nested<T,f1>& a1) {
@@ -229,4 +262,4 @@ template<class T> Nested<T> FromPython<Nested<T>>::convert(PyObject* object) {
 }
 #endif
 
-}
+} // namespace other

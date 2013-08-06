@@ -29,9 +29,9 @@ template<class A0,class... Rest> struct First {
 #else
 template<class A0,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void,class A6=void,class A7=void,class A8=void,class A9=void> struct First {
   typedef A0 type;
- };
+};
 #endif
- 
+
 // A list of types
 #ifdef OTHER_VARIADIC
 template<class... Args> struct Types {

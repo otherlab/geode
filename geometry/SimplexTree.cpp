@@ -397,13 +397,10 @@ template<class TV,int d> static void wrap_helper() {
     ;
 }
 
-// commas in the template args will break macro args so use a define here
-#define RAY_TRAVERSAL_TEST_REAL_3 ray_traversal_test<real,3>
-
 void wrap_simplex_tree() {
   wrap_helper<Vector<real,2>,1>();
   wrap_helper<Vector<real,2>,2>();
   wrap_helper<Vector<real,3>,1>();
   wrap_helper<Vector<real,3>,2>();
-  OTHER_FUNCTION_2(ray_traversal_test,RAY_TRAVERSAL_TEST_REAL_3)
+  OTHER_FUNCTION_2(ray_traversal_test,ray_traversal_test<real,3>)
 }

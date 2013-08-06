@@ -18,11 +18,11 @@ public:
 
   void enqueue(const T& element) { // resizes array on overflow
     array(back) = element;
-    if (++back>=array.m) back = 0;
+    if (++back>=array.size()) back = 0;
     if (back==front) {
-      Array<T> new_array(4*array.m/3+2);
+      Array<T> new_array(4*array.size()/3+2);
       back = 0;
-      for (int index=front;index<array.m;index++) new_array[back++] = array[index];
+      for (int index=front;index<array.size();index++) new_array[back++] = array[index];
       for (int index=0;index<front;index++) new_array[back++] = array[index];
       front=0;
       array.swap(new_array);
@@ -32,7 +32,7 @@ public:
   T dequeue() {
     assert(!empty());
     int index = front;
-    if (++front>=array.m)
+    if (++front>=array.size())
       front = 0;
     return array[index];
   }
@@ -44,13 +44,13 @@ public:
   const T& operator[](const int i) {
     assert(i<size());
     int index = front+i;
-    if (index>=array.m)
-      index = index-array.m;
+    if (index>=array.size())
+      index = index-array.size();
     return array[index];
   }
 
   int size() const {
-    return back<front?back-front+array.m:back-front;
+    return back<front?back-front+array.size():back-front;
   }
 
   bool empty() const {
@@ -58,7 +58,7 @@ public:
   }
 
   bool full() const {
-    return size()==array.m-1;
+    return size()==array.size()-1;
   }
 
   void clear() {

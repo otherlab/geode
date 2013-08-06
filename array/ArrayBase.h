@@ -640,12 +640,13 @@ template<class T,class TA> const TA& concatenate(const ArrayBase<T,TA>& a) {
   return a.derived();
 }
 
-template<class T,class TA0,class TA1> Array<T> concatenate(const ArrayBase<T,TA0>& a0_, const ArrayBase<T,TA1>& a1_) {
+template<class T0,class T1,class TA0,class TA1> Array<typename boost::remove_const<T0>::type> concatenate(const ArrayBase<T0,TA0>& a0_, const ArrayBase<T1,TA1>& a1_) {
+  STATIC_ASSERT_SAME(typename boost::remove_const<T0>::type, typename boost::remove_const<T1>::type);
   const auto& a0 = a0_.derived();
   const auto& a1 = a1_.derived();
   const int m0 = a0.size(),
             m1 = a1.size();
-  Array<T> result(m0+m1,false);
+  Array<typename boost::remove_const<T0>::type> result(m0+m1,false);
   result.slice(0,m0) = a0;
   result.slice(m0,m0+m1) = a1;
   return result;

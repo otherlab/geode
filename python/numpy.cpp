@@ -90,17 +90,21 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
 
 #else // !defined(OTHER_PYTHON)
 
+// CHAR_BIT isn't defined for some build configurations so we use __CHAR_BIT__ instead which seems to work in both clang and gcc
+// It would probably be safe to just use 8 if this fails
+#define OTHER_CHAR_BIT __CHAR_BIT__
+
 // Modified from numpy/npy_common.h
 typedef unsigned char npy_bool;
-#define NPY_BITSOF_BOOL (sizeof(npy_bool)*CHAR_BIT)
-#define NPY_BITSOF_CHAR (sizeof(char)*CHAR_BIT)
-#define NPY_BITSOF_SHORT (sizeof(short)*CHAR_BIT)
-#define NPY_BITSOF_INT (sizeof(int)*CHAR_BIT)
-#define NPY_BITSOF_LONG (sizeof(long)*CHAR_BIT)
-#define NPY_BITSOF_LONGLONG (sizeof(long long)*CHAR_BIT)
-#define NPY_BITSOF_FLOAT (sizeof(float)*CHAR_BIT)
-#define NPY_BITSOF_DOUBLE (sizeof(double)*CHAR_BIT)
-#define NPY_BITSOF_LONGDOUBLE (sizeof(long double)*CHAR_BIT)
+#define NPY_BITSOF_BOOL (sizeof(npy_bool)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_CHAR (sizeof(char)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_SHORT (sizeof(short)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_INT (sizeof(int)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_LONG (sizeof(long)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_LONGLONG (sizeof(long long)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_FLOAT (sizeof(float)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_DOUBLE (sizeof(double)*OTHER_CHAR_BIT)
+#define NPY_BITSOF_LONGDOUBLE (sizeof(long double)*OTHER_CHAR_BIT)
 
 // Lifted from numpy/ndarraytypes.h
 enum NPY_TYPECHAR { NPY_GENBOOLLTR ='b',
@@ -205,4 +209,3 @@ void wrap_numpy() {
   OTHER_FUNCTION(_set_recarray_type)
 #endif
 }
-

@@ -81,6 +81,14 @@ public:
     return Id(flat.append(x));
   }
 
+  template<class TArray> void extend(const TArray& append_array) {
+    flat.extend(append_array);
+  }
+
+  void preallocate(const int m_new, const bool copy_existing_elements=true) {
+    flat.preallocate(m_new, copy_existing_elements);
+  }
+
   Field<Element,Id> copy() const {
     Field<Element,Id> copy;
     copy.flat.copy(flat);
