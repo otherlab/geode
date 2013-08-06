@@ -288,7 +288,7 @@ template<bool add> struct UpwardsF { template<class TV> static PredicateType<8,T
 }};}
 template<bool add,class P3> OTHER_ALWAYS_INLINE static inline bool perturbed_upwards(const int sign1, const int sign2, const P3 S0, const P3 S1, const P3 S2) {
   // This routine is an optimized version of perturbed_predicate_two_sqrts specialized to this particular predicate, taking advantage of polynomial factorization
-  // to reduce the degree from 20 to 6.  This improves on the degree 12 result of Devillers et al., Algebraic methods and arithmetic filtering for exact predicates on circle arcs,
+  // to reduce the degree from 20 to 8.  This improves on the degree 12 result of Devillers et al., Algebraic methods and arithmetic filtering for exact predicates on circle arcs,
   // which is possible since our predicate operates on three unique arcs instead of four.
 
   // Our predicate is a function of three arcs (c0,r0),(c1,r1),(c2,r2).  Let j = 3-i.  Defining
