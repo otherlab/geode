@@ -7,9 +7,7 @@
 #include <other/core/exact/config.h>
 #include <other/core/exact/quantize.h>
 #include <other/core/array/Nested.h>
-
-#include <vector>
-
+#include <other/core/vector/Frame.h>
 namespace other {
 
 // In floating point, we represent circular arcs by the two endpoints x0,x1 and q = 2*sagitta/|x1-x0|.
@@ -19,6 +17,15 @@ namespace other {
 struct CircleArc {
   Vector<real,2> x;
   real q;
+
+  CircleArc()
+    : q() {}
+
+  CircleArc(const Vector<real,2> x, const real q)
+    : x(x), q(q) {}
+
+  CircleArc(const real x, const real y, const real q)
+    : x(x,y), q(q) {}
 };
 
 // After quantization, we represent circles implicitly by center and radius, plus two boolean flags
@@ -68,5 +75,12 @@ OTHER_CORE_EXPORT Nested<const ExactCircleArc> preprune_small_circle_arcs(Nested
 OTHER_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const ExactCircleArc& arc);
+
+// Transformation operators for circle arcs
+static inline CircleArc operator*(const real a,                      const CircleArc& c) { return CircleArc(a*c.x,c.q); }
+static inline CircleArc operator*(const Rotation<Vector<real,2>>& a, const CircleArc& c) { return CircleArc(a*c.x,c.q); }
+static inline CircleArc operator*(const Frame<Vector<real,2>>& a,    const CircleArc& c) { return CircleArc(a*c.x,c.q); }
+static inline CircleArc operator+(const Vector<real,2>& t, const CircleArc& c) { return CircleArc(t+c.x,c.q); }
+static inline CircleArc operator+(const CircleArc& c, const Vector<real,2>& t) { return CircleArc(t+c.x,c.q); }
 
 }
