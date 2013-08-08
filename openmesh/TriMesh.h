@@ -639,13 +639,19 @@ template<class T> struct valid_binary;
 template<class T> struct invalid_binary {
   typedef T value_type;
   static const bool is_streamable = false;
-  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
-  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) { return 0; };
-  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) { return 0; }
-  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) { return 0; }
+  OTHER_CORE_EXPORT static size_t size_of(void) { OTHER_ASSERT(false); return UnknownSize; }
+  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) { OTHER_ASSERT(false); return 0; };
+  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
+  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
 };
 
 // for default-constructible T only
+// OpenMesh already has store/restore specializations for binary<std::vector<T>>
+// for fundamental types T. Sadly, those require the vector to be pre-sized in
+// restore and are therefore fundamentally useless and incompatible. Avoid using
+// IO::size_of, IO::store, IO::restore for all vectors with fundamental types,
+// for which the compiler may randomly choose the OpenMesh version of binary<>.
+// Instead, use the valid_binary<std::vector<T>> functions directly.
 template<class T> struct valid_binary<std::vector<T>> {
   typedef std::vector<T> value_type;
 
@@ -706,6 +712,7 @@ template<class T, class U> struct binary<std::pair<T,U>> {
     size_t bytes = 0;
     bytes += IO::store(os, v.first, swap);
     bytes += IO::store(os, v.second, swap);
+    OTHER_ASSERT(bytes == IO::size_of(v));
     return os.good() ? bytes : 0;
   }
 
@@ -713,6 +720,7 @@ template<class T, class U> struct binary<std::pair<T,U>> {
     size_t bytes = 0;
     bytes += IO::restore(is, v.first, swap);
     bytes += IO::restore(is, v.second, swap);
+    OTHER_ASSERT(bytes == IO::size_of(v));
     return is.good() ? bytes : 0;
   }
 };
@@ -743,6 +751,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U
     for (auto const &pair : v)
       bytes += IO::store(os, pair, swap);
 
+    OTHER_ASSERT(bytes == IO::size_of(v));
     return os.good() ? bytes : 0;
   }
 
@@ -760,6 +769,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U
       v.insert(pair);
     }
 
+    OTHER_ASSERT(bytes == IO::size_of(v));
     return is.good() ? bytes : 0;
   }
 };
@@ -790,6 +800,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, o
     for (auto const &pair : v)
       bytes += IO::store(os, pair, swap);
 
+    OTHER_ASSERT(bytes == IO::size_of(v));
     return os.good() ? bytes : 0;
   }
 
@@ -807,6 +818,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, o
       v.insert(p);
     }
 
+    OTHER_ASSERT(bytes == IO::size_of(v));
     return is.good() ? bytes : 0;
   }
 };
