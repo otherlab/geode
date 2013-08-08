@@ -89,19 +89,19 @@ intersection(const Shape& shape, Array<int>& hits) const {
     intersection_helper(*this,shape,hits,0);
 }
 
-template<class TV> static void closest_point_helper(const ParticleTree<TV>& self, TV point, int& index, T& sqr_distance, int node) {
+template<class TV> static void closest_point_helper(const ParticleTree<TV>& self, TV point, int& index, T& sqr_distance, int node, int ignore) {
   if (!self.is_leaf(node)) {
     Vector<T,2> bounds(self.boxes[2*node+1].sqr_distance_bound(point),
                        self.boxes[2*node+2].sqr_distance_bound(point));
     int c = bounds.argmin();
     if (bounds[c]<sqr_distance)
-      closest_point_helper(self,point,index,sqr_distance,2*node+1+c);
+      closest_point_helper(self,point,index,sqr_distance,2*node+1+c,ignore);
     if (bounds[1-c]<sqr_distance)
-      closest_point_helper(self,point,index,sqr_distance,2*node+2-c);
+      closest_point_helper(self,point,index,sqr_distance,2*node+2-c,ignore);
   } else
     for (int t : self.prims(node)) {
       T sqr_d = sqr_magnitude(point-self.X[t]);
-      if (sqr_distance>sqr_d) {
+      if (sqr_distance>sqr_d && t != ignore) {
         sqr_distance = sqr_d;
         index = t;
       }
@@ -109,11 +109,11 @@ template<class TV> static void closest_point_helper(const ParticleTree<TV>& self
 }
 
 template<class TV> TV ParticleTree<TV>::
-closest_point(TV point, int& index, T max_distance) const {
+closest_point(TV point, int& index, T max_distance, int ignore) const {
   index = -1;
   if (nodes()) {
     T sqr_distance = sqr(max_distance);
-    closest_point_helper(*this,point,index,sqr_distance,0);
+    closest_point_helper(*this,point,index,sqr_distance,0,ignore);
   }
   if (index == -1) {
     TV x;
