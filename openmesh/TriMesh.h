@@ -50,6 +50,7 @@
 #include <other/core/structure/Hashtable.h>
 
 #include <boost/function.hpp>
+#include <boost/mpl/if.hpp>
 
 #ifdef USE_OPENMESH
 
@@ -628,5 +629,200 @@ public:
 OTHER_CORE_EXPORT Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes);
 
 }
+
+// insert some more property writer/readers into OpenMesh::IO
+namespace OpenMesh { namespace IO {
+
+template<class T> struct invalid_binary;
+template<class T> struct valid_binary;
+
+template<class T> struct invalid_binary {
+  typedef T value_type;
+  static const bool is_streamable = false;
+  OTHER_CORE_EXPORT static size_t size_of(void) { OTHER_ASSERT(false); return UnknownSize; }
+  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) { OTHER_ASSERT(false); return 0; };
+  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
+  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
+};
+
+// for default-constructible T only
+// OpenMesh already has store/restore specializations for binary<std::vector<T>>
+// for fundamental types T. Sadly, those require the vector to be pre-sized in
+// restore and are therefore fundamentally useless and incompatible. Avoid using
+// IO::size_of, IO::store, IO::restore for all vectors with fundamental types,
+// for which the compiler may randomly choose the OpenMesh version of binary<>.
+// Instead, use the valid_binary<std::vector<T>> functions directly.
+template<class T> struct valid_binary<std::vector<T>> {
+  typedef std::vector<T> value_type;
+
+  static const bool is_streamable = binary<T>::is_streamable;
+
+  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
+  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+    size_t bytes = 0;
+
+    int n = v.size();
+    bytes += IO::size_of(n);
+
+    for (int i = 0; i < n; ++i)
+      bytes += IO::size_of(v[i]);
+
+    return bytes;
+  }
+
+  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+    size_t bytes = 0;
+
+    int n = v.size();
+    bytes += IO::store(os, n, swap);
+
+    for (int i = 0; i < n; ++i)
+      bytes += IO::store(os, v[i], swap);
+
+    return os.good() ? bytes : 0;
+  }
+
+  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+    size_t bytes = 0;
+
+    int size;
+    bytes += IO::restore(is, size, swap);
+
+    v.resize(size);
+    for (int i = 0; i < size; ++i) {
+      bytes += IO::restore(is, v[i], swap);
+    }
+
+    return is.good() ? bytes : 0;
+  }
+};
+
+template<class T> struct binary<std::vector<T>>: public boost::mpl::if_c<binary<T>::is_streamable, valid_binary<std::vector<T>>, invalid_binary<std::vector<T>>>::type {};
+
+// dynamic size because size of content may not be constant
+template<class T, class U> struct binary<std::pair<T,U>> {
+  typedef std::pair<T, U> value_type;
+  static const bool is_streamable = binary<T>::is_streamable && binary<U>::is_streamable;
+  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
+  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+    return IO::size_of(v.first) + IO::size_of(v.second);
+  }
+
+  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+    size_t bytes = 0;
+    bytes += IO::store(os, v.first, swap);
+    bytes += IO::store(os, v.second, swap);
+    OTHER_ASSERT(bytes == IO::size_of(v));
+    return os.good() ? bytes : 0;
+  }
+
+  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+    size_t bytes = 0;
+    bytes += IO::restore(is, v.first, swap);
+    bytes += IO::restore(is, v.second, swap);
+    OTHER_ASSERT(bytes == IO::size_of(v));
+    return is.good() ? bytes : 0;
+  }
+};
+
+// for default-constructible T and U
+template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U, Hasher>> {
+  typedef other::unordered_map<T, U, Hasher> value_type;
+  static const bool is_streamable = binary<T>::is_streamable && binary<U>::is_streamable;
+  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
+  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+    size_t bytes = 0;
+
+    int n = v.size();
+    bytes += IO::size_of(n);
+
+    for (auto const &p : v)
+      bytes += IO::size_of(p);
+
+    return bytes;
+  }
+
+  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+    size_t bytes = 0;
+
+    int n = v.size();
+    bytes += IO::store(os, n, swap);
+
+    for (auto const &pair : v)
+      bytes += IO::store(os, pair, swap);
+
+    OTHER_ASSERT(bytes == IO::size_of(v));
+    return os.good() ? bytes : 0;
+  }
+
+  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+    size_t bytes = 0;
+
+    v.clear();
+
+    int n;
+    bytes += IO::restore(is, n, swap);
+
+    for (int i = 0; i < n; ++i) {
+      std::pair<T,U> pair;
+      bytes += IO::restore(is, pair, swap);
+      v.insert(pair);
+    }
+
+    OTHER_ASSERT(bytes == IO::size_of(v));
+    return is.good() ? bytes : 0;
+  }
+};
+
+// allow Refs as U, but U must be default constructible
+template<class T, class U, class Hasher> struct binary<other::unordered_map<T, other::Ref<U>, Hasher>> {
+  typedef other::unordered_map<T, other::Ref<U>, Hasher> value_type;
+  static const bool is_streamable = binary<T>::is_streamable && binary<other::Ref<U>>::is_streamable;
+  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
+  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+    size_t bytes = 0;
+
+    int n = v.size();
+    bytes += IO::size_of(n);
+
+    for (auto const &p : v)
+      bytes += IO::size_of(p);
+
+    return bytes;
+  }
+
+  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+    size_t bytes = 0;
+
+    int n = v.size();
+    bytes += IO::store(os, n, swap);
+
+    for (auto const &pair : v)
+      bytes += IO::store(os, pair, swap);
+
+    OTHER_ASSERT(bytes == IO::size_of(v));
+    return os.good() ? bytes : 0;
+  }
+
+  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+    size_t bytes = 0;
+
+    v.clear();
+
+    int n;
+    bytes += IO::restore(is, n, swap);
+
+    for (int i = 0; i < n; ++i) {
+      std::pair<T,other::Ref<U>> p(T(), other::new_<U>());
+      bytes += IO::restore(is, p, swap);
+      v.insert(p);
+    }
+
+    OTHER_ASSERT(bytes == IO::size_of(v));
+    return is.good() ? bytes : 0;
+  }
+};
+
+}}
 
 #endif // USE_OPENMESH
