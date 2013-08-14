@@ -32,15 +32,16 @@ template<int d> static Vector<real,d> point(Vector<real,d> v0, Vector<real,d> v1
   return result;
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& range, int res) const{
+template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertableBox& range, int res) const{
   Array<Vector<real,d>> path;
   if(knots.size()<=1) return path;
   Vector<real,d> p1, p2, p3, p4;
+
   auto it = knots.upper_bound(range.begin);
   auto end = knots.lower_bound(range.end);
-  if(end == knots.end()) end--;
+  if (end == knots.end()) end--;
+  if (it!=knots.begin()) it--;
   OTHER_ASSERT(it!=knots.end() && end!=knots.end());
-  if(it!=knots.begin()) it--;
 
   while(it!=end){
     //jump across null segment end->beginning for closed
@@ -72,14 +73,14 @@ template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& ra
   return path;
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBox& range, int res) const{
+template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertableBox& range, int res) const{
 
   const bool debug = true;
 
   if (debug)
     std::cout << "sampling range " << range << " with " << res << " segments." << " bezier range: " << t_range << std::endl;
 
-  Array<Vector<real,d>> path = segment(range,std::max(10*res, 500));
+  Array<Vector<real,d>> path = evaluate(range,std::max(10*res, 500));
 
   // measure the length of the path
   real total_length = 0;
@@ -243,12 +244,12 @@ template<int d> real Bezier<d>::polygon_angle_at(real t) const {
 
 template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
-  return segment(InvertableBox(t_range.min, t_range.max),res);
+  return evaluate(InvertableBox(t_range.min, t_range.max),res);
 }
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
-  return segment(InvertableBox(t_range.min, t_range.max),res);
+  return alen_evaluate(InvertableBox(t_range.min, t_range.max),res);
 }
 
 template<int d> void Bezier<d>::append_knot(const TV& pt, TV tin, TV tout){
@@ -414,6 +415,7 @@ void wrap_bezier() {
   }
   {
     typedef Bezier<2> Self;
+    typedef Array<Vector<real,2>>(Self::*eval_t)(int)const;
     Class<Self>("Bezier")
       .OTHER_INIT()
       .OTHER_FIELD(knots)
@@ -422,7 +424,7 @@ void wrap_bezier() {
       .OTHER_METHOD(closed)
       .OTHER_METHOD(close)
       .OTHER_METHOD(fuse_ends)
-      .OTHER_METHOD(evaluate)
+      .OTHER_OVERLOADED_METHOD(eval_t, evaluate)
       .OTHER_METHOD(append_knot)
       ;
   }
