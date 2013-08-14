@@ -103,8 +103,14 @@ public:
   OTHER_CORE_EXPORT void append_knot(const TV& pt, TV tin = T(inf)*TV::ones(), TV tout = T(inf)*TV::ones());
   OTHER_CORE_EXPORT void insert_knot(const real t) ;
   OTHER_CORE_EXPORT Span<d> segment(real t) const ;
-  OTHER_CORE_EXPORT TV point(real t) const ;
-  OTHER_CORE_EXPORT TV tangent(real t) const ;
+  OTHER_CORE_EXPORT TV point(real t) const;
+  OTHER_CORE_EXPORT TV tangent(Span<d> const &seg, real t) const;
+  OTHER_CORE_EXPORT TV tangent(real t) const;
+  // left and right tangent are always the same, except at knots
+  OTHER_CORE_EXPORT TV left_tangent(real t) const;
+  OTHER_CORE_EXPORT TV right_tangent(real t) const;
+  // mostly 0, except (maybe) at knots (in radians)
+  OTHER_CORE_EXPORT real angle_at(real t) const;
   inline real t_max() const { return t_range.max; }
   inline real t_min() const { return t_range.min; }
   OTHER_CORE_EXPORT void close() ;

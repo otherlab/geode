@@ -120,7 +120,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   return samples;
 }
 
-template<int d> Span<d> Bezier<d>::segment(real t) const{
+template<int d> Span<d> Bezier<d>::segment(real t) const {
   auto it = knots.lower_bound(t);
   if(it==knots.end()) return Span<d>(it->second,it->second,it->first,it->first);
   if(it != knots.begin() ) --it;
@@ -137,7 +137,15 @@ template<int d> Vector<real,d> Bezier<d>::point(real t) const{
 
 template<int d> Vector<real,d> Bezier<d>::tangent(real t) const{
   Span<d> seg = segment(t);
-  if(seg.start_t==seg.end_t) {Vector<real,d> v; v.fill(numeric_limits<real>::infinity()); return v;}
+  return tangent(seg, t);
+}
+
+template<int d> Vector<real,d> Bezier<d>::tangent(Span<d> const &seg, real t) const{
+  if (seg.start_t==seg.end_t) {
+    Vector<real,d> v;
+    v.fill(numeric_limits<real>::infinity());
+    return v;
+  }
   real subt = (t-seg.start_t)/(seg.end_t-seg.start_t);
 
   /*
@@ -157,6 +165,62 @@ template<int d> Vector<real,d> Bezier<d>::tangent(real t) const{
   Matrix<real,4,d> AP = A*P;
   Matrix<real,4,1> tt; tt.set_column(0,Vector<real,4>(3*subt*subt,2*subt,1,0));
   return (tt.transposed()*AP).transposed().column(0).normalized();
+}
+
+template<int d> Vector<real,d> Bezier<d>::left_tangent(real t) const {
+  if (knots.count(t)) {
+    // get the knot's tangent if it's not singular
+    auto kit = knots.find(t);
+    auto const &k = kit->second;
+
+    if (k->singular_in()) {
+      // evaluate tangent at t in the segment just before this knot
+      // if it is the first knot, evaluate in the last segment at tend
+      auto iit = kit;
+      if (kit != knots.begin())
+        --kit;
+      else {
+        // set kit/iit to end-2,end-1
+        kit = iit = --knots.end();
+        --kit;
+      }
+      Span<d> seg = Span<d>(kit->second,iit->second,kit->first,iit->first);
+      return tangent(seg,iit->first);
+    } else {
+      return k->tangent_in;
+    }
+  } else {
+    return tangent(t);
+  }
+}
+
+template<int d> Vector<real,d> Bezier<d>::right_tangent(real t) const {
+  if (knots.count(t)) {
+    // get the knot's tangent if it's not singular
+    auto kit = knots.find(t);
+    auto const &k = kit->second;
+
+    if (k->singular_out()) {
+      // evaluate tangent at t in the segment just after this knot
+      // if it is the last knot, evaluate in the first segment at tbegin
+      auto iit = kit;
+      ++iit;
+      if (iit == knots.end()) {
+        iit = kit = knots.begin();
+        ++iit;
+      }
+      Span<d> seg = Span<d>(kit->second,iit->second,kit->first,iit->first);
+      return tangent(seg,kit->first);
+    } else {
+      return k->tangent_out;
+    }
+  } else {
+    return tangent(t);
+  }
+}
+
+template<int d> real Bezier<d>::angle_at(real t) const {
+  return angle_between(left_tangent(t), right_tangent(t));
 }
 
 template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(int res) const{
