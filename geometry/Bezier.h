@@ -111,6 +111,7 @@ public:
   OTHER_CORE_EXPORT TV right_tangent(real t) const;
   // mostly 0, except (maybe) at knots (in radians)
   OTHER_CORE_EXPORT real angle_at(real t) const;
+  OTHER_CORE_EXPORT real polygon_angle_at(real t) const;
   inline real t_max() const { return t_range.max; }
   inline real t_min() const { return t_range.min; }
   OTHER_CORE_EXPORT void close() ;

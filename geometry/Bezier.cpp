@@ -223,6 +223,24 @@ template<int d> real Bezier<d>::angle_at(real t) const {
   return angle_between(left_tangent(t), right_tangent(t));
 }
 
+template<int d> real Bezier<d>::polygon_angle_at(real t) const {
+  auto jt = knots.find(t);
+  if (jt == knots.end())
+    return 0.;
+
+  auto it = jt;
+  if (it == knots.begin())
+    it = --(--knots.end());
+
+  auto kt = jt; kt++;
+  if (kt == knots.end())
+    kt = ++knots.begin();
+
+  auto vin = jt->second->pt - it->second->pt;
+  auto vout = kt->second->pt - jt->second->pt;
+  return angle_between(vin, vout);
+}
+
 template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
   return segment(InvertableBox(t_range.min, t_range.max),res);
