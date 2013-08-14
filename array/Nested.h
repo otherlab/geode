@@ -171,6 +171,12 @@ public:
     flat.extend(other.flat);
   }
 
+  // Add an empty array to the back
+  void append_empty() {
+    static_assert(!frozen,"To use append_empty, set frozen=false and eventually call freeze()");
+    offsets.append(offsets.back());
+  }
+
   // Append a single element to the last subarray
   void append_to_back(const T& element) {
     static_assert(!frozen,"To use append_to_back, set frozen=false and eventually call freeze()");
