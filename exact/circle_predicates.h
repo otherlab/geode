@@ -85,6 +85,8 @@ static inline bool arcs_from_same_circle(Arcs arcs, const int i0, const int i1) 
   return a0.index==a1.index;
 }
 
+bool arc_is_repeated_vertex(Arcs arcs, const Vertex& v01, const Vertex& v12);
+
 // Do two circles intersect (degree 2)?
 OTHER_CORE_EXPORT bool circles_intersect(Arcs arcs, const int arc0, const int arc1);
 

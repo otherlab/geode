@@ -56,6 +56,8 @@ def test_circles():
   eq = abs(q0-q1)
   print 'ex = %g, eq = %g (%d: %g to %g)'%(ex,eq,i,q0,q1)
   assert ex<1e-6 and eq<2e-5
+  # Test quantization for complete circles
+  random_circle_quantize_test(12312)
 
   # We don't know how to write a unit test, so use a regression test instead.  Each entry is indexed by (k,n,i):
   known = {(3,1,0):[]

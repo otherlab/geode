@@ -42,6 +42,13 @@ static bool filter_helper(const Interval fast, const bool slow, const int line) 
 #define FILTER(fast,...) filter_helper(fast,__VA_ARGS__,__LINE__)
 #endif
 
+// Check if an arc is degenerate and has the same (symbolic) vertex repeated
+bool arc_is_repeated_vertex(Arcs arcs, const Vertex& v01, const Vertex& v12) {
+  assert(v01.i1 == v12.i0);
+  return arcs_from_same_circle(arcs, v01.i0, v12.i1) && 
+    (v01.left != v12.left || arcs_from_same_circle(arcs, v01.i0, v12.i0));
+}
+
 
 // Do two circles intersect (degree 2)?
 namespace {
@@ -210,9 +217,11 @@ quadrants:
 Box<exact::Vec2> arc_box(Arcs arcs, const Vertex& v01, const Vertex& v12) {
   const int i1 = v01.i1;
   assert(v01.i1 == v12.i0);
-
   // Probably not worth accounting for, but vertex.box() must be inside Box<EV2>(arcs[i].center).thickened(arcs[i].radius) for i in [vertex.i1,vertex.i2]
   auto box = bounding_box(v01.rounded,v12.rounded).thickened(Vertex::tolerance());
+  if(arc_is_repeated_vertex(arcs, v01, v12)) {
+    return box;
+  }
   int q0 = v01.q1,
       q1 = v12.q0;
   if (q0==q1) {
@@ -600,6 +609,8 @@ bool circle_arc_contains_horizontal_intersection(Arcs arcs, const Vertex a01, co
     else
       return flip ^ (((qy-q0)&3)<((q2-q0)&3));
   } else { // a012 starts and ends in the same quadrant
+    if(arc_is_repeated_vertex(arcs,a01,a12))
+      return false;
     const bool small = circle_intersections_upwards(arcs,a10,a12) ^ (q0==1 || q0==2);
     return flip ^ small ^ (   q0!=qy
                            || (small ^ qy_down ^  circle_intersection_below_horizontal(arcs,a10,a1y))
@@ -617,8 +628,10 @@ template<int i> struct RightwardsC { template<class TV> static PredicateType<2,T
 }};}
 bool horizontal_intersections_rightwards(Arcs arcs, const HorizontalVertex ay, const HorizontalVertex by) {
   assert(ay!=by && ay.y==by.y);
-  if (ay.arc==by.arc)
+  if (arcs_from_same_circle(arcs, ay.arc, by.arc)) {
+    assert(ay.left != by.left);
     return ay.left;
+  }
   return FILTER(by.x-ay.x,
                 perturbed_predicate_two_sqrts<RightwardsA,One,One,RightwardsC<0>,RightwardsC<1>>(ay.left?1:-1,by.left?-1:1,aspoint(arcs,ay.arc),aspoint(arcs,by.arc),aspoint_horizontal(ay.y)));
 }

@@ -10,6 +10,7 @@
 #include <other/core/geometry/traverse.h>
 #include <other/core/python/stl.h>
 #include <other/core/python/wrap.h>
+#include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
 namespace other {
 
@@ -66,10 +67,14 @@ static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
       box.enlarge(b);
     const auto y = Quantized(floor((box.min.y+box.max.y)/2));
     // Check if the horizontal line hits the contour
-    for (const int a : I)
-      if (circle_intersects_horizontal(arcs.flat,a,y))
-        for (const auto ay : circle_horizontal_intersections(arcs.flat,a,y))
-          if (circle_arc_contains_horizontal_intersection(arcs.flat,vertices[a],vertices[next[a]],ay)) {
+    for (const int a : I) {
+      if (circle_intersects_horizontal(arcs.flat,a,y)) {
+        const Vertex& a01 = vertices[a];
+        const Vertex& a12 = vertices[next[a]];
+        if(arc_is_repeated_vertex(arcs.flat,a01,a12))
+          continue; // Ignore degenerate arcs
+        for (const auto ay : circle_horizontal_intersections(arcs.flat,a,y)) {
+          if (circle_arc_contains_horizontal_intersection(arcs.flat,a01,a12,ay)) {
             // Success!  Add this contour our unpruned list
             const int shift = pruned_arcs.total_size()-arcs.offsets[c];
             pruned_arcs.append(arcs[c]);
@@ -84,6 +89,9 @@ static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
             pruned_horizontals.back().arc += shift;
             goto next_contour;
           }
+        }
+      }
+    }
     next_contour:;
   }
 
@@ -106,8 +114,11 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
   // Check input consistency
   for (const int p : range(unpruned.size())) {
     const auto contour = unpruned[p];
-    if (contour.size()==2 && contour[0].left!=contour[1].left)
-      throw RuntimeError(format("exact_split_circle_arcs: contour %d is degenerate of size 2",p));
+
+    // This assert checks for contours that are a single repeated point
+    // prune_small_contours will removing these, but they shouldn't be generated in the first place.
+    assert(!(contour.size()==2 && contour[0].left!=contour[1].left));
+
     for (const auto& arc : contour)
       OTHER_ASSERT(arc.radius>0,"Radii must be positive so that symbolic perturbation doesn't make them negative");
   }
@@ -120,7 +131,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
   Arcs arcs = info.arcs.flat;
   Next next = info.next;
   Vertices vertices = info.vertices;
-  
+
   // Compute all nontrivial intersections between segments
   struct Intersections {
     const BoxTree<EV2>& tree;
@@ -238,12 +249,18 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
       void leaf(const int n) {
         assert(tree.prims(n).size()==1);
         const int j = tree.prims(n)[0];
-        if (circle_intersects_horizontal(arcs,j,start.y))
-          for (const auto h : circle_horizontal_intersections(arcs,j,start.y))
+        if (circle_intersects_horizontal(arcs,j,start.y)) {
+          for (const auto h : circle_horizontal_intersections(arcs,j,start.y)) {
+            // If start.left == h.left and start.arc and h.arc are from the same circle, start and h refer to the same symbolic point even though start!=h
+            // This will trigger an "identically zero predicate" error when calling horizontal_intersections_rightwards
+            // Checking circle_arc_contains_horizontal_intersection before horizontal_intersections_rightwards avoids this unless the arcs overlap
+            // Symbolically identical arcs that overlap aren't intended to be handled by splitting and may occasionally raise an assert here
             if (   start!=h
-                && horizontal_intersections_rightwards(arcs,start,h)
-                && circle_arc_contains_horizontal_intersection(arcs,vertices[j],vertices[next[j]],h))
+                && circle_arc_contains_horizontal_intersection(arcs,vertices[j],vertices[next[j]],h) 
+                && horizontal_intersections_rightwards(arcs,start,h))
               depth -= horizontal_depth_change(arcs,h);
+          }
+        }
       }
     };
     Depth ray(tree,next,arcs,vertices,horizontal);
@@ -303,9 +320,11 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
 // Compute an approximate bounding box for all arcs
 Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input) {
   Box<Vector<real,2>> result;
-  for (const auto poly : input)
-    for (int j=0,i=poly.size()-1;j<poly.size();i=j++)
+  for (const auto poly : input) {
+    for (int j=0,i=poly.size()-1;j<poly.size();i=j++) {
       result.enlarge(bounding_box(poly[i].x,poly[j].x).thickened(.5*abs(poly[i].q)*magnitude(poly[i].x-poly[j].x)));
+    }
+  }
   return result;
 }
 
@@ -418,7 +437,7 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
     }
 
     // Filter out back arcs if concentric with front
-    while(output.back().size() > 1 && output.back().front().center == output.back().back().center) {
+    while(output.back().size() > 0 && output.back().front().center == output.back().back().center) {
       out_sources.pop(); // remove from sources list
 
       // We want output.back().pop(), but have to edit internal structures in the nested array
@@ -435,6 +454,20 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
                  c0 = quant.inverse(out[i].center),
                  c1 = quant.inverse(out[j].center);
       out[i].left = cross(c1-c0,x-c0)>0;
+    }
+
+    // Check in case quantization created a single repeated point
+    if(out.size() == 2 && (out[0].left != out[1].left)) {
+      // Most degeneracies involve multiple arcs and are readily handled by sybolic perturbation
+      // However, in setting the left flags we can create a symbolically degenerate contour which we filter here
+      const int n = output.back().size();
+
+      // Remove entire contour from output
+      output.flat.pop_elements(n);
+      output.offsets.pop();
+
+      // Remove it's sources
+      out_sources.pop_elements(n);
     }
   }
 
@@ -477,7 +510,7 @@ ostream& operator<<(ostream& output, const CircleArc& arc) {
 }
 
 ostream& operator<<(ostream& output, const ExactCircleArc& arc) {
-  return output << format("ExactCircleArc([%d,%d],%d,%c%c)",arc.center.x,arc.center.y,arc.radius,arc.positive?'+':'-',arc.left?'L':'R');
+  return output << format("ExactCircleArc([%g,%g],%g,%c%c)",arc.center.x,arc.center.y,arc.radius,arc.positive?'+':'-',arc.left?'L':'R');
 }
 
 // The area between a segment of length 2 and an associated circular sector
@@ -571,6 +604,53 @@ static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) 
   const auto e = quantize_circle_arcs(arcs);
   return unquantize_circle_arcs(e.x,e.y);
 }
+
+static Vector<CircleArc, 2> make_circle(Vec2 p0, Vec2 p1) { return vec(CircleArc(p0,1),CircleArc(p1,1)); }
+static void random_circle_quantize_test(int seed) {
+  auto r = new_<Random>(seed);
+  
+  {
+    // First check that we can split without hitting any asserts
+    const auto sizes = vec(1.e-3,1.e1,1.e3,1.e7);
+    Nested<CircleArc, false> arcs;
+    arcs.append(make_circle(Vec2(0,0),Vec2(1,0)));
+    for(const auto& s : sizes) {
+      for(int i = 0; i < 200; ++i) {
+        arcs.append(make_circle(s*r->unit_ball<Vec2>(),s*r->unit_ball<Vec2>()));
+      }
+    }
+    circle_arc_union(arcs);
+  }
+
+  {
+    // Build a bunch of arcs that don't touch
+    const auto log_options = vec(1.e-3,1.e-1,1.e1,1.e3);
+    const auto max_bounds = Box<Vec2>(Vec2(0.,0.)).thickened(1.e1 * log_options.max());
+    const real spacing = 1e-5*max_bounds.sizes().max();
+    const real max_x = max_bounds.max.x;
+    
+    real curr_x = max_bounds.min.x;
+    Nested<CircleArc, false> arcs;
+    for(int i = 0; i < 50; ++i) {
+      const real remaining = max_x - curr_x;
+      if(remaining < spacing)
+        break;
+      const real log_choice = log_options[r->uniform<int>(0, log_options.size())];
+      real next_r = r->uniform<real>(0., min(log_choice, remaining));
+      arcs.append(make_circle(Vec2(curr_x, 0.),Vec2(curr_x+next_r, 0.)));
+      curr_x += next_r + spacing;
+    }
+
+    // Take the union
+    auto unioned = circle_arc_union(arcs);
+
+    // If range of sizes is very large, some arcs could be filtered out if they are smaller than quantization threshold...
+    OTHER_ASSERT(unioned.size() <= arcs.size());
+    // ...but for the current values, this should be happening so check that no arcs were destroyed
+    OTHER_ASSERT(unioned.size() == arcs.size());
+  }
+}
+
 #endif
 
 } // namespace other
@@ -585,5 +665,6 @@ void wrap_circle_csg() {
 #ifdef OTHER_PYTHON
   OTHER_FUNCTION(_set_circle_arc_dtypes)
   OTHER_FUNCTION(circle_arc_quantize_test)
+  OTHER_FUNCTION(random_circle_quantize_test)
 #endif
 }

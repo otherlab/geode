@@ -28,6 +28,8 @@ struct CircleArc {
     : x(x,y), q(q) {}
 };
 
+std::ostream& operator<<(std::ostream& output, const CircleArc& a);
+
 // After quantization, we represent circles implicitly by center and radius, plus two boolean flags
 // describing how to connect adjacent arcs.
 struct ExactCircleArc {
@@ -50,12 +52,12 @@ OTHER_CORE_EXPORT Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> ar
 OTHER_CORE_EXPORT Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> arcs, const int depth);
 
 // The union of possibly intersecting circular arc polygons, assuming consistent ordering
-template<class... Arcs> static inline Nested<Vec2> circle_arc_union(const Arcs&... arcs) {
+template<class... Arcs> static inline Nested<CircleArc> circle_arc_union(const Arcs&... arcs) {
   return split_circle_arcs(concatenate(arcs...),0);
 }
 
 // The intersection of possibly intersecting circular arc polygons, assuming consistent ordering.
-template<class... Arcs> static inline Nested<Vec2> circle_arc_intersection(const Arcs&... arcs) {
+template<class... Arcs> static inline Nested<CircleArc> circle_arc_intersection(const Arcs&... arcs) {
   return split_circle_arcs(concatenate(arcs...),sizeof...(Arcs)-1);
 }
 
