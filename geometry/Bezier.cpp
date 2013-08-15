@@ -75,7 +75,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertableBox& r
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertableBox& range, int res) const{
 
-  const bool debug = true;
+  const bool debug = false;
 
   if (debug)
     std::cout << "sampling range " << range << " with " << res << " segments." << " bezier range: " << t_range << std::endl;
