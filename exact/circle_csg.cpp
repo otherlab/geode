@@ -536,6 +536,16 @@ real circle_arc_area(Nested<const CircleArc> polys) {
   return area;
 }
 
+void reverse_arcs(RawArray<CircleArc>& arcs) {
+  arcs.reverse();
+  for(int i = arcs.size()-1,j = 0; j<arcs.size(); i=j++) {
+    arcs[i].q = arcs[j].q;
+  }
+}
+void reverse_arcs(Nested<CircleArc>& polyarcs) {
+ for(auto poly : polyarcs) reverse_arcs(poly);
+}
+
 Nested<CircleArc> canonicalize_circle_arcs(Nested<const CircleArc> polys) {
   // Find the minimal point in each polygon under lexicographic order
   Array<int> mins(polys.size());
