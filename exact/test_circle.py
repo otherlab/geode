@@ -43,8 +43,19 @@ def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False,jitter=None):
          points += jitter*random.uniform(-1,1,points.shape) # Jitter if you want to be able to differentiate concident points:
       pylab.plot(points[:,0],points[:,1])
 
-def test_circles():
-  # Test quantization routine
+def test_circle_reverse():
+  random.seed(1240405)
+  for k in [2,3,4,10,100]:
+    for i in range(10):
+      arcs = random_circle_arcs(1 + (i%2),k)
+      area_before = circle_arc_area(arcs)
+      reverse_arcs(arcs)
+      area_after = circle_arc_area(arcs)
+      assert abs(area_before + area_after) < 1e-7
+
+def test_circle_quantize():
+  # Test quantization for complete circles
+  random_circle_quantize_test(12312)
   random.seed(37130)
   arcs0 = random_circle_arcs(1,100)
   #arcs0 = random_circle_arcs(20,5)
@@ -55,10 +66,11 @@ def test_circles():
   q0,q1 = arcs0.flat['q'][i],arcs1.flat['q'][i]
   eq = abs(q0-q1)
   print 'ex = %g, eq = %g (%d: %g to %g)'%(ex,eq,i,q0,q1)
-  assert ex<1e-6 and eq<2e-5
-  # Test quantization for complete circles
-  random_circle_quantize_test(12312)
+  assert ex<1e-6 and eq<2e-5 #This threshold is pretty agressive and might not work for many seeds
 
+def test_circles():
+  # Test quantization routine
+  random.seed(37130)
   # We don't know how to write a unit test, so use a regression test instead.  Each entry is indexed by (k,n,i):
   known = {(3,1,0):[]
           ,(3,1,1):[[[[-3.010773,0.755762],-0.336175],[[-2.858849,1.309345],0.589384],[[-2.848044,0.356576],0.698345]]]

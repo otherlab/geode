@@ -536,13 +536,16 @@ real circle_arc_area(Nested<const CircleArc> polys) {
   return area;
 }
 
-void reverse_arcs(RawArray<CircleArc>& arcs) {
+void reverse_arcs(RawArray<CircleArc> arcs) {
+  if(arcs.empty()) return;
   arcs.reverse();
-  for(int i = arcs.size()-1,j = 0; j<arcs.size(); i=j++) {
-    arcs[i].q = arcs[j].q;
+  const auto temp_q = arcs.front().q;
+  for(int i = 0,j = 1; j<arcs.size(); i=j++) {
+    arcs[i].q = -arcs[j].q;
   }
+  arcs.back().q = -temp_q;
 }
-void reverse_arcs(Nested<CircleArc>& polyarcs) {
+void reverse_arcs(Nested<CircleArc> polyarcs) {
  for(auto poly : polyarcs) reverse_arcs(poly);
 }
 

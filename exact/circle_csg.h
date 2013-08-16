@@ -66,8 +66,8 @@ OTHER_CORE_EXPORT real circle_arc_area(RawArray<const CircleArc> arcs);
 OTHER_CORE_EXPORT real circle_arc_area(Nested<const CircleArc> arcs);
 
 // Reverse winding of circular arc polygons
-OTHER_CORE_EXPORT void reverse_arcs(RawArray<CircleArc>& arcs);
-OTHER_CORE_EXPORT void reverse_arcs(Nested<CircleArc>& arcs);
+OTHER_CORE_EXPORT void reverse_arcs(RawArray<CircleArc> arcs);
+OTHER_CORE_EXPORT void reverse_arcs(Nested<CircleArc> arcs);
 
 // Quantize from approximate to exact representations, taking care to ensure validity of the quantized result.
 // If min_bounds isn't empty the Quantizer will use an appropriate scale to work with other features inside of min_bounds
