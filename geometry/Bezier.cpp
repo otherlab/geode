@@ -32,7 +32,7 @@ template<int d> static Vector<real,d> point(Vector<real,d> v0, Vector<real,d> v1
   return result;
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertableBox& range, int res) const{
+template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& range, int res) const{
   Array<Vector<real,d>> path;
   if(knots.size()<=1) return path;
   Vector<real,d> p1, p2, p3, p4;
@@ -85,7 +85,7 @@ template<int d> real Bezier<d>::arclength(const InvertableBox& range, int res) {
   return total_length;
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertableBox& range, int res) const{
+template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleBox& range, int res) const{
 
   const bool debug = false;
 
@@ -256,12 +256,12 @@ template<int d> real Bezier<d>::polygon_angle_at(real t) const {
 
 template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
-  return evaluate(InvertableBox(t_range.min, t_range.max),res);
+  return evaluate(InvertibleBox(t_range.min, t_range.max),res);
 }
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
-  return alen_evaluate(InvertableBox(t_range.min, t_range.max),res);
+  return alen_evaluate(InvertibleBox(t_range.min, t_range.max),res);
 }
 
 template<int d> void Bezier<d>::append_knot(const TV& pt, TV tin, TV tout){
@@ -396,18 +396,18 @@ template struct Span<3>;
 
 #ifdef OTHER_PYTHON
 
-PyObject* to_python(const InvertableBox& self) {
+PyObject* to_python(const InvertibleBox& self) {
   return to_python(tuple(self.begin,self.end));
 }
 
-InvertableBox FromPython<InvertableBox>::convert(PyObject* object) {
+InvertibleBox FromPython<InvertibleBox>::convert(PyObject* object) {
   const auto extents = from_python<Tuple<real,real>>(object);
-  return InvertableBox(extents.x,extents.y);
+  return InvertibleBox(extents.x,extents.y);
 }
 
 #endif
 
-std::ostream& operator<<(std::ostream& os, const InvertableBox& ib) {
+std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib) {
   os << "[" << ib.begin << ", " << ib.end << "]";
   return os;
 }

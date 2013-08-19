@@ -18,16 +18,16 @@ using std::make_pair;
 // When specifying a range of t values on a closed Bezier that starts before and ends after the minimum/maximum t values (i.e. wraps around)
 // the max value might be less than the min value. This class is used instead to avoid accidentally calling functions like size that wouldn't
 // be meaningful in this case.
-class InvertableBox {
+class InvertibleBox {
  public:
-  InvertableBox(real _begin, real _end) : begin(_begin), end(_end) {}
+  InvertibleBox(real _begin, real _end) : begin(_begin), end(_end) {}
   real begin;
   real end;
 };
-OTHER_CORE_EXPORT PyObject* to_python(const InvertableBox& self);
-template<> struct FromPython<InvertableBox>{OTHER_CORE_EXPORT static InvertableBox convert(PyObject* object);};
+OTHER_CORE_EXPORT PyObject* to_python(const InvertibleBox& self);
+template<> struct FromPython<InvertibleBox>{OTHER_CORE_EXPORT static InvertibleBox convert(PyObject* object);};
 
-std::ostream& operator<<(std::ostream& os, const InvertableBox& ib);
+std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib);
 
 
 template <int d> struct Knot : public Object{
@@ -96,8 +96,8 @@ protected:
   OTHER_CORE_EXPORT Bezier(const Bezier<d>& b);
 public:
   map<real,Ref<Knot<d>>> knots;
-  OTHER_CORE_EXPORT Array<TV> evaluate(const InvertableBox& range, int res) const;
-  OTHER_CORE_EXPORT Array<TV> alen_evaluate(const InvertableBox& range, int res) const;
+  OTHER_CORE_EXPORT Array<TV> evaluate(const InvertibleBox& range, int res) const;
+  OTHER_CORE_EXPORT Array<TV> alen_evaluate(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT Array<TV> evaluate(int res) const;
   OTHER_CORE_EXPORT Array<TV> alen_evaluate(int res) const;
   OTHER_CORE_EXPORT real arclength(const InvertableBox& range, int res) const;

@@ -1395,13 +1395,13 @@ void TriMesh::add_cylinder(TV p0, TV p1, real r1, real r2, int divisions, bool c
 }
 
 void TriMesh::scale(real s, const Vector<real, 3>& center) {
-  Vector<real,3> base = center - s*center;
+  Vector<real,3> base = (1-s)*center;
   for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v)
     set_point(v,base+s*point(v));
 }
 
 void TriMesh::scale(TV s, const Vector<real, 3>& center) {
-  Vector<real,3> base = center - s*center;
+  Vector<real,3> base = (1-s)*center;
   for (TriMesh::VertexIter v = vertices_begin(); v != vertices_end(); ++v)
     set_point(v,base+s*point(v));
   if (has_face_normals())
