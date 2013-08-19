@@ -100,7 +100,7 @@ public:
   OTHER_CORE_EXPORT Array<TV> alen_evaluate(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT Array<TV> evaluate(int res) const;
   OTHER_CORE_EXPORT Array<TV> alen_evaluate(int res) const;
-  OTHER_CORE_EXPORT real arclength(const InvertableBox& range, int res) const;
+  OTHER_CORE_EXPORT real arclength(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT void append_knot(const TV& pt, TV tin = T(inf)*TV::ones(), TV tout = T(inf)*TV::ones());
   OTHER_CORE_EXPORT void insert_knot(const real t);
   OTHER_CORE_EXPORT Span<d> segment(real t) const;
