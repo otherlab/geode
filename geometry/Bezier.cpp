@@ -73,7 +73,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& r
   return path;
 }
 
-template<int d> real Bezier<d>::arclength(const InvertableBox& range, int res) {
+template<int d> real Bezier<d>::arclength(const InvertibleBox& range, int res) const {
   Array<Vector<real,d>> path = evaluate(range,std::max(res, 500));
 
   // measure the length of the path
