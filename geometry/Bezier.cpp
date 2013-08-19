@@ -317,6 +317,18 @@ template<int d> void Bezier<d>::translate(const TV& t){
   }
 }
 
+template<int d> void Bezier<d>::scale(real amt, const TV& ctr){
+  TV c = isfinite(ctr) ? ctr : bounding_box().center();
+  for(auto& k : knots){
+    TV pt = k.second->pt;
+    if(!(k.first == t_max() && closed())) {
+      k.second->pt = (k.second->pt - c)*amt + c;
+      k.second->tangent_in = (k.second->tangent_in - c)*amt + c;
+      k.second->tangent_out = (k.second->tangent_out - c)*amt + c;
+    }
+  }
+}
+
 template<int d> void Bezier<d>::fuse_ends(){
   if(knots.size()<=2) return;
   TV b = knots.begin()->second->pt;

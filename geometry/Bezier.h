@@ -124,6 +124,7 @@ public:
   OTHER_CORE_EXPORT Box<TV> bounding_box() const;
 
   OTHER_CORE_EXPORT void translate(const TV& t);
+  OTHER_CORE_EXPORT void scale(real amt,const TV& ctr = TV::ones()*inf);
 
 };
 
