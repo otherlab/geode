@@ -115,6 +115,10 @@ public:
     return *self;
   }
 
+  T* get() const {
+    return self;
+  }
+
   // Allow conversion to Ref<const T>
   operator Ref<const T>() {
     return Ref<const T>(*self, owner_);
