@@ -2,9 +2,10 @@
 
 from __future__ import absolute_import
 
-import sys
 from numpy import *
 from other.core import *
+import cPickle as pickle
+import sys
 import py
 
 def test_basic():
@@ -68,6 +69,8 @@ def test_write(filename=None):
 
 def test_nested():
   nested_test()
+  a = Nested([[1,2],[3]])
+  assert a==pickle.loads(pickle.dumps(a))
 
 if __name__=='__main__':
   test_write('array.npy')

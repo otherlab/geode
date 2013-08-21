@@ -94,5 +94,15 @@ class Nested(object):
     object.__setattr__(self,'flat',concatenate(flats))
     return self
 
+  # Support pickling
+  def __getstate__(self):
+    return self.offsets,self.flat
+  def __setstate__(self,(offsets,flat)):
+    assert offsets[0]==0
+    assert offsets[-1]==len(flat)
+    assert all(offsets[:-1]<=offsets[1:])
+    object.__setattr__(self,'offsets',offsets)
+    object.__setattr__(self,'flat',flat)
+
 other_core._set_nested_array(Nested)
 other_core._set_recarray_type(recarray)
