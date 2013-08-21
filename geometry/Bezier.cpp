@@ -32,9 +32,11 @@ template<int d> static Vector<real,d> point(Vector<real,d> v0, Vector<real,d> v1
   return result;
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& range, int res) const{
+template<int d> Tuple<Array<Vector<real,d>>, vector<int>> Bezier<d>::evaluate_core(const InvertibleBox& range, int res) const{
   Array<Vector<real,d>> path;
-  if(knots.size()<=1) return path;
+  vector<int> forced;
+
+  if (knots.size()<=1) return tuple(path,forced);
   Vector<real,d> p1, p2, p3, p4;
 
   auto it = knots.upper_bound(range.begin);
@@ -42,15 +44,14 @@ template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& r
   if (end == knots.end()) end--;
   if (it!=knots.begin()) it--;
   OTHER_ASSERT(it!=knots.end() && end!=knots.end());
-
   while(it!=end){
     //jump across null segment end->beginning for closed
     if(b_closed && it->first == t_max()){
       if(range.end == t_min() || range.end == t_max())
         break;
-
       it = knots.begin();
     }
+
     p1 = it->second->pt;
     p2 = it->second->tangent_out;
 
@@ -60,17 +61,26 @@ template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& r
     p3 = it->second->tangent_in;
     p4 = it->second->pt;
 
-    if((p4-p2).magnitude() > 1e-8){
-      for(int j=0;j<res;j++){
-        real t = j/(real)(res); // [0,1)
+    if ((p4-p2).magnitude() > 1e-8) {
+      // first point in this segment
+      forced.push_back(path.size());
+      path.append(other::point(p1,p2,p3,p4,0));
+
+      for (int j=1;j<res;j++) {
+        real t = j/(real)(res); // (0,1)
         path.append(other::point(p1,p2,p3,p4,t));
       }
     }
   }
-
+  // last point
+  forced.push_back(path.size());
   path.append(end->second->pt);
 
-  return path;
+  return tuple(path, forced);
+}
+
+template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& range, int res) const{
+  return evaluate_core(range, res).x;
 }
 
 template<int d> real Bezier<d>::arclength(const InvertibleBox& range, int res) const {
@@ -86,13 +96,14 @@ template<int d> real Bezier<d>::arclength(const InvertibleBox& range, int res) c
 }
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleBox& range, int res) const{
-
   const bool debug = false;
 
   if (debug)
     std::cout << "sampling range " << range << " with " << res << " segments." << " bezier range: " << t_range << std::endl;
 
-  Array<Vector<real,d>> path = evaluate(range,std::max(10*res, 500));
+  auto pathinfo = evaluate_core(range,std::max(10*res, 500));
+  Array<Vector<real,d>> const &path = pathinfo.x;
+  vector<int> const &forced = pathinfo.y;
 
   // measure the length of the path
   real total_length = 0;
@@ -107,6 +118,8 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
   Array<Vector<real,d>> samples;
   samples.append(path.front());
 
+  int forced_idx = 1;
+
   real step = total_length/(double)res;
 
   if (total_length == 0)
@@ -116,11 +129,32 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
   real sample_d = samples.size()*step;
   for (int i = 1; i < (int)path.size()-1; ++i) {
     distance += (path[i-1] - path[i]).magnitude();
-    if (distance >= sample_d) {
+    // this index was forced, we have to add it no matter what
+    // exchange it for either the previous or the next point
+    if (forced[forced_idx] == i) {
+      forced_idx++;
+      if (fabs(sample_d-distance) < step/2) {
+        // get rid of the next sample
+        // (implicitly by change in sample_d below)
+        if (debug)
+          std::cout << "  skipping next sample to make space for forced sample" << std::endl;
+      } else {
+        // get rid of the previous sample
+        samples.resize(samples.size()-1);
+        if (debug)
+          std::cout << "  removed last sample to make space for forced sample" << std::endl;
+      }
       if (debug)
-        std::cout << "  adding sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
+        std::cout << "  adding forced sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
       samples.append(path[i]);
       sample_d = samples.size()*step;
+    } else {
+      if (distance >= sample_d) {
+        if (debug)
+          std::cout << "  adding sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
+        samples.append(path[i]);
+        sample_d = samples.size()*step;
+      }
     }
   }
 

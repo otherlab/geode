@@ -96,6 +96,7 @@ protected:
   OTHER_CORE_EXPORT Bezier(const Bezier<d>& b);
 public:
   map<real,Ref<Knot<d>>> knots;
+  OTHER_CORE_EXPORT Tuple<Array<TV>,std::vector<int>> evaluate_core(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT Array<TV> evaluate(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT Array<TV> alen_evaluate(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT Array<TV> evaluate(int res) const;
