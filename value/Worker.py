@@ -104,8 +104,6 @@ def worker_main(conn,debug):
   conn = Connection('worker',conn,debug=debug)
   conn.process(timeout=None)
 
-next_port = 6007
-
 def worker_standalone_main(key):
   debug,port,authkey = key.split(',')
   debug = debug=='1'
@@ -136,12 +134,9 @@ class Worker(object):
       self.worker_join = worker.join
       self.worker_terminate = worker.terminate
     else:
-      global next_port
-      port = next_port
-      next_port += 1
       key = base64_encode(os.urandom(32))
-      worker = self.worker = subprocess.Popen(command+['%d,%d,%s'%(bool(debug),port,key)],shell=is_windows()) # shell=True is required on Windows, but doesn't work on Mac
-      listener = multiprocessing.connection.Listener(('localhost',port),authkey=key)
+      listener = multiprocessing.connection.Listener(('localhost',0),authkey=key)
+      worker = self.worker = subprocess.Popen(command+['%d,%d,%s'%(bool(debug),listener.address[1],key)],shell=is_windows()) # shell=True is required on Windows, but doesn't work on Mac
       # Ugly hack to avoid blocking forever if client never shows up.
       # Borrowed from http://stackoverflow.com/questions/357656/proper-way-of-cancelling-accept-and-closing-a-python-processing-multiprocessing
       listener.fileno = lambda:listener._listener._socket.fileno()
