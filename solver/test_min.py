@@ -2,6 +2,7 @@
 
 from __future__ import division
 from other.core import *
+from other.core.solver import nelder_mead
 from numpy import *
 
 def test_brent():
@@ -42,6 +43,12 @@ def test_powell():
     fc = 1.34897 if tweak else 13/8
     assert maxabs(x-xc)<2*tol
     assert abs(fx-fc)<tol
+
+def test_nelder_mead():
+  def f((x,y)):
+    return abs((3-2*x)*x-2*y+1)**(7/3) + abs((3-2*y)*y-x+1)**(7/3)
+  x = nelder_mead.optimize(f,(-.9,-1),.3,1e-5,verbose=1)
+  assert f(x) < 1e-9
 
 if __name__=='__main__':
   test_powell()
