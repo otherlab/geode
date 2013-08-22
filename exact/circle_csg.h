@@ -26,6 +26,9 @@ struct CircleArc {
 
   CircleArc(const real x, const real y, const real q)
     : x(x,y), q(q) {}
+
+  bool operator==(const CircleArc& rhs) const { return x == rhs.x && q == rhs.q; }
+  bool operator!=(const CircleArc& rhs) const { return !((*this) == rhs);}
 };
 
 std::ostream& operator<<(std::ostream& output, const CircleArc& a);
@@ -78,6 +81,7 @@ OTHER_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,
 // ignored, but we expose it here for use in benchmarking highly degenerate cases.
 OTHER_CORE_EXPORT Nested<const ExactCircleArc> preprune_small_circle_arcs(Nested<const ExactCircleArc> arcs);
 
+OTHER_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const RawArray<const CircleArc> input);
 OTHER_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
 OTHER_CORE_EXPORT ostream& operator<<(ostream& output, const ExactCircleArc& arc);

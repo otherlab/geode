@@ -317,13 +317,19 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
   return output;
 }
 
+Box<Vector<real,2>> approximate_bounding_box(const RawArray<const CircleArc> input) {
+  Box<Vector<real,2>> result;
+  for (int j=0,i=input.size()-1;j<input.size();i=j++) {
+    result.enlarge(bounding_box(input[i].x,input[j].x).thickened(.5*abs(input[i].q)*magnitude(input[i].x-input[j].x)));
+  }
+  return result;
+}
+
 // Compute an approximate bounding box for all arcs
 Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input) {
   Box<Vector<real,2>> result;
   for (const auto poly : input) {
-    for (int j=0,i=poly.size()-1;j<poly.size();i=j++) {
-      result.enlarge(bounding_box(poly[i].x,poly[j].x).thickened(.5*abs(poly[i].q)*magnitude(poly[i].x-poly[j].x)));
-    }
+    result.enlarge(approximate_bounding_box(poly));
   }
   return result;
 }
