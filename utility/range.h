@@ -1,6 +1,8 @@
 #pragma once
-#include <assert.h>
 
+#include <other/core/utility/config.h>
+#include <boost/utility/declval.hpp>
+#include <cassert>
 namespace other {
 
 template<class Iter> struct Range {
