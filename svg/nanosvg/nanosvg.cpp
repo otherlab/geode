@@ -1080,8 +1080,8 @@ static void pathArcTo(struct SVGParser* p, float* cpx, float* cpy, float* args, 
     }
     float cos_phi = cosf(phi);
     float sin_phi = sinf(phi);
-    float x1p =  .5*cos_phi*(x1-x2) + .5f*sin_phi*(y1-y2); // Step 1
-    float y1p = -.5*sin_phi*(x1-x2) + .5f*cos_phi*(y1-y2);
+    float x1p = (float) .5*cos_phi*(x1-x2) + .5f*sin_phi*(y1-y2); // Step 1
+    float y1p = (float)-.5*sin_phi*(x1-x2) + .5f*cos_phi*(y1-y2);
     float sqr_scale = sqr(x1p/rx)+sqr(y1p/ry);
     if (sqr_scale > 1)
     {

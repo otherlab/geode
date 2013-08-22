@@ -4,6 +4,8 @@
 namespace other {
 
 template<class Iter> struct Range {
+  typedef decltype(*boost::declval<Iter>()) Reference;
+
   const Iter lo, hi;
 
   Range(const Iter& lo, const Iter& hi)
@@ -14,8 +16,8 @@ template<class Iter> struct Range {
 
   Iter operator[](const int i) const { assert(0<=i && i<hi-lo); return lo+i; }
   
-  decltype(*lo) front() const { assert(lo!=hi); return *lo; }
-  decltype(*lo) back() const { assert(lo!=hi); return *(hi-1); }
+  Reference front() const { assert(lo!=hi); return *lo; }
+  Reference back() const { assert(lo!=hi); return *(hi-1); }
 };
 
 template<> struct Range<int> {
