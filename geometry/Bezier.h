@@ -27,7 +27,7 @@ class InvertibleBox {
 OTHER_CORE_EXPORT PyObject* to_python(const InvertibleBox& self);
 template<> struct FromPython<InvertibleBox>{OTHER_CORE_EXPORT static InvertibleBox convert(PyObject* object);};
 
-std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib);
+OTHER_CORE_EXPORT std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib);
 
 
 template <int d> struct Knot : public Object{
