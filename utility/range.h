@@ -1,5 +1,6 @@
 #pragma once
 #include <assert.h>
+#include <boost/utility/declval.hpp>
 
 namespace other {
 
@@ -15,14 +16,14 @@ template<class Iter> struct Range {
   const Iter& end() const { return hi; }
 
   Iter operator[](const int i) const { assert(0<=i && i<hi-lo); return lo+i; }
-  
+
   Reference front() const { assert(lo!=hi); return *lo; }
   Reference back() const { assert(lo!=hi); return *(hi-1); }
 };
 
 template<> struct Range<int> {
   int lo, hi;
-  
+
   struct Iter {
     int i;
     explicit Iter(int i) : i(i) {}
