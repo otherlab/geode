@@ -20,4 +20,9 @@ void wrap_force() {
   OTHER_WRAP(ether_drag)
   OTHER_WRAP(air_pressure)
   OTHER_WRAP(simple_shell)
+  OTHER_WRAP(pins)
+  OTHER_WRAP(axis_pins)
+  OTHER_WRAP(surface_pins)
+  OTHER_WRAP(binding_springs)
+  OTHER_WRAP(particle_binding_springs)
 }

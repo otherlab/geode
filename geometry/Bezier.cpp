@@ -32,24 +32,26 @@ template<int d> static Vector<real,d> point(Vector<real,d> v0, Vector<real,d> v1
   return result;
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& range, int res) const{
+template<int d> Tuple<Array<Vector<real,d>>, vector<int>> Bezier<d>::evaluate_core(const InvertibleBox& range, int res) const{
   Array<Vector<real,d>> path;
-  if(knots.size()<=1) return path;
+  vector<int> forced;
+
+  if (knots.size()<=1) return tuple(path,forced);
   Vector<real,d> p1, p2, p3, p4;
+
   auto it = knots.upper_bound(range.begin);
   auto end = knots.lower_bound(range.end);
-  if(end == knots.end()) end--;
+  if (end == knots.end()) end--;
+  if (it!=knots.begin()) it--;
   OTHER_ASSERT(it!=knots.end() && end!=knots.end());
-  if(it!=knots.begin()) it--;
-
   while(it!=end){
     //jump across null segment end->beginning for closed
     if(b_closed && it->first == t_max()){
       if(range.end == t_min() || range.end == t_max())
         break;
-
       it = knots.begin();
     }
+
     p1 = it->second->pt;
     p2 = it->second->tangent_out;
 
@@ -59,27 +61,49 @@ template<int d> Array<Vector<real,d>> Bezier<d>::segment(const InvertableBox& ra
     p3 = it->second->tangent_in;
     p4 = it->second->pt;
 
-    if((p4-p2).magnitude() > 1e-8){
-      for(int j=0;j<res;j++){
-        real t = j/(real)(res); // [0,1)
+    if ((p4-p2).magnitude() > 1e-8) {
+      // first point in this segment
+      forced.push_back(path.size());
+      path.append(other::point(p1,p2,p3,p4,0));
+
+      for (int j=1;j<res;j++) {
+        real t = j/(real)(res); // (0,1)
         path.append(other::point(p1,p2,p3,p4,t));
       }
     }
   }
-
+  // last point
+  forced.push_back(path.size());
   path.append(end->second->pt);
 
-  return path;
+  return tuple(path, forced);
 }
 
-template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBox& range, int res) const{
+template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(const InvertibleBox& range, int res) const{
+  return evaluate_core(range, res).x;
+}
 
-  const bool debug = true;
+template<int d> real Bezier<d>::arclength(const InvertibleBox& range, int res) const {
+  Array<Vector<real,d>> path = evaluate(range,std::max(res, 500));
+
+  // measure the length of the path
+  real total_length = 0;
+  for (int i = 1; i < (int)path.size(); ++i) {
+    total_length += (path[i-1] - path[i]).magnitude();
+  }
+
+  return total_length;
+}
+
+template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleBox& range, int res) const{
+  const bool debug = false;
 
   if (debug)
     std::cout << "sampling range " << range << " with " << res << " segments." << " bezier range: " << t_range << std::endl;
 
-  Array<Vector<real,d>> path = segment(range,std::max(10*res, 500));
+  auto pathinfo = evaluate_core(range,std::max(10*res, 500));
+  Array<Vector<real,d>> const &path = pathinfo.x;
+  vector<int> const &forced = pathinfo.y;
 
   // measure the length of the path
   real total_length = 0;
@@ -94,6 +118,8 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   Array<Vector<real,d>> samples;
   samples.append(path.front());
 
+  int forced_idx = 1;
+
   real step = total_length/(double)res;
 
   if (total_length == 0)
@@ -103,11 +129,32 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   real sample_d = samples.size()*step;
   for (int i = 1; i < (int)path.size()-1; ++i) {
     distance += (path[i-1] - path[i]).magnitude();
-    if (distance >= sample_d) {
+    // this index was forced, we have to add it no matter what
+    // exchange it for either the previous or the next point
+    if (forced[forced_idx] == i) {
+      forced_idx++;
+      if (fabs(sample_d-distance) < step/2) {
+        // get rid of the next sample
+        // (implicitly by change in sample_d below)
+        if (debug)
+          std::cout << "  skipping next sample to make space for forced sample" << std::endl;
+      } else {
+        // get rid of the previous sample
+        samples.resize(samples.size()-1);
+        if (debug)
+          std::cout << "  removed last sample to make space for forced sample" << std::endl;
+      }
       if (debug)
-        std::cout << "  adding sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
+        std::cout << "  adding forced sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
       samples.append(path[i]);
       sample_d = samples.size()*step;
+    } else {
+      if (distance >= sample_d) {
+        if (debug)
+          std::cout << "  adding sample " << samples.size() << " at d=" << distance << " sample_d=" << sample_d << std::endl;
+        samples.append(path[i]);
+        sample_d = samples.size()*step;
+      }
     }
   }
 
@@ -120,7 +167,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_segment(const InvertableBo
   return samples;
 }
 
-template<int d> Span<d> Bezier<d>::segment(real t) const{
+template<int d> Span<d> Bezier<d>::segment(real t) const {
   auto it = knots.lower_bound(t);
   if(it==knots.end()) return Span<d>(it->second,it->second,it->first,it->first);
   if(it != knots.begin() ) --it;
@@ -137,7 +184,15 @@ template<int d> Vector<real,d> Bezier<d>::point(real t) const{
 
 template<int d> Vector<real,d> Bezier<d>::tangent(real t) const{
   Span<d> seg = segment(t);
-  if(seg.start_t==seg.end_t) {Vector<real,d> v; v.fill(numeric_limits<real>::infinity()); return v;}
+  return tangent(seg, t);
+}
+
+template<int d> Vector<real,d> Bezier<d>::tangent(Span<d> const &seg, real t) const{
+  if (seg.start_t==seg.end_t) {
+    Vector<real,d> v;
+    v.fill(numeric_limits<real>::infinity());
+    return v;
+  }
   real subt = (t-seg.start_t)/(seg.end_t-seg.start_t);
 
   /*
@@ -159,14 +214,88 @@ template<int d> Vector<real,d> Bezier<d>::tangent(real t) const{
   return (tt.transposed()*AP).transposed().column(0).normalized();
 }
 
+template<int d> Vector<real,d> Bezier<d>::left_tangent(real t) const {
+  if (knots.count(t)) {
+    // get the knot's tangent if it's not singular
+    auto kit = knots.find(t);
+    auto const &k = kit->second;
+
+    if (k->singular_in()) {
+      // evaluate tangent at t in the segment just before this knot
+      // if it is the first knot, evaluate in the last segment at tend
+      auto iit = kit;
+      if (kit != knots.begin())
+        --kit;
+      else {
+        // set kit/iit to end-2,end-1
+        kit = iit = --knots.end();
+        --kit;
+      }
+      Span<d> seg = Span<d>(kit->second,iit->second,kit->first,iit->first);
+      return tangent(seg,iit->first);
+    } else {
+      return k->tangent_in;
+    }
+  } else {
+    return tangent(t);
+  }
+}
+
+template<int d> Vector<real,d> Bezier<d>::right_tangent(real t) const {
+  if (knots.count(t)) {
+    // get the knot's tangent if it's not singular
+    auto kit = knots.find(t);
+    auto const &k = kit->second;
+
+    if (k->singular_out()) {
+      // evaluate tangent at t in the segment just after this knot
+      // if it is the last knot, evaluate in the first segment at tbegin
+      auto iit = kit;
+      ++iit;
+      if (iit == knots.end()) {
+        iit = kit = knots.begin();
+        ++iit;
+      }
+      Span<d> seg = Span<d>(kit->second,iit->second,kit->first,iit->first);
+      return tangent(seg,kit->first);
+    } else {
+      return k->tangent_out;
+    }
+  } else {
+    return tangent(t);
+  }
+}
+
+template<int d> real Bezier<d>::angle_at(real t) const {
+  return angle_between(left_tangent(t), right_tangent(t));
+}
+
+template<int d> real Bezier<d>::polygon_angle_at(real t) const {
+  auto jt = knots.find(t);
+  if (jt == knots.end())
+    return 0.;
+
+  auto it = jt;
+  if (it == knots.begin())
+    it = --(--knots.end());
+
+  auto kt = jt; kt++;
+  if (kt == knots.end())
+    kt = ++knots.begin();
+
+  auto vin = jt->second->pt - it->second->pt;
+  auto vout = kt->second->pt - jt->second->pt;
+  return angle_between(vin, vout);
+}
+
 template<int d> Array<Vector<real,d>> Bezier<d>::evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
-  return segment(InvertableBox(t_range.min, t_range.max),res);
+  return evaluate(InvertibleBox(t_range.min, t_range.max),res);
 }
 
 template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(int res) const{
   if(t_range == Box<real>(0)) return Array<Vector<real,d>>();
-  return segment(InvertableBox(t_range.min, t_range.max),res);
+  return alen_evaluate(InvertibleBox(t_range.min, t_range.max),res);
 }
 
 template<int d> void Bezier<d>::append_knot(const TV& pt, TV tin, TV tout){
@@ -219,6 +348,18 @@ template<int d> Box<Vector<real,d> > Bezier<d>::bounding_box() const{
 template<int d> void Bezier<d>::translate(const TV& t){
   for(auto& k : knots){
     if(!(k.first == t_max() && closed())) (*k.second)+=t;
+  }
+}
+
+template<int d> void Bezier<d>::scale(real amt, const TV& ctr){
+  TV c = isfinite(ctr) ? ctr : bounding_box().center();
+  for(auto& k : knots){
+    TV pt = k.second->pt;
+    if(!(k.first == t_max() && closed())) {
+      k.second->pt = (k.second->pt - c)*amt + c;
+      k.second->tangent_in = (k.second->tangent_in - c)*amt + c;
+      k.second->tangent_out = (k.second->tangent_out - c)*amt + c;
+    }
   }
 }
 
@@ -301,18 +442,18 @@ template struct Span<3>;
 
 #ifdef OTHER_PYTHON
 
-PyObject* to_python(const InvertableBox& self) {
+PyObject* to_python(const InvertibleBox& self) {
   return to_python(tuple(self.begin,self.end));
 }
 
-InvertableBox FromPython<InvertableBox>::convert(PyObject* object) {
+InvertibleBox FromPython<InvertibleBox>::convert(PyObject* object) {
   const auto extents = from_python<Tuple<real,real>>(object);
-  return InvertableBox(extents.x,extents.y);
+  return InvertibleBox(extents.x,extents.y);
 }
 
 #endif
 
-std::ostream& operator<<(std::ostream& os, const InvertableBox& ib) {
+std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib) {
   os << "[" << ib.begin << ", " << ib.end << "]";
   return os;
 }
@@ -332,6 +473,7 @@ void wrap_bezier() {
   }
   {
     typedef Bezier<2> Self;
+    typedef Array<Vector<real,2>>(Self::*eval_t)(int)const;
     Class<Self>("Bezier")
       .OTHER_INIT()
       .OTHER_FIELD(knots)
@@ -340,7 +482,7 @@ void wrap_bezier() {
       .OTHER_METHOD(closed)
       .OTHER_METHOD(close)
       .OTHER_METHOD(fuse_ends)
-      .OTHER_METHOD(evaluate)
+      .OTHER_OVERLOADED_METHOD(eval_t, evaluate)
       .OTHER_METHOD(append_knot)
       ;
   }

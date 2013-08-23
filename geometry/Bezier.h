@@ -18,16 +18,16 @@ using std::make_pair;
 // When specifying a range of t values on a closed Bezier that starts before and ends after the minimum/maximum t values (i.e. wraps around)
 // the max value might be less than the min value. This class is used instead to avoid accidentally calling functions like size that wouldn't
 // be meaningful in this case.
-class InvertableBox {
+class InvertibleBox {
  public:
-  InvertableBox(real _begin, real _end) : begin(_begin), end(_end) {}
+  InvertibleBox(real _begin, real _end) : begin(_begin), end(_end) {}
   real begin;
   real end;
 };
-OTHER_CORE_EXPORT PyObject* to_python(const InvertableBox& self);
-template<> struct FromPython<InvertableBox>{OTHER_CORE_EXPORT static InvertableBox convert(PyObject* object);};
+OTHER_CORE_EXPORT PyObject* to_python(const InvertibleBox& self);
+template<> struct FromPython<InvertibleBox>{OTHER_CORE_EXPORT static InvertibleBox convert(PyObject* object);};
 
-std::ostream& operator<<(std::ostream& os, const InvertableBox& ib);
+OTHER_CORE_EXPORT std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib);
 
 
 template <int d> struct Knot : public Object{
@@ -96,15 +96,24 @@ protected:
   OTHER_CORE_EXPORT Bezier(const Bezier<d>& b);
 public:
   map<real,Ref<Knot<d>>> knots;
-  OTHER_CORE_EXPORT Array<TV> segment(const InvertableBox& range, int res) const ;
-  OTHER_CORE_EXPORT Array<TV> alen_segment(const InvertableBox& range, int res) const ;
-  OTHER_CORE_EXPORT Array<TV> evaluate(int res) const ;
-  OTHER_CORE_EXPORT Array<TV> alen_evaluate(int res) const ;
+  OTHER_CORE_EXPORT Tuple<Array<TV>,std::vector<int>> evaluate_core(const InvertibleBox& range, int res) const;
+  OTHER_CORE_EXPORT Array<TV> evaluate(const InvertibleBox& range, int res) const;
+  OTHER_CORE_EXPORT Array<TV> alen_evaluate(const InvertibleBox& range, int res) const;
+  OTHER_CORE_EXPORT Array<TV> evaluate(int res) const;
+  OTHER_CORE_EXPORT Array<TV> alen_evaluate(int res) const;
+  OTHER_CORE_EXPORT real arclength(const InvertibleBox& range, int res) const;
   OTHER_CORE_EXPORT void append_knot(const TV& pt, TV tin = T(inf)*TV::ones(), TV tout = T(inf)*TV::ones());
-  OTHER_CORE_EXPORT void insert_knot(const real t) ;
-  OTHER_CORE_EXPORT Span<d> segment(real t) const ;
-  OTHER_CORE_EXPORT TV point(real t) const ;
-  OTHER_CORE_EXPORT TV tangent(real t) const ;
+  OTHER_CORE_EXPORT void insert_knot(const real t);
+  OTHER_CORE_EXPORT Span<d> segment(real t) const;
+  OTHER_CORE_EXPORT TV point(real t) const;
+  OTHER_CORE_EXPORT TV tangent(Span<d> const &seg, real t) const;
+  OTHER_CORE_EXPORT TV tangent(real t) const;
+  // left and right tangent are always the same, except at knots
+  OTHER_CORE_EXPORT TV left_tangent(real t) const;
+  OTHER_CORE_EXPORT TV right_tangent(real t) const;
+  // mostly 0, except (maybe) at knots (in radians)
+  OTHER_CORE_EXPORT real angle_at(real t) const;
+  OTHER_CORE_EXPORT real polygon_angle_at(real t) const;
   inline real t_max() const { return t_range.max; }
   inline real t_min() const { return t_range.min; }
   OTHER_CORE_EXPORT void close() ;
@@ -116,6 +125,7 @@ public:
   OTHER_CORE_EXPORT Box<TV> bounding_box() const;
 
   OTHER_CORE_EXPORT void translate(const TV& t);
+  OTHER_CORE_EXPORT void scale(real amt,const TV& ctr = TV::ones()*inf);
 
 };
 

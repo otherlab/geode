@@ -127,8 +127,8 @@ template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyO
 
 #else // Unpleasant nonvariadic versions
 
-template<class A0, class A1, class A2, class A3, class A4, class A5, class A6> struct has_to_python<Tuple<Args...>> : public mpl::and_<has_to_python<A0>, has_to_python<A1>, has_to_python<A2>, has_to_python<A3>, has_to_python<A4>, has_to_python<A5>, has_to_python<A6> > {};
-template<class A0, class A1, class A2, class A3, class A4, class A5, class A6> struct has_from_python<Tuple<Args...>> : public mpl::and_<has_from_python<A0>, has_from_python<A1>, has_from_python<A2>, has_from_python<A3>, has_from_python<A4>, has_from_python<A5>, has_from_python<A6> > {};
+template<class A0, class A1, class A2, class A3, class A4, class A5, class A6> struct has_to_python<Tuple<A0,A1,A2,A3,A4,A5,A6>> : public mpl::and_<mpl::and_<has_to_python<A0>, has_to_python<A1>, has_to_python<A2>>, mpl::and_<has_to_python<A3>, has_to_python<A4>, has_to_python<A5>, has_to_python<A6>> > {};
+template<class A0, class A1, class A2, class A3, class A4, class A5, class A6> struct has_from_python<Tuple<A0,A1,A2,A3,A4,A5,A6>> : public mpl::and_<mpl::and_<has_from_python<A0>, has_from_python<A1>, has_from_python<A2>>, mpl::and_<has_from_python<A3>, has_from_python<A4>, has_from_python<A5>, has_from_python<A6>> > {};
 
 static inline Tuple<> tuple() { return Tuple<>(); }
 template<class A0> static inline Tuple<A0> tuple(const A0& a0) { return Tuple<A0>(a0); }

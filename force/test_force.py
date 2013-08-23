@@ -139,5 +139,59 @@ def test_air_pressure():
       air = AirPressure(mesh,X,closed,side)
       force_test(air,X2,verbose=1) 
 
+def test_pins():
+  random.seed(17310)
+  X = random.randn(5,3)
+  nodes = [1,3]
+  mass = random.randn(len(X))**2
+  targets = random.randn(len(nodes),3)
+  pins = Pins(nodes,mass,targets,3.5,1.1)
+  force_test(pins,X,verbose=1)
+
+def test_axis_pins():
+  random.seed(17310)
+  X = random.randn(5,3)
+  nodes = [1,3]
+  mass = random.randn(len(X))**2
+  targets = random.randn(len(nodes),3)
+  pins = AxisPins(nodes,mass,targets,3.5,1.1)
+  pins.axis = (2,3,4)
+  force_test(pins,X,verbose=1)
+
+def test_surface_pins():
+  random.seed(127130)
+  # Test a sphere mesh ignoring errors in the Hessian
+  target_mesh,target_X = sphere_mesh(0)
+  X = random.randn(100,3)
+  mass = absolute(random.randn(len(X)))
+  nodes = unique(random.randint(len(X),size=50).astype(int32))
+  pins = SurfacePins(nodes,mass,target_mesh,target_X,7,1.1)
+  force_test(pins,X,verbose=1,ignore_hessian=1)
+  # Hessian should be correct if the closest points are all on faces
+  target_mesh = TriangleMesh([[0,1,2]])
+  target_X = 100*eye(3)
+  pins = SurfacePins(nodes,mass,target_mesh,target_X,7,1.1)
+  force_test(pins,X,verbose=1)
+
+def test_binding_springs():
+  random.seed(73210)
+  for k in 2,3:
+    nodes = [1,2]
+    X = random.randn(20,3)
+    parents = {2:[[5,6],[8,9]],
+               3:[[5,6,7],[10,11,12]]}[k]
+    weights = random.uniform(1,2,(2,k))
+    weights /= weights.sum(axis=1).reshape(-1,1)
+    mass = absolute(random.randn(len(X)))
+    springs = binding_springs(nodes,parents,weights,mass,7,1.2)
+    force_test(springs,X,verbose=1)
+
+def test_particle_binding_springs():
+  random.seed(73210)
+  X = random.randn(4,3)
+  mass = absolute(random.randn(len(X)))
+  springs = particle_binding_springs([[1,2]],mass,7,1.2)
+  force_test(springs,X,verbose=1)
+
 if __name__=='__main__':
   test_simple_shell()

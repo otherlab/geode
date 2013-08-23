@@ -69,3 +69,12 @@ def cubic_hinges(mesh,X,stiffness,damping,angles=None):
   hinges.stiffness = stiffness
   hinges.damping = damping
   return hinges
+
+BindingSprings = {2:BindingSprings2d,3:BindingSprings3d}
+def binding_springs(nodes,parents,weights,mass,stiffness,damping_ratio):
+  parents = asarray(parents,dtype=int32)
+  return BindingSprings[parents.shape[1]](nodes,parents,weights,mass,stiffness,damping_ratio)
+
+particle_binding_springs = ParticleBindingSprings
+edge_binding_springs = BindingSprings2d
+face_binding_springs = BindingSprings3d
