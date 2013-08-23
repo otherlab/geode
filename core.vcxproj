@@ -35,7 +35,6 @@
     <ClInclude Include="array\convert.h" />
     <ClInclude Include="array\Field.h" />
     <ClInclude Include="array\forward.h" />
-    <ClInclude Include="array\IdentityMap.h" />
     <ClInclude Include="array\IndirectArray.h" />
     <ClInclude Include="array\NdArray.h" />
     <ClInclude Include="array\Nested.h" />
@@ -64,12 +63,14 @@
     <ClInclude Include="force\StrainMeasure.h" />
     <ClInclude Include="force\StrainMeasureHex.h" />
     <ClInclude Include="geometry\AnalyticImplicit.h" />
+    <ClInclude Include="geometry\Bezier.h" />
     <ClInclude Include="geometry\Box.h" />
     <ClInclude Include="geometry\BoxScalar.h" />
     <ClInclude Include="geometry\BoxTree.h" />
     <ClInclude Include="geometry\BoxVector.h" />
     <ClInclude Include="geometry\Capsule.h" />
     <ClInclude Include="geometry\Cylinder.h" />
+    <ClInclude Include="geometry\FastRay.h" />
     <ClInclude Include="geometry\forward.h" />
     <ClInclude Include="geometry\FrameImplicit.h" />
     <ClInclude Include="geometry\Implicit.h" />
@@ -79,10 +80,11 @@
     <ClInclude Include="geometry\platonic.h" />
     <ClInclude Include="geometry\polygon.h" />
     <ClInclude Include="geometry\Ray.h" />
-    <ClInclude Include="geometry\Segment2d.h" />
-    <ClInclude Include="geometry\Segment3d.h" />
+    <ClInclude Include="geometry\Segment.h" />
     <ClInclude Include="geometry\SimplexTree.h" />
     <ClInclude Include="geometry\Sphere.h" />
+    <ClInclude Include="geometry\surface_levelset.h" />
+    <ClInclude Include="geometry\ThickShell.h" />
     <ClInclude Include="geometry\traverse.h" />
     <ClInclude Include="geometry\Triangle2d.h" />
     <ClInclude Include="geometry\Triangle3d.h" />
@@ -104,7 +106,7 @@
     <ClInclude Include="math\cube.h" />
     <ClInclude Include="math\cyclic_shift.h" />
     <ClInclude Include="math\Factorial.h" />
-    <ClInclude Include="math\givens_rotate.h" />
+    <ClInclude Include="math\givens.h" />
     <ClInclude Include="math\hash.h" />
     <ClInclude Include="math\integer_log.h" />
     <ClInclude Include="math\inverse.h" />
@@ -313,6 +315,7 @@
     <ClCompile Include="force\StrainMeasure.cpp" />
     <ClCompile Include="force\StrainMeasureHex.cpp" />
     <ClCompile Include="geometry\AnalyticImplicit.cpp" />
+    <ClCompile Include="geometry\Bezier.cpp" />
     <ClCompile Include="geometry\Box.cpp" />
     <ClCompile Include="geometry\BoxScalar.cpp" />
     <ClCompile Include="geometry\BoxTree.cpp" />
@@ -326,10 +329,11 @@
     <ClCompile Include="geometry\Plane.cpp" />
     <ClCompile Include="geometry\platonic.cpp" />
     <ClCompile Include="geometry\polygon.cpp" />
-    <ClCompile Include="geometry\Segment2d.cpp" />
-    <ClCompile Include="geometry\Segment3d.cpp" />
+    <ClCompile Include="geometry\Segment.cpp" />
     <ClCompile Include="geometry\SimplexTree.cpp" />
     <ClCompile Include="geometry\Sphere.cpp" />
+    <ClCompile Include="geometry\surface_levelset.cpp" />
+    <ClCompile Include="geometry\ThickShell.cpp" />
     <ClCompile Include="geometry\Triangle2d.cpp" />
     <ClCompile Include="geometry\Triangle3d.cpp" />
     <ClCompile Include="image\color_utils.cpp" />

@@ -189,9 +189,6 @@
     <ClInclude Include="array\forward.h">
       <Filter>array\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="array\IdentityMap.h">
-      <Filter>array\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="array\IndirectArray.h">
       <Filter>array\Header Files</Filter>
     </ClInclude>
@@ -318,12 +315,6 @@
     <ClInclude Include="geometry\Ray.h">
       <Filter>geometry\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="geometry\Segment2d.h">
-      <Filter>geometry\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="geometry\Segment3d.h">
-      <Filter>geometry\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="geometry\SimplexTree.h">
       <Filter>geometry\Header Files</Filter>
     </ClInclude>
@@ -391,9 +382,6 @@
       <Filter>math\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="math\Factorial.h">
-      <Filter>math\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="math\givens_rotate.h">
       <Filter>math\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="math\hash.h">
@@ -948,6 +936,24 @@
     <ClInclude Include="array\Nested.h">
       <Filter>array\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="geometry\Bezier.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\FastRay.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\Segment.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\surface_levelset.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\ThickShell.h">
+      <Filter>geometry\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\givens.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
@@ -1050,12 +1056,6 @@
       <Filter>geometry\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="geometry\polygon.cpp">
-      <Filter>geometry\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="geometry\Segment2d.cpp">
-      <Filter>geometry\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="geometry\Segment3d.cpp">
       <Filter>geometry\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="geometry\SimplexTree.cpp">
@@ -1344,6 +1344,18 @@
       <Filter>array\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="geometry\Box.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Bezier.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\Segment.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\surface_levelset.cpp">
+      <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\ThickShell.cpp">
       <Filter>geometry\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
