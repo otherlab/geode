@@ -118,6 +118,10 @@ public:
     return (offsets.slice(1,offsets.size())-offsets.slice(0,offsets.size()-1)).copy();
   }
 
+  Range<int> range(int i) const {
+    return Range<int>(offsets[i],offsets[i+1]);
+  }
+
   T& operator()(int i,int j) const {
     int index = offsets[i]+j;
     assert(0<=j && index<=offsets[i+1]);

@@ -51,4 +51,13 @@ OTHER_CORE_EXPORT Nested<const Vec2> polygons_from_python(PyObject* object);
 // Reorder some polygons into canonical form, assuming nondegeneracy.  Primarily for debugging and unit test purposes.
 OTHER_CORE_EXPORT Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys);
 
+// Helper routine for closed_contours_next
+OTHER_CORE_EXPORT Array<int> closed_contours_next_from_offsets(RawArray<const int> offsets);
+
+// nested.flat[i] connects to nested.flat[closed_contour_next[i]]
+// This allows traversing closed contours as a graph instead of with special cases or messy modular arithmetic
+template<class T,bool f> static inline Array<int> closed_contours_next(const Nested<T,f>& nested) {
+  return closed_contours_next_from_offsets(nested.offsets);
+}
+
 }

@@ -72,6 +72,7 @@ def draw_poly(poly,filled=False,offset=0,name=None,subpoly=False,draw_closed=Tru
   poly = asarray(poly) + offset
   if draw_closed:
     poly = vstack([poly,[poly[0]]])
+
   if filled:
     pylab.fill(poly[:,0],poly[:,1],*args,**kwargs)
   else:
