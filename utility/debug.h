@@ -1,6 +1,4 @@
-//#####################################################################
-// Namespace debug
-//#####################################################################
+// Assertions and other debugging utilities
 #pragma once
 
 #include <other/core/utility/config.h>
@@ -14,26 +12,26 @@
 #endif
 
 #define OTHER_WARN_IF_NOT_OVERRIDDEN() \
-  do{static bool __first_time__=true;if(__first_time__){other::debug::warn_if_not_overridden(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this));__first_time__=false;}}while(0)
+  do{static bool __first_time__=true;if(__first_time__){other::warn_if_not_overridden(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this));__first_time__=false;}}while(0)
 
 #define OTHER_WARNING(message) \
-  do{static bool __first_time__=true;if(__first_time__){other::debug::warning((message),OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__);__first_time__=false;}}while(0)
+  do{static bool __first_time__=true;if(__first_time__){other::warning((message),OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__);__first_time__=false;}}while(0)
 
 #define OTHER_FUNCTION_IS_NOT_DEFINED() \
-  other::debug::function_is_not_defined(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this))
+  other::function_is_not_defined(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,typeid(*this))
 
 #define OTHER_NOT_IMPLEMENTED(...) \
-  other::debug::not_implemented(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,other::debug::message(__VA_ARGS__))
+  other::not_implemented(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,other::debug_message(__VA_ARGS__))
 
 #define OTHER_FATAL_ERROR(...) \
-  other::debug::fatal_error(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,other::debug::message(__VA_ARGS__))
+  other::fatal_error(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,other::debug_message(__VA_ARGS__))
 
 #ifdef __GNUC__ // Avoid ambiguous else warnings on gcc
 #define OTHER_ASSERT(condition,...) ({ \
-  if(!(condition)) other::debug::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug::message(__VA_ARGS__)); })
+  if(!(condition)) other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__)); })
 #else
 #define OTHER_ASSERT(condition,...) \
-  if(condition){}else{other::debug::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug::message(__VA_ARGS__));}
+  if(condition){}else{other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__));}
 #endif
 
 #ifdef NDEBUG
@@ -49,12 +47,10 @@ using std::type_info;
 
 OTHER_CORE_EXPORT void breakpoint();
 
-namespace debug {
-
 // Helper function to work around zero-variadic argument weirdness
-static inline const char* message(){return 0;}
-static inline const char* message(const char* message){return message;}
-static inline const char* message(const string& message){return message.c_str();}
+static inline const char* debug_message(){return 0;}
+static inline const char* debug_message(const char* message){return message;}
+static inline const char* debug_message(const string& message){return message.c_str();}
 
 OTHER_CORE_EXPORT void warn_if_not_overridden(const char* function,const char* file,unsigned int line,const type_info& type) OTHER_COLD;
 OTHER_CORE_EXPORT void warning(const string& message,const char* function,const char* file,unsigned int line) OTHER_COLD;
@@ -71,5 +67,4 @@ typedef void OTHER_NORETURN((*ErrorCallback)(const string&));
 #endif
 OTHER_CORE_EXPORT void set_error_callback(ErrorCallback callback);
 
-}
 }
