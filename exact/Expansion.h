@@ -5,6 +5,7 @@
 // Simple functions for manipulating multiprecision floating-point
 // expansions, with simplicity favoured over speed.
 
+#include <other/core/exact/config.h>
 #include <vector>
 #include <cstddef>
 namespace other {
@@ -90,8 +91,11 @@ print_full( const Expansion& e );
 
 class Expansion
 {
-      
 public:
+   // For compatibility with Interval::Scope
+   struct Scope {
+      OTHER_UNUSED Scope() {}
+   };
    
    vector<double> v;
 
@@ -163,17 +167,6 @@ public:
       return other::estimate( *this );
    }
    
-   inline bool indefinite_sign() const
-   {
-      return false;
-   }
-   
-   static void begin_special_arithmetic()
-   {}
-   
-   static void end_special_arithmetic()
-   {}
-   
    inline void clear()
    {
       v.clear();
@@ -183,9 +176,11 @@ public:
    {
       v.resize(new_size);
    }
-
 };
 
+static inline bool indefinite_sign(const Expansion& e) {
+   return false;
+}
 
 inline void make_expansion( double a, Expansion& e )
 { 

@@ -3,14 +3,15 @@
 
 // Modified from code by Tyson Brochu, 2011
 
-#include <other/core/utility/config.h>
-#include <other/core/geometry/forward.h>
+#include <other/core/exact/config.h>
+#include <other/core/geometry/Box.h>
 #include <other/core/math/constants.h>
 #include <other/core/python/repr.h>
 #include <fenv.h>
 namespace other {
 
 struct Interval;
+struct IntervalScope;
 using std::ostream;
 
 // IMPORTANT: All interval arithmetic must occur within an IntervalScope (see scope.h).
@@ -19,6 +20,8 @@ using std::ostream;
 template<> struct IsScalar<Interval> : public mpl::true_ {};
 
 struct Interval {
+  typedef IntervalScope Scope;
+
   // For now, we use double precision arithmetic unconditionally.  This is particularly important for constructions,
   // where we want to error range to be better than float precision in most cases.
   typedef double T;
@@ -92,6 +95,10 @@ struct Interval {
   Interval thickened(T delta) const {
     assert(fegetround() == FE_UPWARD);
     return Interval(-(nlo+delta),hi+delta);
+  }
+
+  Box<double> box() const {
+    return Box<double>(-nlo,hi);
   }
 };
 

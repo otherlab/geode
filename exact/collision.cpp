@@ -1,9 +1,9 @@
-#include "collision.h"
-#include "TrueInterval.h"
-#include "Expansion.h"
+#include <other/core/exact/collision.h>
+#include <other/core/exact/Interval.h>
+#include <other/core/exact/scope.h>
+#include <other/core/exact/Expansion.h>
 #include <other/core/vector/magnitude.h>
 #include <other/core/vector/normalize.h>
-#include <cstdlib>
 namespace other {
 
 namespace {
@@ -13,11 +13,25 @@ typedef Vector<double,3> Vec3d;
 typedef Vector<int,3> Vec3i;
 typedef Vector<unsigned int,3> Vec3ui;
 typedef Vector<unsigned int,4> Vec4ui;
-typedef Vector<TrueInterval,3> Vec3Interval;
+typedef Vector<Interval,3> Vec3Interval;
 typedef Vector<Expansion,2> Vec2e;
 typedef Vector<Expansion,3> Vec3e;
 typedef Vector<bool,3> Vec3b;
 typedef Vector<bool,4> Vec4b;
+
+static inline double estimate(const Interval x) {
+  const double est = x.center();
+  // Don't return zero as an estimate if the interval is not identically zero.
+  return est || certainly_zero(x) ? est : 1e-20;
+}   
+
+static inline void create_from_double(double a, Interval& x) {
+  x = a;
+}
+
+static inline bool indefinite_sign(const Interval x) {
+  return x.contains_zero();
+}
 
 /// --------------------------------------------------------
 ///
@@ -440,7 +454,7 @@ inline void sub( Vec3d& a, const Vec3d& b )
 inline void edge_edge_collision_function(const Vec3d &d_x0,    const Vec3d &d_x1,    const Vec3d &d_x2,    const Vec3d &d_x3,
                                          const Vec3d &d_x0new, const Vec3d &d_x1new, const Vec3d &d_x2new, const Vec3d &d_x3new,
                                          bool b_t, bool b_u, bool b_v,
-                                         Vector<TrueInterval,3>& out )
+                                         Vector<Interval,3>& out )
 {
     
     Vec3d out_lower( -d_x0[0], -d_x0[1], -d_x0[2] );
@@ -507,13 +521,13 @@ inline void edge_edge_collision_function(const Vec3d &d_x0,    const Vec3d &d_x1
         sub( out_upper, d_x3 );
     }
     
-    out[0].v[0] = out_lower[0];
-    out[1].v[0] = out_lower[1];
-    out[2].v[0] = out_lower[2];
+    out[0].nlo = out_lower[0];
+    out[1].nlo = out_lower[1];
+    out[2].nlo = out_lower[2];
     
-    out[0].v[1] = out_upper[0];
-    out[1].v[1] = out_upper[1];
-    out[2].v[1] = out_upper[2];
+    out[0].hi = out_upper[0];
+    out[1].hi = out_upper[1];
+    out[2].hi = out_upper[2];
     
 }
 
@@ -586,7 +600,7 @@ void point_triangle_collision_function(const Vec3d &d_x0,    const Vec3d &d_x1, 
 void point_triangle_collision_function(const Vec3d &d_x0,    const Vec3d &d_x1,    const Vec3d &d_x2,    const Vec3d &d_x3,
                                        const Vec3d &d_x0new, const Vec3d &d_x1new, const Vec3d &d_x2new, const Vec3d &d_x3new,
                                        bool b_t, bool b_u, bool b_v,
-                                       Vector<TrueInterval,3>& out )
+                                       Vector<Interval,3>& out )
 {
     
     Vec3d out_lower( -d_x0[0], -d_x0[1], -d_x0[2] );
@@ -651,13 +665,13 @@ void point_triangle_collision_function(const Vec3d &d_x0,    const Vec3d &d_x1, 
         sub( out_upper, d_x3 );
     }
     
-    out[0].v[0] = out_lower[0];
-    out[1].v[0] = out_lower[1];
-    out[2].v[0] = out_lower[2];
+    out[0].nlo = out_lower[0];
+    out[1].nlo = out_lower[1];
+    out[2].nlo = out_lower[2];
     
-    out[0].v[1] = out_upper[0];
-    out[1].v[1] = out_upper[1];
-    out[2].v[1] = out_upper[2];
+    out[0].hi = out_upper[0];
+    out[1].hi = out_upper[1];
+    out[2].hi = out_upper[2];
     
 }
 
@@ -672,7 +686,7 @@ void get_quad_vertices(const Vec3d &d_x0old, const Vec3d &d_x1old, const Vec3d &
                        const Vec4b& ts, const Vec4b& us, const Vec4b& vs, 
                        Vector<T,3>& q0, Vector<T,3>& q1, Vector<T,3>& q2, Vector<T,3>& q3 )
 {
-    T::begin_special_arithmetic();
+    typename T::Scope scope;
     if ( is_edge_edge )
     {
         edge_edge_collision_function( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, ts[0], us[0], vs[0], q0 );
@@ -687,7 +701,6 @@ void get_quad_vertices(const Vec3d &d_x0old, const Vec3d &d_x1old, const Vec3d &
         point_triangle_collision_function( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, ts[2], us[2], vs[2], q2 );
         point_triangle_collision_function( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, ts[3], us[3], vs[3], q3 );      
     }
-    T::end_special_arithmetic();
 }
 
 // --------------------------------------------------------
@@ -699,7 +712,7 @@ void get_triangle_vertices(const Vec3d &d_x0old, const Vec3d &d_x1old, const Vec
                            const Vec3b& ts, const Vec3b& us, const Vec3b& vs, 
                            Vector<T,3>& q0, Vector<T,3>& q1, Vector<T,3>& q2 )
 {
-    T::begin_special_arithmetic();
+    typename T::Scope scope;
     if ( is_edge_edge )
     {
         edge_edge_collision_function( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, ts[0], us[0], vs[0], q0 );
@@ -712,7 +725,6 @@ void get_triangle_vertices(const Vec3d &d_x0old, const Vec3d &d_x1old, const Vec
         point_triangle_collision_function( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, ts[1], us[1], vs[1], q1 );
         point_triangle_collision_function( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, ts[2], us[2], vs[2], q2 );
     }
-    T::end_special_arithmetic();
 }
 
 
@@ -921,8 +933,8 @@ int expansion_simplex_intersection1d(int k,
         if( sign(x0-x1) < 0) return 0;
         else if ( sign(x0-x2) > 0 ) return 0;
         *out_alpha0=1;
-        *out_alpha1=(x2.estimate()-x0.estimate())/(x2.estimate()-x1.estimate());
-        *out_alpha2=(x0.estimate()-x1.estimate())/(x2.estimate()-x1.estimate());
+        *out_alpha1=(estimate(x2)-estimate(x0))/(estimate(x2)-estimate(x1));
+        *out_alpha2=(estimate(x0)-estimate(x1))/(estimate(x2)-estimate(x1));
         return 1;
     }
     else if( sign(x1-x2) > 0 )
@@ -930,8 +942,8 @@ int expansion_simplex_intersection1d(int k,
         if( sign(x0-x2) < 0 ) return 0;
         else if( sign(x0-x1) > 0) return 0;
         *out_alpha0=1;
-        *out_alpha1=(x2.estimate()-x0.estimate())/(x2.estimate()-x1.estimate());
-        *out_alpha2=(x0.estimate()-x1.estimate())/(x2.estimate()-x1.estimate());
+        *out_alpha1=(estimate(x2)-estimate(x0))/(estimate(x2)-estimate(x1));
+        *out_alpha2=(estimate(x0)-estimate(x1))/(estimate(x2)-estimate(x1));
         return 1;
     }
     else
@@ -1021,14 +1033,14 @@ int expansion_simplex_intersection2d(int k,
             if(certainly_opposite_sign(alpha1, alpha3)) return 0;
             if(certainly_opposite_sign(alpha2, alpha3)) return 0;
             
-            double sum2 = alpha1.estimate() + alpha2.estimate() + alpha3.estimate();
+            double sum2 = estimate(alpha1) + estimate(alpha2) + estimate(alpha3);
             
             if(sum2)
             { 
                 *out_alpha0=1;
-                *out_alpha1 = alpha1.estimate() / sum2;
-                *out_alpha2 = alpha2.estimate() / sum2;
-                *out_alpha3 = alpha3.estimate() / sum2;
+                *out_alpha1 = estimate(alpha1) / sum2;
+                *out_alpha2 = estimate(alpha2) / sum2;
+                *out_alpha3 = estimate(alpha3) / sum2;
                 return 1;
             }
             else
@@ -1066,14 +1078,14 @@ int expansion_simplex_intersection2d(int k,
             if( certainly_opposite_sign(alpha2, alpha3) ) return 0;
             
             double sum1, sum2;
-            sum1= alpha0.estimate() + alpha1.estimate();
-            sum2= alpha2.estimate() + alpha3.estimate();
+            sum1= estimate(alpha0) + estimate(alpha1);
+            sum2= estimate(alpha2) + estimate(alpha3);
             
             if(sum1 && sum2){
-                *out_alpha0 = alpha0.estimate() / sum1;
-                *out_alpha1 = alpha1.estimate() / sum1;
-                *out_alpha2 = alpha2.estimate() / sum2;
-                *out_alpha3 = alpha3.estimate() / sum2;
+                *out_alpha0 = estimate(alpha0) / sum1;
+                *out_alpha1 = estimate(alpha1) / sum1;
+                *out_alpha2 = estimate(alpha2) / sum2;
+                *out_alpha3 = estimate(alpha3) / sum2;
                 return 1;
             }
             else
@@ -1278,71 +1290,57 @@ int point_tetrahedron_intersection_helper(const Vector<T,3>& x0,
                                           double* out_alpha3,
                                           double* out_alpha4 )
 {
-    
-    T::begin_special_arithmetic();
-    
-    T alpha1;
-    orientation3d(x0, x2, x3, x4, alpha1);
-    alpha1 = -alpha1;
-    
-    T alpha2;
-    orientation3d(x0, x1, x3, x4, alpha2);
-    
-    if( certainly_opposite_sign(alpha1, alpha2) )
+    T alpha1, alpha2, alpha3, alpha4;
     {
-        T::end_special_arithmetic();
-        return 0;
+        typename T::Scope scope;
+    
+        orientation3d(x0, x2, x3, x4, alpha1);
+        alpha1 = -alpha1;
+        
+        orientation3d(x0, x1, x3, x4, alpha2);
+        
+        if( certainly_opposite_sign(alpha1, alpha2) )
+            return 0;
+        
+        orientation3d(x0, x1, x2, x4, alpha3);
+        alpha3 = -alpha3;
+        
+        if( certainly_opposite_sign(alpha1, alpha3) )
+            return 0;
+        
+        if( certainly_opposite_sign(alpha2, alpha3) ) 
+            return 0;
+        
+        orientation3d(x0, x1, x2, x3, alpha4);
     }
-    
-    T alpha3;
-    orientation3d(x0, x1, x2, x4, alpha3);
-    alpha3 = -alpha3;
-    
-    if( certainly_opposite_sign(alpha1, alpha3) )
-    {
-        T::end_special_arithmetic();
-        return 0;
-    }
-    
-    if( certainly_opposite_sign(alpha2, alpha3) ) 
-    {
-        T::end_special_arithmetic();
-        return 0;
-    }
-    
-    T alpha4;
-    orientation3d(x0, x1, x2, x3, alpha4);
-    
-    T::end_special_arithmetic();
     
     if( certainly_opposite_sign(alpha1, alpha4) ) return 0;
     if( certainly_opposite_sign(alpha2, alpha4) ) return 0;         
     if( certainly_opposite_sign(alpha3, alpha4) ) return 0;
     
-    if ( alpha1.indefinite_sign() || alpha2.indefinite_sign() || alpha3.indefinite_sign() || alpha4.indefinite_sign() )
+    if ( indefinite_sign(alpha1) || indefinite_sign(alpha2) || indefinite_sign(alpha3) || indefinite_sign(alpha4) )
     {
         // degenerate
         return -1;
     }
     
-    double sum2 = alpha1.estimate() + alpha2.estimate() + alpha3.estimate() + alpha4.estimate();
+    double sum2 = estimate(alpha1) + estimate(alpha2) + estimate(alpha3) + estimate(alpha4);
     
     if(sum2)
     {
         *out_alpha0 = 1;
-        *out_alpha1 = alpha1.estimate() / sum2;
-        *out_alpha2 = alpha2.estimate() / sum2;
-        *out_alpha3 = alpha3.estimate() / sum2;
-        *out_alpha4 = alpha4.estimate() / sum2;
+        *out_alpha1 = estimate(alpha1) / sum2;
+        *out_alpha2 = estimate(alpha2) / sum2;
+        *out_alpha3 = estimate(alpha3) / sum2;
+        *out_alpha4 = estimate(alpha4) / sum2;
         return 1;
     }
     else
     { 
-        // If T is TrueInterval, returns -1
+        // If T is Interval, returns -1
         // If T is expansion, computes exact intersection by projecting to lower dimensions.
         return degenerate_point_tetrahedron_intersection( x0, x1, x2, x3, x4, out_alpha0, out_alpha1, out_alpha2, out_alpha3, out_alpha4 );
     }
-    
 }
 
 // --------------------------------------------------------
@@ -1416,73 +1414,56 @@ int edge_triangle_intersection_helper(const Vector<T,3>& x0,
                                       double* out_alpha3,
                                       double* out_alpha4 )
 {
-    
-    T::begin_special_arithmetic();
-    
-    T alpha0;
-    orientation3d(x1, x2, x3, x4,alpha0);
-    
-    T alpha1;
-    orientation3d(x0, x2, x3, x4,alpha1);
-    alpha1 = -alpha1;
-    
-    if( certainly_opposite_sign(alpha0, alpha1) )
+    T alpha0, alpha1, alpha2, alpha3, alpha4; 
     {
-        T::end_special_arithmetic();
-        return 0;
+        typename T::Scope scope;
+
+        orientation3d(x1, x2, x3, x4,alpha0);
+        
+        orientation3d(x0, x2, x3, x4,alpha1);
+        alpha1 = -alpha1;
+        
+        if( certainly_opposite_sign(alpha0, alpha1) )
+            return 0;
+        
+        orientation3d(x0, x1, x3, x4, alpha2);
+        
+        orientation3d(x0, x1, x2, x4, alpha3);
+        alpha3 = -alpha3;
+        
+        if( certainly_opposite_sign(alpha2, alpha3) )
+            return 0;
+        
+        orientation3d(x0, x1, x2, x3, alpha4);
+        
+        if( certainly_opposite_sign(alpha2, alpha4) ) 
+            return 0;         
+        
+        if( certainly_opposite_sign(alpha3, alpha4) )
+            return 0;                  
     }
     
-    T alpha2;
-    orientation3d(x0, x1, x3, x4, alpha2);
-    
-    T alpha3;
-    orientation3d(x0, x1, x2, x4, alpha3);
-    alpha3 = -alpha3;
-    
-    if( certainly_opposite_sign(alpha2, alpha3) )
-    {
-        T::end_special_arithmetic();
-        return 0;
-    }
-    
-    T alpha4;
-    orientation3d(x0, x1, x2, x3, alpha4);
-    
-    if( certainly_opposite_sign(alpha2, alpha4) ) 
-    {
-        T::end_special_arithmetic();
-        return 0;         
-    }
-    
-    if( certainly_opposite_sign(alpha3, alpha4) )
-    {
-        T::end_special_arithmetic();
-        return 0;                  
-    }
-    
-    T::end_special_arithmetic();
-    
-    if ( alpha0.indefinite_sign() || alpha1.indefinite_sign() || alpha2.indefinite_sign() || alpha3.indefinite_sign() || alpha4.indefinite_sign() )
+    if ( indefinite_sign(alpha0) || indefinite_sign(alpha1) || indefinite_sign(alpha2) || indefinite_sign(alpha3) || indefinite_sign(alpha4) )
     {
         // degenerate
         return -1;
     }
     
-    double sum1 = alpha0.estimate() + alpha1.estimate();
-    double sum2 = alpha2.estimate() + alpha3.estimate() + alpha4.estimate();
+    double sum1 = estimate(alpha0) + estimate(alpha1);
+    double sum2 = estimate(alpha2) + estimate(alpha3) + estimate(alpha4);
     
     if(sum1 && sum2)
     {
-        *out_alpha0 = alpha0.estimate() / sum1;
-        *out_alpha1 = alpha1.estimate() / sum1;
-        *out_alpha2 = alpha2.estimate() / sum2;
-        *out_alpha3 = alpha3.estimate() / sum2;
-        *out_alpha4 = alpha4.estimate() / sum2;
+        *out_alpha0 = estimate(alpha0) / sum1;
+        *out_alpha1 = estimate(alpha1) / sum1;
+        *out_alpha2 = estimate(alpha2) / sum2;
+        *out_alpha3 = estimate(alpha3) / sum2;
+        *out_alpha4 = estimate(alpha4) / sum2;
         return 1;
     }
     else
     { 
-        // If T is TrueInterval, returns -1
+        // If T is Interval, returns -1
         // If T is expansion, computes exact intersection by projecting to lower dimensions.
         return degenerate_edge_triangle_intersection( x0, x1, x2, x3, x4, out_alpha0, out_alpha1, out_alpha2, out_alpha3, out_alpha4 );
     }
@@ -1546,7 +1527,7 @@ T plane_dist( const Vector<T,3>& x, const Vector<T,3>& q, const Vector<T,3>& r, 
 template<class T>
 void implicit_surface_function( const Vector<T,3>& x, const Vector<T,3>& q0, const Vector<T,3>& q1, const Vector<T,3>& q2, const Vector<T,3>& q3, T& out )
 {
-    T::begin_special_arithmetic();
+    typename T::Scope scope;
     
     T g012 = plane_dist( x, q0, q1, q2 );
     T g132 = plane_dist( x, q1, q3, q2 );   
@@ -1555,8 +1536,6 @@ void implicit_surface_function( const Vector<T,3>& x, const Vector<T,3>& q0, con
     T g032 = plane_dist( x, q0, q3, q2 );   
     T h03 = g013 * g032;   
     out = h12 - h03;
-    
-    T::end_special_arithmetic();  
 }
 
 // ----------------------------------------
@@ -1580,18 +1559,18 @@ bool test_with_triangles(const Vec3d &d_x0old, const Vec3d &d_x1old, const Vec3d
         // TODO: These should be cached already
         get_quad_vertices( d_x0old, d_x1old, d_x2old, d_x3old, d_x0new, d_x1new, d_x2new, d_x3new, is_edge_edge, ts, us, vs, q0, q1, q2, q3 );
         
-        TrueInterval::begin_special_arithmetic();
+        Interval h12;
+        {
+            IntervalScope scope;
+            Vec3Interval x = Interval(0.5) * ( q0 + q3 );
+            Interval g012 = plane_dist( x, q0, q1, q2 );
+            Interval g132 = plane_dist( x, q1, q3, q2 );   
+            h12 = g012 * g132;
+        }
         
-        Vec3Interval x = TrueInterval(0.5) * ( q0 + q3 );
-        TrueInterval g012 = plane_dist( x, q0, q1, q2 );
-        TrueInterval g132 = plane_dist( x, q1, q3, q2 );   
-        TrueInterval h12 = g012 * g132;
-        
-        TrueInterval::end_special_arithmetic();
-        
-        if ( h12.is_certainly_negative() ) { sign_h12 = -1; }
-        if ( h12.is_certainly_zero() )     { sign_h12 = 0; }
-        if ( h12.is_certainly_positive() ) { sign_h12 = 1; }      
+        if ( certainly_negative(h12) ) { sign_h12 = -1; }
+        if ( certainly_zero(h12) )     { sign_h12 = 0; }
+        if ( certainly_positive(h12) ) { sign_h12 = 1; }      
     }
     
     if ( sign_h12 == -2 )
@@ -1724,10 +1703,10 @@ bool test_with_triangles(const Vec3d &d_x0old, const Vec3d &d_x1old, const Vec3d
 inline int plane_sign( const Vec3d& n, const Vec3Interval& x )
 {
     
-    TrueInterval dist = TrueInterval(n[0])*x[0] + TrueInterval(n[1])*x[1] + TrueInterval(n[2])*x[2];      
+    Interval dist = Interval(n[0])*x[0] + Interval(n[1])*x[1] + Interval(n[2])*x[2];      
     
-    if ( dist.is_certainly_negative() ) { return -1; }
-    else if ( dist.is_certainly_positive() ) { return 1; }
+    if ( certainly_negative(dist) ) { return -1; }
+    else if ( certainly_positive(dist) ) { return 1; }
     return 0;
 }
 
@@ -1736,7 +1715,7 @@ inline int plane_sign( const Vec3d& n, const Vec3Interval& x )
 inline int quick_1_plane_sign( const Vec3i& normal, const Vec3Interval& x )
 {
     
-    TrueInterval dist( 0, 0 );
+    Interval dist( 0, 0 );
     
     if ( normal[0] < 0 ) { dist -= x[0]; }
     else if ( normal[0] > 0 ) { dist += x[0]; }
@@ -1747,8 +1726,8 @@ inline int quick_1_plane_sign( const Vec3i& normal, const Vec3Interval& x )
     if ( normal[2] < 0 ) { dist -= x[2]; }
     else if ( normal[2] > 0 ) { dist += x[2]; }
     
-    if ( dist.is_certainly_negative() ) { return -1; }
-    else if ( dist.is_certainly_positive() ) { return 1; }
+    if ( certainly_negative(dist) ) { return -1; }
+    else if ( certainly_positive(dist) ) { return 1; }
     return 0;
 } 
                 
@@ -1888,12 +1867,12 @@ int RootParityCollisionTest::implicit_surface_function_sign( const Vec4ui& quad,
         Vec3Interval x;
         copy_vector( d_x, x );
         
-        TrueInterval f;
+        Interval f;
         implicit_surface_function( x, q0, q1, q2, q3, f );      
         
-        if ( f.is_certainly_negative() ) { return -1; }
-        if ( f.is_certainly_zero() )     { return 0; }
-        if ( f.is_certainly_positive() ) { return 1; }      
+        if ( certainly_negative(f) ) { return -1; }
+        if ( certainly_zero(f) )     { return 0; }
+        if ( certainly_positive(f) ) { return 1; }      
     }
     
     // not sure about sign - compute using expansion
@@ -2229,7 +2208,6 @@ bool RootParityCollisionTest::ray_hex_parity_test( )
 
 bool RootParityCollisionTest::plane_culling( const std::vector<Vec3ui>& triangles, const std::vector<Vec3d>& boundary_vertices )
 {
-    
     std::size_t num_triangles = triangles.size();
     std::size_t num_boundary_vertices = boundary_vertices.size();
     
@@ -2242,11 +2220,11 @@ bool RootParityCollisionTest::plane_culling( const std::vector<Vec3ui>& triangle
         
         normal = normalized(normal);
         
-        TrueInterval::begin_special_arithmetic();         
-        
-        const int sgn = plane_sign( normal, m_interval_hex_vertices[0] );
-        
-        TrueInterval::end_special_arithmetic();
+        int sgn;
+        {
+            IntervalScope scope;
+            sgn = plane_sign( normal, m_interval_hex_vertices[0] );
+        }
         
         if ( sgn == 0 )
         {
@@ -2257,11 +2235,9 @@ bool RootParityCollisionTest::plane_culling( const std::vector<Vec3ui>& triangle
         
         for ( unsigned int v = 1; v < num_boundary_vertices; ++v )
         {
-            TrueInterval::begin_special_arithmetic();         
+            IntervalScope scope;
             
             const int this_plane_sign = plane_sign( normal, m_interval_hex_vertices[v] );
-            
-            TrueInterval::end_special_arithmetic();
             
             if ( this_plane_sign == 0 || this_plane_sign != sgn )
             {
@@ -2276,9 +2252,7 @@ bool RootParityCollisionTest::plane_culling( const std::vector<Vec3ui>& triangle
         }
     }
     
-    TrueInterval::end_special_arithmetic();
     return false;
-    
 }
 
 /// --------------------------------------------------------
@@ -2294,9 +2268,9 @@ bool RootParityCollisionTest::edge_edge_interval_plane_culling()
     std::vector<Vec3d> hex_vertices(8);
     for ( unsigned int i = 0; i < 8; ++i )
     {
-        hex_vertices[i][0] = m_interval_hex_vertices[i][0].estimate();
-        hex_vertices[i][1] = m_interval_hex_vertices[i][1].estimate();
-        hex_vertices[i][2] = m_interval_hex_vertices[i][2].estimate();
+        hex_vertices[i][0] = estimate(m_interval_hex_vertices[i][0]);
+        hex_vertices[i][1] = estimate(m_interval_hex_vertices[i][1]);
+        hex_vertices[i][2] = estimate(m_interval_hex_vertices[i][2]);
     }
     
     std::vector<Vec3ui> triangles(12);
@@ -2330,9 +2304,9 @@ bool RootParityCollisionTest::point_triangle_interval_plane_culling()
     std::vector<Vec3d> hex_vertices(6);
     for ( unsigned int i = 0; i < 6; ++i )
     {
-        hex_vertices[i][0] = m_interval_hex_vertices[i][0].estimate();
-        hex_vertices[i][1] = m_interval_hex_vertices[i][1].estimate();
-        hex_vertices[i][2] = m_interval_hex_vertices[i][2].estimate();
+        hex_vertices[i][0] = estimate(m_interval_hex_vertices[i][0]);
+        hex_vertices[i][1] = estimate(m_interval_hex_vertices[i][1]);
+        hex_vertices[i][2] = estimate(m_interval_hex_vertices[i][2]);
     }
     
     std::vector<Vec3ui> triangles(8);
@@ -2411,36 +2385,35 @@ bool RootParityCollisionTest::fixed_plane_culling( unsigned int num_hex_vertices
 
 bool RootParityCollisionTest::edge_edge_collision( )
 {
-    
+    bool plane_culled; 
     static const bool vertex_ts[8] = { 0, 1, 1, 0, 0, 1, 1, 0 };
     static const bool vertex_us[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
     static const bool vertex_vs[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };      
     
     // Get the transformed corners of the domain boundary in interval representation
-    
-    TrueInterval::begin_special_arithmetic();
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[0], vertex_us[0], vertex_vs[0], m_interval_hex_vertices[0] );
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[1], vertex_us[1], vertex_vs[1], m_interval_hex_vertices[1] );
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[2], vertex_us[2], vertex_vs[2], m_interval_hex_vertices[2] );
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[3], vertex_us[3], vertex_vs[3], m_interval_hex_vertices[3] );      
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[4], vertex_us[4], vertex_vs[4], m_interval_hex_vertices[4] );
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[5], vertex_us[5], vertex_vs[5], m_interval_hex_vertices[5] );
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[6], vertex_us[6], vertex_vs[6], m_interval_hex_vertices[6] );
-    edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                 vertex_ts[7], vertex_us[7], vertex_vs[7], m_interval_hex_vertices[7] );      
-    
-    // Plane culling: check if all corners are on one side of the plane passing through the origin
-    
-    bool plane_culled = fixed_plane_culling(8);      
-    
-    TrueInterval::end_special_arithmetic();
+    {
+        IntervalScope scope; 
+
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[0], vertex_us[0], vertex_vs[0], m_interval_hex_vertices[0] );
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[1], vertex_us[1], vertex_vs[1], m_interval_hex_vertices[1] );
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[2], vertex_us[2], vertex_vs[2], m_interval_hex_vertices[2] );
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[3], vertex_us[3], vertex_vs[3], m_interval_hex_vertices[3] );      
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[4], vertex_us[4], vertex_vs[4], m_interval_hex_vertices[4] );
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[5], vertex_us[5], vertex_vs[5], m_interval_hex_vertices[5] );
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[6], vertex_us[6], vertex_vs[6], m_interval_hex_vertices[6] );
+        edge_edge_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                     vertex_ts[7], vertex_us[7], vertex_vs[7], m_interval_hex_vertices[7] );      
+        
+        // Plane culling: check if all corners are on one side of the plane passing through the origin
+        plane_culled = fixed_plane_culling(8);      
+    }
     
     bool hex_plane_culled = false;
     
@@ -2463,17 +2436,17 @@ bool RootParityCollisionTest::edge_edge_collision( )
         
         for ( unsigned int i = 0; i < 8; ++i )
         {
-            Vec2d interval0 = m_interval_hex_vertices[i][0].get_actual_interval();
-            Vec2d interval1 = m_interval_hex_vertices[i][1].get_actual_interval();
-            Vec2d interval2 = m_interval_hex_vertices[i][2].get_actual_interval();
+            Box<double> interval0 = m_interval_hex_vertices[i][0].box();
+            Box<double> interval1 = m_interval_hex_vertices[i][1].box();
+            Box<double> interval2 = m_interval_hex_vertices[i][2].box();
             
-            xmin[0] = std::min( xmin[0], interval0[0]  );
-            xmin[1] = std::min( xmin[1], interval1[0]  );
-            xmin[2] = std::min( xmin[2], interval2[0]  );
+            xmin[0] = std::min( xmin[0], interval0.min );
+            xmin[1] = std::min( xmin[1], interval1.min );
+            xmin[2] = std::min( xmin[2], interval2.min );
             
-            xmax[0] = std::max( xmax[0], interval0[1]  );
-            xmax[1] = std::max( xmax[1], interval1[1]  );
-            xmax[2] = std::max( xmax[2], interval2[1]  );
+            xmax[0] = std::max( xmax[0], interval0.max );
+            xmax[1] = std::max( xmax[1], interval1.max );
+            xmax[2] = std::max( xmax[2], interval2.max );
         }
         
         const double ray_len = sqrt( max( sqr_magnitude(xmin), sqr_magnitude(xmax) ) ) + 10.0;
@@ -2497,31 +2470,31 @@ bool RootParityCollisionTest::edge_edge_collision( )
 
 bool RootParityCollisionTest::point_triangle_collision( )
 {
+    bool plane_culled;
     static const bool vertex_ts[6] = { 0, 0, 0, 1, 1, 1 };
     static const bool vertex_us[6] = { 0, 1, 0, 0, 1, 0 };
     static const bool vertex_vs[6] = { 0, 0, 1, 0, 0, 1 };      
     
     // Get the transformed corners of the domain boundary in interval representation
-    
-    TrueInterval::begin_special_arithmetic();
-    point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                      vertex_ts[0], vertex_us[0], vertex_vs[0], m_interval_hex_vertices[0] );
-    point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                      vertex_ts[1], vertex_us[1], vertex_vs[1], m_interval_hex_vertices[1] );
-    point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                      vertex_ts[2], vertex_us[2], vertex_vs[2], m_interval_hex_vertices[2] );
-    point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                      vertex_ts[3], vertex_us[3], vertex_vs[3], m_interval_hex_vertices[3] );
-    point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                      vertex_ts[4], vertex_us[4], vertex_vs[4], m_interval_hex_vertices[4] );
-    point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
-                                      vertex_ts[5], vertex_us[5], vertex_vs[5], m_interval_hex_vertices[5] );
-    
-    // Plane culling: check if all corners are on one side of the plane passing through the origin
-    
-    bool plane_culled = fixed_plane_culling(6);      
-    
-    TrueInterval::end_special_arithmetic();
+    {
+        IntervalScope scope; 
+
+        point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                          vertex_ts[0], vertex_us[0], vertex_vs[0], m_interval_hex_vertices[0] );
+        point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                          vertex_ts[1], vertex_us[1], vertex_vs[1], m_interval_hex_vertices[1] );
+        point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                          vertex_ts[2], vertex_us[2], vertex_vs[2], m_interval_hex_vertices[2] );
+        point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                          vertex_ts[3], vertex_us[3], vertex_vs[3], m_interval_hex_vertices[3] );
+        point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                          vertex_ts[4], vertex_us[4], vertex_vs[4], m_interval_hex_vertices[4] );
+        point_triangle_collision_function( m_x0old, m_x1old, m_x2old, m_x3old, m_x0new, m_x1new, m_x2new, m_x3new, 
+                                          vertex_ts[5], vertex_us[5], vertex_vs[5], m_interval_hex_vertices[5] );
+        
+        // Plane culling: check if all corners are on one side of the plane passing through the origin
+        plane_culled = fixed_plane_culling(6);      
+    }
     
     if ( plane_culled )
     {
@@ -2543,17 +2516,17 @@ bool RootParityCollisionTest::point_triangle_collision( )
     
     for ( unsigned int i = 0; i < 6; ++i )
     {
-        Vec2d interval0 = m_interval_hex_vertices[i][0].get_actual_interval();
-        Vec2d interval1 = m_interval_hex_vertices[i][1].get_actual_interval();
-        Vec2d interval2 = m_interval_hex_vertices[i][2].get_actual_interval();
+        Box<double> interval0 = m_interval_hex_vertices[i][0].box();
+        Box<double> interval1 = m_interval_hex_vertices[i][1].box();
+        Box<double> interval2 = m_interval_hex_vertices[i][2].box();
         
-        xmin[0] = std::min( xmin[0], interval0[0]  );
-        xmin[1] = std::min( xmin[1], interval1[0]  );
-        xmin[2] = std::min( xmin[2], interval2[0]  );
+        xmin[0] = std::min( xmin[0], interval0.min );
+        xmin[1] = std::min( xmin[1], interval1.min );
+        xmin[2] = std::min( xmin[2], interval2.min );
         
-        xmax[0] = std::max( xmax[0], interval0[1]  );
-        xmax[1] = std::max( xmax[1], interval1[1]  );
-        xmax[2] = std::max( xmax[2], interval2[1]  );
+        xmax[0] = std::max( xmax[0], interval0.max );
+        xmax[1] = std::max( xmax[1], interval1.max );
+        xmax[2] = std::max( xmax[2], interval2.max );
     }
     
     const double ray_len = sqrt( max( sqr_magnitude(xmin), sqr_magnitude(xmax) ) ) + 10.0;
@@ -2587,7 +2560,7 @@ bool edge_triangle_intersection(const Vector<double,3>& x0, const Vector<double,
   double a0,a1,a2,a3,a4;
 
   // Try using interval arithmetic first
-  Vector<TrueInterval,3> i0(x0), i1(x1), i2(x2), i3(x3), i4(x4);
+  Vector<Interval,3> i0(x0), i1(x1), i2(x2), i3(x3), i4(x4);
   int i = edge_triangle_intersection_helper(i0,i1,i2,i3,i4,&a0,&a1,&a2,&a3,&a4);
   if (i >= 0)
     return i!=0;
