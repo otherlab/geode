@@ -548,8 +548,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCored.lib;OpenMeshToolsd.lib;zlibd.lib;boost_filesystem-vc110-mt-gd-1_51.lib;boost_chrono-vc110-mt-gd-1_51.lib;libpng15d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Debug;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\build\Debug;$(OPENMESHDIR)\lib;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCore.lib;OpenMeshTools.lib;zlibd.lib;boost_filesystem-vc110-mt-gd-1_51.lib;boost_chrono-vc110-mt-gd-1_51.lib;libpng15d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Debug;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\build;$(OPENMESHDIR)\build\src\OpenMesh\Core\Debug;$(OPENMESHDIR)\build\src\OpenMesh\Tools\Debug;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
     </Link>
