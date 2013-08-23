@@ -3,6 +3,7 @@
 #include <other/core/geometry/ThickShell.h>
 #include <other/core/array/view.h>
 #include <other/core/math/constants.h>
+#include <other/core/math/copysign.h>
 #include <other/core/mesh/SegmentMesh.h>
 #include <other/core/mesh/TriangleMesh.h>
 #include <other/core/python/cast.h>

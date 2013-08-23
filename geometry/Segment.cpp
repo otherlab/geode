@@ -5,7 +5,7 @@
 #include <other/core/array/Array.h>
 #include <other/core/math/clamp.h>
 #include <other/core/math/givens.h>
-#include <other/core/mesh/copysign.h>
+#include <other/core/math/copysign.h>
 #include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
 #include <other/core/structure/Tuple.h>

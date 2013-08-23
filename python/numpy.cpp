@@ -92,7 +92,11 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
 
 // CHAR_BIT isn't defined for some build configurations so we use __CHAR_BIT__ instead which seems to work in both clang and gcc
 // It would probably be safe to just use 8 if this fails
+#ifndef _WIN32
 #define OTHER_CHAR_BIT __CHAR_BIT__
+#else
+#define OTHER_CHAR_BIT 8
+#endif
 
 // Modified from numpy/npy_common.h
 typedef unsigned char npy_bool;
