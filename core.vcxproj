@@ -541,7 +541,7 @@
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStatic (Otherlab)|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
@@ -674,7 +674,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(ALL_LIBS_DEBUG);$(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ALL_LIBS_DEBUG);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ALL_DIRS_DEBUG)</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
@@ -690,7 +690,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>__SSE__;WIN32;_DEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PNGLIBDIR);$(PNGLIBDIR)\build;$(ZLIBDIR);$(ZLIBDIR)\build;$(OPENMESHDIR)\src;$(MKLDIR)\include;$(ProjectDir)..\..;$(BOOSTDIR);$(TLINE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ALL_INCLUDES);$(AdditionalIncludes);$(SolutionDir)\..</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
@@ -886,7 +886,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__SSE__;WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PNGLIBDIR);$(PNGLIBDIR)\build;$(ZLIBDIR);$(ZLIBDIR)\build;$(OPENMESHDIR)\src;"$(MKLDIR)\include";$(ProjectDir)..\..;$(BOOSTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ALL_INCLUDES);$(AdditionalIncludes);$(SolutionDir)\..</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
@@ -902,8 +902,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCore.lib;OpenMeshTools.lib;zlib.lib;boost_filesystem-vc110-mt-1_51.lib;boost_chrono-vc110-mt-1_51.lib;libpng15.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Release;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\Release;$(JPEGLIBDIR)\Release;$(OPENMESHDIR)\build\src\OpenMesh\Core\Release;$(OPENMESHDIR)\build\src\OpenMesh\Tools\Release;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(ALL_LIBS_RELEASE);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ALL_DIRS_RELEASE)</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
     </Link>
@@ -920,7 +920,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__SSE__;WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PNGLIBDIR);$(PNGLIBDIR)\build;$(ZLIBDIR);$(ZLIBDIR)\build;$(OPENMESHDIR)\src;"$(MKLDIR)\include";$(ProjectDir)..\..;$(BOOSTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ALL_INCLUDES);$(AdditionalIncludes);$(SolutionDir)\..</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
