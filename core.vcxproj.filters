@@ -954,6 +954,9 @@
     <ClInclude Include="math\givens.h">
       <Filter>math\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utility\resource.h">
+      <Filter>utility\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">

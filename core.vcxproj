@@ -263,6 +263,7 @@
     <ClInclude Include="utility\range.h" />
     <ClInclude Include="utility\remove_commas.h" />
     <ClInclude Include="utility\remove_const_reference.h" />
+    <ClInclude Include="utility\resource.h" />
     <ClInclude Include="utility\safe_bool.h" />
     <ClInclude Include="utility\SanitizeFunction.h" />
     <ClInclude Include="utility\shared_ptr_util.h" />
@@ -603,22 +604,32 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)..\$(Configuration)\</OutDir>
+    <TargetName>other_$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)..\$(Configuration)\</OutDir>
+    <TargetName>other_$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL (Otherlab)|Win32'">
     <OutDir>$(ProjectDir)..\$(Configuration)\</OutDir>
+    <TargetName>other_$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugStatic (Otherlab)|Win32'">
     <OutDir>$(ProjectDir)..\$(Configuration)\</OutDir>
+    <TargetName>other_$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL (Otherlab)|x64'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugStatic (Otherlab)|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL (Otherlab)|Win32'">
+    <TargetName>other_$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStatic (Otherlab)|Win32'">
+    <TargetName>other_$(ProjectName)</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>
@@ -644,8 +655,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCored.lib;OpenMeshToolsd.lib;zlibd.lib;boost_filesystem-vc110-mt-gd-1_51.lib;boost_chrono-vc110-mt-gd-1_51.lib;libpng15d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Debug;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\build\Debug;$(OPENMESHDIR)\lib;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
-      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
-      <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(OutDir)$(TargetName).lib</ImportLibrary>
     </Link>
     <Lib>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
@@ -676,8 +687,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(ALL_LIBS_DEBUG);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ALL_DIRS_DEBUG)</AdditionalLibraryDirectories>
-      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
-      <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(OutDir)$(TargetName).lib</ImportLibrary>
     </Link>
     <Lib>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
@@ -689,7 +700,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>__SSE__;WIN32;_DEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OTHER_SINGLE_LIB;__SSE__;WIN32;_DEBUG;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;USE_ZLIB;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ALL_INCLUDES);$(AdditionalIncludes);$(SolutionDir)\..</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
@@ -712,7 +723,7 @@
       <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
     </Link>
     <Lib>
-      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -836,8 +847,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>mkl_intel_s_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;mkl_lapack95.lib;mkl_blas95.lib;mkl_intel_c_dll.lib;OpenMeshCore.lib;OpenMeshTools.lib;zlib.lib;boost_filesystem-vc110-mt-1_51.lib;boost_chrono-vc110-mt-1_51.lib;libpng15.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PNGLIBDIR)\build\Release;$(BOOSTDIR)\stage\lib;$(ZLIBDIR)\build\Release;$(OPENMESHDIR)\lib;"$(MKLDIR)\lib\ia32"</AdditionalLibraryDirectories>
-      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
-      <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(OutDir)$(TargetName).lib</ImportLibrary>
     </Link>
     <Lib>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
@@ -904,8 +915,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(ALL_LIBS_RELEASE);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ALL_DIRS_RELEASE)</AdditionalLibraryDirectories>
-      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
-      <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(OutDir)$(TargetName).lib</ImportLibrary>
     </Link>
     <Lib>
       <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
@@ -919,7 +930,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>__SSE__;WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OTHER_SINGLE_LIB;__SSE__;WIN32;NDEBUG;USE_ZLIB;USE_OPENMESH;USE_MKL;_CRT_SECURE_NO_DEPRECATE;NOMINMAX;_USE_MATH_DEFINES;OTHER_THREAD_SAFE=0;BOOST_EXCEPTION_DISABLE;OTHER_BLAS;BUILDING_other_core;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ALL_INCLUDES);$(AdditionalIncludes);$(SolutionDir)\..</AdditionalIncludeDirectories>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerListingLocation>$(IntDir)/%(RelativeDir)/</AssemblerListingLocation>
@@ -942,7 +953,7 @@
       <ImportLibrary>$(OutDir)other_$(TargetName).lib</ImportLibrary>
     </Link>
     <Lib>
-      <OutputFile>$(OutDir)other_$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL (Otherlab)|x64'">
