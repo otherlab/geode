@@ -957,6 +957,9 @@
     <ClInclude Include="utility\resource.h">
       <Filter>utility\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="python\try_convert.h">
+      <Filter>python\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
@@ -1360,6 +1363,9 @@
     </ClCompile>
     <ClCompile Include="geometry\ThickShell.cpp">
       <Filter>geometry\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="python\try_convert.cpp">
+      <Filter>python\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

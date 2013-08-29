@@ -202,6 +202,7 @@
     <ClInclude Include="python\repr.h" />
     <ClInclude Include="python\stl.h" />
     <ClInclude Include="python\to_python.h" />
+    <ClInclude Include="python\try_convert.h" />
     <ClInclude Include="python\utility.h" />
     <ClInclude Include="python\wrap_call.h" />
     <ClInclude Include="python\wrap_constructor.h" />
@@ -420,6 +421,7 @@
     <ClCompile Include="python\Object.cpp" />
     <ClCompile Include="python\Ref.cpp" />
     <ClCompile Include="python\repr.cpp" />
+    <ClCompile Include="python\try_convert.cpp" />
     <ClCompile Include="python\wrap_constructor.cpp" />
     <ClCompile Include="python\wrap_field.cpp" />
     <ClCompile Include="python\wrap_function.cpp" />
