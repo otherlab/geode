@@ -44,8 +44,8 @@ template<int d> struct Point {
 };
 typedef Vector<Quantized,2> Vec2;
 typedef Vector<Quantized,3> Vec3;
-typedef typename Point<2>::type Point2;
-typedef typename Point<3>::type Point3;
+typedef Point<2>::type Point2;
+typedef Point<3>::type Point3;
 
 }
 }

@@ -127,6 +127,15 @@
     <Filter Include="vector\Source Files">
       <UniqueIdentifier>{151c25fe-c293-4d72-bf49-574bcd5b3aba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="svg">
+      <UniqueIdentifier>{bd64f587-616b-454c-aab5-3ee96fc3a76d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="svg\Header Files">
+      <UniqueIdentifier>{b0900609-7435-48cb-b429-e8dc5b140f3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="svg\Source Files">
+      <UniqueIdentifier>{1c466224-b466-4485-b481-b506da3da56b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="array\amap.h">
@@ -960,6 +969,12 @@
     <ClInclude Include="python\try_convert.h">
       <Filter>python\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="svg\nanosvg\nanosvg.h">
+      <Filter>svg\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="svg\svg_to_bezier.h">
+      <Filter>svg\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
@@ -1366,6 +1381,40 @@
     </ClCompile>
     <ClCompile Include="python\try_convert.cpp">
       <Filter>python\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="module.cpp" />
+    <ClCompile Include="svg\nanosvg\nanosvg.cpp">
+      <Filter>svg\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="svg\svg_to_bezier.cpp">
+      <Filter>svg\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\CubicHinges.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\SurfacePins.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\AirPressure.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\AxisPins.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\BindingSprings.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\ParticleBindingSprings.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\Pins.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="force\SimpleShell.cpp">
+      <Filter>force\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="random\permute.cpp">
+      <Filter>random\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

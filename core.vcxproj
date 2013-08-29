@@ -229,6 +229,8 @@
     <ClInclude Include="structure\Triple.h" />
     <ClInclude Include="structure\Tuple.h" />
     <ClInclude Include="structure\UnionFind.h" />
+    <ClInclude Include="svg\nanosvg\nanosvg.h" />
+    <ClInclude Include="svg\svg_to_bezier.h" />
     <ClInclude Include="utility\base64.h" />
     <ClInclude Include="utility\Cloneable.h" />
     <ClInclude Include="utility\CloneArray.h" />
@@ -336,7 +338,11 @@
     <ClCompile Include="array\NdArray.cpp" />
     <ClCompile Include="array\Nested.cpp" />
     <ClCompile Include="array\RawArray.cpp" />
+    <ClCompile Include="force\AirPressure.cpp" />
+    <ClCompile Include="force\AxisPins.cpp" />
+    <ClCompile Include="force\BindingSprings.cpp" />
     <ClCompile Include="force\ConstitutiveModel.cpp" />
+    <ClCompile Include="force\CubicHinges.cpp" />
     <ClCompile Include="force\DiagonalizedIsotropicStressDerivative.cpp" />
     <ClCompile Include="force\EtherDrag.cpp" />
     <ClCompile Include="force\FiniteVolume.cpp" />
@@ -347,11 +353,15 @@
     <ClCompile Include="force\LinearFiniteVolumeHex.cpp" />
     <ClCompile Include="force\module.cpp" />
     <ClCompile Include="force\NeoHookean.cpp" />
+    <ClCompile Include="force\ParticleBindingSprings.cpp" />
+    <ClCompile Include="force\Pins.cpp" />
     <ClCompile Include="force\PlasticityModel.cpp" />
     <ClCompile Include="force\RotatedLinear.cpp" />
+    <ClCompile Include="force\SimpleShell.cpp" />
     <ClCompile Include="force\Springs.cpp" />
     <ClCompile Include="force\StrainMeasure.cpp" />
     <ClCompile Include="force\StrainMeasureHex.cpp" />
+    <ClCompile Include="force\SurfacePins.cpp" />
     <ClCompile Include="geometry\AnalyticImplicit.cpp" />
     <ClCompile Include="geometry\Bezier.cpp" />
     <ClCompile Include="geometry\Box.cpp" />
@@ -403,6 +413,7 @@
     <ClCompile Include="mesh\SegmentMesh.cpp" />
     <ClCompile Include="mesh\TriangleMesh.cpp" />
     <ClCompile Include="mesh\TriangleSubdivision.cpp" />
+    <ClCompile Include="module.cpp" />
     <ClCompile Include="openmesh\curvature.cpp" />
     <ClCompile Include="openmesh\decimate.cpp" />
     <ClCompile Include="openmesh\module.cpp" />
@@ -429,12 +440,15 @@
     <ClCompile Include="python\wrap_property.cpp" />
     <ClCompile Include="random\counter.cpp" />
     <ClCompile Include="random\module.cpp" />
+    <ClCompile Include="random\permute.cpp" />
     <ClCompile Include="random\Random.cpp" />
     <ClCompile Include="random\Sobol.cpp" />
     <ClCompile Include="solver\brent.cpp" />
     <ClCompile Include="solver\module.cpp" />
     <ClCompile Include="solver\powell.cpp" />
     <ClCompile Include="structure\Tuple.cpp" />
+    <ClCompile Include="svg\nanosvg\nanosvg.cpp" />
+    <ClCompile Include="svg\svg_to_bezier.cpp" />
     <ClCompile Include="utility\base64.cpp" />
     <ClCompile Include="utility\CloneArray.cpp" />
     <ClCompile Include="utility\curry.cpp" />
@@ -943,6 +957,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <AdditionalOptions>/WL %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
