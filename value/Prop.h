@@ -334,6 +334,10 @@ public:
   }
 };
 
+template<class T> inline std::ostream& operator<<(std::ostream& output, const PropRef<T>& ref) {
+  return output<<ref();
+}
+
 #ifdef OTHER_PYTHON
 
 OTHER_CORE_EXPORT PyObject* to_python(const PropBase& prop);
@@ -347,10 +351,6 @@ template<class T> PyObject* ptr_to_python(const Prop<T>* prop) {
 
 template<class T> PyObject* to_python(const PropRef<T>& prop) {
   return to_python(static_cast<PropBase&>(prop.self));
-}
-
-template<class T> inline std::ostream& operator<<(std::ostream& output, const PropRef<T>& ref) {
-  return output<<ref();
 }
 
 template<> struct FromPython<PropBase&> { static PropBase& convert(PyObject* object); };
