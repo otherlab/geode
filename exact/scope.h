@@ -3,7 +3,8 @@
 
 // Modified from code by Tyson Brochu, 2011
 
-#include <fenv.h>
+#include <other/core/math/float-env.h>
+
 namespace other {
 
 // All interval arithmetic must occur within an IntervalScope.  Since the rounding
@@ -12,17 +13,18 @@ struct IntervalScope {
   const int previous_mode;
 
   IntervalScope()
-    : previous_mode(fegetround()) {
-   fesetround(FE_UPWARD);
+    : previous_mode(get_rounding_mode()) {
+   set_rounding_mode(FE_UPWARD);
   }
 
   ~IntervalScope() {
-    fesetround(previous_mode);
+    set_rounding_mode(previous_mode);
   }
 
+private:
   // Noncopyable
-  IntervalScope(const IntervalScope& rhs) = delete;
-  IntervalScope& operator=(const IntervalScope& rhs) = delete;
+  IntervalScope(const IntervalScope& rhs): previous_mode(0) { OTHER_UNREACHABLE(); };
+ IntervalScope& operator=(const IntervalScope& rhs) { OTHER_UNREACHABLE(); };
 };
 
 }

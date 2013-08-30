@@ -136,6 +136,15 @@
     <Filter Include="svg\Source Files">
       <UniqueIdentifier>{1c466224-b466-4485-b481-b506da3da56b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="exact">
+      <UniqueIdentifier>{db700d78-d904-46ad-8026-17e23dbbf49d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="exact\Header Files">
+      <UniqueIdentifier>{39bf5cd6-475b-4833-83d3-7bbefb6b2d99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="exact\Source Files">
+      <UniqueIdentifier>{c87d5238-7178-4b5f-85e3-b7c082c02a1b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="array\amap.h">
@@ -975,6 +984,24 @@
     <ClInclude Include="svg\svg_to_bezier.h">
       <Filter>svg\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="exact\scope.h">
+      <Filter>exact\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exact\Expansion.h">
+      <Filter>exact\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exact\Interval.h">
+      <Filter>exact\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exact\config.h">
+      <Filter>exact\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exact\collision.h">
+      <Filter>exact\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\float-env.h">
+      <Filter>math\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
@@ -1415,6 +1442,12 @@
     </ClCompile>
     <ClCompile Include="random\permute.cpp">
       <Filter>random\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="exact\collision.cpp">
+      <Filter>exact\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="exact\Expansion.cpp">
+      <Filter>exact\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
