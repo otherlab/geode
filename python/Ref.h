@@ -212,7 +212,7 @@ to_python(const Ref<T>& ref) {
 }
 
 #ifdef OTHER_PYTHON
-template<class T> static inline Ref<PyObject>
+template<class T> inline Ref<PyObject>
 to_python_ref(const T& x) {
   return steal_ref_check(to_python(x));
 }

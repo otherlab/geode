@@ -11,8 +11,9 @@
 namespace other {
 
 using std::ostream;
-template<class T> OTHER_CORE_EXPORT PyObject* to_python(const NdArray<T>& array);
-template<class T> struct FromPython<NdArray<T> >{OTHER_CORE_EXPORT static NdArray<T> convert(PyObject* object);};
+// this cannot be OTHER_CORE_EXPORT, since it's defined as a template in headers
+template<class T> PyObject* to_python(const NdArray<T>& array);
+template<class T> struct FromPython<NdArray<T> >{ static NdArray<T> convert(PyObject* object);};
 
 template<class T>
 class NdArray {
