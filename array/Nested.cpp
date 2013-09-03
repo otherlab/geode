@@ -2,6 +2,7 @@
 // Class Nested
 //#####################################################################
 #include <other/core/array/Nested.h>
+#include <other/core/array/convert.h>
 #include <other/core/python/Class.h>
 namespace other {
 
@@ -58,11 +59,15 @@ bool is_nested_array(PyObject* object) {
 }
 
 Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object) {
-  if (!is_nested_array(object))
-    throw_type_error(object,nested_array_type);
   return vec(steal_ref_check(PyObject_GetAttr(object,&*offsets_string)),
              steal_ref_check(PyObject_GetAttr(object,&*flat_string)));
 }
+
+NESTED_CONVERSIONS(int)
+NESTED_CONVERSIONS(float)
+NESTED_CONVERSIONS(double)
+NESTED_CONVERSIONS(Vector<float,2>)
+NESTED_CONVERSIONS(Vector<double,2>)
 
 #endif
 }

@@ -64,6 +64,10 @@ void nested_test() {
   OTHER_ASSERT(n2.size() == n0.size() + n1.size());
 }
 
+Nested<const int> nested_convert_test(Nested<const int> a) {
+  return a;
+}
+
 #ifdef OTHER_PYTHON
 
 ssize_t base_refcnt(PyObject* array) {
@@ -90,6 +94,7 @@ void wrap_array() {
   OTHER_FUNCTION(empty_array)
   OTHER_FUNCTION(array_test)
   OTHER_FUNCTION(nested_test)
+  OTHER_FUNCTION(nested_convert_test)
   OTHER_FUNCTION(const_array_test)
 #ifdef OTHER_PYTHON
   OTHER_FUNCTION(base_refcnt)
