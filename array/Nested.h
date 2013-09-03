@@ -249,8 +249,8 @@ template<class T,bool f0,bool f1> Nested<typename boost::remove_const<T>::type,f
 }
 
 #ifdef OTHER_PYTHON
-template<class T> OTHER_CORE_EXPORT PyObject* to_python(const Nested<T>& array); // Defined in array/convert.h
-template<class T> struct FromPython<Nested<T>>{OTHER_CORE_EXPORT static Nested<T> convert(PyObject* object);}; // Defined in array/convert.h
+template<class T> PyObject* to_python(const Nested<T>& array); // Defined in array/convert.h
+template<class T> struct FromPython<Nested<T>>{ static Nested<T> convert(PyObject* object);}; // Defined in array/convert.h
 OTHER_CORE_EXPORT PyObject* nested_array_to_python_helper(PyObject* offsets, PyObject* flat);
 OTHER_CORE_EXPORT Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object); // Assumes is_nested_array(object)
 #endif
