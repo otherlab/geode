@@ -28,9 +28,9 @@ static inline int fegetround() {
   return _controlfp(0,0) & _MCW_RC;
 }
 
-static inline void fesetround(int mode) {
+static inline int fesetround(int mode) {
   assert((mode&_MCW_RC)==mode);
-  _controlfp(mode,_MCW_RC);
+  return _controlfp(mode,_MCW_RC);
 }
 
 #endif

@@ -926,7 +926,7 @@ int expansion_simplex_intersection1d(int k,
 {
     assert( k == 1 );
     assert(out_alpha0 && out_alpha1 && out_alpha2);
-    assert(get_rounding_mode()== FE_TONEAREST);
+    assert(fegetround()== FE_TONEAREST);
     
     if( sign(x1-x2) < 0 )
     {
@@ -971,7 +971,7 @@ expansion_simplex_intersection2d(int k,
                                  double* out_alpha2 )
 {
     assert(k==1);
-    assert(get_rounding_mode()== FE_TONEAREST);
+    assert(fegetround()== FE_TONEAREST);
     
     // try projecting each coordinate out in turn
     
@@ -1018,7 +1018,7 @@ int expansion_simplex_intersection2d(int k,
                                      double* out_alpha3)
 {
     assert(1<=k && k<=3);
-    assert(get_rounding_mode()== FE_TONEAREST);
+    assert(fegetround()== FE_TONEAREST);
     
     switch(k)
     {
@@ -1134,7 +1134,7 @@ bool expansion_simplex_intersection3d(int k,
                                       double* )
 {
     assert(k<=2);
-    assert(get_rounding_mode()== FE_TONEAREST);
+    assert(fegetround()== FE_TONEAREST);
     
     // try projecting each coordinate out in turn
     
@@ -1232,7 +1232,7 @@ int degenerate_point_tetrahedron_intersection(const Vec3e& x0,
                                               double* alpha4)
 {
     
-    assert(get_rounding_mode()== FE_TONEAREST);
+    assert(fegetround()== FE_TONEAREST);
     
     // degenerate: point and tetrahedron in same plane
     if (expansion_simplex_intersection3d(1, x0, x2, x3, x4, alpha0, alpha2, alpha3, alpha4))

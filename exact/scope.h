@@ -3,7 +3,7 @@
 
 // Modified from code by Tyson Brochu, 2011
 
-#include <other/core/math/float-env.h>
+#include <other/core/utility/rounding.h>
 
 namespace other {
 
@@ -13,12 +13,12 @@ struct IntervalScope {
   const int previous_mode;
 
   IntervalScope()
-    : previous_mode(get_rounding_mode()) {
-   set_rounding_mode(FE_UPWARD);
+    : previous_mode(fegetround()) {
+   fesetround(FE_UPWARD);
   }
 
   ~IntervalScope() {
-    set_rounding_mode(previous_mode);
+    fesetround(previous_mode);
   }
 
 private:

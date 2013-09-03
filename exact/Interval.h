@@ -7,7 +7,7 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/math/constants.h>
 #include <other/core/python/repr.h>
-#include <other/core/math/float-env.h>
+#include <other/core/utility/rounding.h>
 
 namespace other {
 
@@ -55,14 +55,14 @@ struct Interval {
   }
 
   Interval& operator+=(const Interval x) {
-    assert(get_rounding_mode() == FE_UPWARD);
+    assert(fegetround() == FE_UPWARD);
     nlo += x.nlo;
     hi += x.hi;
     return *this;
   }
 
   Interval& operator-=(const Interval x) {
-    assert(get_rounding_mode() == FE_UPWARD);
+    assert(fegetround() == FE_UPWARD);
     nlo += x.hi;
     hi += x.nlo;
     return *this;
@@ -73,12 +73,12 @@ struct Interval {
   }
 
   Interval operator+(const Interval x) const {
-    assert(get_rounding_mode() == FE_UPWARD);
+    assert(fegetround() == FE_UPWARD);
     return Interval(-(nlo+x.nlo),hi+x.hi);
   }
 
   Interval operator-(const Interval x) const {
-    assert(get_rounding_mode() == FE_UPWARD);
+    assert(fegetround() == FE_UPWARD);
     return Interval(-(nlo+x.hi),hi+x.nlo);
   }
 
@@ -94,7 +94,7 @@ struct Interval {
   }
 
   Interval thickened(T delta) const {
-    assert(get_rounding_mode() == FE_UPWARD);
+    assert(fegetround() == FE_UPWARD);
     return Interval(-(nlo+delta),hi+delta);
   }
 
@@ -145,7 +145,7 @@ static inline Interval max(const Interval& a, const Interval& b) {
 }
 
 static inline Interval operator-(const double x, const Interval y) {
-  assert(get_rounding_mode() == FE_UPWARD);
+  assert(fegetround() == FE_UPWARD);
   return Interval(-(y.hi-x),x+y.nlo);
 }
 
@@ -154,7 +154,7 @@ static inline Interval operator+(const double x, const Interval y) {
 }
 
 inline Interval Interval::operator*(const Interval x) const {
-  assert(get_rounding_mode() == FE_UPWARD);
+  assert(fegetround() == FE_UPWARD);
   const T na = nlo,
           b = hi,
           nc = x.nlo,
@@ -199,7 +199,7 @@ inline Interval Interval::operator*(const Interval x) const {
 }
 
 static inline Interval sqr(const Interval x) {
-  assert(get_rounding_mode() == FE_UPWARD);
+  assert(fegetround() == FE_UPWARD);
   Interval s;
   if (x.nlo < 0) { // x > 0
     s.nlo = x.nlo * -x.nlo;
@@ -216,7 +216,7 @@ static inline Interval sqr(const Interval x) {
 }
 
 static inline Interval cube(const Interval x) {
-  assert(get_rounding_mode() == FE_UPWARD);
+  assert(fegetround() == FE_UPWARD);
   return Interval(-(x.nlo*x.nlo*x.nlo),x.hi*x.hi*x.hi);
 }
 
@@ -240,7 +240,7 @@ OTHER_ALWAYS_INLINE static inline Interval operator>>(const Interval x, const in
 
 // Valid only for intervals that don't contain zero
 static inline Interval inverse(const Interval x) {
-  assert(!x.contains_zero() && get_rounding_mode() == FE_UPWARD);
+  assert(!x.contains_zero() && fegetround() == FE_UPWARD);
   Interval s;
   s.nlo = -1/x.hi;
   s.hi  = -1/x.nlo;
@@ -250,7 +250,7 @@ static inline Interval inverse(const Interval x) {
 
 // Take the sqrt root of an interval, assuming the true input is nonnegative
 static inline Interval assume_safe_sqrt(const Interval x) {
-  assert(get_rounding_mode()==FE_UPWARD);
+  assert(fegetround()==FE_UPWARD);
   assert(x.hi >= 0);
   Interval s;
   // The upper bound is easy

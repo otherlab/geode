@@ -999,9 +999,6 @@
     <ClInclude Include="exact\collision.h">
       <Filter>exact\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="math\float-env.h">
-      <Filter>math\Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="array\Array.cpp">
