@@ -42,6 +42,6 @@ public:
 };
 
 OTHER_CORE_EXPORT Ref<Listen> listen(const ValueBase& value, const function<void()>& f);
-OTHER_CORE_EXPORT Ref<BatchListen> listen(const vector<Ref<const ValueBase>>& values, const function<void()>& f);
+OTHER_CORE_EXPORT Ref<BatchListen> batch_listen(const vector<Ref<const ValueBase>>& values, const function<void()>& f);
 
 }

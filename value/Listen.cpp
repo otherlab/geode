@@ -49,7 +49,7 @@ Ref<Listen> listen(const ValueBase& value, const function<void()>& f) {
   return new_<Listen>(value,f);
 }
 
-Ref<BatchListen> listen(const vector<Ref<const ValueBase>>& values, const function<void()>& f) {
+Ref<BatchListen> batch_listen(const vector<Ref<const ValueBase>>& values, const function<void()>& f) {
   return new_<BatchListen>(values,f);
 }
 
