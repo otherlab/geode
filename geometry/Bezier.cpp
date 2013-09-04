@@ -105,6 +105,9 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
   Array<Vector<real,d>> const &path = pathinfo.x;
   vector<int> const &forced = pathinfo.y;
 
+  bool ignore_forced = false;
+  if((int)forced.size() > res+1) ignore_forced = true;
+
   // measure the length of the path
   real total_length = 0;
   for (int i = 1; i < (int)path.size(); ++i) {
@@ -131,7 +134,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
     distance += (path[i-1] - path[i]).magnitude();
     // this index was forced, we have to add it no matter what
     // exchange it for either the previous or the next point
-    if (forced[forced_idx] == i) {
+    if (forced[forced_idx] == i && !ignore_forced) {
       forced_idx++;
       if (fabs(sample_d-distance) < step/2) {
         // get rid of the next sample
@@ -161,9 +164,10 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
   samples.append(path.back());
 
   if (debug)
-    std::cout << "  samples: " << samples.size() << " res+1: " << res+1 << std::endl;
+    std::cout << "  samples: " << samples.size() << " res+1: " << res+1 << " sample_d: " << sample_d << " len: " << total_length << std::endl;
 
-  OTHER_ASSERT(samples.size() >= 2 && samples.size() == res+1);
+  OTHER_ASSERT(samples.size() >= 2);
+  OTHER_ASSERT(samples.size() == res+1);
   return samples;
 }
 
