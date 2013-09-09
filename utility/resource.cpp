@@ -51,7 +51,7 @@ static string executable_path() {
     if (m<0)
       throw OSError(format("executable_path: readlink failed, %s",strerror(errno)));
     if (m<n-1)
-      return path.data();
+      return string(path.data(),m);
   }
 #else
   OTHER_NOT_IMPLEMENTED("Don't know how to extract path to exe on this platform");
