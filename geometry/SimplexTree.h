@@ -27,7 +27,8 @@ public:
   const Array<Simplex> simplices;
 
 protected:
-OTHER_CORE_EXPORT SimplexTree(const Mesh& mesh, Array<const TV> X, int leaf_size);
+  OTHER_CORE_EXPORT SimplexTree(const Mesh& mesh, Array<const TV> X, int leaf_size);
+  OTHER_CORE_EXPORT SimplexTree(const SimplexTree& other, Array<const TV> X); // Shares ownership for topology (mesh, tree structure, etc.) but not geometry (X,boxes,simplices)
 public:
   ~SimplexTree();
 

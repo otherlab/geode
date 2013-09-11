@@ -37,6 +37,7 @@ public:
 protected:
   OTHER_CORE_EXPORT BoxTree(RawArray<const TV> geo,int leaf_size);
   OTHER_CORE_EXPORT BoxTree(RawArray<const Box<TV>> geo,int leaf_size);
+  OTHER_CORE_EXPORT BoxTree(const BoxTree<TV>& other); // Shares ownership with everything except boxes
 public:
   ~BoxTree();
 

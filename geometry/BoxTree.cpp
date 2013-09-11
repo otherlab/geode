@@ -105,8 +105,7 @@ static inline Range<int> leaf_range(int prims, int leaf_size) {
   return range(leaves-1,2*leaves-1);
 }
 
-template<class TV> BoxTree<TV>::
-BoxTree(RawArray<const TV> geo,int leaf_size)
+template<class TV> BoxTree<TV>::BoxTree(RawArray<const TV> geo,int leaf_size)
   : leaf_size(check_leaf_size(leaf_size))
   , leaves(leaf_range(geo.size(),leaf_size))
   , depth(other::depth(leaves.size()))
@@ -118,8 +117,7 @@ BoxTree(RawArray<const TV> geo,int leaf_size)
     build(*this,ranges,geo,0);
 }
 
-template<class TV> BoxTree<TV>::
-BoxTree(RawArray<const Box<TV>> geo,int leaf_size)
+template<class TV> BoxTree<TV>::BoxTree(RawArray<const Box<TV>> geo,int leaf_size)
   : leaf_size(check_leaf_size(leaf_size))
   , leaves(leaf_range(geo.size(),leaf_size))
   , depth(other::depth(leaves.size()))
@@ -131,11 +129,18 @@ BoxTree(RawArray<const Box<TV>> geo,int leaf_size)
     build(*this,ranges,geo,0);
 }
 
-template<class TV> BoxTree<TV>::
-~BoxTree() {}
+template<class TV> BoxTree<TV>::BoxTree(const BoxTree<TV>& other)
+  : leaf_size(other.leaf_size)
+  , leaves(other.leaves)
+  , depth(other.depth)
+  , p(other.p)
+  , ranges(other.ranges)
+  , boxes(other.boxes.copy()) // Don't share ownership with geometry
+{}
 
-template<class TV> void BoxTree<TV>::
-update_nonleaf_boxes() {
+template<class TV> BoxTree<TV>::~BoxTree() {}
+
+template<class TV> void BoxTree<TV>::update_nonleaf_boxes() {
   for(int n=leaves.lo-1;n>=0;n--)
     boxes[n] = Box<TV>::combine(boxes[2*n+1],boxes[2*n+2]);
 }
