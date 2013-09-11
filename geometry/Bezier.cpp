@@ -106,7 +106,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
   vector<int> const &forced = pathinfo.y;
 
   bool ignore_forced = false;
-  if((int)forced.size() > res+1) ignore_forced = true;
+  if((int)forced.size() >= res+1) ignore_forced = true;
 
   // measure the length of the path
   real total_length = 0;
