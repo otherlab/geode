@@ -111,6 +111,10 @@ private:
 #endif
 };
 
+//forward declare from Action.h for friending from Value, as this needs to call set_value
+template<class T> void set_value_and_dependencies(ValueRef<T> &value, T const &v, vector<ValueBase const*> const &dependencies);
+
+
 template<class T> class OTHER_CORE_CLASS_EXPORT Value : public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
@@ -134,6 +138,8 @@ protected:
       signal();
     }
   }
+
+  template<class S> friend void other::set_value_and_dependencies(ValueRef<S> &value, S const &v, vector<ValueBase const*> const &dependencies);
 
   void set_value(const T& value_) const {
     dirty_ = false;
@@ -165,6 +171,7 @@ public:
     return *value;
   }
 };
+
 
 template<class T> class ValueRef
 {
