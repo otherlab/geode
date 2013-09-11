@@ -14,8 +14,8 @@ namespace other{
 using std::cout;
 using std::endl;
 
-template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,2> >)
-template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,3> >)
+template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,2>>)
+template<> OTHER_DEFINE_TYPE(BoxTree<Vector<real,3>>)
 
 namespace {
 
@@ -71,10 +71,10 @@ build(BoxTree<TV>& self, RawArray<const Range<int>> ranges, RawArray<const Geo> 
 
   // Recursively split along largest axis if necessary
   if (self.is_leaf(node))
-    sort(self.p.slice(r.lo,r.hi));
+    sort(self.p.slice(r.lo,r.hi).const_cast_());
   else {
     const int axis = box.sizes().argmax();
-    int* pp = self.p.data();
+    int* pp = const_cast<int*>(self.p.data());
     std::nth_element(pp+r.lo,
                      pp+ranges[2*node+1].hi,
                      pp+r.hi,indirect_comparison(geo,CenterCompare(axis)));
