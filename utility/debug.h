@@ -26,13 +26,11 @@
 #define OTHER_FATAL_ERROR(...) \
   other::fatal_error(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,other::debug_message(__VA_ARGS__))
 
-#ifdef __GNUC__ // Avoid ambiguous else warnings on gcc
-#define OTHER_ASSERT(condition,...) ({ \
-  if(!(condition)) other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__)); })
-#else
 #define OTHER_ASSERT(condition,...) \
-  if(condition){}else{other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__));}
-#endif
+  do { \
+    if (!(condition)) \
+      other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__)); \
+  } while (0)
 
 #ifdef NDEBUG
 #   define OTHER_DEBUG_ONLY(...)

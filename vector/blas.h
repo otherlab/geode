@@ -4,7 +4,7 @@
 #ifdef OTHER_BLAS
 
 // On Mac, we can't include Accelerate.h unless __SSE__ is available
-#if !defined(__APPLE__) || defined(__SSE__)
+#if !defined(__APPLE__) || (defined(__SSE__) && !defined(__COVERITY__))
 
 #ifndef __blas_wrap_iterating__
 #ifndef __blas_wrap_h__
