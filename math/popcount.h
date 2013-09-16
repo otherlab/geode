@@ -5,6 +5,9 @@
 
 #include <boost/static_assert.hpp>
 #include <stdint.h>
+#ifdef _WIN32
+#include <intrin.h>
+#endif
 namespace other {
 
 #ifndef _WIN32
