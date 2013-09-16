@@ -27,6 +27,9 @@
 #include <math.h>
 #include <ctype.h>
 #include <iostream>
+#include <vector>
+
+using std::vector;
 
 #ifndef M_PI
     #define M_PI 3.14159265358979323846264338327
@@ -89,7 +92,7 @@ static void parseElement(char* s,
     if (*s) { *s++ = '\0'; }
 
     // Get attribs
-    while (!end && *s && nattr < MAX_ATTRIBS-1)
+    while (!end && *s && nattr < MAX_ATTRIBS-2)
     {
         // Skip white space before the attrib name
         while (*s && isspace(*s)) s++;
@@ -1205,7 +1208,7 @@ static void svgParsePath(struct SVGParser* p, const char** attr)
                                 break;
                             case 'T':
                             case 't':
-                                pathQuadBezShortTo(p, &cpx, &cpy, &cpx2, &cpy2, args, cmd == 's' ? 1 : 0);
+                                pathQuadBezShortTo(p, &cpx, &cpy, &cpx2, &cpy2, args, cmd == 't' ? 1 : 0);
                                 break;
                             case 'A':
                             case 'a':
@@ -1599,23 +1602,16 @@ struct SVGPath* svgParse(char* input, SVGInfo *svginfo)
 
 struct SVGPath* svgParseFromFile(const char* filename, SVGInfo *svginfo)
 {
-    FILE* fp;
-    int size;
-    char* data;
-    struct SVGPath* plist;
-
-    fp = fopen(filename, "rb");
+    FILE* fp = fopen(filename, "rb");
     if (!fp) return 0;
     fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
+    const int size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    data = (char*)malloc(size+1);
-    int r = fread(data, size, 1, fp);
+    vector<char> data(size+1);
+    int r = fread(&data[0], size, 1, fp);
     data[r?size:0] = '\0';    // Must be null terminated.
     fclose(fp);
-    plist = svgParse(data, svginfo);
-    free(data);
-    return plist;
+    return svgParse(&data[0], svginfo);
 }
 
 void svgDelete(struct SVGPath* plist)

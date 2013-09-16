@@ -157,7 +157,8 @@ void set_float_exceptions(const int exceptions) {
   static bool have_original_action = false;
   static struct sigaction original_action;
   if (!have_original_action) // initialize with original action
-    sigaction(SIGFPE,0,&original_action);
+    if (sigaction(SIGFPE,0,&original_action))
+      OTHER_FATAL_ERROR("Could not register FPE signal handler");
   if (exceptions) {
     // Avoid catching delayed exceptions caused by external code
     fedisableexcept(FE_ALL_EXCEPT);
@@ -167,10 +168,12 @@ void set_float_exceptions(const int exceptions) {
     action.sa_flags=SA_SIGINFO;
     action.sa_sigaction=float_exception_handler;
     sigemptyset(&action.sa_mask);
-    if(sigaction(SIGFPE,&action,0)) OTHER_FATAL_ERROR("Could not register Fpe signal handler");
+    if (sigaction(SIGFPE,&action,0))
+      OTHER_FATAL_ERROR("Could not register FPE signal handler");
     feenableexcept(exceptions);
   } else {
-    if (sigaction(SIGFPE,&original_action,0)) OTHER_FATAL_ERROR("Could not restore Fpe signal handler");
+    if (sigaction(SIGFPE,&original_action,0))
+      OTHER_FATAL_ERROR("Could not restore FPE signal handler");
     fedisableexcept(FE_ALL_EXCEPT);
   }
 }

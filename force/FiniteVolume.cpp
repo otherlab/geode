@@ -29,7 +29,9 @@ template<class TV,int d> FiniteVolume<TV,d>::FiniteVolume(StrainMeasure<T,d>& st
   : strain(ref(strain))
   , density(density)
   , model(ref(model))
-  , plasticity(plasticity) {
+  , plasticity(plasticity)
+  , stress_derivatives_valid(false)
+  , definite(false) {
   Be_scales.resize(strain.elements.size(),false,false);
   for (int t=0;t<Be_scales.size();t++)
     Be_scales[t] = -(T)1/Factorial<d>::value/strain.Dm_inverse[t].determinant();

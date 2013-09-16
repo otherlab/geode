@@ -229,7 +229,6 @@ Vector<real,3> TriMesh::centroid(FaceHandle fh) const {
 }
 
 real TriMesh::mean_edge_length() const {
-
   real result = 0;
   int count = 0;
 

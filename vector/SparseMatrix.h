@@ -30,7 +30,7 @@ private:
 
     OTHER_CORE_EXPORT SparseMatrix(Nested<int> J,Array<T> A); // entries in each row will be sorted
     OTHER_CORE_EXPORT SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vector<int,2>& sizes = (Vector<int,2>(-1,-1)));
-    SparseMatrix(Private);
+    SparseMatrix(Nested<const int> J, Nested<T> A, Array<const int> diagonal_index, const bool cholesky, Private);
 public:
     ~SparseMatrix();
 

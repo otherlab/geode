@@ -25,6 +25,7 @@ AirPressure::AirPressure(Ref<TriangleMesh> mesh,Array<const TV> X,bool closed,in
   , side(side)
   , skip_rotation_terms(false)
   , initial_volume(side*mesh->volume(X))
+  , volume(initial_volume)
 {
   OTHER_ASSERT(abs(side)==1);
   temperature = 293; // room temperature

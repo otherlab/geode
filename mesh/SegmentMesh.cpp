@@ -25,7 +25,8 @@ const int SegmentMesh::d;
 SegmentMesh::SegmentMesh(Array<const Vector<int,2> > elements)
   : vertices(scalar_view_own(elements))
   , elements(elements)
-  , node_count(compute_node_count()) {}
+  , node_count(compute_node_count())
+  , bending_tuples_valid(false) {}
 
 int SegmentMesh::compute_node_count() const {
   // Assert validity and compute counts
