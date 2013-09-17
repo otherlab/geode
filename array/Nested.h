@@ -30,7 +30,7 @@ public:
   Array<T> flat;
 
   Nested()
-    : offsets(nested_array_offsets(Array<const int>())) {}
+    : offsets(nested_array_offsets(RawArray<const int>())) {}
 
   Nested(RawArray<const int> lengths, bool initialize=true)
     : offsets(nested_array_offsets(lengths)), flat(offsets.back(),initialize) {}
@@ -249,27 +249,10 @@ template<class T,bool f0,bool f1> Nested<typename boost::remove_const<T>::type,f
 }
 
 #ifdef OTHER_PYTHON
+template<class T> PyObject* to_python(const Nested<T>& array); // Defined in array/convert.h
+template<class T> struct FromPython<Nested<T>>{ static Nested<T> convert(PyObject* object);}; // Defined in array/convert.h
 OTHER_CORE_EXPORT PyObject* nested_array_to_python_helper(PyObject* offsets, PyObject* flat);
-OTHER_CORE_EXPORT Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object);
-
-template<class T> PyObject* to_python(const Nested<T>& array) {
-  if (PyObject* offsets = to_python(array.offsets)) {
-    if (PyObject* flat = to_python(array.flat))
-      return nested_array_to_python_helper(offsets,flat);
-    else
-      Py_DECREF(offsets);
-  }
-  return 0;
-}
-
-template<class T> struct FromPython<Nested<T>>{static Nested<T> convert(PyObject* object);};
-template<class T> Nested<T> FromPython<Nested<T>>::convert(PyObject* object) {
-  const auto fields = nested_array_from_python_helper(object);
-  Nested<T> self;
-  self.offsets = from_python<Array<const int>>(fields.x);
-  self.flat = from_python<Array<T>>(fields.y);
-  return self;
-}
+OTHER_CORE_EXPORT Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object); // Assumes is_nested_array(object)
 #endif
 
 } // namespace other

@@ -24,10 +24,7 @@ template<class T,class... Args> static inline Ref<T> new_(Args&&... args) {
   memory = OTHER_PY_OBJECT_INIT(memory,&T::pytype);
   try {
     new(memory+1) T(args...);
-    Ref<T> ref;
-    ref.self = (T*)(memory+1);
-    ref.owner_ = memory;
-    return ref;
+    return Ref<T>(*(T*)(memory+1),memory,typename Ref<T>::Steal());
   } catch(...) {
     free(memory);
     throw;
@@ -48,10 +45,7 @@ template<class T,class... Args> static inline Ref<T> new_(Args&&... args) {
     memory = OTHER_PY_OBJECT_INIT(memory,&T::pytype); \
     try { \
       new(memory+1) T args; \
-      Ref<T> ref; \
-      ref.self = (T*)(memory+1); \
-      ref.owner_ = memory; \
-      return ref; \
+      return Ref<T>(*(T*)(memory+1),memory,typename Ref<T>::Steal()); \
     } catch(...) { \
       free(memory); \
       throw; \

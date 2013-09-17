@@ -30,13 +30,14 @@ public:
   const int leaf_size;
   const Range<int> leaves;
   const int depth; // max path size from root to leaf counting both ends
-  const Array<int> p; // index permutation
+  const Array<const int> p; // index permutation
   const Array<const Range<int>> ranges;
-  const Array<Box<TV> > boxes;
+  const Array<Box<TV>> boxes;
 
 protected:
   OTHER_CORE_EXPORT BoxTree(RawArray<const TV> geo,int leaf_size);
   OTHER_CORE_EXPORT BoxTree(RawArray<const Box<TV>> geo,int leaf_size);
+  OTHER_CORE_EXPORT BoxTree(const BoxTree<TV>& other); // Shares ownership with everything except boxes
 public:
   ~BoxTree();
 

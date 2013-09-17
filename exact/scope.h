@@ -3,7 +3,7 @@
 
 // Modified from code by Tyson Brochu, 2011
 
-#include <fenv.h>
+#include <other/core/utility/rounding.h>
 namespace other {
 
 // All interval arithmetic must occur within an IntervalScope.  Since the rounding
@@ -20,9 +20,10 @@ struct IntervalScope {
     fesetround(previous_mode);
   }
 
+private:
   // Noncopyable
-  IntervalScope(const IntervalScope& rhs) = delete;
-  IntervalScope& operator=(const IntervalScope& rhs) = delete;
+  IntervalScope(const IntervalScope& rhs);
+  IntervalScope& operator=(const IntervalScope& rhs);
 };
 
 }

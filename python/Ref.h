@@ -62,11 +62,15 @@ class Ref {
   template<class S> friend class Ref;
   template<class S> friend class Ptr;
   template<class S> friend Ref<S> steal_ref(S&);
+  struct Steal {};
 
   T* self; // pointers are always nonzero
   PyObject* owner_;
 
-  Ref() {} // used by new_ and python interface code
+  // Used by new_ and python interface code
+  Ref(T& self, PyObject* owner, Steal)
+    : self(&self), owner_(owner) {}
+
 public:
   typedef T Element;
 
@@ -88,7 +92,7 @@ public:
   }
 
   // Construct a Ref given explicit self and owner pointers
-  Ref(T& self,PyObject* owner)
+  Ref(T& self, PyObject* owner)
     : self(&self), owner_(owner) {
     OTHER_INCREF(owner_);
   }
@@ -179,10 +183,7 @@ ref(T& object) {
 template<class T> static inline Ref<T>
 steal_ref(T& object) {
   BOOST_MPL_ASSERT((mpl::or_<boost::is_same<T,PyObject>,boost::is_base_of<Object,T> >));
-  Ref<T> ref;
-  ref.self = &object;
-  ref.owner_ = ptr_to_python(&object);
-  return ref;
+  return Ref<T>(object,ptr_to_python(&object),typename Ref<T>::Steal());
 }
 
 #ifdef OTHER_PYTHON
@@ -212,7 +213,7 @@ to_python(const Ref<T>& ref) {
 }
 
 #ifdef OTHER_PYTHON
-template<class T> static inline Ref<PyObject>
+template<class T> inline Ref<PyObject>
 to_python_ref(const T& x) {
   return steal_ref_check(to_python(x));
 }

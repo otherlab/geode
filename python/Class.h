@@ -262,7 +262,7 @@ namespace {
 #define OTHER_DEFINE_TYPE(...) \
   other::PyTypeObject __VA_ARGS__::pytype = { \
     typeid(__VA_ARGS__).name(),  /* tp_name */ \
-    Class<__VA_ARGS__>::dealloc, /* tp_dealloc */ \
+    other::Class<__VA_ARGS__>::dealloc, /* tp_dealloc */ \
   };
 
 template<class T> class Class {

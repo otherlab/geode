@@ -639,10 +639,10 @@ template<class T> struct valid_binary;
 template<class T> struct invalid_binary {
   typedef T value_type;
   static const bool is_streamable = false;
-  OTHER_CORE_EXPORT static size_t size_of(void) { OTHER_ASSERT(false); return UnknownSize; }
-  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) { OTHER_ASSERT(false); return 0; };
-  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
-  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
+  static size_t size_of(void) { OTHER_ASSERT(false); return UnknownSize; }
+  static size_t size_of(const value_type &v) { OTHER_ASSERT(false); return 0; };
+  static size_t store(std::ostream& os, const value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
+  static size_t restore(std::istream& is, value_type& v, bool swap=false) { OTHER_ASSERT(false); return 0; }
 };
 
 // for default-constructible T only
@@ -657,8 +657,8 @@ template<class T> struct valid_binary<std::vector<T>> {
 
   static const bool is_streamable = binary<T>::is_streamable;
 
-  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
-  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+  static size_t size_of(void) { return UnknownSize; }
+  static size_t size_of(const value_type &v) {
     size_t bytes = 0;
 
     int n = v.size();
@@ -670,7 +670,7 @@ template<class T> struct valid_binary<std::vector<T>> {
     return bytes;
   }
 
-  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+  static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
     size_t bytes = 0;
 
     int n = v.size();
@@ -682,7 +682,7 @@ template<class T> struct valid_binary<std::vector<T>> {
     return os.good() ? bytes : 0;
   }
 
-  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+  static size_t restore(std::istream& is, value_type& v, bool swap=false) {
     size_t bytes = 0;
 
     int size;
@@ -703,12 +703,12 @@ template<class T> struct binary<std::vector<T>>: public boost::mpl::if_c<binary<
 template<class T, class U> struct binary<std::pair<T,U>> {
   typedef std::pair<T, U> value_type;
   static const bool is_streamable = binary<T>::is_streamable && binary<U>::is_streamable;
-  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
-  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+  static size_t size_of(void) { return UnknownSize; }
+  static size_t size_of(const value_type &v) {
     return IO::size_of(v.first) + IO::size_of(v.second);
   }
 
-  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+  static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
     size_t bytes = 0;
     bytes += IO::store(os, v.first, swap);
     bytes += IO::store(os, v.second, swap);
@@ -716,7 +716,7 @@ template<class T, class U> struct binary<std::pair<T,U>> {
     return os.good() ? bytes : 0;
   }
 
-  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+  static size_t restore(std::istream& is, value_type& v, bool swap=false) {
     size_t bytes = 0;
     bytes += IO::restore(is, v.first, swap);
     bytes += IO::restore(is, v.second, swap);
@@ -729,8 +729,8 @@ template<class T, class U> struct binary<std::pair<T,U>> {
 template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U, Hasher>> {
   typedef other::unordered_map<T, U, Hasher> value_type;
   static const bool is_streamable = binary<T>::is_streamable && binary<U>::is_streamable;
-  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
-  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+  static size_t size_of(void) { return UnknownSize; }
+  static size_t size_of(const value_type &v) {
     size_t bytes = 0;
 
     int n = v.size();
@@ -742,7 +742,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U
     return bytes;
   }
 
-  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+  static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
     size_t bytes = 0;
 
     int n = v.size();
@@ -755,7 +755,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U
     return os.good() ? bytes : 0;
   }
 
-  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+  static size_t restore(std::istream& is, value_type& v, bool swap=false) {
     size_t bytes = 0;
 
     v.clear();
@@ -778,8 +778,8 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, U
 template<class T, class U, class Hasher> struct binary<other::unordered_map<T, other::Ref<U>, Hasher>> {
   typedef other::unordered_map<T, other::Ref<U>, Hasher> value_type;
   static const bool is_streamable = binary<T>::is_streamable && binary<other::Ref<U>>::is_streamable;
-  OTHER_CORE_EXPORT static size_t size_of(void) { return UnknownSize; }
-  OTHER_CORE_EXPORT static size_t size_of(const value_type &v) {
+  static size_t size_of(void) { return UnknownSize; }
+  static size_t size_of(const value_type &v) {
     size_t bytes = 0;
 
     int n = v.size();
@@ -791,7 +791,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, o
     return bytes;
   }
 
-  OTHER_CORE_EXPORT static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
+  static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
     size_t bytes = 0;
 
     int n = v.size();
@@ -804,7 +804,7 @@ template<class T, class U, class Hasher> struct binary<other::unordered_map<T, o
     return os.good() ? bytes : 0;
   }
 
-  OTHER_CORE_EXPORT static size_t restore(std::istream& is, value_type& v, bool swap=false) {
+  static size_t restore(std::istream& is, value_type& v, bool swap=false) {
     size_t bytes = 0;
 
     v.clear();

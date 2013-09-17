@@ -34,23 +34,30 @@ template<class Mesh,class TV> static Array<Box<TV>> boxes(const Mesh& mesh, Arra
   return boxes;
 }
 
-template<class TV,int d> SimplexTree<TV,d>::
-SimplexTree(const Mesh& mesh, Array<const TV> X, int leaf_size)
+template<class TV,int d> SimplexTree<TV,d>::SimplexTree(const Mesh& mesh, Array<const TV> X, int leaf_size)
   : Base(RawArray<const Box<TV>>(other::boxes(mesh,X)),leaf_size), mesh(ref(mesh)), X(X), simplices(mesh.elements.size(),false) {
   for (int t=0;t<mesh.elements.size();t++)
     simplices[t] = Simplex(X.subset(mesh.elements[t]));
 }
 
-template<class TV,int d> SimplexTree<TV,d>::
-~SimplexTree()
-{}
+template<class TV,int d> SimplexTree<TV,d>::SimplexTree(const SimplexTree& other, Array<const TV> X)
+  : Base(other), mesh(other.mesh), X(X), simplices(mesh->elements.size(),false) {
+  OTHER_ASSERT(mesh->nodes()<=X.size());
+  update();
+}
+
+template<class TV,int d> SimplexTree<TV,d>::~SimplexTree() {}
 
 template<class TV,int d> void SimplexTree<TV,d>::update() {
   RawArray<const Vector<int,d+1>> elements = mesh->elements;
   for (int t=0;t<elements.size();t++)
     simplices[t] = Simplex(X.subset(elements[t]));
-  for (int n : leaves)
-    boxes[n] = other::bounding_box(X.subset(prims(n)));
+  for (const int n : leaves) {
+    Box<TV> box;
+    for (const int s : prims(n))
+      box.enlarge(other::bounding_box(X.subset(elements[s])));
+    boxes[n] = box;
+  }
   update_nonleaf_boxes();
 }
 

@@ -61,9 +61,9 @@ template<class T>
 void set_value_and_dependencies(ValueRef<T> &value, T const &v, vector<ValueBase const*> const &dependencies) {
 
   // Get the action
-  Action *action = 0;
+  Action const*action = 0;
   try {
-    action = dynamic_cast<Action*>(&*value);
+    action = dynamic_cast<Action const*>(&*value);
   } catch (std::bad_cast) {
     throw std::runtime_error("set_value_and_dependencies only works on objects derived from both Action and Value");
   }
@@ -74,7 +74,7 @@ void set_value_and_dependencies(ValueRef<T> &value, T const &v, vector<ValueBase
     action->depend_on(*dep);
 
   // Set the value
-  value.set_value(v);
+  value->set_value(v);
 }
 
 }

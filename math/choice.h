@@ -20,7 +20,7 @@ template<class T> static inline T& choice(const int i, T& a, T& b, T& c) {
   return i==0?a:i==1?b:c;
 }
 
-#ifdef OTHER_VARIADIC
+#if defined(OTHER_VARIADIC) && !defined(__COVERITY__)
 
 template<class T0,class... Rest>                                     static inline T0& choice_helper(mpl::int_<0>, T0& x,                     Rest&...) {return x;}
 template<class T0,class T1,class... Rest>                            static inline T1& choice_helper(mpl::int_<1>, T0&, T1& x,                Rest&...) {return x;}

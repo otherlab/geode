@@ -7,7 +7,7 @@
 #include <other/core/geometry/Box.h>
 #include <other/core/math/constants.h>
 #include <other/core/python/repr.h>
-#include <fenv.h>
+#include <other/core/utility/rounding.h>
 namespace other {
 
 struct Interval;

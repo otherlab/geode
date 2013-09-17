@@ -607,6 +607,8 @@ PyArray_Descr* NumpyDescr<ExactCircleArc>::d;
 }
 ARRAY_CONVERSIONS(1,CircleArc)
 ARRAY_CONVERSIONS(1,ExactCircleArc)
+NESTED_CONVERSIONS(CircleArc)
+NESTED_CONVERSIONS(ExactCircleArc)
 
 static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
   OTHER_ASSERT(PyArray_DescrCheck(inexact));

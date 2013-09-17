@@ -4,6 +4,14 @@
 #ifdef OTHER_PYTHON
 #ifdef __APPLE__
 #include <Python/Python.h>
+// Clean up macros in anticipation of C++ headers
+#undef isspace
+#undef isupper
+#undef islower
+#undef isalpha
+#undef isalnum
+#undef toupper
+#undef tolower
 #else
 #undef _POSIX_C_SOURCE
 #undef _XOPEN_SOURCE

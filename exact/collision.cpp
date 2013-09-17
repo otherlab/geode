@@ -2570,4 +2570,14 @@ bool edge_triangle_intersection(const Vector<double,3>& x0, const Vector<double,
   return edge_triangle_intersection_helper(e0,e1,e2,e3,e4,&a0,&a1,&a2,&a3,&a4)!=0;
 }
 
+bool triangle_triangle_intersection(const Vector<double,3>& a0, const Vector<double,3>& a1, const Vector<double,3>& a2,
+                                    const Vector<double,3>& b0, const Vector<double,3>& b1, const Vector<double,3>& b2) {
+  return edge_triangle_intersection(a0,a1,b0,b1,b2)
+      || edge_triangle_intersection(a1,a2,b0,b1,b2)
+      || edge_triangle_intersection(a2,a0,b0,b1,b2)
+      || edge_triangle_intersection(b0,b1,a0,a1,a2)
+      || edge_triangle_intersection(b1,b2,a0,a1,a2)
+      || edge_triangle_intersection(b2,b0,a0,a1,a2);
+}
+
 }
