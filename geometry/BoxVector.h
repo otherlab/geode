@@ -99,6 +99,10 @@ public:
     return Box<TV>(-max,-min);
   }
 
+  Box<T> operator[](const int i) const {
+    return Box<T>(min[i],max[i]);
+  }
+
   Box<TV>& operator+=(const Box<TV>& r) {
     min+=r.min;max+=r.max;return *this;
   }
