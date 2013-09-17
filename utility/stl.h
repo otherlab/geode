@@ -103,7 +103,7 @@ template<class T,class C> inline void extend(std::deque<T>& dst, const C& src) {
 // check if a STL vector contains an element.
 template<class T> inline bool contains(const std::vector<T>& v, const T& x) {
   for (auto y : v) {
-    if (equals<T>::eval(y,x))
+    if (Equals<T>::eval(y,x))
       return true;
   }
   return false;
