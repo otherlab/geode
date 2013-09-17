@@ -222,20 +222,20 @@ public:
     return min<=box.min && box.max<=max;
   }
 
-  bool lazy_intersection(const Box& box) const {
+  bool lazy_intersects(const Box& box) const {
     return min<=box.max && box.min<=max;
   }
 
-  bool intersection(const Box& box, const T half_thickness) const {
-    return thickened(half_thickness).lazy_intersection(box);
+  bool intersects(const Box& box, const T half_thickness) const {
+    return thickened(half_thickness).lazy_intersects(box);
   }
 
-  bool intersection(const Box& box, const Zero half_thickness) const {
-    return lazy_intersection(box);
+  bool intersects(const Box& box, const Zero half_thickness) const {
+    return lazy_intersects(box);
   }
 
-  bool intersection(const Box& box) const {
-    return lazy_intersection(box);
+  bool intersects(const Box& box) const {
+    return lazy_intersects(box);
   }
 
   T signed_distance(const T& X) const {
