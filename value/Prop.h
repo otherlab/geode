@@ -189,7 +189,7 @@ public:
   vector<T> allowed;
 
   void set(const T& value_) {
-    if (!equals<T>::eval(*Base::value,value_)) {
+    if (!Equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !other::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name);
       this->set_value(Clamp::clamp(value_));
@@ -277,7 +277,7 @@ public:
 
   bool same_default(PropBase& other_) const {
     Prop* other = other_.cast<T>();
-    return other && equals<T>::eval(default_,other->default_);
+    return other && Equals<T>::eval(default_,other->default_);
   }
 
   string value_str(bool use_default) const {
