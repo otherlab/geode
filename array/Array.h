@@ -378,8 +378,7 @@ public:
     STATIC_ASSERT_SAME(typename boost::remove_const<T>::type,typename boost::remove_const<typename TArray::value_type>::type);
     int append_m = append_array.size(),
         m_new = m_+append_m;
-    if (max_size_<m_new)
-      grow_buffer(m_new);
+    preallocate(m_new);
     for (int i=0;i<append_m;i++)
       other::const_cast_(data_[m_+i]) = append_array[i];
     m_ = m_new;
