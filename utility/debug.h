@@ -27,10 +27,7 @@
   other::fatal_error(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,other::debug_message(__VA_ARGS__))
 
 #define OTHER_ASSERT(condition,...) \
-  do { \
-    if (!(condition)) \
-      other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__)); \
-  } while (0)
+  ((condition) ? (void)0 : other::assertion_failed(OTHER_DEBUG_FUNCTION_NAME,__FILE__,__LINE__,#condition,other::debug_message(__VA_ARGS__)))
 
 #ifdef NDEBUG
 #   define OTHER_DEBUG_ONLY(...)
