@@ -18,14 +18,17 @@ class Nested(object):
 
   def __init__(self,x,dtype=None):
     if isinstance(x,Nested):
-      object.__setattr__(self,"offsets",x.offsets)
+      offsets = x.offsets
       flat = x.flat
+    elif isinstance(x,ndarray):
+      m,n = x.shape
+      offsets = n*arange(m+1,dtype=int32)
+      flat = x.ravel()
     else:
-      object.__setattr__(self,"offsets",hstack([self.single_zero,cumsum([len(y) for y in x],dtype=int32)]))
+      offsets = hstack([self.single_zero,cumsum([len(y) for y in x],dtype=int32)])
       flat = concatenate(x)
-    if dtype is not None:
-      flat = flat.astype(dtype)
-    object.__setattr__(self,"flat",ascontiguousarray(flat))
+    object.__setattr__(self,"offsets",offsets)
+    object.__setattr__(self,"flat",ascontiguousarray(flat,dtype=dtype))
 
   @staticmethod
   def zeros(lengths,dtype=int32):
