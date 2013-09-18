@@ -21,9 +21,9 @@ class Nested(object):
       offsets = x.offsets
       flat = x.flat
     elif isinstance(x,ndarray):
-      m,n = x.shape
-      offsets = n*arange(m+1,dtype=int32)
-      flat = x.ravel()
+      assert x.ndim>=2
+      offsets = x.shape[1]*arange(x.shape[0]+1,dtype=int32)
+      flat = x.reshape(-1,*x.shape[2:])
     else:
       offsets = hstack([self.single_zero,cumsum([len(y) for y in x],dtype=int32)])
       flat = concatenate(x)
