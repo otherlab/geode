@@ -132,6 +132,10 @@ public:
     return flat.slice(offsets[i],offsets[i+1]);
   }
 
+  Array<T> own(int i) const {
+    return flat.slice_own(offsets[i],offsets[i+1]);
+  }
+
   bool operator==(const Nested& v) const {
     return (offsets == v.offsets) && (flat == v.flat);
   }
