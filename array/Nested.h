@@ -197,6 +197,12 @@ public:
     flat.extend(append_array);
     offsets.back() += append_array.size();
   }
+
+  // Remove the last subarray
+  void pop_back() {
+    flat.pop_elements(back().size());
+    offsets.pop();
+  }
 };
 
 template<class T,bool f> inline ostream& operator<<(ostream& output, const Nested<T,f>& a) {

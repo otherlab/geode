@@ -433,14 +433,6 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
   }
 }
 
-static inline RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x) {
-  int n = x.size();
-  for (;n>0;n--)
-    if (x[n-1])
-      break;
-  return x.slice(0,n);
-}
-
 static inline RawArray<mp_limb_t> sqrt_helper(RawArray<mp_limb_t> result, RawArray<const mp_limb_t> x) {
   const auto s = result.slice(0,(1+x.size())/2);
   mpn_sqrtrem(s.data(),0,x.data(),x.size());
@@ -449,7 +441,7 @@ static inline RawArray<mp_limb_t> sqrt_helper(RawArray<mp_limb_t> result, RawArr
 
 // Cast num/den to an int, rounding towards nearest.  All inputs are destroyed.  Take a sqrt if desired.
 // The values array must consist of r numerators followed by one denominator.
-static void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const bool take_sqrt) {
+void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const bool take_sqrt) {
   assert(result.size()+1==values.m);
 
   // For division, we seek x s.t.

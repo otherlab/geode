@@ -416,37 +416,37 @@ template<bool add> bool circle_intersections_upwards(Arcs arcs, const Vertex a, 
                   : perturbed_upwards<add>(a.left^add?-1:1,b.left?1:-1,aspoint(arcs,a.i0),aspoint(arcs,a.i1),aspoint(arcs,b.i1)));
 }
 
-// // Are the intersections of two circles with a third counterclockwise?  In other words, is the triangle c0,x01,x02 positively oriented?
-// // The two intersections are assumed to exist.
-// namespace {
-// // ai is true if we're the coefficient of the ith sqrt
-// template<bool a0,bool a1> struct Ordered { static Exact<6-2*(a0+a1)> eval(const LV3 S0, const LV3 S1, const LV3 S2) {
-//   const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
-//   const auto dc1 = c1-c0, dc2 = c2-c0;
-//   return choice<a0>(Alpha::eval(S0,S1),One())
-//        * choice<a1>(Alpha::eval(S0,S2),One())
-//        * small_mul(a0 && !a1 ? -1 : 1, choice<a0!=a1>(edet(dc1,dc2),edot(dc1,dc2)));
-// }};
-// }
-// static bool circle_intersections_ordered_helper(Arcs arcs, const Vertex v0, const Vertex v1) {
-//   assert(v0.i0==v1.i0);
-//   // Perform case analysis based on the two quadrants
-//   const int q0 = v0.q0,
-//             q1 = v1.q0;
-//   switch ((q1-q0)&3) {
-//     case 0: return circle_intersections_upwards      (arcs,v0,v1) ^ (q0==1 || q0==2);
-//     case 2: return circle_intersections_upwards<true>(arcs,v0,v1) ^ (q0==1 || q0==2);
-//     case 3: return false;
-//     default: return true; // case 1
-//   }
-// }
-// // Tests if an arc segment is less then a half circle
-// static bool circle_intersections_ordered(Arcs arcs, const Vertex v0, const Vertex v1) {
-//   assert(v0.i0==v1.i0);
-//   const Vector<Interval,2> center(arcs[v0.i0].center);
-//   return FILTER(cross(v0.p()-center,v1.p()-center),
-//                 circle_intersections_ordered_helper(arcs,v0,v1));
-// }
+// Are the intersections of two circles with a third counterclockwise?  In other words, is the triangle c0,x01,x02 positively oriented?
+// The two intersections are assumed to exist.
+namespace {
+// ai is true if we're the coefficient of the ith sqrt
+template<bool a0,bool a1> struct Ordered { static Exact<6-2*(a0+a1)> eval(const LV3 S0, const LV3 S1, const LV3 S2) {
+  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
+  const auto dc1 = c1-c0, dc2 = c2-c0;
+  return choice<a0>(Alpha::eval(S0,S1),One())
+       * choice<a1>(Alpha::eval(S0,S2),One())
+       * small_mul(a0 && !a1 ? -1 : 1, choice<a0!=a1>(edet(dc1,dc2),edot(dc1,dc2)));
+}};
+}
+static bool circle_intersections_ccw_helper(Arcs arcs, const Vertex v0, const Vertex v1) {
+  assert(v0.i0==v1.i0);
+  // Perform case analysis based on the two quadrants
+  const int q0 = v0.q0,
+            q1 = v1.q0;
+  switch ((q1-q0)&3) {
+    case 0: return circle_intersections_upwards      (arcs,v0,v1) ^ (q0==1 || q0==2);
+    case 2: return circle_intersections_upwards<true>(arcs,v0,v1) ^ (q0==1 || q0==2);
+    case 3: return false;
+    default: return true; // case 1
+  }
+}
+// Tests if an arc segment is less then a half circle
+bool circle_intersections_ccw(Arcs arcs, const Vertex v0, const Vertex v1) {
+  assert(v0.i0==v1.i0);
+  const Vector<Interval,2> center(arcs[v0.i0].center);
+  return FILTER(cross(v0.p()-center,v1.p()-center),
+                circle_intersections_ccw_helper(arcs,v0,v1));
+}
 
 // Does the (a1,b) intersection occur on the piece of a1 between a0 and a2?  a1 and b are assumed to intersect.
 bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12, const Vertex a1b) {

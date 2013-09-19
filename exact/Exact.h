@@ -41,15 +41,49 @@ template<int d> struct Exact {
       swap(n[0],n[1]);
 #endif
   }
+
+  template<int smaller_d> explicit Exact(const Exact<smaller_d>& rhs) {
+    static_assert(d > smaller_d, "Can only assign if increasing precision"); // should fall back to default operator for a == b
+    memcpy(n,&rhs.n,sizeof(rhs.n));
+    memset(n + smaller_d, 0, (d - smaller_d)*sizeof(n[0]));
+  }
 };
 
-template<int d> static inline int sign(const Exact<d>& x) {
-  if (mp_limb_signed_t(x.n[x.limbs-1])<0)
-    return -1;
+template<int d> static inline bool is_negative(const Exact<d>& x) {
+  return (mp_limb_signed_t(x.n[x.limbs-1])<0);
+}
+
+template<int d> static inline bool is_nonzero(const Exact<d>& x) {
   for (int i=0;i<x.limbs;i++)
     if (x.n[i])
-      return 1;
-  return 0;
+      return true;
+  return false;
+}
+
+template<int d> static inline int sign(const Exact<d>& x) {
+  if (is_negative(x))
+    return -1;
+  return is_nonzero(x);
+}
+
+template<int d> static inline bool operator==(const Exact<d>& lhs, const Exact<d>& rhs) {
+  if(Exact<d>::limbs == 1)
+    return lhs.n[0] == rhs.n[0];
+  else
+    return mpn_cmp(lhs.n, rhs.n, Exact<d>::limbs) == 0;
+}
+
+template<int d> static inline bool operator<(const Exact<d>& lhs, const Exact<d>& rhs) {
+  return sign(lhs - rhs) < 0;
+}
+template<int d> static inline bool operator<=(const Exact<d>& lhs, const Exact<d>& rhs) {
+  return sign(lhs - rhs) <= 0;
+}
+template<int d> static inline bool operator>=(const Exact<d>& lhs, const Exact<d>& rhs) {
+  return sign(lhs - rhs) >= 0;
+}
+template<int d> static inline bool operator>(const Exact<d>& lhs, const Exact<d>& rhs) {
+  return sign(lhs - rhs) > 0;
 }
 
 template<int a> OTHER_PURE static inline Exact<a> operator+(const Exact<a> x, const Exact<a> y) {
@@ -71,7 +105,7 @@ template<int a> static inline void operator+=(Exact<a>& x, const Exact<a>& y) {
 template<int a> OTHER_PURE static inline Exact<a> operator-(const Exact<a> x, const Exact<a> y) {
   Exact<a> r(uninit);
   if (r.limbs==1)
-    r.n[0] = x.n[0] - y.n[0]; 
+    r.n[0] = x.n[0] - y.n[0];
   else
     mpn_sub_n(r.n,x.n,y.n,r.limbs);
   return r;
@@ -85,13 +119,13 @@ template<int a,int b> OTHER_PURE static inline Exact<a+b> operator*(const Exact<
   else
     mpn_mul(r.n,y.n,y.limbs,x.n,x.limbs);
   // Correct for negative numbers
-  if (mp_limb_signed_t(x.n[x.limbs-1])<0) {
+  if (is_negative(x)) {
     if (y.limbs==1)
       r.n[x.limbs] -= y.n[0];
     else
       mpn_sub_n(r.n+x.limbs,r.n+x.limbs,y.n,y.limbs);
   }
-  if (mp_limb_signed_t(y.n[y.limbs-1])<0) {
+  if (is_negative(y)) {
     if (x.limbs==1)
       r.n[y.limbs] -= x.n[0];
     else
@@ -112,7 +146,7 @@ template<int a> OTHER_PURE static inline Exact<a> operator-(const Exact<a> x) {
 template<int a> OTHER_PURE static inline Exact<2*a> sqr(const Exact<a> x) {
   Exact<2*a> r(uninit);
   mp_limb_t nx[x.limbs];
-  const bool negative = mp_limb_signed_t(x.n[x.limbs-1])<0;
+  const bool negative = is_negative(x);
   if (negative)
     mpn_neg(nx,x.n,x.limbs);
   mpn_sqr(r.n,negative?nx:x.n,x.limbs);
@@ -121,6 +155,33 @@ template<int a> OTHER_PURE static inline Exact<2*a> sqr(const Exact<a> x) {
 
 template<int a> OTHER_PURE static inline Exact<3*a> cube(const Exact<a> x) {
   return x*sqr(x);
+}
+
+template<int a> void operator++(Exact<a>& x) {
+  mpn_add_1(x.n,x.n,x.limbs,1);
+}
+
+template<int a> OTHER_PURE static inline Exact<(a>>1) + (a&1)> ceil_sqrt(const Exact<a> x) {
+  assert(!is_negative(x));
+  Exact<(a>>1)+(a&1)> r;
+  const auto trim_x = trim(asarray(x.n));
+  const auto inexact = mpn_sqrtrem(r.n,0,trim_x.data(),trim_x.size());
+  if(inexact)
+    ++r;
+  return r;
+}
+
+template<int a> static inline Exact<a>& operator>>=(Exact<a>& x, const int s) {
+  assert(!is_negative(x));
+  assert(0<s && s<=3);
+  mpn_rshift(x.n,x.n,x.limbs,s);
+  return x;
+}
+
+template<int a> OTHER_PURE static inline Exact<a> operator>>(const Exact<a> x, const int s) {
+  Exact<1> r = x;
+  r >>= s;
+  return r;
 }
 
 // Multiplication by small constants, assumed to not increase the precision required
@@ -192,5 +253,8 @@ static inline SmallShift operator<<(One, const int s) {
 template<class T> static inline T operator*(const T& x, const SmallShift s) {
   return x<<s.s;
 }
+
+RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x);
+RawArray<const mp_limb_t> trim(RawArray<const mp_limb_t> x);
 
 }

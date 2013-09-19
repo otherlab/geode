@@ -5,6 +5,9 @@
 #include <other/core/exact/circle_csg.h>
 #include <other/core/exact/circle_predicates.h>
 #include <other/core/exact/scope.h>
+#include <other/core/exact/Exact.h>
+#include <other/core/exact/math.h>
+#include <other/core/exact/perturb.h>
 #include <other/core/geometry/BoxTree.h>
 #include <other/core/geometry/polygon.h>
 #include <other/core/geometry/traverse.h>
@@ -12,6 +15,10 @@
 #include <other/core/python/wrap.h>
 #include <other/core/random/Random.h>
 #include <other/core/structure/Hashtable.h>
+
+// Set to 1 to enable checks in quantization that ensure all tolerances were met
+#define CHECK_CONSTRUCTIONS 0
+
 namespace other {
 
 typedef RawArray<const ExactCircleArc> Arcs;
@@ -47,7 +54,7 @@ struct Info {
 };
 }
 
-// Precompute information about a series of arc contours, and 
+// Precompute information about a series of arc contours, and
 static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
   // Precompute base information
   const auto next = closed_contours_next(arcs);
@@ -256,7 +263,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
             // Checking circle_arc_contains_horizontal_intersection before horizontal_intersections_rightwards avoids this unless the arcs overlap
             // Symbolically identical arcs that overlap aren't intended to be handled by splitting and may occasionally raise an assert here
             if (   start!=h
-                && circle_arc_contains_horizontal_intersection(arcs,vertices[j],vertices[next[j]],h) 
+                && circle_arc_contains_horizontal_intersection(arcs,vertices[j],vertices[next[j]],h)
                 && horizontal_intersections_rightwards(arcs,start,h))
               depth -= horizontal_depth_change(arcs,h);
           }
@@ -289,7 +296,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
         // Remember this subsegment if it has the right depth, the advance to the next segment
         if (!delta)
           graph.set(prev,next);
-        delta += next.left ^ arcs[next.i0].positive ^ arcs[next.i1].positive ? -1 : 1; 
+        delta += next.left ^ arcs[next.i0].positive ^ arcs[next.i1].positive ? -1 : 1;
         prev = next.reverse();
       }
     } while (prev != start_vertex);
@@ -388,7 +395,179 @@ void tweak_arcs_to_intersect(Nested<ExactCircleArc>& arcs) {
   }
 }
 
+template<int a> OTHER_PURE static inline Exact<a> ceil_half(const Exact<a> x) {
+  assert(!is_negative(x));
+  Exact<a> r = x;
+  ++r; // Add 1 to round up
+  r >>= 1;
+  return r;
+}
+
+static Quantized snap(const Exact<1> e) {
+  static_assert(sizeof(e.n) == sizeof(mp_limb_signed_t), "Need to handle multiple limbs");
+  return Quantized(mp_limb_signed_t(e.n[0]));
+}
+
+// A circle that is centered at x0 or x1 with a radius of constructed_arc_max_endpoint_error() will always intersect
+// an ExactCircleArc with radius and center as returned from construct_circle_radius_and_center(x0,x1,q)
+static Quantized constructed_arc_endpoint_error_bound() { return 3; } // ceil(sqrt(2))
+
+// Returns a center and radius for a circle that passes within constructed_arc_max_endpoint_error() units of each quantized vertex and has approxamently the correct curvature
+// WARNING: If endpoints quantize to the same point, a radius of 0 (invalid for an ExactCircleArc) will be returned to indicate no arc is needed
+// x0 and x1 should be integer points (from quantizer)
+static Tuple<Quantized, Vector<Quantized,2>> construct_circle_radius_and_center(const Vector<Quantized, 2> x0, const Vector<Quantized, 2> x1, const real q) {
+  if(x0 == x1) {
+    return tuple(Quantized(0), x0);
+  }
+
+  const Vector<Exact<1>,2> ex0(x0),
+                           ex1(x1);
+
+  const Vector<Exact<1>,2> delta = ex1 - ex0;
+  const Exact<2> d_sqr = esqr_magnitude(delta);
+
+  const Exact<1> min_valid_r = Exact<1>(constructed_arc_endpoint_error_bound());
+  const Exact<1> min_r = max(min_valid_r, ceil_half(ceil_sqrt(d_sqr))); // Need to ensure c_root_num >= 0
+  const Exact<1> max_r = Exact<1>(exact::bound/8); // FIXME: I'm not convinced this is correct, but it will work for now
+
+#if CHECK_CONSTRUCTIONS
+  // Check that min_r correctly computed
+  OTHER_ASSERT(!is_negative(small_mul(4,sqr(min_r)) - d_sqr));
+  OTHER_ASSERT((min_r == min_valid_r) || is_negative(small_mul(4,sqr(min_r - Exact<1>(1))) - d_sqr)); // Check that we are at min_r or subtracting 1 gives in imaginary root
+#endif
+
+  const Quantized qr = round(magnitude(.25*abs(q+1/q)*(x0-x1)));
+
+  // Convert qr to an Exact value and clamp to between min_r and max_r
+  const Exact<1> r = !isfinite(qr) ? max_r : clamp(Exact<1>(qr), min_r, max_r);
+
+  const Vector<Quantized,2> midpoint = snap_div(ex0 + ex1, Exact<1>(2), false);
+
+  assert(is_nonzero(d_sqr));
+  const Exact<2> c_root_num = small_mul(4,sqr(r)) - d_sqr;
+  assert(!is_negative(c_root_num));
+  const Exact<2> c_root_denom = small_mul(4, d_sqr);
+  const auto ortho = delta.orthogonal_vector();
+
+  const Vector<Quantized,2> h = ((q>0)^(abs(q)>1)?1:-1)*Vector<Quantized, 2>(sign(ortho))*snap_div(emul(c_root_num,esqr(ortho)), c_root_denom, true);
+  const Vector<Quantized,2> center = midpoint + h;
+
+#if CHECK_CONSTRUCTIONS
+  Vector<ExactCircleArc,3> test_arcs;
+  test_arcs[0].center = center;
+  test_arcs[0].radius = snap(r);
+  test_arcs[0].index = 0;
+  test_arcs[1].center = x0;
+  test_arcs[1].radius = constructed_arc_endpoint_error_bound();
+  test_arcs[1].index = 1;
+  test_arcs[2].center = x1;
+  test_arcs[2].radius = constructed_arc_endpoint_error_bound();
+  test_arcs[2].index = 2;
+  OTHER_ASSERT(circles_intersect(asarray(test_arcs), 0, 1));
+  OTHER_ASSERT(circles_intersect(asarray(test_arcs), 0, 2));
+#endif
+
+  return tuple(snap(r), center);
+}
+
+#if CHECK_CONSTRUCTIONS
+static Tuple<real, Vec2> arc_radius_and_center(const Vec2 x0, const Vec2 x1, const real q) {
+  const auto dx = x1-x0;
+  const auto L = magnitude(dx);
+  // Compute radius, quantize, then compute center from quantized radius to reduce endpoint error
+  const auto radius = .25*L*abs(q+1/q);
+  const auto center = L ? .5*(x0+x1)+((q>0)^(abs(q)>1)?1:-1)*sqrt(max(0.,sqr(radius/L)-.25))*rotate_left_90(dx) : x0;
+
+  return tuple(radius, center);
+}
+#endif
+
+static int is_big_arc(real arc_q) {
+  const real cmp = abs(arc_q) - 1;
+  if(abs(cmp) > 1e-6) // Check that it isn't close to zero
+    return (cmp > 0);
+  else
+    return -1;
+}
+
+// Starting at v0 and walking around arcs[on_circle] in arcs[on_circle].positive, is v0 reached before v1?
+// This function is used to sort intersections in unravel_helper_arc and could probably be replaced with direct calls to circle_arc_intersects_circle with some very careful case analysis
+static bool vertices_in_order(const Arcs arcs, const int on_circle, const Vertex& v0, const Vertex& v1, const Vertex& v2) {
+  const Vertex a01 = (v0.i1 == on_circle) ? v0 : v0.reverse();
+  const Vertex a12 = (v1.i0 == on_circle) ? v1 : v1.reverse();
+  const Vertex a1b = (v2.i0 == on_circle) ? v2 : v2.reverse();
+
+  assert(a01.i1 == on_circle);
+  assert(a01.i1==a12.i0 && a12.i0==a1b.i0);
+
+  return !circle_arc_intersects_circle(arcs, a01, a12, a1b);
+}
+
+// Choose directions and left flags for intersections with c1 to try and avoid any crossings
+// For use on helper arcs created when c0 and c2 don't intersect
+static void unravel_helper_arc(const RawArray<ExactCircleArc> arcs, const int c0, const int c1, const int c2) {
+  #if CHECK_CONSTRUCTIONS
+    OTHER_ASSERT(circles_intersect(arcs, c0, c1));
+    OTHER_ASSERT(circles_intersect(arcs, c1, c2));
+  #endif
+  enum IID { R01=0, L01=1, R12=2, L12=3 }; // Intersection ID
+  const auto verts = Vector<Vertex,4>(circle_circle_intersections(arcs, c0, c1),
+                                      circle_circle_intersections(arcs, c1, c2));
+  // There are 4 intersections with c1 and its neighbors
+  auto arc_order = Vector<IID,4>(R01,L01,R12,L12);
+
+  // These swaps sort arc_order (one predicate could be eliminated by using the fact that arc_order[2] can't be L01 after sorting)
+  if(!vertices_in_order(arcs, c1, verts[R01], verts[arc_order[1]], verts[arc_order[2]]))
+    swap(arc_order[1],arc_order[2]);
+  if(!vertices_in_order(arcs, c1, verts[R01], verts[arc_order[2]], verts[arc_order[3]]))
+    swap(arc_order[2],arc_order[3]);
+  if(!vertices_in_order(arcs, c1, verts[R01], verts[arc_order[1]], verts[arc_order[2]]))
+    swap(arc_order[1],arc_order[2]);
+
+  assert(arc_order[0] == R01); // Nothing should have changed our reference arc
+  if(!(arc_order[2] != L01)) {
+    // OTHER_WARNING("Intersection detected inside helper arc");
+    return; // For now leave these as is
+  }
+  //assert(arc_order[2] != L01); // arc_order[2] should only be L01 if c0 and c2 intersect inside c1 (which means we shouldn't have created a helper arc)
+
+  // We want to arc from R01 in whichever direction doesn't cross L01
+  // Since R01 and L01 are adjacent we have either [R01, L01, X12, Y12] or [R01, X12, Y12, L01] (with X and Y as L/R or R/L)
+  // R01 will arc to whichever one of arc_order[1] or arc_order[3] isn't L01
+  const IID R01_connection = (arc_order[1] != L01) ? arc_order[1] : arc_order[3];
+  // In both cases L01 arcs to the intersection farthest (going forward or backwards) from R01
+  const IID L01_connection = arc_order[2];
+
+  // If R01's neighbor is in same direction as circle then next entry in arc order won't be L01
+  // If not, we will need to reverse this arc
+  const bool R01_pair_correctly_oriented = arc_order[1] != L01;
+
+  // We now need to choose between R01's pair and L01's pair. Since the choice of connections ensures we don't introduce unneccesary topological features it might be
+  // better to keep existing value of arcs[c0].left. For now we use smallest approximate distances.
+  const auto R01_pair_dist_sqr = (verts[R01_connection].rounded - verts[R01].rounded).sqr_magnitude();
+  const auto L01_pair_dist_sqr = (verts[L01_connection].rounded - verts[L01].rounded).sqr_magnitude();
+  const bool left_01 = L01_pair_dist_sqr < R01_pair_dist_sqr; // Choose based on smaller distance
+
+  const bool left_12 = (left_01 ? L01_connection : R01_connection) & 1; // Use low bit of enum to get left flag
+
+  const bool c1_correctly_oriented = left_01
+    ? !R01_pair_correctly_oriented // L01's pair needs opposite orientation from R01
+    : R01_pair_correctly_oriented;
+
+  // Shouldn't be able to have two helper arcs in a row so setting these flags won't conflict with previous calls to unravel_helper_arc
+  arcs[c0].left = left_01;
+  arcs[c1].left = left_12;
+
+  // Set orientation of c1 so that we get the simpler arc
+  if(!c1_correctly_oriented) {
+    arcs[c1].positive = !arcs[c1].positive;
+  }
+}
+
 Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<const CircleArc> input, const Box<Vector<real,2>> min_bounds) {
+  const Quantized allowed_vertex_error = constructed_arc_endpoint_error_bound() + Vertex::tolerance() + 1;
+  const Quantized allowed_vertex_error_sqr = sqr(allowed_vertex_error);
+
   Box<Vector<real,2>> box = min_bounds;
   box.enlarge(approximate_bounding_box(input));
 
@@ -407,81 +586,189 @@ Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<cons
   // Quantize and implicitize each arc
   IntervalScope scope;
   auto output = Nested<ExactCircleArc,false>();
-  auto out_sources = Array<int>(); // scratch array for tracking origin of merged arcs
+  auto new_contour = Array<ExactCircleArc>();
+
+  const int num_in_arcs = input.total_size();
+  int next_helper_index = num_in_arcs; // permution index used for helper arcs
+  #if CHECK_CONSTRUCTIONS
+  struct SourceData {
+    bool is_helper;
+    Vec2 x0;
+    real q;
+    Vec2 x1;
+  };
+  Hashtable<int, SourceData> source_data;
+  #endif
 
   for (const int p : range(input.size())) {
     const int base = input.offsets[p];
     const auto in = input[p];
-    out_sources.clear();
-    output.append(Array<ExactCircleArc>()); // Add a zero length array which we will update
-
+    new_contour.clear();
     const int n = in.size();
     for(int i = 0; i<n; ++i) {
       const int j = (i+1)%n;
-      // Implicitize
-      const auto x0 = in[i].x,
-                 x1 = in[j].x,
-                 dx = x1-x0;
-      const auto L = magnitude(dx);
-      const auto q = in[i].q;
-      // Compute radius, quantize, then compute center from quantized radius to reduce endpoint error
+      const auto arc_start = quant(in[i].x),
+                 arc_end = quant(in[j].x); // Quantize the start and end points of the arc
+      const auto arc_q = in[i].q; // q is dimensionless and can be used without scaling
+
+      if(arc_start == arc_end)
+        continue; // Ignore any 0 size arcs
+
+      const auto radius_and_center = construct_circle_radius_and_center(arc_start, arc_end, arc_q);
       ExactCircleArc e;
-      e.radius = max(Quantized(1),Quantized(round(quant.scale*min(.25*L*abs(q+1/q),max_radius))),Quantized(ceil(.5*quant.scale*L)));
-      const auto radius = quant.inverse.inv_scale*e.radius;
-      const auto center = L ? .5*(x0+x1)+((q>0)^(abs(q)>1)?1:-1)*sqrt(max(0.,sqr(radius/L)-.25))*rotate_left_90(dx) : x0;
-      e.center = quant(center);
+      e.radius = radius_and_center.x;
+      e.center = radius_and_center.y;
       e.index = base+i;
-      e.positive = q > 0;
+      e.positive = arc_q > 0;
       e.left = false; // Set to false to avoid compiler warning. Actual value set below
+      assert(&(input.flat[e.index]) == &(input(p,i))); // We assume e.index can be used to lookup origional q values
 
-      // All output arcs need to intersect their neighbors which will be ensured by calling tweak_arcs_to_intersect
-      // Concentric arcs are ignored since those would be redundent after tweaking
-      if(output.back().empty() || output.flat.back().center != e.center) {
-        out_sources.append(j);
-        output.append_to_back(e);
-      }
+      #if CHECK_CONSTRUCTIONS
+      OTHER_ASSERT(!source_data.contains(e.index));
+      source_data[e.index] = SourceData({false, in[i].x, arc_q, in[j].x});
+      #endif
+
+      new_contour.append(e);
     }
 
-    // Filter out back arcs if concentric with front
-    while(output.back().size() > 0 && output.back().front().center == output.back().back().center) {
-      out_sources.pop(); // remove from sources list
+    const int out_n = new_contour.size();
 
-      // We want output.back().pop(), but have to edit internal structures in the nested array
-      output.offsets.back() -= 1;
-      output.flat.pop();
-    }
-
-    auto out = output.back();
-    const int out_n = out.size();
-    assert(out_n == out_sources.size());
     // Fill in left flags
     for (int j=0,i=out_n-1;j<out_n;i=j++) {
-      const auto x = in[out_sources[i]].x,
-                 c0 = quant.inverse(out[i].center),
-                 c1 = quant.inverse(out[j].center);
-      out[i].left = cross(c1-c0,x-c0)>0;
+      const int source_index = (new_contour[i].index - base + 1) % n;
+      const auto x = in[source_index].x,
+                 c0 = quant.inverse(new_contour[i].center),
+                 c1 = quant.inverse(new_contour[j].center);
+      new_contour[i].left = cross(c1-c0,x-c0)>0;
     }
 
     // Check in case quantization created a single repeated point
-    if(out.size() == 2 && (out[0].left != out[1].left)) {
-      // Most degeneracies involve multiple arcs and are readily handled by sybolic perturbation
-      // However, in setting the left flags we can create a symbolically degenerate contour which we filter here
-      const int n = output.back().size();
+    if(new_contour.size() == 2 && (new_contour[0].left != new_contour[1].left)) {
+      continue; // Discard it if so
+    }
+    else { // Assuming we want to keep the contour...
+      output.append_empty(); // Allocate new subarray in the output
+      for (int i=0;i<out_n;++i) {
+        const int j = (i+1)%out_n;
+        output.append_to_back(new_contour[i]); // Add this arc
+        const int source_index = (new_contour[i].index - base + 1) % n;
+        const auto target_position = quant(in[source_index].x); // This is quantized value for position of arc
 
-      // Remove entire contour from output
-      output.flat.pop_elements(n);
-      output.offsets.pop();
+        if(circles_intersect(new_contour, i, j)) { // Check if we already have an intersection
+          const Vertex vert = circle_circle_intersections(new_contour, i, j)[new_contour[i].left];
+          const auto vert_error_sqr = (vert.rounded - target_position).sqr_magnitude();
+          if(vert_error_sqr <= allowed_vertex_error_sqr)
+            continue; // If error between intersection and target is small we don't need to do anything
+        }
 
-      // Remove it's sources
-      out_sources.pop_elements(n);
+        // If we fall through we either don't have an intersection or the intersection point is too far from intended position
+        // In either case we need to add a new helper arc that will have verticies close to the intersection
+        ExactCircleArc new_e;
+        new_e.center = target_position;
+        new_e.radius = constructed_arc_endpoint_error_bound();
+        new_e.positive = true;
+        new_e.left = true;
+        new_e.index = next_helper_index++;
+
+        #if CHECK_CONSTRUCTIONS
+          OTHER_ASSERT(!source_data.contains(new_e.index));
+          source_data[new_e.index] = SourceData({true, quant.inverse(target_position), 1, quant.inverse(target_position)});
+        #endif
+
+        output.append_to_back(new_e);
+
+        #if CHECK_CONSTRUCTIONS
+          const int out_i = output.back().size()-2;
+          OTHER_ASSERT(circles_intersect(output.back(),out_i, out_i + 1));
+          const auto new_verts = circle_circle_intersections(output.back(), out_i, out_i + 1);
+          const auto new_dists_sqr = vec((new_verts[0].rounded - target_position).sqr_magnitude(),(new_verts[1].rounded - target_position).sqr_magnitude());
+          OTHER_ASSERT(new_dists_sqr.min() <= allowed_vertex_error_sqr);
+        #endif
+      }
     }
   }
 
-  auto result = output.freeze();
-  // After quantization some pairs of arcs might not intersect so perform (very small) adjustments
-  tweak_arcs_to_intersect(result);
-  return tuple(quant,result);
+  // Fix directions and left flags for any helper arcs we added
+  const Array<const int> next = closed_contours_next(output);
+  const RawArray<ExactCircleArc> arcs = output.flat;
+  for(const int i0 : range(next.size())) {
+    const int i1 = next[i0];
+    if(arcs[i1].index >= num_in_arcs) { // Any helper arc will have index >= number of original arcs
+      const int i2 = next[i1];
+      unravel_helper_arc(arcs,i0,i1,i2);
+    }
+  }
+
+  // Make sure we didn't turn any small short lines int giant arcs
+  const auto verts = compute_vertices(arcs, next);
+  for(const int i0 : range(next.size())) {
+    auto& arc = arcs[i0];
+    if(arc.index >= num_in_arcs)
+      continue; // skip over helper arcs
+    const real q = input.flat[arc.index].q;
+    const int expected_big = is_big_arc(q);
+    if(expected_big == -1) // If numerical precision can be blamed leave as is (this will happen for a half-circle that could get rounded to just below or above 180 degrees)
+      continue;
+    const int i1 = next[i0];
+    const Vertex v0 = verts[i0].reverse();
+    const Vertex v1 = verts[i1];
+    const bool is_big = circle_intersections_ccw(arcs, v0, v1) != arc.positive;
+    if(is_big != expected_big)
+      arc.positive = !arc.positive;
+  }
+
+  #if CHECK_CONSTRUCTIONS
+  {
+    const Array<int> prev(next.size());
+    for(int i : range(next.size()))
+      prev[next[i]] = i;
+
+    const auto result = output.freeze();
+    const auto verts = compute_vertices(arcs, next);
+    for(const int i0 : range(next.size())) {
+      const auto& arc = arcs[i0];
+      OTHER_ASSERT(source_data.contains(arc.index));
+      SourceData data = source_data[arc.index];
+
+      const int expected_big = data.is_helper ? -1 : is_big_arc(data.q);
+      const int i1 = next[i0];
+      const Vertex v0 = verts[i0].reverse();
+      const Vertex v1 = verts[i1];
+      OTHER_ASSERT(v0.i0 == i0);
+      OTHER_ASSERT(v1.i0 == i0);
+      OTHER_ASSERT(v0.i0==v1.i0);
+      const bool is_big = circle_intersections_ccw(arcs, v0, v1) != arc.positive;
+
+      OTHER_ASSERT(expected_big == -1 || expected_big == is_big);
+
+
+      const real error_margin = 2.*allowed_vertex_error*quant.inverse.inv_scale;
+      const real v0_error = magnitude(quant.inverse(v0.rounded) - data.x0);
+      const real v1_error = magnitude(quant.inverse(v1.rounded) - data.x1);
+
+      // FIXME: Can we work out a strict error bound for error of radius and center?
+      if(false) {
+        const auto expected_radius_and_center = arc_radius_and_center(data.x0,data.x1,data.q);
+        const auto actual_radius_and_center = tuple(quant.inverse.inv_scale * arc.radius, quant.inverse(arc.center));
+
+        const real radius_error = abs(expected_radius_and_center.x - actual_radius_and_center.x);
+        const real center_error = magnitude(expected_radius_and_center.y - actual_radius_and_center.y);
+        if(radius_error > error_margin || center_error > error_margin) {
+          OTHER_WARNING(format("Center and radius errors larger than expected: center_error: %f, radius_error: %f", center_error, radius_error));
+        }
+      }
+
+      if(v0_error > error_margin || v1_error > error_margin) {
+        OTHER_FATAL_ERROR("Botched construction!");
+      }
+    }
+  }
+  #endif
+  return tuple(quant,output.freeze());
 }
+
+#if 0
+// This version doesn't cull small arcs
 
 Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input) {
   IntervalScope scope;
@@ -505,6 +792,56 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
   }
   return output;
 }
+#else
+Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input) {
+  IntervalScope scope;
+  auto out = Array<CircleArc>();
+  auto cull = Array<bool>();
+  Nested<CircleArc,false> result;
+
+  for (const int p : range(input.size())) {
+    const int base = input.offsets[p];
+    const auto in = input[p];
+    out.resize(in.size(),false,false);
+    cull.resize(in.size(),false,false);
+    const int n = in.size();
+    bool culled_prev = false;
+    int num_culled = 0;
+
+    for (int j=0,i=n-1;j<n;i=j++)
+      out[j].x = quant.inverse(circle_circle_intersections(input.flat,base+i,base+j)[in[i].left].rounded);
+    for (int j=0,i=n-1;j<n;i=j++) {
+      const auto x0 = out[i].x,
+                 x1 = out[j].x,
+                 c = quant.inverse(in[i].center);
+      const auto radius = quant.inverse.inv_scale*in[i].radius;
+      const auto half_L = .5*magnitude(x1-x0);
+      const int s = in[i].positive ^ (cross(x1-x0,c-x0)>0) ? -1 : 1;
+      out[i].q = half_L/(radius+s*sqrt(max(0.,sqr(radius)-sqr(half_L)))) * (in[i].positive ? 1 : -1);
+
+      if(culled_prev) { // Don't cull more than one arc in a row to avoid large errors for many small arcs (shouldn't have more than one helper arc in a row anyway)
+        cull[i] = false;
+        culled_prev = false;
+      }
+      else {
+        cull[i] = in[i].radius <= constructed_arc_endpoint_error_bound();
+        culled_prev = cull[i];
+        num_culled += cull[i];
+      }
+    }
+
+    if(out.size() - num_culled > 1) {
+      result.append_empty();
+      for(int i = 0; i < n; ++i) {
+        if(!cull[i])
+          result.append_to_back(out[i]);
+      }
+    }
+  }
+
+  return result.freeze();
+}
+#endif
 
 Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int depth) {
   const auto e = quantize_circle_arcs(arcs);
@@ -629,7 +966,7 @@ static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) 
 static Vector<CircleArc, 2> make_circle(Vec2 p0, Vec2 p1) { return vec(CircleArc(p0,1),CircleArc(p1,1)); }
 static void random_circle_quantize_test(int seed) {
   auto r = new_<Random>(seed);
-  
+
   {
     // First check that we can split without hitting any asserts
     const auto sizes = vec(1.e-3,1.e1,1.e3,1.e7);
@@ -649,7 +986,7 @@ static void random_circle_quantize_test(int seed) {
     const auto max_bounds = Box<Vec2>(Vec2(0.,0.)).thickened(1.e1 * log_options.max());
     const real spacing = 1e-5*max_bounds.sizes().max();
     const real max_x = max_bounds.max.x;
-    
+
     real curr_x = max_bounds.min.x;
     Nested<CircleArc, false> arcs;
     for(int i = 0; i < 50; ++i) {
@@ -667,8 +1004,6 @@ static void random_circle_quantize_test(int seed) {
 
     // If range of sizes is very large, some arcs could be filtered out if they are smaller than quantization threshold...
     OTHER_ASSERT(unioned.size() <= arcs.size());
-    // ...but for the current values, this should be happening so check that no arcs were destroyed
-    OTHER_ASSERT(unioned.size() == arcs.size());
   }
 }
 
