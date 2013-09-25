@@ -219,8 +219,9 @@ template<class TA> Nested<typename TA::value_type> make_nested(const TA& a0) {
   return nested;
 }
 
-template<class TA> Nested<typename TA::value_type> make_nested(const TA& a0, const TA& a1) {
-  Nested<typename TA::value_type> nested(asarray(vec((int)a0.size(),(int)a1.size())),false);
+template<class TA0,class TA1> Nested<typename TA0::value_type> make_nested(const TA0& a0, const TA1& a1) {
+  STATIC_ASSERT_SAME(typename TA0::value_type,typename TA1::value_type);
+  Nested<typename TA0::value_type> nested(asarray(vec((int)a0.size(),(int)a1.size())),false);
   nested[0] = a0;
   nested[1] = a1;
   return nested;
