@@ -4,7 +4,6 @@
 // Modified from code by Tyson Brochu, 2011
 
 #include <other/core/utility/rounding.h>
-
 namespace other {
 
 // All interval arithmetic must occur within an IntervalScope.  Since the rounding
@@ -23,8 +22,8 @@ struct IntervalScope {
 
 private:
   // Noncopyable
-  IntervalScope(const IntervalScope& rhs): previous_mode(0) { OTHER_UNREACHABLE(); };
- IntervalScope& operator=(const IntervalScope& rhs) { OTHER_UNREACHABLE(); };
+  IntervalScope(const IntervalScope& rhs);
+  IntervalScope& operator=(const IntervalScope& rhs);
 };
 
 }

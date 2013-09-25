@@ -8,7 +8,6 @@
 #include <other/core/math/constants.h>
 #include <other/core/python/repr.h>
 #include <other/core/utility/rounding.h>
-
 namespace other {
 
 struct Interval;
@@ -194,7 +193,8 @@ inline Interval Interval::operator*(const Interval x) const {
       r.hi  = b * d;
     }
   }
-  assert(-r.nlo <= r.hi);
+
+  assert(!(-r.nlo > r.hi)); // Use 'not greater' instead of 'less than or equal' so that nan won't trigger this
   return r;
 }
 
@@ -297,4 +297,18 @@ template<int m> static inline Box<Vector<Quantized,m>> snap_box(const Vector<Int
   return box;
 }
 
+static inline Interval abs(const Interval x) {
+  if(x.nlo > 0) {
+    if(x.hi > 0) { // x.nlo > 0 && x.hi > 0
+      return Interval(0, max(x.nlo, x.hi));
+    }
+    else { // x.nlo > 0 && x.hi <= 0
+      return Interval(-x.hi, x.nlo);
+    }
+  }
+  else {
+    return x;
+  }
 }
+
+} // namespace other

@@ -140,4 +140,9 @@ OTHER_CORE_EXPORT ostream& operator<<(ostream& output, uint128_t n);
 OTHER_CORE_EXPORT PyObject* to_python(uint128_t n);
 template<> struct FromPython<uint128_t>{OTHER_CORE_EXPORT static uint128_t convert(PyObject* object);};
 
+#if defined(__GNUC__) && defined(__LP64__)
+OTHER_CORE_EXPORT string str(__int128_t n);
+OTHER_CORE_EXPORT ostream& operator<<(ostream& output, __int128_t n);
+#endif
+
 }
