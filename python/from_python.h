@@ -58,7 +58,7 @@ template<> struct FromPython<string>{OTHER_CORE_EXPORT static string convert(PyO
 template<> struct FromPython<char>{OTHER_CORE_EXPORT static char convert(PyObject* object);};
 
 // Conversion to T& for python types
-template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T> >::type>{static T&
+template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T>>::type>{static T&
 convert(PyObject* object) {
   if (!boost::is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
     unregistered_python_type(object,&T::pytype,OTHER_DEBUG_FUNCTION_NAME);
@@ -67,8 +67,14 @@ convert(PyObject* object) {
   return *(T*)(object+1);
 }};
 
-// Conversion to const T& for non-python types
-template<class T> struct FromPython<const T&,typename boost::disable_if<boost::is_base_of<Object,T> >::type> : public FromPython<T>{};
+#ifdef OTHER_PYTHON
+// Declare has_from_python<T>
+OTHER_VALIDITY_CHECKER(has_from_python,T,from_python<T>(0))
+template<> struct has_from_python<void> : public mpl::true_ {};
+#endif
+
+// Conversion to const T& for copy constructible types
+template<class T> struct FromPython<const T&,typename boost::enable_if<has_from_python<T>>::type> : public FromPython<T>{};
 
 // Conversion from enums
 template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type> { OTHER_CORE_EXPORT static E convert(PyObject*); };
@@ -77,12 +83,5 @@ template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E
 
 // Conversion to const T
 template<class T> struct FromPython<const T> : public FromPython<T>{};
-
-#ifdef OTHER_PYTHON
-// Declare has_from_python<T>
-OTHER_VALIDITY_CHECKER(has_from_python,T,from_python<T>(0))
-template<> struct has_from_python<void> : public mpl::true_ {};
-
-#endif
 
 }
