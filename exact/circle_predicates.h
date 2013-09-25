@@ -94,6 +94,9 @@ OTHER_CORE_EXPORT bool circles_intersect(Arcs arcs, const int arc0, const int ar
 // If add = true, check whether ((0,a1)+(0,b1)).y > 0.
 template<bool add=false> bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b);
 
+// Tests if an arc segment is less then a half circle
+bool circle_intersections_ccw(Arcs arcs, const Vertex v0, const Vertex v1);
+
 // Does the piece of a1 between a01 and a12 intersect the piece of b1 between b01 and b12 (degree 6)?  a1 and b1 are assumed to intersect at ab.
 bool circle_arcs_intersect(Arcs arcs, const Vertex a01, const Vertex a12,
                                       const Vertex b01, const Vertex b12,

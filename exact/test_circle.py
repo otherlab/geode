@@ -43,6 +43,16 @@ def draw_circle_arcs(arcs,n=100,label=False,full=False,dots=False,jitter=None):
          points += jitter*random.uniform(-1,1,points.shape) # Jitter if you want to be able to differentiate concident points:
       pylab.plot(points[:,0],points[:,1])
 
+def subplot_arcs(arcs,subplot_index=111,title=None,full=True,label=True,dots=True,jitter=None):
+  import pylab
+  ax = pylab.subplot(subplot_index)
+  if title is not None:
+    pylab.title(title)
+  if full:
+    draw_circle_arcs(arcs,full=True,label=label,jitter=jitter)
+  draw_circle_arcs(arcs,label=label,dots=dots,jitter=jitter)
+  ax.set_aspect('equal')
+
 def test_circle_reverse():
   random.seed(1240405)
   for k in [2,3,4,10,100]:
@@ -66,7 +76,13 @@ def test_circle_quantize():
   q0,q1 = arcs0.flat['q'][i],arcs1.flat['q'][i]
   eq = abs(q0-q1)
   print 'ex = %g, eq = %g (%d: %g to %g)'%(ex,eq,i,q0,q1)
-  assert ex<1e-6 and eq<2e-5 #This threshold is pretty agressive and might not work for many seeds
+  assert ex<1e-6 and eq<3e-5 #This threshold is pretty agressive and might not work for many seeds
+
+def to_arcs(py_arcs):
+  arrays = []
+  for contour in py_arcs:
+    arrays.append(asarray([((a[0][0],a[0][1]),a[1]) for a in contour], dtype=CircleArc))
+  return Nested(arrays)
 
 def test_circles():
   # Test quantization routine
@@ -107,9 +123,7 @@ def test_circles():
 
   # Test CSG
   k = 3
-  full = 1
-  label = 1
-  dots = 1
+  plot_args = dict(full=False, label=True, dots=True)
   for n in 1,2,3,10,40,100:
     for i in xrange({1:10,2:5,3:4,10:6,40:20,100:10}[n]):
       correct = known.get((k,n,i))
@@ -123,35 +137,32 @@ def test_circles():
         print 'arcs0 = %s'%compact_str(arcs0)
         import pylab
         pylab.suptitle('k %d, n %d, i %d'%(k,n,i))
-        if full:
-          draw_circle_arcs(arcs0,full=True,label=label)
-        draw_circle_arcs(arcs0,label=label,dots=dots)
-        #pylab.axhline(y=0.436509,color='r')
-        pylab.axes().set_aspect('equal')
+        subplot_arcs(arcs0,full=full,label=label,dots=dots)
         pylab.show()
       arcs1 = canonicalize_circle_arcs(circle_arc_union(arcs0))
       error = 0 if n>=40 else inf if correct is None else arc_error(correct,arcs1)
-      if error>1e-5:
+      if error>2e-5:
+        print 'error = %f' % error
+        print 'expected area = %f' % circle_arc_area(to_arcs(correct))
+        print 'result area = %f' % circle_arc_area(arcs1)
         print 'arcs0 = %s'%compact_str(arcs0)
         print '\narcs1 = %s'%compact_str(arcs1)
         print '\ncorrect = %s'%compact_str(correct)
         import pylab
-        ax = pylab.subplot(121)
         pylab.suptitle('k %d, n %d, i %d, error %g'%(k,n,i,error))
-        if full:
-          draw_circle_arcs(arcs0,full=True,label=label)
-        draw_circle_arcs(arcs0,label=label,dots=dots)
-        ax.set_aspect('equal')
-        ax = pylab.subplot(122)
-        if full:
-          draw_circle_arcs(arcs1,full=True,label=label)
-        draw_circle_arcs(arcs1,label=label,dots=dots)
-        ax.set_aspect('equal')
+        subplot_arcs(arcs0, 121, "Input to union", **plot_args)
+        subplot_arcs(arcs1, 122, "Output of union", **plot_args)
+        pylab.figure()
+        subplot_arcs(arcs0, 121, "Before Quantization", **plot_args)
+        subplot_arcs(circle_arc_quantize_test(arcs0), 122, "After Quantization", **plot_args)
+        pylab.figure()
+        subplot_arcs(to_arcs(correct), 121, "Expected", **plot_args)
+        subplot_arcs(arcs1, 122, "Returned", **plot_args)
         pylab.show()
         assert False
       # Check extremely degenerate situations
       if n==40 and i<2:
-        area = circle_arc_area(arcs1) 
+        area = circle_arc_area(arcs1)
         assert allclose(area,circle_arc_area(circle_arc_union(arcs1,arcs1)))
         assert allclose(area,circle_arc_area(circle_arc_intersection(arcs1,arcs1)))
 

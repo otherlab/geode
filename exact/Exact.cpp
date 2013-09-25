@@ -5,6 +5,23 @@
 #include <other/core/array/Subarray.h>
 namespace other {
 
+RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x) {
+  int n = x.size();
+  for (;n>0;n--)
+    if (x[n-1])
+      break;
+  return x.slice(0,n);
+}
+
+RawArray<const mp_limb_t> trim(RawArray<const mp_limb_t> x) {
+  int n = x.size();
+  for (;n>0;n--)
+    if (x[n-1])
+      break;
+  return x.slice(0,n);
+}
+
+
 string mpz_str(RawArray<const mp_limb_t> limbs, const bool hex) {
   OTHER_ASSERT(limbs.size());
   if (mp_limb_signed_t(limbs.back())<0) { // Negative

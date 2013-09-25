@@ -41,4 +41,9 @@ template<class U,class V> static auto emul(const U& s, const Vector<V,2>& v)
   return Vector<decltype(s*v.x),2>(s*v.x,s*v.y);
 }
 
+template<class T> static auto esqr(const Vector<T,2>& u)
+  -> decltype(vec(sqr(u.x),sqr(u.y))) {
+  return vec(sqr(u.x),sqr(u.y));
+}
+
 }
