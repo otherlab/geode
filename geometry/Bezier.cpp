@@ -173,8 +173,8 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
 
 template<int d> Span<d> Bezier<d>::segment(real t) const {
   auto it = knots.lower_bound(t);
-  if(it==knots.end()) return Span<d>(it->second,it->second,it->first,it->first);
-  if(it != knots.begin() ) --it;
+  OTHER_ASSERT(it != knots.end());
+  if (it != knots.begin()) --it;
   auto iit = it; ++iit;
   return Span<d>(it->second,iit->second,it->first,iit->first);
 }
