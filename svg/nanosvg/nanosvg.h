@@ -44,10 +44,10 @@ struct SVGInfo
 {
   char x_unit[2], y_unit[2], width_unit[2], height_unit[2];
   int x, y, width, height;
-  
+
   char viewbox_units[4][2];
   int viewbox[4];
-  
+
   char preserveAspectRatio[9];
 };
 
@@ -56,19 +56,19 @@ struct SVGPath
   // polyline
   float* pts;
   int npts;
-  
+
   // added: bezier segments
   float* bezpts;
   int nbezpts;
-  
+
   unsigned int elementIndex; //can be used to differentiate multiple subpaths from same path. Will monotonicaly decrease while traversing next
   unsigned int fillColor;
   unsigned int strokeColor;
   float strokeWidth;
-  char hasFill;
+  int hasFill;
   char fillRule; // 1 for nonzero (default), 2 for evenodd
   char hasStroke;
-  char closed;
+  int closed;
   struct SVGPath* next;
 };
 

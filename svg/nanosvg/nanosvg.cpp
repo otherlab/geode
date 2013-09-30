@@ -174,7 +174,7 @@ struct SVGAttrib
     float fillOpacity;
     float strokeOpacity;
     float strokeWidth;
-    char hasFill;
+    int hasFill;
     char fillRule; // 1 for nonzero (default), 2 for evenodd
     char hasStroke;
     char visible;
@@ -261,7 +261,7 @@ static struct SVGParser* svgCreateParser()
     p->attr[0].fillOpacity = 1;
     p->attr[0].strokeOpacity = 1;
     p->attr[0].strokeWidth = 1;
-    p->attr[0].hasFill = 1;
+    p->attr[0].hasFill = 0;
     p->attr[0].fillRule = 1;
     p->attr[0].hasStroke = 0;
     p->attr[0].visible = 1;
@@ -362,7 +362,7 @@ static void svgPopAttr(struct SVGParser* p)
         p->attrHead--;
 }
 
-static void svgCreatePath(struct SVGParser* p, char closed)
+static void svgCreatePath(struct SVGParser* p, int closed)
 {
     float* t;
     float* pt;
@@ -1069,7 +1069,7 @@ static void pathArcTo(struct SVGParser* p, float* cpx, float* cpy, float* args, 
     float y1 = *cpy;
     float rx = fabs(args[0]);
     float ry = fabs(args[1]);
-    float phi = (float)(M_PI/180)*args[2]; 
+    float phi = (float)(M_PI/180)*args[2];
     int large = args[3]!=0;
     int sweep = args[4]!=0;
     float x2 = args[5] + rel*x1;
@@ -1142,7 +1142,7 @@ static void svgParsePath(struct SVGParser* p, const char** attr)
     int rargs = 0; //modification: initialize to avoid warnings
     float cpx =0, cpy =0, cpx2 =0, cpy2=0; //modification: initialize to avoid warnings
     const char* tmp[4];
-    char closedFlag;
+    int closedFlag = 0;
     int i;
     char item[64];
     //do a first pass just to get attributes and ignoring path data
@@ -1425,7 +1425,6 @@ static void svgParsePoly(struct SVGParser* p, const char** attr, int closeFlag)
     char item[64];
 
     bool start = true;
-
     svgResetPath(p);
 
     for (i = 0; attr[i]; i += 2)

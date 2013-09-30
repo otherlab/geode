@@ -36,10 +36,13 @@ static vector<Ref<Bezier<2> > > svg_paths_to_beziers(const struct SVGPath* plist
       Vector<real,2> tan_out = (i<it->nbezpts-1) ? Vector<real,2>(it->bezpts[2*(i+1)], it->bezpts[2*(i+1)+1]) : pt;
       bez.append_knot(pt,tan_in,tan_out);
     }
-    if(   it->closed
-       || (it->hasFill && bez.knots.size()>2)) { // SVG implicitly closes filled shapes.  Obey that here, unless we only have two knots.
-      auto it = bez.knots.end();--it;
-      (it->second->pt - (--it)->second->pt).magnitude() > 1e-8 ? bez.fuse_ends() : bez.close();
+    if(it->closed
+       || (it->hasFill && bez.knots.size()>2)) { // SVG implicitly closes filled shapes.  Obey that here, unless we only have two knots
+      auto last = bez.knots.end();
+      --last;
+      auto prev = last;
+      --prev;
+      (last->second->pt - prev->second->pt).magnitude() > 1e-8 ? bez.close() : bez.fuse_ends();
     }
   }
 
