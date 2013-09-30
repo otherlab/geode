@@ -9,6 +9,7 @@
 from __future__ import (division,absolute_import)
 
 import platform
+import numpy
 from numpy import *
 if platform.system()=='Windows':
   import other_all as other_core
@@ -141,6 +142,8 @@ def signed_angle_between(u,v,n):
 
 def angle(v):
   v = asarray(v)
+  if iscomplexobj(v):
+    return numpy.angle(v)
   assert v.shape[-1]==2
   return atan2(v[...,1],v[...,0])
 
