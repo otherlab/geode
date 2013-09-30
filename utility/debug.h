@@ -5,10 +5,16 @@
 #include <typeinfo>
 #include <string>
 
-#ifdef _WIN32
-#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__FUNCTION__) // cast to const char* to work around error in noreturn
+// Wow.  The gcc folk have fixed segfault bugs for __FUNCTION__ or __PRETTY_FUNCTION__ numerous times.
+// Is this really so complicated?  I am giving up on gcc 4.8 and using 0.
+#if defined(__clang__)
+#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__PRETTY_FUNCTION__)
+#elif defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__==4 && __GNUC_MINOR__==8
+#define OTHER_DEBUG_FUNCTION_NAME ("unknown") // gcc 4.8 is broken
+#elif defined(__WIN32__)
+#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__FUNCSIG__)
 #else
-#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__PRETTY_FUNCTION__) // cast to const char* to work around error in noreturn
+#define OTHER_DEBUG_FUNCTION_NAME ((const char*)__FUNCTION__)
 #endif
 
 #define OTHER_WARN_IF_NOT_OVERRIDDEN() \
