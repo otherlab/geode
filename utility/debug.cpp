@@ -41,7 +41,7 @@ void warning(const string& message,const char* function,const char* file,unsigne
 }
 
 void function_is_not_defined(const char* function,const char* file,unsigned int line,const type_info& type) {
-  string error=format("%s:%s:%d: Function not defined by %s",file,function,line,type.name());
+  const string error = format("%s:%s:%d: Function not defined by %s",file,function,line,type.name());
   if (error_callback) {
     error_callback(error);
 #ifdef _WIN32
@@ -52,7 +52,7 @@ void function_is_not_defined(const char* function,const char* file,unsigned int 
 }
 
 void not_implemented(const char* function,const char* file,unsigned int line,const char* message) {
-  string error=format("%s:%s:%d: Not implemented: %s",file,function,line,message?message:"something");
+  const string error = format("%s:%s:%d: Not implemented: %s",file,function,line,message?message:"something");
   if (error_callback) {
     error_callback(error);
 #ifdef _WIN32
@@ -63,7 +63,7 @@ void not_implemented(const char* function,const char* file,unsigned int line,con
 }
 
 void fatal_error(const char* function,const char* file,unsigned int line,const char* message) {
-  string error=format("%s:%s:%d: %s",file,function,line,message?message:"Fatal error");
+  const string error = format("%s:%s:%d: %s",file,function,line,message?message:"Fatal error");
   if (error_callback) {
     error_callback(error);
 #ifdef _WIN32
@@ -74,7 +74,7 @@ void fatal_error(const char* function,const char* file,unsigned int line,const c
 }
 
 void assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message) {
-  string error = format("%s:%s:%d: %s, condition = %s",file,function,line,message?message:"Assertion failed",condition);
+  const string error = format("%s:%s:%d: %s, condition = %s",file,function,line,message?message:"Assertion failed",condition);
   static const bool break_on_assert = getenv("OTHER_BREAK_ON_ASSERT")!=0;
   if (break_on_assert) {
     Log::cout<<flush;
