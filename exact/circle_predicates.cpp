@@ -315,8 +315,8 @@ template<bool add,class P3> OTHER_ALWAYS_INLINE static inline bool perturbed_upw
   typedef UpwardsA<add> A; // Degree 5
   typedef UpwardsB<1> B1;  // Degree 3
   typedef UpwardsB<2> B2;
-  typedef Beta<0,1> C1;    // Degree 4
-  typedef Beta<0,2> C2;
+  OTHER_DEBUG_ONLY(typedef Beta<0,1> C1;) // Degree 4
+  OTHER_DEBUG_ONLY(typedef Beta<0,2> C2;)
 
   // First, some consistency checks
   assert(abs(sign1)==1 && abs(sign2)==1);

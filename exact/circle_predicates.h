@@ -17,7 +17,7 @@ struct Vertex {
   uint8_t q0,q1; // Quadrants relative to i0's center and i1's center, respectively
   exact::Vec2 rounded; // The nearly exactly rounded intersect, differing from the exact intersection by at most vertex::tolerance.
 
-  static const Quantized tolerance() { return 2; }
+  static Quantized tolerance() { return 2; }
 
   bool operator==(const Vertex v) const {
     return i0==v.i0 && i1==v.i1 && left==v.left;
