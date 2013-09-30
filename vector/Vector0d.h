@@ -121,6 +121,15 @@ public:
     static Vector ones()
     {return Vector();}
 
+    // For stl
+    T* begin() { return 0; }
+    T* end() { return 0; }
+    const T* begin() const { return 0; }
+    const T* end() const { return 0; }
+
+    Vector sorted() const
+    {return *this;}
+
     template<class RW>
     void read(std::istream&)
     {}
