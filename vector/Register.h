@@ -6,6 +6,7 @@
 #include <other/core/array/forward.h>
 #include <other/core/utility/config.h>
 #include <other/core/vector/forward.h>
+#include <other/core/array/RawArray.h>
 namespace other {
 
 OTHER_CORE_EXPORT Frame<Vector<real,2>> rigid_register(RawArray<const Vector<real,2>> X0, RawArray<const Vector<real,2>> X1, RawArray<const real> mass = RawArray<const real>());

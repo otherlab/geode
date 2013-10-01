@@ -2,7 +2,7 @@
 // Class SimplexTree
 //#####################################################################
 #pragma once
-
+#include <other/core/utility/config.h>
 #include <other/core/geometry/forward.h>
 #include <other/core/geometry/BoxTree.h>
 #include <other/core/mesh/SegmentMesh.h>

@@ -9,8 +9,6 @@
 #include <other/core/vector/Vector.h>
 namespace other {
 
-// True if edge x01 intersects triangle x234.  If an 
-
 // True if the edges x01 and x23 intersect an odd or degenerate number of times during linear motion
 OTHER_CORE_EXPORT bool edge_edge_collision_parity(const Vector<double,3>& x0old, const Vector<double,3>& x1old, const Vector<double,3>& x2old, const Vector<double,3>& x3old,
                                                   const Vector<double,3>& x0new, const Vector<double,3>& x1new, const Vector<double,3>& x2new, const Vector<double,3>& x3new);
