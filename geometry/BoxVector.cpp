@@ -109,7 +109,7 @@ INSTANTIATION_HELPER(real,3)
 
 #ifdef OTHER_PYTHON
 
-static void bounding_box_py_helper(Array<Box<real>>& box, PyObject* object) {
+static void bounding_box_py_helper(const int depth, Array<Box<real>>& box, PyObject* object) {
   if (const auto array = numpy_from_any(object,NumpyDescr<real>::descr(),0,100,NPY_ARRAY_CARRAY_RO,0)) {
     // object is a rectangular numpy array
     const int rank = PyArray_NDIM((PyArrayObject*)array);
@@ -131,10 +131,12 @@ static void bounding_box_py_helper(Array<Box<real>>& box, PyObject* object) {
         box[j].enlarge(data[i*d+j]);
     OTHER_DECREF(array);
   } else {
+    if (depth > 20)
+      throw RuntimeError("bounding_box: maximum recursion depth exceeded, maybe you passed in a str?");
     // object is either badly formed or has irregular dimensions.  Loop over the structure manually.
     const auto iterator = steal_ref_check(PyObject_GetIter(object));
     while (const auto item = steal_ptr(PyIter_Next(&*iterator)))
-      bounding_box_py_helper(box,item.get());
+      bounding_box_py_helper(depth+1,box,item.get());
     if (PyErr_Occurred()) // PyIter_Next returns 0 for both done and error, so check what happened
       throw_python_error();
   }
@@ -155,7 +157,7 @@ static PyObject* bounding_box_py(PyObject* object) {
 
   // object is neither a numpy array nor a Nested, so loop over it manually
   Array<Box<real>> box;
-  bounding_box_py_helper(box,object);
+  bounding_box_py_helper(0,box,object);
   if (box.size()==2)
     return to_python(Box<Vector<real,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
   else if (box.size()==3)
