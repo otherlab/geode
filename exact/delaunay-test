@@ -1,0 +1,114 @@
+#!/usr/bin/env python
+
+from __future__ import division
+from other.core import *
+from other.core.exact import *
+from other.core.value import parser
+from other.gui import *
+from OpenGL import GL
+import time
+import sys
+
+props = PropManager()
+vertices = props.add('vertices',100).set_category('delaunay')
+velocity = props.add('velocity',1.).set_category('delaunay')
+frequency = props.add('frequency',1.).set_category('delaunay')
+seed = props.add('seed',1718).set_category('delaunay')
+mode = props.add('mode','well').set_allowed('well circle degenerate'.split()).set_category('delaunay')
+validate = props.add('validate',False).set_category('delaunay')
+
+current_time = Prop('time',0.)
+
+@cache
+def initial():
+  random.seed(seed())
+  n = vertices()
+  if mode()=='well':
+    return random.randn(n,2),velocity()*random.randn(n,2),frequency()*random.uniform(low=1,high=2,size=n)
+  elif mode()=='circle':
+    u = random.random(n)+random.random(n)
+    r = minimum(2-u,u)
+    x = .999*r[:,None]*polar(2*pi*random.random(n))
+    v = velocity()*random.uniform(.1,1,n)[:,None]*polar(2*pi*random.random(n))
+    return x,v
+  elif mode()=='degenerate':
+    return 2*pi*random.random(n),1e-7*velocity()*random.randn(n)
+
+@cache
+def colors():
+  random.seed(seed()+1331)
+  return wheel_color(random.random(vertices()))
+
+@cache
+def current():
+  if mode()=='well':
+    x,v,w = initial()
+    w = w[:,None]
+    wt = w*current_time()
+    return x*cos(wt)+v*sin(wt)
+  elif mode()=='circle':
+    t = current_time()
+    x,v = initial()
+    # Warp time so that |v| = 1
+    speed = magnitudes(v)
+    t *= speed
+    v = v/speed[:,None]
+    # Shift time so that at t = 0, position is orthogonal to velocity
+    tc = -dots(x,v)
+    x = x+tc[:,None]*v
+    t = t-tc
+    # Solve for the time to various collisions
+    xx = sqr_magnitudes(x)[:,None]
+    t1 = sqrt(1-xx) # First collision
+    t2 = sqrt(xx) # Second collision is at t1+2*t2
+    vp = -x/t2
+    # Shift time so that at t = 0, we are moving away from touching the circle at velocity v
+    t = ((t[:,None]+t1)%(4*(t1+t2)))
+    x -= t1*v
+    # Walk around the quad
+    def walk(tm,v):
+      x[:] += minimum(t,tm)*v
+      t[:] = maximum(t-tm,0)
+    walk(2*t1,v)
+    walk(2*t2,vp)
+    walk(2*t1,-v)
+    walk(2*t2,-vp)
+    return x
+  elif mode()=='degenerate':
+    a,v = initial()
+    return polar(a+current_time()*v)
+
+@cache
+def delaunay():
+  return delaunay_points(current(),validate=validate())
+
+class DelaunayScene(Scene):
+  def render(self,*args):
+    edges = TriangleMesh(delaunay().elements()).segment_mesh().elements
+    X = current()
+    c = colors()  
+    GL.glBegin(GL.GL_LINES)
+    gl_colored_vertices(c[edges],X[edges])
+    GL.glEnd()
+
+  def bounding_box(self):
+    X = current()
+    return Box(hstack([X.min(axis=0),0]),hstack([X.max(axis=0),0]))
+
+def main():
+  app = QEApp(sys.argv,True)
+  main = MainWindow(props)
+  main.view.toggle_2d_mode(True)
+  main.view.interaction_mode.set(InteractionMode('flat'))
+  main.view.interaction_mode().track = 0
+  main.view.add_scene('delaunay',DelaunayScene())
+  parser.parse(props,'Delaunay triangulation demo')
+  main.view.show_all(True)
+  main.init()
+  start_time = time.time()
+  timer = Timer((lambda:current_time.set(time.time()-start_time)),.02,False)
+  main.show_prop_section('delaunay')
+  app.run()
+
+if __name__=='__main__':
+  main()

@@ -23,6 +23,7 @@ OTHER_PYTHON_MODULE(other_core) {
   OTHER_WRAP(random)
   OTHER_WRAP(value)
   OTHER_WRAP(force)
+  OTHER_WRAP(exact)
   OTHER_WRAP(solver)
   OTHER_WRAP(openmesh)
   OTHER_WRAP(svg_to_bezier)
