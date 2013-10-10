@@ -41,6 +41,8 @@ def test_const():
     assert False
   except RuntimeError:
     pass
+  except ValueError:
+    pass
 
 def test_refcount():
   a = array([],dtype=int32)
