@@ -43,4 +43,8 @@ template<class TS,int d> static inline Quantizer<TS, d> quantizer(const Box<Vect
   return Quantizer<TS,d>(box);
 }
 
+template<class TS,int d> static inline Hash hash_reduce(const Quantizer<TS, d>& q) {
+  return Hash(q.center,q.scale,q.shifted_center,q.inverse.center,q.inverse.inv_scale);
+}
+
 }

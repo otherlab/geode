@@ -259,6 +259,10 @@ template<class T,bool f0,bool f1> Nested<typename boost::remove_const<T>::type,f
                                                              concatenate(a0.flat,a1.flat));
 }
 
+template<class T,bool f> static inline Hash hash_reduce(const Nested<T,f>& a) {
+  return Hash(a.offsets,a.flat);
+}
+
 #ifdef OTHER_PYTHON
 template<class T> PyObject* to_python(const Nested<T>& array); // Defined in array/convert.h
 template<class T> struct FromPython<Nested<T>>{ static Nested<T> convert(PyObject* object);}; // Defined in array/convert.h

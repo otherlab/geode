@@ -93,4 +93,10 @@ static inline CircleArc operator*(const Frame<Vector<real,2>>& a,    const Circl
 static inline CircleArc operator+(const Vector<real,2>& t, const CircleArc& c) { return CircleArc(t+c.x,c.q); }
 static inline CircleArc operator+(const CircleArc& c, const Vector<real,2>& t) { return CircleArc(t+c.x,c.q); }
 
+// Hashing for circle arcs
+template<> struct is_packed_pod<CircleArc> : public mpl::true_{};
+static inline Hash hash_reduce(const ExactCircleArc& a) {
+  return Hash(a.center,a.radius,a.index,a.positive,a.left);
+}
+
 }
