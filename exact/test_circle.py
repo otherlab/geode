@@ -148,17 +148,18 @@ def test_circles():
         print 'arcs0 = %s'%compact_str(arcs0)
         print '\narcs1 = %s'%compact_str(arcs1)
         print '\ncorrect = %s'%compact_str(correct)
-        import pylab
-        pylab.suptitle('k %d, n %d, i %d, error %g'%(k,n,i,error))
-        subplot_arcs(arcs0, 121, "Input to union", **plot_args)
-        subplot_arcs(arcs1, 122, "Output of union", **plot_args)
-        pylab.figure()
-        subplot_arcs(arcs0, 121, "Before Quantization", **plot_args)
-        subplot_arcs(circle_arc_quantize_test(arcs0), 122, "After Quantization", **plot_args)
-        pylab.figure()
-        subplot_arcs(to_arcs(correct), 121, "Expected", **plot_args)
-        subplot_arcs(arcs1, 122, "Returned", **plot_args)
-        pylab.show()
+        if 0: # Enable this if you want comparisons between expected and actual results
+          import pylab
+          pylab.suptitle('k %d, n %d, i %d, error %g'%(k,n,i,error))
+          subplot_arcs(arcs0, 121, "Input to union", **plot_args)
+          subplot_arcs(arcs1, 122, "Output of union", **plot_args)
+          pylab.figure()
+          subplot_arcs(arcs0, 121, "Before Quantization", **plot_args)
+          subplot_arcs(circle_arc_quantize_test(arcs0), 122, "After Quantization", **plot_args)
+          pylab.figure()
+          subplot_arcs(to_arcs(correct), 121, "Expected", **plot_args)
+          subplot_arcs(arcs1, 122, "Returned", **plot_args)
+          pylab.show()
         assert False
       # Check extremely degenerate situations
       if n==40 and i<2:
