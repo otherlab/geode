@@ -161,7 +161,6 @@ int parsexml(char* input,
     return 1;
 }
 
-
 /* Simple SVG parser. */
 
 #define SVG_MAX_ATTR 128
@@ -436,7 +435,12 @@ static void svgCreatePath(struct SVGParser* p, int closed)
 
 static int isnum(char c)
 {
-    return strchr("0123456789+-.eE", c) != 0;
+    return c && (strchr("0123456789+-.eE", c) != 0);
+}
+
+static int isdigit(char c)
+{
+     return c && (strchr("0123456789", c) != 0);
 }
 
 /*static const char* parsePathFloats(const char* s, float* arg, int n)
@@ -463,7 +467,6 @@ static int isnum(char c)
     return s;
 }*/
 
-
 static const char* getNextPathItem(const char* s, char* it)
 {
     int i = 0;
@@ -471,29 +474,66 @@ static const char* getNextPathItem(const char* s, char* it)
     // Skip white spaces and commas
     while (*s && (isspace(*s) || *s == ',')) s++;
     if (!*s) return s;
-    if (*s == '-' || *s == '+' || isnum(*s))
+    if(strchr("0123456789+-.", *s) != 0)
     {
-        while (*s == '-' || *s == '+')
+        // Optional leading sign
+        if(*s == '-' || *s == '+')
         {
             if (i < 63) it[i++] = *s;
             s++;
         }
-        while (*s && *s != '-' && *s != '+' && isnum(*s))
+
+        // Digits before decimal
+        while (isdigit(*s))
         {
             if (i < 63) it[i++] = *s;
             s++;
         }
+
+        // Optional decimal place
+        if(*s == '.')
+        {
+            if (i < 63) it[i++] = *s;
+            s++;
+        }
+
+        // Digits after decimal
+        while (isdigit(*s))
+        {
+            if (i < 63) it[i++] = *s;
+            s++;
+        }
+
+        // Optional exponent
+        if(*s == 'e' || *s == 'E')
+        {
+            if (i < 63) it[i++] = *s;
+            s++;
+            // Optional exponent sign
+            if(*s == '-' || *s == '+')
+            {
+                if (i < 63) it[i++] = *s;
+                s++;
+            }
+            // Digits before decimal
+            while (isdigit(*s))
+            {
+                if (i < 63) it[i++] = *s;
+                s++;
+            }
+        }
+
         it[i] = '\0';
     }
     else
     {
+        // If not a number get the one character movement command
         it[0] = *s++;
         it[1] = '\0';
         return s;
     }
     return s;
 }
-
 
 static unsigned int parseColor(const char* str)
 {
@@ -872,7 +912,6 @@ static void pathMoveTo(struct SVGParser* p, float* cpx, float* cpy, float* args,
     svgPathPoint(p, *cpx, *cpy);
     svgBezierPoint(p, *cpx, *cpy);
 }
-
 
 static void pathLineTo(struct SVGParser* p, float* cpx, float* cpy, float* args, int rel)
 {
