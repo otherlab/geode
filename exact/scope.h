@@ -13,11 +13,11 @@ struct IntervalScope {
 
   IntervalScope()
     : previous_mode(fegetround()) {
-   fesetround(FE_UPWARD);
+    safe_fesetround(FE_UPWARD);
   }
 
   ~IntervalScope() {
-    fesetround(previous_mode);
+    safe_fesetround(previous_mode);
   }
 
 private:

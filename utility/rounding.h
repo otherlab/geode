@@ -30,9 +30,17 @@ static inline int fegetround() {
 
 static inline int fesetround(int mode) {
   assert((mode&_MCW_RC)==mode);
-  return _controlfp(mode,_MCW_RC);
+  _controlfp(mode,_MCW_RC);
+  return 0; // Always indicate success
 }
 
 #endif
+
+// Clang optimizations don't respect fesetround, so trick it into avoiding code
+// motion around such calls.  For safety, do this for all other compilers as well.
+// This is a cludge, but a necessary one due to clang's stupidity.
+static inline void safe_fesetround(int mode) {
+  OTHER_ASSERT(!fesetround(mode));
+}
 
 }
