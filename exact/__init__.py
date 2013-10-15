@@ -10,12 +10,8 @@ else:
   from other_core import *
   import other_core
 
-def delaunay_points(X,Mesh=CornerMesh,validate=False):
-  if Mesh is HalfedgeMesh:
-    return delaunay_points_halfedge(X,validate)
-  elif Mesh is CornerMesh:
-    return delaunay_points_corner(X,validate)
-  raise TypeError('expected Mesh = HalfedgeMesh or CornerMesh, got %s'%Mesh)
+def delaunay_points(X,validate=False):
+  return delaunay_points_py(X,validate)
 
 def polygon_union(*polys):
   '''The union of possibly intersecting polygons, assuming consistent ordering'''
