@@ -9,7 +9,7 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
   nanosphere = TriangleMesh([(0,1,2),(0,2,1)])
   print
   print Mesh.__name__
-  for soup in nanosphere,icosahedron_mesh()[0],torus_topology(4,5),double_torus_mesh(),cylinder_topology(5,6):
+  for soup in nanosphere,icosahedron_mesh()[0],torus_topology(4,5),double_torus_mesh(),cylinder_topology(6,5):
     # Learn about triangle soup
     n_vertices = soup.nodes()
     n_edges = len(soup.segment_mesh().elements)

@@ -20,7 +20,7 @@ from .utility import *
 from .array import *
 from .exact import *
 from .geometry import *
-from .value import Prop
+from .value import *
 from .vector import *
 from .mesh import *
 real = other_core.real
