@@ -74,7 +74,7 @@ OTHER_CORE_EXPORT void reverse_arcs(Nested<CircleArc> arcs);
 
 // Quantize from approximate to exact representations, taking care to ensure validity of the quantized result.
 // If min_bounds isn't empty the Quantizer will use an appropriate scale to work with other features inside of min_bounds
-OTHER_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(Nested<const CircleArc> arcs, const Box<Vector<real,2>> min_bounds=Box<Vector<real,2>>::empty_box());
+OTHER_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Box<Vector<real,2>> min_bounds=Box<Vector<real,2>>::empty_box());
 OTHER_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input);
 
 // exact_split_circle_arcs prunes away contours that are too small to intersect with a horizontal line.  Normally this can be

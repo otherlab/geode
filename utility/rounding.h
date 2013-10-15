@@ -12,6 +12,9 @@ namespace other {
 // We use the native API on posix, or emulate it on Windows.
 // These functions should not be called in performance critical loops.
 
+// Be careful when using fesetround as Clang can 'optimize' your code by moving
+// operations past the fesetround call and has no safe mechanism to prevent this.
+
 #ifdef _WIN32
 
 // Teach Windows that we care about floating point rounding modes
@@ -35,12 +38,5 @@ static inline int fesetround(int mode) {
 }
 
 #endif
-
-// Clang optimizations don't respect fesetround, so trick it into avoiding code
-// motion around such calls.  For safety, do this for all other compilers as well.
-// This is a cludge, but a necessary one due to clang's stupidity.
-static inline void safe_fesetround(int mode) {
-  OTHER_ASSERT(!fesetround(mode));
-}
 
 }
