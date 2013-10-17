@@ -66,7 +66,7 @@ read(const std::string& filename)
     if(!info_ptr) throw IOError(format("Error reading png file %s",filename));
     if(setjmp(png_jmpbuf(png_ptr))) throw IOError(format("Error reading png file %s",filename));
     png_init_io(png_ptr,file);
-    png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_STRIP_ALPHA | PNG_TRANSFORM_PACKING,0);
+    png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_STRIP_ALPHA | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_EXPAND,0);
     int width=png_get_image_width(png_ptr,info_ptr),height=png_get_image_height(png_ptr,info_ptr);
 
     Array<Vector<T,3>,2> image(height,width);
@@ -90,7 +90,7 @@ read_alpha(const std::string& filename)
     if(!info_ptr) throw IOError(format("Error reading png file %s",filename));
     if(setjmp(png_jmpbuf(png_ptr))) throw IOError(format("Error reading png file %s",filename));
     png_init_io(png_ptr,file);
-    png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING,0);
+    png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_EXPAND,0);
     int width=png_get_image_width(png_ptr,info_ptr),height=png_get_image_height(png_ptr,info_ptr);
 
     Array<Vector<T,4>,2> image(height,width);
@@ -119,7 +119,7 @@ template<> struct ColorPolicy<4> {
   enum {Type = PNG_COLOR_TYPE_RGBA};
 };
 
-template<class T, int C> void 
+template<class T, int C> void
 write_helper(const std::string& filename,RawArray<const Vector<T,C>,2> image)
 {
     FILE* file=fopen(filename.c_str(),"wb");
@@ -176,7 +176,7 @@ template<class T,int C> std::vector<unsigned char> write_to_memory_helper(RawArr
   if(!info_ptr) OTHER_FATAL_ERROR("Error writing png file to buffer");
 
   if(setjmp(png_jmpbuf(png_ptr))) OTHER_FATAL_ERROR("Error writing png file");
-  
+
   png_set_write_fn(png_ptr, &result, &VecWriter::write, &VecWriter::flush);
 
   png_set_IHDR(png_ptr,info_ptr,width,height,8,ColorPolicy<C>::Type,PNG_INTERLACE_NONE,PNG_COMPRESSION_TYPE_DEFAULT,PNG_FILTER_TYPE_DEFAULT);
