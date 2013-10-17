@@ -193,6 +193,13 @@ public:
     flat.append(element);
   }
 
+  // Remove an element from the last subarray
+  void pop_from_back() {
+    assert(!back().empty());
+    flat.pop();
+    --offsets.back();
+  }
+
   // Extend the last subarray
   template<class TArray> void extend_back(const TArray& append_array) {
     static_assert(!frozen,"To use extend_back, set frozen=false and eventually call freeze()");

@@ -753,11 +753,6 @@ OTHER_NEVER_INLINE Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circ
   return tuple(quant,output.freeze());
 }
 
-typedef other::Tuple<other::Quantizer<double, 2>, other::Nested<other::ExactCircleArc, true> > (*F)(other::Nested<const other::CircleArc, true>, other::Box<other::Vector<double, 2> >, other::Quantizer<double, 2>);
-typedef const other::Nested<const other::CircleArc, true> &A0;
-typedef const other::Box<other::Vector<double, 2> > &A1;
-typedef const other::Quantizer<double, 2> &A2;
-
 Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(const Nested<const CircleArc> input, const Box<Vector<real,2>> min_bounds) {
   Box<Vector<real,2>> box = min_bounds;
   box.enlarge(approximate_bounding_box(input));
@@ -811,6 +806,15 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
   for (const int p : range(input.size())) {
     const int base = input.offsets[p];
     const auto in = input[p];
+    if(in.size() == 1) { // Catch any size one circle arcs and convert them into full circles
+      const auto el = in[0].center - EV2(in[0].radius, 0);
+      const auto er = in[0].center + EV2(in[0].radius, 0);
+      result.append_empty();
+      result.append_to_back(CircleArc(quant.inverse(er), in[0].positive ? 1 : -1));
+      result.append_to_back(CircleArc(quant.inverse(el), in[0].positive ? 1 : -1));
+      continue;
+    }
+
     out.resize(in.size(),false,false);
     cull.resize(in.size(),false,false);
     const int n = in.size();

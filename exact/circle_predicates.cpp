@@ -441,11 +441,11 @@ static bool circle_intersections_ccw_helper(Arcs arcs, const Vertex v0, const Ve
   }
 }
 // Tests if an arc segment is less then a half circle
-bool circle_intersections_ccw(Arcs arcs, const Vertex v0, const Vertex v1) {
-  assert(v0.i0==v1.i0);
-  const Vector<Interval,2> center(arcs[v0.i0].center);
-  return FILTER(cross(v0.p()-center,v1.p()-center),
-                circle_intersections_ccw_helper(arcs,v0,v1));
+bool circle_intersections_ccw(Arcs arcs, const Vertex v01, const Vertex v02) {
+  assert(v01.i0==v02.i0);
+  const Vector<Interval,2> center(arcs[v01.i0].center);
+  return FILTER(cross(v01.p()-center,v02.p()-center),
+                circle_intersections_ccw_helper(arcs,v01,v02));
 }
 
 // Does the (a1,b) intersection occur on the piece of a1 between a0 and a2?  a1 and b are assumed to intersect.
@@ -587,7 +587,7 @@ struct HorizontalA { template<class TV> static PredicateType<3,TV> eval(const TV
 struct HorizontalB { template<class TV> static PredicateType<1,TV> eval(const TV S0, const TV S1, const TV S2) {
   return S0.x-S1.x;
 }};}
-static bool circle_intersection_below_horizontal(Arcs arcs, const Vertex a01, const HorizontalVertex a0y) {
+bool circle_intersection_below_horizontal(Arcs arcs, const Vertex a01, const HorizontalVertex a0y) {
   assert(a01.i0==a0y.arc);
   return FILTER(a0y.y-a01.p().y,
                 perturbed_predicate_sqrt<HorizontalA,HorizontalB,Beta<0,1>>(a01.left?1:-1,aspoint(arcs,a01.i0),aspoint(arcs,a01.i1),aspoint_horizontal(a0y.y)));
