@@ -10,7 +10,7 @@ def test_predicates():
 def test_constructions():
   construction_tests()
 
-def delaunay_test(Mesh,benchmark=False,cgal=False,origin=True,circle=False):
+def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False):
   random.seed(8711)
   for n in range(3,10)+[50,100,563,1025,2000,-2000]+benchmark*[1<<20,-1<<20]:
     if n<0 and not origin:
@@ -18,8 +18,8 @@ def delaunay_test(Mesh,benchmark=False,cgal=False,origin=True,circle=False):
     if n>0 and circle: name,X = 'circle',polar(random.uniform(0,2*pi,n))
     elif n>0:          name,X = 'gaussian',random.randn(abs(n),2)
     else:              name,X = 'origin',zeros((-n,2))
-    with Log.scope('%s delaunay %s %d'%(Mesh.__name__[:-4].lower(),name,n)):
-      mesh = delaunay_points(X,validate=not benchmark,Mesh=Mesh)
+    with Log.scope('delaunay %s %d'%(name,n)):
+      mesh = delaunay_points(X,validate=not benchmark)
       if not benchmark:
         mesh.assert_consistent()
         assert mesh.n_vertices==abs(n)
@@ -33,12 +33,6 @@ def delaunay_test(Mesh,benchmark=False,cgal=False,origin=True,circle=False):
         nf = cgal.cgal_time_delaunay_points(X)
         if n>0 and mesh.n_faces!=nf:
           Log.write('expected %d faces, got %d'%(mesh.n_faces,nf))
-
-def test_delaunay_corner():
-  delaunay_test(Mesh=CornerMesh)
-
-def test_delaunay_halfedge():
-  delaunay_test(Mesh=HalfedgeMesh)
 
 def test_polygon():
   k = 4 # Use random quads to get occasional concave vertices
@@ -75,9 +69,8 @@ if __name__=='__main__':
     cgal = '-c' in sys.argv
     circle = '-d' in sys.argv
     Mesh = HalfedgeMesh if '-h' in sys.argv else CornerMesh
-    delaunay_test(Mesh=Mesh,benchmark=True,origin=False,cgal=cgal,circle=circle)
+    test_delaunay(Mesh=Mesh,benchmark=True,origin=False,cgal=cgal,circle=circle)
   else:
     test_predicates()
     test_constructions()
-    test_delaunay_corner()
-    test_delaunay_halfedge()
+    test_delaunay()

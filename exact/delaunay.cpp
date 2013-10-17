@@ -126,7 +126,7 @@ OTHER_COLD OTHER_PURE static inline bool is_delaunay_sentinels(Point x0, Point x
 }
 
 // Test whether an edge is Delaunay
-template<class Mesh> OTHER_ALWAYS_INLINE static inline bool is_delaunay(const Mesh& mesh, RawField<const Point,VertexId> X, const HalfedgeId edge) {
+OTHER_ALWAYS_INLINE static inline bool is_delaunay(const CornerMesh& mesh, RawField<const Point,VertexId> X, const HalfedgeId edge) {
   // Boundary edges belong to the sentinel quad and are always Delaunay.
   const auto rev = mesh.reverse(edge);
   if (mesh.is_boundary(rev))
@@ -160,7 +160,7 @@ static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Point,V
   return FaceId(~node);
 }
 
-template<class Mesh> OTHER_UNUSED static void check_bsp(const Mesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Point,VertexId> X_) {
+OTHER_UNUSED static void check_bsp(const CornerMesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Point,VertexId> X_) {
   if (self_check) {
     cout << "bsp:\n";
     #define CHILD(c) format("%c%d",(c<0?'f':'n'),(c<0?~c:c))
@@ -216,41 +216,10 @@ OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const Po
   }
 }
 
-OTHER_UNUSED OTHER_COLD static void assert_delaunay(const HalfedgeMesh& mesh, RawField<const Point,VertexId> X, const bool oriented_only=false) {
-  // Verify that all faces are correctly oriented
-  for (const auto f : mesh.faces()) {
-    const auto v = mesh.vertices(f);
-    OTHER_ASSERT(triangle_oriented(X,v.x,v.y,v.z));
-  }
-  if (oriented_only)
-    return;
-  // Verify that all internal edges are Delaunay, and all boundary vertices are convex
-  for (const auto ee : mesh.edges()) {
-    auto e = mesh.halfedge(ee,0);
-    if (mesh.is_boundary(ee)) {
-      e = mesh.is_boundary(e)?e:mesh.reverse(e);
-      // Check convexity
-      const auto v0 = mesh.src(e),
-                 v1 = mesh.dst(e),
-                 v2 = mesh.dst(mesh.next(e));
-      OTHER_ASSERT(triangle_oriented(X,v2,v1,v0));
-    } else if (!is_delaunay(mesh,X,e))
-      throw RuntimeError(format("non delaunay edge: e%d, v%d v%d",e.id,mesh.src(e).id,mesh.dst(e).id));
-  }
-}
-
-static inline void unsafe_flip_edge(CornerMesh& mesh, HalfedgeId& e) {
-  e = mesh.unsafe_flip_edge(e);
-}
-
-static inline void unsafe_flip_edge(HalfedgeMesh& mesh, const HalfedgeId e) {
-  mesh.unsafe_flip_edge(e);
-}
-
 // This routine assumes the sentinel points have already been added, and processes points in order
-template<class Mesh> OTHER_NEVER_INLINE static Ref<Mesh> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
+OTHER_NEVER_INLINE static Ref<CornerMesh> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
   const int n = X.size()-3;
-  const auto mesh = new_<Mesh>();
+  const auto mesh = new_<CornerMesh>();
   IntervalScope scope;
 
   // Initialize the mesh to a Delaunay triangle containing the sentinels at infinity.
@@ -324,7 +293,7 @@ template<class Mesh> OTHER_NEVER_INLINE static Ref<Mesh> deterministic_exact_del
       if (e.valid() && !is_delaunay(*mesh,X,e)) {
         // Our mesh is linearly embedded in the plane, so edge flips are always safe
         assert(mesh->is_flip_safe(e));
-        unsafe_flip_edge(mesh,e);
+        e = mesh->unsafe_flip_edge(e);
         OTHER_ASSERT(is_delaunay(*mesh,X,e));
         // Update the BSP tree for the triangle flip
         const auto f0 = mesh->face(e),
@@ -437,7 +406,7 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
   return X;
 }
 
-template<class Mesh,class Inputs> static inline Ref<Mesh> delaunay_helper(const Inputs& Xin, bool validate) {
+template<class Inputs> static inline Ref<CornerMesh> delaunay_helper(const Inputs& Xin, bool validate) {
   const int n = Xin.size();
   OTHER_ASSERT(n>=3);
 
@@ -445,26 +414,25 @@ template<class Mesh,class Inputs> static inline Ref<Mesh> delaunay_helper(const 
   Field<const Point,VertexId> X(partially_sorted_shuffle(Xin));
 
   // Compute Delaunay triangulation
-  const auto mesh = deterministic_exact_delaunay<Mesh>(X,validate);
+  const auto mesh = deterministic_exact_delaunay(X,validate);
 
   // Undo the vertex permutation
   mesh->permute_vertices(X.flat.slice(0,n).project<int,&Point::x>().copy());
   return mesh;
 }
 
-template<class Mesh> Ref<Mesh> delaunay_points(RawArray<const Vector<real,2>> X, bool validate) {
-  return delaunay_helper<Mesh>(amap(quantizer(bounding_box(X)),X),validate);
+Ref<CornerMesh> delaunay_points(RawArray<const Vector<real,2>> X, bool validate) {
+  return delaunay_helper(amap(quantizer(bounding_box(X)),X),validate);
 }
 
 // Same as above, but points are already quantized
-template<class Mesh> Ref<Mesh> exact_delaunay_points(RawArray<const EV> X, bool validate) {
-  return delaunay_helper<Mesh>(X,validate);
+Ref<CornerMesh> exact_delaunay_points(RawArray<const EV> X, bool validate) {
+  return delaunay_helper(X,validate);
 }
 
 }
 using namespace other;
 
 void wrap_delaunay() {
-  OTHER_FUNCTION_2(delaunay_points_corner,delaunay_points<CornerMesh>)
-  OTHER_FUNCTION_2(delaunay_points_halfedge,delaunay_points<HalfedgeMesh>)
+  OTHER_FUNCTION_2(delaunay_points_py,delaunay_points)
 }
