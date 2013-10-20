@@ -45,19 +45,6 @@ Array<VertexId> HalfedgeGraph::one_ring(VertexId v) const {
   return result;
 }
 
-bool halfedges_linked(const HalfedgeGraph& g, const HalfedgeId e) {
-  const auto en = g.next(e);
-  const auto ep = g.prev(e);
-  return (g.prev(g.next(e)) == e) && (g.src(g.next(e)) == g.src(g.reverse(e)))
-      && (g.next(g.prev(e)) == e) && (g.src(e) == g.src(g.reverse(g.prev(e))));
-}
-template<int d> bool halfedges_linked(const HalfedgeGraph& g, const Vector<HalfedgeId, d> edges) {
-  for(const HalfedgeId& e : edges)
-    if(!halfedges_linked(g, e))
-      return false;
-  return true;
-}
-
 OTHER_CORE_EXPORT EdgeId HalfedgeGraph::split_edge(const EdgeId e, const VertexId use_vertex) {
   const int base = halfedges_.size();
   assert(base % 2 == 0); // Should have even number of halfedges
