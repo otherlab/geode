@@ -7,7 +7,7 @@ import glob
 import fileinput
 import subprocess
 
-class_ignore_pattern = re.compile(r'^(?:TRY_|INSTANT|BOOST|STATIC_ASSERT_SAME|FLT_|DBL_|NPY_|FE_|BREAKPOINT$|SIG|FILE$|RUSAGE_|FPE_|SA_|SEEK_|PY_|USE_|M_|CBLAS_|TRUE$|FALSE$|JSAM|JCS|PNG_(?!FILE))')
+class_ignore_pattern = re.compile(r'^(?:TRY_|INSTANT|BOOST|STATIC_ASSERT_SAME|FLT_|DBL_|NPY_|FE_|BREAKPOINT$|SIG|FILE$|RUSAGE_|FPE_|SA_|SEEK_|PY_|M_|CBLAS_|TRUE$|FALSE$|JSAM|JCS|PNG_(?!FILE))')
 
 class_overrides = {
   'NDARRAY':'NdArray',
@@ -60,7 +60,7 @@ def convert_namespace(m):
   s = m.group(1)
   s = s.lower()
   if s == 'try':
-    s = 'other'
+    s = 'geode'
   if s == 'log':
     s = 'Log'
   return 'namespace '+s
@@ -77,20 +77,20 @@ def convert(line):
   line = function_pattern.sub(convert_function,line)
   line = class_pattern.sub(convert_class,line)
   line = namespace_pattern.sub(convert_namespace,line)
-  line = try_pattern.sub('OTHER_',line)
-  line = trycolon_pattern.sub('other::',line)
+  line = try_pattern.sub('GEODE_',line)
+  line = trycolon_pattern.sub('geode::',line)
   return line
 
 include_pattern = re.compile(r'#include <(Try|Pneumo)/(\w+)/(\w+).h>')
 def convert_include(m):
   if m.group(1)=='Pneumo':
     return '#include <other/sim/%s.h>'%convert(m.group(3))
-  return '#include <other/core/%s/%s.h>'%(dir_map[m.group(2)],convert(m.group(3)))
+  return '#include <geode/%s/%s.h>'%(dir_map[m.group(2)],convert(m.group(3)))
 
 module_pattern = re.compile(r'\bTry((?:\.[A-Z][a-z_]{2,})?)\b')
 def convert_module(m):
   s = m.group(1)
-  return 'other.core'+('.'+dir_map[s[1:]] if s else '')
+  return 'geode'+('.'+dir_map[s[1:]] if s else '')
 
 module_name_pattern = re.compile(r'\bTry('+'|'.join(dir_map.keys())+r')\b')
 def convert_module_name(m):

@@ -10,3 +10,9 @@
 *.vcxproj.user
 Debug*/
 Release*/
+/config.py
+.sconsign.dblite
+build
+dist
+*.egg-info
+*.so
