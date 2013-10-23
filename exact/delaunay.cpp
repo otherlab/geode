@@ -126,7 +126,7 @@ OTHER_COLD OTHER_PURE static inline bool is_delaunay_sentinels(Point x0, Point x
 }
 
 // Test whether an edge is Delaunay
-OTHER_ALWAYS_INLINE static inline bool is_delaunay(const CornerMesh& mesh, RawField<const Point,VertexId> X, const HalfedgeId edge) {
+OTHER_ALWAYS_INLINE static inline bool is_delaunay(const TriangleTopology& mesh, RawField<const Point,VertexId> X, const HalfedgeId edge) {
   // Boundary edges belong to the sentinel quad and are always Delaunay.
   const auto rev = mesh.reverse(edge);
   if (mesh.is_boundary(rev))
@@ -160,7 +160,7 @@ static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Point,V
   return FaceId(~node);
 }
 
-OTHER_UNUSED static void check_bsp(const CornerMesh& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Point,VertexId> X_) {
+OTHER_UNUSED static void check_bsp(const TriangleTopology& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Point,VertexId> X_) {
   if (self_check) {
     cout << "bsp:\n";
     #define CHILD(c) format("%c%d",(c<0?'f':'n'),(c<0?~c:c))
@@ -194,7 +194,7 @@ OTHER_UNUSED static void check_bsp(const CornerMesh& mesh, RawArray<const Node> 
   }
 }
 
-OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const Point,VertexId> X, const bool oriented_only=false) {
+OTHER_COLD static void assert_delaunay(const TriangleTopology& mesh, RawField<const Point,VertexId> X, const bool oriented_only=false) {
   // Verify that all faces are correctly oriented
   for (const auto f : mesh.faces()) {
     const auto v = mesh.vertices(f);
@@ -217,9 +217,9 @@ OTHER_COLD static void assert_delaunay(const CornerMesh& mesh, RawField<const Po
 }
 
 // This routine assumes the sentinel points have already been added, and processes points in order
-OTHER_NEVER_INLINE static Ref<CornerMesh> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
+OTHER_NEVER_INLINE static Ref<TriangleTopology> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
   const int n = X.size()-3;
-  const auto mesh = new_<CornerMesh>();
+  const auto mesh = new_<TriangleTopology>();
   IntervalScope scope;
 
   // Initialize the mesh to a Delaunay triangle containing the sentinels at infinity.
@@ -320,7 +320,7 @@ OTHER_NEVER_INLINE static Ref<CornerMesh> deterministic_exact_delaunay(RawField<
 
   // Remove sentinels
   for (int i=0;i<3;i++)
-    mesh->unsafe_delete_last_vertex();
+    mesh->erase_last_vertex_with_reordering();
 
   // If desired, check that the final mesh is Delaunay
   if (validate)
@@ -366,7 +366,7 @@ static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random)
   // We use exact arithmetic to perform the partition, which is important in case many points are coincident
   const int mid = axis==0 ? spatial_partition<0>(X,random)
                           : spatial_partition<1>(X,random);
-  
+
   // Recursely sort both halves
   spatial_sort(X.slice(0,mid),leaf_size,random);
   spatial_sort(X.slice(mid,n),leaf_size,random);
@@ -406,7 +406,7 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
   return X;
 }
 
-template<class Inputs> static inline Ref<CornerMesh> delaunay_helper(const Inputs& Xin, bool validate) {
+template<class Inputs> static inline Ref<TriangleTopology> delaunay_helper(const Inputs& Xin, bool validate) {
   const int n = Xin.size();
   OTHER_ASSERT(n>=3);
 
@@ -421,12 +421,12 @@ template<class Inputs> static inline Ref<CornerMesh> delaunay_helper(const Input
   return mesh;
 }
 
-Ref<CornerMesh> delaunay_points(RawArray<const Vector<real,2>> X, bool validate) {
+Ref<TriangleTopology> delaunay_points(RawArray<const Vector<real,2>> X, bool validate) {
   return delaunay_helper(amap(quantizer(bounding_box(X)),X),validate);
 }
 
 // Same as above, but points are already quantized
-Ref<CornerMesh> exact_delaunay_points(RawArray<const EV> X, bool validate) {
+Ref<TriangleTopology> exact_delaunay_points(RawArray<const EV> X, bool validate) {
   return delaunay_helper(X,validate);
 }
 

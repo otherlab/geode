@@ -271,18 +271,18 @@ void HalfedgeMesh::unsafe_flip_edge(HalfedgeId e0) {
 
 void HalfedgeMesh::permute_vertices(RawArray<const int> permutation, bool check) {
   OTHER_ASSERT(n_vertices()==permutation.size());
-  OTHER_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no deleted vertices
+  OTHER_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no erased vertices
 
   // Permute vertex_to_edge_ out of place
   Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),false);
   if (check) {
-    new_vertex_to_edge.fill(HalfedgeId(deleted_id));
+    new_vertex_to_edge.fill(HalfedgeId(erased_id));
     for (const auto v : vertices()) {
       const int pv = permutation[v.id];
       OTHER_ASSERT(new_vertex_to_edge.valid(pv));
       new_vertex_to_edge[pv] = vertex_to_edge_[v];
     }
-    OTHER_ASSERT(!new_vertex_to_edge.contains(HalfedgeId(deleted_id)));
+    OTHER_ASSERT(!new_vertex_to_edge.contains(HalfedgeId(erased_id)));
   } else
     for (const auto v : vertices())
       new_vertex_to_edge[permutation[v.id]] = vertex_to_edge_[v];
@@ -375,7 +375,7 @@ bool HalfedgeMesh::is_manifold_with_boundary() const {
       for (;;) {
         e = left(e);
         if (e==start)
-          break; 
+          break;
         if (is_boundary(e)) // If there are two boundary halfedges, this vertex is bad
           return false;
       }
@@ -393,7 +393,7 @@ int HalfedgeMesh::degree(VertexId v) const {
 
 Nested<HalfedgeId> HalfedgeMesh::boundary_loops() const {
   Nested<HalfedgeId> loops;
-  boost::dynamic_bitset<> seen(n_halfedges()); 
+  boost::dynamic_bitset<> seen(n_halfedges());
   for (const auto start : halfedges())
     if (is_boundary(start) && !seen[start.idx()]) {
       auto e = start;
@@ -407,16 +407,16 @@ Nested<HalfedgeId> HalfedgeMesh::boundary_loops() const {
   return loops;
 }
 
-void HalfedgeMesh::unsafe_delete_last_vertex() {
+void HalfedgeMesh::unsafe_erase_last_vertex() {
   const VertexId v(n_vertices()-1);
-  // Delete all incident faces
+  // erase all incident faces
   while (!isolated(v))
-    unsafe_delete_face(face(reverse(halfedge(v))));
+    unsafe_erase_face(face(reverse(halfedge(v))));
   // Remove the vertex
   vertex_to_edge_.flat.pop();
 }
 
-void HalfedgeMesh::unsafe_delete_face(const FaceId f) {
+void HalfedgeMesh::unsafe_erase_face(const FaceId f) {
   // Break halfedges away from this face
   const auto es = halfedges(f);
   for (const auto e : es) {
@@ -424,8 +424,8 @@ void HalfedgeMesh::unsafe_delete_face(const FaceId f) {
     vertex_to_edge_[src(e)] = e; // Make sure we know the vertex is now a boundary
   }
 
-  // Remove unconnected halfedges (higher first to not break as we delete)
-  for (const auto e0 : es.sorted().reversed()) { 
+  // Remove unconnected halfedges (higher first to not break as we erase)
+  for (const auto e0 : es.sorted().reversed()) {
     const auto e1 = reverse(e0);
     if (is_boundary(e1)) {
       // Decouple the halfedge pair from its neighbors
@@ -466,7 +466,7 @@ void HalfedgeMesh::unsafe_delete_face(const FaceId f) {
         if (halfedge(v3)==e3)
           vertex_to_edge_[v3] = e1;
       }
-      // Discard the deleted halfedges
+      // Discard the erased halfedges
       halfedges_.flat.pop();
       halfedges_.flat.pop();
 
@@ -482,8 +482,8 @@ void HalfedgeMesh::unsafe_delete_face(const FaceId f) {
     face_to_edge_[f] = es.x;
   }
 
-  // Remove the delete face
-  face_to_edge_.flat.pop(); 
+  // Remove the erase face
+  face_to_edge_.flat.pop();
 }
 
 void HalfedgeMesh::dump_internals() const {
@@ -553,9 +553,9 @@ static void mesh_destruction_test(HalfedgeMesh& mesh, const uint128_t key) {
   while (mesh.n_vertices()) {
     const int target = random->uniform<int>(0,1+2*mesh.n_faces());
     if (target<mesh.n_faces())
-      mesh.unsafe_delete_face(FaceId(target));
+      mesh.unsafe_erase_face(FaceId(target));
     else
-      mesh.unsafe_delete_last_vertex();
+      mesh.unsafe_erase_last_vertex();
     mesh.assert_consistent();
   }
 }
