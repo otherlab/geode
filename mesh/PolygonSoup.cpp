@@ -1,7 +1,7 @@
 //#####################################################################
-// Class PolygonMesh
+// Class PolygonSoup
 //#####################################################################
-#include <other/core/mesh/PolygonMesh.h>
+#include <other/core/mesh/PolygonSoup.h>
 #include <other/core/mesh/SegmentMesh.h>
 #include <other/core/mesh/TriangleSoup.h>
 #include <other/core/structure/Hashtable.h>
@@ -9,9 +9,9 @@
 #include <other/core/python/Class.h>
 namespace other {
 
-OTHER_DEFINE_TYPE(PolygonMesh)
+OTHER_DEFINE_TYPE(PolygonSoup)
 
-PolygonMesh::PolygonMesh(Array<const int> counts, Array<const int> vertices)
+PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices)
   : counts(counts)
   , vertices(vertices)
   , node_count(0)
@@ -26,9 +26,9 @@ PolygonMesh::PolygonMesh(Array<const int> counts, Array<const int> vertices)
   }
 }
 
-PolygonMesh::~PolygonMesh() {}
+PolygonSoup::~PolygonSoup() {}
 
-Ref<SegmentMesh> PolygonMesh::segment_mesh() const {
+Ref<SegmentMesh> PolygonSoup::segment_mesh() const {
   if (!segment_mesh_) {
     Hashtable<Vector<int,2> > hash;
     Array<Vector<int,2> > segments;
@@ -45,7 +45,7 @@ Ref<SegmentMesh> PolygonMesh::segment_mesh() const {
   return ref(segment_mesh_);
 }
 
-Ref<TriangleSoup> PolygonMesh::triangle_mesh() const {
+Ref<TriangleSoup> PolygonSoup::triangle_mesh() const {
   if (!triangle_mesh_) {
     Array<Vector<int,3> > triangles(half_edge_count-2*counts.size());
     int offset=0, t=0;
@@ -63,8 +63,8 @@ Ref<TriangleSoup> PolygonMesh::triangle_mesh() const {
 using namespace other;
 
 void wrap_polygon_mesh() {
-  typedef PolygonMesh Self;
-  Class<Self>("PolygonMesh")
+  typedef PolygonSoup Self;
+  Class<Self>("PolygonSoup")
     .OTHER_INIT(Array<const int>,Array<const int>)
     .OTHER_FIELD(counts)
     .OTHER_FIELD(vertices)

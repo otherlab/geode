@@ -1,8 +1,8 @@
 //#####################################################################
-// Class PolygonMesh
+// Class PolygonSoup
 //#####################################################################
 //
-// PolygonMesh stores immutable topology for a polygon mesh.  The advantage
+// PolygonSoup stores immutable topology for a polygon mesh.  The advantage
 // of immutability is that we don't have to worry about acceleration structures
 // becoming invalid, and we can check validity once at construction time.
 //
@@ -16,7 +16,7 @@
 #include <other/core/python/Ref.h>
 namespace other {
 
-class PolygonMesh : public Object {
+class PolygonSoup : public Object {
 public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
@@ -29,9 +29,9 @@ private:
   mutable Ptr<TriangleSoup> triangle_mesh_;
 
 protected:
-  PolygonMesh(Array<const int> counts, Array<const int> vertices);
+  PolygonSoup(Array<const int> counts, Array<const int> vertices);
 public:
-  ~PolygonMesh();
+  ~PolygonSoup();
 
   int nodes() const {
     return node_count;

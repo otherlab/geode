@@ -174,7 +174,7 @@
     <ClInclude Include="math\wrap.h" />
     <ClInclude Include="math\Zero.h" />
     <ClInclude Include="mesh\forward.h" />
-    <ClInclude Include="mesh\PolygonMesh.h" />
+    <ClInclude Include="mesh\PolygonSoup.h" />
     <ClInclude Include="mesh\SegmentMesh.h" />
     <ClInclude Include="mesh\TriangleSoup.h" />
     <ClInclude Include="mesh\TriangleSubdivision.h" />
@@ -416,7 +416,7 @@
     <ClCompile Include="math\numeric_limits.cpp" />
     <ClCompile Include="math\uint128.cpp" />
     <ClCompile Include="mesh\module.cpp" />
-    <ClCompile Include="mesh\PolygonMesh.cpp" />
+    <ClCompile Include="mesh\PolygonSoup.cpp" />
     <ClCompile Include="mesh\SegmentMesh.cpp" />
     <ClCompile Include="mesh\TriangleSoup.cpp" />
     <ClCompile Include="mesh\TriangleSubdivision.cpp" />

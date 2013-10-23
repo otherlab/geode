@@ -6,7 +6,7 @@
 #include <other/core/array/forward.h>
 namespace other{
 
-class PolygonMesh;
+class PolygonSoup;
 class SegmentMesh;
 class TriangleSoup;
 class HalfedgeMesh;

@@ -49,7 +49,7 @@ public:
     return node_count;
   }
 
-  // to match PolygonMesh
+  // to match PolygonSoup
   Ref<const TriangleSoup> triangle_mesh() const {
     return ref(*this);
   }

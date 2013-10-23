@@ -3,14 +3,14 @@
 from __future__ import division
 
 from numpy import *
-from other.core import Nested, PolygonMesh, SegmentMesh, TriangleSoup
+from other.core import Nested, PolygonSoup, SegmentMesh, TriangleSoup
 from other.core.geometry.platonic import icosahedron_mesh, sphere_mesh
 from other.core.vector import relative_error
 
 def test_misc():
   counts = array([3,4],dtype=int32)
   vertices = array([0,1,2,2,1,3,4],dtype=int32)
-  polygon_mesh = PolygonMesh(counts,vertices)
+  polygon_mesh = PolygonSoup(counts,vertices)
   assert all(polygon_mesh.counts==counts)
   assert all(polygon_mesh.vertices==vertices)
   triangle_mesh = polygon_mesh.triangle_mesh()
@@ -25,7 +25,7 @@ def test_misc():
 
 def test_bad():
   try:
-    PolygonMesh(array([-2],dtype=int32),array([1],dtype=int32))
+    PolygonSoup(array([-2],dtype=int32),array([1],dtype=int32))
     assert False
   except AssertionError:
     pass

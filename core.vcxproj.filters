@@ -480,7 +480,7 @@
     <ClInclude Include="mesh\forward.h">
       <Filter>mesh\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mesh\PolygonMesh.h">
+    <ClInclude Include="mesh\PolygonSoup.h">
       <Filter>mesh\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh\SegmentMesh.h">
@@ -1151,7 +1151,7 @@
     <ClCompile Include="mesh\module.cpp">
       <Filter>mesh\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mesh\PolygonMesh.cpp">
+    <ClCompile Include="mesh\PolygonSoup.cpp">
       <Filter>mesh\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mesh\SegmentMesh.cpp">
