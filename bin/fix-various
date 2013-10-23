@@ -10,7 +10,16 @@ def log(s):
   print>>sys.stderr, s
 
 include_pattern = re.compile(r'^#include\s+(["<])([\w/.]+)([">])\s*$')
-base = os.path.normpath(os.path.join(os.environ['OTHER'],'..'))
+bases = [os.path.dirname(os.path.dirname(__file__))
+
+def find(head,tail):
+  head,tail = os.path.split(path)
+  for base in bases:
+    for f in os.listdir(os.path.join(base,head)):
+      if f.lower()==tail.lower():
+        return f
+  log("couldn't find '%s'"%path)
+  return tail
 
 fixed = {'':''}
 def fix(path):
@@ -18,12 +27,7 @@ def fix(path):
     return fixed[path]
   except KeyError:
     head,tail = os.path.split(path)
-    for f in os.listdir(os.path.join(base,head)):
-      if f.lower()==tail.lower():
-        tail = f
-        break
-    else:
-      log("couldn't find '%s'"%path)
+    tail = find(head,tail)
     fixed[path] = os.path.join(fix(head),tail)
     return fixed[path]
 
