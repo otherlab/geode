@@ -66,7 +66,7 @@ public:
   typedef T Element;
   typedef HashtableIter<TK,T> iterator;
   typedef HashtableIter<TK,const T> const_iterator;
-  typedef typename remove_const_reference<decltype(Entry().value())>::type value_type;
+  typedef typename remove_const_reference<decltype(boost::declval<Entry>().value())>::type value_type;
 private:
   vector<Entry> table_;
   int size_;

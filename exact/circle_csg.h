@@ -41,6 +41,14 @@ struct ExactCircleArc {
   int index; // Index into the symbolic perturbation
   bool positive; // True if the arc is traversed counterclockwise
   bool left; // True if we use the intersection between this arc and the next to the left of the segment joining their centers
+  ExactCircleArc() = default;
+  ExactCircleArc(const Vector<Quantized,2> _center, const Quantized _radius, const int _index, const bool _positive, const bool _left)
+   : center(_center)
+   , radius(_radius)
+   , index(_index)
+   , positive(_positive)
+   , left(_left)
+  {}
 };
 
 // Tweak quantized circles so that they intersect.
