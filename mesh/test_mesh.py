@@ -3,7 +3,7 @@
 from __future__ import division
 
 from numpy import *
-from other.core import Nested, PolygonMesh, SegmentMesh, TriangleMesh
+from other.core import Nested, PolygonMesh, SegmentMesh, TriangleSoup
 from other.core.geometry.platonic import icosahedron_mesh, sphere_mesh
 from other.core.vector import relative_error
 
@@ -22,7 +22,7 @@ def test_misc():
   segments=make_set(array([0,1,1,2,2,0,2,1,1,3,3,4,4,2],dtype=int32).reshape(-1,2))
   assert make_set(polygon_mesh.segment_mesh().elements)==segments
   assert make_set(triangle_mesh.segment_mesh().elements)==segments|set([(2,3)])
-  
+
 def test_bad():
   try:
     PolygonMesh(array([-2],dtype=int32),array([1],dtype=int32))
@@ -39,13 +39,13 @@ def test_incident_segments():
   assert incident==[[0,1],[0],[1]]
 
 def test_incident_triangles():
-  mesh = TriangleMesh([(0,1,2),(0,3,4)])
+  mesh = TriangleSoup([(0,1,2),(0,3,4)])
   incident =  mesh.incident_elements()
   incident = map(list,incident)
   assert incident==[[0,1],[0],[0],[1],[1]]
 
 def test_boundary_mesh():
-  mesh = TriangleMesh([(0,1,2),(2,1,3)])
+  mesh = TriangleSoup([(0,1,2),(2,1,3)])
   boundary = mesh.boundary_mesh()
   assert all(boundary.elements==[[0,1],[2,0],[1,3],[3,2]])
 
@@ -54,7 +54,7 @@ def test_bending_triples():
   assert all(mesh.bending_tuples()==[(7,8,9),(7,8,10),(9,8,10)])
 
 def test_bending_quadruples():
-  mesh = TriangleMesh([(0,1,2),(2,1,3)])
+  mesh = TriangleSoup([(0,1,2),(2,1,3)])
   assert all(mesh.bending_tuples()==[(0,1,2,3)])
 
 def test_adjacent_segments():
@@ -62,23 +62,23 @@ def test_adjacent_segments():
   assert all(mesh.adjacent_elements()==[(-1,1),(0,-1)])
 
 def test_adjacent_triangles():
-  mesh = TriangleMesh([(0,1,2),(2,1,3)])
+  mesh = TriangleSoup([(0,1,2),(2,1,3)])
   assert all(mesh.adjacent_elements()==[(-1,1,-1),(0,-1,-1)])
 
 def test_nodes_touched():
-  mesh = TriangleMesh([(4,7,5)])
+  mesh = TriangleSoup([(4,7,5)])
   assert all(mesh.nodes_touched()==[4,5,7])
 
 def test_polygons():
   random.seed(9831)
   segments = array([(0,0), # degenerate
                     (1,2),(2,3),(3,1), # closed
-                    (4,5),(7,6),(6,4),(4,8),(8,9),(9,10)]) # nonmanifold 
+                    (4,5),(7,6),(6,4),(4,8),(8,9),(9,10)]) # nonmanifold
   closed = Nested([(0,),(1,2,3)])
   open = Nested([(4,5),(7,6,4),(4,8,9,10)])
   def closed_key(p):
     p = asarray(p)
-    i = argmin(p) 
+    i = argmin(p)
     return tuple(hstack([p[i:],p[:i]]))
   for _ in xrange(4):
     inj = injection(11)
@@ -137,6 +137,6 @@ def test_nonmanifold_triangles():
     s = random.randint(3,size=len(tris)).reshape(-1,1)
     tris = hstack([tris,tris])[arange(len(tris)).reshape(-1,1),hstack([s,s+1,s+2])]
     # Are we good?
-    mesh = TriangleMesh(ascontiguousarray(tris))
+    mesh = TriangleSoup(ascontiguousarray(tris))
     assert all(mesh.nonmanifold_nodes(False)==sort(map[closed]))
     assert all(mesh.nonmanifold_nodes(True)==sort(map[open]))

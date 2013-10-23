@@ -20,7 +20,7 @@ typedef real T;
 typedef Vector<T,3> TV;
 OTHER_DEFINE_TYPE(SurfacePins)
 
-SurfacePins::SurfacePins(Array<const int> particles, Array<const T> mass, TriangleMesh& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
+SurfacePins::SurfacePins(Array<const int> particles, Array<const T> mass, TriangleSoup& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : particles(particles)
   , target_mesh(ref(target_mesh))
   , target_X(target_X)
@@ -38,7 +38,7 @@ SurfacePins::SurfacePins(Array<const int> particles, Array<const T> mass, Triang
   OTHER_ASSERT(damping_ratio.rank()==0 || (damping_ratio.rank()==1 && damping_ratio.shape[0]==particles.size()));
 
   for (int i=0;i<particles.size();i++) {
-    int p = particles[i]; 
+    int p = particles[i];
     T stiffness_ = stiffness.rank()?stiffness[i]:stiffness();
     T damping_ratio_ = damping_ratio.rank()?damping_ratio[i]:damping_ratio();
     k[i] = stiffness_*mass[p];
@@ -69,7 +69,7 @@ void SurfacePins::update_position(Array<const TV> X_, bool definite) {
 }
 
 Array<TV> SurfacePins::closest_points(Array<const TV> X) {
-  update_position(X,false); 
+  update_position(X,false);
   Array<TV> closest(particles.size(),false);
   for (int i=0;i<particles.size();i++)
     closest[i] = X[particles[i]]-info[i].phi*info[i].normal;
@@ -155,7 +155,7 @@ using namespace other;
 void wrap_surface_pins() {
   typedef SurfacePins Self;
   Class<Self>("SurfacePins")
-    .OTHER_INIT(Array<const int>,Array<const T>,TriangleMesh&,Array<const TV>,NdArray<const T>,NdArray<const T>)
+    .OTHER_INIT(Array<const int>,Array<const T>,TriangleSoup&,Array<const TV>,NdArray<const T>,NdArray<const T>)
     .OTHER_METHOD(closest_points)
     ;
 }

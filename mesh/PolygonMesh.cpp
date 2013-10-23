@@ -3,7 +3,7 @@
 //#####################################################################
 #include <other/core/mesh/PolygonMesh.h>
 #include <other/core/mesh/SegmentMesh.h>
-#include <other/core/mesh/TriangleMesh.h>
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/structure/Hashtable.h>
 #include <other/core/utility/const_cast.h>
 #include <other/core/python/Class.h>
@@ -45,7 +45,7 @@ Ref<SegmentMesh> PolygonMesh::segment_mesh() const {
   return ref(segment_mesh_);
 }
 
-Ref<TriangleMesh> PolygonMesh::triangle_mesh() const {
+Ref<TriangleSoup> PolygonMesh::triangle_mesh() const {
   if (!triangle_mesh_) {
     Array<Vector<int,3> > triangles(half_edge_count-2*counts.size());
     int offset=0, t=0;
@@ -54,7 +54,7 @@ Ref<TriangleMesh> PolygonMesh::triangle_mesh() const {
         triangles[t++].set(vertices[offset],vertices[offset+i+1],vertices[offset+i+2]);
       offset+=counts[p];
     }
-    triangle_mesh_=new_<TriangleMesh>(triangles);
+    triangle_mesh_=new_<TriangleSoup>(triangles);
   }
   return ref(triangle_mesh_);
 }

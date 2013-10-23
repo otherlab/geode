@@ -6,7 +6,7 @@ from other.core.geometry.platonic import *
 
 def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
   random.seed(813177)
-  nanosphere = TriangleMesh([(0,1,2),(0,2,1)])
+  nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
   print
   print Mesh.__name__
   for soup in nanosphere,icosahedron_mesh()[0],torus_topology(4,5),double_torus_mesh(),cylinder_topology(6,5):

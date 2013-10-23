@@ -84,9 +84,9 @@ def delaunay():
 
 class DelaunayScene(Scene):
   def render(self,*args):
-    edges = TriangleMesh(delaunay().elements()).segment_mesh().elements
+    edges = TriangleSoup(delaunay().elements()).segment_mesh().elements
     X = current()
-    c = colors()  
+    c = colors()
     GL.glBegin(GL.GL_LINES)
     gl_colored_vertices(c[edges],X[edges])
     GL.glEnd()

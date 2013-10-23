@@ -80,7 +80,7 @@ def read_obj(file):
   if face_texcoords:
     assert len(vertices)==len(face_texcoords)
     props['face_texcoords']=array(face_texcoords,dtype=int)-1
-  
+
   # done
   return mesh,props
 
@@ -106,7 +106,7 @@ def write_obj(file,mesh,X):
     output.write("v %.5g %.5g %.5g\n"%tuple(x))
 
   # write polygons
-  if isinstance(mesh,TriangleMesh):
+  if isinstance(mesh,TriangleSoup):
     triangles=mesh.elements+1
     for t in triangles:
       print>>output,'f',' '.join(map(str,t))
@@ -121,7 +121,7 @@ def write_obj(file,mesh,X):
 
 def read_stl(file):
   f = open(file)
-  header = f.read(80) 
+  header = f.read(80)
   count, = struct.unpack('<I',f.read(4))
   X,triangles = [],[]
   id = {}
@@ -137,15 +137,15 @@ def read_stl(file):
         id[x] = i
       tri.append(i)
     triangles.append(tri)
-  return TriangleMesh(triangles),array(X,dtype=real)
+  return TriangleSoup(triangles),array(X,dtype=real)
 
 def merge_meshes(surfaces):
   tris = []
   X = []
   total = 0
   for m,x in surfaces:
-    tris.append(total+(m.elements if isinstance(m,TriangleMesh) else asarray(m)))
+    tris.append(total+(m.elements if isinstance(m,TriangleSoup) else asarray(m)))
     x = asarray(x)
     X.append(x)
     total += len(x)
-  return TriangleMesh(concatenate(tris).astype(int32)),concatenate(X)
+  return TriangleSoup(concatenate(tris).astype(int32)),concatenate(X)

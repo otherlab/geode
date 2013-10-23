@@ -33,8 +33,8 @@ def test_consistency():
     Capsule((-.5,-.5,-.5),(1,2,3),1),
     Cylinder(0,(0,0,1),1),
     Cylinder((-1,-2,-3),(4,2,1),1.5),
-    ThickShell(TriangleMesh([(0,1,2)]),[(0,0,0),(1,0,0),(0,1,0)],(.1,.2,.3)),
-    ThickShell(TriangleMesh([(0,1,2)]),random.randn(3,3),.2*abs(random.randn(3)))]
+    ThickShell(TriangleSoup([(0,1,2)]),[(0,0,0),(1,0,0),(0,1,0)],(.1,.2,.3)),
+    ThickShell(TriangleSoup([(0,1,2)]),random.randn(3,3),.2*abs(random.randn(3)))]
   n = 1000
   def sv(x):
     return '[%s]'%','.join(map(str,x))

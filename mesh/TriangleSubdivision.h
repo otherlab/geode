@@ -7,7 +7,7 @@
 //#####################################################################
 #pragma once
 
-#include <other/core/mesh/TriangleMesh.h>
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/python/Object.h>
 #include <other/core/python/Ptr.h>
 #include <other/core/python/Ref.h>
@@ -21,13 +21,13 @@ public:
 
   typedef real T;
 
-  Ref<const TriangleMesh> coarse_mesh;
-  Ref<TriangleMesh> fine_mesh;
+  Ref<const TriangleSoup> coarse_mesh;
+  Ref<TriangleSoup> fine_mesh;
   Array<const int> corners; // Change only before subdivision functions are called
 protected:
   mutable Ptr<SparseMatrix> loop_matrix_;
 
-  OTHER_CORE_EXPORT TriangleSubdivision(const TriangleMesh& coarse_mesh);
+  OTHER_CORE_EXPORT TriangleSubdivision(const TriangleSoup& coarse_mesh);
 public:
   ~TriangleSubdivision();
 

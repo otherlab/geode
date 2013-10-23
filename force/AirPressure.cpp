@@ -4,7 +4,7 @@
 #include <other/core/force/AirPressure.h>
 #include <other/core/math/constants.h>
 #include <other/core/mesh/SegmentMesh.h>
-#include <other/core/mesh/TriangleMesh.h>
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/python/Class.h>
 #include <other/core/structure/Hashtable.h>
 #include <other/core/vector/SolidMatrix.h>
@@ -19,7 +19,7 @@ typedef Vector<T,3> TV;
 
 OTHER_DEFINE_TYPE(AirPressure)
 
-AirPressure::AirPressure(Ref<TriangleMesh> mesh,Array<const TV> X,bool closed,int side)
+AirPressure::AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,int side)
   : mesh(mesh)
   , closed(closed)
   , side(side)
@@ -37,7 +37,7 @@ AirPressure::AirPressure(Ref<TriangleMesh> mesh,Array<const TV> X,bool closed,in
   // Set up local mesh
   Array<const int> nodes = mesh->nodes_touched();
   Hashtable<int,int> hash;
-  for (int i=0;i<nodes.size();i++) 
+  for (int i=0;i<nodes.size();i++)
     hash.set(nodes[i],i);
   local_mesh.resize(mesh->elements.size(),false);
   for (int t=0;t<mesh->elements.size();t++)
@@ -96,7 +96,7 @@ void AirPressure::add_elastic_force(RawArray<TV> F) const {
                         : -pressure;
   const T factor = -side*dEdV/6;
   // Assuming a closed mesh, we have
-  //   V = 1/6 sum_t det(a,b,c) 
+  //   V = 1/6 sum_t det(a,b,c)
   //     = 1/6 sum_t det(a-o,b-o,c-o)
   //     = 1/6 sum_t (a-o) . cross(b-o,c-o)
   //   dV/da = 1/6 sum_{t on a} cross(b-o,c-o)
@@ -205,7 +205,7 @@ using namespace other;
 void wrap_air_pressure() {
   typedef AirPressure Self;
   Class<Self>("AirPressure")
-    .OTHER_INIT(Ref<TriangleMesh>,Array<const TV>,bool,int)
+    .OTHER_INIT(Ref<TriangleSoup>,Array<const TV>,bool,int)
     .OTHER_FIELD(temperature)
     .OTHER_FIELD(amount)
     .OTHER_FIELD(pressure)

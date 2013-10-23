@@ -26,7 +26,7 @@ public:
 private:
   const int node_count, half_edge_count;
   mutable Ptr<SegmentMesh> segment_mesh_;
-  mutable Ptr<TriangleMesh> triangle_mesh_;
+  mutable Ptr<TriangleSoup> triangle_mesh_;
 
 protected:
   PolygonMesh(Array<const int> counts, Array<const int> vertices);
@@ -38,6 +38,6 @@ public:
   }
 
   OTHER_CORE_EXPORT Ref<SegmentMesh> segment_mesh() const;
-  OTHER_CORE_EXPORT Ref<TriangleMesh> triangle_mesh() const;
+  OTHER_CORE_EXPORT Ref<TriangleSoup> triangle_mesh() const;
 };
 }

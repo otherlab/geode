@@ -5,7 +5,7 @@
 #include <other/core/math/constants.h>
 #include <other/core/math/copysign.h>
 #include <other/core/mesh/SegmentMesh.h>
-#include <other/core/mesh/TriangleMesh.h>
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/python/cast.h>
 #include <other/core/python/Class.h>
 #include <other/core/utility/Log.h>
@@ -26,25 +26,25 @@ ThickShell::ThickShell(const SegmentMesh& mesh, Array<const TV> X, Array<const T
   OTHER_ASSERT(radii.size()==mesh.nodes());
 }
 
-ThickShell::ThickShell(const TriangleMesh& mesh, Array<const TV> X, Array<const T> radii)
+ThickShell::ThickShell(const TriangleSoup& mesh, Array<const TV> X, Array<const T> radii)
   : tris(mesh.elements), segs(mesh.segment_mesh()->elements), X(X), radii(radii) {
   OTHER_ASSERT(X.size()==mesh.nodes());
   OTHER_ASSERT(radii.size()==mesh.nodes());
 }
 
 static Array<const Vector<int,3>> py_tris(Ref<> mesh) {
-  if (auto* m = python_cast<TriangleMesh*>(&*mesh))
+  if (auto* m = python_cast<TriangleSoup*>(&*mesh))
     return m->elements;
   return Array<const Vector<int,3>>();
 }
 
 static Array<const Vector<int,2>> py_segs(Ref<> mesh) {
-  if (auto* m = python_cast<TriangleMesh*>(&*mesh))
+  if (auto* m = python_cast<TriangleSoup*>(&*mesh))
     return m->segment_mesh()->elements;
   else if (auto* m = python_cast<SegmentMesh*>(&*mesh))
     return m->elements;
   else
-    throw TypeError(format("ThickShell: expected SegmentMesh or TriangleMesh, got %s",mesh->ob_type->tp_name));
+    throw TypeError(format("ThickShell: expected SegmentMesh or TriangleSoup, got %s",mesh->ob_type->tp_name));
 }
 
 ThickShell::ThickShell(Ref<> mesh, Array<const TV> X, Array<const T> radii)
@@ -125,7 +125,7 @@ Tuple<T,TV> ThickShell::phi_normal(const TV& y) const {
     const T phi = k-(r0+e*dr);
     if (best_phi > phi) {
       best_phi = phi;
-      // Compute cylinder normal robustly 
+      // Compute cylinder normal robustly
       const TV u0 = dx.unit_orthogonal_vector(),
                u1 = cross(dx,u0)/sqrt(dxx);
       const auto vu = normalized(vec(dot(dy,u0),dot(dy,u1)));
@@ -169,7 +169,7 @@ Box<TV> ThickShell::bounding_box() const {
 }
 
 string ThickShell::repr() const {
-  return format("ThickShell(TriangleMesh(%s),%s,%s)",str(tris),str(X),str(radii));
+  return format("ThickShell(TriangleSoup(%s),%s,%s)",str(tris),str(X),str(radii));
 }
 
 }

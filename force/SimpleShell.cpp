@@ -19,7 +19,7 @@ typedef StrainMeasure<T,2> Strain;
 
 OTHER_DEFINE_TYPE(SimpleShell)
 
-SimpleShell::SimpleShell(const TriangleMesh& mesh, RawArray<const Matrix<T,2>> Dm, const T density)
+SimpleShell::SimpleShell(const TriangleSoup& mesh, RawArray<const Matrix<T,2>> Dm, const T density)
   : density(density)
   , shear_stiffness(0)
   , F_threshold(.1)
@@ -297,7 +297,7 @@ using namespace other;
 void wrap_simple_shell() {
   typedef SimpleShell Self;
   Class<Self>("SimpleShell")
-    .OTHER_INIT(const TriangleMesh&,RawArray<const Matrix<T,2>>,T)
+    .OTHER_INIT(const TriangleSoup&,RawArray<const Matrix<T,2>>,T)
     .OTHER_FIELD(density)
     .OTHER_FIELD(stretch_stiffness)
     .OTHER_FIELD(shear_stiffness)

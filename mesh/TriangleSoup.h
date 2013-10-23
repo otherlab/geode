@@ -1,8 +1,8 @@
 //#####################################################################
-// Class TriangleMesh
+// Class TriangleSoup
 //#####################################################################
 //
-// TriangleMesh stores immutable topology for a triangle mesh.  The advantage
+// TriangleSoup stores immutable topology for a triangle mesh.  The advantage
 // of immutability is that we don't have to worry about acceleration structures
 // becoming invalid, and we can check validity once at construction time.
 //
@@ -18,7 +18,7 @@
 #include <other/core/vector/Vector.h>
 namespace other {
 
-class TriangleMesh : public Object {
+class TriangleSoup : public Object {
   typedef real T;
   typedef Vector<T,2> TV2;
   typedef Vector<T,3> TV3;
@@ -41,16 +41,16 @@ private:
   mutable Nested<const int> sorted_neighbors_;
 
 protected:
-OTHER_CORE_EXPORT TriangleMesh(Array<const Vector<int,3> > elements);
+OTHER_CORE_EXPORT TriangleSoup(Array<const Vector<int,3> > elements);
 public:
-  ~TriangleMesh();
+  ~TriangleSoup();
 
   int nodes() const {
     return node_count;
   }
 
   // to match PolygonMesh
-  Ref<const TriangleMesh> triangle_mesh() const {
+  Ref<const TriangleSoup> triangle_mesh() const {
     return ref(*this);
   }
 

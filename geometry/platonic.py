@@ -9,12 +9,12 @@ def sphere_mesh(refinements,center=0,radius=1):
 
 def tetrahedron_mesh():
   X = array([[ 1, 1, 1],[-1,-1, 1],[-1,+1,-1],[+1,-1,-1]],dtype=real)
-  mesh = TriangleMesh([[1,2,3],[3,2,0],[3,0,1],[0,2,1]])
+  mesh = TriangleSoup([[1,2,3],[3,2,0],[3,0,1],[0,2,1]])
   return mesh,X
 
 def cube_mesh():
   X = array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]],dtype=real)
-  mesh = TriangleMesh([[0,1,2], [2,1,3],
+  mesh = TriangleSoup([[0,1,2], [2,1,3],
                        [1,0,5], [5,0,4],
                        [3,1,7], [7,1,5],
                        [0,2,4], [4,2,6],
@@ -35,7 +35,7 @@ def circle_mesh(n,center=0,radius=1):
   return mesh,(radius*vstack([cos(theta),sin(theta)])).T.copy()
 
 def grid_topology(nx,ny):
-  '''Construct a rectangular grid TriangleMesh with nx+1 by ny+1 vertices.'''
+  '''Construct a rectangular grid TriangleSoup with nx+1 by ny+1 vertices.'''
   i = (ny+1)*arange(nx).reshape(-1,1)
   j = arange(ny)
   ip = i+ny+1
@@ -45,10 +45,10 @@ def grid_topology(nx,ny):
   tris[:,:,0,1] = i+j
   tris[:,:,0,2] = tris[:,:,1,1] = ip+j
   tris[:,:,1,2] = ip+jp
-  return TriangleMesh(tris.reshape(-1,3))
+  return TriangleSoup(tris.reshape(-1,3))
 
 def torus_topology(nx,ny):
-  '''Construct a torus TriangleMesh with nx by ny vertices.
+  '''Construct a torus TriangleSoup with nx by ny vertices.
   A matching position array would have shape (nx,ny,3).
   If you want geometry too, consider using surface_of_revolution with periodic=True.'''
   i = ny*arange(nx).reshape(-1,1)
@@ -60,10 +60,10 @@ def torus_topology(nx,ny):
   tris[:,:,0,1] = i+j
   tris[:,:,0,2] = tris[:,:,1,1] = ip+j
   tris[:,:,1,2] = ip+jp
-  return TriangleMesh(tris.reshape(-1,3))
+  return TriangleSoup(tris.reshape(-1,3))
 
 def cylinder_topology(nz,na,closed=False):
-  '''Construct a open cylinder TriangleMesh with na triangles around and nz along.
+  '''Construct a open cylinder TriangleSoup with na triangles around and nz along.
   closed can be either a single bool or an array of two bools (one for each end).'''
   closed = asarray(closed)
   c0,c1 = closed if closed.ndim else (closed,closed)
@@ -80,7 +80,7 @@ def cylinder_topology(nz,na,closed=False):
   elif c1:      tris = concatenate([            tris[ :-1].reshape(-1,3),tris[-1,:,0]])
   if c1: tris = minimum(tris.ravel(),na*nz)
   if c0: tris = maximum(0,tris.ravel()-(na-1))
-  return TriangleMesh(tris.reshape(-1,3))
+  return TriangleSoup(tris.reshape(-1,3))
 
 def surface_of_revolution(base,axis,radius,height,resolution,closed=False,periodic=False):
   '''Construct a surface of revolution with given radius and height curves.

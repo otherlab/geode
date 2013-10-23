@@ -30,7 +30,7 @@ from_json_fn['frame2'] = lambda v: Frames(v['t'], Rotation.from_matrix(array(v['
 from_json_fn['frame3'] = lambda v: Frames(v['t'], Rotation.from_matrix(array(v['r']).reshape(3, 3)))
 
 from_json_fn['box2'] = from_json_fn['box3'] = lambda v: Box(v['min'], v['max'])
-from_json_fn['TriangleMesh'] = from_json_fn['SegmentMesh'] = lambda v: v
+from_json_fn['TriangleSoup'] = from_json_fn['SegmentMesh'] = lambda v: v
 
 
 to_json_fn[int]   = lambda v: { 't': 'int',    'v': v }
@@ -64,8 +64,8 @@ to_json_fn[Frames] = lambda v: { # send matrix over the wire or make javascript 
   }
 }
 
-to_json_fn[TriangleMesh] = lambda v: {
-  't': 'TriangleMesh',
+to_json_fn[TriangleSoup] = lambda v: {
+  't': 'TriangleSoup',
   'v': from_ndarray(v.elements, int)
 }
 to_json_fn[SegmentMesh] = lambda v: {

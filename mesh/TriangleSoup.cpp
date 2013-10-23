@@ -1,7 +1,7 @@
 //#####################################################################
-// Class TriangleMesh
+// Class TriangleSoup
 //#####################################################################
-#include <other/core/mesh/TriangleMesh.h>
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/mesh/SegmentMesh.h>
 #include <other/core/array/sort.h>
 #include <other/core/array/view.h>
@@ -14,13 +14,13 @@ using std::endl;
 typedef real T;
 typedef Vector<T,3> TV3;
 
-OTHER_DEFINE_TYPE(TriangleMesh)
+OTHER_DEFINE_TYPE(TriangleSoup)
 
 #ifndef _WIN32
-const int TriangleMesh::d;
+const int TriangleSoup::d;
 #endif
 
-TriangleMesh::TriangleMesh(Array<const Vector<int,3> > elements)
+TriangleSoup::TriangleSoup(Array<const Vector<int,3> > elements)
   : vertices(scalar_view_own(elements))
   , elements(elements)
   , bending_tuples_valid(false) {
@@ -32,9 +32,9 @@ TriangleMesh::TriangleMesh(Array<const Vector<int,3> > elements)
   }
 }
 
-TriangleMesh::~TriangleMesh() {}
+TriangleSoup::~TriangleSoup() {}
 
-Ref<const SegmentMesh> TriangleMesh::segment_mesh() const {
+Ref<const SegmentMesh> TriangleSoup::segment_mesh() const {
   if (!segment_mesh_) {
     Hashtable<Vector<int,2> > hash;
     Array<Vector<int,2> > segments;
@@ -49,7 +49,7 @@ Ref<const SegmentMesh> TriangleMesh::segment_mesh() const {
   return ref(segment_mesh_);
 }
 
-Nested<const int> TriangleMesh::incident_elements() const {
+Nested<const int> TriangleSoup::incident_elements() const {
   if (!incident_elements_.size() && nodes()) {
     Array<int> lengths(nodes());
     for (int i=0;i<vertices.size();i++)
@@ -63,7 +63,7 @@ Nested<const int> TriangleMesh::incident_elements() const {
   return incident_elements_;
 }
 
-Array<const Vector<int,3> > TriangleMesh::adjacent_elements() const {
+Array<const Vector<int,3> > TriangleSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
     Nested<const int> incident = incident_elements();
@@ -86,7 +86,7 @@ Array<const Vector<int,3> > TriangleMesh::adjacent_elements() const {
   return adjacent_elements_;
 }
 
-Ref<SegmentMesh> TriangleMesh::boundary_mesh() const {
+Ref<SegmentMesh> TriangleSoup::boundary_mesh() const {
   if (!boundary_mesh_) {
     Hashtable<Vector<int,2>,int> hash;
     for (int t=0;t<elements.size();t++)
@@ -110,7 +110,7 @@ Ref<SegmentMesh> TriangleMesh::boundary_mesh() const {
   return ref(boundary_mesh_);
 }
 
-Array<const Vector<int,4> > TriangleMesh::bending_tuples() const {
+Array<const Vector<int,4> > TriangleSoup::bending_tuples() const {
   if (!bending_tuples_valid) {
     Hashtable<Vector<int,2>,Array<int> > edge_to_face;
     for (int t=0;t<elements.size();t++) {
@@ -139,7 +139,7 @@ Array<const Vector<int,4> > TriangleMesh::bending_tuples() const {
   return bending_tuples_;
 }
 
-Array<const int> TriangleMesh::nodes_touched() const {
+Array<const int> TriangleSoup::nodes_touched() const {
   if (!nodes_touched_.size() && elements.size()) {
     Hashtable<int> hash;
     for (int t=0;t<elements.size();t++) for (int i=0;i<3;i++)
@@ -150,7 +150,7 @@ Array<const int> TriangleMesh::nodes_touched() const {
   return nodes_touched_;
 }
 
-Nested<const int> TriangleMesh::sorted_neighbors() const {
+Nested<const int> TriangleSoup::sorted_neighbors() const {
   if (!sorted_neighbors_.size() && elements.size()) {
     Hashtable<Vector<int,2>,int> next; // next[(i,j)] = k if (i,j,k) is a triangle
     Hashtable<Vector<int,2>,int> prev; // prev[(i,k)] = j if (i,j,k) is a triangle
@@ -184,7 +184,7 @@ Nested<const int> TriangleMesh::sorted_neighbors() const {
           sorted_neighbors(i,a) = j;
         }
       } catch (const KeyError&) {
-        throw RuntimeError(format("TriangleMesh::sorted_neighbors failed: node %d",i));
+        throw RuntimeError(format("TriangleSoup::sorted_neighbors failed: node %d",i));
       }
     }
     sorted_neighbors_ = sorted_neighbors;
@@ -192,7 +192,7 @@ Nested<const int> TriangleMesh::sorted_neighbors() const {
   return sorted_neighbors_;
 }
 
-T TriangleMesh::area(RawArray<const TV2> X) const {
+T TriangleSoup::area(RawArray<const TV2> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   T sum = 0;
   for (int t=0;t<elements.size();t++) {
@@ -202,7 +202,7 @@ T TriangleMesh::area(RawArray<const TV2> X) const {
   return (T).5*sum;
 }
 
-T TriangleMesh::volume(RawArray<const TV3> X) const {
+T TriangleSoup::volume(RawArray<const TV3> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   // If S is the surface and I is the interior, Stokes theorem gives
   //     V = int_I dV = 1/3 int_I (div x) dV = 1/3 int_S x . dA
@@ -220,7 +220,7 @@ T TriangleMesh::volume(RawArray<const TV3> X) const {
   return T(1./6)*sum;
 }
 
-T TriangleMesh::surface_area(RawArray<const TV3> X) const {
+T TriangleSoup::surface_area(RawArray<const TV3> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   T sum = 0;
   for (int t=0;t<elements.size();t++) {
@@ -230,7 +230,7 @@ T TriangleMesh::surface_area(RawArray<const TV3> X) const {
   return T(.5)*sum;
 }
 
-Array<T> TriangleMesh::vertex_areas(RawArray<const TV3> X) const {
+Array<T> TriangleSoup::vertex_areas(RawArray<const TV3> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   Array<T> areas(X.size());
   for (int t=0;t<elements.size();t++) {
@@ -243,7 +243,7 @@ Array<T> TriangleMesh::vertex_areas(RawArray<const TV3> X) const {
   return areas;
 }
 
-Array<TV3> TriangleMesh::vertex_normals(RawArray<const TV3> X) const {
+Array<TV3> TriangleSoup::vertex_normals(RawArray<const TV3> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   Array<TV3> normals(X.size());
   for(int t=0;t<elements.size();t++){
@@ -256,7 +256,7 @@ Array<TV3> TriangleMesh::vertex_normals(RawArray<const TV3> X) const {
   return normals;
 }
 
-Array<TV3> TriangleMesh::element_normals(RawArray<const TV3> X) const {
+Array<TV3> TriangleSoup::element_normals(RawArray<const TV3> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   Array<TV3> normals(elements.size(),false);
   for (int t=0;t<elements.size();t++) {
@@ -266,7 +266,7 @@ Array<TV3> TriangleMesh::element_normals(RawArray<const TV3> X) const {
   return normals;
 }
 
-Array<int> TriangleMesh::nonmanifold_nodes(bool allow_boundary) const {
+Array<int> TriangleSoup::nonmanifold_nodes(bool allow_boundary) const {
   Array<int> nonmanifold;
   Nested<const int> incident_elements = this->incident_elements();
   Array<Vector<int,2> > ring;
@@ -335,8 +335,8 @@ Array<int> TriangleMesh::nonmanifold_nodes(bool allow_boundary) const {
 using namespace other;
 
 void wrap_triangle_mesh() {
-  typedef TriangleMesh Self;
-  Class<Self>("TriangleMesh")
+  typedef TriangleSoup Self;
+  Class<Self>("TriangleSoup")
     .OTHER_INIT(Array<const Vector<int,3> >)
     .OTHER_FIELD(d)
     .OTHER_FIELD(elements)

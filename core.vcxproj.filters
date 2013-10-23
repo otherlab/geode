@@ -486,7 +486,7 @@
     <ClInclude Include="mesh\SegmentMesh.h">
       <Filter>mesh\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mesh\TriangleMesh.h">
+    <ClInclude Include="mesh\TriangleSoup.h">
       <Filter>mesh\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh\TriangleSubdivision.h">
@@ -1157,7 +1157,7 @@
     <ClCompile Include="mesh\SegmentMesh.cpp">
       <Filter>mesh\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mesh\TriangleMesh.cpp">
+    <ClCompile Include="mesh\TriangleSoup.cpp">
       <Filter>mesh\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mesh\TriangleSubdivision.cpp">

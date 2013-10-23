@@ -11,7 +11,7 @@
 #include <other/core/array/Array.h>
 #include <other/core/force/Force.h>
 #include <other/core/geometry/surface_levelset.h>
-#include <other/core/mesh/TriangleMesh.h>
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/vector/Vector.h>
 namespace other {
 
@@ -24,7 +24,7 @@ public:
   enum {m=TV::m};
 
   const Array<const int> particles;
-  Ref<TriangleMesh> target_mesh;
+  Ref<TriangleSoup> target_mesh;
   const Array<const TV> target_X;
 private:
   int max_node;
@@ -35,7 +35,7 @@ private:
   const Ref<SimplexTree<TV,2>> target_tree;
   const Array<CloseTriangleInfo> info;
 protected:
-  SurfacePins(Array<const int> particles, Array<const T> mass, TriangleMesh& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio);
+  SurfacePins(Array<const int> particles, Array<const T> mass, TriangleSoup& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio);
 public:
   ~SurfacePins();
 
