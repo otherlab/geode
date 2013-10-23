@@ -169,6 +169,7 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
     std::cout << "  samples: " << samples.size() << " res+1: " << res+1 << " sample_d: " << sample_d << " len: " << total_length << std::endl;
 
   OTHER_ASSERT(samples.size() >= 2);
+  if(samples.size() != res+1) std::cout << "incorrect number of samples! expected " << res+1 << ", found " << samples.size() << std::endl;
   OTHER_ASSERT(samples.size() == res+1);
   return samples;
 }
