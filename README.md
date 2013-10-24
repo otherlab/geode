@@ -1,128 +1,106 @@
-Otherlab core library
-=====================
+Geode: The Otherlab computational geometry library
+==================================================
 
-`other/core` is an open source utility library of arrays, vectors, matrices, and other mathematical code together
-with a fast, lightweight python binding layer.  The license is standard three-clause BSD (see the included `LICENSE`
-file or [LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
-
-### Acknowledgements
-
-Much of core is based on parts of the [PhysBAM simulation library](http://physbam.stanford.edu) developed by
-Ron Fedkiw et al. at Stanford University.
-
-For random numbers, we use the [Random123 library](http://www.deshawresearch.com/resources_random123.html) of
-John Salmon et al. at D. E. Shaw Research.  Random123 code is included inline in `core/random/random123`.
-
-The interval arithmetic in `exact/Interval` is based on code by [Robert Bridson](http://www.cs.ubc.ca/~rbridson)
-and [Tyson Brochu](http://www.cs.ubc.ca/~tbrochu).
+Geode is an open source library of computational geometry and associated mathematical utilities
+together with a fast, lightweight python binding layer.  The license is standard three-clause BSD
+(see the included `LICENSE` file or [LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
 
 ### Dependencies
 
-Required dependencies:
+For C++:
 
 * [boost >= 1.46](http://www.boost.org): Various C++ utility libraries (Boost Software License)
 * [scons >= 2.0](http://www.scons.org): A build system (MIT license)
 * [gmp >= 5.0](http://gmplib.org): Arbitrary precision arithmetic (LGPL)
 * [cblas](http://www.netlib.org/blas/blast-forum/cblas.tgz): C wrappers for BLAS (BSD license)
 
+For Python:
+
+* [python >= 2.7](http://python.org): A scripting language (Python Software Foundation (PSF) license)
+* [numpy >= 1.5](http://numpy.scipy.org): Efficient multidimensional arrays for Python (BSD license)
+* [setuptools >= 0.6](http://pythonhosted.org/setuptools): A packaging system for Python (PSF license)
+
 Optional dependencies (see below for how to disable these):
 
-* [python >= 2.6](http://python.org): A scripting language (Python Software Foundation (PSF) license)
-* [numpy >= 1.5](http://numpy.scipy.org): Efficient multidimensional arrays for Python (BSD license)
-* [scipy](http://www.scipy.org): Scientific computation for Python (BSD license)
 * [py.test >= 2.1](http://pytest.org): Simple python testing (MIT license)
+* [scipy](http://www.scipy.org): Scientific computation for Python (BSD license)
 * [openexr](http://www.openexr.com): High dynamic range floating point image format (BSD license)
 * [libpng](http://www.libpng.org): Lossless image format (Custom noncopyleft license)
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
 * [openmesh](http://www.openmesh.org): Halfedge triangle mesh data structure (LGPL)
 
-`core` makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
+Geode makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
 
 * [gcc 4.6](http://gcc.gnu.org)
 * [gcc 4.7](http://gcc.gnu.org)
 * [clang 3.1](http://clang.llvm.org)
+* [clang 3.2](http://clang.llvm.org)
 
-### Setup
+### Installation
 
-`core` is a mixed Python/C++ codebase, so for now the setup requires setting several environment variables.
-Ideally, we will improve this part so that everything works more automatically.
+If necessary, dependencies can be installed via
 
-1. Install dependencies:
+    # Debian/Ubuntu
+    sudo apt-get install python python-numpy scons libboost-dev \
+      python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
 
-        # MacPorts
-        sudo port -v install python26 py26-numpy boost scons \
-          py26-scipy py26-py libpng libjpeg openexr # optional
+    # Homebrew
+    TODO
 
-        # Debian/Ubuntu
-        sudo apt-get install python python-numpy libboost-1.48 scons \
-          python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
+    # MacPorts
+    sudo port -v install python26 py26-numpy scons boost \
+      py26-scipy py26-py libpng libjpeg openexr # optional
 
-2. Unpack `core` inside a root directory (we use `other`), and set $OTHER to that root directory.
+Geode can then be installed from source via
 
-        mkdir other 
-        export OTHER=`pwd`/other
-        cd $OTHER
-        git clone https://github.com/otherlab/core.git
+    git clone https//github.com/otherlab/geode.git
+    cd geode
 
-3. Set up build:
+    # Install c++ headers and libraries to /usr/local
+    scons -j 5
+    sudo scons install
 
-        cd $OTHER
-        ./core/build/setup
+    # Install python bindings
+    sudo python setup.py install
 
-4. Configure build: If desired, edit `config.py` and set any desired options.  For example:
+### Testing
 
-        # config.py
-        CXX = 'clang++'
-        cache = '/tmp/scons-cache'
+Unit tests can be run via
 
-   The following flags can be used to disable optional components:
+    cd geode
+    py.test
 
-        has_python = 0
-        has_openexr = 0
-        has_libpng = 0
-        has_libjpeg = 0
-        has_openmesh = 0
+### Extra configuration
 
-5. Build:
+If additional build configuration is necessary, create a `config.py` file and set any desired options.  For example,
 
-        cd $OTHER
-        scons -j5 # optimized build
-        scons -j5 type=debug # debug build
+    # config.py
+    CXX = 'clang++'
+    cache = '/tmp/scons-cache'
 
-   Run `scons -h` to get a complete list of available options.
+These options can also be passed on the command line to scons.  Run `scons -h` for a complete list.
+Use `type=debug` for a much slower build with many more assertions
 
-   Libraries and directories will be installed into `$OTHER/install/<variant>`, where <variant> is debug or release.
+    scons -j 5 type=debug
 
-6. Make a flavor symlink to your desired active variant.
+The following flags can be used to disable optional components:
 
-        cd $OTHER/install
-        ln -s <variant> flavor # <variant> can be debug or release
+    has_python = 0
+    has_openexr = 0
+    has_libpng = 0
+    has_libjpeg = 0
+    has_openmesh = 0
 
-   Alternatively, you can add this to your .bashrc:
+The libraries are built into `build/$arch/$type` (`build/native/release` by default) if you want to use
+them without installing.
 
-        other-flavor () {
-          if test -n "$1" -a -e "$OTHER/install/$1"; then
-            rm -v -f $OTHER/install/flavor
-            ln -sf $1 $OTHER/install/flavor
-          elif [ "$1" ]; then
-            echo flavor \"$1\" not found.
-          else
-            ls -GFC -l $OTHER/install
-          fi
-        }
+### Acknowledgements
 
-   and do
+Parts of geode come from the [PhysBAM simulation library](http://physbam.stanford.edu) developed by
+Ron Fedkiw et al. at Stanford University.
 
-        other-flavor <variant>
+For random numbers, we use the [Random123 library](http://www.deshawresearch.com/resources_random123.html) of
+John Salmon et al. at D. E. Shaw Research.  Random123 is included inline in `core/random/random123`.
 
-7. Set up environment variables:
-
-        export OTHER=$HOME/otherlab/other
-        export PATH=$PATH:$OTHER/install/flavor/bin
-        export PYTHONPATH=$PYTHONPATH:$OTHER/..:$OTHER/install/flavor/lib
-
-8. Test:
-
-        cd $OTHER/core
-        py.test --version # Need at least 2.1
-        py.test
+The interval arithmetic in `exact/Interval` is based on code by [Robert Bridson](http://www.cs.ubc.ca/~rbridson)
+and [Tyson Brochu](http://www.cs.ubc.ca/~tbrochu).
