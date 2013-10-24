@@ -175,12 +175,12 @@ public:
   GEODE_CORE_EXPORT void unsafe_flip_edge(HalfedgeId e);
 
   // Remove a face from the mesh, shuffling face and halfedge ids in the process.
-  // Vertex ids are untouched, and in particular isolated vertices are not deleted.
-  GEODE_CORE_EXPORT void unsafe_delete_face(FaceId f);
+  // Vertex ids are untouched, and in particular isolated vertices are not erased.
+  GEODE_CORE_EXPORT void unsafe_erase_face(FaceId f);
 
   // Remove the last vertex from the mesh, shuffling face and halfedge ids in the process.
-  // This exists solely to delete sentinel vertices created by Delaunay.
-  GEODE_CORE_EXPORT void unsafe_delete_last_vertex();
+  // This exists solely to erase sentinel vertices created by Delaunay.
+  GEODE_CORE_EXPORT void unsafe_erase_last_vertex();
 };
 
 // Use only through HalfedgeMesh::outgoing()

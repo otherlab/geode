@@ -5,7 +5,7 @@
 // our energy function has the form
 //
 //   E = E_00(Fh_00) + E_01(Fh_01) + E_11(Fh_11)
-// 
+//
 // In cloth terminology, we independently penalize weft, warp, and shear deformation.
 // For now, we ignore damping forces.
 //
@@ -13,7 +13,7 @@
 // use StrainMeasure<T,2> directly.
 
 #include <geode/force/Force.h>
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/vector/Matrix.h>
 namespace geode {
 
@@ -48,7 +48,7 @@ protected:
   };
   Array<Info> info;
 
-  SimpleShell(const TriangleMesh& mesh, RawArray<const Matrix<T,2>> Dm, const T density);
+  SimpleShell(const TriangleSoup& mesh, RawArray<const Matrix<T,2>> Dm, const T density);
 public:
   virtual ~SimpleShell();
 

@@ -69,7 +69,7 @@ def test_bending():
   stiffness = 7
   damping = 3
   for d in 2,3:
-    mesh = SegmentMesh([[0,1],[1,2]]) if d==2 else TriangleMesh([[0,2,1],[1,2,3]])
+    mesh = SegmentMesh([[0,1],[1,2]]) if d==2 else TriangleSoup([[0,2,1],[1,2,3]])
     X = random.randn(d+1,d)
     dX = .1*random.randn(d+1,d)
     for bend in linear_bending_elements(mesh,X,stiffness,damping),cubic_hinges(mesh,X,stiffness,damping):
@@ -131,13 +131,13 @@ def test_air_pressure():
   mesh,X = icosahedron_mesh()
   if 1:
     X = vstack([random.randn(3),X,random.randn(3)])
-    mesh = TriangleMesh(mesh.elements+1)
+    mesh = TriangleSoup(mesh.elements+1)
   X2 = X + random.randn(*X.shape)/10
   for closed in 0,1:
     for side in 1,-1:
       print '\nclosed %d, side %d'%(closed,side)
       air = AirPressure(mesh,X,closed,side)
-      force_test(air,X2,verbose=1) 
+      force_test(air,X2,verbose=1)
 
 def test_pins():
   random.seed(17310)
@@ -168,7 +168,7 @@ def test_surface_pins():
   pins = SurfacePins(nodes,mass,target_mesh,target_X,7,1.1)
   force_test(pins,X,verbose=1,ignore_hessian=1)
   # Hessian should be correct if the closest points are all on faces
-  target_mesh = TriangleMesh([[0,1,2]])
+  target_mesh = TriangleSoup([[0,1,2]])
   target_X = 100*eye(3)
   pins = SurfacePins(nodes,mass,target_mesh,target_X,7,1.1)
   force_test(pins,X,verbose=1)

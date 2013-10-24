@@ -6,7 +6,7 @@
 #include <geode/geometry/forward.h>
 #include <geode/geometry/BoxTree.h>
 #include <geode/mesh/SegmentMesh.h>
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/math/constants.h>
 #include <vector>
 namespace geode {
@@ -16,7 +16,7 @@ template<class TV,int d> class SimplexTree : public BoxTree<TV> {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef BoxTree<TV> Base;
-  typedef typename mpl::if_c<d==1,SegmentMesh,TriangleMesh>::type Mesh;
+  typedef typename mpl::if_c<d==1,SegmentMesh,TriangleSoup>::type Mesh;
   typedef typename mpl::if_c<d==1,Segment<TV>,Triangle<TV>>::type Simplex;
   typedef typename mpl::if_c<d==1,T,Vector<T,3>>::type Weights;
   using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;

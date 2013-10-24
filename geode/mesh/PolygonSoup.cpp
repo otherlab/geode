@@ -1,17 +1,17 @@
 //#####################################################################
-// Class PolygonMesh
+// Class PolygonSoup
 //#####################################################################
-#include <geode/mesh/PolygonMesh.h>
+#include <geode/mesh/PolygonSoup.h>
 #include <geode/mesh/SegmentMesh.h>
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/const_cast.h>
 #include <geode/python/Class.h>
 namespace geode {
 
-GEODE_DEFINE_TYPE(PolygonMesh)
+GEODE_DEFINE_TYPE(PolygonSoup)
 
-PolygonMesh::PolygonMesh(Array<const int> counts, Array<const int> vertices)
+PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices)
   : counts(counts)
   , vertices(vertices)
   , node_count(0)
@@ -26,9 +26,9 @@ PolygonMesh::PolygonMesh(Array<const int> counts, Array<const int> vertices)
   }
 }
 
-PolygonMesh::~PolygonMesh() {}
+PolygonSoup::~PolygonSoup() {}
 
-Ref<SegmentMesh> PolygonMesh::segment_mesh() const {
+Ref<SegmentMesh> PolygonSoup::segment_mesh() const {
   if (!segment_mesh_) {
     Hashtable<Vector<int,2> > hash;
     Array<Vector<int,2> > segments;
@@ -45,7 +45,7 @@ Ref<SegmentMesh> PolygonMesh::segment_mesh() const {
   return ref(segment_mesh_);
 }
 
-Ref<TriangleMesh> PolygonMesh::triangle_mesh() const {
+Ref<TriangleSoup> PolygonSoup::triangle_mesh() const {
   if (!triangle_mesh_) {
     Array<Vector<int,3> > triangles(half_edge_count-2*counts.size());
     int offset=0, t=0;
@@ -54,7 +54,7 @@ Ref<TriangleMesh> PolygonMesh::triangle_mesh() const {
         triangles[t++].set(vertices[offset],vertices[offset+i+1],vertices[offset+i+2]);
       offset+=counts[p];
     }
-    triangle_mesh_=new_<TriangleMesh>(triangles);
+    triangle_mesh_=new_<TriangleSoup>(triangles);
   }
   return ref(triangle_mesh_);
 }
@@ -63,8 +63,8 @@ Ref<TriangleMesh> PolygonMesh::triangle_mesh() const {
 using namespace geode;
 
 void wrap_polygon_mesh() {
-  typedef PolygonMesh Self;
-  Class<Self>("PolygonMesh")
+  typedef PolygonSoup Self;
+  Class<Self>("PolygonSoup")
     .GEODE_INIT(Array<const int>,Array<const int>)
     .GEODE_FIELD(counts)
     .GEODE_FIELD(vertices)

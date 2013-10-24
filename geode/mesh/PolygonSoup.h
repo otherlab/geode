@@ -1,8 +1,8 @@
 //#####################################################################
-// Class PolygonMesh
+// Class PolygonSoup
 //#####################################################################
 //
-// PolygonMesh stores immutable topology for a polygon mesh.  The advantage
+// PolygonSoup stores immutable topology for a polygon mesh.  The advantage
 // of immutability is that we don't have to worry about acceleration structures
 // becoming invalid, and we can check validity once at construction time.
 //
@@ -16,7 +16,7 @@
 #include <geode/python/Ref.h>
 namespace geode {
 
-class PolygonMesh : public Object {
+class PolygonSoup : public Object {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Object Base;
@@ -26,18 +26,18 @@ public:
 private:
   const int node_count, half_edge_count;
   mutable Ptr<SegmentMesh> segment_mesh_;
-  mutable Ptr<TriangleMesh> triangle_mesh_;
+  mutable Ptr<TriangleSoup> triangle_mesh_;
 
 protected:
-  PolygonMesh(Array<const int> counts, Array<const int> vertices);
+  PolygonSoup(Array<const int> counts, Array<const int> vertices);
 public:
-  ~PolygonMesh();
+  ~PolygonSoup();
 
   int nodes() const {
     return node_count;
   }
 
   GEODE_CORE_EXPORT Ref<SegmentMesh> segment_mesh() const;
-  GEODE_CORE_EXPORT Ref<TriangleMesh> triangle_mesh() const;
+  GEODE_CORE_EXPORT Ref<TriangleSoup> triangle_mesh() const;
 };
 }

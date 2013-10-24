@@ -281,7 +281,7 @@ protected:
   GEODE_CORE_EXPORT TriMesh();
   GEODE_CORE_EXPORT TriMesh(const TriMesh& m);
   GEODE_CORE_EXPORT TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real,3> > X);
-  GEODE_CORE_EXPORT TriMesh(Tuple<Ref<TriangleMesh>,Array<Vector<real,3>>> const &);
+  GEODE_CORE_EXPORT TriMesh(Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> const &);
 
   void cut_and_mirror(Plane<real> const &p, bool mirror, T epsilon, T area_hack);
 public:

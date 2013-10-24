@@ -96,6 +96,19 @@ public:
     flat.preallocate(m_new, copy_existing_elements);
   }
 
+  // permute the field such that fnew[permutation[i]] = f[i]. Negative values in permutation signify deletion.
+  void permute(RawArray<int> permutation) {
+    GEODE_ASSERT(permutation.size() == flat.size());
+    Array<T> newflat(permutation.max()+1);
+    for (int i = 0; i < permutation.size(); ++i) {
+      if (permutation[i] >= 0) {
+        GEODE_ASSERT(permutation[i] < newflat.size());
+        newflat[permutation[i]] = flat[i];
+      }
+    }
+    flat = newflat;
+  }
+
   Field<Element,Id> copy() const {
     Field<Element,Id> copy;
     copy.flat.copy(flat);

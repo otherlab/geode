@@ -22,7 +22,7 @@ public:
 
 protected:
   ThickShell(const SegmentMesh& mesh, Array<const TV> X, Array<const T> radii);
-  ThickShell(const TriangleMesh& mesh, Array<const TV> X, Array<const T> radii);
+  ThickShell(const TriangleSoup& mesh, Array<const TV> X, Array<const T> radii);
   ThickShell(Ref<> mesh, Array<const TV> X, Array<const T> radii);
 public:
   ~ThickShell();

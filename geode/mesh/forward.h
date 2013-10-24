@@ -6,13 +6,13 @@
 #include <geode/array/forward.h>
 namespace geode {
 
-class PolygonMesh;
+class PolygonSoup;
 class SegmentMesh;
-class TriangleMesh;
+class TriangleSoup;
 class HalfedgeMesh;
 
 template<int d> struct SimplexMesh;
 template<> struct SimplexMesh<1>{typedef SegmentMesh type;};
-template<> struct SimplexMesh<2>{typedef TriangleMesh type;};
+template<> struct SimplexMesh<2>{typedef TriangleSoup type;};
 
 }

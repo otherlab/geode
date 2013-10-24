@@ -2,7 +2,7 @@
 
 #include "triangulator.h"
 #include <geode/structure/Tuple.h>
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/array/Array.h>
 #include <geode/utility/stl.h>
 #include <geode/geometry/Segment.h>

@@ -18,7 +18,7 @@ namespace geode {
 typedef real T;
 GEODE_DEFINE_TYPE(TriangleSubdivision)
 
-static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh) {
+static Ref<TriangleSoup> make_fine_mesh(const TriangleSoup& coarse_mesh) {
   Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();
   Nested<const int> incident_elements=segments->incident_elements();
   int offset = coarse_mesh.nodes();
@@ -40,10 +40,10 @@ static Ref<TriangleMesh> make_fine_mesh(const TriangleMesh& coarse_mesh) {
     triangles[4*t+2].set(edges[2],edges[1],nodes[2]);
     triangles[4*t+3].set(edges[0],edges[1],edges[2]);
   }
-  return new_<TriangleMesh>(triangles);
+  return new_<TriangleSoup>(triangles);
 }
 
-TriangleSubdivision::TriangleSubdivision(const TriangleMesh& coarse_mesh)
+TriangleSubdivision::TriangleSubdivision(const TriangleSoup& coarse_mesh)
   : coarse_mesh(ref(coarse_mesh))
   , fine_mesh(make_fine_mesh(coarse_mesh)) {}
 
@@ -162,7 +162,7 @@ Ref<SparseMatrix> TriangleSubdivision::loop_matrix() const {
       for (int a=0;a<2;a++)
         A.set(vec(i,e[a]),(T).5);
     else if (n[0].size()==6 && n[1].size()==6) { // Edge between regular vertices
-      int j = n[0].find(e[1]); 
+      int j = n[0].find(e[1]);
       int c[2] = {n[0][(j-1+n[0].size())%n[0].size()],
                   n[0][(j+1)%n[0].size()]};
       for (int a=0;a<2;a++) {
@@ -212,7 +212,7 @@ using namespace geode;
 void wrap_triangle_subdivision() {
   typedef TriangleSubdivision Self;
   Class<Self>("TriangleSubdivision")
-    .GEODE_INIT(TriangleMesh&)
+    .GEODE_INIT(TriangleSoup&)
     .GEODE_FIELD(coarse_mesh)
     .GEODE_FIELD(fine_mesh)
     .GEODE_FIELD(corners)

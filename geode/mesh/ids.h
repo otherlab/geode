@@ -11,7 +11,7 @@ using std::numeric_limits;
 
 // Special id values
 const int invalid_id = numeric_limits<int>::min();
-const int deleted_id = numeric_limits<int>::max();
+const int erased_id = numeric_limits<int>::max();
 
 #define GEODE_DEFINE_ID(Name) \
   struct Name { \

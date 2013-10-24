@@ -36,7 +36,7 @@ public:
   typedef Vector<T,3> TV;
   typedef Force<TV> Base;
 
-  const Ref<TriangleMesh> mesh;
+  const Ref<TriangleSoup> mesh;
   const bool closed;
   const int side; // +1 for air on the inside of the mesh, -1 for air on the outside
   T temperature; // in Kelvin
@@ -51,7 +51,7 @@ private:
   Array<TV> normals; // area weighted times two
 
 protected:
-  AirPressure(Ref<TriangleMesh> mesh,Array<const TV> X,bool closed,int side); // defaults to 1 atm
+  AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,int side); // defaults to 1 atm
 public:
   ~AirPressure();
 

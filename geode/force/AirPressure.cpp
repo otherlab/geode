@@ -4,7 +4,7 @@
 #include <geode/force/AirPressure.h>
 #include <geode/math/constants.h>
 #include <geode/mesh/SegmentMesh.h>
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/python/Class.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/vector/SolidMatrix.h>
@@ -19,7 +19,7 @@ typedef Vector<T,3> TV;
 
 GEODE_DEFINE_TYPE(AirPressure)
 
-AirPressure::AirPressure(Ref<TriangleMesh> mesh,Array<const TV> X,bool closed,int side)
+AirPressure::AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,int side)
   : mesh(mesh)
   , closed(closed)
   , side(side)
@@ -37,7 +37,7 @@ AirPressure::AirPressure(Ref<TriangleMesh> mesh,Array<const TV> X,bool closed,in
   // Set up local mesh
   Array<const int> nodes = mesh->nodes_touched();
   Hashtable<int,int> hash;
-  for (int i=0;i<nodes.size();i++) 
+  for (int i=0;i<nodes.size();i++)
     hash.set(nodes[i],i);
   local_mesh.resize(mesh->elements.size(),false);
   for (int t=0;t<mesh->elements.size();t++)
@@ -96,7 +96,7 @@ void AirPressure::add_elastic_force(RawArray<TV> F) const {
                         : -pressure;
   const T factor = -side*dEdV/6;
   // Assuming a closed mesh, we have
-  //   V = 1/6 sum_t det(a,b,c) 
+  //   V = 1/6 sum_t det(a,b,c)
   //     = 1/6 sum_t det(a-o,b-o,c-o)
   //     = 1/6 sum_t (a-o) . cross(b-o,c-o)
   //   dV/da = 1/6 sum_{t on a} cross(b-o,c-o)
@@ -205,7 +205,7 @@ using namespace geode;
 void wrap_air_pressure() {
   typedef AirPressure Self;
   Class<Self>("AirPressure")
-    .GEODE_INIT(Ref<TriangleMesh>,Array<const TV>,bool,int)
+    .GEODE_INIT(Ref<TriangleSoup>,Array<const TV>,bool,int)
     .GEODE_FIELD(temperature)
     .GEODE_FIELD(amount)
     .GEODE_FIELD(pressure)

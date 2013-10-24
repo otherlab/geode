@@ -1,11 +1,12 @@
 // A corner data structure representing oriented triangle meshes.
 
-#include <geode/mesh/CornerMesh.h>
+#include <geode/mesh/TriangleTopology.h>
 #include <geode/array/convert.h>
 #include <geode/array/Nested.h>
 #include <geode/python/Class.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
+#include <geode/structure/Tuple.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/convert.h>
 #include <boost/dynamic_bitset.hpp>
@@ -14,7 +15,7 @@ namespace geode {
 using Log::cout;
 using std::endl;
 
-GEODE_DEFINE_TYPE(CornerMesh)
+GEODE_DEFINE_TYPE(TriangleTopology)
 
 // Add numpy conversion support
 #ifdef GEODE_PYTHON
@@ -34,27 +35,27 @@ static string str_halfedge(HalfedgeId e) {
                    : "e_";
 }
 
-CornerMesh::CornerMesh()
+TriangleTopology::TriangleTopology()
   : n_vertices_(0)
   , n_faces_(0)
   , n_boundary_edges_(0) {}
 
-CornerMesh::CornerMesh(const CornerMesh& mesh)
+TriangleTopology::TriangleTopology(const TriangleTopology& mesh)
   : n_vertices_(mesh.n_vertices_)
   , n_faces_(mesh.n_faces_)
   , n_boundary_edges_(mesh.n_boundary_edges_)
   , faces_(mesh.faces_.copy())
   , vertex_to_edge_(mesh.vertex_to_edge_.copy())
   , boundaries_(mesh.boundaries_.copy())
-  , deleted_boundaries_(mesh.deleted_boundaries_) {}
+  , erased_boundaries_(mesh.erased_boundaries_) {}
 
-CornerMesh::~CornerMesh() {}
+TriangleTopology::~TriangleTopology() {}
 
-Ref<CornerMesh> CornerMesh::copy() const {
-  return new_<CornerMesh>(*this);
+Ref<TriangleTopology> TriangleTopology::copy() const {
+  return new_<TriangleTopology>(*this);
 }
 
-HalfedgeId CornerMesh::halfedge(VertexId v0, VertexId v1) const {
+HalfedgeId TriangleTopology::halfedge(VertexId v0, VertexId v1) const {
   assert(valid(v0));
   const auto start = halfedge(v0);
   if (start.valid()) {
@@ -68,7 +69,7 @@ HalfedgeId CornerMesh::halfedge(VertexId v0, VertexId v1) const {
   return HalfedgeId();
 }
 
-HalfedgeId CornerMesh::common_halfedge(FaceId f0, FaceId f1) const {
+HalfedgeId TriangleTopology::common_halfedge(FaceId f0, FaceId f1) const {
   if (f0.valid()) {
     for (const auto e : halfedges(f0))
       if (face(reverse(e))==f1)
@@ -81,17 +82,19 @@ HalfedgeId CornerMesh::common_halfedge(FaceId f0, FaceId f1) const {
   return HalfedgeId();
 }
 
-VertexId CornerMesh::add_vertex() {
+VertexId TriangleTopology::add_vertex() {
   n_vertices_++;
   return vertex_to_edge_.append(HalfedgeId());
 }
 
-void CornerMesh::add_vertices(int n) {
+VertexId TriangleTopology::add_vertices(int n) {
+  int id = n_vertices_;
   n_vertices_ += n;
   vertex_to_edge_.flat.resize(vertex_to_edge_.size()+n);
+  return VertexId(id);
 }
 
-static inline HalfedgeId right_around_dst_to_boundary(const CornerMesh& mesh, HalfedgeId e) {
+static inline HalfedgeId right_around_dst_to_boundary(const TriangleTopology& mesh, HalfedgeId e) {
   e = mesh.reverse(mesh.next(mesh.reverse(e)));
   while (!mesh.is_boundary(e))
     e = mesh.reverse(mesh.next(e));
@@ -100,7 +103,7 @@ static inline HalfedgeId right_around_dst_to_boundary(const CornerMesh& mesh, Ha
 
 // Set halfedge(v) to an outgoing boundary halfedge if possible, or any halfedge otherwise.  We start
 // looping at the given initial guess, which should ideally be a likely boundary edge.
-static inline void fix_vertex_to_edge(CornerMesh& mesh, const VertexId v, const HalfedgeId start) {
+static inline void fix_vertex_to_edge(TriangleTopology& mesh, const VertexId v, const HalfedgeId start) {
   auto e = start;
   for (;;) {
     if (mesh.is_boundary(e))
@@ -113,12 +116,12 @@ static inline void fix_vertex_to_edge(CornerMesh& mesh, const VertexId v, const 
 }
 
 // Allocate a fresh boundary edge and set its src and reverse pointers
-static inline HalfedgeId unsafe_new_boundary(CornerMesh& mesh, const VertexId src, const HalfedgeId reverse) {
+static inline HalfedgeId unsafe_new_boundary(TriangleTopology& mesh, const VertexId src, const HalfedgeId reverse) {
   mesh.n_boundary_edges_++;
   HalfedgeId e;
-  if (mesh.deleted_boundaries_.valid()) {
-    e = mesh.deleted_boundaries_;
-    mesh.deleted_boundaries_ = mesh.boundaries_[-1-e.id].next;
+  if (mesh.erased_boundaries_.valid()) {
+    e = mesh.erased_boundaries_;
+    mesh.erased_boundaries_ = mesh.boundaries_[-1-e.id].next;
   } else {
     const int b = mesh.boundaries_.size();
     mesh.boundaries_.resize(b+1,false);
@@ -130,10 +133,10 @@ static inline HalfedgeId unsafe_new_boundary(CornerMesh& mesh, const VertexId sr
 }
 
 GEODE_COLD static void add_face_error(const Vector<VertexId,3> v, const char* reason) {
-  throw RuntimeError(format("CornerMesh::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
+  throw RuntimeError(format("TriangleTopology::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
 }
 
-FaceId CornerMesh::add_face(const Vector<VertexId,3> v) {
+FaceId TriangleTopology::add_face(const Vector<VertexId,3> v) {
   // Check for errors
   if (!valid(v.x) || !valid(v.y) || !valid(v.z))
     add_face_error(v," containing invalid vertex");
@@ -212,11 +215,11 @@ FaceId CornerMesh::add_face(const Vector<VertexId,3> v) {
   LINK(1)
   LINK(2)
 
-  // Delete edges that used to be boundaries.  We do this after allocating new boundary edges
+  // erase edges that used to be boundaries.  We do this after allocating new boundary edges
   // so that fields we need are not overwritten before they are used.
-  if (e0.valid()) unsafe_set_deleted(e0);
-  if (e1.valid()) unsafe_set_deleted(e1);
-  if (e2.valid()) unsafe_set_deleted(e2);
+  if (e0.valid()) unsafe_set_erased(e0);
+  if (e1.valid()) unsafe_set_erased(e1);
+  if (e2.valid()) unsafe_set_erased(e2);
 
   // Fix vertex to edge pointers to point to boundary halfedges if possible
   fix_vertex_to_edge(*this,v.x,r2);
@@ -227,13 +230,13 @@ FaceId CornerMesh::add_face(const Vector<VertexId,3> v) {
   return f;
 }
 
-void CornerMesh::add_faces(RawArray<const Vector<int,3>> vs) {
+void TriangleTopology::add_faces(RawArray<const Vector<int,3>> vs) {
   // TODO: We desperately need a batch insertion routine.
   for (auto& v : vs)
     add_face(Vector<VertexId,3>(v));
 }
 
-void CornerMesh::split_face(const FaceId f, const VertexId c) {
+void TriangleTopology::split_face(const FaceId f, const VertexId c) {
   GEODE_ASSERT(valid(f) && isolated(c));
   const auto v = faces_[f].vertices;
   const auto n = faces_[f].neighbors;
@@ -256,13 +259,13 @@ void CornerMesh::split_face(const FaceId f, const VertexId c) {
   vertex_to_edge_[c] = halfedge(f,2);
 }
 
-VertexId CornerMesh::split_face(FaceId f) {
+VertexId TriangleTopology::split_face(FaceId f) {
   const auto c = add_vertex();
   split_face(f,c);
   return c;
 }
 
-bool CornerMesh::is_flip_safe(HalfedgeId e0) const {
+bool TriangleTopology::is_flip_safe(HalfedgeId e0) const {
   if (!valid(e0) || is_boundary(e0))
     return false;
   const auto e1 = reverse(e0);
@@ -273,13 +276,13 @@ bool CornerMesh::is_flip_safe(HalfedgeId e0) const {
   return o0!=o1 && !halfedge(o0,o1).valid();
 }
 
-HalfedgeId CornerMesh::flip_edge(HalfedgeId e) {
+HalfedgeId TriangleTopology::flip_edge(HalfedgeId e) {
   if (!is_flip_safe(e))
-    throw RuntimeError(format("CornerMesh::flip_edge: edge flip %d is invalid",e.id));
+    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d is invalid",e.id));
   return unsafe_flip_edge(e);
 }
 
-HalfedgeId CornerMesh::unsafe_flip_edge(HalfedgeId e0) {
+HalfedgeId TriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
   const auto e1 = reverse(e0);
   const auto f0 = face(e0),
              f1 = face(e1);
@@ -309,14 +312,14 @@ HalfedgeId CornerMesh::unsafe_flip_edge(HalfedgeId e0) {
   return HalfedgeId(3*f0.id);
 }
 
-void CornerMesh::assert_consistent() const {
+void TriangleTopology::assert_consistent() const {
   // Check simple vertex properties
   int actual_vertices = 0;
   for (const auto v : vertices()) {
     actual_vertices++;
     const auto e = halfedge(v);
     if (e.valid())
-      GEODE_ASSERT(valid(e) && src(e)==v);
+      GEODE_ASSERT(src(e)==v);
   }
   GEODE_ASSERT(actual_vertices==n_vertices());
 
@@ -340,6 +343,9 @@ void CornerMesh::assert_consistent() const {
   for (const auto e : halfedges()) {
     const auto f = face(e);
     const auto p = prev(e), n = next(e), r = reverse(e);
+    GEODE_ASSERT(valid(p));
+    GEODE_ASSERT(valid(n));
+    GEODE_ASSERT(valid(r));
     GEODE_ASSERT(e!=p && e!=n && e!=r);
     GEODE_ASSERT(src(r)==src(n));
     GEODE_ASSERT(src(e)!=dst(e));
@@ -347,8 +353,13 @@ void CornerMesh::assert_consistent() const {
     GEODE_ASSERT(valid(n) && prev(n)==e && face(n)==f);
     if (f.valid())
       GEODE_ASSERT(valid(f) && halfedges(f).contains(e));
-    else
+    else {
+      GEODE_ASSERT(is_boundary(e));
+      GEODE_ASSERT(is_boundary(p));
+      GEODE_ASSERT(is_boundary(n));
+      GEODE_ASSERT(!is_boundary(r));
       GEODE_ASSERT(face(r).valid());
+    }
     const auto ce = common_halfedge(f,face(r));
     GEODE_ASSERT(ce.valid() && face(ce)==f && face(reverse(ce))==face(r));
   }
@@ -381,18 +392,18 @@ void CornerMesh::assert_consistent() const {
     }
   GEODE_ASSERT(seen.count()==size_t(2*n_edges()));
 
-  // Check that all deleted boundary edges occur in our linked list
+  // Check that all erased boundary edges occur in our linked list
   int limit = boundaries_.size();
-  int actual_deleted = 0;
-  for (auto b=deleted_boundaries_;b.valid();b=boundaries_[-1-b.id].next) {
+  int actual_erased = 0;
+  for (auto b=erased_boundaries_;b.valid();b=boundaries_[-1-b.id].next) {
     GEODE_ASSERT(boundaries_.valid(-1-b.id));
     GEODE_ASSERT(limit--);
-    actual_deleted++;
+    actual_erased++;
   }
-  GEODE_ASSERT(n_boundary_edges()+actual_deleted==boundaries_.size());
+  GEODE_ASSERT(n_boundary_edges()+actual_erased==boundaries_.size());
 }
 
-Array<Vector<int,3>> CornerMesh::elements() const {
+Array<Vector<int,3>> TriangleTopology::elements() const {
   Array<Vector<int,3>> tris(n_faces(),false);
   int i = 0;
   for (const auto f : faces())
@@ -400,15 +411,15 @@ Array<Vector<int,3>> CornerMesh::elements() const {
   return tris;
 }
 
-bool CornerMesh::has_boundary() const {
+bool TriangleTopology::has_boundary() const {
   return n_boundary_edges()!=0;
 }
 
-bool CornerMesh::is_manifold() const {
+bool TriangleTopology::is_manifold() const {
   return !has_boundary();
 }
 
-bool CornerMesh::is_manifold_with_boundary() const {
+bool TriangleTopology::is_manifold_with_boundary() const {
   if (is_manifold()) // Finish in O(1) time if possible
     return true;
   for (const auto v : vertices()) {
@@ -427,21 +438,21 @@ bool CornerMesh::is_manifold_with_boundary() const {
   return true;
 }
 
-bool CornerMesh::has_isolated_vertices() const {
+bool TriangleTopology::has_isolated_vertices() const {
   for (const auto v : vertices())
     if (isolated(v))
       return true;
   return false;
 }
 
-int CornerMesh::degree(VertexId v) const {
+int TriangleTopology::degree(VertexId v) const {
   int degree = 0;
   for (GEODE_UNUSED auto _ : outgoing(v))
     degree++;
   return degree;
 }
 
-Nested<HalfedgeId> CornerMesh::boundary_loops() const {
+Nested<HalfedgeId> TriangleTopology::boundary_loops() const {
   Nested<HalfedgeId> loops;
   boost::dynamic_bitset<> seen(boundaries_.size());
   for (const auto start : boundary_edges())
@@ -457,25 +468,25 @@ Nested<HalfedgeId> CornerMesh::boundary_loops() const {
   return loops;
 }
 
-void CornerMesh::unsafe_delete_last_vertex() {
+void TriangleTopology::erase_last_vertex_with_reordering() {
   const VertexId v(vertex_to_edge_.size()-1);
-  // Delete all incident faces
+  // erase all incident faces
   while (!isolated(v))
-    unsafe_delete_face(face(reverse(halfedge(v))));
+    erase_face_with_reordering(face(reverse(halfedge(v))));
   // Remove the vertex
   vertex_to_edge_.flat.pop();
   n_vertices_--;
 }
 
-void CornerMesh::unsafe_delete_face(const FaceId f) {
-  // Look up connectivity of neighboring boundary edges, then delete them
+void TriangleTopology::erase_face_with_reordering(const FaceId f) {
+  // Look up connectivity of neighboring boundary edges, then erase them
   const auto e = faces_[f].neighbors;
   Vector<HalfedgeId,2> near[3]; // (prev,next) for each neighbor boundary edge
   for (int i=0;i<3;i++)
     if (e[i].id<0) {
       const auto& B = boundaries_[-1-e[i].id];
       near[i] = vec(B.prev,B.next);
-      unsafe_set_deleted(e[i]);
+      unsafe_set_erased(e[i]);
     }
 
   // Create any new boundary edges and set src and reverse
@@ -503,7 +514,7 @@ void CornerMesh::unsafe_delete_face(const FaceId f) {
   // Rename the last face to f
   const FaceId f1(faces_.size()-1);
   if (f.id<f1.id) {
-    assert(!deleted(f1));
+    assert(!erased(f1));
     const auto I = faces_[f1];
     faces_[f].vertices = I.vertices;
     for (int i=0;i<3;i++) {
@@ -513,12 +524,12 @@ void CornerMesh::unsafe_delete_face(const FaceId f) {
     }
   }
 
-  // Remove the deleted face
+  // Remove the erased face
   faces_.flat.pop();
   n_faces_--;
 }
 
-void CornerMesh::dump_internals() const {
+void TriangleTopology::dump_internals() const {
   cout << format("corner mesh dump:\n  vertices: %d\n",n_vertices());
   for (const auto v : vertices()) {
     if (isolated(v))
@@ -557,36 +568,188 @@ void CornerMesh::dump_internals() const {
   cout << endl;
 }
 
-void CornerMesh::permute_vertices(RawArray<const int> permutation, bool check) {
+void TriangleTopology::permute_vertices(RawArray<const int> permutation, bool check) {
   GEODE_ASSERT(n_vertices()==permutation.size());
-  GEODE_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no deleted vertices
+  GEODE_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no erased vertices
 
   // Permute vertex_to_edge_ out of place
   Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),false);
   if (check) {
-    new_vertex_to_edge.fill(HalfedgeId(deleted_id));
-    for (const auto v : unsafe_vertices()) {
+    new_vertex_to_edge.fill(HalfedgeId(erased_id));
+    for (const auto v : all_vertices()) {
       const int pv = permutation[v.id];
       GEODE_ASSERT(new_vertex_to_edge.valid(pv));
       new_vertex_to_edge[pv] = vertex_to_edge_[v];
     }
-    GEODE_ASSERT(!new_vertex_to_edge.contains(HalfedgeId(deleted_id)));
+    GEODE_ASSERT(!new_vertex_to_edge.contains(HalfedgeId(erased_id)));
   } else
-    for (const auto v : unsafe_vertices())
+    for (const auto v : all_vertices())
       new_vertex_to_edge[permutation[v.id]] = vertex_to_edge_[v];
   vertex_to_edge_.flat = new_vertex_to_edge;
 
   // The other arrays can be modified in place
   for (auto& f : faces_.flat)
-    if (f.vertices.x.id!=deleted_id)
+    if (f.vertices.x.id!=erased_id)
       for (auto& v : f.vertices)
         v = VertexId(permutation[v.id]);
   for (auto& b : boundaries_)
-    if (b.src.id!=deleted_id)
+    if (b.src.id!=erased_id)
       b.src = VertexId(permutation[b.src.id]);
 }
 
-static int corner_random_edge_flips(CornerMesh& mesh, const int attempts, const uint128_t key) {
+// erase the given vertex. erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
+void TriangleTopology::erase(VertexId id, bool erase_isolated) {
+  // TODO: Make a better version of this. For now, just erase all incident faces
+  // and then our own (or have it automatically erased if erase_isolated is true)
+  GEODE_ASSERT(!erased(id));
+
+  while (!isolated(id))
+    erase(face(reverse(halfedge(id))));
+
+  // erase at least this vertex, if not already happened
+  if (!erase_isolated) {
+    unsafe_set_erased(id);
+  }
+}
+
+// erase the given halfedge. erases all incident faces as well. If erase_isolated is true, also erase incident vertices that are now isolated.
+void TriangleTopology::erase(HalfedgeId id, bool erase_isolated) {
+  auto he = faces(id);
+  for (auto h : he) {
+    if (valid(h)) {
+      erase(h, erase_isolated);
+    }
+  }
+}
+
+// erase the given face. If erase_isolated is true, also erases incident vertices that are now isolated.
+void TriangleTopology::erase(FaceId f, bool erase_isolated) {
+  GEODE_ASSERT(!erased(f));
+
+  // Look up connectivity of neighboring boundary edges, then erase them
+  const auto e = faces_[f].neighbors;
+  Vector<HalfedgeId,2> near[3]; // (prev,next) for each neighbor boundary edge
+  for (int i=0;i<3;i++)
+    if (e[i].id<0) {
+      const auto& B = boundaries_[-1-e[i].id];
+      near[i] = vec(B.prev,B.next);
+      unsafe_set_erased(e[i]);
+    }
+
+  // Create any new boundary edges and set src and reverse
+  HalfedgeId b[3];
+  for (int i=0;i<3;i++)
+    if (e[i].id>=0) {
+      b[i] = unsafe_new_boundary(*this,faces_[f].vertices[i],e[i]);
+      const int fi = e[i].id/3;
+      faces_.flat[fi].neighbors[e[i].id-3*fi] = b[i];
+    }
+
+  // Fix connectivity around each vertex: link together prev/next adjacent edges and update vertex to edge pointers
+  for (int i=0, ip=2; i<3; ip=i++) {
+    const auto v = faces_[f].vertices[i];
+    const auto prev = e[ip].id>=0 ? b[ip] : near[ip].x,
+               next = e[i ].id>=0 ? b[i ] : near[i ].y;
+    if (e[i].id>=0 || e[ip].id>=0 || prev!=e[i]) {
+      unsafe_boundary_link(prev,next);
+      vertex_to_edge_[v] = next;
+    } else if (vertex_to_edge_[v]==e[ip]) {
+      // this vertex is isolated, erase it if requested
+      vertex_to_edge_[v] = HalfedgeId();
+      if (erase_isolated)
+        unsafe_set_erased(v);
+    }
+  }
+
+  // erase the face
+  unsafe_set_erased(f);
+}
+
+inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
+  assert(h.id != erased_id);
+  if (!h.valid())
+    return h;
+  if (h.id >= 0)
+    return HalfedgeId(3*face_permutation[h.id/3] + h.id%3);
+  else
+    return HalfedgeId(-1-boundary_permutation[-1-h.id]);
+}
+
+// Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
+// vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
+// Note: non-boundary halfedges don't change order within triangles, so halfedge 3*f+i is now 3*permutation[f]+i
+Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::collect_garbage() {
+  Array<int> vertex_permutation(vertex_to_edge_.size()), face_permutation(faces_.size()), boundary_permutation(boundaries_.size());
+
+  int j;
+
+  // first, compact vertex indices (because we only ever decrease ids, we can do this in place)
+  j = 0;
+  for (int i = 0; i < vertex_to_edge_.size(); ++i) {
+    if (!erased(VertexId(i))) {
+      vertex_to_edge_.flat[j] = vertex_to_edge_.flat[i];
+      vertex_permutation[i] = j;
+      j++;
+    }
+  }
+  // discard deleted entries in the back
+  vertex_to_edge_.flat.resize(j);
+  GEODE_ASSERT(vertex_to_edge_.size() == n_vertices_);
+
+  // now, compact faces
+  j = 0;
+  for (int i = 0; i < faces_.size(); ++i) {
+    if (!erased(FaceId(i))) {
+      faces_.flat[j] = faces_.flat[i];
+      face_permutation[i] = j;
+      j++;
+    }
+  }
+  // discard deleted entries in the back
+  faces_.flat.resize(j);
+  GEODE_ASSERT(faces_.size() == n_faces_);
+
+  // compact boundaries
+  j = 0;
+  for (int i = 0; i < boundaries_.size(); ++i) {
+    if (!erased(HalfedgeId(-1-i))) {
+      boundaries_[j] = boundaries_[i];
+      boundary_permutation[i] = j;
+      j++;
+    }
+  }
+  boundaries_.resize(j);
+  GEODE_ASSERT(boundaries_.size() == n_boundary_edges_);
+
+  // erase boundary free list
+  erased_boundaries_ = HalfedgeId();
+
+  // reflect id changes in other arrays
+  for (auto& h : vertex_to_edge_.flat) {
+    assert(h.id != erased_id);
+    h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
+  }
+  for (auto& f : faces_.flat) {
+    assert(f.vertices.x.id != erased_id);
+    for (auto& v : f.vertices)
+      v = VertexId(vertex_permutation[v.id]);
+    for (auto &h : f.neighbors)
+      h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
+  }
+  for (auto& b : boundaries_) {
+    assert(b.src.id != erased_id);
+    assert(b.src.valid());
+    b.src = VertexId(vertex_permutation[b.src.id]);
+    b.next = apply_halfedge_permutation(b.next, face_permutation, boundary_permutation);
+    b.prev = apply_halfedge_permutation(b.prev, face_permutation, boundary_permutation);
+    b.reverse = apply_halfedge_permutation(b.reverse, face_permutation, boundary_permutation);
+  }
+
+  return tuple(vertex_permutation, face_permutation, boundary_permutation);
+}
+
+
+static int corner_random_edge_flips(TriangleTopology& mesh, const int attempts, const uint128_t key) {
   int flips = 0;
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
@@ -594,7 +757,7 @@ static int corner_random_edge_flips(CornerMesh& mesh, const int attempts, const 
       const HalfedgeId e(random->uniform<int>(0,3*mesh.faces_.size()));
       if (mesh.is_flip_safe(e)) {
         const auto f0 = mesh.face(e),
-                   f1 = mesh.face(mesh.reverse(e)); 
+                   f1 = mesh.face(mesh.reverse(e));
         const auto ef = mesh.unsafe_flip_edge(e);
         GEODE_ASSERT(mesh.face(ef)==f0 && mesh.face(mesh.reverse(ef))==f1);
         flips++;
@@ -604,7 +767,7 @@ static int corner_random_edge_flips(CornerMesh& mesh, const int attempts, const 
   return flips;
 }
 
-static void corner_random_face_splits(CornerMesh& mesh, const int splits, const uint128_t key) {
+static void corner_random_face_splits(TriangleTopology& mesh, const int splits, const uint128_t key) {
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
     for (int a=0;a<splits;a++) {
@@ -615,16 +778,85 @@ static void corner_random_face_splits(CornerMesh& mesh, const int splits, const 
   }
 }
 
-static void corner_mesh_destruction_test(CornerMesh& mesh, const uint128_t key) {
+static void corner_mesh_destruction_test(TriangleTopology& mesh, const uint128_t key) {
   const auto random = new_<Random>(key);
-  while (mesh.n_vertices()) {
-    GEODE_ASSERT(mesh.n_faces()==mesh.faces_.size());
-    const int target = random->uniform<int>(0,1+2*mesh.n_faces());
-    if (target<mesh.n_faces())
-      mesh.unsafe_delete_face(FaceId(target));
+
+  // make two copies, rip one apart using the reordering deletion, and one
+  // with the in-place deletion
+  auto mesh2 = mesh.copy();
+
+  // with reordering first
+  while (mesh2->n_vertices()) {
+    GEODE_ASSERT(mesh2->n_faces()==mesh2->faces_.size());
+    const int target = random->uniform<int>(0,1+2*mesh2->n_faces());
+    if (target<mesh2->n_faces())
+      mesh2->erase_face_with_reordering(FaceId(target));
     else
-      mesh.unsafe_delete_last_vertex();
+      mesh2->erase_last_vertex_with_reordering();
+    mesh2->assert_consistent();
+  }
+
+  // in-place (and perform two random garbage collections)
+  int gc1_at = random->uniform<int>(mesh.n_vertices()/2, mesh.n_vertices());
+  int gc2_at = random->uniform<int>(0, mesh.n_vertices()/2);
+
+  while (mesh.n_vertices()) {
+
+    const bool erase_isolated = random->uniform<int>(0,2);
+
+    // decide whether to erase a face or a halfedge or a vertex
+    int choice = random->uniform<int>(0,3);
+    if (mesh.n_faces() && choice) {
+      if (choice == 1) {
+        // find a non-erased face and erase it (there must be one)
+        int imax = mesh.faces_.size();
+        TriangleTopologyIter<FaceId> target(mesh, FaceId(random->uniform<int>(0, imax)), FaceId(imax));
+        while (target.i == target.end) {
+          GEODE_ASSERT(target.i != FaceId(0));
+          imax = target.i.id;
+          target = TriangleTopologyIter<FaceId>(mesh, FaceId(random->uniform<int>(0, imax)), FaceId(imax));
+        }
+        GEODE_ASSERT(!mesh.erased(*target));
+        std::cout << "deleting face " << target.i.id << (erase_isolated ? " and isolated vertices" : "") << std::endl;
+        mesh.erase(*target, erase_isolated);
+      } else {
+        // find a halfedge and erase it (there must be one)
+        int imax = mesh.faces_.size();
+        TriangleTopologyIter<FaceId> target(mesh, FaceId(random->uniform<int>(0, imax)), FaceId(imax));
+        while (target.i == target.end) {
+          GEODE_ASSERT(target.i != FaceId(0));
+          imax = target.i.id;
+          target = TriangleTopologyIter<FaceId>(mesh, FaceId(random->uniform<int>(0, imax)), FaceId(imax));
+        }
+        GEODE_ASSERT(!mesh.erased(*target));
+        int k = random->uniform<int>(0,3);
+        std::cout << "deleting halfedge " << target.i.id << ", " << k << (erase_isolated ? " and isolated vertices" : "") << std::endl;
+        mesh.erase(mesh.halfedge(*target, k), erase_isolated);
+      }
+    } else {
+      // find a non-erased vertex and erase it (there must be one)
+      int imax = mesh.vertex_to_edge_.size();
+      TriangleTopologyIter<VertexId> target(mesh, VertexId(random->uniform<int>(0, imax)), VertexId(imax));
+      while (target.i == target.end) {
+        GEODE_ASSERT(target.i != VertexId(0));
+        imax = target.i.id;
+        target = TriangleTopologyIter<VertexId>(mesh, VertexId(random->uniform<int>(0, imax)), VertexId(imax));
+      }
+      GEODE_ASSERT(!mesh.erased(*target));
+      std::cout << "deleting vertex " << target.i.id << (erase_isolated ? " and isolated vertices" : "") << std::endl;
+      mesh.erase(*target, erase_isolated);
+    }
     mesh.assert_consistent();
+
+    if (mesh.n_vertices() <= gc1_at) {
+      std::cout << "collect garbage." << std::endl;
+      mesh.collect_garbage();
+      mesh.assert_consistent();
+      if (gc1_at == gc2_at)
+        gc1_at = -1;
+      else
+        gc1_at = gc2_at;
+    }
   }
 }
 
@@ -632,8 +864,8 @@ static void corner_mesh_destruction_test(CornerMesh& mesh, const uint128_t key) 
 using namespace geode;
 
 void wrap_corner_mesh() {
-  typedef CornerMesh Self;
-  Class<Self>("CornerMesh")
+  typedef TriangleTopology Self;
+  Class<Self>("TriangleTopology")
     .GEODE_INIT()
     .GEODE_METHOD(copy)
     .GEODE_GET(n_vertices)
@@ -653,6 +885,7 @@ void wrap_corner_mesh() {
     .GEODE_METHOD(add_faces)
     .GEODE_METHOD(assert_consistent)
     .GEODE_METHOD(dump_internals)
+    .GEODE_METHOD(collect_garbage)
     ;
 
   // For testing purposes

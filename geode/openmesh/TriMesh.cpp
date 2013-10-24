@@ -69,7 +69,7 @@ TriMesh::TriMesh(RawArray<const Vector<int,3> > tris, RawArray<const Vector<real
     GEODE_ASSERT(add_face(VertexHandle(tri.x),VertexHandle(tri.y),VertexHandle(tri.z)).is_valid());
 }
 
-TriMesh::TriMesh(Tuple<Ref<TriangleMesh>,Array<Vector<real,3>>> const &in) {
+TriMesh::TriMesh(Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> const &in) {
   RawArray<const Vector<int,3> > tris = in.x->elements;
   RawArray<const Vector<real,3> > X = in.y;
   if (tris.size())
@@ -1642,7 +1642,7 @@ vector<Ref<TriMesh> > TriMesh::nested_components() const{
     volumes.push_back(mesh->volume()); // could be zero if things haven't been repaired or whatnot, need to check later
   }
 
-  Ref<TriangleMesh> m = new_<TriangleMesh>(elements());
+  Ref<TriangleSoup> m = new_<TriangleSoup>(elements());
   Ref<SimplexTree<TV,2> > tree = new_<SimplexTree<TV,2> >(*m,X().copy(),1);
   real thicken = 1e-6*bounding_box().sizes().magnitude();
 
@@ -1721,7 +1721,7 @@ Ref<TriMesh> TriMesh::largest_connected_component() const {
 }
 
 Ref<SimplexTree<Vector<real,3>,2>> TriMesh::face_tree() const {
-  return new_<SimplexTree<TV,2>>(*new_<TriangleMesh>(elements()),X().copy(),4);
+  return new_<SimplexTree<TV,2>>(*new_<TriangleSoup>(elements()),X().copy(),4);
 }
 
 Ref<SimplexTree<Vector<real,3>,1>> TriMesh::edge_tree() const {

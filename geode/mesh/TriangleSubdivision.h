@@ -7,7 +7,7 @@
 //#####################################################################
 #pragma once
 
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/python/Object.h>
 #include <geode/python/Ptr.h>
 #include <geode/python/Ref.h>
@@ -21,13 +21,13 @@ public:
 
   typedef real T;
 
-  Ref<const TriangleMesh> coarse_mesh;
-  Ref<TriangleMesh> fine_mesh;
+  Ref<const TriangleSoup> coarse_mesh;
+  Ref<TriangleSoup> fine_mesh;
   Array<const int> corners; // Change only before subdivision functions are called
 protected:
   mutable Ptr<SparseMatrix> loop_matrix_;
 
-  GEODE_CORE_EXPORT TriangleSubdivision(const TriangleMesh& coarse_mesh);
+  GEODE_CORE_EXPORT TriangleSubdivision(const TriangleSoup& coarse_mesh);
 public:
   ~TriangleSubdivision();
 

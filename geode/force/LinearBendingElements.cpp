@@ -1,6 +1,6 @@
 #include <geode/force/LinearBendingElements.h>
 #include <geode/mesh/SegmentMesh.h>
-#include <geode/mesh/TriangleMesh.h>
+#include <geode/mesh/TriangleSoup.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/SparseMatrix.h>
 #include <geode/vector/SolidMatrix.h>
@@ -37,7 +37,7 @@ template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentMesh& mes
   return new_<SparseMatrix>(entries);
 }
 
-template<class TV> static Ref<SparseMatrix> matrix_helper(const TriangleMesh& mesh,Array<const TV> X) {
+template<class TV> static Ref<SparseMatrix> matrix_helper(const TriangleSoup& mesh,Array<const TV> X) {
   GEODE_ASSERT(mesh.nodes()<=X.size());
   Array<const Vector<int,4>> quadruples = mesh.bending_tuples();
   Hashtable<Vector<int,2>,T> entries;
