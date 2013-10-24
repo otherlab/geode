@@ -3,7 +3,7 @@
 from __future__ import division
 
 from numpy import *
-from other.core import Nested, PolygonSoup, SegmentMesh, TriangleSoup
+from other.core import Nested, PolygonSoup, SegmentSoup, TriangleSoup
 from other.core.geometry.platonic import icosahedron_mesh, sphere_mesh
 from other.core.vector import relative_error
 
@@ -31,7 +31,7 @@ def test_bad():
     pass
 
 def test_incident_segments():
-  mesh = SegmentMesh([(0,1),(0,2)])
+  mesh = SegmentSoup([(0,1),(0,2)])
   incident = mesh.incident_elements()
   print incident.offsets
   print incident.flat
@@ -50,7 +50,7 @@ def test_boundary_mesh():
   assert all(boundary.elements==[[0,1],[2,0],[1,3],[3,2]])
 
 def test_bending_triples():
-  mesh = SegmentMesh([(7,8),(8,9),(8,10)])
+  mesh = SegmentSoup([(7,8),(8,9),(8,10)])
   assert all(mesh.bending_tuples()==[(7,8,9),(7,8,10),(9,8,10)])
 
 def test_bending_quadruples():
@@ -58,7 +58,7 @@ def test_bending_quadruples():
   assert all(mesh.bending_tuples()==[(0,1,2,3)])
 
 def test_adjacent_segments():
-  mesh = SegmentMesh([(0,1),(1,2)])
+  mesh = SegmentSoup([(0,1),(1,2)])
   assert all(mesh.adjacent_elements()==[(-1,1),(0,-1)])
 
 def test_adjacent_triangles():
@@ -84,7 +84,7 @@ def test_polygons():
     inj = injection(11)
     segs = inj[segments]
     random.shuffle(segs)
-    closed2,open2 = SegmentMesh(segs).polygons()
+    closed2,open2 = SegmentSoup(segs).polygons()
     assert sorted(map(closed_key,closed2))==sorted(closed_key(inj[p]) for p in closed)
     assert sorted(map(tuple,open2))==sorted(tuple(inj[p]) for p in open)
 
@@ -98,7 +98,7 @@ def test_volume():
   assert relative_error(mesh.volume(X),4/3*pi) < .01
 
 def test_neighbors():
-  mesh = SegmentMesh([(0,1),(0,2),(0,2)])
+  mesh = SegmentSoup([(0,1),(0,2),(0,2)])
   assert all(mesh.neighbors()==[[1,2],[0],[0]])
 
 def injection(n):
@@ -110,7 +110,7 @@ def injection(n):
 def test_nonmanifold_segments():
   random.seed(71318)
   map = injection(12)
-  mesh = SegmentMesh(map[asarray([(0,0), # degenerate segment
+  mesh = SegmentSoup(map[asarray([(0,0), # degenerate segment
                                   (1,2),(3,4), # open curve
                                   (4,5),(4,6), # two outgoing segments
                                   (8,7),(9,7), # two incoming segments

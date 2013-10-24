@@ -69,7 +69,7 @@ def test_bending():
   stiffness = 7
   damping = 3
   for d in 2,3:
-    mesh = SegmentMesh([[0,1],[1,2]]) if d==2 else TriangleSoup([[0,2,1],[1,2,3]])
+    mesh = SegmentSoup([[0,1],[1,2]]) if d==2 else TriangleSoup([[0,2,1],[1,2,3]])
     X = random.randn(d+1,d)
     dX = .1*random.randn(d+1,d)
     for bend in linear_bending_elements(mesh,X,stiffness,damping),cubic_hinges(mesh,X,stiffness,damping):

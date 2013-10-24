@@ -6,7 +6,7 @@ from other.core import *
 from other.core.force import *
 
 def dt(dx,stiffness,mass):
-  mesh = SegmentMesh([[0,1]])
+  mesh = SegmentSoup([[0,1]])
   mass = array([1e10,mass],dtype=real)
   X = array([[0,0,0],[dx,0,0]],dtype=real)
   springs = edge_springs(mesh,mass,X,stiffness,1)

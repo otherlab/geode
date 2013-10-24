@@ -5,7 +5,7 @@
 #include <other/core/utility/config.h>
 #include <other/core/geometry/forward.h>
 #include <other/core/geometry/BoxTree.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/mesh/TriangleSoup.h>
 #include <other/core/math/constants.h>
 #include <vector>
@@ -16,7 +16,7 @@ template<class TV,int d> class SimplexTree : public BoxTree<TV> {
 public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef BoxTree<TV> Base;
-  typedef typename mpl::if_c<d==1,SegmentMesh,TriangleSoup>::type Mesh;
+  typedef typename mpl::if_c<d==1,SegmentSoup,TriangleSoup>::type Mesh;
   typedef typename mpl::if_c<d==1,Segment<TV>,Triangle<TV>>::type Simplex;
   typedef typename mpl::if_c<d==1,T,Vector<T,3>>::type Weights;
   using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;

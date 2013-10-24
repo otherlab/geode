@@ -2,7 +2,7 @@
 // Class TriangleSoup
 //#####################################################################
 #include <other/core/mesh/TriangleSoup.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/array/sort.h>
 #include <other/core/array/view.h>
 #include <other/core/structure/Hashtable.h>
@@ -34,7 +34,7 @@ TriangleSoup::TriangleSoup(Array<const Vector<int,3> > elements)
 
 TriangleSoup::~TriangleSoup() {}
 
-Ref<const SegmentMesh> TriangleSoup::segment_mesh() const {
+Ref<const SegmentSoup> TriangleSoup::segment_mesh() const {
   if (!segment_mesh_) {
     Hashtable<Vector<int,2> > hash;
     Array<Vector<int,2> > segments;
@@ -44,7 +44,7 @@ Ref<const SegmentMesh> TriangleSoup::segment_mesh() const {
         if (hash.set(segment)) segments.append(segment);
       }
     }
-    segment_mesh_ = new_<SegmentMesh>(segments);
+    segment_mesh_ = new_<SegmentSoup>(segments);
   }
   return ref(segment_mesh_);
 }
@@ -86,7 +86,7 @@ Array<const Vector<int,3> > TriangleSoup::adjacent_elements() const {
   return adjacent_elements_;
 }
 
-Ref<SegmentMesh> TriangleSoup::boundary_mesh() const {
+Ref<SegmentSoup> TriangleSoup::boundary_mesh() const {
   if (!boundary_mesh_) {
     Hashtable<Vector<int,2>,int> hash;
     for (int t=0;t<elements.size();t++)
@@ -97,7 +97,7 @@ Ref<SegmentMesh> TriangleSoup::boundary_mesh() const {
         hash.get_or_insert(vec(b,a))+=2;
       }
     Array<Vector<int,2> > segments;
-    Ref<const SegmentMesh> segment_mesh_ = segment_mesh();
+    Ref<const SegmentSoup> segment_mesh_ = segment_mesh();
     for (int s=0;s<segment_mesh_->elements.size();s++) {
       int i,j;segment_mesh_->elements[s].get(i,j);
       if (hash.get_default(vec(i,j))==1)
@@ -105,7 +105,7 @@ Ref<SegmentMesh> TriangleSoup::boundary_mesh() const {
       else if (hash.get_default(vec(j,i))==1)
         segments.append(vec(j,i));
     }
-    boundary_mesh_ = new_<SegmentMesh>(segments);
+    boundary_mesh_ = new_<SegmentSoup>(segments);
   }
   return ref(boundary_mesh_);
 }

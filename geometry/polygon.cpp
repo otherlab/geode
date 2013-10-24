@@ -9,7 +9,7 @@
 #include <other/core/vector/normalize.h>
 #include <other/core/geometry/Box.h>
 #include <other/core/geometry/Segment.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/geometry/SimplexTree.h>
 #include <other/core/array/Array.h>
 #include <other/core/array/IndirectArray.h>
@@ -490,12 +490,12 @@ Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const 
   return tuple(new_opoly,new_corr);
 }
 
-Ref<SegmentMesh> nested_array_offsets_to_segment_mesh(RawArray<const int> offsets, bool open) {
+Ref<SegmentSoup> nested_array_offsets_to_segment_mesh(RawArray<const int> offsets, bool open) {
   OTHER_ASSERT(offsets.size() && !offsets[0]); // Not a complete check, but may catch a few bugs
 
   // empty?
   if (offsets.back() == 0) {
-    return new_<SegmentMesh>(Array<Vector<int,2>>());
+    return new_<SegmentSoup>(Array<Vector<int,2>>());
   }
 
   const int count = offsets.size()-1;
@@ -513,7 +513,7 @@ Ref<SegmentMesh> nested_array_offsets_to_segment_mesh(RawArray<const int> offset
     for (int i=0;i<count;i++)
       segments[offsets[i+1]-1].y = offsets[i];
   }
-  return new_<SegmentMesh>(segments);
+  return new_<SegmentSoup>(segments);
 }
 
 Nested<const Vec2> polygons_from_python(PyObject* object) {

@@ -3,7 +3,6 @@
 //#####################################################################
 #include <other/core/force/AirPressure.h>
 #include <other/core/math/constants.h>
-#include <other/core/mesh/SegmentMesh.h>
 #include <other/core/mesh/TriangleSoup.h>
 #include <other/core/python/Class.h>
 #include <other/core/structure/Hashtable.h>

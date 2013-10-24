@@ -2,7 +2,7 @@
 // Class TriangleSubdivision
 //#####################################################################
 #include <other/core/mesh/TriangleSubdivision.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/array/Array2d.h>
 #include <other/core/array/NdArray.h>
 #include <other/core/array/view.h>
@@ -19,7 +19,7 @@ typedef real T;
 OTHER_DEFINE_TYPE(TriangleSubdivision)
 
 static Ref<TriangleSoup> make_fine_mesh(const TriangleSoup& coarse_mesh) {
-  Ref<const SegmentMesh> segments=coarse_mesh.segment_mesh();
+  Ref<const SegmentSoup> segments=coarse_mesh.segment_mesh();
   Nested<const int> incident_elements=segments->incident_elements();
   int offset = coarse_mesh.nodes();
   Array<Vector<int,3> > triangles(4*coarse_mesh.elements.size(),false);
@@ -53,7 +53,7 @@ template<class TV> Array<TV> TriangleSubdivision::linear_subdivide(RawArray<cons
   typedef typename ScalarPolicy<TV>::type T;
   int offset = coarse_mesh->nodes();
   OTHER_ASSERT(X.size()==offset);
-  Ref<const SegmentMesh> segments = coarse_mesh->segment_mesh();
+  Ref<const SegmentSoup> segments = coarse_mesh->segment_mesh();
   Array<TV> fine_X(offset+segments->elements.size(),false);
   fine_X.slice(0,offset) = X;
   for (int s=0;s<segments->elements.size();s++) {
@@ -66,7 +66,7 @@ template<class TV> Array<TV> TriangleSubdivision::linear_subdivide(RawArray<cons
 Array<T,2> TriangleSubdivision::linear_subdivide(RawArray<const T,2> X) const {
   int offset = coarse_mesh->nodes();
   OTHER_ASSERT(X.m==offset);
-  Ref<const SegmentMesh> segments = coarse_mesh->segment_mesh();
+  Ref<const SegmentSoup> segments = coarse_mesh->segment_mesh();
   Array<T,2> fine_X(offset+segments->elements.size(),X.n,false);
   fine_X.slice(0,offset) = X;
   for (int s=0;s<segments->elements.size();s++) {

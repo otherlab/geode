@@ -1725,7 +1725,7 @@ Ref<SimplexTree<Vector<real,3>,2>> TriMesh::face_tree() const {
 }
 
 Ref<SimplexTree<Vector<real,3>,1>> TriMesh::edge_tree() const {
-  return new_<SimplexTree<TV,1>>(*new_<SegmentMesh>(segments()),X().copy(),4);
+  return new_<SimplexTree<TV,1>>(*new_<SegmentSoup>(segments()),X().copy(),4);
 }
 
 Ref<ParticleTree<Vector<real,3>>> TriMesh::point_tree() const {

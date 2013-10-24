@@ -28,7 +28,7 @@ def circle_mesh(n,center=0,radius=1):
   segments[:,0] = i
   segments[:-1,1] = i[1:]
   segments[-1,1] = 0
-  mesh = SegmentMesh(segments)
+  mesh = SegmentSoup(segments)
   if center is None:
     return mesh
   theta = 2*pi/n*i

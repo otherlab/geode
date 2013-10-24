@@ -25,7 +25,7 @@ public:
   const Array<const int> vertices; // indices of each polygon flattened into a single array
 private:
   const int node_count, half_edge_count;
-  mutable Ptr<SegmentMesh> segment_mesh_;
+  mutable Ptr<SegmentSoup> segment_mesh_;
   mutable Ptr<TriangleSoup> triangle_mesh_;
 
 protected:
@@ -37,7 +37,7 @@ public:
     return node_count;
   }
 
-  OTHER_CORE_EXPORT Ref<SegmentMesh> segment_mesh() const;
+  OTHER_CORE_EXPORT Ref<SegmentSoup> segment_mesh() const;
   OTHER_CORE_EXPORT Ref<TriangleSoup> triangle_mesh() const;
 };
 }

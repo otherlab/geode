@@ -1,7 +1,7 @@
 //#####################################################################
-// Class SegmentMesh
+// Class SegmentSoup
 //#####################################################################
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/array/Nested.h>
 #include <other/core/array/sort.h>
 #include <other/core/array/view.h>
@@ -16,19 +16,19 @@ namespace other {
 using std::vector;
 typedef Vector<real,2> TV2;
 
-OTHER_DEFINE_TYPE(SegmentMesh)
+OTHER_DEFINE_TYPE(SegmentSoup)
 
 #ifndef _WIN32
-const int SegmentMesh::d;
+const int SegmentSoup::d;
 #endif
 
-SegmentMesh::SegmentMesh(Array<const Vector<int,2> > elements)
+SegmentSoup::SegmentSoup(Array<const Vector<int,2> > elements)
   : vertices(scalar_view_own(elements))
   , elements(elements)
   , node_count(compute_node_count())
   , bending_tuples_valid(false) {}
 
-int SegmentMesh::compute_node_count() const {
+int SegmentSoup::compute_node_count() const {
   // Assert validity and compute counts
   int c = 0;
   for (int i=0;i<vertices.size();i++) {
@@ -38,9 +38,9 @@ int SegmentMesh::compute_node_count() const {
   return c;
 }
 
-SegmentMesh::~SegmentMesh() {}
+SegmentSoup::~SegmentSoup() {}
 
-const Tuple<Nested<const int>,Nested<const int>>& SegmentMesh::polygons() const {
+const Tuple<Nested<const int>,Nested<const int>>& SegmentSoup::polygons() const {
   if (nodes() && !polygons_.x.size() && !polygons_.y.size()) {
     const auto incident = incident_elements();
     // Start from each segment, compute the contour that contains it and classify as either closed or open
@@ -88,7 +88,7 @@ const Tuple<Nested<const int>,Nested<const int>>& SegmentMesh::polygons() const 
   return polygons_;
 }
 
-Nested<const int> SegmentMesh::neighbors() const {
+Nested<const int> SegmentSoup::neighbors() const {
   if (nodes() && !neighbors_.size()) {
     Array<int> lengths(nodes());
     for(int s=0;s<elements.size();s++)
@@ -120,7 +120,7 @@ Nested<const int> SegmentMesh::neighbors() const {
   return neighbors_;
 }
 
-Nested<const int> SegmentMesh::incident_elements() const {
+Nested<const int> SegmentSoup::incident_elements() const {
   if (nodes() && !incident_elements_.size()) {
     Array<int> lengths(nodes());
     for (int i=0;i<vertices.size();i++)
@@ -134,7 +134,7 @@ Nested<const int> SegmentMesh::incident_elements() const {
   return incident_elements_;
 }
 
-Array<const Vector<int,2> > SegmentMesh::adjacent_elements() const {
+Array<const Vector<int,2> > SegmentSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
     Nested<const int> incident = incident_elements();
@@ -154,7 +154,7 @@ Array<const Vector<int,2> > SegmentMesh::adjacent_elements() const {
   return adjacent_elements_;
 }
 
-Array<TV2> SegmentMesh::element_normals(RawArray<const TV2> X) const {
+Array<TV2> SegmentSoup::element_normals(RawArray<const TV2> X) const {
   OTHER_ASSERT(X.size()>=nodes());
   Array<TV2> normals(elements.size(),false);
   for (int t=0;t<elements.size();t++) {
@@ -164,7 +164,7 @@ Array<TV2> SegmentMesh::element_normals(RawArray<const TV2> X) const {
   return normals;
 }
 
-Array<int> SegmentMesh::nonmanifold_nodes(bool allow_boundary) const {
+Array<int> SegmentSoup::nonmanifold_nodes(bool allow_boundary) const {
   Array<int> nonmanifold;
   Nested<const int> incident_elements = this->incident_elements();
   for (int i=0;i<incident_elements.size();i++) {
@@ -177,7 +177,7 @@ Array<int> SegmentMesh::nonmanifold_nodes(bool allow_boundary) const {
   return nonmanifold;
 }
 
-Array<const Vector<int,3>> SegmentMesh::bending_tuples() const {
+Array<const Vector<int,3>> SegmentSoup::bending_tuples() const {
   if (!bending_tuples_valid) {
     Nested<const int> neighbors = this->neighbors();
     Array<Vector<int,3>> tuples;
@@ -195,8 +195,8 @@ Array<const Vector<int,3>> SegmentMesh::bending_tuples() const {
 using namespace other;
 
 void wrap_segment_mesh() {
-  typedef SegmentMesh Self;
-  Class<Self>("SegmentMesh")
+  typedef SegmentSoup Self;
+  Class<Self>("SegmentSoup")
     .OTHER_INIT(Array<const Vector<int,2> >)
     .OTHER_FIELD(d)
     .OTHER_FIELD(vertices)

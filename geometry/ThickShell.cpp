@@ -4,7 +4,7 @@
 #include <other/core/array/view.h>
 #include <other/core/math/constants.h>
 #include <other/core/math/copysign.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/mesh/TriangleSoup.h>
 #include <other/core/python/cast.h>
 #include <other/core/python/Class.h>
@@ -20,7 +20,7 @@ OTHER_DEFINE_TYPE(ThickShell)
 using Log::cout;
 using std::endl;
 
-ThickShell::ThickShell(const SegmentMesh& mesh, Array<const TV> X, Array<const T> radii)
+ThickShell::ThickShell(const SegmentSoup& mesh, Array<const TV> X, Array<const T> radii)
   : segs(mesh.elements), X(X), radii(radii) {
   OTHER_ASSERT(X.size()==mesh.nodes());
   OTHER_ASSERT(radii.size()==mesh.nodes());
@@ -41,10 +41,10 @@ static Array<const Vector<int,3>> py_tris(Ref<> mesh) {
 static Array<const Vector<int,2>> py_segs(Ref<> mesh) {
   if (auto* m = python_cast<TriangleSoup*>(&*mesh))
     return m->segment_mesh()->elements;
-  else if (auto* m = python_cast<SegmentMesh*>(&*mesh))
+  else if (auto* m = python_cast<SegmentSoup*>(&*mesh))
     return m->elements;
   else
-    throw TypeError(format("ThickShell: expected SegmentMesh or TriangleSoup, got %s",mesh->ob_type->tp_name));
+    throw TypeError(format("ThickShell: expected SegmentSoup or TriangleSoup, got %s",mesh->ob_type->tp_name));
 }
 
 ThickShell::ThickShell(Ref<> mesh, Array<const TV> X, Array<const T> radii)

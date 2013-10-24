@@ -39,9 +39,9 @@ OTHER_CORE_EXPORT Vec2 point_inside_polygon_component(RawArray<const Vec2> poly,
 // Warning: Not robust
 OTHER_CORE_EXPORT Tuple<Array<Vec2>,Array<int>> offset_polygon_with_correspondence(RawArray<const Vec2> poly, real offset, real maxangle_deg = 20., real minangle_deg = 10.);
 
-// Turn an array of polygons into a SegmentMesh.
-OTHER_CORE_EXPORT Ref<SegmentMesh> nested_array_offsets_to_segment_mesh(RawArray<const int> offsets, bool open);
-template<class TV> static inline Tuple<Ref<SegmentMesh>,Array<TV>> to_segment_mesh(const Nested<TV>& polys, bool open) {
+// Turn an array of polygons into a SegmentSoup.
+OTHER_CORE_EXPORT Ref<SegmentSoup> nested_array_offsets_to_segment_mesh(RawArray<const int> offsets, bool open);
+template<class TV> static inline Tuple<Ref<SegmentSoup>,Array<TV>> to_segment_mesh(const Nested<TV>& polys, bool open) {
   return tuple(nested_array_offsets_to_segment_mesh(polys.offsets,open),polys.flat);
 }
 

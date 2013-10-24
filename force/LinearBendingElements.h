@@ -14,7 +14,7 @@ template<class TV> class LinearBendingElements : public Force<TV> {
 public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Force<TV> Base;
-  typedef typename mpl::if_c<d==2,SegmentMesh,TriangleSoup>::type Mesh;
+  typedef typename mpl::if_c<d==2,SegmentSoup,TriangleSoup>::type Mesh;
 
   const Ref<const Mesh> mesh;
   T stiffness,damping;

@@ -1,5 +1,5 @@
 #include <other/core/force/LinearBendingElements.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/mesh/TriangleSoup.h>
 #include <other/core/utility/Log.h>
 #include <other/core/vector/SparseMatrix.h>
@@ -15,7 +15,7 @@ using std::endl;
 template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,2>>)
 template<> OTHER_DEFINE_TYPE(LinearBendingElements<Vector<T,3>>)
 
-template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentMesh& mesh,Array<const TV> X) {
+template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentSoup& mesh,Array<const TV> X) {
   OTHER_ASSERT(mesh.nodes()<=X.size());
   Nested<const int> mesh_neighbors = mesh.neighbors();
   Hashtable<Vector<int,2>,T> entries;

@@ -2,7 +2,7 @@
 // Class PolygonSoup
 //#####################################################################
 #include <other/core/mesh/PolygonSoup.h>
-#include <other/core/mesh/SegmentMesh.h>
+#include <other/core/mesh/SegmentSoup.h>
 #include <other/core/mesh/TriangleSoup.h>
 #include <other/core/structure/Hashtable.h>
 #include <other/core/utility/const_cast.h>
@@ -28,7 +28,7 @@ PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices)
 
 PolygonSoup::~PolygonSoup() {}
 
-Ref<SegmentMesh> PolygonSoup::segment_mesh() const {
+Ref<SegmentSoup> PolygonSoup::segment_mesh() const {
   if (!segment_mesh_) {
     Hashtable<Vector<int,2> > hash;
     Array<Vector<int,2> > segments;
@@ -40,7 +40,7 @@ Ref<SegmentMesh> PolygonSoup::segment_mesh() const {
       }
       offset += counts[p];
     }
-    segment_mesh_=new_<SegmentMesh>(segments);
+    segment_mesh_=new_<SegmentSoup>(segments);
   }
   return ref(segment_mesh_);
 }

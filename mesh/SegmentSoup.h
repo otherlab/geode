@@ -1,8 +1,8 @@
 //#####################################################################
-// Class SegmentMesh
+// Class SegmentSoup
 //#####################################################################
 //
-// SegmentMesh stores immutable topology for a segment mesh.  The advantage
+// SegmentSoup stores immutable topology for a segment mesh.  The advantage
 // of immutability is that we don't have to worry about acceleration structures
 // becoming invalid, and we can check validity once at construction time.
 //
@@ -18,7 +18,7 @@
 #include <other/core/structure/Tuple.h>
 namespace other {
 
-class SegmentMesh : public Object {
+class SegmentSoup : public Object {
 public:
   OTHER_DECLARE_TYPE(OTHER_CORE_EXPORT)
   typedef Object Base;
@@ -37,16 +37,16 @@ private:
   mutable Array<Vector<int,3>> bending_tuples_;
 
 protected:
-  OTHER_CORE_EXPORT SegmentMesh(Array<const Vector<int,2> > elements);
+  OTHER_CORE_EXPORT SegmentSoup(Array<const Vector<int,2> > elements);
 
   int compute_node_count() const;
 public:
-  ~SegmentMesh();
+  ~SegmentSoup();
 
   int nodes() const
   {return node_count;}
 
-  Ref<const SegmentMesh> segment_mesh() const
+  Ref<const SegmentSoup> segment_mesh() const
   {return ref(*this);}
 
   // Decompose segment mesh into maximal manifold contours, returning closed-contours, open-contours.
