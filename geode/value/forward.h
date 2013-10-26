@@ -13,6 +13,7 @@ class Action;
 template<class T> class Prop;
 template<class T> class PropRef;
 class Listen;
+class PropManager;
 
 template<class T> struct has_clamp : public mpl::false_{};
 template<> struct has_clamp<int> : public mpl::true_{};

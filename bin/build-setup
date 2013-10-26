@@ -58,7 +58,6 @@ if not os.path.exists(config):
 link(os.path.join(geode,'SConstruct'))
 link(os.path.join(geode,'config.py'))
 link(os.path.join(geode,'setup.cfg'))
-link(os.path.join(geode,'__init__.py'))
 
 # Add site_scons symlink
 scons = os.path.join('gui','site_scons')

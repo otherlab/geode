@@ -16,7 +16,7 @@ EnsureSConsVersion(2,0,0)
 sys.path.insert(0,Dir('#').abspath)
 import config
 del sys.path[0]
-def options(*vars):
+def options(env,*vars):
   for name,help,default in vars:
     Help('%s: %s (default %s)\n'%(name,help,default))
     if name in ARGUMENTS:
@@ -54,7 +54,7 @@ else:
   env.Replace(BASE='/usr')
 
 # Base options
-options(
+options(env,
   ('CXX','C++ compiler','<detect>'),
   ('arch','Architecture (e.g. opteron, nocona, powerpc, native)','native'),
   ('type','Type of build (e.g. release, debug, profile)','release'),
@@ -87,7 +87,7 @@ options(
   ('PREFIX_INCLUDE','Override path to install headers','$PREFIX/include'),
   ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
   ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
-  ('PREFIX_SHARE','Override path to install resources','$PREFIX_BIN'),
+  ('PREFIX_SHARE','Override path to install resources','$PREFIX/share'),
   ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
   ('python','Python executable','python'),
   ('mpicc','MPI wrapper compiler (used only to extract flags)','<detect>'),
@@ -104,7 +104,7 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 
 # External libraries
 externals = {}
-def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,has=1,hide=False,callback=None):
+def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,has=1,hide=False,callback=None):
   if name in externals:
     raise RuntimeError("Trying to redefine the external %s. That's not a good idea."%name)
 
@@ -118,7 +118,7 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),l
       lib[n] = []
 
   Help('\n')
-  options(
+  options(env,
     ('has_'+name,'Whether '+name+' is available',lib['has']),
     ('use_'+name,'Whether to use '+name+' by default',default),
     (name+'_dir','Base directory for '+name,dir),
@@ -169,27 +169,28 @@ def external(name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),l
   if env[name+'_callback']!=0: lib['callback'] = env[name+'_callback']
 
 # Predefined external libraries
-external('python',default=1,frameworks=['Python'],flags=['GEODE_PYTHON'])
-external('boost',default=1,hide=1)
-external('boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
-external('mpi',flags=['GEODE_MPI'])
-external('zlib',flags=['GEODE_ZLIB'],libs=['z'])
-external('libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
-external('libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',requires=['zlib'] if windows else [])
-external('imath',libs=['Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
-external('openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'])
-external('atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
-external('openblas',flags=['GEODE_BLAS'],libs=['lapack','blas'])
-external('gmp',flags=['GEODE_GMP'],libs=['gmp'])
-external('openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'])
+external(env,'geode') # For downstream use
+external(env,'python',default=1,frameworks=['Python'],flags=['GEODE_PYTHON'])
+external(env,'boost',default=1,hide=1)
+external(env,'boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
+external(env,'mpi',flags=['GEODE_MPI'])
+external(env,'zlib',flags=['GEODE_ZLIB'],libs=['z'])
+external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
+external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',requires=['zlib'] if windows else [])
+external(env,'imath',libs=['Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
+external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'])
+external(env,'atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
+external(env,'openblas',flags=['GEODE_BLAS'],libs=['lapack','blas'])
+external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'])
+external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'])
 if darwin:
-  external('accelerate',default=1,flags=['GEODE_BLAS'],frameworks=['Accelerate'])
+  external(env,'accelerate',default=1,flags=['GEODE_BLAS'],frameworks=['Accelerate'])
 if windows:
-  external('mkl',flags=['GEODE_BLAS','GEODE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
+  external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
 else:
-  external('mkl',flags=['GEODE_BLAS','GEODE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+  external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
 if windows:
-  external('shellapi',default=windows,libs=['Shell32.lib'])
+  external(env,'shellapi',default=windows,libs=['Shell32.lib'])
 
 # Automatic python configuration
 def configure_python():
@@ -411,10 +412,12 @@ if darwin:
 # Work around apparent bug in variable expansion
 env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
 
-# Library configuration
-env.Append(CPPPATH=['#.'])
-env.Append(CPPPATH=[env['PREFIX_INCLUDE']],
-           LIBPATH=[env['PREFIX_LIB'],'#$variant_build/lib'])
+# Library configuration.  Local directories must go first or scons will try to install unexpectedly
+env.Prepend(CPPPATH=['#.'])
+env.Append(CPPPATH=[env['PREFIX_INCLUDE']],LIBPATH=[env['PREFIX_LIB']])
+env.Prepend(LIBPATH=['#$variant_build/lib'])
+if posix:
+  env.Append(LINKFLAGS='-Wl,-rpath-link=$variant_build/lib')
 
 # Account for library dependencies
 def add_dependencies(env):
@@ -442,7 +445,7 @@ def link_flags(env):
     if env['use_'+name]:
       all_uses.append('use_'+name)
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
-      env_link.PrependUnique(LIBPATH=lib['libpath'])
+      env_link.AppendUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
         env_link.PrependUnique(CPPDEFINES=lib['flags'])
@@ -515,7 +518,7 @@ if windows:
   python_libs = []
   projects = []
 
-def library(env,name,pyname=None,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
+def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,pyname=None):
   if name in env['skip_libs']:
     return
   sources = []
@@ -536,7 +539,7 @@ def library(env,name,pyname=None,libs=(),skip=(),extra=(),skip_all=False,no_expo
     env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
 
   # Install headers
-  header_dir = os.path.join(env['PREFIX_INCLUDE'],os.path.basename(dir))
+  header_dir = os.path.join(env['PREFIX_INCLUDE'],Dir('.').srcnode().path)
   for h in headers:
     env.Alias('install',env.Install(os.path.join(header_dir,os.path.dirname(h)),h))
 
@@ -548,7 +551,7 @@ def library(env,name,pyname=None,libs=(),skip=(),extra=(),skip_all=False,no_expo
   env = copy_files(env)
 
   libpath = '#'+os.path.join(env['variant_build'],'lib')
-  path = libpath+name
+  path = os.path.join(libpath,name)
   env.Append(LIBS=libs)
   if env['shared']:
     linkflags = env['LINKFLAGS']
@@ -590,10 +593,8 @@ def program(env,name,cpp=None):
   env = copy_files(env)
   files = objects(env,cpp)
   bin = env.Program(name,files)
-  bin = env.Install(env['PREFIX_BIN'],bin)
-  if windows and 0:
-    projects.append(env.MSVSProject('#windows/'+name+env['MSVSPROJECTSUFFIX'],srcs=[cpp],variant=env['type'].capitalize(),buildtarget=bin,auto_build_solution=0))
   env.Depends('.',bin)
+  env.Alias('install',env.Install(env['PREFIX_BIN'],bin))
 
 # Install a (possibly directory) resource
 def resource(env,dir):
@@ -603,11 +604,11 @@ def resource(env,dir):
       reldir = os.path.relpath(dirname, basedir)
       for name in names:
         fullname = os.path.join(dirname, name)
-        env.Depends('.', env.Install(os.path.join(env['PREFIX_SHARE'], reldir), fullname))
+        env.Alias('install', env.Install(os.path.join(env['PREFIX_SHARE'], reldir), fullname))
     basedir = str(Dir('.').srcnode())
     os.path.walk(str(Dir(dir).srcnode()), visitor, basedir)
   else:
-    env.Depends('.', env.Install(env['PREFIX_SHARE'], Dir(dir).srcnode()))
+    env.Alias('install', env.Install(env['PREFIX_SHARE'], Dir(dir).srcnode()))
 
 
 # Turn a latex document into a pdf

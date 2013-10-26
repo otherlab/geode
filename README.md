@@ -38,14 +38,14 @@ Geode makes extensive use of C++11 features, so a relatively recent C++ compiler
 
 ### Installation
 
-If necessary, dependencies can be installed via
+If necessary, dependencies can be installed via one of
 
     # Debian/Ubuntu
     sudo apt-get install python python-numpy scons libboost-dev \
       python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
 
     # Homebrew
-    TODO
+    brew install scons boost openexr
 
     # MacPorts
     sudo port -v install python26 py26-numpy scons boost \
@@ -78,8 +78,8 @@ If additional build configuration is necessary, create a `config.py` file and se
     CXX = 'clang++'
     cache = '/tmp/scons-cache'
 
-These options can also be passed on the command line to scons.  Run `scons -h` for a complete list.
-Use `type=debug` for a much slower build with many more assertions
+These options can also be passed via command line to scons.  Run `scons -h` for a complete list.
+Use `type=debug` for a much slower build with many more assertions:
 
     scons -j 5 type=debug
 
@@ -91,8 +91,15 @@ The following flags can be used to disable optional components:
     has_libjpeg = 0
     has_openmesh = 0
 
+### Developer mode
+
 The libraries are built into `build/$arch/$type` (`build/native/release` by default) if you want to use
-them without installing.
+them without installing.  To point python imports to your development tree, run one of
+
+    sudo python setup.py develop
+    python setup.py develop --prefix=$HOME
+
+TODO: Add more details about for LD_LIBRARY_PATH or equivalents.
 
 ### Acknowledgements
 
