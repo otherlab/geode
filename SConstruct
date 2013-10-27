@@ -106,13 +106,13 @@ env.Append(LIBS=env['LIBS_EXTRA'])
 externals = {}
 def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,has=1,hide=False,callback=None):
   if name in externals:
-    raise RuntimeError("Trying to redefine the external %s. That's not a good idea."%name)
+    raise RuntimeError("Trying to redefine the external %s"%name)
 
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide,'callback':callback}
 
-  # make sure the empty lists are copied and do not refer to the same object
+  # Make sure the empty lists are copied and do not refer to the same object
   for n in lib:
     if lib[n] == ():
       lib[n] = []
