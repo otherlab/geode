@@ -5,6 +5,8 @@ Geode is an open source library of computational geometry and associated mathema
 together with a fast, lightweight python binding layer.  The license is standard three-clause BSD
 (see the included `LICENSE` file or [LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
 
+For questions or discussion, email geode-dev@googlegroups.com.
+
 ### Dependencies
 
 For C++:
