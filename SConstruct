@@ -180,7 +180,7 @@ external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',req
 external(env,'imath',libs=['Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
 external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'])
 external(env,'atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
-external(env,'openblas',flags=['GEODE_BLAS'],libs=['lapack','blas'])
+external(env,'openblas',default=posix,flags=['GEODE_BLAS'],libs=['lapack','blas'])
 external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'])
 external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'])
 if darwin:
