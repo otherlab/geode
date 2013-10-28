@@ -89,6 +89,8 @@ def surface_of_revolution(base,axis,radius,height,resolution,closed=False,period
   If periodic is true, toroidal topology is used.'''
   closed = asarray(closed,dtype=int32)
   c0,c1 = closed if closed.ndim else (closed,closed)
+  radius = asarray(radius)
+  height = asarray(height)
   assert radius.ndim<=1 and height.ndim<=1
   assert height.size>=1+c0+c1
   assert not periodic or (not c0 and not c1)
@@ -114,7 +116,8 @@ def revolve_around_curve(curve,radius,resolution,tangent=None,closed=False,perio
   c0,c1 = closed if closed.ndim else (closed,closed)
   curve = asarray(curve)
   n = len(curve)
-  assert len(radius)==n-c0-c1
+  radius = asarray(radius)
+  assert radius.ndim==0 or radius.shape==(n-c0-c1,)
   if tangent is not None:
     assert len(tangent)==n-c0-c1
     tangent = normalized(tangent)
