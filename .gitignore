@@ -12,6 +12,8 @@ Debug*/
 Release*/
 /config.py
 .sconsign.dblite
+.sconf_temp
+config.log
 build
 dist
 *.egg-info
