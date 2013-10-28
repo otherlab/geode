@@ -258,7 +258,7 @@ env.Replace(prefix_lib=env.subst(env['prefix_lib']))
 externals = {}
 def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
              copy=(),frameworkpath=(),frameworks=(),requires=(),hide=False,callback=None,
-             preamble=(),headers=None,configure=None,required=False):
+             headers=None,configure=None,preamble=(),body=(),required=False):
   if name in externals:
     raise RuntimeError("Trying to redefine the external %s"%name)
 
@@ -357,7 +357,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
     # Check whether the library is usable
     def check(context):
       context.Message('checking for %s: '%name)
-      source = '\n'.join(list(preamble)+['#include <%s>'%h for h in headers]+['int main() { return 0; }\n'])
+      source = '\n'.join(list(preamble)+['#include <%s>'%h for h in headers]+['int main() {']+list(body)+['  return 0;','}\n'])
       r = context.TryLink(source,extension='.cpp')
       context.Result(r)
       return r
@@ -673,12 +673,27 @@ external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],cxxflags='
 external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],requires=['imath'],headers=['OpenEXR/ImfRgbaFile.h'])
 external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'],headers=['gmp.h'])
 external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'],headers=['OpenMesh/Core/Utils/Endian.hh'])
-if 0: external(env,'atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
-if posix: external(env,'openblas',default=1,flags=['GEODE_BLAS'],libs=['lapack','blas'],headers=['cblas.h'])
-if darwin: external(env,'accelerate',default=1,flags=['GEODE_BLAS'],frameworks=['Accelerate'],headers=['cblas.h'])
-if windows: external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],headers=['mkl_cblas.h'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
-else:       external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],headers=['mkl_cblas.h'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
 if windows: external(env,'shellapi',default=windows,libs=['Shell32.lib'])
+
+# BLAS is tricky.  We define separate externals for openblas, atlas, and mkl, then a unified external which picks one of them
+def blas_variants():
+  body = ['  cblas_dscal(0,1,0,1);']
+  external(env,'atlas',libs=['cblas','lapack','atlas'],headers=['cblas.h'],body=body)
+  external(env,'openblas',libs=['lapack','blas'],headers=['cblas.h'],body=body)
+  if darwin: external(env,'accelerate',frameworks=['Accelerate'],headers=['cblas.h'],body=body)
+  if windows: external(env,'mkl',flags=['GEODE_MKL'],headers=['mkl_cblas.h'],body=body,libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
+  else:       external(env,'mkl',flags=['GEODE_MKL'],headers=['mkl_cblas.h'],body=body,linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+blas_variants()
+def configure_blas(env,blas):
+  kinds = ['accelerate']*darwin+['openblas','atlas','mkl']
+  for kind in kinds:
+    if env['use_'+kind]:
+      print 'configuring blas: using %s'%kind
+      blas['requires'] = [kind]
+      return 1
+  print>>sys.stderr, "disabling blas: can't find any variant, tried %s, and %s"%(', '.join(kinds[:-1]),kinds[-1])
+  return 0
+external(env,'blas',default=1,flags=['GEODE_BLAS'],configure=configure_blas)
 
 # Descend into a child SConscript
 def child(env,dir):
