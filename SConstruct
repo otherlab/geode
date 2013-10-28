@@ -37,6 +37,7 @@ darwin = env['PLATFORM']=='darwin'
 windows = env['PLATFORM']=='win32'
 if not windows:
   env.Replace(ENV=os.environ)
+verbose = True
 
 # Locate geode in case we're in a different directory
 env['geode'] = os.path.normpath(os.path.dirname(os.path.realpath(File('#SConstruct').abspath)))
@@ -69,7 +70,7 @@ options(env,
   ('hidden','make symbols invisible by default',0),
   ('openmp','use openmp',1),
   ('syntax','check syntax only',0),
-  ('use_latex','Whether latex is available',0),
+  ('use_latex','Use latex (mostly for internal technical documents)',0),
   ('thread_safe','use thread safe reference counting in pure C++ code',1),
   ('optimizations','override default optimization settings','<default>'),
   ('sse','Use SSE if available',1),
@@ -101,129 +102,6 @@ env.Append(CPPPATH=env['CPPPATH_EXTRA'])
 env.Append(LIBPATH=env['LIBPATH_EXTRA'])
 env.Append(RPATH=env['RPATH_EXTRA'])
 env.Append(LIBS=env['LIBS_EXTRA'])
-
-# External libraries
-externals = {}
-def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,has=1,hide=False,callback=None):
-  if name in externals:
-    raise RuntimeError("Trying to redefine the external %s"%name)
-
-  lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
-         'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
-         'has':has,'hide':hide,'callback':callback}
-  env['need_'+name] = default
-
-  # Make sure the empty lists are copied and do not refer to the same object
-  for n in lib:
-    if lib[n] == ():
-      lib[n] = []
-
-  Help('\n')
-  options(env,
-    ('use_'+name,'Whether '+name+' is available',lib['has']),
-    (name+'_dir','Base directory for '+name,dir),
-    (name+'_include','Include directory for '+name,0),
-    (name+'_libpath','Library directory for '+name,0),
-    (name+'_rpath','Extra rpath directory for '+name,0),
-    (name+'_libs','Libraries for '+name,0),
-    (name+'_copy','Copy these files to the binary output directory for ' + name,0),
-    (name+'_frameworks','Frameworks for '+name,0),
-    (name+'_frameworkpath','Framework path for '+name,0),
-    (name+'_cxxflags','Compiler flags for '+name,0),
-    (name+'_linkflags','Linker flags for '+name,0),
-    (name+'_requires','Required libraries for '+name,0),
-    (name+'_pkgconfig','pkg-config names for '+name,0),
-    (name+'_callback','Arbitrary environment modification callback for '+name,0))
-
-  # Is this external library available?
-  if env['use_'+name]:
-    externals[name] = lib
-  else:
-    return
-
-  # Absorb settings
-  if env[name+'_pkgconfig']!=0: lib['pkg-config']=env[name+'_pkgconfig']
-  if 'pkg-config' in lib and lib['pkg-config']:
-    def pkgconfig(pkg,data):
-      return subprocess.Popen(['pkg-config',pkg,data],stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()[0].replace('\n','')
-    pkg = lib['pkg-config']
-    includes = pkgconfig(pkg,"--cflags-only-I").split()
-    lib['cpppath'] = [x.replace("-I","") for x in includes]
-    lib['cxxflags'] = pkgconfig(pkg,"--cflags-only-other")
-    lib['linkflags'] = pkgconfig(pkg,"--libs")
-  dir = env[name+'_dir']
-  def sanitize(path):
-    return [path] if isinstance(path,str) else path
-  if env[name+'_include']!=0: lib['cpppath'] = sanitize(env[name+'_include'])
-  elif dir and not lib['cpppath']: lib['cpppath'] = [dir+'/include']
-  if env[name+'_libpath']!=0: lib['libpath'] = sanitize(env[name+'_libpath'])
-  elif dir and not lib['libpath']: lib['libpath'] = [dir+'/lib']
-  if env[name+'_rpath']!=0: lib['rpath'] = sanitize(env[name+'_rpath'])
-  elif lib['rpath']==0: lib['rpath'] = [Dir(d).abspath for d in lib['libpath']]
-  if env[name+'_libs']!=0: lib['libs'] = env[name+'_libs']
-  if env[name+'_frameworks']!=0: lib['frameworks'] = env[name+'_frameworks']
-  if env[name+'_frameworkpath']!=0: lib['frameworkpath'] = sanitize(env[name+'_frameworkpath'])
-  if env[name+'_cxxflags']!=0: lib['cxxflags'] = env[name+'_cxxflags']
-  if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
-  if env[name+'_copy']!=0: lib['copy'] = env[name+'_copy']
-  if env[name+'_callback']!=0: lib['callback'] = env[name+'_callback']
-
-# Predefined external libraries
-external(env,'geode') # For downstream use
-external(env,'python',default=1,frameworks=['Python'],flags=['GEODE_PYTHON'])
-external(env,'boost',default=1,hide=1)
-external(env,'boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1)
-external(env,'mpi',flags=['GEODE_MPI'])
-external(env,'zlib',flags=['GEODE_ZLIB'],libs=['z'])
-external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile')
-external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',requires=['zlib'] if windows else [])
-external(env,'imath',libs=['Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '')
-external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'])
-external(env,'atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
-external(env,'openblas',default=posix,flags=['GEODE_BLAS'],libs=['lapack','blas'])
-external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'])
-external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'])
-if darwin:
-  external(env,'accelerate',default=1,flags=['GEODE_BLAS'],frameworks=['Accelerate'])
-if windows:
-  external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
-else:
-  external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
-if windows:
-  external(env,'shellapi',default=windows,libs=['Shell32.lib'])
-
-# Automatic python configuration
-def configure_python():
-  pattern = re.compile(r'^\s+',flags=re.MULTILINE)
-  data = subprocess.Popen([env['python'],'-c',pattern.sub('','''
-    import numpy
-    import distutils.sysconfig as sc
-    get = sc.get_config_var
-    def p(s): print "'%s'"%s
-    p(sc.get_python_inc())
-    p(numpy.get_include())
-    p(get('LIBDIR'))
-    p(get('LDLIBRARY'))
-    p(get('PYTHONFRAMEWORKPREFIX'))
-    p(get('VERSION'))
-    p(get('prefix'))
-    ''')],stdout=subprocess.PIPE).communicate()[0]
-  include,nmpy,libpath,lib,frameworkpath,version,prefix = [s.strip()[1:-1] for s in data.strip().split('\n')]
-  python = externals['python']
-  assert include,nmpy
-  python['cpppath'] = [include] if os.path.exists(os.path.join(include,'numpy')) else [include,nmpy]
-  if darwin:
-    assert frameworkpath
-    python['frameworkpath'] = [frameworkpath]
-  elif windows:
-    python['libpath'] = [prefix,os.path.join(prefix,'libs')]
-    python['libs'] = ['python%s'%version]
-  else:
-    assert libpath and lib and libpath!='None' and lib!='None'
-    python['libpath'] = [libpath]
-    python['libs'] = [lib]
-if env['use_python']:
-  configure_python()
 
 # Improve performance
 env.Decider('MD5-timestamp')
@@ -365,43 +243,6 @@ if env['openmp']:
   else:
     print>>sys.stderr, 'Warning: clang doesn\'t know how to do OpenMP, so many things will be slower'
 
-# Find the right mpicc
-if env['mpicc']=='<detect>':
-  if windows:
-    env.Replace(mpicc='mpicc')
-  else:
-    mpicc_options = ['mpicc','openmpicc']
-    for mpicc in mpicc_options:
-      if subprocess.Popen(['which',mpicc], stdout=subprocess.PIPE).communicate()[0]:
-        env.Replace(mpicc=mpicc)
-        break
-    else:
-      env.Replace(mpicc='') # If we don't find mpi, hopefully we don't need it
-
-# Configure MPI if it exists
-try:
-  mpi = externals['mpi']
-  if env['mpicc'] and not mpi['cpppath']:
-    # Find mpi.h
-    mpi_include_options = ['/opt/local/include/openmpi', '/usr/local/include/openmpi', '/opt/local/include/mpi', '/usr/local/include/mpi']
-    for dir in mpi_include_options:
-      if os.path.exists(os.path.join(dir, 'mpi.h')):
-        mpi['cpppath'] = dir
-        break
-  if env['mpicc'] and not (mpi['cxxflags'] or mpi['linkflags'] or mpi['libs']):
-    for flags,stage in ('linkflags','link'),('cxxflags','compile'):
-      mpi[flags] = ' '+subprocess.Popen([env['mpicc'],'--showme:%s'%stage],stdout=subprocess.PIPE).communicate()[0].strip()
-    all_flags = mpi['linkflags'].strip().split()
-    flags = []
-    for f in all_flags:
-      if f.startswith('-l'):
-        mpi['libs'].append(f[2:])
-      else:
-        flags.append(f)
-    mpi['linkflags'] = ' '+' '.join(flags)
-except OSError:
-  pass
-
 # Turn off boost::exceptions to avoid completely useless code bloat
 env.Append(CPPDEFINES=['BOOST_EXCEPTION_DISABLE'])
 
@@ -411,6 +252,117 @@ if darwin:
 
 # Work around apparent bug in variable expansion
 env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
+
+# External libraries
+externals = {}
+def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
+             copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,hide=False,callback=None,
+             preamble=(),headers=None,configure=None,required=False):
+  if name in externals:
+    raise RuntimeError("Trying to redefine the external %s"%name)
+
+  def fail():
+    if required:
+      print>>sys.stderr, 'FATAL: %s is required'%name
+      Exit(1)
+
+  for r in requires:
+    if not env['use_'+r]:
+      if verbose:
+        print 'disabling %s: no %s'%(name,r)
+      fail()
+      return
+
+  lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
+         'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
+         'hide':hide,'callback':callback,'name':name}
+  env['need_'+name] = default
+
+  # Make sure empty lists are copied and do not refer to the same object
+  for n in lib:
+    if lib[n] == ():
+      lib[n] = []
+
+  Help('\n')
+  options(env,
+    ('use_'+name,'Use '+name+' if available',1),
+    (name+'_dir','Base directory for '+name,dir),
+    (name+'_include','Include directory for '+name,0),
+    (name+'_libpath','Library directory for '+name,0),
+    (name+'_rpath','Extra rpath directory for '+name,0),
+    (name+'_libs','Libraries for '+name,0),
+    (name+'_copy','Copy these files to the binary output directory for ' + name,0),
+    (name+'_frameworks','Frameworks for '+name,0),
+    (name+'_frameworkpath','Framework path for '+name,0),
+    (name+'_cxxflags','Compiler flags for '+name,0),
+    (name+'_linkflags','Linker flags for '+name,0),
+    (name+'_requires','Required libraries for '+name,0),
+    (name+'_pkgconfig','pkg-config names for '+name,0),
+    (name+'_callback','Arbitrary environment modification callback for '+name,0))
+
+  # Do we want to use this external?
+  if env['use_'+name]:
+    externals[name] = lib
+  else:
+    fail()
+    return
+
+  # Absorb settings
+  if env[name+'_pkgconfig']!=0: lib['pkg-config']=env[name+'_pkgconfig']
+  if 'pkg-config' in lib and lib['pkg-config']:
+    def pkgconfig(pkg,data):
+      return subprocess.Popen(['pkg-config',pkg,data],stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()[0].replace('\n','')
+    pkg = lib['pkg-config']
+    includes = pkgconfig(pkg,"--cflags-only-I").split()
+    lib['cpppath'] = [x.replace("-I","") for x in includes]
+    lib['cxxflags'] = pkgconfig(pkg,"--cflags-only-other")
+    lib['linkflags'] = pkgconfig(pkg,"--libs")
+  dir = env[name+'_dir']
+  def sanitize(path):
+    return [path] if isinstance(path,str) else path
+  if env[name+'_include']!=0: lib['cpppath'] = sanitize(env[name+'_include'])
+  elif dir and not lib['cpppath']: lib['cpppath'] = [dir+'/include']
+  if env[name+'_libpath']!=0: lib['libpath'] = sanitize(env[name+'_libpath'])
+  elif dir and not lib['libpath']: lib['libpath'] = [dir+'/lib']
+  if env[name+'_rpath']!=0: lib['rpath'] = sanitize(env[name+'_rpath'])
+  elif lib['rpath']==0: lib['rpath'] = [Dir(d).abspath for d in lib['libpath']]
+  if env[name+'_libs']!=0: lib['libs'] = env[name+'_libs']
+  if env[name+'_frameworks']!=0: lib['frameworks'] = env[name+'_frameworks']
+  if env[name+'_frameworkpath']!=0: lib['frameworkpath'] = sanitize(env[name+'_frameworkpath'])
+  if env[name+'_cxxflags']!=0: lib['cxxflags'] = env[name+'_cxxflags']
+  if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
+  if env[name+'_copy']!=0: lib['copy'] = env[name+'_copy']
+  if env[name+'_callback']!=0: lib['callback'] = env[name+'_callback']
+
+  # Check whether the external is usable
+  if configure is not None:
+    has = configure(env,lib)
+  else:
+    assert headers is not None
+
+    # Match the configure environment to how we'll actually build things
+    env_conf = env.Clone()
+    env_conf['need_'+name] = 1
+    env_conf = link_flags(env_conf)
+    libraries = [externals[n] for n in externals.keys() if env_conf['need_'+n]]
+    def absorb(source,**kwargs):
+      for k,v in kwargs.iteritems():
+        env_conf[k] = v
+    objects_helper(env_conf,'',libraries,absorb)
+
+    # Check whether the library is usable
+    def check(context):
+      context.Message('checking for %s: '%name)
+      source = '\n'.join(list(preamble)+['#include <%s>'%h for h in headers]+['int main() { return 0; }\n'])
+      r = context.TryLink(source,extension='.cpp')
+      context.Result(r)
+      return r
+    conf = env_conf.Configure(custom_tests={'Check':check},clean=0,help=0)
+    if not conf.Check():
+      env['use_'+name] = 0
+      del externals[name]
+      fail()
+    conf.Finish()
 
 # Library configuration.  Local directories must go first or scons will try to install unexpectedly
 env.Prepend(CPPPATH=['#.'])
@@ -470,27 +422,27 @@ def copy_files(env):
   return env_copy
 
 # Convert sources into objects
+def objects_helper(env,source,libraries,builder):
+  if type(source)!=str: return source # assume it's already an object
+  cppdefines_reversed = env['CPPDEFINES'][::-1]
+  cpppath_reversed = env['CPPPATH'][::-1]
+  cpppath_hidden_reversed = env['CPPPATH_HIDDEN'][::-1]
+  if darwin:
+    frameworkpath = env['FRAMEWORKPATH'][:]
+    frameworks = env['FRAMEWORKS'][:]
+  else:
+    frameworks,frameworkpath = [],[]
+  cxxflags = str(env['CXXFLAGS'])
+  for lib in libraries:
+    if lib['pattern'] and source and not lib['pattern'].search(File(source).abspath):
+      continue
+    cppdefines_reversed.extend(lib['flags'][::-1])
+    (cpppath_hidden_reversed if lib['hide'] else cpppath_reversed).extend(lib['cpppath'][::-1])
+    frameworkpath.extend(lib['frameworkpath'])
+    frameworks.extend(lib['frameworks'])
+    cxxflags += lib['cxxflags']
+  return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1],FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
 def objects(env,sources):
-  def Helper(env,source,libraries):
-    if type(source)!=str: return source # assume it's already an object
-    cppdefines_reversed = env['CPPDEFINES'][::-1]
-    cpppath_reversed = env['CPPPATH'][::-1]
-    cpppath_hidden_reversed = env['CPPPATH_HIDDEN'][::-1]
-    if darwin:
-      frameworkpath = env['FRAMEWORKPATH'][:]
-      frameworks = env['FRAMEWORKS'][:]
-    else:
-      frameworks,frameworkpath = [],[]
-    cxxflags = str(env['CXXFLAGS'])
-    for lib in libraries:
-      if lib['pattern'] and not lib['pattern'].search(File(source).abspath):
-        continue
-      cppdefines_reversed.extend(lib['flags'][::-1])
-      (cpppath_hidden_reversed if lib['hide'] else cpppath_reversed).extend(lib['cpppath'][::-1])
-      frameworkpath.extend(lib['frameworkpath'])
-      frameworks.extend(lib['frameworks'])
-      cxxflags += lib['cxxflags']
-    return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1],FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
   add_dependencies(env)
   libraries = [externals[name] for name in externals.keys() if env['need_'+name]]
   for lib in libraries:
@@ -498,8 +450,8 @@ def objects(env,sources):
       env = env.Clone()
       lib['callback'](env)
   builder = env.SharedObject if env['shared_objects'] or env['shared'] else env.StaticObject
-  if type(sources)==list: return [Helper(env,source,libraries) for source in sources]
-  else: return Helper(env,sources,libraries)
+  if type(sources)==list: return [objects_helper(env,source,libraries,builder) for source in sources]
+  else: return objects_helper(env,sources,libraries,builder)
 
 # Recursively list all files beneath a directory
 def files(dir,skip=()):
@@ -610,11 +562,118 @@ def resource(env,dir):
   else:
     env.Alias('install', env.Install(env['PREFIX_SHARE'], Dir(dir).srcnode()))
 
+# Configure latex
+def configure_latex():
+  def check(context):
+    context.Message('checking for latex: ')
+    r = context.TryBuild(env.PDF,text=r'\documentclass{book}\begin{document}\end{document}',extension='.tex')
+    context.Result(r)
+    return r
+  conf = env.Configure(custom_tests={'Check':check},clean=0,help=0)
+  if not conf.Check():
+    env['use_latex'] = 0
+  conf.Finish()
+if env['use_latex']:
+  configure_latex()
 
 # Turn a latex document into a pdf
 def latex(env,name):
   if env['use_latex'] and env['type']=='release':
     env.Install(Dir('.').srcnode(),env.PDF(name+'.pdf',name+'.tex'))
+
+# Automatic python configuration
+def configure_python(env,python):
+  pattern = re.compile(r'^\s+',flags=re.MULTILINE)
+  data = subprocess.Popen([env['python'],'-c',pattern.sub('','''
+    import numpy
+    import distutils.sysconfig as sc
+    get = sc.get_config_var
+    def p(s): print "'%s'"%s
+    p(sc.get_python_inc())
+    p(numpy.get_include())
+    p(get('LIBDIR'))
+    p(get('LDLIBRARY'))
+    p(get('PYTHONFRAMEWORKPREFIX'))
+    p(get('VERSION'))
+    p(get('prefix'))
+    ''')],stdout=subprocess.PIPE).communicate()[0]
+  include,nmpy,libpath,lib,frameworkpath,version,prefix = [s.strip()[1:-1] for s in data.strip().split('\n')]
+  assert include,nmpy
+  python['cpppath'] = [include] if os.path.exists(os.path.join(include,'numpy')) else [include,nmpy]
+  if darwin:
+    assert frameworkpath
+    python['frameworkpath'] = [frameworkpath]
+  elif windows:
+    python['libpath'] = [prefix,os.path.join(prefix,'libs')]
+    python['libs'] = ['python%s'%version]
+  else:
+    assert libpath and lib and libpath!='None' and lib!='None'
+    python['libpath'] = [libpath]
+    python['libs'] = [lib]
+  return 1
+
+# Automatic MPI configuration
+def configure_mpi(env,mpi):
+  # Find the right mpicc
+  if env['mpicc']=='<detect>':
+    if windows:
+      env.Replace(mpicc='mpicc')
+    else:
+      mpicc_options = ['mpicc','openmpicc']
+      for mpicc in mpicc_options:
+        if subprocess.Popen(['which',mpicc], stdout=subprocess.PIPE).communicate()[0]:
+          env.Replace(mpicc=mpicc)
+          break
+      else:
+        if verbose:
+          print 'disabling mpi: mpicc not found'
+        return 0
+
+  # Configure MPI if it exists
+  try:
+    if env['mpicc'] and not mpi['cpppath']:
+      # Find mpi.h
+      mpi_include_options = ['/opt/local/include/openmpi','/usr/local/include/openmpi','/opt/local/include/mpi','/usr/local/include/mpi']
+      for dir in mpi_include_options:
+        if os.path.exists(os.path.join(dir,'mpi.h')):
+          mpi['cpppath'] = dir
+          break
+    if env['mpicc'] and not (mpi['cxxflags'] or mpi['linkflags'] or mpi['libs']):
+      for flags,stage in ('linkflags','link'),('cxxflags','compile'):
+        mpi[flags] = ' '+subprocess.Popen([env['mpicc'],'--showme:%s'%stage],stdout=subprocess.PIPE).communicate()[0].strip()
+      all_flags = mpi['linkflags'].strip().split()
+      flags = []
+      for f in all_flags:
+        if f.startswith('-l'):
+          mpi['libs'].append(f[2:])
+        else:
+          flags.append(f)
+      mpi['linkflags'] = ' '+' '.join(flags)
+  except OSError,e:
+    if verbose:
+      print 'disabling mpi: %s'%e
+    return 0
+  return 1
+
+# Predefined external libraries
+external(env,'python',default=1,frameworks=['Python'],flags=['GEODE_PYTHON'],configure=configure_python)
+external(env,'boost',default=1,required=1,hide=1,headers=['boost/version.hpp'])
+external(env,'boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1,headers=())
+external(env,'mpi',flags=['GEODE_MPI'],configure=configure_mpi)
+external(env,'zlib',flags=['GEODE_ZLIB'],libs=['z'],headers=['zlib.h'])
+external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile',headers=[],
+  preamble=['#include <stdio.h>','extern "C" {','#ifdef _WIN32','#undef HAVE_STDDEF_H','#endif','#include <jpeglib.h>','}'])
+external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',requires=['zlib'] if windows else [],headers=['png.h'])
+external(env,'imath',libs=['Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
+external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'],headers=['OpenEXR/ImfRgbaFile.h'])
+external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'],headers=['gmp.h'])
+external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'],headers=['OpenMesh/Core/Utils/Endian.hh'])
+if 0: external(env,'atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
+if posix: external(env,'openblas',default=1,flags=['GEODE_BLAS'],libs=['lapack','blas'],headers=['cblas.h'])
+if darwin: external(env,'accelerate',default=1,flags=['GEODE_BLAS'],frameworks=['Accelerate'],headers=['cblas.h'])
+if windows: external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],headers=['mkl_cblas.h'],libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
+else:       external(env,'mkl',flags=['GEODE_BLAS','GEODE_MKL'],headers=['mkl_cblas.h'],linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
+if windows: external(env,'shellapi',default=windows,libs=['Shell32.lib'])
 
 # Descend into a child SConscript
 def child(env,dir):
