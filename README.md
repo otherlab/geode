@@ -87,11 +87,11 @@ Use `type=debug` for a much slower build with many more assertions:
 
 The following flags can be used to disable optional components:
 
-    has_python = 0
-    has_openexr = 0
-    has_libpng = 0
-    has_libjpeg = 0
-    has_openmesh = 0
+    use_python = 0
+    use_openexr = 0
+    use_libpng = 0
+    use_libjpeg = 0
+    use_openmesh = 0
 
 ### Developer mode
 
