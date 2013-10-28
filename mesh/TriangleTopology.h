@@ -2,6 +2,7 @@
 // This class represents topology only, not geometry.
 #pragma once
 
+#include <other/core/mesh/TriangleSoup.h>
 #include <other/core/utility/range.h>
 #include <other/core/mesh/ids.h>
 #include <other/core/array/Field.h>
@@ -91,6 +92,8 @@ public:
 protected:
   OTHER_CORE_EXPORT TriangleTopology();
   OTHER_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh);
+  OTHER_CORE_EXPORT TriangleTopology(TriangleSoup const &soup);
+  OTHER_CORE_EXPORT TriangleTopology(RawArray<const Vector<int,3>> faces);
 public:
   ~TriangleTopology();
 
@@ -137,6 +140,7 @@ public:
   inline Vector<HalfedgeId,3> halfedges(FaceId f) const;
   inline Vector<VertexId,2> vertices(HalfedgeId e) const;
   inline Vector<VertexId,3> vertices(FaceId f) const;
+  inline Vector<FaceId,3> faces(FaceId f) const;
   inline Range<TriangleTopologyOutgoing> outgoing(VertexId v) const;
   inline Range<TriangleTopologyIncoming> incoming(VertexId v) const;
   inline Vector<FaceId,2> faces(HalfedgeId e) const; // vec(face(e), face(reverse(e)))
@@ -172,6 +176,9 @@ public:
     return n_vertices()-n_edges()+n_faces();
   }
 
+  // Add another TriangleTopology, assuming the vertex sets are disjoint. The vertex, face, and boundary edge permutations for the added topology are returned.
+  OTHER_CORE_EXPORT Tuple<Array<int>, Array<int>, Array<int>> add(TriangleTopology const &other);
+
   // Add a new isolated vertex and return its id
   OTHER_CORE_EXPORT VertexId add_vertex();
 
@@ -181,8 +188,8 @@ public:
   // Add a new face.  If the result would not be manifold, no change is made and ValueError is thrown (TODO: throw a better exception).
   OTHER_CORE_EXPORT FaceId add_face(Vector<VertexId,3> v);
 
-  // Add many new faces
-  OTHER_CORE_EXPORT void add_faces(RawArray<const Vector<int,3>> vs);
+  // Add many new faces (return the first id, new ids are contiguous)
+  OTHER_CORE_EXPORT FaceId add_faces(RawArray<const Vector<int,3>> vs);
 
   // Split a face into three by inserting a new vertex in the center
   OTHER_CORE_EXPORT VertexId split_face(FaceId f);
@@ -386,6 +393,12 @@ inline Vector<HalfedgeId,3> TriangleTopology::halfedges(FaceId f) const {
   return vec(HalfedgeId(3*f.id+0),
              HalfedgeId(3*f.id+1),
              HalfedgeId(3*f.id+2));
+}
+
+inline Vector<FaceId,3> TriangleTopology::faces(FaceId f) const {
+  return vec(face(faces_[f].neighbors[0]),
+             face(faces_[f].neighbors[1]),
+             face(faces_[f].neighbors[2]));
 }
 
 inline Vector<VertexId,2> TriangleTopology::vertices(HalfedgeId e) const {

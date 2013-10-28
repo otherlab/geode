@@ -49,6 +49,15 @@ TriangleTopology::TriangleTopology(const TriangleTopology& mesh)
   , boundaries_(mesh.boundaries_.copy())
   , erased_boundaries_(mesh.erased_boundaries_) {}
 
+TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
+: TriangleTopology() {
+  add_faces(faces);
+}
+
+TriangleTopology::TriangleTopology(TriangleSoup const &soup)
+: TriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
+}
+
 TriangleTopology::~TriangleTopology() {}
 
 Ref<TriangleTopology> TriangleTopology::copy() const {
@@ -80,6 +89,70 @@ HalfedgeId TriangleTopology::common_halfedge(FaceId f0, FaceId f1) const {
         return reverse(e);
   }
   return HalfedgeId();
+}
+
+inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
+  assert(h.id != erased_id);
+  if (!h.valid())
+    return h;
+  if (h.id >= 0)
+    return HalfedgeId(3*face_permutation[h.id/3] + h.id%3);
+  else
+    return HalfedgeId(-1-boundary_permutation[-1-h.id]);
+}
+
+Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::add(TriangleTopology const &other) {
+  Array<int> vertex_permutation(other.vertex_to_edge_.size()),
+             face_permutation(other.faces_.size()),
+             boundary_permutation(boundaries_.size());
+
+  // the first indices
+  int base_vertex = vertex_to_edge_.size();
+  int base_face = faces_.size();
+  int base_boundary = boundaries_.size();
+
+  // add things from other to the end
+  vertex_permutation.fill(-1);
+  for (int i = 0; i < vertices_size_)
+  for (auto vi : other.vertices()) {
+    vertex_permutation[vi.i.id] = vertex_to_edge_.size();
+    vertex_to_edge_.append(other.vertex_to_edge_[vi.i]);
+  }
+  face_permutation.fill(-1);
+  for (auto fi : other.faces()) {
+    face_permutation[fi.i.id] = faces_.size();
+    faces_.append(other.faces_[fi.i]);
+  }
+  boundary_permutation.fill(-1);
+  for (auto bi : other.boundary_edges()) {
+    boundary_permutation[bi.i.id] = boundaries_.size();
+    boundaries_.append(other.boundaries_[bi.i]);
+  }
+
+  // renumber all new primitives
+
+  // reflect id changes in newly added arrays
+  for (auto& h : vertex_to_edge_.flat.slice(base_vertex, vertex_to_edge_.size())) {
+    assert(h.id != erased_id);
+    h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
+  }
+  for (auto& f : faces_.flat.slice(base_face, faces_.size())) {
+    assert(f.vertices.x.id != erased_id);
+    for (auto& v : f.vertices)
+      v = VertexId(vertex_permutation[v.id]);
+    for (auto &h : f.neighbors)
+      h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
+  }
+  for (auto& b : boundaries_.slice(base_boundary, boundaries_.size())) {
+    assert(b.src.id != erased_id);
+    assert(b.src.valid());
+    b.src = VertexId(vertex_permutation[b.src.id]);
+    b.next = apply_halfedge_permutation(b.next, face_permutation, boundary_permutation);
+    b.prev = apply_halfedge_permutation(b.prev, face_permutation, boundary_permutation);
+    b.reverse = apply_halfedge_permutation(b.reverse, face_permutation, boundary_permutation);
+  }
+
+  return tuple(vertex_permutation, face_permutation, boundary_permutation);
 }
 
 VertexId TriangleTopology::add_vertex() {
@@ -230,10 +303,16 @@ FaceId TriangleTopology::add_face(const Vector<VertexId,3> v) {
   return f;
 }
 
-void TriangleTopology::add_faces(RawArray<const Vector<int,3>> vs) {
+FaceId TriangleTopology::add_faces(RawArray<const Vector<int,3>> vs) {
   // TODO: We desperately need a batch insertion routine.
-  for (auto& v : vs)
-    add_face(Vector<VertexId,3>(v));
+  if (vs.empty()) {
+    return FaceId();
+  } else {
+    FaceId first(faces_.size());
+    for (auto& v : vs)
+      add_face(Vector<VertexId,3>(v));
+    return first;
+  }
 }
 
 void TriangleTopology::split_face(const FaceId f, const VertexId c) {
@@ -663,16 +742,6 @@ void TriangleTopology::erase(FaceId f, bool erase_isolated) {
 
   // erase the face
   unsafe_set_erased(f);
-}
-
-inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
-  assert(h.id != erased_id);
-  if (!h.valid())
-    return h;
-  if (h.id >= 0)
-    return HalfedgeId(3*face_permutation[h.id/3] + h.id%3);
-  else
-    return HalfedgeId(-1-boundary_permutation[-1-h.id]);
 }
 
 // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
