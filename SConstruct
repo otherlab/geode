@@ -69,7 +69,7 @@ options(env,
   ('hidden','make symbols invisible by default',0),
   ('openmp','use openmp',1),
   ('syntax','check syntax only',0),
-  ('has_latex','true if latex is available',0),
+  ('use_latex','Whether latex is available',0),
   ('thread_safe','use thread safe reference counting in pure C++ code',1),
   ('optimizations','override default optimization settings','<default>'),
   ('sse','Use SSE if available',1),
@@ -111,6 +111,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
          'has':has,'hide':hide,'callback':callback}
+  env['need_'+name] = default
 
   # Make sure the empty lists are copied and do not refer to the same object
   for n in lib:
@@ -119,8 +120,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
 
   Help('\n')
   options(env,
-    ('has_'+name,'Whether '+name+' is available',lib['has']),
-    ('use_'+name,'Whether to use '+name+' by default',default),
+    ('use_'+name,'Whether '+name+' is available',lib['has']),
     (name+'_dir','Base directory for '+name,dir),
     (name+'_include','Include directory for '+name,0),
     (name+'_libpath','Library directory for '+name,0),
@@ -136,7 +136,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
     (name+'_callback','Arbitrary environment modification callback for '+name,0))
 
   # Is this external library available?
-  if env['has_'+name]:
+  if env['use_'+name]:
     externals[name] = lib
   else:
     return
@@ -222,7 +222,7 @@ def configure_python():
     assert libpath and lib and libpath!='None' and lib!='None'
     python['libpath'] = [libpath]
     python['libs'] = [lib]
-if env['has_python']:
+if env['use_python']:
   configure_python()
 
 # Improve performance
@@ -423,12 +423,12 @@ if posix:
 def add_dependencies(env):
   libs = []
   for a,lib in externals.iteritems():
-    if env['use_'+a]:
+    if env['need_'+a]:
       libs += lib['requires']
 
   while libs:
     a = libs.pop()
-    env['use_'+a] = 1
+    env['need_'+a] = 1
     libs.extend(externals[a]['requires'])
 
 # Linker flags
@@ -439,11 +439,11 @@ def link_flags(env):
   else:
     env_link = env.Clone()
   add_dependencies(env_link)
-  workaround = env.get('use_qt',0)
+  workaround = env.get('need_qt',0)
 
   for name,lib in externals.items():
-    if env['use_'+name]:
-      all_uses.append('use_'+name)
+    if env['need_'+name]:
+      all_uses.append('need_'+name)
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
       env_link.AppendUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
@@ -461,7 +461,7 @@ def copy_files(env):
   env_copy = env.Clone()
   add_dependencies(env_copy)
   for name,lib in externals.items():
-    if env['use_'+name]:
+    if env['need_'+name]:
       for cp in lib['copy']:
         target = env['PREFIX_BIN']+cp
         if target not in copied_files:
@@ -492,7 +492,7 @@ def objects(env,sources):
       cxxflags += lib['cxxflags']
     return builder(source,CPPDEFINES=cppdefines_reversed[::-1],CPPPATH=cpppath_reversed[::-1],CPPPATH_HIDDEN=cpppath_hidden_reversed[::-1],FRAMEWORKPATH=frameworkpath,FRAMEWORKS=frameworks,CXXFLAGS=cxxflags)
   add_dependencies(env)
-  libraries = [externals[name] for name in externals.keys() if env['use_'+name]]
+  libraries = [externals[name] for name in externals.keys() if env['need_'+name]]
   for lib in libraries:
     if lib['callback'] is not None:
       env = env.Clone()
@@ -533,7 +533,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
       headers.append(f)
   if not sources and not headers:
     print 'Warning: library %s has no input source files'%name
-  if env.get('use_qt',0): # Qt gets confused if we only set options on the builder
+  if env.get('need_qt',0): # Qt gets confused if we only set options on the builder
     env = env.Clone()
     qt = externals['qt']
     env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
@@ -577,7 +577,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
       python_libs.append(lib)
   else:
     env.Alias('install',env.Install(env['PREFIX_LIB'],lib))
-    if env['has_python']:
+    if env['use_python']:
       if pyname is None:
         pyname = name
       module = os.path.join('#'+Dir('.').srcnode().path,pyname)
@@ -613,7 +613,7 @@ def resource(env,dir):
 
 # Turn a latex document into a pdf
 def latex(env,name):
-  if env['has_latex'] and env['type']=='release':
+  if env['use_latex'] and env['type']=='release':
     env.Install(Dir('.').srcnode(),env.PDF(name+'.pdf',name+'.tex'))
 
 # Descend into a child SConscript
@@ -655,7 +655,7 @@ if windows and 0:
 
 # On Windows, distinct python extension modules can't share symbols.  Therefore, we
 # build a single large extension module with links to all the dlls.
-if windows and env['has_python']:
+if windows and env['use_python']:
   if env['shared']:
     raise RuntimeError('Separate shared libraries do not work on windows.  Switch to shared=0.')
 
