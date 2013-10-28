@@ -113,20 +113,19 @@ Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::add(TriangleTopology
 
   // add things from other to the end
   vertex_permutation.fill(-1);
-  for (int i = 0; i < vertices_size_)
   for (auto vi : other.vertices()) {
-    vertex_permutation[vi.i.id] = vertex_to_edge_.size();
-    vertex_to_edge_.append(other.vertex_to_edge_[vi.i]);
+    vertex_permutation[vi.id] = vertex_to_edge_.size();
+    vertex_to_edge_.append(other.vertex_to_edge_[vi]);
   }
   face_permutation.fill(-1);
   for (auto fi : other.faces()) {
-    face_permutation[fi.i.id] = faces_.size();
-    faces_.append(other.faces_[fi.i]);
+    face_permutation[fi.id] = faces_.size();
+    faces_.append(other.faces_[fi]);
   }
   boundary_permutation.fill(-1);
   for (auto bi : other.boundary_edges()) {
-    boundary_permutation[bi.i.id] = boundaries_.size();
-    boundaries_.append(other.boundaries_[bi.i]);
+    boundary_permutation[-1-bi.id] = boundaries_.size();
+    boundaries_.append(other.boundaries_[-1-bi.id]);
   }
 
   // renumber all new primitives

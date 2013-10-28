@@ -97,7 +97,7 @@ public:
   }
 
   // permute the field such that fnew[permutation[i]] = f[i]. Negative values in permutation signify deletion.
-  void permute(RawArray<int> permutation) {
+  void permute(RawArray<const int> permutation) {
     GEODE_ASSERT(permutation.size() == flat.size());
     Array<T> newflat(permutation.max()+1);
     for (int i = 0; i < permutation.size(); ++i) {

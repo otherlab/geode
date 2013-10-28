@@ -1,8 +1,9 @@
 #pragma once
 
 #include <geode/mesh/TriangleTopology.h>
+#include <geode/geometry/Triangle3d.h>
 
-namespace other {
+namespace geode {
 
 // A manifold triangle mesh with positions.
 // Keeps positions consistent when vertex ids change.
@@ -20,13 +21,13 @@ protected:
 
 private:
   // hide these methods (they add vertex ids without adding the position)
-  VertexId TriangleTopology::add_vertex();
-  VertexId TriangleTopology::add_vertices(int);
-  VertexId TriangleTopology::split_face(FaceId);
+  VertexId add_vertex();
+  VertexId add_vertices(int);
+  VertexId split_face(FaceId);
 
   // hide these methods (they change ids without reporting in what way)
-  void TriangleTopology::erase_face_with_reordering(FaceId f);
-  void TriangleTopology::erase_last_vertex_with_reordering();
+  void erase_face_with_reordering(FaceId f);
+  void erase_last_vertex_with_reordering();
 
 public:
 

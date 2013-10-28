@@ -1,7 +1,7 @@
 #include <geode/mesh/TriangleMesh.h>
 #include <geode/python/Class.h>
 
-namespace other {
+namespace geode {
 
 GEODE_DEFINE_TYPE(TriangleMesh)
 
@@ -48,7 +48,7 @@ Tuple<Array<int>, Array<int>, Array<int>> TriangleMesh::add(TriangleMesh const &
   for (int i = 0; i < result.x.size(); ++i) {
     if (result.x[i] != -1) {
       assert(result.x[i] == positions.size());
-      positions.append(mesh.positions[i]);
+      positions.append(mesh.positions[VertexId(i)]);
     }
   }
 
@@ -56,8 +56,8 @@ Tuple<Array<int>, Array<int>, Array<int>> TriangleMesh::add(TriangleMesh const &
 }
 
 // Permute vertices: vertices v becomes vertex permutation[v]
-void TriangleMesh::permute_vertices(RawArray<const int> permutation, bool check=false) {
-  TriangleTopology.permute_vertices(permutation, check);
+void TriangleMesh::permute_vertices(RawArray<const int> permutation, bool check) {
+  TriangleTopology::permute_vertices(permutation, check);
   positions.permute(permutation);
 }
 
@@ -66,6 +66,7 @@ void TriangleMesh::permute_vertices(RawArray<const int> permutation, bool check=
 Tuple<Array<int>, Array<int>, Array<int>> TriangleMesh::collect_garbage() {
   auto result = TriangleTopology::collect_garbage();
   positions.permute(result.x);
+  return result;
 }
 
 }

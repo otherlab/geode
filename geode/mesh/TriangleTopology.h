@@ -178,7 +178,7 @@ public:
   }
 
   // Add another TriangleTopology, assuming the vertex sets are disjoint. The vertex, face, and boundary edge permutations for the added topology are returned.
-  OTHER_CORE_EXPORT Tuple<Array<int>, Array<int>, Array<int>> add(TriangleTopology const &other);
+  GEODE_CORE_EXPORT Tuple<Array<int>, Array<int>, Array<int>> add(TriangleTopology const &other);
 
   // Add a new isolated vertex and return its id
   GEODE_CORE_EXPORT VertexId add_vertex();

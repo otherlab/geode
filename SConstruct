@@ -14,7 +14,13 @@ EnsureSConsVersion(2,0,0)
 # Read configuration from config.py.
 # As far as I can tell, the scons version of this doesn't allow defining new options in SConscript files.
 sys.path.insert(0,Dir('#').abspath)
-import config
+
+try:
+  import config
+  has_config = True
+except:
+  has_config = False
+
 del sys.path[0]
 def options(env,*vars):
   for name,help,default in vars:
@@ -26,8 +32,10 @@ def options(env,*vars):
       except ValueError:
         pass
       env[name] = value
-    else:
+    elif has_config:
       env[name] = config.__dict__.get(name,default)
+    else:
+      env[name] = default
 
 # Base environment
 env = Environment(tools=['default','pdflatex','pdftex'],TARGET_ARCH='x86') # TARGET_ARCH applies only on Windows
@@ -415,7 +423,7 @@ env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
 # Library configuration.  Local directories must go first or scons will try to install unexpectedly
 env.Prepend(CPPPATH=['#.'])
 env.Append(CPPPATH=[env['PREFIX_INCLUDE']],LIBPATH=[env['PREFIX_LIB']])
-env.Prepend(LIBPATH=['#$variant_build/lib'])
+env.Prepend(LIBPATH=['#' + os.path.join(env['variant_build'],'lib')])
 if posix:
   env.Append(LINKFLAGS='-Wl,-rpath-link=$variant_build/lib')
 
@@ -562,7 +570,6 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
   else:
     lib = env.StaticLibrary(path,source=sources)
   env.Depends('.',lib)
-
   # Install dlls in bin, lib and exp in lib
   if windows:
     installed = []
