@@ -257,7 +257,7 @@ env.Replace(prefix_lib=env.subst(env['prefix_lib']))
 # External libraries
 externals = {}
 def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
-             copy=(),frameworkpath=(),frameworks=(),requires=(),pattern=None,hide=False,callback=None,
+             copy=(),frameworkpath=(),frameworks=(),requires=(),hide=False,callback=None,
              preamble=(),headers=None,configure=None,required=False):
   if name in externals:
     raise RuntimeError("Trying to redefine the external %s"%name)
@@ -275,7 +275,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
       return
 
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
-         'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,'pattern':(re.compile(pattern) if pattern else None),
+         'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,
          'hide':hide,'callback':callback,'name':name}
   env['need_'+name] = default
 
@@ -334,6 +334,9 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
   if env[name+'_linkflags']!=0: lib['linkflags'] = env[name+'_linkflags']
   if env[name+'_copy']!=0: lib['copy'] = env[name+'_copy']
   if env[name+'_callback']!=0: lib['callback'] = env[name+'_callback']
+
+  # SConscripts can override this to restrict flags to certain files
+  env[name+'_pattern'] = None
 
   # Check whether the external is usable
   if configure is not None:
@@ -435,7 +438,8 @@ def objects_helper(env,source,libraries,builder):
     frameworks,frameworkpath = [],[]
   cxxflags = str(env['CXXFLAGS'])
   for lib in libraries:
-    if lib['pattern'] and source and not lib['pattern'].search(File(source).abspath):
+    pattern = env[lib['name']+'_pattern']
+    if pattern and source and not pattern.search(File(source).abspath):
       continue
     cppdefines_reversed.extend(lib['flags'][::-1])
     (cpppath_hidden_reversed if lib['hide'] else cpppath_reversed).extend(lib['cpppath'][::-1])
@@ -662,11 +666,11 @@ external(env,'boost',default=1,required=1,hide=1,headers=['boost/version.hpp'])
 external(env,'boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix','boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1,headers=())
 external(env,'mpi',flags=['GEODE_MPI'],configure=configure_mpi)
 external(env,'zlib',flags=['GEODE_ZLIB'],libs=['z'],headers=['zlib.h'])
-external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile',headers=[],
+external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],headers=[],
   preamble=['#include <stdio.h>','extern "C" {','#ifdef _WIN32','#undef HAVE_STDDEF_H','#endif','#include <jpeglib.h>','}'])
-external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',requires=['zlib'] if windows else [],headers=['png.h'])
-external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
-external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'],headers=['OpenEXR/ImfRgbaFile.h'])
+external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],requires=['zlib'] if windows else [],headers=['png.h'])
+external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
+external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],requires=['imath'],headers=['OpenEXR/ImfRgbaFile.h'])
 external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'],headers=['gmp.h'])
 external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'],headers=['OpenMesh/Core/Utils/Endian.hh'])
 if 0: external(env,'atlas',flags=['GEODE_BLAS'],libs=['cblas','lapack','atlas'])
