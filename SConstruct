@@ -46,17 +46,17 @@ env['geode'] = os.path.normpath(os.path.dirname(os.path.realpath(File('#SConstru
 if darwin:
   for base in '/opt/local','/usr/local':
     if os.path.exists(base):
-      env.Replace(BASE=base)
+      env.Replace(base=base)
       env.Append(CPPPATH=[base+'/include'],LIBPATH=[base+'/lib'])
       break
   else:
     die("We're on Mac, but neither /opt/local or /usr/local exists.  Geode requires either MacPorts or Homebrew.")
 else:
-  env.Replace(BASE='/usr')
+  env.Replace(base='/usr')
 
 # Base options
 options(env,
-  ('CXX','C++ compiler','<detect>'),
+  ('cxx','C++ compiler','<detect>'),
   ('arch','Architecture (e.g. opteron, nocona, powerpc, native)','native'),
   ('type','Type of build (e.g. release, debug, profile)','release'),
   ('default_arch','Architecture that doesn\'t need a suffix',''),
@@ -77,18 +77,18 @@ options(env,
   ('skip','list of modules to skip',[]),
   ('skip_libs', 'list of libraries to skip', []),
   ('skip_programs','Build libraries only',0),
-  ('BASE','Standard base directory for headers and libraries',env['BASE']),
-  ('CXXFLAGS_EXTRA','',[]),
-  ('LINKFLAGS_EXTRA','',[]),
-  ('CPPPATH_EXTRA','',['/usr/local/include']),
-  ('LIBPATH_EXTRA','',['/usr/local/lib']),
-  ('RPATH_EXTRA','',[]),
-  ('LIBS_EXTRA','',[]),
-  ('PREFIX','Path to install libraries, binaries, and scripts','/usr/local'),
-  ('PREFIX_INCLUDE','Override path to install headers','$PREFIX/include'),
-  ('PREFIX_LIB','Override path to install libraries','$PREFIX/lib'),
-  ('PREFIX_BIN','Override path to install binaries','$PREFIX/bin'),
-  ('PREFIX_SHARE','Override path to install resources','$PREFIX/share'),
+  ('base','Standard base directory for headers and libraries',env['base']),
+  ('cxxflags_extra','',[]),
+  ('linkflags_extra','',[]),
+  ('cpppath_extra','',['/usr/local/include']),
+  ('libpath_extra','',['/usr/local/lib']),
+  ('rpath_extra','',[]),
+  ('libs_extra','',[]),
+  ('prefix','Path to install libraries, binaries, and scripts','/usr/local'),
+  ('prefix_include','Override path to install headers','$prefix/include'),
+  ('prefix_lib','Override path to install libraries','$prefix/lib'),
+  ('prefix_bin','Override path to install binaries','$prefix/bin'),
+  ('prefix_share','Override path to install resources','$prefix/share'),
   ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
   ('python','Python executable','python'),
   ('mpicc','MPI wrapper compiler (used only to extract flags)','<detect>'),
@@ -96,12 +96,12 @@ options(env,
 assert env['real'] in ('float','double')
 
 # Extra flag options
-env.Append(CXXFLAGS=env['CXXFLAGS_EXTRA'])
-env.Append(LINKFLAGS=env['LINKFLAGS_EXTRA'])
-env.Append(CPPPATH=env['CPPPATH_EXTRA'])
-env.Append(LIBPATH=env['LIBPATH_EXTRA'])
-env.Append(RPATH=env['RPATH_EXTRA'])
-env.Append(LIBS=env['LIBS_EXTRA'])
+env.Append(CXXFLAGS=env['cxxflags_extra'])
+env.Append(LINKFLAGS=env['linkflags_extra'])
+env.Append(CPPPATH=env['cpppath_extra'])
+env.Append(LIBPATH=env['libpath_extra'])
+env.Append(RPATH=env['rpath_extra'])
+env.Append(LIBS=env['libs_extra'])
 
 # Improve performance
 env.Decider('MD5-timestamp')
@@ -111,28 +111,29 @@ env.SetDefault(CPPDEFINES=[])
 env.Replace(_CPPINCFLAGS=env['_CPPINCFLAGS']+re.sub(r'\$\( (.*)\bCPPPATH\b(.*)\$\)',r'\1CPPPATH_HIDDEN\2',env['_CPPINCFLAGS']))
 
 # Pick compiler if the user requested the default
-if env['CXX']=='<detect>':
+if env['cxx']=='<detect>':
   if windows:
-    env.Replace(CXX=default_cxx)
+    env.Replace(cxx=default_cxx)
   else:
     for gcc in 'clang++ g++-4.7 g++-4.6 g++'.split():
       if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
-        env.Replace(CXX=gcc)
+        env.Replace(cxx=gcc)
         break
     else:
       die('no suitable version of g++ found')
+env.Replace(CXX=env['cxx'])
 
 # If we're using gcc, insist on 4.6 or higher
-if re.match(r'\bg\+\+',env['CXX']):
-  version = subprocess.Popen([env['CXX'],'--version'], stdout=subprocess.PIPE).communicate()[0]
+if re.match(r'\bg\+\+',env['cxx']):
+  version = subprocess.Popen([env['cxx'],'--version'], stdout=subprocess.PIPE).communicate()[0]
   m = re.search(r'\s+([\d\.]+)(\s+|\n|$)',version)
   if not m:
     die('weird version line: %s'%version[:-1])
   version_tuple = tuple(map(int, m.group(1).split('.')))
   if version_tuple<(4,6):
-    die('gcc 4.6 or higher is required, but %s has version %s'%(env['CXX'],m.group(1)))
+    die('gcc 4.6 or higher is required, but %s has version %s'%(env['cxx'],m.group(1)))
   if version_tuple[0:2] == (4,7) and version_tuple[2] in (0,1):
-    die('use of gcc 4.7.0 or 4.7.1 is strongly discouraged (ABI incompatabilities when mixing C++11 and other standards). %s is version %s'%(env['CXX'],m.group(1)))
+    die('use of gcc 4.7.0 or 4.7.1 is strongly discouraged (ABI incompatabilities when mixing C++11 and other standards). %s is version %s'%(env['cxx'],m.group(1)))
 
 # Build cache
 if env['cache']!='':
@@ -146,7 +147,7 @@ env['variant_build'] = os.path.join('build',env['arch'],env['type'])
 env.VariantDir(env['variant_build'],'.',duplicate=0)
 
 # Compiler flags
-clang = bool(re.search(r'clang\b',env['CXX']))
+clang = bool(re.search(r'clang\b',env['cxx']))
 if windows:
   def ifsse(s):
     return s if env['sse'] else ''
@@ -155,7 +156,7 @@ if windows:
   if env['type'] in ('release','optdebug','profile'):
     env.Append(CXXFLAGS=' /O2')
   env.Append(CXXFLAGS=ifsse('/arch:SSE2') + ' /W3 /wd4996 /wd4267 /wd4180 /EHs',LINKFLAGS='/ignore:4221',CPPDEFINES=[ifsse('__SSE__'), '_CRT_SECURE_NO_DEPRECATE','NOMINMAX','_USE_MATH_DEFINES'])
-  if env['CXX'].endswith('icl') or env['CXX'].endswith('icl"'):
+  if env['cxx'].endswith('icl') or env['cxx'].endswith('icl"'):
     env.Append(CXXFLAGS=' /wd2415 /wd597 /wd177')
   if env['type']=='debug':
     env.Append(CXXFLAGS=' /RTC1 /MDd',CCFLAGS=' /MDd',LINKFLAGS=' /DEBUG')
@@ -164,7 +165,7 @@ if windows:
   if not env['shared']:
     env.Append(CPPDEFINES=['GEODE_SINGLE_LIB'])
   #dangerous: env.Append(LINKFLAGS='/NODEFAULTLIB:libcmtd.lib')
-elif env['CXX'].endswith('icc') or env['CXX'].endswith('icpc'):
+elif env['cxx'].endswith('icc') or env['cxx'].endswith('icpc'):
   if env['type']=='optdebug' or env['type']=='debug':
     env.Append(CXXFLAGS=' -g')
   if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
@@ -251,7 +252,7 @@ if darwin:
   env.Replace(LDMODULESUFFIX='.so')
 
 # Work around apparent bug in variable expansion
-env.Replace(PREFIX_LIB=env.subst(env['PREFIX_LIB']))
+env.Replace(prefix_lib=env.subst(env['prefix_lib']))
 
 # External libraries
 externals = {}
@@ -366,7 +367,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
 
 # Library configuration.  Local directories must go first or scons will try to install unexpectedly
 env.Prepend(CPPPATH=['#.'])
-env.Append(CPPPATH=[env['PREFIX_INCLUDE']],LIBPATH=[env['PREFIX_LIB']])
+env.Append(CPPPATH=[env['prefix_include']],LIBPATH=[env['prefix_lib']])
 env.Prepend(LIBPATH=['#$variant_build/lib'])
 if posix:
   env.Append(LINKFLAGS='-Wl,-rpath-link=$variant_build/lib')
@@ -387,7 +388,7 @@ def add_dependencies(env):
 all_uses = []
 def link_flags(env):
   if not windows:
-    env_link = env.Clone(LINK=env['CXX'])
+    env_link = env.Clone(LINK=env['cxx'])
   else:
     env_link = env.Clone()
   add_dependencies(env_link)
@@ -415,10 +416,10 @@ def copy_files(env):
   for name,lib in externals.items():
     if env['need_'+name]:
       for cp in lib['copy']:
-        target = env['PREFIX_BIN']+cp
+        target = env['prefix_bin']+cp
         if target not in copied_files:
           copied_files.add(target)
-          env_copy.Install(env['PREFIX_BIN'], cp)
+          env_copy.Install(env['prefix_bin'], cp)
   return env_copy
 
 # Convert sources into objects
@@ -491,7 +492,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
 
   # Install headers
-  header_dir = os.path.join(env['PREFIX_INCLUDE'],Dir('.').srcnode().path)
+  header_dir = os.path.join(env['prefix_include'],Dir('.').srcnode().path)
   for h in headers:
     env.Alias('install',env.Install(os.path.join(header_dir,os.path.dirname(h)),h))
 
@@ -508,7 +509,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
   if env['shared']:
     linkflags = env['LINKFLAGS']
     if darwin:
-      linkflags = '-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['PREFIX_LIB'])).abspath,name)+linkflags
+      linkflags = '-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['prefix_lib'])).abspath,name)+linkflags
     # On Windows, this will create two files: a .lib (for other builds), and a .dll for the runtime.
     lib = env.SharedLibrary(path,source=sources,LINKFLAGS=linkflags)
   else:
@@ -520,20 +521,20 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     installed = []
     for l in lib:
       if l.name[-4:] in ['.dll','.pyd']:
-        installed.extend(env.Install(env['PREFIX_BIN'],l))
+        installed.extend(env.Install(env['prefix_bin'],l))
       elif not no_exports:
-        installed.extend(env.Install(env['PREFIX_LIB'],l))
+        installed.extend(env.Install(env['prefix_lib'],l))
     lib = installed
     all_libs.append(lib)
     if 'module.cpp' in cpps:
       python_libs.append(lib)
   else:
-    env.Alias('install',env.Install(env['PREFIX_LIB'],lib))
+    env.Alias('install',env.Install(env['prefix_lib'],lib))
     if env['use_python']:
       if pyname is None:
         pyname = name
       module = os.path.join('#'+Dir('.').srcnode().path,pyname)
-      python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath],SHLIBPREFIX='',LINK=env['CXX'])
+      python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath],SHLIBPREFIX='',LINK=env['cxx'])
 
 # Build a program
 def program(env,name,cpp=None):
@@ -546,7 +547,7 @@ def program(env,name,cpp=None):
   files = objects(env,cpp)
   bin = env.Program(name,files)
   env.Depends('.',bin)
-  env.Alias('install',env.Install(env['PREFIX_BIN'],bin))
+  env.Alias('install',env.Install(env['prefix_bin'],bin))
 
 # Install a (possibly directory) resource
 def resource(env,dir):
@@ -556,11 +557,11 @@ def resource(env,dir):
       reldir = os.path.relpath(dirname, basedir)
       for name in names:
         fullname = os.path.join(dirname, name)
-        env.Alias('install', env.Install(os.path.join(env['PREFIX_SHARE'], reldir), fullname))
+        env.Alias('install', env.Install(os.path.join(env['prefix_share'], reldir), fullname))
     basedir = str(Dir('.').srcnode())
     os.path.walk(str(Dir(dir).srcnode()), visitor, basedir)
   else:
-    env.Alias('install', env.Install(env['PREFIX_SHARE'], Dir(dir).srcnode()))
+    env.Alias('install', env.Install(env['prefix_share'], Dir(dir).srcnode()))
 
 # Configure latex
 def configure_latex():
@@ -664,7 +665,7 @@ external(env,'zlib',flags=['GEODE_ZLIB'],libs=['z'],headers=['zlib.h'])
 external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],pattern=r'JpgFile|MovFile',headers=[],
   preamble=['#include <stdio.h>','extern "C" {','#ifdef _WIN32','#undef HAVE_STDDEF_H','#endif','#include <jpeglib.h>','}'])
 external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],pattern=r'PngFile',requires=['zlib'] if windows else [],headers=['png.h'])
-external(env,'imath',libs=['Imath'],cpppath=['$BASE/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
+external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],pattern=r'ExrFile|tim[/\\]fab',cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
 external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],pattern=r'ExrFile|tim[/\\]fab',requires=['imath'],headers=['OpenEXR/ImfRgbaFile.h'])
 external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'],headers=['gmp.h'])
 external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'],headers=['OpenMesh/Core/Utils/Endian.hh'])
