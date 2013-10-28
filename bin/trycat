@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import optparse
-from other.core.utility import tryfile
+from geode.utility import tryfile
 from numpy import *
 
 usage="usage: %prog [options] <data.try>..."

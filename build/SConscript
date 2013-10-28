@@ -1,4 +1,0 @@
-Import('env toplevel children')
-
-toplevel('other','.')
-children(env)
