@@ -687,7 +687,7 @@ def blas_variants():
   body = ['  cblas_dscal(0,1,0,1);']
   external(env,'atlas',libs=['cblas','lapack','atlas'],headers=['cblas.h'],body=body)
   external(env,'openblas',libs=['lapack','blas'],headers=['cblas.h'],body=body)
-  if darwin: external(env,'accelerate',frameworks=['Accelerate'],headers=['cblas.h'],body=body)
+  if darwin: external(env,'accelerate',frameworks=['Accelerate'],headers=['Accelerate/Accelerate.h'],body=body)
   if windows: external(env,'mkl',flags=['GEODE_MKL'],headers=['mkl_cblas.h'],body=body,libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
   else:       external(env,'mkl',flags=['GEODE_MKL'],headers=['mkl_cblas.h'],body=body,linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
 blas_variants()
