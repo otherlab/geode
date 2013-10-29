@@ -1,8 +1,11 @@
 Import('env library')
+import re
 
-env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need_gmp=1)
-
-# Minimal dependencies:
-# env = env.Clone(need_libpng=0,need_libjpeg=0,need_openexr=0,need_openmesh=0,need_python=0)
+openexr_pattern = re.compile(r'ExrFile')
+env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need_gmp=1,
+                libpng_pattern=re.compile(r'PngFile'),
+                libjpeg_pattern=re.compile(r'JpgFile|MovFile'),
+                imath_pattern=openexr_pattern,
+                openexr_pattern=openexr_pattern)
 
 library(env,'geode',pyname='geode_wrap')
