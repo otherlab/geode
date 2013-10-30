@@ -68,6 +68,7 @@ options(env,
   ('arch','Architecture (e.g. opteron, nocona, powerpc, native)','native'),
   ('type','Type of build (e.g. release, debug, profile)','release'),
   ('default_arch','Architecture that doesn\'t need a suffix',''),
+  ('install','Allow install (set to false to developer mode trees)',1),
   ('cache','Cache directory to use',''),
   ('shared','Build shared libraries',1),
   ('shared_objects','Build shareable objects when without shared libraries',1),
@@ -502,9 +503,10 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
 
   # Install headers
-  header_dir = os.path.join(env['prefix_include'],Dir('.').srcnode().path)
-  for h in headers:
-    env.Alias('install',env.Install(os.path.join(header_dir,os.path.dirname(h)),h))
+  if env['install']:
+    header_dir = os.path.join(env['prefix_include'],Dir('.').srcnode().path)
+    for h in headers:
+      env.Alias('install',env.Install(os.path.join(header_dir,os.path.dirname(h)),h))
 
   # Tell the compiler which library we're building
   env.Append(CPPDEFINES=['BUILDING_'+name])
@@ -538,7 +540,8 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     if 'module.cpp' in cpps:
       python_libs.append(lib)
   else:
-    env.Alias('install',env.Install(env['prefix_lib'],lib))
+    if env['install']:
+      env.Alias('install',env.Install(env['prefix_lib'],lib))
     if env['use_python']:
       if pyname is None:
         pyname = name
@@ -556,10 +559,13 @@ def program(env,name,cpp=None):
   files = objects(env,cpp)
   bin = env.Program(name,files)
   env.Depends('.',bin)
-  env.Alias('install',env.Install(env['prefix_bin'],bin))
+  if env['install']:
+    env.Alias('install',env.Install(env['prefix_bin'],bin))
 
 # Install a (possibly directory) resource
 def resource(env,dir):
+  if not env['install']:
+    return
   # if dir is a directory, add a dependency for each file found in its subtree
   if os.path.isdir(str(Dir(dir).srcnode())):
     def visitor(basedir, dirname, names):
