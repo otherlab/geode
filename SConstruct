@@ -148,7 +148,9 @@ if env['cache']!='':
   CacheDir(env['cache'])
 
 # Make a variant-independent environment for building python modules
-python_env = env.Clone()
+python_env = env.Clone(SHLIBPREFIX='',LINK=env['cxx'])
+if darwin:
+  python_env.Replace(LDMODULESUFFIX='.so',SHLIBSUFFIX='.so')
 
 # Variant build setup
 env['variant_build'] = os.path.join('build',env['arch'],env['type'])
@@ -254,10 +256,6 @@ if env['openmp']:
 
 # Turn off boost::exceptions to avoid completely useless code bloat
 env.Append(CPPDEFINES=['BOOST_EXCEPTION_DISABLE'])
-
-# Darwin specific options
-if darwin:
-  env.Replace(LDMODULESUFFIX='.so')
 
 # Work around apparent bug in variable expansion
 env.Replace(prefix_lib=env.subst(env['prefix_lib']))
@@ -545,7 +543,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
       if pyname is None:
         pyname = name
       module = os.path.join('#'+Dir('.').srcnode().path,pyname)
-      python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath],SHLIBPREFIX='',LINK=env['cxx'])
+      python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath])
 
 # Build a program
 def program(env,name,cpp=None):
