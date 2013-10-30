@@ -3,13 +3,9 @@
 
 #include <geode/utility/config.h>
 
-#ifdef _WIN32
 #include <boost/tr1/unordered_set.hpp>
 #include <boost/tr1/unordered_map.hpp>
-#else
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
-#endif
+
 
 namespace geode {
 
