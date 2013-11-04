@@ -3,7 +3,6 @@ import json
 from numpy import *
 from geode import *
 
-
 def from_ndarray(v, typ = float):
   return map(typ, v.flatten())
 
@@ -73,6 +72,15 @@ to_json_fn[SegmentSoup] = lambda v: {
   'v': from_ndarray(v.elements, int)
 }
 
+to_json_fn[TriMesh] = lambda v: {
+  't': 'TriMesh',
+  'v': {
+    'vertices': from_ndarray(v.X()),
+    'elements': from_ndarray(v.elements(), int)
+  }
+}
+
+from_json_fn[TriMesh] = lambda d: d['v']
 
 def to_json(v):
   fn = to_json_fn.get(type(v), None)
@@ -87,7 +95,6 @@ def from_json(d):
 
 def from_json_string(s):
   return from_json(json.loads(s))
-
 
 def register(typ, name, to_fn, from_fn):
   to_json_fn[typ] = to_fn
