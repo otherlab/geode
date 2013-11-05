@@ -22,6 +22,8 @@ template<class T,class Id> struct FromPython<Field<T,Id> >{static inline Field<T
 
 template<class T,class Id>
 class Field {
+private:
+  struct Unusable {};
 public:
   typedef typename boost::remove_const<T>::type Element;
   static const bool is_const=boost::is_const<T>::value;
@@ -31,10 +33,10 @@ public:
 
   Field() {}
 
-  Field(const Field<Element,Id>& source)
+  Field(const Field& source)
     : flat(source.flat) {}
 
-  Field(const Field<const Element,Id>& source)
+  Field(typename mpl::if_c<is_const,const Field<Element,Id>&,Unusable>::type source)
     : flat(source.flat) {}
 
   explicit Field(int n, bool initialize=true)
@@ -48,7 +50,7 @@ public:
     for (auto& s : flat)
       s = def;
     for (const auto& p : source)
-      flat[p.key.idx()] = p.data;
+      flat[p.key().idx()] = p.data();
   }
 
   Field& operator=(const Field<Element,Id>& source) {
@@ -88,8 +90,8 @@ public:
     return Id(flat.append(x));
   }
 
-  template<class TArray> void extend(const TArray& append_array) {
-    flat.extend(append_array);
+  template<class TField> void extend(const TField& append_field) {
+    flat.extend(append_field.flat);
   }
 
   void preallocate(const int m_new, const bool copy_existing_elements=true) {
@@ -102,7 +104,7 @@ public:
     Array<T> newflat(permutation.max()+1);
     for (int i = 0; i < permutation.size(); ++i) {
       if (permutation[i] >= 0) {
-        GEODE_ASSERT(permutation[i] < newflat.size());
+        assert(permutation[i] < newflat.size());
         newflat[permutation[i]] = flat[i];
       }
     }
@@ -114,6 +116,15 @@ public:
     copy.flat.copy(flat);
     return copy;
   }
+
+  Field<Element,Id>& const_cast_() {
+    return *(Field<Element,Id>*)this;
+  }
+
+  const Field<Element,Id>& const_cast_() const {
+    return *(const Field<Element,Id>*)this;
+  }
+
 };
 
 }

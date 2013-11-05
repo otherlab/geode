@@ -217,9 +217,9 @@ GEODE_COLD static void assert_delaunay(const TriangleTopology& mesh, RawField<co
 }
 
 // This routine assumes the sentinel points have already been added, and processes points in order
-GEODE_NEVER_INLINE static Ref<TriangleTopology> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
+GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
   const int n = X.size()-3;
-  const auto mesh = new_<TriangleTopology>();
+  const auto mesh = new_<MutableTriangleTopology>();
   IntervalScope scope;
 
   // Initialize the mesh to a Delaunay triangle containing the sentinels at infinity.

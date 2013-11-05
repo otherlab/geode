@@ -186,13 +186,13 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
   Hashtable<Vector<int,2>> seen;
   Nested<EV,false> output;
   for (const auto& start : graph)
-    if (seen.set(start.key)) {
-      auto ij = start.key;
+    if (seen.set(start.key())) {
+      auto ij = start.key();
       for (;;) {
         const int i = ij.x, j = ij.y, in = next[i], jn = next[j];
         output.flat.append(j==next[i] ? X[j] : segment_segment_intersection(tuple(i,X[i]),tuple(in,X[in]),tuple(j,X[j]),tuple(jn,X[jn])));
         ij = vec(j,graph.get(ij));
-        if (ij == start.key)
+        if (ij == start.key())
           break;
         seen.set(ij);
       }

@@ -5,19 +5,21 @@
 
 namespace geode {
 
+#if 0
+
 // A manifold triangle mesh with positions.
 // Keeps positions consistent when vertex ids change.
 // Some TriangleTopology functions are hidden, some are overridden, but since they're not virtual,
 // it is possible to break a TriangleMesh by casting a pointer to it to a TriangleTopology pointer.
-class TriangleMesh: public TriangleTopology {
+class TriangleMesh: public Object {
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
-  typedef TriangleTopology Base;
+  typedef Object Base;
 
 protected:
-  GEODE_CORE_EXPORT TriangleMesh();
-  GEODE_CORE_EXPORT TriangleMesh(TriangleTopology const &topo, Field<Vector<real,3>, VertexId> const &positions); // We share data with position field
-  GEODE_CORE_EXPORT TriangleMesh(RawArray<const Vector<int,3>> const &tris, RawArray<const Vector<real,3>> const &X);  // position vector is copied
-  GEODE_CORE_EXPORT TriangleMesh(TriangleSoup const &soup, RawArray<const Vector<real,3>> const &positions); // position vector is copied
+  GEODE_CORE_EXPORT TriangleMesh(); // this creates a new Topology and a new positions field
+  GEODE_CORE_EXPORT TriangleMesh(RawArray<const Vector<int,3>> const &tris, RawArray<const Vector<real,3>> const &X);  // creates a new topology and X and copies X
+  GEODE_CORE_EXPORT TriangleMesh(TriangleSoup const &soup, RawArray<const Vector<real,3>> const &X); // creates a new topology and X and copies X
+  GEODE_CORE_EXPORT TriangleMesh(TriangleTopology const &topo, Field<Vector<real,3>, VertexId> const &X); // We share data with position field
 
 private:
   // hide these methods (they add vertex ids without adding the position)
@@ -31,9 +33,10 @@ private:
 
 public:
 
-  Field<Vector<real,3>, VertexId> positions;
+  TriangleTopology const &topo();
+  Field<Vector<real,3>, VertexId> X;
 
-  // copy the mesh, with independent positions field
+  // copy the mesh, with a new, independent X field
   GEODE_CORE_EXPORT Ref<TriangleMesh> copy() const;
 
   // add a vertex
@@ -55,7 +58,7 @@ public:
   // Local geometry //////////////////////////////////////////////////////////////////////
 
   // get a triangle area
-  GEODE_CORE_EXPORT real area(FaceId fh) const;
+  inline real area(FaceId fh) const { return area(X, fh); }
 
   // get a triangle or edge centroid
   GEODE_CORE_EXPORT Vector<real,3> centroid(FaceId fh) const;
@@ -102,5 +105,7 @@ public:
   // mean edge length of the mesh
   GEODE_CORE_EXPORT real mean_edge_length() const;
 };
+
+#endif
 
 }
