@@ -49,7 +49,7 @@ SparseMatrix::SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vect
   // Count rows and columns
   int rows=0;
   for (auto& k : entries)
-    rows=max(rows,k.key[0]+1);
+    rows=max(rows,k.key()[0]+1);
   if (sizes.x>=0) {
     GEODE_ASSERT(rows<=sizes.x);
     rows = sizes.x;
@@ -58,7 +58,7 @@ SparseMatrix::SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vect
   // Compute row lengths
   Array<int> lengths(rows);
   for (auto& k : entries)
-    lengths[k.key[0]]++;
+    lengths[k.key()[0]]++;
 
   // Compute offsets
   const_cast_(J) = Nested<int>(lengths);
@@ -66,10 +66,10 @@ SparseMatrix::SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vect
 
   // Fill in entries
   for (auto& k : entries) {
-    int i,j;k.key.get(i,j);
+    int i,j;k.key().get(i,j);
     int index = J.offsets[i]+--lengths[i];
     const_cast_(J.flat[index]) = j;
-    A.flat[index] = k.data;
+    A.flat[index] = k.data();
   }
 
   // Finish up

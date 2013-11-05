@@ -16,6 +16,8 @@ using Log::cout;
 using std::endl;
 
 GEODE_DEFINE_TYPE(TriangleTopology)
+GEODE_DEFINE_TYPE(PropertyStorage)
+GEODE_DEFINE_TYPE(MutableTriangleTopology)
 
 // Add numpy conversion support
 #ifdef GEODE_PYTHON
@@ -40,18 +42,18 @@ TriangleTopology::TriangleTopology()
   , n_faces_(0)
   , n_boundary_edges_(0) {}
 
-TriangleTopology::TriangleTopology(const TriangleTopology& mesh)
+TriangleTopology::TriangleTopology(const TriangleTopology& mesh, bool copy)
   : n_vertices_(mesh.n_vertices_)
   , n_faces_(mesh.n_faces_)
   , n_boundary_edges_(mesh.n_boundary_edges_)
-  , faces_(mesh.faces_.copy())
-  , vertex_to_edge_(mesh.vertex_to_edge_.copy())
-  , boundaries_(mesh.boundaries_.copy())
+  , faces_(copy ? mesh.faces_.copy() : mesh.faces_)
+  , vertex_to_edge_(copy ? mesh.vertex_to_edge_.copy() : mesh.vertex_to_edge_)
+  , boundaries_(copy ? mesh.boundaries_.copy() : mesh.boundaries_)
   , erased_boundaries_(mesh.erased_boundaries_) {}
 
 TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
 : TriangleTopology() {
-  add_faces(faces);
+  internal_add_faces(faces);
 }
 
 TriangleTopology::TriangleTopology(TriangleSoup const &soup)
@@ -61,7 +63,7 @@ TriangleTopology::TriangleTopology(TriangleSoup const &soup)
 TriangleTopology::~TriangleTopology() {}
 
 Ref<TriangleTopology> TriangleTopology::copy() const {
-  return new_<TriangleTopology>(*this);
+  return new_<TriangleTopology>(*this, true);
 }
 
 HalfedgeId TriangleTopology::halfedge(VertexId v0, VertexId v1) const {
@@ -91,78 +93,14 @@ HalfedgeId TriangleTopology::common_halfedge(FaceId f0, FaceId f1) const {
   return HalfedgeId();
 }
 
-inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
-  assert(h.id != erased_id);
-  if (!h.valid())
-    return h;
-  if (h.id >= 0)
-    return HalfedgeId(3*face_permutation[h.id/3] + h.id%3);
-  else
-    return HalfedgeId(-1-boundary_permutation[-1-h.id]);
+VertexId TriangleTopology::internal_add_vertex() {
+  return internal_add_vertices(1);
 }
 
-Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::add(TriangleTopology const &other) {
-  Array<int> vertex_permutation(other.vertex_to_edge_.size()),
-             face_permutation(other.faces_.size()),
-             boundary_permutation(boundaries_.size());
-
-  // the first indices
-  int base_vertex = vertex_to_edge_.size();
-  int base_face = faces_.size();
-  int base_boundary = boundaries_.size();
-
-  // add things from other to the end
-  vertex_permutation.fill(-1);
-  for (auto vi : other.vertices()) {
-    vertex_permutation[vi.id] = vertex_to_edge_.size();
-    vertex_to_edge_.append(other.vertex_to_edge_[vi]);
-  }
-  face_permutation.fill(-1);
-  for (auto fi : other.faces()) {
-    face_permutation[fi.id] = faces_.size();
-    faces_.append(other.faces_[fi]);
-  }
-  boundary_permutation.fill(-1);
-  for (auto bi : other.boundary_edges()) {
-    boundary_permutation[-1-bi.id] = boundaries_.size();
-    boundaries_.append(other.boundaries_[-1-bi.id]);
-  }
-
-  // renumber all new primitives
-
-  // reflect id changes in newly added arrays
-  for (auto& h : vertex_to_edge_.flat.slice(base_vertex, vertex_to_edge_.size())) {
-    assert(h.id != erased_id);
-    h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
-  }
-  for (auto& f : faces_.flat.slice(base_face, faces_.size())) {
-    assert(f.vertices.x.id != erased_id);
-    for (auto& v : f.vertices)
-      v = VertexId(vertex_permutation[v.id]);
-    for (auto &h : f.neighbors)
-      h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
-  }
-  for (auto& b : boundaries_.slice(base_boundary, boundaries_.size())) {
-    assert(b.src.id != erased_id);
-    assert(b.src.valid());
-    b.src = VertexId(vertex_permutation[b.src.id]);
-    b.next = apply_halfedge_permutation(b.next, face_permutation, boundary_permutation);
-    b.prev = apply_halfedge_permutation(b.prev, face_permutation, boundary_permutation);
-    b.reverse = apply_halfedge_permutation(b.reverse, face_permutation, boundary_permutation);
-  }
-
-  return tuple(vertex_permutation, face_permutation, boundary_permutation);
-}
-
-VertexId TriangleTopology::add_vertex() {
-  n_vertices_++;
-  return vertex_to_edge_.append(HalfedgeId());
-}
-
-VertexId TriangleTopology::add_vertices(int n) {
+VertexId TriangleTopology::internal_add_vertices(int n) {
   int id = n_vertices_;
-  n_vertices_ += n;
-  vertex_to_edge_.flat.resize(vertex_to_edge_.size()+n);
+  const_cast<int&>(n_vertices_) += n;
+  const_cast_(vertex_to_edge_).const_cast_().flat.resize(vertex_to_edge_.size()+n);
   return VertexId(id);
 }
 
@@ -184,23 +122,23 @@ static inline void fix_vertex_to_edge(TriangleTopology& mesh, const VertexId v, 
     if (e==start)
       break;
   }
-  mesh.vertex_to_edge_[v] = e;
+  mesh.vertex_to_edge_.const_cast_()[v] = e;
 }
 
 // Allocate a fresh boundary edge and set its src and reverse pointers
-static inline HalfedgeId unsafe_new_boundary(TriangleTopology& mesh, const VertexId src, const HalfedgeId reverse) {
-  mesh.n_boundary_edges_++;
+HalfedgeId TriangleTopology::unsafe_new_boundary(const VertexId src, const HalfedgeId reverse) {
+  const_cast_(n_boundary_edges_)++;
   HalfedgeId e;
-  if (mesh.erased_boundaries_.valid()) {
-    e = mesh.erased_boundaries_;
-    mesh.erased_boundaries_ = mesh.boundaries_[-1-e.id].next;
+  if (erased_boundaries_.valid()) {
+    e = erased_boundaries_;
+    const_cast_(erased_boundaries_) = boundaries_[-1-e.id].next;
   } else {
-    const int b = mesh.boundaries_.size();
-    mesh.boundaries_.resize(b+1,false);
+    const int b = boundaries_.size();
+    const_cast_(boundaries_).const_cast_().resize(b+1,false);
     e = HalfedgeId(-1-b);
   }
-  mesh.boundaries_[-1-e.id].src = src;
-  mesh.boundaries_[-1-e.id].reverse = reverse;
+  boundaries_.const_cast_()[-1-e.id].src = src;
+  boundaries_.const_cast_()[-1-e.id].reverse = reverse;
   return e;
 }
 
@@ -208,7 +146,7 @@ GEODE_COLD static void add_face_error(const Vector<VertexId,3> v, const char* re
   throw RuntimeError(format("TriangleTopology::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
 }
 
-FaceId TriangleTopology::add_face(const Vector<VertexId,3> v) {
+FaceId TriangleTopology::internal_add_face(const Vector<VertexId,3> v) {
   // Check for errors
   if (!valid(v.x) || !valid(v.y) || !valid(v.z))
     add_face_error(v," containing invalid vertex");
@@ -250,9 +188,9 @@ FaceId TriangleTopology::add_face(const Vector<VertexId,3> v) {
   RELINK(e2,e0,c2)
 
   // Create a new face, including three implicit halfedges.
-  n_faces_++;
-  const auto f = faces_.append(FaceInfo());
-  faces_[f].vertices = v;
+  const_cast_(n_faces_)++;
+  const auto f = const_cast_(faces_).const_cast_().append(FaceInfo());
+  faces_.const_cast_()[f].vertices = v;
 
   // Look up all connectivity we'll need to restructure the mesh.  This includes the reverses
   // r0,r1,r2 of each of e0,e1,e2 (the old halfedges of the triangle), and their future prev/next links.
@@ -262,7 +200,7 @@ FaceId TriangleTopology::add_face(const Vector<VertexId,3> v) {
              ve2 = halfedge(v.z);
   #define REVERSE(i) \
     const auto r##i = e##i.valid() ? boundaries_[-1-e##i.id].reverse \
-                                   : unsafe_new_boundary(*this,v[(i+1)%3],HalfedgeId(3*f.id+i));
+                                   : unsafe_new_boundary(v[(i+1)%3],HalfedgeId(3*f.id+i));
   REVERSE(0)
   REVERSE(1)
   REVERSE(2)
@@ -302,45 +240,16 @@ FaceId TriangleTopology::add_face(const Vector<VertexId,3> v) {
   return f;
 }
 
-FaceId TriangleTopology::add_faces(RawArray<const Vector<int,3>> vs) {
+FaceId TriangleTopology::internal_add_faces(RawArray<const Vector<int,3>> vs) {
   // TODO: We desperately need a batch insertion routine.
   if (vs.empty()) {
     return FaceId();
   } else {
     FaceId first(faces_.size());
     for (auto& v : vs)
-      add_face(Vector<VertexId,3>(v));
+      internal_add_face(Vector<VertexId,3>(v));
     return first;
   }
-}
-
-void TriangleTopology::split_face(const FaceId f, const VertexId c) {
-  GEODE_ASSERT(valid(f) && isolated(c));
-  const auto v = faces_[f].vertices;
-  const auto n = faces_[f].neighbors;
-  const int f_base = faces_.size();
-  n_faces_ += 2;
-  faces_.flat.resize(f_base+2,false);
-  const auto fs = vec(f,FaceId(f_base),FaceId(f_base+1));
-  #define UPDATE(i) { \
-    const int ip = (i+2)%3, in = (i+1)%3; \
-    faces_[fs[i]].vertices.set(v[i],v[in],c); \
-    unsafe_set_reverse(fs[i],0,n[i]); \
-    faces_[fs[i]].neighbors[1] = HalfedgeId(3*fs[in].id+2); \
-    faces_[fs[i]].neighbors[2] = HalfedgeId(3*fs[ip].id+1); \
-    if (i && vertex_to_edge_[v[i]].id==3*f.id+i) \
-      vertex_to_edge_[v[i]] = HalfedgeId(3*fs[i].id); }
-  UPDATE(0)
-  UPDATE(1)
-  UPDATE(2)
-  #undef UPDATE
-  vertex_to_edge_[c] = halfedge(f,2);
-}
-
-VertexId TriangleTopology::split_face(FaceId f) {
-  const auto c = add_vertex();
-  split_face(f,c);
-  return c;
 }
 
 bool TriangleTopology::is_flip_safe(HalfedgeId e0) const {
@@ -352,42 +261,6 @@ bool TriangleTopology::is_flip_safe(HalfedgeId e0) const {
   const auto o0 = src(prev(e0)),
              o1 = src(prev(e1));
   return o0!=o1 && !halfedge(o0,o1).valid();
-}
-
-HalfedgeId TriangleTopology::flip_edge(HalfedgeId e) {
-  if (!is_flip_safe(e))
-    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d is invalid",e.id));
-  return unsafe_flip_edge(e);
-}
-
-HalfedgeId TriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
-  const auto e1 = reverse(e0);
-  const auto f0 = face(e0),
-             f1 = face(e1);
-  const auto n0 = next(e0), p0 = prev(e0),
-             n1 = next(e1), p1 = prev(e1),
-             rn0 = reverse(n0), rp0 = reverse(p0),
-             rn1 = reverse(n1), rp1 = reverse(p1);
-  const auto v0 = src(e0), o0 = src(p0),
-             v1 = src(e1), o1 = src(p1);
-  faces_[f0].vertices = vec(o0,o1,v1);
-  faces_[f1].vertices = vec(o1,o0,v0);
-  faces_[f0].neighbors.x = HalfedgeId(3*f1.id);
-  faces_[f1].neighbors.x = HalfedgeId(3*f0.id);
-  unsafe_set_reverse(f0,1,rp1);
-  unsafe_set_reverse(f0,2,rn0);
-  unsafe_set_reverse(f1,1,rp0);
-  unsafe_set_reverse(f1,2,rn1);
-  // Fix vertex to edge links
-  auto &ve0 = vertex_to_edge_[v0],
-       &ve1 = vertex_to_edge_[v1],
-       &oe0 = vertex_to_edge_[o0],
-       &oe1 = vertex_to_edge_[o1];
-  if (ve0==e0 || ve0==n1) ve0 = HalfedgeId(3*f1.id+2);
-  if (ve1==e1 || ve1==n0) ve1 = HalfedgeId(3*f0.id+2);
-  if (oe0==p0) oe0 = HalfedgeId(3*f0.id);
-  if (oe1==p1) oe1 = HalfedgeId(3*f1.id);
-  return HalfedgeId(3*f0.id);
 }
 
 void TriangleTopology::assert_consistent() const {
@@ -546,67 +419,6 @@ Nested<HalfedgeId> TriangleTopology::boundary_loops() const {
   return loops;
 }
 
-void TriangleTopology::erase_last_vertex_with_reordering() {
-  const VertexId v(vertex_to_edge_.size()-1);
-  // erase all incident faces
-  while (!isolated(v))
-    erase_face_with_reordering(face(reverse(halfedge(v))));
-  // Remove the vertex
-  vertex_to_edge_.flat.pop();
-  n_vertices_--;
-}
-
-void TriangleTopology::erase_face_with_reordering(const FaceId f) {
-  // Look up connectivity of neighboring boundary edges, then erase them
-  const auto e = faces_[f].neighbors;
-  Vector<HalfedgeId,2> near[3]; // (prev,next) for each neighbor boundary edge
-  for (int i=0;i<3;i++)
-    if (e[i].id<0) {
-      const auto& B = boundaries_[-1-e[i].id];
-      near[i] = vec(B.prev,B.next);
-      unsafe_set_erased(e[i]);
-    }
-
-  // Create any new boundary edges and set src and reverse
-  HalfedgeId b[3];
-  for (int i=0;i<3;i++)
-    if (e[i].id>=0) {
-      b[i] = unsafe_new_boundary(*this,faces_[f].vertices[i],e[i]);
-      const int fi = e[i].id/3;
-      faces_.flat[fi].neighbors[e[i].id-3*fi] = b[i];
-    }
-
-  // Fix connectivity around each vertex: link together prev/next adjacent edges and update vertex to edge pointers
-  for (int i=0;i<3;i++) {
-    const int ip = i?i-1:2;
-    const auto v = faces_[f].vertices[i];
-    const auto prev = e[ip].id>=0 ? b[ip] : near[ip].x,
-               next = e[i ].id>=0 ? b[i ] : near[i ].y;
-    if (e[i].id>=0 || e[ip].id>=0 || prev!=e[i]) {
-      unsafe_boundary_link(prev,next);
-      vertex_to_edge_[v] = next;
-    } else if (vertex_to_edge_[v]==e[ip])
-      vertex_to_edge_[v] = HalfedgeId();
-  }
-
-  // Rename the last face to f
-  const FaceId f1(faces_.size()-1);
-  if (f.id<f1.id) {
-    assert(!erased(f1));
-    const auto I = faces_[f1];
-    faces_[f].vertices = I.vertices;
-    for (int i=0;i<3;i++) {
-      unsafe_set_reverse(f,i,I.neighbors[i]);
-      if (vertex_to_edge_[I.vertices[i]].id==3*f1.id+i)
-        vertex_to_edge_[I.vertices[i]].id = 3*f.id+i;
-    }
-  }
-
-  // Remove the erased face
-  faces_.flat.pop();
-  n_faces_--;
-}
-
 void TriangleTopology::dump_internals() const {
   cout << format("corner mesh dump:\n  vertices: %d\n",n_vertices());
   for (const auto v : vertices()) {
@@ -646,7 +458,349 @@ void TriangleTopology::dump_internals() const {
   cout << endl;
 }
 
-void TriangleTopology::permute_vertices(RawArray<const int> permutation, bool check) {
+
+
+MutableTriangleTopology::MutableTriangleTopology()
+  : TriangleTopology()
+  , mutable_n_vertices_(const_cast_(n_vertices_))
+  , mutable_n_faces_(const_cast_(n_faces_))
+  , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
+  , mutable_faces_(const_cast_(faces_).const_cast_())
+  , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
+  , mutable_boundaries_(const_cast_(mutable_boundaries_).const_cast_())
+  , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
+  , max_property_id(0)
+{}
+
+MutableTriangleTopology::MutableTriangleTopology(const TriangleTopology& mesh, bool copy)
+  : TriangleTopology(mesh, copy)
+  , mutable_n_vertices_(const_cast_(n_vertices_))
+  , mutable_n_faces_(const_cast_(n_faces_))
+  , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
+  , mutable_faces_(const_cast_(faces_).const_cast_())
+  , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
+  , mutable_boundaries_(const_cast_(mutable_boundaries_).const_cast_())
+  , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
+  , max_property_id(0)
+{}
+
+MutableTriangleTopology::MutableTriangleTopology(const MutableTriangleTopology& mesh, bool copy)
+  : TriangleTopology(mesh, copy)
+  , mutable_n_vertices_(const_cast_(n_vertices_))
+  , mutable_n_faces_(const_cast_(n_faces_))
+  , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
+  , mutable_faces_(const_cast_(faces_).const_cast_())
+  , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
+  , mutable_boundaries_(const_cast_(mutable_boundaries_).const_cast_())
+  , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
+  , max_property_id(mesh.max_property_id)
+{
+  for (auto const &p : mesh.vertex_storage) {
+    vertex_storage.set(p.key(), copy ? p.data()->copy() : p.data());
+  }
+}
+
+MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces)
+  : TriangleTopology()
+  , mutable_n_vertices_(const_cast_(n_vertices_))
+  , mutable_n_faces_(const_cast_(n_faces_))
+  , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
+  , mutable_faces_(const_cast_(faces_).const_cast_())
+  , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
+  , mutable_boundaries_(const_cast_(mutable_boundaries_).const_cast_())
+  , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
+  , max_property_id(0)
+{
+  add_faces(faces);
+}
+
+MutableTriangleTopology::MutableTriangleTopology(TriangleSoup const &soup)
+: MutableTriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
+}
+
+MutableTriangleTopology::~MutableTriangleTopology() {}
+
+
+HalfedgeId MutableTriangleTopology::unsafe_new_boundary(const VertexId src, const HalfedgeId reverse) {
+  HalfedgeId e = TriangleTopology::unsafe_new_boundary(src, reverse);
+
+  // Take care of boundary properties
+  // ...
+
+  return e;
+}
+
+
+Ref<MutableTriangleTopology> MutableTriangleTopology::copy() const {
+  return new_<MutableTriangleTopology>(*this, true);
+}
+
+VertexId MutableTriangleTopology::add_vertex() {
+  return add_vertices(1);
+}
+
+VertexId MutableTriangleTopology::add_vertices(int n) {
+  VertexId id = internal_add_vertices(n);
+  for (auto &s : vertex_storage)
+    s.data()->grow(n);
+  return id;
+}
+
+// Add a new face.  If the result would not be manifold, no change is made and ValueError is thrown (TODO: throw a better exception).
+FaceId MutableTriangleTopology::add_face(Vector<VertexId,3> v) {
+  FaceId id = internal_add_face(v);
+
+  // Take care to add properties for new halfedges, faces, and boundaries
+  // ...
+
+  return id;
+}
+
+// Add many new faces (return the first id, new ids are contiguous)
+FaceId MutableTriangleTopology::add_faces(RawArray<const Vector<int,3>> vs) {
+  FaceId id = internal_add_faces(vs);
+
+  // Take care to add properties for new halfedges, faces, and boundaries
+  // ...
+
+  return id;
+}
+
+inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
+  assert(h.id != erased_id);
+  if (!h.valid())
+    return h;
+  if (h.id >= 0)
+    return HalfedgeId(3*face_permutation[h.id/3] + h.id%3);
+  else
+    return HalfedgeId(-1-boundary_permutation[-1-h.id]);
+}
+
+inline static HalfedgeId apply_halfedge_offsets(HalfedgeId h, int face_offset, int boundary_offset) {
+  if (h.id != erased_id && h.valid()) {
+    if (h.id >= 0) {
+      h = HalfedgeId(h.id + face_offset*3);
+    } else {
+      h = HalfedgeId(h.id - boundary_offset);
+    }
+  }
+  return h;
+}
+
+Tuple<int, int, int> MutableTriangleTopology::add(MutableTriangleTopology const &other) {
+  // the first indices
+  int base_vertex = vertex_to_edge_.size();
+  int base_face = faces_.size();
+  int base_boundary = boundaries_.size();
+
+  // add things from other to the end
+  mutable_vertex_to_edge_.extend(other.vertex_to_edge_);
+  mutable_faces_.extend(other.faces_);
+  mutable_boundaries_.extend(other.boundaries_);
+
+  // renumber all new primitives
+
+  // reflect id changes in newly added arrays
+  for (auto& h : mutable_vertex_to_edge_.flat.slice(base_vertex, vertex_to_edge_.size()))
+    h = apply_halfedge_offsets(h, base_face, base_boundary);
+  for (auto& f : mutable_faces_.flat.slice(base_face, faces_.size())) {
+    if (f.vertices.x.id == erased_id)
+      continue;
+    for (auto& v : f.vertices)
+      v = VertexId(v.id + base_vertex);
+    for (auto &h : f.neighbors)
+      h = apply_halfedge_offsets(h, base_face, base_boundary);
+  }
+  for (auto& b : mutable_boundaries_.slice(base_boundary, boundaries_.size())) {
+    if (b.src.id == erased_id) {
+      // maintain the free list
+      b.next = apply_halfedge_offsets(b.next, base_face, base_boundary);
+      continue;
+    }
+    assert(b.src.valid());
+    b.src = VertexId(b.src.id + base_vertex);
+    b.next = apply_halfedge_offsets(b.next, base_face, base_boundary);
+    b.prev = apply_halfedge_offsets(b.prev, base_face, base_boundary);
+    b.reverse = apply_halfedge_offsets(b.reverse, base_face, base_boundary);
+  }
+
+  // attach the free list
+  if (other.erased_boundaries_.valid()) {
+    // attach this at the end of our free list
+    HalfedgeId bid = HalfedgeId(other.erased_boundaries_.id - base_boundary);
+
+    if (erased_boundaries_.valid()) {
+      // go to the end of our free list
+      int end = -1-erased_boundaries_.id;
+      while (mutable_boundaries_[end].next.valid()) {
+        assert(mutable_boundaries_[end].src.id == erased_id);
+        end = -1-mutable_boundaries_[end].next.id;
+      }
+      mutable_boundaries_[end].next = bid;
+    } else {
+      mutable_erased_boundaries_ = bid;
+    }
+  }
+
+  // maintain counts
+  mutable_n_vertices_ += other.n_vertices_;
+  mutable_n_faces_ += other.n_faces_;
+  mutable_n_boundary_edges_ += other.n_boundary_edges_;
+
+  // maintain stored fields
+  // ...
+
+  return tuple(base_vertex, base_face, base_boundary);
+}
+
+void MutableTriangleTopology::split_face(const FaceId f, const VertexId c) {
+  GEODE_ASSERT(valid(f) && isolated(c));
+  const auto v = faces_[f].vertices;
+  const auto n = faces_[f].neighbors;
+  const int f_base = faces_.size();
+  mutable_n_faces_ += 2;
+  mutable_faces_.flat.resize(f_base+2,false);
+  const auto fs = vec(f,FaceId(f_base),FaceId(f_base+1));
+
+  #define UPDATE(i) { \
+    const int ip = (i+2)%3, in = (i+1)%3; \
+    mutable_faces_[fs[i]].vertices.set(v[i],v[in],c); \
+    unsafe_set_reverse(fs[i],0,n[i]); \
+    mutable_faces_[fs[i]].neighbors[1] = HalfedgeId(3*fs[in].id+2); \
+    mutable_faces_[fs[i]].neighbors[2] = HalfedgeId(3*fs[ip].id+1); \
+    if (i && mutable_vertex_to_edge_[v[i]].id==3*f.id+i) \
+      mutable_vertex_to_edge_[v[i]] = HalfedgeId(3*fs[i].id); }
+
+  UPDATE(0)
+  UPDATE(1)
+  UPDATE(2)
+
+  #undef UPDATE
+
+  mutable_vertex_to_edge_[c] = halfedge(f,2);
+
+  // Take care to add/update properties on all involved halfedges and faces
+  // ...
+}
+
+VertexId MutableTriangleTopology::split_face(FaceId f) {
+  const auto c = add_vertex();
+  split_face(f,c);
+  return c;
+}
+
+HalfedgeId MutableTriangleTopology::flip_edge(HalfedgeId e) {
+  if (!is_flip_safe(e))
+    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d is invalid",e.id));
+  return unsafe_flip_edge(e);
+}
+
+HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
+  const auto e1 = reverse(e0);
+  const auto f0 = face(e0),
+             f1 = face(e1);
+  const auto n0 = next(e0), p0 = prev(e0),
+             n1 = next(e1), p1 = prev(e1),
+             rn0 = reverse(n0), rp0 = reverse(p0),
+             rn1 = reverse(n1), rp1 = reverse(p1);
+  const auto v0 = src(e0), o0 = src(p0),
+             v1 = src(e1), o1 = src(p1);
+  mutable_faces_[f0].vertices = vec(o0,o1,v1);
+  mutable_faces_[f1].vertices = vec(o1,o0,v0);
+  mutable_faces_[f0].neighbors.x = HalfedgeId(3*f1.id);
+  mutable_faces_[f1].neighbors.x = HalfedgeId(3*f0.id);
+  unsafe_set_reverse(f0,1,rp1);
+  unsafe_set_reverse(f0,2,rn0);
+  unsafe_set_reverse(f1,1,rp0);
+  unsafe_set_reverse(f1,2,rn1);
+  // Fix vertex to edge links
+  auto &ve0 = mutable_vertex_to_edge_[v0],
+       &ve1 = mutable_vertex_to_edge_[v1],
+       &oe0 = mutable_vertex_to_edge_[o0],
+       &oe1 = mutable_vertex_to_edge_[o1];
+  if (ve0==e0 || ve0==n1) ve0 = HalfedgeId(3*f1.id+2);
+  if (ve1==e1 || ve1==n0) ve1 = HalfedgeId(3*f0.id+2);
+  if (oe0==p0) oe0 = HalfedgeId(3*f0.id);
+  if (oe1==p1) oe1 = HalfedgeId(3*f1.id);
+
+  // Take care to add/update properties on all involved halfedges and faces
+  // ...
+
+  return HalfedgeId(3*f0.id);
+}
+
+void MutableTriangleTopology::erase_last_vertex_with_reordering() {
+  const VertexId v(vertex_to_edge_.size()-1);
+  // erase all incident faces
+  while (!isolated(v))
+    erase_face_with_reordering(face(reverse(halfedge(v))));
+  // Remove the vertex
+  mutable_vertex_to_edge_.flat.pop();
+
+  for (auto &s : vertex_storage)
+    s.data()->grow(-1);
+
+  mutable_n_vertices_--;
+}
+
+void MutableTriangleTopology::erase_face_with_reordering(const FaceId f) {
+  GEODE_ASSERT(f.valid());
+  GEODE_ASSERT(f.id != erased_id);
+
+  // Look up connectivity of neighboring boundary edges, then erase them
+  const auto e = faces_[f].neighbors;
+  Vector<HalfedgeId,2> near[3]; // (prev,next) for each neighbor boundary edge
+  for (int i=0;i<3;i++)
+    if (e[i].id<0) {
+      const auto& B = boundaries_[-1-e[i].id];
+      near[i] = vec(B.prev,B.next);
+      unsafe_set_erased(e[i]);
+    }
+
+  // Create any new boundary edges and set src and reverse
+  HalfedgeId b[3];
+  for (int i=0;i<3;i++)
+    if (e[i].id>=0) {
+      b[i] = unsafe_new_boundary(faces_[f].vertices[i],e[i]);
+      const int fi = e[i].id/3;
+      mutable_faces_.flat[fi].neighbors[e[i].id-3*fi] = b[i];
+    }
+
+  // Fix connectivity around each vertex: link together prev/next adjacent edges and update vertex to edge pointers
+  for (int i=0;i<3;i++) {
+    const int ip = i?i-1:2;
+    const auto v = faces_[f].vertices[i];
+    const auto prev = e[ip].id>=0 ? b[ip] : near[ip].x,
+               next = e[i ].id>=0 ? b[i ] : near[i ].y;
+    if (e[i].id>=0 || e[ip].id>=0 || prev!=e[i]) {
+      unsafe_boundary_link(prev,next);
+      mutable_vertex_to_edge_[v] = next;
+    } else if (vertex_to_edge_[v]==e[ip])
+      mutable_vertex_to_edge_[v] = HalfedgeId();
+  }
+
+  // Rename the last face to f
+  const FaceId f1(faces_.size()-1);
+  if (f.id<f1.id) {
+    assert(!erased(f1));
+    const auto I = faces_[f1];
+    mutable_faces_[f].vertices = I.vertices;
+    for (int i=0;i<3;i++) {
+      unsafe_set_reverse(f,i,I.neighbors[i]);
+      if (mutable_vertex_to_edge_[I.vertices[i]].id==3*f1.id+i)
+        mutable_vertex_to_edge_[I.vertices[i]].id = 3*f.id+i;
+    }
+  }
+
+  // also update the properties on halfedges, boundaries, and faces
+  // ...
+
+  // Remove the erased face
+  mutable_faces_.flat.pop();
+  mutable_n_faces_--;
+}
+
+void MutableTriangleTopology::permute_vertices(RawArray<const int> permutation, bool check) {
   GEODE_ASSERT(n_vertices()==permutation.size());
   GEODE_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no erased vertices
 
@@ -663,20 +817,24 @@ void TriangleTopology::permute_vertices(RawArray<const int> permutation, bool ch
   } else
     for (const auto v : all_vertices())
       new_vertex_to_edge[permutation[v.id]] = vertex_to_edge_[v];
-  vertex_to_edge_.flat = new_vertex_to_edge;
+  mutable_vertex_to_edge_.flat = new_vertex_to_edge;
 
   // The other arrays can be modified in place
-  for (auto& f : faces_.flat)
+  for (auto& f : mutable_faces_.flat)
     if (f.vertices.x.id!=erased_id)
       for (auto& v : f.vertices)
         v = VertexId(permutation[v.id]);
-  for (auto& b : boundaries_)
+  for (auto& b : mutable_boundaries_)
     if (b.src.id!=erased_id)
       b.src = VertexId(permutation[b.src.id]);
+
+  // permute properties
+  for (auto &s : vertex_storage)
+    s.data()->apply_permutation(permutation);
 }
 
 // erase the given vertex. erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
-void TriangleTopology::erase(VertexId id, bool erase_isolated) {
+void MutableTriangleTopology::erase(VertexId id, bool erase_isolated) {
   // TODO: Make a better version of this. For now, just erase all incident faces
   // and then our own (or have it automatically erased if erase_isolated is true)
   GEODE_ASSERT(!erased(id));
@@ -691,7 +849,7 @@ void TriangleTopology::erase(VertexId id, bool erase_isolated) {
 }
 
 // erase the given halfedge. erases all incident faces as well. If erase_isolated is true, also erase incident vertices that are now isolated.
-void TriangleTopology::erase(HalfedgeId id, bool erase_isolated) {
+void MutableTriangleTopology::erase(HalfedgeId id, bool erase_isolated) {
   auto he = faces(id);
   for (auto h : he) {
     if (valid(h)) {
@@ -701,7 +859,7 @@ void TriangleTopology::erase(HalfedgeId id, bool erase_isolated) {
 }
 
 // erase the given face. If erase_isolated is true, also erases incident vertices that are now isolated.
-void TriangleTopology::erase(FaceId f, bool erase_isolated) {
+void MutableTriangleTopology::erase(FaceId f, bool erase_isolated) {
   GEODE_ASSERT(!erased(f));
 
   // Look up connectivity of neighboring boundary edges, then erase them
@@ -718,9 +876,9 @@ void TriangleTopology::erase(FaceId f, bool erase_isolated) {
   HalfedgeId b[3];
   for (int i=0;i<3;i++)
     if (e[i].id>=0) {
-      b[i] = unsafe_new_boundary(*this,faces_[f].vertices[i],e[i]);
+      b[i] = unsafe_new_boundary(faces_[f].vertices[i],e[i]);
       const int fi = e[i].id/3;
-      faces_.flat[fi].neighbors[e[i].id-3*fi] = b[i];
+      mutable_faces_.flat[fi].neighbors[e[i].id-3*fi] = b[i];
     }
 
   // Fix connectivity around each vertex: link together prev/next adjacent edges and update vertex to edge pointers
@@ -730,14 +888,17 @@ void TriangleTopology::erase(FaceId f, bool erase_isolated) {
                next = e[i ].id>=0 ? b[i ] : near[i ].y;
     if (e[i].id>=0 || e[ip].id>=0 || prev!=e[i]) {
       unsafe_boundary_link(prev,next);
-      vertex_to_edge_[v] = next;
+      mutable_vertex_to_edge_[v] = next;
     } else if (vertex_to_edge_[v]==e[ip]) {
       // this vertex is isolated, erase it if requested
-      vertex_to_edge_[v] = HalfedgeId();
+      mutable_vertex_to_edge_[v] = HalfedgeId();
       if (erase_isolated)
         unsafe_set_erased(v);
     }
   }
+
+  // add/update properties on boundaries
+  // ...
 
   // erase the face
   unsafe_set_erased(f);
@@ -746,7 +907,7 @@ void TriangleTopology::erase(FaceId f, bool erase_isolated) {
 // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
 // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
 // Note: non-boundary halfedges don't change order within triangles, so halfedge 3*f+i is now 3*permutation[f]+i
-Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::collect_garbage() {
+Tuple<Array<int>, Array<int>, Array<int>> MutableTriangleTopology::collect_garbage() {
   Array<int> vertex_permutation(vertex_to_edge_.size()), face_permutation(faces_.size()), boundary_permutation(boundaries_.size());
 
   int j;
@@ -755,56 +916,56 @@ Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::collect_garbage() {
   j = 0;
   for (int i = 0; i < vertex_to_edge_.size(); ++i) {
     if (!erased(VertexId(i))) {
-      vertex_to_edge_.flat[j] = vertex_to_edge_.flat[i];
+      mutable_vertex_to_edge_.flat[j] = vertex_to_edge_.flat[i];
       vertex_permutation[i] = j;
       j++;
     }
   }
   // discard deleted entries in the back
-  vertex_to_edge_.flat.resize(j);
+  mutable_vertex_to_edge_.flat.resize(j);
   GEODE_ASSERT(vertex_to_edge_.size() == n_vertices_);
 
   // now, compact faces
   j = 0;
   for (int i = 0; i < faces_.size(); ++i) {
     if (!erased(FaceId(i))) {
-      faces_.flat[j] = faces_.flat[i];
+      mutable_faces_.flat[j] = faces_.flat[i];
       face_permutation[i] = j;
       j++;
     }
   }
   // discard deleted entries in the back
-  faces_.flat.resize(j);
+  mutable_faces_.flat.resize(j);
   GEODE_ASSERT(faces_.size() == n_faces_);
 
   // compact boundaries
   j = 0;
   for (int i = 0; i < boundaries_.size(); ++i) {
     if (!erased(HalfedgeId(-1-i))) {
-      boundaries_[j] = boundaries_[i];
+      mutable_boundaries_[j] = mutable_boundaries_[i];
       boundary_permutation[i] = j;
       j++;
     }
   }
-  boundaries_.resize(j);
+  mutable_boundaries_.resize(j);
   GEODE_ASSERT(boundaries_.size() == n_boundary_edges_);
 
   // erase boundary free list
-  erased_boundaries_ = HalfedgeId();
+  mutable_erased_boundaries_ = HalfedgeId();
 
   // reflect id changes in other arrays
-  for (auto& h : vertex_to_edge_.flat) {
+  for (auto& h : mutable_vertex_to_edge_.flat) {
     assert(h.id != erased_id);
     h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
   }
-  for (auto& f : faces_.flat) {
+  for (auto& f : mutable_faces_.flat) {
     assert(f.vertices.x.id != erased_id);
     for (auto& v : f.vertices)
       v = VertexId(vertex_permutation[v.id]);
     for (auto &h : f.neighbors)
       h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
   }
-  for (auto& b : boundaries_) {
+  for (auto& b : mutable_boundaries_) {
     assert(b.src.id != erased_id);
     assert(b.src.valid());
     b.src = VertexId(vertex_permutation[b.src.id]);
@@ -813,11 +974,23 @@ Tuple<Array<int>, Array<int>, Array<int>> TriangleTopology::collect_garbage() {
     b.reverse = apply_halfedge_permutation(b.reverse, face_permutation, boundary_permutation);
   }
 
+  for (auto &s : vertex_storage)
+    s.data()->apply_permutation(vertex_permutation);
+
+  // also apply permutations to faces and halfedges and boundaries
+  // ...
+
   return tuple(vertex_permutation, face_permutation, boundary_permutation);
 }
 
 
-static int corner_random_edge_flips(TriangleTopology& mesh, const int attempts, const uint128_t key) {
+
+
+
+
+
+
+static int corner_random_edge_flips(MutableTriangleTopology& mesh, const int attempts, const uint128_t key) {
   int flips = 0;
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
@@ -835,7 +1008,7 @@ static int corner_random_edge_flips(TriangleTopology& mesh, const int attempts, 
   return flips;
 }
 
-static void corner_random_face_splits(TriangleTopology& mesh, const int splits, const uint128_t key) {
+static void corner_random_face_splits(MutableTriangleTopology& mesh, const int splits, const uint128_t key) {
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
     for (int a=0;a<splits;a++) {
@@ -846,7 +1019,7 @@ static void corner_random_face_splits(TriangleTopology& mesh, const int splits, 
   }
 }
 
-static void corner_mesh_destruction_test(TriangleTopology& mesh, const uint128_t key) {
+static void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const uint128_t key) {
   const auto random = new_<Random>(key);
 
   // make two copies, rip one apart using the reordering deletion, and one
@@ -932,30 +1105,41 @@ static void corner_mesh_destruction_test(TriangleTopology& mesh, const uint128_t
 using namespace geode;
 
 void wrap_corner_mesh() {
-  typedef TriangleTopology Self;
-  Class<Self>("TriangleTopology")
-    .GEODE_INIT()
-    .GEODE_METHOD(copy)
-    .GEODE_GET(n_vertices)
-    .GEODE_GET(n_boundary_edges)
-    .GEODE_GET(n_edges)
-    .GEODE_GET(n_faces)
-    .GEODE_GET(chi)
-    .GEODE_METHOD(elements)
-    .GEODE_METHOD(has_boundary)
-    .GEODE_METHOD(is_manifold)
-    .GEODE_METHOD(is_manifold_with_boundary)
-    .GEODE_METHOD(has_isolated_vertices)
-    .GEODE_METHOD(boundary_loops)
-    .GEODE_METHOD(add_vertex)
-    .GEODE_METHOD(add_vertices)
-    .GEODE_METHOD(add_face)
-    .GEODE_METHOD(add_faces)
-    .GEODE_METHOD(assert_consistent)
-    .GEODE_METHOD(dump_internals)
-    .GEODE_METHOD(collect_garbage)
-    ;
-
+  {
+    typedef TriangleTopology Self;
+    Class<Self>("TriangleTopology")
+      .GEODE_INIT()
+      .GEODE_METHOD(copy)
+      .GEODE_GET(n_vertices)
+      .GEODE_GET(n_boundary_edges)
+      .GEODE_GET(n_edges)
+      .GEODE_GET(n_faces)
+      .GEODE_GET(chi)
+      .GEODE_METHOD(elements)
+      .GEODE_METHOD(has_boundary)
+      .GEODE_METHOD(is_manifold)
+      .GEODE_METHOD(is_manifold_with_boundary)
+      .GEODE_METHOD(has_isolated_vertices)
+      .GEODE_METHOD(boundary_loops)
+      .GEODE_METHOD(assert_consistent)
+      .GEODE_METHOD(dump_internals)
+      ;
+  }
+  {
+    typedef MutableTriangleTopology Self;
+    Class<Self>("MutableTriangleTopology")
+      .GEODE_INIT()
+      .GEODE_METHOD(copy)
+      .GEODE_METHOD(add_vertex)
+      .GEODE_METHOD(add_vertices)
+      .GEODE_METHOD(add_face)
+      .GEODE_METHOD(add_faces)
+      .GEODE_METHOD(collect_garbage)
+      //.GEODE_METHOD(add_vertex_property)
+      //.GEODE_METHOD(has_vertex_property)
+      //.GEODE_METHOD(remove_vertex_property)
+      ;
+  }
   // For testing purposes
   GEODE_FUNCTION(corner_random_edge_flips)
   GEODE_FUNCTION(corner_random_face_splits)

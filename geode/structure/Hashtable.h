@@ -1,8 +1,8 @@
 //#####################################################################
 // Class Hashtable
-// This hashtable is about twice as fast as the tr1::unordered_map. 
+// This hashtable is about twice as fast as the tr1::unordered_map.
 // A wrapper class for tr1::unordered_map can be found in STLHashtable.h
-// in the STLHashtable branch. It can be used to globally replace 
+// in the STLHashtable branch. It can be used to globally replace
 // Hashtable if that is desired.
 //#####################################################################
 #pragma once
@@ -13,6 +13,9 @@
 #include <geode/math/hash.h>
 #include <geode/math/integer_log.h>
 #include <vector>
+
+#include <boost/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 
 namespace geode {
 
@@ -26,23 +29,39 @@ enum HashtableEntryState{EntryFree,EntryActive,EntryDeleted};
 
 template<class TK,class T> class HashtableEntry {
 public:
-  TK key;
-  mutable T data;
-  
+  typename boost::aligned_storage<sizeof(TK), boost::alignment_of<TK>::value>::type TKbuf;
+  typename boost::aligned_storage<sizeof(T), boost::alignment_of<T>::value>::type Tbuf;
+
+  inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
+  inline T & data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
+
+  inline void init(TK const &v, T const &value) {
+    new(&TKbuf) TK(v);
+    new(&Tbuf) T(value);
+    state = EntryActive;
+  }
+
   friend struct HashtableIter<TK,T>;
   friend struct HashtableIter<TK,const T>;
   friend class Hashtable<TK,T>;
 
 private:
   HashtableEntryState state;
-  bool active() const {return state==EntryActive;}
-  T& data_() const {return data;}
-  const HashtableEntry& value() const {return *this;}
+  inline bool active() const {return state==EntryActive;}
+  inline const HashtableEntry& value() const {return *this;}
 };
 
 template<class TK> class HashtableEntry<TK,unit> : public unit {
 public:
-  TK key;
+  typename boost::aligned_storage<sizeof(TK), boost::alignment_of<TK>::value>::type TKbuf;
+
+  inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
+  unit& data() {return *this;}
+
+  inline void init(TK const &v, unit const &) {
+    new(&TKbuf) TK(v);
+    state = EntryActive;
+  }
 
   friend struct HashtableIter<TK,unit>;
   friend struct HashtableIter<TK,const unit>;
@@ -50,9 +69,8 @@ public:
 
 private:
   HashtableEntryState state;
-  bool active() const {return state==EntryActive;}
-  unit& data_() {return *this;}
-  const TK& value() const {return key;}
+  inline bool active() const {return state==EntryActive;}
+  inline const TK& value() const {return key();}
 };
 
 // Tables
@@ -91,7 +109,7 @@ public:
     return table_.size();
   }
 
-  int next_resize() const 
+  int next_resize() const
     {return next_resize_;
   }
 
@@ -111,7 +129,7 @@ public:
     initialize_new_table(estimated_max_size);
     for (int h=0;h<(int)old_table.size();h++) {
       Entry& entry = old_table[h];
-      if (entry.active()) insert(entry.key,entry.data_());
+      if (entry.active()) insert(entry.key(),entry.data());
     }
   }
 
@@ -132,7 +150,7 @@ private:
   bool contains(const TK& v,const int h) const {
     for (int i=h;;i=next_index(i)) {
       if (table_[i].state==EntryFree) return false;
-      else if (table_[i].active() && table_[i].key==v) return true;
+      else if (table_[i].active() && table_[i].key()==v) return true;
     }
   }
 public:
@@ -144,9 +162,8 @@ public:
     assert(!contains(v,h));
     for (;table_[h].state!=EntryFree;h=next_index(h));
     Entry& entry = table_[h];
-    entry.key = v;
-    entry.state = EntryActive;
-    return entry.data_() = value;
+    entry.init(v, value);
+    return entry.data();
   }
 
   void insert(const TK& v) { // Assumes no entry with v exists
@@ -157,13 +174,12 @@ public:
     if (size_>next_resize_) resize_table();
     int h = hash_index(v);
     for (;table_[h].state!=EntryFree;h=next_index(h))
-      if (table_[h].active() && table_[h].key==v) return table_[h].data_();
+      if (table_[h].active() && table_[h].key()==v)
+        return table_[h].data();
     size_++;
     Entry& entry = table_[h];
-    entry.key = v;
-    entry.state = EntryActive;
-    entry.data_() = default_;
-    return entry.data_();
+    entry.init(v, default_);
+    return entry.data();
   }
 
   T& operator[](const TK& v) { // inserts the default if key not found
@@ -172,7 +188,8 @@ public:
 
   T* get_pointer(const TK& v) { // returns Null if key not found
     for (int h=hash_index(v);table_[h].state!=EntryFree;h=next_index(h))
-      if (table_[h].active() && table_[h].key==v) return &table_[h].data_();
+      if (table_[h].active() && table_[h].key()==v)
+        return &table_[h].data();
     return 0;
   }
 
@@ -203,7 +220,7 @@ public:
   bool get(const TK& v, T& value) const {
     for (int h=hash_index(v);table_[h].state!=EntryFree;h=next_index(h))
        if (table_[h].active() && table_[h].key==v) {
-          value = table_[h].data_();
+          value = table_[h].data();
           return true;
         }
     return false;
@@ -213,15 +230,13 @@ public:
     if (size_>next_resize_) resize_table(); // if over load average, have to grow (must do this before computing hash index)
     int h = hash_index(v);
     for (;table_[h].state!=EntryFree;h=next_index(h))
-      if (table_[h].active() && table_[h].key==v) {
-        table_[h].data_() = value;
+      if (table_[h].active() && table_[h].key()==v) {
+        table_[h].data() = value;
         return false;
       }
     size_++;
     Entry& entry = table_[h];
-    entry.key = v;
-    entry.state = EntryActive;
-    entry.data_() = value;
+    entry.init(v,value);
     return true;
   }
 
@@ -231,7 +246,7 @@ public:
 
   bool erase(const TK& v) { // Erase an element if it exists, returning true if so
     for (int h=hash_index(v);table_[h].state!=EntryFree;h=next_index(h)) // reduce as still are using entries for deletions
-      if (table_[h].active() && table_[h].key==v) {
+      if (table_[h].active() && table_[h].key()==v) {
         table_[h].state = EntryDeleted;
         size_--;
         next_resize_--;
@@ -267,7 +282,7 @@ public:
 
   const_iterator begin() const {
     return const_iterator(table_,0);
-    
+
   }
 
   iterator end() {

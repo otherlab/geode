@@ -92,7 +92,7 @@ T LinearFiniteVolumeHex::damping_energy(RawArray<const TV> V) const {
   T half_alpha = (T).5*alpha;
   for (int h=0;h<strain->elements.size();h++)
     for (int g=0;g<8;g++) {
-      SymmetricMatrix<T,m> S = symmetric_part(strain->gradient(V,h,g)); 
+      SymmetricMatrix<T,m> S = symmetric_part(strain->gradient(V,h,g));
       energy += strain->DmH_det[h][g]*(beta*S.sqr_frobenius_norm()+half_alpha*sqr(S.trace()));
     }
   return energy;
@@ -114,7 +114,7 @@ void LinearFiniteVolumeHex::add_frequency_squared(RawArray<T> frequency_squared)
     }
   }
   for (auto& it : particle_frequency_squared)
-    frequency_squared[it.key] += it.data;
+    frequency_squared[it.key()] += it.data();
 }
 
 T LinearFiniteVolumeHex::strain_rate(RawArray<const TV> V) const {

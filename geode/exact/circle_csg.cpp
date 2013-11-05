@@ -306,7 +306,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
   Hashtable<Vertex> seen;
   Nested<ExactCircleArc,false> output;
   for (const auto& it : graph) {
-    const auto start = it.key;
+    const auto start = it.key();
     if (seen.set(start)) {
       auto v = start;
       for (;;) {

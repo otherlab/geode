@@ -6,6 +6,7 @@
 #include <geode/utility/range.h>
 #include <geode/mesh/ids.h>
 #include <geode/array/Field.h>
+#include <geode/structure/Hashtable.h>
 #include <exception>
 
 namespace geode {
@@ -69,9 +70,9 @@ public:
   typedef Object Base;
 
   // Various feature counts, exluding erased entries
-  int n_vertices_;
-  int n_faces_;
-  int n_boundary_edges_;
+  const int n_vertices_;
+  const int n_faces_;
+  const int n_boundary_edges_;
 
   // Flat arrays describing the mesh structure.  Do not use these directly unless you have a good reason.
   struct FaceInfo {
@@ -83,18 +84,59 @@ public:
     HalfedgeId reverse; // Always points to an interior halfedge
     VertexId src; // If erased, src = erased_id
   };
-  Field<FaceInfo,FaceId> faces_;
-  Field<HalfedgeId,VertexId> vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased
-  Array<BoundaryInfo> boundaries_; // If HalfedgeId(-1-b) is a boundary halfedge, boundaries_[b] is its info
+  const Field<const FaceInfo,FaceId> faces_;
+  const Field<const HalfedgeId,VertexId> vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased
+  const Array<const BoundaryInfo> boundaries_; // If HalfedgeId(-1-b) is a boundary halfedge, boundaries_[b] is its info
 
   // The linked list of erased boundary edges
-  HalfedgeId erased_boundaries_;
+  const HalfedgeId erased_boundaries_;
 
 protected:
+
+  // these functions are needed for the constructors, they are protected because
+  // we are not publicly mutable
+
+  // Link two boundary edges together (without ensuring consistency)
+  void unsafe_boundary_link(HalfedgeId p, HalfedgeId n) {
+    assert(p.id<0 && n.id<0);
+    boundaries_.const_cast_()[-1-p.id].next = n;
+  }
+
+  // Link an interior halfedge with an arbitrary opposite halfedge (without ensuring consistency)
+  inline void unsafe_set_reverse(FaceId f, int i, HalfedgeId r) {
+    faces_.const_cast_()[f].neighbors[i] = r;
+    if (r.id>=0) {
+      const int f1 = r.id/3;
+      faces_.const_cast_().flat[f1].neighbors[r.id-3*f1] = HalfedgeId(3*f.id+i);
+    } else
+      boundaries_.const_cast_()[-1-r.id].reverse = HalfedgeId(3*f.id+i);
+  }
+
+  // make a new boundary at src, opposite of reverse. Does not ensure consistency
+  HalfedgeId unsafe_new_boundary(const VertexId src, const HalfedgeId reverse);
+
+  // Mark features as erased (takes care of element counts, but without ensuring consistency)
+  inline void unsafe_set_erased(VertexId v); // safe if the vertex is isolated
+  inline void unsafe_set_erased(FaceId f);
+  inline void unsafe_set_erased(HalfedgeId b); // Must be a boundary edge
+
+  // Add a new isolated vertex and return its id
+  GEODE_CORE_EXPORT VertexId internal_add_vertex();
+
+  // Add n isolated vertices and return the first id (new ids are contiguous)
+  GEODE_CORE_EXPORT VertexId internal_add_vertices(int n);
+
+  // Add a new face.  If the result would not be manifold, no change is made and ValueError is thrown (TODO: throw a better exception).
+  GEODE_CORE_EXPORT FaceId internal_add_face(Vector<VertexId,3> v);
+
+  // Add many new faces (return the first id, new ids are contiguous)
+  GEODE_CORE_EXPORT FaceId internal_add_faces(RawArray<const Vector<int,3>> vs);
+
   GEODE_CORE_EXPORT TriangleTopology();
-  GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh);
+  GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, bool copy = false);
   GEODE_CORE_EXPORT TriangleTopology(TriangleSoup const &soup);
   GEODE_CORE_EXPORT TriangleTopology(RawArray<const Vector<int,3>> faces);
+
 public:
   ~TriangleTopology();
 
@@ -177,10 +219,220 @@ public:
     return n_vertices()-n_edges()+n_faces();
   }
 
-  // Add another TriangleTopology, assuming the vertex sets are disjoint. The vertex, face, and boundary edge permutations for the added topology are returned.
-  GEODE_CORE_EXPORT Tuple<Array<int>, Array<int>, Array<int>> add(TriangleTopology const &other);
+  // Check whether an edge flip would result in a manifold mesh
+  GEODE_CORE_EXPORT bool is_flip_safe(HalfedgeId e) const;
 
-  // Add a new isolated vertex and return its id
+  // Run an expensive internal consistency check.  Safe to call even if the structure arrays are random noise.
+  GEODE_CORE_EXPORT void assert_consistent() const;
+
+  // Print internal structure to Log::cout.  Safe to call even if the structure arrays are random noise.
+  GEODE_CORE_EXPORT void dump_internals() const;
+
+  // Iterate over vertices, edges, or faces *without* skipping erased entries.
+  inline Range<IdIter<VertexId>>   all_vertices()       const;
+  inline Range<IdIter<FaceId>>     all_faces()          const;
+  inline Range<IdIter<HalfedgeId>> all_boundary_edges() const;
+  inline Range<IdIter<HalfedgeId>> all_interior_edges() const;
+
+};
+
+// A property container. Properties are addressed by id, which is typed so we
+// can return a typed property array, and also distinguish simple updating
+// properties from interpolating ones.
+class PropertyStorage: public Object {
+public:
+  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  typedef Object Base;
+
+private:
+  Array<uint8_t> data;
+  size_t t_size;
+protected:
+  PropertyStorage(PropertyStorage const &o, bool copy = false)
+  : data(copy ? o.data.copy() : o.data), t_size(o.t_size) {}
+  PropertyStorage(size_t t_size, size_t size)
+  : data(t_size * size), t_size(t_size) {}
+public:
+
+  // deep copy
+  Ref<PropertyStorage> copy() const {
+    return new_<PropertyStorage>(*this, true);
+  }
+
+  int size() const {
+    return data.size()/t_size;
+  }
+
+  // maintenance functions without need for types (using element size only)
+
+  void resize(size_t n) {
+    data.resize(n*t_size);
+  }
+
+  int grow(size_t n) {
+    resize(size()+n);
+    return size();
+  }
+
+  void swap(int i, int j) {
+    uint8_t *tmp = new uint8_t[t_size];
+    memcpy(tmp, data.data()+i*t_size, t_size);
+    memcpy(data.data()+i*t_size, data.data()+j*t_size, t_size);
+    memcpy(data.data()+j*t_size, tmp, t_size);
+    delete[] tmp;
+  }
+
+  void apply_permutation(RawArray<const int> permutation) {
+    GEODE_ASSERT(permutation.size() == size());
+    Array<uint8_t> newdata((permutation.max()+1)*t_size);
+    for (int i = 0; i < permutation.size(); ++i) {
+      if (permutation[i] >= 0) {
+        assert(permutation[i]*(int)t_size < newdata.size());
+        memcpy(newdata.data()+t_size*permutation[i], data.data()+t_size*i, t_size);
+      }
+    }
+    data = newdata;
+  }
+
+  // typed access to data
+
+  template<class T>
+  void append(T const &t) {
+    resize(size()+1);
+    get<T>(size()-1) = t;
+  }
+
+  template<class T>
+  T const &get(int i) const {
+    assert(sizeof(T) == t_size);
+    assert(i < data.size()/t_size && i >= 0);
+    return ((T*)data.data())[i];
+  }
+
+  template<class T>
+  T &get(int i) {
+    assert(sizeof(T) == t_size);
+    assert(i < data.size()/t_size && i >= 0);
+    return ((T*)data.data())[i];
+  }
+
+  template<class T>
+  T &set(int i, T const &t) {
+    return get<T>(i) = t;
+  }
+
+  template<class T>
+  Array<T> get() {
+    return Array<T>(size(), (T*)data.data(), data.owner());
+  }
+
+  template<class T>
+  Array<const T> get() const {
+    return Array<const T>(size(), (T const *)data.data(), data.owner());
+  }
+
+};
+
+// A mutable topology, with attached data (properties) on vertices, faces, or
+// halfedges, which are maintained through topological operations using user-defined
+// schemes
+class MutableTriangleTopology: public TriangleTopology {
+public:
+  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  typedef TriangleTopology Base;
+
+  typedef Base::FaceInfo FaceInfo;
+  typedef Base::BoundaryInfo BoundaryInfo;
+
+protected:
+
+  int &mutable_n_vertices_;
+  int &mutable_n_faces_;
+  int &mutable_n_boundary_edges_;
+
+  Field<FaceInfo,FaceId>& mutable_faces_;
+  Field<HalfedgeId,VertexId>& mutable_vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased
+  Array<BoundaryInfo>& mutable_boundaries_; // If HalfedgeId(-1-b) is a boundary halfedge, boundaries_[b] is its info
+
+  // The linked list of erased boundary edges
+  HalfedgeId& mutable_erased_boundaries_;
+
+  Hashtable<int,Ref<PropertyStorage>> vertex_storage;
+  int max_property_id;
+
+  GEODE_CORE_EXPORT MutableTriangleTopology();
+  GEODE_CORE_EXPORT MutableTriangleTopology(const TriangleTopology& mesh, bool copy = false);
+  GEODE_CORE_EXPORT MutableTriangleTopology(const MutableTriangleTopology& mesh, bool copy = false);
+  GEODE_CORE_EXPORT MutableTriangleTopology(TriangleSoup const &soup);
+  GEODE_CORE_EXPORT MutableTriangleTopology(RawArray<const Vector<int,3>> faces);
+
+public:
+
+  ~MutableTriangleTopology();
+
+  // property management
+
+  template<class T>
+  PropertyId<T,VertexId,false> add_vertex_property() {
+    int id = max_property_id++;
+    GEODE_ASSERT(!vertex_storage.contains(id));
+    vertex_storage.insert(id, new_<PropertyStorage>(sizeof(T), n_vertices()));
+
+    for (auto &pi : vertex_storage[id]->get<T>())
+      pi = T();
+
+    return PropertyId<T,VertexId,false>(id);
+  }
+
+  template<class T>
+  bool has_vertex_property(PropertyId<T,VertexId,false> id) {
+    if (!id.valid())
+      return false;
+    return vertex_storage.contains(id);
+  }
+
+  template<class T>
+  void remove_vertex_property(PropertyId<T,VertexId,false> id) {
+    vertex_storage.erase(id.id);
+  }
+
+  template<class T>
+  T &property(PropertyId<T,VertexId,false> id, VertexId vi) {
+    assert(id.valid());
+    return vertex_storage[id.id]->get(vi.id);
+  }
+  template<class T>
+  T const &property(PropertyId<T,VertexId,false> id, VertexId vi) const {
+    assert(id.valid());
+    return vertex_storage[id.id]->get(vi.id);
+  }
+
+  template<class T>
+  const Field<T,VertexId> property(PropertyId<T,VertexId,false> id) {
+    assert(id.valid());
+    return Field<T,VertexId>(vertex_storage[id.id]->template get<T>());
+  }
+  template<class T>
+  const Field<const T,VertexId> property(PropertyId<T,VertexId,false> id) const {
+    assert(id.valid());
+    return Field<T,VertexId>(vertex_storage[id.id]->template get<T>());
+  }
+
+
+  // publish the hidden construction methods from TriangleTopology
+  using TriangleTopology::unsafe_boundary_link;
+  using TriangleTopology::unsafe_set_erased;
+  using TriangleTopology::unsafe_set_reverse;
+
+  // we have to overwrite this -- it needs to take care of fields for us
+  HalfedgeId unsafe_new_boundary(const VertexId src, const HalfedgeId reverse);
+
+  // return a deep copy as a new TriangleTopology
+  Ref<MutableTriangleTopology> copy() const;
+
+  // these methods take care of your fields for you.
+
+  // Add a new isolated vertex and return its id.
   GEODE_CORE_EXPORT VertexId add_vertex();
 
   // Add n isolated vertices and return the first id (new ids are contiguous)
@@ -192,15 +444,6 @@ public:
   // Add many new faces (return the first id, new ids are contiguous)
   GEODE_CORE_EXPORT FaceId add_faces(RawArray<const Vector<int,3>> vs);
 
-  // Split a face into three by inserting a new vertex in the center
-  GEODE_CORE_EXPORT VertexId split_face(FaceId f);
-
-  // Split a face into three by inserting an existing isolated vertex in the center.  Afterwards, face(halfedge(c))==f.
-  GEODE_CORE_EXPORT void split_face(FaceId f, VertexId c);
-
-  // Check whether an edge flip would result in a manifold mesh
-  GEODE_CORE_EXPORT bool is_flip_safe(HalfedgeId e) const;
-
   // Flip the two triangles adjacent to a given halfedge.  The routines throw an exception if is_flip_safe fails; call unsafe_flip_edge if you've already checked.
   // WARNING: The all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
   GEODE_CORE_EXPORT HalfedgeId flip_edge(HalfedgeId e) GEODE_WARN_UNUSED_RESULT;
@@ -208,11 +451,15 @@ public:
   // Permute vertices: vertices v becomes vertex permutation[v]
   GEODE_CORE_EXPORT void permute_vertices(RawArray<const int> permutation, bool check=false);
 
-  // Run an expensive internal consistency check.  Safe to call even if the structure arrays are random noise.
-  GEODE_CORE_EXPORT void assert_consistent() const;
+  // Add another TriangleTopology, assuming the vertex sets are disjoint.
+  // Returns the offsets of the other vertex, face, and boundary ids in the new arrays.
+  GEODE_CORE_EXPORT Tuple<int,int,int> add(MutableTriangleTopology const &other);
 
-  // Print internal structure to Log::cout.  Safe to call even if the structure arrays are random noise.
-  GEODE_CORE_EXPORT void dump_internals() const;
+  // Split a face into three by inserting a new vertex in the center
+  GEODE_CORE_EXPORT VertexId split_face(FaceId f);
+
+  // Split a face into three by inserting an existing isolated vertex in the center.  Afterwards, face(halfedge(c))==f.
+  GEODE_CORE_EXPORT void split_face(FaceId f, VertexId c);
 
   // Erase the given vertex. Erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
   GEODE_CORE_EXPORT void erase(VertexId id, bool erase_isolated = false);
@@ -225,38 +472,11 @@ public:
 
   // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
   // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
+  // For any field f, use f.permute() to create a field that works with the new ids
   GEODE_CORE_EXPORT Tuple<Array<int>, Array<int>, Array<int>> collect_garbage();
 
   // The remaining functions are mainly for internal use, or for external routines that perform direct surgery
   // on the internal structure.  Use with caution!
-
-  // Link two boundary edges together (without ensuring consistency)
-  void unsafe_boundary_link(HalfedgeId p, HalfedgeId n) {
-    assert(p.id<0 && n.id<0);
-    boundaries_[-1-p.id].next = n;
-    boundaries_[-1-n.id].prev = p;
-  }
-
-  // Link an interior halfedge with an arbitrary opposite halfedge (without ensuring consistency)
-  void unsafe_set_reverse(FaceId f, int i, HalfedgeId r) {
-    faces_[f].neighbors[i] = r;
-    if (r.id>=0) {
-      const int f1 = r.id/3;
-      faces_.flat[f1].neighbors[r.id-3*f1] = HalfedgeId(3*f.id+i);
-    } else
-      boundaries_[-1-r.id].reverse = HalfedgeId(3*f.id+i);
-  }
-
-  // Mark features as erased (takes care of element counts, but without ensuring consistency)
-  inline void unsafe_set_erased(VertexId v); // safe if the vertex is isolated
-  inline void unsafe_set_erased(FaceId f);
-  inline void unsafe_set_erased(HalfedgeId b); // Must be a boundary edge
-
-  // Iterate over vertices, edges, or faces *without* skipping erased entries.
-  inline Range<IdIter<VertexId>>   all_vertices()       const;
-  inline Range<IdIter<FaceId>>     all_faces()          const;
-  inline Range<IdIter<HalfedgeId>> all_boundary_edges() const;
-  inline Range<IdIter<HalfedgeId>> all_interior_edges() const;
 
   // Flip an edge assuming is_flip_safe(e). If that is not the case, this may leave the mesh in a broken state.
   // WARNING: The all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
@@ -270,6 +490,10 @@ public:
   // This exists solely to erase sentinel vertices created by Delaunay.
   GEODE_CORE_EXPORT void erase_last_vertex_with_reordering();
 };
+
+
+
+
 
 // Mesh walking routines
 inline HalfedgeId TriangleTopology::halfedge(VertexId v) const {
@@ -348,19 +572,19 @@ inline bool TriangleTopology::erased(FaceId f) const {
 
 // Mark features as erased
 inline void TriangleTopology::unsafe_set_erased(VertexId v) {
-  vertex_to_edge_[v].id = erased_id;
-  n_vertices_--;
+  vertex_to_edge_.const_cast_()[v].id = erased_id;
+  const_cast_(n_vertices_)--;
 }
 inline void TriangleTopology::unsafe_set_erased(FaceId f) {
-  faces_[f].vertices.x.id = erased_id;
-  n_faces_--;
+  faces_.const_cast_()[f].vertices.x.id = erased_id;
+  const_cast_(n_faces_)--;
 }
 inline void TriangleTopology::unsafe_set_erased(HalfedgeId b) {
   assert(b.id < 0); // make sure this is a boundary edge
-  boundaries_[-1-b.id].src.id = erased_id;
-  boundaries_[-1-b.id].next = erased_boundaries_;
-  erased_boundaries_ = b;
-  n_boundary_edges_--;
+  boundaries_.const_cast_()[-1-b.id].src.id = erased_id;
+  boundaries_.const_cast_()[-1-b.id].next = erased_boundaries_;
+  const_cast_(erased_boundaries_) = b;
+  const_cast_(n_boundary_edges_)--;
 }
 
 // Check for boundaries

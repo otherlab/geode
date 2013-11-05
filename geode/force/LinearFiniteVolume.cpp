@@ -71,7 +71,7 @@ template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::elastic_e
   T mu,lambda;mu_lambda().get(mu,lambda);
   T half_lambda = (T).5*lambda;
   for (int t=0;t<elements.size();t++) {
-    SymmetricMatrix<T,m> strain = symmetric_part(Ds(X,t)*Dm_inverse[t])-1; 
+    SymmetricMatrix<T,m> strain = symmetric_part(Ds(X,t)*Dm_inverse[t])-1;
     if ((int)m>(int)d)
       strain += outer_product(normals[t]);
     energy -= Bm_scales[t]*(mu*strain.sqr_frobenius_norm()+half_lambda*sqr(strain.trace()));
@@ -118,7 +118,7 @@ template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::damping_e
   T beta,alpha;(rayleigh_coefficient*mu_lambda()).get(beta,alpha);
   T half_alpha = (T).5*alpha;
   for (int t=0;t<elements.size();t++) {
-    SymmetricMatrix<T,m> strain = symmetric_part(Ds(V,t)*Dm_inverse[t]); 
+    SymmetricMatrix<T,m> strain = symmetric_part(Ds(V,t)*Dm_inverse[t]);
     energy -= Bm_scales[t]*(beta*strain.sqr_frobenius_norm()+half_alpha*sqr(strain.trace()));
   }
   return energy;
@@ -149,7 +149,7 @@ template<class TV,int d> void LinearFiniteVolume<TV,d>::add_frequency_squared(Ra
     }
   }
   for (auto& it : particle_frequency_squared)
-    frequency_squared[it.key] += it.data;
+    frequency_squared[it.key()] += it.data();
 }
 
 template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::strain_rate(RawArray<const TV> V) const {
