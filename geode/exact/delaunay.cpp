@@ -218,6 +218,7 @@ GEODE_COLD static void assert_delaunay(const TriangleTopology& mesh, RawField<co
 
 // This routine assumes the sentinel points have already been added, and processes points in order
 GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
+
   const int n = X.size()-3;
   const auto mesh = new_<MutableTriangleTopology>();
   IntervalScope scope;
@@ -225,8 +226,10 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
   // Initialize the mesh to a Delaunay triangle containing the sentinels at infinity.
   mesh->add_vertices(n+3);
   mesh->add_face(vec(VertexId(n+0),VertexId(n+1),VertexId(n+2)));
-  if (self_check)
+  if (self_check) {
+    mesh->assert_consistent();
     assert_delaunay(mesh,X);
+  }
 
   // The randomized incremental construction algorithm uses the history of the triangles
   // as the acceleration structure.  Specifically, we maintain a BSP tree where the nodes
@@ -277,8 +280,10 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
     face_to_bsp[f0] = vec(2*(base+1)+0,-1);
     face_to_bsp.flat.append_assuming_enough_space(vec(2*(base+1)+1,2*(base+2)+0));
     face_to_bsp.flat.append_assuming_enough_space(vec(2*(base+2)+1,-1));
-    if (self_check)
+    if (self_check) {
+      mesh->assert_consistent();
       check_bsp(*mesh,bsp,face_to_bsp,X);
+    }
 
     // Fix all non-Delaunay edges
     stack.resize(3,false,false);
@@ -303,8 +308,10 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
         set_links(bsp,face_to_bsp[f1],node);
         face_to_bsp[f0] = vec(2*node+1,-1);
         face_to_bsp[f1] = vec(2*node+0,-1);
-        if (self_check)
+        if (self_check) {
+          mesh->assert_consistent();
           check_bsp(*mesh,bsp,face_to_bsp,X);
+        }
         // Recurse to successor edges to e
         const auto e0 = mesh->next(e),
                    e1 = mesh->prev(mesh->reverse(e));
@@ -314,8 +321,10 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
           assert_delaunay(mesh,X,true);
       }
     }
-    if (self_check)
+    if (self_check) {
+      mesh->assert_consistent();
       assert_delaunay(mesh,X);
+    }
   }
 
   // Remove sentinels

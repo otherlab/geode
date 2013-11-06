@@ -100,6 +100,7 @@ protected:
   void unsafe_boundary_link(HalfedgeId p, HalfedgeId n) {
     assert(p.id<0 && n.id<0);
     boundaries_.const_cast_()[-1-p.id].next = n;
+    boundaries_.const_cast_()[-1-n.id].prev = p;
   }
 
   // Link an interior halfedge with an arbitrary opposite halfedge (without ensuring consistency)

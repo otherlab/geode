@@ -99,7 +99,7 @@ def test_halfedge_construction():
   construction_test(HalfedgeMesh)
 
 def test_corner_construction():
-  construction_test(TriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
+  construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
 
 if __name__=='__main__':
   test_corner_construction()

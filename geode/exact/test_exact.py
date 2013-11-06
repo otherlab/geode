@@ -18,7 +18,7 @@ def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False):
     if n>0 and circle: name,X = 'circle',polar(random.uniform(0,2*pi,n))
     elif n>0:          name,X = 'gaussian',random.randn(abs(n),2)
     else:              name,X = 'origin',zeros((-n,2))
-    with Log.scope('delaunay %s %d'%(name,n)):
+    with Log.scope('delaunay %s %d, validate %d'%(name,n,not benchmark)):
       mesh = delaunay_points(X,validate=not benchmark)
       if not benchmark:
         mesh.assert_consistent()

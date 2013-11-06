@@ -32,7 +32,7 @@ template<> struct NumpyScalar<FaceId>{enum{value=NPY_INT};};
 #endif
 
 static string str_halfedge(HalfedgeId e) {
-  return e.valid() ? e.id>=0 ? format("e%d%d",e.id/3,e.id%3)
+  return e.valid() ? e.id>=0 ? format("e%d:%d",e.id/3,e.id%3)
                              : format("b%d",-1-e.id)
                    : "e_";
 }
@@ -453,7 +453,8 @@ void TriangleTopology::dump_internals() const {
   cout << format("  boundary edges: %d\n",n_boundary_edges());
   for (const auto e : boundary_edges()) {
     const auto n = next(e);
-    cout << format("    %s: v%d %s, %s %s, r %s\n",str_halfedge(e),src(e).id,(valid(n)?format("v%d",src(n).id):"boom"),str_halfedge(prev(e)),str_halfedge(n),str_halfedge(reverse(e)));
+    cout << format("    %s: v%d -> %s, p %s, n %s, r %s\n",str_halfedge(e),src(e).id,(valid(n)?format("v%d",src(n).id):"boom"),
+                                                           str_halfedge(prev(e)),str_halfedge(n),str_halfedge(reverse(e)));
   }
   cout << endl;
 }
@@ -732,8 +733,9 @@ HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
 void MutableTriangleTopology::erase_last_vertex_with_reordering() {
   const VertexId v(vertex_to_edge_.size()-1);
   // erase all incident faces
-  while (!isolated(v))
+  while (!isolated(v)) {
     erase_face_with_reordering(face(reverse(halfedge(v))));
+  }
   // Remove the vertex
   mutable_vertex_to_edge_.flat.pop();
 
