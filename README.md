@@ -46,12 +46,14 @@ If necessary, dependencies can be installed via one of
     sudo apt-get install python python-numpy scons libboost-dev
     sudo apt-get python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
 
-    # Homebrew
+    # Homebrew (recommended)
     brew install scons boost openexr
 
-    # MacPorts
+    # MacPorts (not recommended)
     sudo port -v install python26 py26-numpy scons boost
     sudo port -v install py26-scipy py26-py libpng libjpeg openexr # optional
+    sudo port -v install gcc47 # If clang is unavailable
+
 
 Geode can then be installed from source via
 
@@ -77,8 +79,10 @@ Unit tests can be run via
 If additional build configuration is necessary, create a `config.py` file and set any desired options.  For example,
 
     # config.py
-    CXX = 'clang++'
+    cxx = 'clang++'
     cache = '/tmp/scons-cache'
+
+For developers wishing to use without installing, see more options in Developer mode section below
 
 These options can also be passed via command line to scons.  Run `scons -h` for a complete list.
 Use `type=debug` for a much slower build with many more assertions:
@@ -100,6 +104,15 @@ them without installing.  To point python imports to your development tree, run 
 
     sudo python setup.py develop
     python setup.py develop --prefix=$HOME
+
+You may also want to add options into config.py:
+
+    import os
+    install = 0
+    prefix = '#build/$arch/$type'
+    geode_dir = ...
+    geode_include = [geode_dir]
+    geode_libpath = [geode_dir+'/build/$arch/$type/lib']
 
 TODO: Add more details about for LD_LIBRARY_PATH or equivalents.
 
