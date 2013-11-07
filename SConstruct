@@ -557,7 +557,7 @@ def program(env,name,cpp=None):
   env = link_flags(env)
   env = copy_files(env)
   files = objects(env,cpp)
-  bin = env.Program(name,files)
+  bin = env.Program('#'+os.path.join(env['variant_build'],'bin',name),files)
   env.Depends('.',bin)
   if env['install']:
     env.Alias('install',env.Install(env['prefix_bin'],bin))
