@@ -368,7 +368,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
       r = context.TryLink(source,extension='.cpp')
       context.Result(r)
       return r
-    conf = env_conf.Configure(custom_tests={'Check':check},clean=0,help=0)
+    conf = env_conf.Configure(custom_tests={'Check':check})
     if not conf.Check():
       env['use_'+name] = 0
       del externals[name]
@@ -585,7 +585,7 @@ def configure_latex():
     r = context.TryBuild(env.PDF,text=r'\documentclass{book}\begin{document}\end{document}',extension='.tex')
     context.Result(r)
     return r
-  conf = env.Configure(custom_tests={'Check':check},clean=0,help=0)
+  conf = env.Configure(custom_tests={'Check':check})
   if not conf.Check():
     env['use_latex'] = 0
   conf.Finish()
