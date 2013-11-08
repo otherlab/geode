@@ -26,7 +26,8 @@ static inline uint32_t decode(char x) {
 }
 
 string base64_encode(const string& src) {
-  return base64_encode(RawArray<const uint8_t>(src.size(),(const uint8_t*)src.c_str()));
+  assert(src.size() <= (size_t)std::numeric_limits<int>::max());
+  return base64_encode(RawArray<const uint8_t>((int)src.size(),(const uint8_t*)src.c_str()));
 }
 
 string base64_encode(RawArray<const uint8_t> src) {

@@ -392,7 +392,7 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
   const int bins = integer_log(n);
   Array<int> bin_counts(bins);
   for (int i=0;i<n;i++) {
-    int j = random_permute(n,key,i);
+    int j = (int)random_permute(n,key,i);
     const int bin = min(integer_log(j+1),bins-1);
     j = (1<<bin)-1+bin_counts[bin]++;
     X[j] = tuple(i,Xin[i]);

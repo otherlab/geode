@@ -827,12 +827,12 @@ vector<vector<FaceHandle>> TriMesh::surface_components(VertexHandle vh, unordere
   auto incident = incident_faces(vh);
 
   // map face handles to indices in incident
-  unordered_map<FaceHandle, size_t, Hasher> fmap;
+  unordered_map<FaceHandle, int, Hasher> fmap;
   for (auto it = incident.begin(); it != incident.end(); ++it) {
-    fmap[*it] = it-incident.begin();
+    fmap[*it] = (int)(it-incident.begin());
   }
 
-  UnionFind union_find(incident.size());
+  UnionFind union_find((int)incident.size());
   for (ConstVertexEdgeIter e = cve_iter(vh); e; ++e) {
     if (is_boundary(e) || exclude_edges.count(e))
       continue;

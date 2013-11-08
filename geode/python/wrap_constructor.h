@@ -26,7 +26,7 @@ GEODE_CORE_EXPORT void handle_constructor_error(PyObject* self, const exception&
 template<class T,class... Args> static PyObject*
 wrapped_constructor(PyTypeObject* type, PyObject* args, PyObject* kwds) {
   const int desired = sizeof...(Args);
-  const int nargs = PyTuple_GET_SIZE(args);
+  const auto nargs = PyTuple_GET_SIZE(args);
   // Require exact match if we're constructing T, otherwise extra arguments are fine
   if (type==&T::pytype ? nargs!=desired || (kwds && PyDict_Size(kwds)) : nargs<desired) {
     set_argument_count_error(desired,args,kwds);

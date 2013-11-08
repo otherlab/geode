@@ -58,7 +58,7 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
     return 0;
   }
 
-  const int count = decimater.decimate(max_collapses);
+  const int count = (int) decimater.decimate(max_collapses);
 
   mesh.release_face_normals();
 

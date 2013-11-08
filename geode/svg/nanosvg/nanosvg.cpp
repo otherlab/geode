@@ -1643,10 +1643,10 @@ struct SVGPath* svgParseFromFile(const char* filename, SVGInfo *svginfo)
     FILE* fp = fopen(filename, "rb");
     if (!fp) return 0;
     fseek(fp, 0, SEEK_END);
-    const int size = ftell(fp);
+    const auto size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     vector<char> data(size+1);
-    int r = fread(&data[0], size, 1, fp);
+    const auto r = fread(&data[0], size, 1, fp);
     data[r?size:0] = '\0';    // Must be null terminated.
     fclose(fp);
     return svgParse(&data[0], svginfo);

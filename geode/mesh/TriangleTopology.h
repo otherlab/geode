@@ -247,12 +247,12 @@ public:
 
 private:
   Array<uint8_t> data;
-  size_t t_size;
+  int t_size;
 protected:
   PropertyStorage(PropertyStorage const &o, bool copy = false)
   : data(copy ? o.data.copy() : o.data), t_size(o.t_size) {}
   PropertyStorage(size_t t_size, size_t size)
-  : data(t_size * size), t_size(t_size) {}
+  : data((int)(t_size * size)), t_size((int)t_size) {}
 public:
 
   // deep copy
@@ -266,11 +266,11 @@ public:
 
   // maintenance functions without need for types (using element size only)
 
-  void resize(size_t n) {
+  void resize(int n) {
     data.resize(n*t_size);
   }
 
-  int grow(size_t n) {
+  int grow(int n) {
     resize(size()+n);
     return size();
   }

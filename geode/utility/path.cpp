@@ -70,7 +70,7 @@ string join(const string& p0, const string& p1, const string& p2, const string& 
 
 // WARNING: These do not work for escaped directory separators
 string extension(const string& path) {
-  for (int i=path.size()-1;i>=0;i--) {
+  for (int i=(int)path.size()-1;i>=0;i--) {
     // we stop if we're at the beginning, or at the first directory separator
     // this will treat filenames that begin with a '.' (and have no other '.')
     // as having no extension
@@ -90,14 +90,14 @@ string remove_extension(const string& path) {
 }
 
 string basename(const string& path) {
-  for (int i=path.size()-1;i>=0;i--)
+  for (int i=(int)path.size()-1;i>=0;i--)
     if (is_sep(path[i]))
       return path.substr(i+1);
   return path;
 }
 
 string dirname(const string& path) {
-  for (int i=path.size()-1;i>=0;i--)
+  for (int i=(int)path.size()-1;i>=0;i--)
     if (is_sep(path[i]))
       return path.substr(0,i);
   return string();
