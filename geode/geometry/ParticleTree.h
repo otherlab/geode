@@ -33,6 +33,7 @@ public:
 
   GEODE_CORE_EXPORT TV closest_point(TV point, int& index, T max_distance=inf, int ignore = -1) const; // simplex=-1 if nothing is found
   GEODE_CORE_EXPORT TV closest_point(TV point, T max_distance=inf) const; // return value is infinity if nothing is found
+  GEODE_CORE_EXPORT Tuple<TV,int> closest_point_py(TV point, T max_distance=inf) const;
 };
 
 }
