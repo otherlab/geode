@@ -21,7 +21,8 @@ from .Matrix import Matrix
 geode_wrap._set_matrix_type(Matrix)
 
 # Rename some numpy functions to be more like C++
-from numpy import (square as sqr, arctan2 as atan2, arcsin as asin, arccos as acos, arctan as atan)
+from numpy import (square as sqr, arctan2 as atan2, arcsin as asin, arccos as acos, arctan as atan,
+                   arcsinh as asinh, arccosh as acosh, arctanh as atanh)
 from numpy.linalg import norm as magnitude
 
 SolidMatrix = {2:SolidMatrix2d,3:SolidMatrix3d}
