@@ -4,6 +4,7 @@
 #pragma once
 
 #include <geode/utility/config.h> // Must be included before other headers
+#include <geode/utility/forward.h>
 #include <boost/mpl/bool.hpp>
 namespace geode {
 
@@ -31,7 +32,6 @@ template<class T> class NdArray;
 
 template<class T,class Id> class Field;
 template<class T,class Id> class RawField;
-template<class Iter> struct Range;
 
 template<class TArray,class TProjector> class ProjectedArray;
 template<class TStruct,class TField,TField TStruct::* field> struct FieldProjector;
