@@ -31,12 +31,14 @@
 #include <geode/python/wrap.h>
 #include <geode/python/Object.h>
 #include <geode/utility/Enumerate.h>
+#include <geode/utility/format.h>
 #ifdef GEODE_PYTHON
 #include <geode/python/wrap_constructor.h>
 #include <geode/python/wrap_field.h>
 #include <geode/python/wrap_method.h>
 #include <geode/python/wrap_property.h>
 #include <geode/python/wrap_call.h>
+#include <geode/python/wrap_iter.h>
 #endif
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/void.hpp>
@@ -149,6 +151,21 @@ public:
 
 #endif
 
+  // Register this as an iterable class. This uses the iter() and iternext()
+  // functions of T.
+  Class &iter() {
+    BOOST_STATIC_ASSERT(has_iter<T>::value || has_iternext<T>::value);
+
+    if (type->tp_iternext || type->tp_iter)
+      throw TypeError("Iterator already specified");
+
+    type->tp_flags |= Py_TPFLAGS_HAVE_ITER; // this is included in Py_TPFLAGS_DEFAULT, but just to make sure
+    type->tp_iter = wrapped_iter<T>;
+    type->tp_iternext = wrapped_iternext_helper<T>::iter;
+
+    return *this;
+  }
+
   template<class Field> Class&
   field(const char* name, Field field) {
     add_descriptor(type,name,wrap_field<T>(name,field));
@@ -189,12 +206,12 @@ public:
   }
 
   Class& getattr() {
-    type->tp_getattro = getattro_wrapper; 
+    type->tp_getattro = getattro_wrapper;
     return *this;
   }
 
   Class& setattr() {
-    type->tp_setattro = setattro_wrapper; 
+    type->tp_setattro = setattro_wrapper;
     return *this;
   }
 
@@ -209,6 +226,7 @@ public:
   }
 
 private:
+
   static PyObject* repr_wrapper(PyObject* self) {
     try {
       return to_python(GetSelf<T>::get(self)->repr());
