@@ -18,7 +18,7 @@ sys.path.insert(0,Dir('#').abspath)
 try:
   import config
   has_config = True
-except:
+except ImportError:
   has_config = False
 
 del sys.path[0]
