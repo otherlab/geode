@@ -348,6 +348,10 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
   # Check whether the external is usable
   if configure is not None:
     has = configure if isinstance(configure,bool) else configure(env,lib)
+    if not has:
+      env['use_'+name] = 0
+      del externals[name]
+      fail()
   else:
     assert headers is not None
 
