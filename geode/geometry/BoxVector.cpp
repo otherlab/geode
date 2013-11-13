@@ -117,16 +117,18 @@ static void bounding_box_py_helper(const int depth, Array<Box<real>>& box, PyObj
       GEODE_DECREF(array);
       throw TypeError("bounding_box: possibly nested array of vectors expected, found a bare scalar");
     }
-    const int d = PyArray_DIMS((PyArrayObject*)array)[rank-1];
+    const ssize_t d = PyArray_DIMS((PyArrayObject*)array)[rank-1];
+    GEODE_ASSERT(0<=d && d<=numeric_limits<int>::max());
     if (!box.size())
-      box.resize(d);
+      box.resize(int(d));
     if (box.size() != d) {
       GEODE_DECREF(array);
       throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),d));
     }
-    const int count = PyArray_SIZE((PyArrayObject*)array)/d;
+    const ssize_t count = PyArray_SIZE((PyArrayObject*)array)/d;
+    GEODE_ASSERT(0<=count && count<=numeric_limits<int>::max());
     const real* data = (const real*)PyArray_DATA((PyArrayObject*)array);
-    for (int i=0;i<count;i++)
+    for (int i=0;i<int(count);i++)
       for (int j=0;j<d;j++)
         box[j].enlarge(data[i*d+j]);
     GEODE_DECREF(array);

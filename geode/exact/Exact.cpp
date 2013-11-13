@@ -39,7 +39,7 @@ string mpz_str(RawArray<const mp_limb_t> limbs, const bool hex) {
       const auto s = GEODE_RAW_ALLOCA(hex ? 5+2*sizeof(mp_limb_t)*n
                                           : 3+int(ceil(8*sizeof(mp_limb_t)*log10(2)*n)),unsigned char);
       auto p = s.data()+2*hex;
-      const int count = mpn_get_str(p,hex?16:10,limbs.slice(0,n).copy().data(),n);
+      const int count = (int) mpn_get_str(p,hex?16:10,limbs.slice(0,n).copy().data(),n);
       for (int i=0;i<count;i++)
         p[i] += p[i]<10?'0':'a'-10;
       p[count] = 0;

@@ -62,7 +62,7 @@ static Array<const uint8_t,2> monomials(const int degree, const int variables) {
   }
   num /= den;
   GEODE_ASSERT(num <= (1<<20));
-  Array<uint8_t,2> results(num,variables);
+  Array<uint8_t,2> results((int)num,variables);
 
   // We simulate a stack manually to avoid recursion
   if (variables) {

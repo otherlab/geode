@@ -673,7 +673,7 @@ template<class T> struct valid_binary<std::vector<T>> {
   static size_t store(std::ostream& os, const value_type& v, bool swap=false) {
     size_t bytes = 0;
 
-    int n = v.size();
+    int n = (int) v.size();
     bytes += IO::store(os, n, swap);
 
     for (int i = 0; i < n; ++i)

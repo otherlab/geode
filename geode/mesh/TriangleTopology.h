@@ -301,7 +301,6 @@ public:
   }
 
   // maintenance functions without need for types (using element size only)
-
   void resize(size_t n) {
     int s = size();
 

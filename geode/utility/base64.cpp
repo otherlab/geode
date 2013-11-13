@@ -4,6 +4,8 @@
 #include <geode/python/wrap.h>
 namespace geode {
 
+using std::numeric_limits;
+
 static inline char encode(uint8_t x) {
   return x<26 ? x+'A'
        : x<52 ? x-26+'a'
@@ -26,7 +28,8 @@ static inline uint32_t decode(char x) {
 }
 
 string base64_encode(const string& src) {
-  return base64_encode(RawArray<const uint8_t>(src.size(),(const uint8_t*)src.c_str()));
+  GEODE_ASSERT(src.size() <= size_t(numeric_limits<int>::max()));
+  return base64_encode(RawArray<const uint8_t>((int)src.size(),(const uint8_t*)src.c_str()));
 }
 
 string base64_encode(RawArray<const uint8_t> src) {

@@ -12,6 +12,7 @@ namespace geode {
 struct Hasher;
 template<class T> class Ptr;
 template<class T> class Ref;
+template<class I,class Enable=void> struct Range;
 
 // Convenience struct for marking that function semantics have changed
 struct Mark {};

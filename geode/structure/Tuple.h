@@ -119,7 +119,7 @@ template<class Tup,class... Enum> static inline Tup tuple_from_python_helper(PyO
   const size_t n = sizeof...(Enum);
   Ref<PyObject> seq = steal_ref_check(PySequence_Fast(object,"expected tuple"));
   size_t len = PySequence_Length(&*seq);
-  if (len!=n) throw_tuple_mismatch_error(n,len);
+  if (len!=n) throw_tuple_mismatch_error((int)n,(int)len);
   return Tup(convert_sequence_item<Enum>(&*seq)...);
 }
 

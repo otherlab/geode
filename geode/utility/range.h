@@ -1,6 +1,7 @@
 #pragma once
 
 #include <geode/utility/config.h>
+#include <geode/utility/forward.h>
 #include <boost/utility/declval.hpp>
 #include <cassert>
 
@@ -12,7 +13,7 @@
 
 namespace geode {
 
-template<class Iter> struct Range {
+template<class Iter,class Enable> struct Range {
   typedef decltype(*boost::declval<Iter>()) Reference;
 
   const Iter lo, hi;
@@ -29,45 +30,46 @@ template<class Iter> struct Range {
   Reference back() const { assert(lo!=hi); return *(hi-1); }
 };
 
-template<> struct Range<int> {
-  int lo, hi;
+template<class I> struct Range<I,typename boost::enable_if<boost::is_integral<I>>::type> {
+  I lo, hi;
 
   struct Iter {
-    int i;
-    explicit Iter(int i) : i(i) {}
+    I i;
+    explicit Iter(I i) : i(i) {}
     bool operator!=(Iter j) const { return i != j.i; }
     void operator++() { ++i; }
     void operator--() { --i; }
-    int operator*() const { return i; }
+    I operator*() const { return i; }
   };
 
   Range()
     : lo(0), hi(0) {}
 
-  Range(int lo, int hi)
+  Range(I lo, I hi)
     : lo(lo), hi(hi) {
     assert(lo<=hi);
   }
 
-  int size() const { return hi-lo; }
+  I size() const { return hi-lo; }
 
   Iter begin() const { return Iter(lo); }
   Iter end() const { return Iter(hi); }
 
-  int operator[](const int i) const { assert(0<=i && i<hi-lo); return lo+i; }
+  I operator[](const I i) const { assert(0<=i && i<hi-lo); return lo+i; }
 
-  int front() const { assert(lo<hi); return lo; }
-  int back() const { assert(lo<hi); return hi-1; }
+  I front() const { assert(lo<hi); return lo; }
+  I back() const { assert(lo<hi); return hi-1; }
 
-  bool contains(int i) const { return lo <= i && i < hi; }
+  bool contains(I i) const { return lo <= i && i < hi; }
 };
 
 template<class Iter> static inline Range<Iter> range(const Iter& lo, const Iter& hi) {
   return Range<Iter>(lo,hi);
 }
 
-static inline Range<int> range(int n) {
-  return Range<int>(0,n);
+template<class I> static inline Range<I> range(I n) {
+  static_assert(boost::is_integral<I>::value,"single argument range must take an integral type");
+  return Range<I>(0,n);
 }
 
 template<class Iter> static inline Range<Iter> operator+(const Range<Iter>& r, int n) {

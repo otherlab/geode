@@ -129,6 +129,11 @@ closest_point(TV point, T max_distance) const {
   return closest_point(point, index, max_distance);
 }
 
+template<class TV> Tuple<TV,int> ParticleTree<TV>::closest_point_py(TV point, T max_distance) const {
+  int index = -1;
+  const TV p = closest_point(point,index,max_distance);
+  return tuple(p,index);
+}
 
 #define INSTANTIATE(d) \
   template class ParticleTree<Vector<T,d>>; \
@@ -147,6 +152,7 @@ template<int d> static void wrap_helper() {
     .GEODE_FIELD(X)
     .GEODE_METHOD(update)
     .GEODE_METHOD(remove_duplicates)
+    .GEODE_METHOD_2("closest_point",closest_point_py)
     ;
 }
 

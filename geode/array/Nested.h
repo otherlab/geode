@@ -110,6 +110,10 @@ public:
     return unsigned(i)<unsigned(size());
   }
 
+  bool valid(int i,int j) const {
+    return valid(i) && unsigned(j)<unsigned(size(i));
+  }
+
   int total_size() const {
     return offsets.back();
   }
