@@ -5,6 +5,7 @@
 using namespace geode;
 
 void wrap_mesh() {
+  GEODE_WRAP(ids)
   GEODE_WRAP(polygon_mesh)
   GEODE_WRAP(segment_soup)
   GEODE_WRAP(triangle_mesh)

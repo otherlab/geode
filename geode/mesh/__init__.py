@@ -149,3 +149,4 @@ def merge_meshes(surfaces):
     X.append(x)
     total += len(x)
   return TriangleSoup(concatenate(tris).astype(int32)),concatenate(X)
+

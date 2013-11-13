@@ -1,7 +1,7 @@
 // A halfedge data structure representing oriented triangle meshes.
 
 #include <geode/mesh/HalfedgeMesh.h>
-#include <geode/array/convert.h>
+#include <geode/utility/str.h>
 #include <geode/array/Nested.h>
 #include <geode/python/Class.h>
 #include <geode/random/Random.h>
@@ -15,19 +15,6 @@ using Log::cout;
 using std::endl;
 
 GEODE_DEFINE_TYPE(HalfedgeMesh)
-
-// Add numpy conversion support
-#ifdef GEODE_PYTHON
-namespace {
-template<> struct NumpyIsScalar<VertexId>:public mpl::true_{};
-template<> struct NumpyIsScalar<HalfedgeId>:public mpl::true_{};
-template<> struct NumpyIsScalar<FaceId>:public mpl::true_{};
-template<> struct NumpyScalar<VertexId>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<HalfedgeId>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<FaceId>{enum{value=NPY_INT};};
-}
-GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexId)
-#endif
 
 HalfedgeMesh::HalfedgeMesh() {}
 
