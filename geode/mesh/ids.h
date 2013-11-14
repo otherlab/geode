@@ -1,10 +1,11 @@
 // Strongly typed ids for use in meshes
 #pragma once
 
+#include <geode/python/numpy-types.h>
 #include <geode/python/from_python.h>
 #include <geode/python/to_python.h>
-#include <geode/python/numpy.h>
 #include <geode/vector/Vector.h>
+
 namespace geode {
 
 using std::ostream;
