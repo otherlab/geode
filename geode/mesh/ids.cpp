@@ -1,8 +1,8 @@
 #include <geode/mesh/ids.h>
+#include <geode/array/convert.h>
 #include <geode/python/Class.h>
 #include <geode/python/numpy.h>
 #include <geode/vector/convert.h>
-
 namespace geode {
 
 // Add numpy conversion support
@@ -14,6 +14,7 @@ GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceId)
 GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexId)
 GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,HalfedgeId)
 GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceId)
+NESTED_CONVERSIONS(HalfedgeId)
 
 GEODE_DEFINE_TYPE(PyPropertyId);
 
