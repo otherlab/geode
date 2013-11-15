@@ -129,6 +129,7 @@ INSTANTIATE(ArithmeticError)
 INSTANTIATE(OverflowError)
 INSTANTIATE(ZeroDivisionError)
 INSTANTIATE(ReferenceError)
+INSTANTIATE(ImportError)
 
 }
 using namespace geode;
@@ -149,6 +150,7 @@ void wrap_exceptions() {
   register_python_exception<OverflowError>(PyExc_OverflowError);
   register_python_exception<ZeroDivisionError>(PyExc_ZeroDivisionError);
   register_python_exception<ReferenceError>(PyExc_ReferenceError);
+  register_python_exception<ImportError>(PyExc_ImportError);
 
   GEODE_FUNCTION(redefine_assertion_error)
 #endif
