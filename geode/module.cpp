@@ -2,8 +2,17 @@
 // Module geode_wrap
 //#####################################################################
 #include <geode/python/module.h>
+#include <geode/python/wrap.h>
 #include <geode/utility/interrupts.h>
 using namespace geode;
+
+static bool has_exact() {
+#ifdef GEODE_GMP
+  return true;
+#else
+  return false;
+#endif
+}
 
 GEODE_PYTHON_MODULE(geode_wrap) {
   GEODE_WRAP(python)
@@ -23,8 +32,12 @@ GEODE_PYTHON_MODULE(geode_wrap) {
   GEODE_WRAP(random)
   GEODE_WRAP(value)
   GEODE_WRAP(force)
-  GEODE_WRAP(exact)
   GEODE_WRAP(solver)
   GEODE_WRAP(openmesh)
   GEODE_WRAP(svg_to_bezier)
+#ifdef GEODE_GMP
+  GEODE_WRAP(exact)
+#endif
+
+  GEODE_FUNCTION(has_exact)
 }

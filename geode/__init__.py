@@ -18,7 +18,8 @@ geode_wrap.redefine_assertion_error(AssertionError)
 # Import children
 from .utility import *
 from .array import *
-from .exact import *
+if has_exact():
+  from .exact import *
 from .geometry import *
 from .value import *
 from .vector import *
