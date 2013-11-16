@@ -92,6 +92,20 @@ static PyObject* rotation_from_matrix(NdArray<const real> A) {
     throw TypeError(format("expected 2x2 or 3x3 matrices, got shape %s",str(A.shape)));
 }
 
+static NdArray<Rotation<Vector<T,3>>> rotation_from_euler_angles_3d(NdArray<const Vector<T,3>> theta) {
+  NdArray<Rotation<Vector<T,3>>> R(theta.shape,false);
+  for (const int i : range(R.flat.size()))
+    R.flat[i] = Rotation<Vector<T,3>>::from_euler_angles(theta.flat[i]);
+  return R;
+}
+
+static NdArray<Vector<T,3>> rotation_euler_angles_3d(NdArray<const Rotation<Vector<T,3>>> R) {
+  NdArray<Vector<T,3>> theta(R.shape,false);
+  for (const int i : range(R.flat.size()))
+    theta.flat[i] = R.flat[i].euler_angles();
+  return theta;
+}
+
 #endif
 }
 using namespace geode;
@@ -105,5 +119,7 @@ void wrap_rotation() {
   function("rotation_array_test_2d",rotation_array_test<Vector<real,2>>);
   function("rotation_array_test_3d",rotation_array_test<Vector<real,3>>);
   GEODE_FUNCTION(rotation_from_matrix);
+  GEODE_FUNCTION(rotation_from_euler_angles_3d);
+  GEODE_FUNCTION(rotation_euler_angles_3d);
 #endif
 }

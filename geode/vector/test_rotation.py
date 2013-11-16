@@ -47,6 +47,8 @@ def test_3d():
   assert all(r2.v==(0,1,0))
   r2.v[:] = (1,0,0)
   assert all(r2.v==(1,0,0))
+  theta = .2*random.randn(3,3)
+  assert allclose(Rotation.from_euler_angles(theta).euler_angles(),theta)
 
 def test_from_3d():
   random.seed(12313)
