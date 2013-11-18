@@ -152,6 +152,12 @@ public:
   int n_edges()          const { return (3*n_faces_+n_boundary_edges_)>>1; }
   int n_boundary_edges() const { return n_boundary_edges_; }
 
+  inline bool is_garbage_collected() const {
+    return n_vertices_ == vertex_to_edge_.size() &&
+           n_faces_ == faces_.size() &&
+           n_boundary_edges_ == boundaries_.size();
+  }
+
   // Walk around the mesh.  These always succeed given valid ids, but may return invalid ids as a result (e.g., the face of a boundary halfedge).
   inline HalfedgeId halfedge(VertexId v)        const;
   inline HalfedgeId prev    (HalfedgeId e)      const;
