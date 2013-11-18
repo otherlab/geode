@@ -1,6 +1,10 @@
 // Multiprecision integer arithmetic for exact geometric predicates
 #pragma once
 
+#ifndef GEODE_GMP
+#error geode/exact requires gmp support: recompile with use_gmp=1 or check config.log for gmp errors
+#endif
+
 #include <geode/exact/config.h>
 #include <geode/array/RawArray.h>
 #include <geode/math/One.h>

@@ -5,7 +5,6 @@
 #include <geode/array/IndirectArray.h>
 #include <geode/array/ProjectedArray.h>
 #include <geode/array/sort.h>
-#include <geode/exact/config.h>
 #include <geode/geometry/Box.h>
 #include <geode/geometry/Sphere.h>
 #include <geode/geometry/traverse.h>
@@ -199,7 +198,6 @@ any_box_intersection(const Shape& shape) const {
   template class BoxTree<Vector<T,d>>; \
   template GEODE_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Box<Vector<T,d>>&) const; \
   template GEODE_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Sphere<Vector<T,d>>&) const;
-template BoxTree<Vector<ExactInt,2>>::BoxTree(RawArray<const Box<Vector<ExactInt,2>>>,int);
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)
 }

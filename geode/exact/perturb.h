@@ -7,7 +7,6 @@
 #include <geode/structure/Tuple.h>
 #include <geode/utility/IRange.h>
 #include <geode/vector/Vector.h>
-#include <gmp.h>
 namespace geode {
 
 // Evaluate predicate(X+epsilon)>0 for a certain infinitesimal perturbation epsilon.  The predicate must be a multivariate polynomial of at most

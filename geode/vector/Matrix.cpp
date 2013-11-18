@@ -35,9 +35,12 @@ convert(PyObject* object) {
   template GEODE_CORE_EXPORT PyObject* to_python<T,m,n>(const Matrix<T,m,n>&); \
   template GEODE_CORE_EXPORT Matrix<T,m,n> FromPython<Matrix<T,m,n> >::convert(PyObject*); \
   ARRAY_CONVERSIONS(1,Matrix<T,m,n>)
-INSTANTIATE(real,2,2)
-INSTANTIATE(real,3,3)
-INSTANTIATE(real,4,4)
+INSTANTIATE(float,2,2)
+INSTANTIATE(float,3,3)
+INSTANTIATE(float,4,4)
+INSTANTIATE(double,2,2)
+INSTANTIATE(double,3,3)
+INSTANTIATE(double,4,4)
 
 #endif
 
