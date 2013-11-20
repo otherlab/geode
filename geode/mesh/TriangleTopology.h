@@ -95,8 +95,7 @@ public:
 
 protected:
 
-  // these functions are needed for the constructors, they are protected because
-  // we are not publicly mutable
+  // These functions are needed for the constructors, but are protected because we are not publically mutable.
 
   // Link two boundary edges together (without ensuring consistency)
   void unsafe_boundary_link(HalfedgeId p, HalfedgeId n) {
@@ -135,6 +134,11 @@ protected:
   // Add many new faces (return the first id, new ids are contiguous)
   GEODE_CORE_EXPORT FaceId internal_add_faces(RawArray<const Vector<int,3>> vs);
 
+  // Collect unused boundary halfedges.  Returns old_to_new map.  This can be called after construction
+  // from triangle soup, since unordered face addition leaves behind garbage boundary halfedges.
+  // The complexity is linear in the size of the boundary (including garbage).
+  GEODE_CORE_EXPORT Array<int> internal_collect_boundary_garbage();
+
   GEODE_CORE_EXPORT TriangleTopology();
   GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, bool copy = false);
   GEODE_CORE_EXPORT explicit TriangleTopology(TriangleSoup const &soup);
@@ -152,11 +156,8 @@ public:
   int n_edges()          const { return (3*n_faces_+n_boundary_edges_)>>1; }
   int n_boundary_edges() const { return n_boundary_edges_; }
 
-  inline bool is_garbage_collected() const {
-    return n_vertices_ == vertex_to_edge_.size() &&
-           n_faces_ == faces_.size() &&
-           n_boundary_edges_ == boundaries_.size();
-  }
+  // Check if vertices, faces, and boundary edges are garbage collected, ensuring contiguous indices.
+  GEODE_CORE_EXPORT bool is_garbage_collected() const;
 
   // Walk around the mesh.  These always succeed given valid ids, but may return invalid ids as a result (e.g., the face of a boundary halfedge).
   inline HalfedgeId halfedge(VertexId v)        const;
@@ -571,7 +572,12 @@ public:
   // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
   // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
   // For any field f, use f.permute() to create a field that works with the new ids
-  GEODE_CORE_EXPORT Tuple<Array<int>, Array<int>, Array<int>> collect_garbage();
+  GEODE_CORE_EXPORT Tuple<Array<int>,Array<int>,Array<int>> collect_garbage();
+
+  // Collect unused boundary halfedges.  Returns old_to_new map.  This can be called after construction
+  // from triangle soup, since unordered face addition leaves behind garbage boundary halfedges.
+  // The complexity is linear in the size of the boundary (including garbage).
+  GEODE_CORE_EXPORT Array<int> collect_boundary_garbage();
 
   // The remaining functions are mainly for internal use, or for external routines that perform direct surgery
   // on the internal structure.  Use with caution!
