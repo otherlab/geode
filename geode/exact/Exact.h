@@ -14,9 +14,6 @@
 #include <gmp.h>
 namespace geode {
 
-struct Uninit {};
-static const Uninit uninit = Uninit();
-
 // A fixed width 2's complement integer compatible with GMP's low level interface.
 // See http://gmplib.org/manual/Low_002dlevel-Functions.html#Low_002dlevel-Functions.
 // Exact<d> holds a signed integer with exactly d*sizeof(Quantized) bytes, suitable
