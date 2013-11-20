@@ -75,7 +75,18 @@ public:
   GEODE_CORE_EXPORT void signal() const;
 
   virtual void dump(int indent) const = 0;
+
+  // things that depend on us
+  virtual vector<Ref<const ValueBase>> dependents() const;
+
+  // things that depend on us, even indirectly
+  virtual vector<Ref<const ValueBase>> all_dependents() const;
+
+  // things we depend on
   virtual vector<Ref<const ValueBase>> dependencies() const = 0;
+
+  // things we depend on, even indirectly
+  virtual vector<Ref<const ValueBase>> all_dependencies() const;
 
   const string& get_name() const;
   GEODE_CORE_EXPORT ValueBase& set_name(const string& n);

@@ -7,6 +7,8 @@
 #include <geode/python/stl.h>
 #include <geode/python/wrap.h>
 #include <geode/utility/const_cast.h>
+#include <geode/python/Ref.h>
+#include <geode/utility/Hasher.h>
 #include <iostream>
 namespace geode {
 
@@ -117,6 +119,52 @@ void ValueBase::pull() const {
     error.throw_();
 }
 
+vector<Ref<const ValueBase>> ValueBase::dependents() const {
+  vector<Ref<const ValueBase>> result;
+  for (ValueBase::Link* link=actions; link; link=link->value_next) {
+    // make sure we have a value here, don't put other things in the
+    auto value_p = dynamic_cast<ValueBase*>(link->action);
+    if (value_p)
+      result.push_back(ref(*value_p));
+  }
+  return result;
+}
+
+vector<Ref<const ValueBase>> ValueBase::all_dependents() const {
+  auto depv = dependents();
+  unordered_set<Ref<const ValueBase>, Hasher> deps(depv.begin(), depv.end());
+  unordered_set<Ref<const ValueBase>, Hasher> incoming = deps;
+  while (!incoming.empty()) {
+    auto depdeps = (*incoming.begin())->dependents();
+    incoming.erase(incoming.begin());
+    for (auto dep : depdeps) {
+      if (!deps.count(dep)) {
+        incoming.insert(dep);
+        deps.insert(dep);
+      }
+    }
+  }
+  return vector<Ref<const ValueBase>>(deps.begin(), deps.end());
+}
+
+vector<Ref<const ValueBase>> ValueBase::all_dependencies() const {
+  auto depv = dependencies();
+  unordered_set<Ref<const ValueBase>, Hasher> deps(depv.begin(), depv.end());
+  unordered_set<Ref<const ValueBase>, Hasher> incoming = deps;
+  while (!incoming.empty()) {
+    auto depdeps = (*incoming.begin())->dependencies();
+    incoming.erase(incoming.begin());
+    for (auto dep : depdeps) {
+      if (!deps.count(dep)) {
+        incoming.insert(dep);
+        deps.insert(dep);
+      }
+    }
+  }
+  return vector<Ref<const ValueBase>>(deps.begin(), deps.end());
+}
+
+
 #ifdef GEODE_PYTHON
 // For testing purposes
 static ValueRef<int> value_test(ValueRef<int> value) {
@@ -176,7 +224,10 @@ void wrap_value_base() {
     .GEODE_METHOD(set_name)
     .GEODE_METHOD(dirty)
     .GEODE_METHOD(dump)
+    .GEODE_METHOD(dependents)
+    .GEODE_METHOD(all_dependents)
     .GEODE_METHOD(dependencies)
+    .GEODE_METHOD(all_dependencies)
     .GEODE_METHOD(signal)
     .GEODE_METHOD(is_prop)
     // The following work only if the object is a Prop
