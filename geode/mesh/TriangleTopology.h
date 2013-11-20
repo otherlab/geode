@@ -137,8 +137,8 @@ protected:
 
   GEODE_CORE_EXPORT TriangleTopology();
   GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, bool copy = false);
-  GEODE_CORE_EXPORT TriangleTopology(TriangleSoup const &soup);
-  GEODE_CORE_EXPORT TriangleTopology(RawArray<const Vector<int,3>> faces);
+  GEODE_CORE_EXPORT explicit TriangleTopology(TriangleSoup const &soup);
+  GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
 
 public:
   ~TriangleTopology();

@@ -4,6 +4,19 @@ from __future__ import division
 from geode import *
 from geode.geometry.platonic import *
 
+def test_basic():
+  a = TriangleTopology([(0,1,2)])
+  b = TriangleTopology(TriangleSoup([(0,1,2)]))
+  assert all(a.elements()==[(0,1,2)])
+  assert all(a.elements()==b.elements())
+  try:
+    TriangleTopology([(-1,1,2)])
+    assert False
+  except ValueError:
+    pass
+  c = TriangleTopology()
+  assert all(c.elements().shape==(0,3))
+
 def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
   random.seed(813177)
   nanosphere = TriangleSoup([(0,1,2),(0,2,1)])

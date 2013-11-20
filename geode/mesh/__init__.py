@@ -4,6 +4,13 @@ from numpy import *
 from geode import *
 import struct
 
+def TriangleTopology(soup=TriangleSoup(empty((0,3),int32))):
+  if isinstance(soup,geode_wrap.TriangleTopology):
+    return soup
+  elif not isinstance(soup,TriangleSoup):
+    soup = TriangleSoup(soup)
+  return geode_wrap.TriangleTopology(soup)
+
 def linear_subdivide(mesh,X,steps=1):
   for _ in xrange(steps):
     subdivide = TriangleSubdivision(mesh)
@@ -149,4 +156,3 @@ def merge_meshes(surfaces):
     X.append(x)
     total += len(x)
   return TriangleSoup(concatenate(tris).astype(int32)),concatenate(X)
-

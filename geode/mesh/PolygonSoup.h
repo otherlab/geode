@@ -29,7 +29,7 @@ private:
   mutable Ptr<TriangleSoup> triangle_mesh_;
 
 protected:
-  PolygonSoup(Array<const int> counts, Array<const int> vertices);
+  explicit PolygonSoup(Array<const int> counts, Array<const int> vertices);
 public:
   ~PolygonSoup();
 

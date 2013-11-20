@@ -43,12 +43,16 @@ TriangleTopology::TriangleTopology(const TriangleTopology& mesh, bool copy)
   , erased_boundaries_(mesh.erased_boundaries_) {}
 
 TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
-: TriangleTopology() {
+  : TriangleTopology() {
+  const int nodes = faces.size() ? scalar_view(faces).max()+1 : 0;
+  internal_add_vertices(nodes);
   internal_add_faces(faces);
 }
 
 TriangleTopology::TriangleTopology(TriangleSoup const &soup)
-: TriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
+  : TriangleTopology() {
+  internal_add_vertices(soup.nodes());
+  internal_add_faces(soup.elements);
 }
 
 TriangleTopology::~TriangleTopology() {}
@@ -134,7 +138,7 @@ HalfedgeId TriangleTopology::unsafe_new_boundary(const VertexId src, const Halfe
 }
 
 GEODE_COLD static void add_face_error(const Vector<VertexId,3> v, const char* reason) {
-  throw RuntimeError(format("TriangleTopology::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
+  throw ValueError(format("TriangleTopology::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
 }
 
 FaceId TriangleTopology::internal_add_face(const Vector<VertexId,3> v) {
@@ -1597,7 +1601,7 @@ void wrap_corner_mesh() {
   {
     typedef TriangleTopology Self;
     Class<Self>("TriangleTopology")
-      .GEODE_INIT()
+      .GEODE_INIT(const TriangleSoup&)
       .GEODE_METHOD(copy)
       .GEODE_GET(n_vertices)
       .GEODE_GET(n_boundary_edges)

@@ -37,7 +37,7 @@ private:
   mutable Array<Vector<int,3>> bending_tuples_;
 
 protected:
-  GEODE_CORE_EXPORT SegmentSoup(Array<const Vector<int,2> > elements);
+  GEODE_CORE_EXPORT explicit SegmentSoup(Array<const Vector<int,2> > elements);
 
   int compute_node_count() const;
 public:
