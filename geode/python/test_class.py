@@ -11,13 +11,13 @@ def test_extra():
     pass
 
 def test_field():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   c.field = 2
   assert c.field==2
   assert c.static_const==17
 
 def test_attr():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   assert c.attr==8
   c.attr = 9
   assert c.attr==9
@@ -33,7 +33,7 @@ def test_attr():
     pass
 
 def test_ref():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   assert isinstance(c.ref,Object)
   o = Object()
   c.ref = o
@@ -45,7 +45,7 @@ def test_ref():
     pass
 
 def test_ptr():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   o = Object()
   assert c.ptr is None
   c.ptr = o
@@ -62,7 +62,7 @@ def test_ref2():
   assert c.ref2 is None
 
 def test_ptr2():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   assert c.ptr2 is None
   c.ptr2 = {}
   assert isinstance(c.ptr2,dict)
@@ -70,14 +70,14 @@ def test_ptr2():
   assert c.ptr2 is None
 
 def test_methods():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   assert c.normal(1)==2
   assert c.virtual_(2)==6
   assert c.static_(3)==15
   assert c(6)==24
 
 def test_prop():
-  c = ClassTest(Object()) 
+  c = ClassTest(Object())
   assert c.prop==17
   c.data = 78
   assert c.data==78
@@ -98,6 +98,13 @@ def test_inherit():
   assert a.prop==17
   assert a.ref is a.y
 
+def test_weakref():
+  import weakref
+  c = ClassTest(Object())
+  r = weakref.ref(c)
+  assert r() is c
+  del c
+  assert r() is None
+
 if __name__=='__main__':
-  test_inherit()
-  test_field()
+  test_weakref()

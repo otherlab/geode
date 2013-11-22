@@ -27,6 +27,7 @@
 //#####################################################################
 #pragma once
 
+#include <geode/math/choice.h>
 #include <geode/python/config.h>
 #include <geode/python/wrap.h>
 #include <geode/python/Object.h>
@@ -42,6 +43,7 @@
 #endif
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/void.hpp>
+#include <boost/integer.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/add_const.hpp>
 #include <boost/type_traits/remove_pointer.hpp>
@@ -118,17 +120,23 @@ protected:
   GEODE_CORE_EXPORT ClassBase(const char* name,bool visible,PyTypeObject* type,ptrdiff_t offset);
 };
 
+
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file
 namespace {
 
 template<class T>
 class Class : public ClassBase {
+  struct Unusable {};
 public:
   typedef typename boost::remove_pointer<decltype(GetSelf<T>::get((PyObject*)0))>::type Self;
 
   Class(const char* name, bool visible=true)
     : ClassBase(name,visible,&T::pytype,(char*)(typename T::Base*)(T*)1-(char*)(T*)1)
-  {}
+  {
+    type->tp_weaklistoffset = WeakRef_Helper<T>::offset();
+    if (type->tp_weaklistoffset)
+      type->tp_flags |= Py_TPFLAGS_HAVE_WEAKREFS;
+  }
 
 #ifdef GEODE_VARIADIC
 
@@ -216,6 +224,9 @@ public:
   }
 
   static void dealloc(PyObject* self) {
+    // clear weak refs if we have to
+    WeakRef_Helper<T>::clear_refs(self);
+
     ((T*)(self+1))->~T(); // call destructor
     self->ob_type->tp_free(self);
   }

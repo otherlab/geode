@@ -18,7 +18,7 @@ private:
   }
 
   void update() const {
-    GEODE_FATAL_ERROR(); // We never go invalid, so this never be called
+    GEODE_FATAL_ERROR(); // We never go invalid, so this should never be called
   }
 
   void dump(int indent) const {

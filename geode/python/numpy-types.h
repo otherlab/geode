@@ -17,8 +17,6 @@ namespace geode {
 // Use an unnamed namespace since a given instantiation of these functions should appear in only one object file
 namespace {
 
-#ifndef GEODE_PYTHON
-
 // Lifted from numpy/ndarraytypes.h
 enum NPY_TYPES { NPY_BOOL=0,
                  NPY_BYTE, NPY_UBYTE,
@@ -32,24 +30,6 @@ enum NPY_TYPES { NPY_BOOL=0,
                  NPY_STRING, NPY_UNICODE,
                  NPY_VOID
 };
-
-#else
-
-// Lifted from numpy/ndarraytypes.h
-enum NPY_TYPES { NPY_BOOL=0,
-                 NPY_BYTE, NPY_UBYTE,
-                 NPY_SHORT, NPY_USHORT,
-                 NPY_INT, NPY_UINT,
-                 NPY_LONG, NPY_ULONG,
-                 NPY_LONGLONG, NPY_ULONGLONG,
-                 NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
-                 NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-                 NPY_OBJECT=17,
-                 NPY_STRING, NPY_UNICODE,
-                 NPY_VOID
-};
-
-#endif
 
 // NumpyIsScalar
 template<class T> struct NumpyIsScalar:public mpl::false_{};
