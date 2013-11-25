@@ -24,8 +24,8 @@ GEODE_DEFINE_TYPE(ValueBase)
 // destruct during dependency propagation.
 ValueBase::Link* ValueBase::pending = 0;
 
-ValueBase::ValueBase()
-  : dirty_(true), actions(0)
+ValueBase::ValueBase(string const &s)
+  : dirty_(true), name_(s), actions(0)
 {}
 
 ValueBase::~ValueBase() {
@@ -178,9 +178,7 @@ bool ValueBase::is_prop() const {
 }
 
 // for backwards compatibility with previously un-named values
-const string& ValueBase::get_name() const { return name; }
-
-ValueBase& ValueBase::set_name(const string& s) { name = s; return *this; }
+const string& ValueBase::name() const { return name_; }
 
 // The following exist only for python purposes: they throw exceptions if the ValueBase isn't a PropBase.
 PropBase& ValueBase::prop() {
@@ -220,8 +218,7 @@ void wrap_value_base() {
   typedef ValueBase Self;
   Class<Self>("Value")
     .GEODE_CALL(PyObject*)
-    .GEODE_FIELD(name)
-    .GEODE_METHOD(set_name)
+    .GEODE_GET(name)
     .GEODE_METHOD(dirty)
     .GEODE_METHOD(dump)
     .GEODE_METHOD(dependents)
