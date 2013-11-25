@@ -325,7 +325,7 @@ public:
   }
 
   PropRef<T> clone_prop() const {
-    PropRef<T> result(self->name,self->default_);
+    PropRef<T> result(self->name(),self->default_);
     result->set_allowed(self->allowed);
     result->copy_range_from(self);
     result->set((*this)());
