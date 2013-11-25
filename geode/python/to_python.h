@@ -35,8 +35,8 @@ static inline PyObject* to_python(PyObject* value) {
   return value;
 }
 
-// Conversion from bool
-static inline PyObject* to_python(bool value) {
+// Conversion from bool, taking care not to accept pointer arguments and other weird types
+template<class T> static inline typename boost::enable_if<boost::is_same<T,bool>,PyObject*>::type to_python(T value) {
   return PyBool_FromLong(value);
 }
 

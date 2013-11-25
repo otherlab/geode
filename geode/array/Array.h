@@ -45,7 +45,7 @@ template<class TArray> struct IsShareableArray<const TArray>:public IsShareableA
 // Array<T> is shareable
 template<class T> struct IsShareableArray<Array<T>>:public mpl::true_{};
 
-// this cannot be GEODE_CORE_EXPORT, since it's defined as a template in headers
+// This cannot be GEODE_CORE_EXPORT, since it's defined as a template in headers
 template<class T,int d> PyObject* to_python(const Array<T,d>& array);
 template<class T,int d> struct FromPython<Array<T,d>>{static Array<T,d> convert(PyObject* object);};
 template<class T,int d> struct has_to_python<Array<T,d>> : public has_to_python<T> {};

@@ -55,6 +55,10 @@ struct null {
   }
 };
 
+// Marker for special uninitialized constructors
+struct Uninit {};
+static const Uninit uninit = Uninit();
+
 // GEODE_REMOVE_PARENS((a,b,c)) = a,b,c
 #define GEODE_REMOVE_PARENS_HELPER(...) __VA_ARGS__
 #define GEODE_REMOVE_PARENS(arg) GEODE_REMOVE_PARENS_HELPER arg

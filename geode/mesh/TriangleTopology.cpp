@@ -43,12 +43,18 @@ TriangleTopology::TriangleTopology(const TriangleTopology& mesh, bool copy)
   , erased_boundaries_(mesh.erased_boundaries_) {}
 
 TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
-: TriangleTopology() {
+  : TriangleTopology() {
+  const int nodes = faces.size() ? scalar_view(faces).max()+1 : 0;
+  internal_add_vertices(nodes);
   internal_add_faces(faces);
+  internal_collect_boundary_garbage();
 }
 
 TriangleTopology::TriangleTopology(TriangleSoup const &soup)
-: TriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
+  : TriangleTopology() {
+  internal_add_vertices(soup.nodes());
+  internal_add_faces(soup.elements);
+  internal_collect_boundary_garbage();
 }
 
 TriangleTopology::~TriangleTopology() {}
@@ -134,7 +140,7 @@ HalfedgeId TriangleTopology::unsafe_new_boundary(const VertexId src, const Halfe
 }
 
 GEODE_COLD static void add_face_error(const Vector<VertexId,3> v, const char* reason) {
-  throw RuntimeError(format("TriangleTopology::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
+  throw ValueError(format("TriangleTopology::add_face: can't add face (%d,%d,%d)%s",v.x.id,v.y.id,v.z.id,reason));
 }
 
 FaceId TriangleTopology::internal_add_face(const Vector<VertexId,3> v) {
@@ -1061,13 +1067,11 @@ void MutableTriangleTopology::erase(FaceId f, bool erase_isolated) {
 // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
 // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
 // Note: non-boundary halfedges don't change order within triangles, so halfedge 3*f+i is now 3*permutation[f]+i
-Tuple<Array<int>, Array<int>, Array<int>> MutableTriangleTopology::collect_garbage() {
+Tuple<Array<int>,Array<int>,Array<int>> MutableTriangleTopology::collect_garbage() {
   Array<int> vertex_permutation(vertex_to_edge_.size()), face_permutation(faces_.size()), boundary_permutation(boundaries_.size());
 
-  int j;
-
   // first, compact vertex indices (because we only ever decrease ids, we can do this in place)
-  j = 0;
+  int j = 0;
   for (int i = 0; i < vertex_to_edge_.size(); ++i) {
     if (!erased(VertexId(i))) {
       mutable_vertex_to_edge_.flat[j] = vertex_to_edge_.flat[i];
@@ -1155,7 +1159,50 @@ Tuple<Array<int>, Array<int>, Array<int>> MutableTriangleTopology::collect_garba
   return tuple(vertex_permutation, face_permutation, boundary_permutation);
 }
 
+Array<int> TriangleTopology::internal_collect_boundary_garbage() {
+  // Compact boundaries
+  int j = 0;
+  Array<int> boundary_permutation(boundaries_.size());
+  for (int i=0;i<boundaries_.size();i++) {
+    if (!erased(HalfedgeId(-1-i))) {
+      const_cast_(boundaries_[j]) = boundaries_[i];
+      boundary_permutation[i] = j;
+      j++;
+    } else {
+      boundary_permutation[i] = -1;
+    }
+  }
+  const_cast_(boundaries_).const_cast_().resize(j);
+  GEODE_ASSERT(boundaries_.size() == n_boundary_edges_);
 
+  // Erase boundary free list
+  const_cast_(erased_boundaries_) = HalfedgeId();
+
+  // Apply boundary permutation
+  for (int i=0;i<boundaries_.size();i++) {
+    auto& B = boundaries_[i];
+    const auto b = HalfedgeId(-1-i);
+    const auto r = B.reverse;
+    const auto f = FaceId(r.id/3);
+    unsafe_set_reverse(f,r.id-3*f.id,b);
+    const_cast_(vertex_to_edge_[B.src]) = b;
+    const_cast_(B.prev) = HalfedgeId(-1-boundary_permutation[-1-B.prev.id]);
+    const_cast_(B.next) = HalfedgeId(-1-boundary_permutation[-1-B.next.id]);
+  }
+  return boundary_permutation;
+}
+
+Array<int> MutableTriangleTopology::collect_boundary_garbage() {
+  const auto p = internal_collect_boundary_garbage();
+  // Once we have boundary fields, we will need to apply p to them
+  return p;
+}
+
+bool TriangleTopology::is_garbage_collected() const {
+  return n_vertices_ == vertex_to_edge_.size() &&
+         n_faces_ == faces_.size() &&
+         n_boundary_edges_ == boundaries_.size();
+}
 
 #ifdef GEODE_PYTHON
 
@@ -1597,7 +1644,7 @@ void wrap_corner_mesh() {
   {
     typedef TriangleTopology Self;
     Class<Self>("TriangleTopology")
-      .GEODE_INIT()
+      .GEODE_INIT(const TriangleSoup&)
       .GEODE_METHOD(copy)
       .GEODE_GET(n_vertices)
       .GEODE_GET(n_boundary_edges)
@@ -1642,6 +1689,7 @@ void wrap_corner_mesh() {
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<HalfedgeId>>(Self::*)() const, halfedges)
       .GEODE_METHOD(boundary_edges)
       .GEODE_METHOD(interior_halfedges)
+      .GEODE_METHOD(is_garbage_collected)
       ;
   }
   {
@@ -1657,6 +1705,7 @@ void wrap_corner_mesh() {
       .GEODE_OVERLOADED_METHOD_2(void(Self::*)(VertexId,bool), "erase_vertex", erase)
       .GEODE_OVERLOADED_METHOD_2(void(Self::*)(HalfedgeId,bool), "erase_halfedge", erase)
       .GEODE_METHOD(collect_garbage)
+      .GEODE_METHOD(collect_boundary_garbage)
       .GEODE_METHOD_2("add_vertex_property", add_vertex_property_py)
       .GEODE_METHOD_2("add_face_property", add_face_property_py)
       .GEODE_METHOD_2("add_halfedge_property", add_halfedge_property_py)

@@ -27,7 +27,8 @@ TriangleSoup::TriangleSoup(Array<const Vector<int,3> > elements)
   // Assert validity and compute counts
   node_count = 0;
   for (int i=0;i<vertices.size();i++) {
-    GEODE_ASSERT(vertices[i]>=0);
+    if (vertices[i] < 0)
+      throw ValueError(format("TriangleSoup: invalid negative vertex %d",vertices[i]));
     node_count = max(node_count,vertices[i]+1);
   }
 }
