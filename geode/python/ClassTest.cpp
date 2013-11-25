@@ -46,7 +46,7 @@ public:
     std::cout << "dumping ClassTest object at " << this << " (0 is at start of PyObject)" << std::endl;
     Object const *othis = dynamic_cast<Object const*>(this);
     WeakRefSupport const *wthis = dynamic_cast<WeakRefSupport const *>(this);
-    PyObject const *pythis = to_python(this);
+    PyObject const *pythis = to_python(geode::ref(*this));
 
     std::cout << "  Object instance at " << othis << std::endl;
     std::cout << "  WeakRefSupport instance at " << wthis << std::endl;

@@ -32,9 +32,9 @@ private:
   template<class T> friend class Value;
   mutable bool dirty_; // are we up to date?
   mutable ExceptionValue error; // is the value an exception?
-public:
-  string name;
+
 private:
+  string name_;
 
   // A link between an Action and a Value
   struct Link
@@ -48,7 +48,8 @@ private:
   static Link* pending; // linked list of pending signals
 
 protected:
-  GEODE_CORE_EXPORT ValueBase();
+  GEODE_CORE_EXPORT ValueBase(string const &name = string());
+
 public:
   GEODE_CORE_EXPORT virtual ~ValueBase();
 
@@ -88,8 +89,7 @@ public:
   // things we depend on, even indirectly
   virtual vector<Ref<const ValueBase>> all_dependencies() const;
 
-  const string& get_name() const;
-  GEODE_CORE_EXPORT ValueBase& set_name(const string& n);
+  const string& name() const;
 
 private:
   GEODE_CORE_EXPORT void pull() const;
@@ -138,7 +138,7 @@ public:
 protected:
   mutable Optional<T> value; // the cached value
 
-  Value() {}
+  Value(string const &name = string()): ValueBase(name) {}
   ~Value() {}
 
   void set_dirty() const {
@@ -223,7 +223,7 @@ public:
   }
 
   friend ostream& operator<<(ostream& output,const ValueRef& v){
-    output << "ValueRef(" << v.self->name << ')';
+    output << "ValueRef(" << v.self->name_ << ')';
     return output;
   }
 
