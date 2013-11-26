@@ -2,8 +2,16 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
+#include <boost/type_traits/is_integral.hpp>
 #include <boost/utility/declval.hpp>
 #include <cassert>
+
+#ifdef GEODE_PYTHON
+#include <geode/python/Ref.h>
+#include <geode/python/Object.h>
+#include <geode/python/to_python.h>
+#endif
+
 namespace geode {
 
 template<class Iter,class Enable> struct Range {
@@ -76,5 +84,39 @@ template<class Iter> static inline Range<Iter> operator-(const Range<Iter>& r, i
 template<class Iter> static inline Range<Iter> operator+(int n, const Range<Iter>& r) {
   return Range<Iter>(r.lo+n,r.hi+n);
 }
+
+#ifdef GEODE_PYTHON
+
+// This makes an iterable/iterator python class out of a range
+template<class Iter> class PyRange: public Object {
+public:
+  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
+
+  Iter cur, end;
+
+  PyObject *iternext() {
+    PyObject *ret = NULL;
+    if (cur != end) {
+      ret = to_python(*cur);
+      ++cur;
+    }
+    return ret;
+  }
+
+protected:
+  PyRange(Range<Iter> const &range): cur(range.lo), end(range.hi) {}
+};
+
+template<class Iter>
+static inline PyObject* to_python(Range<Iter> const &r) {
+  return to_python(new_<PyRange<Iter>>(r));
+}
+
+// put this in a wrap_... function to define the python iterator class
+#define GEODE_PYTHON_RANGE(Iter,Name)\
+  { typedef PyRange<Iter> Self; Class<Self>(Name).iter(); }
+
+#endif
 
 }

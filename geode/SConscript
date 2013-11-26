@@ -8,4 +8,5 @@ env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need
                 imath_pattern=openexr_pattern,
                 openexr_pattern=openexr_pattern)
 
-library(env,'geode',pyname='geode_wrap')
+skip = () if env['use_gmp'] else ('exact',)
+library(env,'geode',pyname='geode_wrap',skip=skip)

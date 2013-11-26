@@ -57,7 +57,7 @@ public:
   }
 
   const string& name_() const { // Can't be named name due to ambiguity in gcc 4.6
-    return base().name;
+    return base().name();
   }
 
   template<class T> Prop<T>* cast() {
@@ -172,10 +172,9 @@ public:
   using Base::name;
 
 protected:
-  Prop(string const& name, const T& value_) 
-    : PropBase(), default_(value_)
+  Prop(string const& name, const T& value_)
+    : Value<T>(name), PropBase(), default_(value_)
   {
-    this->set_name(name);
     this->set_value(value_);
   }
 
@@ -191,7 +190,7 @@ public:
   void set(const T& value_) {
     if (!Equals<T>::eval(*Base::value,value_)) {
       if(allowed.size() && !geode::contains(allowed,value_))
-        throw ValueError("value not in allowed values for " + name);
+        throw ValueError("value not in allowed values for " + name());
       this->set_value(Clamp::clamp(value_));
     }
   }
@@ -326,7 +325,7 @@ public:
   }
 
   PropRef<T> clone_prop() const {
-    PropRef<T> result(self->name,self->default_);
+    PropRef<T> result(self->name(),self->default_);
     result->set_allowed(self->allowed);
     result->copy_range_from(self);
     result->set((*this)());

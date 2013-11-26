@@ -29,6 +29,9 @@ def test_partition_loop():
   for threads in 1,5,14:
     for count in 0,5,7,71:
       partition_loop_test(count,threads)
+  samples = 1000
+  for ranks in 1,2,1024,13813:
+    large_partition_loop_test(1475380615039,ranks,samples)
 
 def test_format():
   format_test()

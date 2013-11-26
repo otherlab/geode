@@ -36,8 +36,8 @@ template<class I> inline Range<I> partition_loop(const I loop_steps) {
 // Inverse of partition_loop: map an index to the thread that owns it
 template<class I,class TI> inline TI partition_loop_inverse(const I loop_steps, const TI threads, const I index) {
   static_assert(boost::is_integral<I>::value && boost::is_integral<TI>::value,"");
-  typedef typename boost::uint_t<8*sizeof(TI)>::exact TUI;
-  GEODE_ASSERT(threads>0 && TUI(index)<TUI(loop_steps));
+  typedef typename boost::uint_t<8*sizeof(I)>::exact UI;
+  GEODE_ASSERT(threads>0 && UI(index)<UI(loop_steps));
   const I steps_per_thread = loop_steps/threads, // Round down, so some threads will get one more step
           extra_steps = loop_steps%threads, // The first extra_steps threads will get one extra step
           threshold = (steps_per_thread+1)*extra_steps; // Before this point, all threads have an extra step

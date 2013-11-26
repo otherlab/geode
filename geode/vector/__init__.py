@@ -64,8 +64,8 @@ def axis_vector(axis,d=3,dtype=real):
 def magnitudes_and_normalized(v):
   "returns magnitudes(v),normalized(v), but doesn't compute magnitudes twice"
   mags = magnitudes(v)
-  result = v/mags[...,newaxis]
   zeros = mags==0
+  result = v/(mags+zeros)[...,None]
   if any(zeros):
     fallback = axis_vector(0,v.shape[-1])
     if isinstance(zeros,ndarray):

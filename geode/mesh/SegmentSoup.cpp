@@ -32,7 +32,8 @@ int SegmentSoup::compute_node_count() const {
   // Assert validity and compute counts
   int c = 0;
   for (int i=0;i<vertices.size();i++) {
-    GEODE_ASSERT(vertices[i]>=0);
+    if (vertices[i] < 0)
+      throw ValueError(format("SegmentSoup: invalid negative vertex %d",vertices[i]));
     c = max(c,vertices[i]+1);
   }
   return c;

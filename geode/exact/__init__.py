@@ -10,6 +10,9 @@ else:
   from .. import geode_wrap
   from ..geode_wrap import *
 
+if not has_exact():
+  raise ImportError('geode/exact is unavailable since geode was compiled without gmp support')
+
 def delaunay_points(X,validate=False):
   return delaunay_points_py(X,validate)
 

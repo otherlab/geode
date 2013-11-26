@@ -81,6 +81,7 @@ GEODE_SIMPLE_EXCEPTION(ArithmeticError,RuntimeError)
   GEODE_SIMPLE_EXCEPTION(OverflowError,ArithmeticError)
   GEODE_SIMPLE_EXCEPTION(ZeroDivisionError,ArithmeticError)
 GEODE_SIMPLE_EXCEPTION(ReferenceError,RuntimeError)
+GEODE_SIMPLE_EXCEPTION(ImportError,RuntimeError)
 
 #undef GEODE_SIMPLE_EXCEPTION
 

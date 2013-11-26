@@ -16,7 +16,9 @@
 #include <geode/python/exceptions.h>
 #include <geode/python/from_python.h>
 #include <geode/python/to_python.h>
+#include <geode/python/function.h>
 #include <boost/type_traits/is_const.hpp>
+
 namespace geode {
 
 using std::exception;

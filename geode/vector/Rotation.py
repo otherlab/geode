@@ -134,6 +134,9 @@ class Rotations3d(ndarray):
         m,v = magnitudes_and_normalized(self.v)
         return atan2(m,self.s)[...,None]*v
 
+    def euler_angles(self):
+        return rotation_euler_angles_3d(self)
+
 Rotations = {2:Rotations2d,3:Rotations3d}
 
 def from_angle(angle):
@@ -186,6 +189,7 @@ def from_rotated_vector(initial,final):
     raise NotImplemented()
 
 from_matrix = rotation_from_matrix
+from_euler_angles = rotation_from_euler_angles_3d
 
 def identity(d):
   if d==2:

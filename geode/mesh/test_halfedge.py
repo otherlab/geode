@@ -4,6 +4,33 @@ from __future__ import division
 from geode import *
 from geode.geometry.platonic import *
 
+def test_basic():
+  a = TriangleTopology([(0,1,2)])
+  b = TriangleTopology(TriangleSoup([(0,1,2)]))
+  assert all(a.elements()==[(0,1,2)])
+  assert all(a.elements()==b.elements())
+  try:
+    TriangleTopology([(-1,1,2)])
+    assert False
+  except ValueError:
+    pass
+  c = TriangleTopology()
+  assert all(c.elements().shape==(0,3))
+
+def test_collect_boundary_garbage():
+  random.seed(13131)
+  soup = torus_topology(4,5)
+  tris = torus_topology(4,5).elements.copy()
+  random.shuffle(tris)
+  mesh = MutableTriangleTopology()
+  assert mesh.is_garbage_collected()
+  mesh.add_vertices(soup.nodes())
+  mesh.add_faces(tris)
+  assert not mesh.is_garbage_collected()
+  mesh.collect_boundary_garbage()
+  mesh.assert_consistent()
+  assert mesh.is_garbage_collected()
+
 def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
   random.seed(813177)
   nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
@@ -88,7 +115,7 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       partial = Mesh()
       partial.add_vertices(soup.nodes())
       check_add_faces(partial,tris)
-      # Check that face splits are safe
+      # Check that face (and maybe edge) splits are safe
       random_face_splits(mesh,20,key+10)
       mesh.assert_consistent()
       # Tear the mesh apart in random order
@@ -101,7 +128,85 @@ def test_halfedge_construction():
 def test_corner_construction():
   construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
 
+def test_properties():
+  random.seed(813177)
+  nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
+  for soup in nanosphere,icosahedron_mesh()[0],torus_topology(4,5),double_torus_mesh(),cylinder_topology(6,5):
+    # Make a MutableTriangleTopology
+    mesh = MutableTriangleTopology()
+    mesh.add_vertices(soup.nodes())
+    mesh.add_faces(soup.elements)
+
+    # make a prop
+    propid1 = mesh.add_vertex_property('int32', invalid_id)
+    assert mesh.has_property(propid1)
+
+    # check size
+    prop1 = mesh.property(propid1)
+    assert prop1.shape == (mesh.n_vertices,)
+
+    # remove a prop
+    mesh.remove_property(propid1)
+    assert not mesh.has_property(propid1)
+
+    # permute vertices and check invariants
+    print 'permuting vertices...'
+    vprop = mesh.add_vertex_property('i', invalid_id)
+    assert mesh.has_property(vprop)
+    vdata = mesh.property(vprop)
+
+    for vertex in mesh.all_vertices():
+      vdata[vertex] = mesh.halfedge(vertex)
+
+    perm = array(random.permutation(mesh.n_vertices),dtype=int32)
+    mesh.permute_vertices(perm, False)
+
+    # update property data (vertex properties are invalidated by permute_vertices)
+    vdata = mesh.property(vprop)
+
+    for vertex in mesh.all_vertices():
+      assert vdata[vertex] == mesh.halfedge(vertex)
+
+    mesh.remove_property(vprop)
+
+    # randomly remove some faces (but no vertices) and collect garbage and check invariants
+    print 'garbage collection test for faces...'
+
+    # make another (vector) prop, which is stored as face colors
+    fprop = mesh.add_face_property('3i', face_color_id)
+    assert mesh.has_property(fprop)
+
+    # get the property memory
+    fdata = mesh.property(fprop)
+    assert fdata.shape == (mesh.n_faces,3)
+
+    # write vertex ids into it
+    for face in mesh.all_faces():
+      fdata[face] = mesh.face_vertices(face)
+      # delete around 50% of faces (but not vertices)
+      if random.uniform() > .5:
+        #print 'erasing face %s, vertices %s' % (face, mesh.face_vertices(face))
+        mesh.erase_face(face, False)
+
+    mesh.collect_garbage()
+    fdata = mesh.property(fprop)
+
+    # since we didn't delete any vertices, their ordering hasn't changed, and we
+    # should be connected to the same vertices as before
+    for face in mesh.all_faces():
+      #print "face: %s, vertices %s, stored %s" % (face, fdata[face], mesh.face_vertices(face))
+      assert all(fdata[face] == mesh.face_vertices(face))
+
+    mesh.remove_property(fprop)
+
+    # split some faces, check that the content of new faces is as expected
+    # (we're already checking consistency)
+
+    # flip some edges, check that the content of affected faces is as expected
+    # (we're already checking consistency)
+
 if __name__=='__main__':
+  test_properties()
   test_corner_construction()
   test_halfedge_construction()
 

@@ -33,6 +33,7 @@
 #include <limits>
 namespace geode {
 
+using std::type_info;
 template<class T,class TArray> class ArrayBase;
 
 template<class TArray,class Enabler=void> struct CanonicalizeConstArray{typedef TArray type;};
@@ -47,6 +48,9 @@ template<class TArray> struct SameArrayCanonical<TArray,TArray> { static bool sa
 }};
 
 template<class TA1,class TA2> struct SameArray : public SameArrayCanonical<typename CanonicalizeConstArray<TA1>::type,typename CanonicalizeConstArray<TA2>::type>{};
+
+// Throw IndexError with nice formatting.  Defined in Array.cpp
+GEODE_CORE_EXPORT void GEODE_NORETURN(out_of_bounds(const type_info& type, const int size, const int i)) GEODE_COLD;
 
 template<class T_,class TArray>
 class ArrayBase {
@@ -558,6 +562,14 @@ public:
 
   T_* end() const { // for stl
     return derived().data()+derived().size();
+  }
+
+  T& at(const int i) const {
+    const TArray& self = derived();
+    const int m = self.size();
+    if (unsigned(i) >= unsigned(m))
+      out_of_bounds(typeid(T),m,i);
+    return self[i];
   }
 };
 

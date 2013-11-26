@@ -13,7 +13,7 @@
 namespace geode {
 namespace {
 
-class ClassTest : public Object {
+class ClassTest : public Object, public WeakRefSupport {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Object Base;
@@ -41,6 +41,25 @@ public:
   int prop() const {return 17;}
   int data() const {return data_;}
   void set_data(int d) {data_=d;}
+
+  void dump_mem() const {
+    std::cout << "dumping ClassTest object at " << this << " (0 is at start of PyObject)" << std::endl;
+    Object const *othis = dynamic_cast<Object const*>(this);
+    WeakRefSupport const *wthis = dynamic_cast<WeakRefSupport const *>(this);
+    PyObject const *pythis = to_python(geode::ref(*this));
+
+    std::cout << "  Object instance at " << othis << std::endl;
+    std::cout << "  WeakRefSupport instance at " << wthis << std::endl;
+    std::cout << "  PyObject at " << pythis << std::endl;
+
+    if (pythis != 0) {
+      uint8_t const *p = (uint8_t const *)pythis;
+      for (int i = -24; i < (int)(sizeof(ClassTest) + sizeof(PyObject) + pytype.tp_weaklistoffset); i += 8) {
+        std::cout << format("0x%016x (%4d): %02x %02x %02x %02x  %02x %02x %02x %02x",
+                            p+i, i, p[i], p[i+1], p[i+2], p[i+3], p[i+4], p[i+5], p[i+6], p[i+7]) << std::endl;
+      }
+    }
+  }
 
   int getattr(const string& name) {
     if (name=="attr")
@@ -89,6 +108,7 @@ void wrap_test_class() {
     .GEODE_CALL(int,int)
     .GEODE_GET(prop)
     .GEODE_GETSET(data)
+    .GEODE_METHOD(dump_mem)
     .getattr()
     .setattr()
     ;

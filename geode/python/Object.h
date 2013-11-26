@@ -56,6 +56,41 @@ template<class T> struct GetSelf {
   }
 };
 
+class WeakRefSupport;
+
+template<class T, bool has_weakrefs = boost::is_base_of<WeakRefSupport,T>::value >
+struct WeakRef_Helper {
+  static int offset() { return 0; }
+  static void clear_refs(PyObject *) {}
+};
+
+template<class T>
+struct WeakRef_Helper<T, true> {
+  static int offset() {
+    // Enable weak reference support if the class derives from WeakRefSupport
+    const T* test = (T*)0xff;
+    PyObject * const * weaklist = &test->weakreflist;
+    int offset = long(weaklist) - long(test) + sizeof(geode::PyObject);
+    return offset;
+  }
+
+  static void clear_refs(PyObject *o) {
+    T *t = GetSelf<T>::get(o);
+    if (t->weakreflist != NULL) {
+      PyObject_ClearWeakRefs(o);
+      t->weakreflist = 0;
+    }
+  }
+};
+
+class GEODE_CORE_CLASS_EXPORT WeakRefSupport {
+  template<class T, bool B> friend struct WeakRef_Helper;
+private:
+  PyObject *weakreflist;
+protected:
+  GEODE_CORE_EXPORT WeakRefSupport(): weakreflist(0) {}
+};
+
 struct ObjectUnusable {};
 
 // Conversion from T& for python types

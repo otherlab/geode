@@ -5,6 +5,10 @@
 #include <geode/vector/Vector.h>
 namespace geode {
 
+void out_of_bounds(const type_info& type, const int size, const int i) {
+  throw IndexError(format("array index out of bounds: type %s, len %d, index %d",type.name(),size,i));
+}
+
 ARRAY_CONVERSIONS(1,bool)
 ARRAY_CONVERSIONS(1,char)
 ARRAY_CONVERSIONS(1,uint8_t)
