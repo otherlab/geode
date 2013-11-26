@@ -9,6 +9,9 @@ def is_value(value):
 def is_prop(prop):
   return is_value(prop) and prop.is_prop()
 
+def const_value(value, name=""):
+  return const_value_py(value, name)
+
 def Prop(name,default,shape=None):
   if shape is None:
     return make_prop(name,default)
