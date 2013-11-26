@@ -74,7 +74,6 @@ GEODE_DEFINE_ID_INTERNAL(PropertyId, (PropertyId<T, Id, Fancy>), (template<class
 class PyPropertyId: public Object {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
-  GEODE_NEW_FRIEND
   typedef Object Base;
 
   const int id;

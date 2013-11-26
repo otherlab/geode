@@ -14,6 +14,18 @@
 #include <gmp.h>
 namespace geode {
 
+// If we have gmp 4, set up some compatibility routines
+#if __GMP_MP__ < 5
+static void mpn_neg(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
+  mpn_sub_1(rp,sp,n,1);
+  for (int i=0;i<int(n);i++)
+    rp[i] = ~rp[i]; 
+}
+static void mpn_sqr(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
+  mpn_mul_n(rp,sp,sp,n);
+}
+#endif
+
 // A fixed width 2's complement integer compatible with GMP's low level interface.
 // See http://gmplib.org/manual/Low_002dlevel-Functions.html#Low_002dlevel-Functions.
 // Exact<d> holds a signed integer with exactly d*sizeof(Quantized) bytes, suitable

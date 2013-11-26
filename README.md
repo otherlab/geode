@@ -13,7 +13,7 @@ For C++:
 
 * [boost >= 1.46](http://www.boost.org): Various C++ utility libraries (Boost Software License)
 * [scons >= 2.0](http://www.scons.org): A build system (MIT license)
-* [gmp >= 5.0](http://gmplib.org): Arbitrary precision arithmetic (LGPL)
+* [gmp >= 4.0](http://gmplib.org): Arbitrary precision arithmetic (LGPL)
 * [cblas](http://www.netlib.org/blas/blast-forum/cblas.tgz): C wrappers for BLAS (BSD license)
 
 For Python:

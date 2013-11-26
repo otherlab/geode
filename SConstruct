@@ -18,7 +18,7 @@ sys.path.insert(0,Dir('#').abspath)
 try:
   import config
   has_config = True
-except:
+except ImportError:
   has_config = False
 
 del sys.path[0]
@@ -348,6 +348,10 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
   # Check whether the external is usable
   if configure is not None:
     has = configure if isinstance(configure,bool) else configure(env,lib)
+    if not has:
+      env['use_'+name] = 0
+      del externals[name]
+      fail()
   else:
     assert headers is not None
 

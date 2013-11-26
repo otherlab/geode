@@ -96,7 +96,7 @@ template<int d> static void wrap_box_helper() {
     .template method<void(Box<TV>::*)(const TV&)>("enlarge",&Self::enlarge)
     ;
 
-  function(d==1?"empty_box_1d":d==2?"empty_box_2d":"empty_box_3d",Box<TV>::empty_box);
+  geode::python::function(d==1?"empty_box_1d":d==2?"empty_box_2d":"empty_box_3d",Box<TV>::empty_box);
 }
 
 void wrap_analytic_implicit() {
