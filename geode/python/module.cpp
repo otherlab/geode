@@ -115,10 +115,10 @@ void wrap_python() {
   GEODE_WRAP(test_class)
   GEODE_WRAP(numpy)
 
-  function("list_convert_test",convert_test<vector<int> >);
-  function("set_convert_test",convert_test<unordered_set<int> >);
-  function("dict_convert_test",convert_test<unordered_map<int,string> >);
-  function("enum_convert_test",convert_test<EnumTest>);
+  python::function("list_convert_test",convert_test<vector<int> >);
+  python::function("set_convert_test",convert_test<unordered_set<int> >);
+  python::function("dict_convert_test",convert_test<unordered_map<int,string> >);
+  python::function("enum_convert_test",convert_test<EnumTest>);
 
   GEODE_ENUM(EnumTest)
   GEODE_ENUM_VALUE(EnumTestA)
