@@ -12,7 +12,6 @@
 namespace geode {
 
 using std::string;
-using boost::function;
 
 #ifdef GEODE_PYTHON
 
@@ -70,9 +69,9 @@ template<> void PythonFunctionWrapper<void>::return_(PyObject* r) {
 
 GEODE_CORE_EXPORT void GEODE_NORETURN(throw_callable_error(PyObject* object));
 
-template<class F> struct FromPython<function<F> >{static function<F> convert(PyObject* object) {
+template<class F> struct FromPython<boost::function<F> >{static boost::function<F> convert(PyObject* object) {
   if (object==Py_None)
-    return function<F>();
+    return boost::function<F>();
   if (!PyCallable_Check(object))
     throw_callable_error(object);
   return PythonFunctionWrapper<typename boost::function_traits<F>::result_type>(object);
