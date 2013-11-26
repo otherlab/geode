@@ -4,9 +4,8 @@
 //
 // To use,
 //
-// 1. Put GEODE_DECLARE_ENUM(E) in a .h.
-// 2. Put GEODE_DEFINE_ENUM(E) in a .cpp.
-// 3. In a wrap() function, do
+// 1. Put GEODE_DEFINE_ENUM(E) in a .cpp.
+// 2. In a wrap() function, do
 //
 //   GEODE_ENUM(E)
 //   GEODE_ENUM_VALUE(value0)
@@ -37,7 +36,7 @@ using std::make_pair;
 template<class E> class PyEnum : public Object {};
 
 // For dllimport/export reaons, this has to be used in the library it is exported from, with its export specifier. So
-// we declare the generic template here (which is independent of export specs), and this macro declares template 
+// we declare the generic template here (which is independent of export specs), and this macro declares template
 // specializations with the proper exports.
 #define GEODE_DEFINE_ENUM(E,EXPORT) \
   template<> class PyEnum<E> : public Object { \
