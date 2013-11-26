@@ -2,6 +2,7 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
+#include <boost/type_traits/is_integral.hpp>
 #include <boost/utility/declval.hpp>
 #include <cassert>
 
