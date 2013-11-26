@@ -23,7 +23,7 @@ using std::type_info;
 using boost::is_const;
 using boost::is_reference;
 
-class GEODE_CORE_CLASS_EXPORT ValueBase : public Object {
+class GEODE_CORE_CLASS_EXPORT ValueBase : public Object, public WeakRefSupport {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Object Base;
