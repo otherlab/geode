@@ -25,7 +25,7 @@ template<class Iter,class Enable> struct Range {
   const Iter& begin() const { return lo; }
   const Iter& end() const { return hi; }
 
-  Iter operator[](const int i) const { assert(0<=i && i<hi-lo); return lo+i; }
+  Iter operator[](const size_t i) const { assert(i<hi-lo); return lo+i; }
 
   Reference front() const { assert(lo!=hi); return *lo; }
   Reference back() const { assert(lo!=hi); return *(hi-1); }
@@ -73,16 +73,19 @@ template<class I> static inline Range<I> range(I n) {
   return Range<I>(0,n);
 }
 
-template<class Iter> static inline Range<Iter> operator+(const Range<Iter>& r, int n) {
-  return Range<Iter>(r.lo+n,r.hi+n);
+template<class Iter,class I> static inline auto operator+(const Range<Iter>& r, const I n)
+  -> typename boost::enable_if<boost::is_integral<I>,decltype(range(r.lo+n,r.hi+n))>::type {
+  return range(r.lo+n,r.hi+n);
 }
 
-template<class Iter> static inline Range<Iter> operator-(const Range<Iter>& r, int n) {
-  return Range<Iter>(r.lo-n,r.hi-n);
+template<class Iter,class I> static inline auto operator-(const Range<Iter>& r, const I n)
+  -> typename boost::enable_if<boost::is_integral<I>,decltype(range(r.lo-n,r.hi-n))>::type {
+  return range(r.lo-n,r.hi-n);
 }
 
-template<class Iter> static inline Range<Iter> operator+(int n, const Range<Iter>& r) {
-  return Range<Iter>(r.lo+n,r.hi+n);
+template<class Iter,class I> static inline auto operator+(const I n, const Range<Iter>& r)
+  -> typename boost::enable_if<boost::is_integral<I>,decltype(range(r.lo+n,r.hi+n))>::type {
+  return range(r.lo+n,r.hi+n);
 }
 
 #ifdef GEODE_PYTHON
