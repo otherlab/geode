@@ -106,7 +106,7 @@ public:
   }
 
   int max_size() const {
-    return table_.size();
+    return int(table_.size());
   }
 
   int next_resize() const
