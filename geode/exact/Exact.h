@@ -15,13 +15,13 @@
 namespace geode {
 
 // If we have gmp 4, set up some compatibility routines
-#if __GMP_MP__ < 5
-inline void mpn_neg(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
+#if __GNU_MP__ < 5
+static inline void mpn_neg(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
   mpn_sub_1(rp,sp,n,1);
   for (int i=0;i<int(n);i++)
     rp[i] = ~rp[i];
 }
-inline void mpn_sqr(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
+static inline void mpn_sqr(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
   mpn_mul_n(rp,sp,sp,n);
 }
 #endif
