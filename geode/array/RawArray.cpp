@@ -138,6 +138,7 @@ template Array<double,2> RawArray<double,2>::transposed() const;
 template Array<float,2> RawArray<const float,2>::transposed() const;
 template Array<double,2> RawArray<const double,2>::transposed() const;
 #endif
+template void RawArray<unsigned char,2>::transpose();
 template void RawArray<Vector<float,3>,2>::transpose();
 template void RawArray<Vector<float,4>,2>::transpose();
 template void RawArray<Vector<double,3>,2>::transpose();

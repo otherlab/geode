@@ -64,7 +64,7 @@ public:
 
   // Type safe conversion to go from positions in the field back to an Id
   Id ptr_to_id(const T* x) const {
-    Id result = Id(x - flat.begin());
+    Id result = Id(int(x - flat.begin()));
     assert(valid(result));
     return result;
   }
