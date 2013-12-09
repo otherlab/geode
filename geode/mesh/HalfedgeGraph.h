@@ -62,6 +62,7 @@ public:
   bool valid(EdgeId e)     const;
 
   bool is_forward(HalfedgeId e) const { return (e.id&1) == 0; }
+  bool isolated(VertexId v)     const { return !valid(halfedge(v)); }
 
   // Iterate over vertices, edges, or faces
   Range<IdIter<VertexId>>   vertices()  const { return Range<IdIter<VertexId>>  (VertexId(0),  VertexId(  n_vertices())); }
