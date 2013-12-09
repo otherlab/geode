@@ -257,7 +257,7 @@ public:
 
 private:
   Array<uint8_t> data;
-  const size_t t_size;
+  const int t_size;
   uint8_t *tmp; // memory used for swapping
 protected:
   PropertyStorage(PropertyStorage const &o, bool copy = false)
@@ -284,10 +284,10 @@ protected:
   //  - are relocatable: memcpy'ing the object to different memory is ok
   // We can only check for a trivial constructor here, but that's not a bad start.
   template<class T>
-  PropertyStorage(size_t size, T const & def = T(), typename boost::enable_if<typename boost::has_trivial_destructor<T>::type>::type* dummy = 0)
+  PropertyStorage(int size, T const & def = T(), typename boost::enable_if<typename boost::has_trivial_destructor<T>::type>::type* dummy = 0)
   : data(sizeof(T) * size), t_size(sizeof(T)), tmp(new uint8_t[t_size]) {
     // initialize content
-    for (size_t i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) {
       construct(i);
     }
   }
@@ -308,7 +308,7 @@ public:
   }
 
   // maintenance functions without need for types (using element size only)
-  void resize(size_t n) {
+  void resize(int n) {
     int s = size();
 
     for (int i = n; i < s; ++i) {
