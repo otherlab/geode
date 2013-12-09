@@ -1631,11 +1631,13 @@ static void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const ui
   }
 }
 
+#ifdef GEODE_PYTHON
 template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIncoming>);
 template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyOutgoing>);
 template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<VertexId>>);
 template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<FaceId>>);
 template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<HalfedgeId>>);
+#endif
 
 }
 using namespace geode;
@@ -1706,12 +1708,14 @@ void wrap_corner_mesh() {
       .GEODE_OVERLOADED_METHOD_2(void(Self::*)(HalfedgeId,bool), "erase_halfedge", erase)
       .GEODE_METHOD(collect_garbage)
       .GEODE_METHOD(collect_boundary_garbage)
+      #ifdef GEODE_PYTHON
       .GEODE_METHOD_2("add_vertex_property", add_vertex_property_py)
       .GEODE_METHOD_2("add_face_property", add_face_property_py)
       .GEODE_METHOD_2("add_halfedge_property", add_halfedge_property_py)
       .GEODE_METHOD_2("has_property", has_property_py)
       .GEODE_METHOD_2("remove_property", remove_property_py)
       .GEODE_METHOD_2("property", property_py)
+      #endif
       .GEODE_METHOD(permute_vertices)
       ;
   }

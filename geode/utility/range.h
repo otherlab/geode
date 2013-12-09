@@ -120,6 +120,10 @@ static inline PyObject* to_python(Range<Iter> const &r) {
 #define GEODE_PYTHON_RANGE(Iter,Name)\
   { typedef PyRange<Iter> Self; Class<Self>(Name).iter(); }
 
+#else
+// Make this a noop if python support is disabled
+#define GEODE_PYTHON_RANGE(Iter,Name)
+
 #endif
 
 }

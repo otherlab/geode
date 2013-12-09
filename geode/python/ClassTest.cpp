@@ -43,6 +43,7 @@ public:
   void set_data(int d) {data_=d;}
 
   void dump_mem() const {
+    #ifdef GEODE_PYTHON
     std::cout << "dumping ClassTest object at " << this << " (0 is at start of PyObject)" << std::endl;
     Object const *othis = dynamic_cast<Object const*>(this);
     WeakRefSupport const *wthis = dynamic_cast<WeakRefSupport const *>(this);
@@ -59,6 +60,7 @@ public:
                             p+i, i, p[i], p[i+1], p[i+2], p[i+3], p[i+4], p[i+5], p[i+6], p[i+7]) << std::endl;
       }
     }
+    #endif
   }
 
   int getattr(const string& name) {

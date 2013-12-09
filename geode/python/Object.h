@@ -58,11 +58,14 @@ template<class T> struct GetSelf {
 
 class WeakRefSupport;
 
+#ifdef GEODE_PYTHON
+
 template<class T, bool has_weakrefs = boost::is_base_of<WeakRefSupport,T>::value >
 struct WeakRef_Helper {
   static int offset() { return 0; }
   static void clear_refs(PyObject *) {}
 };
+
 
 template<class T>
 struct WeakRef_Helper<T, true> {
@@ -82,6 +85,8 @@ struct WeakRef_Helper<T, true> {
     }
   }
 };
+
+#endif
 
 class GEODE_CORE_CLASS_EXPORT WeakRefSupport {
   template<class T, bool B> friend struct WeakRef_Helper;
