@@ -409,7 +409,7 @@ def link_flags(env):
   workaround = env.get('need_qt',0)
 
   for name,lib in externals.items():
-    if env['need_'+name]:
+    if env_link['need_'+name]:
       all_uses.append('need_'+name)
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
       env_link.AppendUnique(LIBPATH=lib['libpath'])
