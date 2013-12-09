@@ -149,6 +149,7 @@ def test_prop_manager():
 
   assert pm.get("test1")() == 10
   assert pm.get("test2")() == "string"
+  assert pm.get('test1') is pm.test1
   
   test1.set(15)
   test2.set("blah")

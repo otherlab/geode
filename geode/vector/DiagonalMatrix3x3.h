@@ -223,7 +223,7 @@ public:
     static DiagonalMatrix identity_matrix()
     {return DiagonalMatrix(1,1,1);}
 
-    Vector<T,3> To_Vector() const
+    Vector<T,3> to_vector() const
     {return Vector<T,3>(x00,x11,x22);}
 
 //#####################################################################

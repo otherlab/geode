@@ -66,6 +66,7 @@ public:
 #ifdef GEODE_PYTHON
   PropBase& add_python(const string& name, PyObject* default_);
   PropBase& get_or_add_python(const string& name, PyObject* default_);
+  PropBase& getattr(const string& name) const;
 #endif
 };
 

@@ -594,7 +594,7 @@ template<class T,int d> static inline bool isnan(const Array<T,d>& a) {
 }
 
 template<class T,class TArray1,class TArray2> inline typename ScalarPolicy<T>::type dot(const ArrayBase<T,TArray1>& a1_, const ArrayBase<T,TArray2>& a2_) {
-  typedef typename ScalarPolicy<T>::type Scalar;
+  typedef typename ScalarPolicy<typename boost::remove_const<T>::type>::type Scalar;
   const TArray1& a1 = a1_.derived();
   const TArray2& a2 = a2_.derived();
   assert(a1.size()==a2.size());

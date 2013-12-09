@@ -85,6 +85,15 @@ PropBase& PropManager::get_or_add_python(const string& name, PyObject* default_)
     return *value;
   return add_python(name,default_);
 }
+
+PropBase& PropManager::getattr(const string& name) const {
+  const auto prop = get_ptr(name);
+  if (prop)
+    return *prop;
+  else
+    throw AttributeError(name);
+}
+
 #endif
 
 }
@@ -103,6 +112,7 @@ void wrap_prop_manager() {
     .GEODE_CONST_FIELD(items)
     .GEODE_CONST_FIELD(order)
     .GEODE_FIELD(frozen)
+    .getattr()
     ;
 #endif
 }

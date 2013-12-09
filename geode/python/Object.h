@@ -70,7 +70,7 @@ struct WeakRef_Helper<T, true> {
     // Enable weak reference support if the class derives from WeakRefSupport
     const T* test = (T*)0xff;
     PyObject * const * weaklist = &test->weakreflist;
-    int offset = long(weaklist) - long(test) + sizeof(geode::PyObject);
+    const int offset = int(long(weaklist) - long(test) + sizeof(geode::PyObject));
     return offset;
   }
 
