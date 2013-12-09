@@ -209,7 +209,7 @@ public:
     static DiagonalMatrix identity_matrix()
     {return DiagonalMatrix(1,1);}
 
-    Vector<T,2> To_Vector() const
+    Vector<T,2> to_vector() const
     {return Vector<T,2>(x00,x11);}
 
     template<class TMatrix>

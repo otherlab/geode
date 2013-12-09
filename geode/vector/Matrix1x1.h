@@ -235,7 +235,7 @@ public:
     static Matrix identity_matrix()
     {return Matrix((T)1);}
 
-    Vector<T,1> To_Vector() const
+    Vector<T,1> to_vector() const
     {return Vector<T,1>(x00);}
 
     void solve_eigenproblem(Matrix& D,Matrix& V) const

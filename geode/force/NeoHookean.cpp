@@ -103,7 +103,7 @@ public:
   DiagonalizedIsotropicStressDerivative<T,2> isotropic_stress_derivative(const DiagonalMatrix<T,2>& F, const int triangle) const {
     DiagonalMatrix<T,2> F_inverse = F.clamp_min(failure_threshold).inverse();
     T mu_minus_lambda_logJ = mu()+lambda()*log(F_inverse.determinant());
-    SymmetricMatrix<T,2> F_inverse_outer = outer_product(F_inverse.To_Vector());
+    SymmetricMatrix<T,2> F_inverse_outer = outer_product(F_inverse.to_vector());
     DiagonalizedIsotropicStressDerivative<T,2> dP_dF;
     dP_dF.x0000 = mu()+(lambda()+mu_minus_lambda_logJ)*F_inverse_outer.x00;//alpha+beta+gamma
     dP_dF.x1111 = mu()+(lambda()+mu_minus_lambda_logJ)*F_inverse_outer.x11;
@@ -116,7 +116,7 @@ public:
   DiagonalizedIsotropicStressDerivative<T,3> isotropic_stress_derivative(const DiagonalMatrix<T,3>& F, const int tetrahedron) const {
     DiagonalMatrix<T,3> F_inverse = F.clamp_min(failure_threshold).inverse();
     T mu_minus_lambda_logJ = mu()+lambda()*log(F_inverse.determinant());
-    SymmetricMatrix<T,3> F_inverse_outer = outer_product(F_inverse.To_Vector());
+    SymmetricMatrix<T,3> F_inverse_outer = outer_product(F_inverse.to_vector());
     DiagonalizedIsotropicStressDerivative<T,3> dP_dF;
     dP_dF.x0000 = mu()+(lambda()+mu_minus_lambda_logJ)*F_inverse_outer.x00;
     dP_dF.x1111 = mu()+(lambda()+mu_minus_lambda_logJ)*F_inverse_outer.x11;
