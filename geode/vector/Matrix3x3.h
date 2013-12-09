@@ -101,6 +101,12 @@ public:
     void set_column(const int j,const Vector<T,3>& c)
     {assert(unsigned(j)<3);x[0][j]=c[0];x[1][j]=c[1];x[2][j]=c[2];}
 
+    T* data()
+    {return (T*)x;}
+
+    const T* data() const
+    {return (T*)x;}
+
     bool operator==(const Matrix& A) const
     {for(int i=0;i<3;i++) for(int j=0;j<3;j++) if(x[i][j]!=A.x[i][j]) return false;return true;}
 

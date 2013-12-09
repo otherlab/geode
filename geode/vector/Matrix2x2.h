@@ -84,6 +84,12 @@ public:
     const T& operator()(const int i,const int j) const
     {assert(unsigned(i)<2 && unsigned(j)<2);return x[i][j];}
 
+    Vector<T,2>& operator[](const int i)
+    {assert(unsigned(i)<2);return *(Vector<T,2>*)x[i];}
+
+    const Vector<T,2>& operator[](const int i) const
+    {assert(unsigned(i)<2);return *(const Vector<T,2>*)x[i];}
+
     bool valid_index(const int i,const int j) const
     {return unsigned(i)<2 && unsigned(j)<2;}
 
@@ -92,6 +98,12 @@ public:
 
     void set_column(const int j,const Vector<T,2>& c)
     {assert(unsigned(j)<2);x[0][j]=c.x;x[1][j]=c.y;}
+
+    T* data()
+    {return (T*)x;}
+
+    const T* data() const
+    {return (T*)x;}
 
     bool operator==(const Matrix& A) const
     {for(int i=0;i<2;i++) for(int j=0;j<2;j++) if(x[i][j]!=A.x[i][j]) return false;return true;}
