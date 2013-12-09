@@ -54,10 +54,9 @@ If necessary, dependencies can be installed via one of
     sudo port -v install py26-scipy py26-py libpng libjpeg openexr # optional
     sudo port -v install gcc47 # If clang is unavailable
 
-
 Geode can then be installed from source via
 
-    git clone https//github.com/otherlab/geode.git
+    git clone https://github.com/otherlab/geode.git
     cd geode
 
     # Install c++ headers and libraries to /usr/local
