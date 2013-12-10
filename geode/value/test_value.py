@@ -33,6 +33,8 @@ def test_array_prop():
     assert False
   except ValueError:
     pass
+  d = Prop('d',zeros((2,2),dtype=int32),shape=(-1,2))
+  assert d().dtype==dtype('int32')
   
 def test_unusable():
   unusable = unusable_prop_test()

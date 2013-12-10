@@ -40,8 +40,10 @@ void PropBase::dump(int indent) const {
 // we need a special wrapper class to expose Prop<T> to python.
 
 #ifdef GEODE_PYTHON
-Ref<PropBase> make_prop_shape(const string& n, NdArray<const T> a, RawArray<const int> shape) {
+template<class S> static Ref<PropBase> make_prop_shape_helper(const string& n, NdArray<const S> a,
+                                                              RawArray<const int> shape_=RawArray<const int>()) {
   const int rank = a.rank();
+  const auto shape = shape_.size() ? shape_ : a.shape.raw();
   GEODE_ASSERT(rank==shape.size());
   const int fixed = shape.count_matches(-1);
   if (shape.slice(0,fixed).count_matches(-1)!=fixed)
@@ -50,17 +52,34 @@ Ref<PropBase> make_prop_shape(const string& n, NdArray<const T> a, RawArray<cons
     if (a.shape[i]!=shape[i])
       throw ValueError(format("Prop: default shape %s does not match shape specification %s",str(a.shape),str(shape)));
   if (rank==1 && fixed==0) {
-    if (shape[0]==2) return new_<Prop<TV2>>(n,vec(a[0],a[1]));
-    if (shape[0]==3) return new_<Prop<TV3>>(n,vec(a[0],a[1],a[2]));
-    if (shape[0]==4) return new_<Prop<TV4>>(n,vec(a[0],a[1],a[2],a[3]));
+    if (shape[0]==2) return new_<Prop<Vector<S,2>>>(n,vec(a[0],a[1]));
+    if (shape[0]==3) return new_<Prop<Vector<S,3>>>(n,vec(a[0],a[1],a[2]));
+    if (shape[0]==4) return new_<Prop<Vector<S,4>>>(n,vec(a[0],a[1],a[2],a[3]));
   } else if (rank==1 && fixed==1)
-    return new_<Prop<Array<const T>>>(n,a.flat);
+    return new_<Prop<Array<const S>>>(n,a.flat);
   else if (rank==2 && fixed==1) {
-    if (shape[1]==2) return new_<Prop<Array<const TV2>>>(n,vector_view_own<2>(a.flat));
-    if (shape[1]==3) return new_<Prop<Array<const TV3>>>(n,vector_view_own<3>(a.flat));
-    if (shape[1]==4) return new_<Prop<Array<const TV4>>>(n,vector_view_own<4>(a.flat));
+    if (shape[1]==2) return new_<Prop<Array<const Vector<S,2>>>>(n,vector_view_own<2>(a.flat));
+    if (shape[1]==3) return new_<Prop<Array<const Vector<S,3>>>>(n,vector_view_own<3>(a.flat));
+    if (shape[1]==4) return new_<Prop<Array<const Vector<S,4>>>>(n,vector_view_own<4>(a.flat));
   }
   throw NotImplementedError(format("Prop: shape specification %s is not implemented",str(shape)));
+}
+
+static Ref<PropBase> make_prop_shape(const string& n, PyObject* value,
+                                     RawArray<const int> shape=RawArray<const int>()) {
+  const Ptr<> a = steal_ptr(numpy_from_any(value,0,0,0,0,0));
+  if (!a)
+    throw TypeError(format("make_prop_shape: numpy array convertible type expected, got %s",a->ob_type->tp_name));
+  switch (PyArray_TYPE((PyArrayObject*)a.get())) {
+    #define TYPE_CASE(S) \
+      case NumpyScalar<S>::value: \
+        return make_prop_shape_helper(n,from_python<NdArray<const S>>(a.get()),shape);
+    TYPE_CASE(int)
+    TYPE_CASE(real)
+    #undef TYPE_CASE
+  }
+  throw NotImplementedError(format("make_prop_shape: unhandled dtype %s",
+    PyArray_DESCR((PyArrayObject*)a.get())->typeobj->tp_name));
 }
 
 Ref<PropBase> make_prop(const string& n, PyObject* value) {
@@ -84,14 +103,8 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       if (frames_check<TV3>(value))
         return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
     }
-    NdArray<const T> a;
-    try {
-      a = from_python<NdArray<const T>>(value);
-    } catch (const exception&) {
-      // If the NdArray conversion fails, squelch the error and fall back to our default
-      PyErr_Clear();
-    }
-    return make_prop_shape(n,a,a.shape);
+    if (auto a = steal_ptr(numpy_from_any(value,0,0,0,0,0)))
+      return make_prop_shape(n,a.get());
   }
 
   // Default to a property containing an arbitrary python object
