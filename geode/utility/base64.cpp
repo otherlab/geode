@@ -66,8 +66,10 @@ string base64_decode(const string& src) {
     return dst;
   if (src.size()&3)
     throw ValueError(format("base 64 encoded string has length %d not a multiple of 4",src.size()));
-  dst.resize(src.size()/4*3-(src[src.size()-1]=='=')-(src[src.size()-2]=='='));
-  const int n = (src.size()>>2)-(src[src.size()-1]=='=');
+  const auto dst_size = src.size()/4*3-(src[src.size()-1]=='=')-(src[src.size()-2]=='=');
+  GEODE_ASSERT(dst_size<size_t(numeric_limits<int>::max()));
+  dst.resize(int(dst_size));
+  const int n = int((src.size()>>2)-(src[src.size()-1]=='='));
   for (int i=0;i<n;i++) {
     const uint32_t x = decode(src[4*i+0])<<18
                      | decode(src[4*i+1])<<12

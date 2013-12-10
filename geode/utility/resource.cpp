@@ -46,7 +46,7 @@ static string executable_path() {
   return large.data();
 #elif defined(__linux__)
   for (ssize_t n=128;;n*=2) {
-    Array<char> path(n,false);
+    Array<char> path(int(n),false);
     ssize_t m = readlink("/proc/self/exe",path.data(),n-1);
     if (m<0)
       throw OSError(format("executable_path: readlink failed, %s",strerror(errno)));

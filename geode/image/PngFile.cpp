@@ -67,11 +67,15 @@ read(const std::string& filename)
     if(setjmp(png_jmpbuf(png_ptr))) throw IOError(format("Error reading png file %s",filename));
     png_init_io(png_ptr,file);
     png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_STRIP_ALPHA | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_EXPAND,0);
-    int width=png_get_image_width(png_ptr,info_ptr),height=png_get_image_height(png_ptr,info_ptr);
+    const size_t width  = png_get_image_width(png_ptr,info_ptr),
+                 height = png_get_image_height(png_ptr,info_ptr);
+    GEODE_ASSERT((width+1)*(height+1)<size_t(numeric_limits<int>::max()));
 
-    Array<Vector<T,3>,2> image(height,width);
+    Array<Vector<T,3>,2> image((int(height)),int(width));
     Vector<unsigned char,3>** row_pointers=(Vector<unsigned char,3>**)png_get_rows(png_ptr,info_ptr);
-    for(int i=0;i<width;i++)for(int j=0;j<height;j++) image(j,i)=Image<T>::to_scalar_color(row_pointers[height-j-1][i]);
+    for(int i=0;i<int(width);i++)
+      for(int j=0;j<int(height);j++)
+        image(j,i) = Image<T>::to_scalar_color(row_pointers[int(height)-j-1][i]);
 
     png_destroy_read_struct(&png_ptr,&info_ptr,0);
     fclose(file);
@@ -91,15 +95,17 @@ read_alpha(const std::string& filename)
     if(setjmp(png_jmpbuf(png_ptr))) throw IOError(format("Error reading png file %s",filename));
     png_init_io(png_ptr,file);
     png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_EXPAND,0);
-    int width=png_get_image_width(png_ptr,info_ptr),height=png_get_image_height(png_ptr,info_ptr);
+    const size_t width  = png_get_image_width(png_ptr,info_ptr),
+                 height = png_get_image_height(png_ptr,info_ptr);
+    GEODE_ASSERT((width+1)*(height+1)<size_t(numeric_limits<int>::max()));
 
-    Array<Vector<T,4>,2> image(height,width);
+    Array<Vector<T,4>,2> image((int(height)),int(width));
     Vector<unsigned char,4>** row_pointers=(Vector<unsigned char,4>**)png_get_rows(png_ptr,info_ptr);
 
-    for(int i=0;i<width;i++){
-      for(int j=0;j<height;j++) {
-        Vector<unsigned char,4>& v = row_pointers[height-j-1][i];
-        image(j,i)=Image<T>::to_scalar_color(v);
+    for(int i=0;i<int(width);i++){
+      for(int j=0;j<int(height);j++) {
+        Vector<unsigned char,4>& v = row_pointers[int(height)-j-1][i];
+        image(j,i) = Image<T>::to_scalar_color(v);
       }
     }
 
