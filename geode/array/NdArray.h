@@ -32,6 +32,11 @@ public:
     assert(!shape.size() || shape.min()>=0);
   }
 
+  NdArray(Array<const int> shape, Array<T> flat)
+    : shape(shape), flat(flat) {
+    assert(shape.product()==flat.size());
+  }
+
   NdArray(Array<const int> shape, T* data, PyObject* owner)
     : shape(shape), flat(shape.product(),data,owner) {
     assert(!shape.size() || shape.min()>=0);
@@ -98,6 +103,10 @@ public:
     Vector<int,d> shape_;
     for (int i=0;i<d;i++) shape_[i] = shape[i];
     return Array<T,d>(shape_,flat.data(),flat.borrow_owner());
+  }
+
+  template<class S> NdArray<S> as() const {
+    return NdArray<S>(shape,flat.template as<S>());
   }
 
   T& operator()() const {

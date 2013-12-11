@@ -77,6 +77,12 @@ static Ref<PropBase> make_prop_shape(const string& n, PyObject* value,
     TYPE_CASE(int)
     TYPE_CASE(real)
     #undef TYPE_CASE
+    case NumpyScalar<int64_t>::value: {
+      const auto b = from_python<NdArray<const int64_t>>(a.get());
+      const auto c = b.as<const int>();
+      GEODE_ASSERT(b.flat==c.flat.as<const int64_t>());
+      return make_prop_shape_helper(n,c,shape);
+    }
   }
   throw NotImplementedError(format("make_prop_shape: unhandled dtype %s",
     PyArray_DESCR((PyArrayObject*)a.get())->typeobj->tp_name));
