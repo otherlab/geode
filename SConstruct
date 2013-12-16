@@ -59,13 +59,16 @@ if darwin:
 else:
   env.Replace(base='/usr')
 
+# install or develop only if explicitly asked for on the command line
+env['install'] = 'install' in COMMAND_LINE_TARGETS
+env['develop'] = 'develop' in COMMAND_LINE_TARGETS
+
 # Base options
 options(env,
   ('cxx','C++ compiler','<detect>'),
   ('arch','Architecture (e.g. opteron, nocona, powerpc, native)','native'),
   ('type','Type of build (e.g. release, debug, profile)','release'),
   ('default_arch','Architecture that doesn\'t need a suffix',''),
-  ('install','Allow install (set to false to developer mode trees)',1),
   ('cache','Cache directory to use',''),
   ('shared','Build shared libraries',1),
   ('shared_objects','Build shareable objects when without shared libraries',1),
@@ -486,6 +489,17 @@ if windows:
   python_libs = []
   projects = []
 
+# target must be a directory!
+def install_or_link(env, target, src):
+  # get the real location of src
+  src = os.path.join(Dir('.').srcnode().abspath, "%s"%src)
+
+  if env['install']:
+    env.Alias('install', env.Install(target, src))
+  elif env['develop']:
+    env.Alias('develop', env.Command("%s-->%s"%(src,target), src, "mkdir -p '%s'; ln -sf '%s' '%s'" % (target, src, target)))
+
+
 def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,pyname=None):
   if name in env['skip_libs']:
     return
@@ -507,10 +521,8 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
 
   # Install headers
-  if env['install']:
-    header_dir = os.path.join(env['prefix_include'],Dir('.').srcnode().path)
-    for h in headers:
-      env.Alias('install',env.Install(os.path.join(header_dir,os.path.dirname(h)),h))
+  for h in headers:
+    install_or_link(env, os.path.join(env['prefix_include'], Dir('.').srcnode().path, os.path.dirname(h)), h)
 
   # Tell the compiler which library we're building
   env.Append(CPPDEFINES=['BUILDING_'+name])
@@ -544,8 +556,8 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     if 'module.cpp' in cpps:
       python_libs.append(lib)
   else:
-    if env['install']:
-      env.Alias('install',env.Install(env['prefix_lib'],lib))
+    for l in lib:
+      install_or_link(env, env['prefix_lib'], l)
     if env['use_python']:
       if pyname is None:
         pyname = name
@@ -563,24 +575,21 @@ def program(env,name,cpp=None):
   files = objects(env,cpp)
   bin = env.Program('#'+os.path.join(env['variant_build'],'bin',name),files)
   env.Depends('.',bin)
-  if env['install']:
-    env.Alias('install',env.Install(env['prefix_bin'],bin))
+  install_or_link(env, env['prefix_bin'], bin)
 
 # Install a (possibly directory) resource
 def resource(env,dir):
-  if not env['install']:
-    return
   # if dir is a directory, add a dependency for each file found in its subtree
   if os.path.isdir(str(Dir(dir).srcnode())):
     def visitor(basedir, dirname, names):
       reldir = os.path.relpath(dirname, basedir)
       for name in names:
         fullname = os.path.join(dirname, name)
-        env.Alias('install', env.Install(os.path.join(env['prefix_share'], reldir), fullname))
+        install_or_link(env, os.path.join(env['prefix_share'], reldir), fullname)
     basedir = str(Dir('.').srcnode())
     os.path.walk(str(Dir(dir).srcnode()), visitor, basedir)
   else:
-    env.Alias('install', env.Install(env['prefix_share'], Dir(dir).srcnode()))
+    install_or_link(env, env['prefix_share'], Dir(dir).srcnode())
 
 # Configure latex
 def configure_latex():
