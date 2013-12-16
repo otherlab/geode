@@ -98,22 +98,22 @@ The following flags can be used to disable optional components:
 
 ### Developer mode
 
-The libraries are built into `build/$arch/$type` (`build/native/release` by default) if you want to use
-them without installing.  To point python imports to your development tree, run one of
+The libraries are built into `build/$arch/$type` (`build/native/release` by default) if you want to use them without installing.  To point python imports to your development tree, run one of
 
     sudo python setup.py develop
     python setup.py develop --prefix=$HOME
 
-You may also want to add options into config.py:
+To create symlinks in /usr/local/{include,lib} pointing into the development tree, run
 
-    import os
-    install = 0
-    prefix = '#build/$arch/$type'
-    geode_dir = ...
-    geode_include = [geode_dir]
-    geode_libpath = [geode_dir+'/build/$arch/$type/lib']
+    sudo scons -j5 develop
 
-TODO: Add more details about for LD_LIBRARY_PATH or equivalents.
+or
+
+    sudo scons -j5 develop type=debug
+
+which will allow you to develop with geode in C++ as if it was installed.
+
+
 
 ### Acknowledgements
 
