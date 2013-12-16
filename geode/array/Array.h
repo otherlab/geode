@@ -468,8 +468,8 @@ public:
   }
 
   template<class T2> typename boost::disable_if<boost::is_same<T2,Element>,Array<T2>>::type as() const {
-    Array<T2> copy(m_,false);
-    for (int i=0;i<m_;i++) copy[i] = data_[i];
+    Array<typename boost::remove_const<T2>::type> copy(m_,false);
+    for (int i=0;i<m_;i++) copy[i] = T2(data_[i]);
     return copy;
   }
 };

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from geode import Object,ClassTest
+from geode import Object,ClassTest,ClassTest2
 
 def test_extra():
   # Extra arguments should throw exceptions
@@ -105,6 +105,37 @@ def test_weakref():
   assert r() is c
   del c
   assert r() is None
+
+def test_hash():
+  a = ClassTest(Object())
+  a.field = 17
+  b = ClassTest(Object())
+  b.field = 17
+  assert hash(a)==hash(b)
+  b.field = 18
+  assert hash(a)!=hash(b)
+
+def test_compare():
+  c = ClassTest2(17)
+  assert c==c
+  assert not c!=c
+  try:
+    c<c
+    assert False
+  except TypeError:
+    pass
+  a = ClassTest(Object())
+  b = ClassTest(Object())
+  for i in 0,1:
+    a.field = i
+    for j in 0,1:
+      b.field = j
+      assert (a==b)==(a.field==b.field)
+      assert (a!=b)==(a.field!=b.field)
+      assert (a< b)==(a.field< b.field)
+      assert (a> b)==(a.field> b.field)
+      assert (a<=b)==(a.field<=b.field)
+      assert (a>=b)==(a.field>=b.field)
 
 if __name__=='__main__':
   test_weakref()

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from geode import *
 from . import parser
+import types
 
 def is_value(value):
   return isinstance(value, Value)
@@ -26,6 +27,8 @@ class cache_method(object):
     try:
       return getattr(instance,self._name)
     except AttributeError:
+      if type(instance)==types.InstanceType:
+        raise TypeError('cache_method can only be used on new-style classes (must inherit from object)')
       value = cache(types.MethodType(self.f,instance,owner))
       object.__setattr__(instance,self._name,value)
       return value

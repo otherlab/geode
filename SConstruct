@@ -562,7 +562,8 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
       if pyname is None:
         pyname = name
       module = os.path.join('#'+Dir('.').srcnode().path,pyname)
-      python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath])
+      module = python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath])
+      python_env.Depends(module,lib) # scons doesn't always notice this (obvious) dependency
 
 # Build a program
 def program(env,name,cpp=None):

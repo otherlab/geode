@@ -5,6 +5,8 @@
 namespace geode {
 
 NDARRAY_CONVERSIONS(int)
+NDARRAY_CONVERSIONS(long)
+NDARRAY_CONVERSIONS(long long)
 NDARRAY_CONVERSIONS(unsigned long)
 NDARRAY_CONVERSIONS(unsigned long long)
 NDARRAY_CONVERSIONS(float)

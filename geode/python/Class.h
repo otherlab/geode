@@ -124,6 +124,8 @@ protected:
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file
 namespace {
 
+GEODE_VALIDITY_CHECKER(has_less,T,boost::declval<const T&>()<boost::declval<const T&>())
+
 template<class T>
 class Class : public ClassBase {
   struct Unusable {};
@@ -236,6 +238,16 @@ public:
     return *this;
   }
 
+  Class& hash() {
+    type->tp_hash = hash;
+    return *this;
+  }
+
+  Class& compare() {
+    type->tp_richcompare = richcompare;
+    return *this;
+  }
+
 private:
 
   static PyObject* repr_wrapper(PyObject* self) {
@@ -278,6 +290,40 @@ private:
       set_python_exception(error);
       return -1;
     }
+  }
+
+  static bool safe_compare(PyObject* a_, const T& a, const T& b, int op, mpl::false_) {
+    throw TypeError(format("%s has equality but not comparison",a_->ob_type->tp_name));
+  }
+
+  static bool safe_compare(PyObject* a_, const T& a, const T& b, int op, mpl::true_) {
+    switch (op) {
+      case Py_LT: return a<b;
+      case Py_GT: return b<a;
+      case Py_LE: return !(b<a);
+      case Py_GE: return !(a<b);
+      default: GEODE_UNREACHABLE();
+    }
+  }
+
+  static PyObject* richcompare(PyObject* a_, PyObject* b_, int op) {
+    bool result;
+    const T& a = from_python<const T&>(a_);
+    const T& b = from_python<const T&>(b_);
+    try {
+      if (op==Py_EQ || op==Py_NE)
+        result = (a==b)^(op==Py_NE);
+      else
+        result = safe_compare(a_,a,b,op,has_less<T>());
+    } catch (const exception& e) {
+      set_python_exception(e);
+      return 0;
+    }
+    return to_python(result);
+  }
+
+  static long hash(PyObject* self) {
+    return geode::hash(from_python<const T&>(self));
   }
 };
 

@@ -77,11 +77,39 @@ public:
       throw AttributeError("setattr");
 #endif
   }
+
+  friend int hash_reduce(const ClassTest& self) {
+    return self.field;
+  }
+
+  bool operator==(const ClassTest& other) const {
+    return field==other.field;
+  }
+
+  bool operator<(const ClassTest& other) const {
+    return field<other.field;
+  }
+};
+
+struct ClassTest2 : public Object {
+  GEODE_DECLARE_TYPE(GEODE_NO_EXPORT)
+
+  const int field;
+
+protected:
+  ClassTest2(const int field)
+    : field(field) {}
+public:
+
+  bool operator==(const ClassTest2& other) const {
+    return field==other.field;
+  }
 };
 
 const int ClassTest::static_const;
 
 GEODE_DEFINE_TYPE(ClassTest)
+GEODE_DEFINE_TYPE(ClassTest2)
 
 }
 }
@@ -95,23 +123,33 @@ void wrap_test_class() {
     self->virtual_(0);
   } // including destruction
 
-  typedef ClassTest Self;
-  Class<Self>("ClassTest")
-    .GEODE_INIT(Ref<Object>)
-    .GEODE_FIELD(field)
-    .GEODE_FIELD(ref)
-    .GEODE_FIELD(ptr)
-    .GEODE_FIELD(ref2)
-    .GEODE_FIELD(ptr2)
-    .GEODE_FIELD(static_const)
-    .GEODE_METHOD(normal)
-    .GEODE_METHOD(virtual_)
-    .GEODE_METHOD(static_)
-    .GEODE_CALL(int,int)
-    .GEODE_GET(prop)
-    .GEODE_GETSET(data)
-    .GEODE_METHOD(dump_mem)
-    .getattr()
-    .setattr()
-    ;
+  {
+    typedef ClassTest Self;
+    Class<Self>("ClassTest")
+      .GEODE_INIT(Ref<Object>)
+      .GEODE_FIELD(field)
+      .GEODE_FIELD(ref)
+      .GEODE_FIELD(ptr)
+      .GEODE_FIELD(ref2)
+      .GEODE_FIELD(ptr2)
+      .GEODE_FIELD(static_const)
+      .GEODE_METHOD(normal)
+      .GEODE_METHOD(virtual_)
+      .GEODE_METHOD(static_)
+      .GEODE_CALL(int,int)
+      .GEODE_GET(prop)
+      .GEODE_GETSET(data)
+      .GEODE_METHOD(dump_mem)
+      .getattr()
+      .setattr()
+      .hash()
+      .compare()
+      ;
+  } {
+    typedef ClassTest2 Self;
+    Class<Self>("ClassTest2")
+      .GEODE_INIT(int)
+      .compare()
+      ;
+  }
 }
