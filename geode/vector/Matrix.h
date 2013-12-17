@@ -231,4 +231,11 @@ outer_product(const Vector<T,m>& u,const Vector<T,n>& v)
 template<class T,int m,int n> std::ostream& operator<<(std::ostream& output,const Matrix<T,m,n>& A)
 {for(int i=0;i<m;i++){for(int j=0;j<n;j++) output<<std::setw(12)<<A(i,j)<<" ";output<<std::endl;}return output;}
 
+// TODO: Optimize
+template<class T,int m,int n> inline DiagonalMatrix<T,(m<n?m:n)> fast_singular_values(const Matrix<T,m,n>& A) {
+  Matrix<T,m> U;DiagonalMatrix<T,(m<n?m:n)> D;Matrix<T,n> V;
+  A.fast_singular_value_decomposition(U,D,V);
+  return D;
+}
+
 }
