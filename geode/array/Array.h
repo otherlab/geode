@@ -85,7 +85,7 @@ public:
     owner_ = (PyObject*)buffer;
     if (initialize) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_,0,m_*sizeof(T));
+        memset((void*)data_,0,m_*sizeof(T));
       else
         for (int i=0;i<m_;i++)
           const_cast<Element*>(data_)[i] = T();
@@ -100,7 +100,7 @@ public:
     owner_ = (PyObject*)buffer;
     if (initialize) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_,0,m_*sizeof(T));
+        memset((void*)data_,0,m_*sizeof(T));
       else
         for (int i=0;i<m_;i++)
           const_cast<Element*>(data_)[i] = T();
@@ -289,7 +289,7 @@ public:
     preallocate(m_new,copy_existing_elements);
     if (initialize_new_elements && m_new>m_) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_+m_,0,(m_new-m_)*sizeof(T));
+        memset((void*)(data_+m_),0,(m_new-m_)*sizeof(T));
       else
         for (int i=m_;i<m_new;i++) data_[i] = T();
     }
@@ -311,7 +311,7 @@ public:
     }
     if (initialize_new_elements && m_new>m_end) {
       if (IsScalarVectorSpace<T>::value)
-        memset(data_+m_end,0,(m_new-m_end)*sizeof(T));
+        memset((void*)(data_+m_end),0,(m_new-m_end)*sizeof(T));
       else
         for (int i=m_end;i<m_new;i++)
           data_[i] = T();
@@ -460,7 +460,7 @@ public:
 
   void zero() const {
     BOOST_MPL_ASSERT((IsScalarVectorSpace<T>));
-    memset(data_,0,m_*sizeof(T));
+    memset((void*)data_,0,m_*sizeof(T));
   }
 
   template<class T2> typename boost::enable_if<boost::is_same<T2,Element>,Array<T>>::type as() const {
