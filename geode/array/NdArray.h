@@ -69,6 +69,10 @@ public:
     shape = shape_;
   }
 
+  template<class TArray1> bool operator==(const TArray1& v) const {
+    return shape == v.shape && flat == v.flat;
+  }
+
   NdArray& operator=(const NdArray<Element>& source) {
     shape = source.shape;
     flat = source.flat;
