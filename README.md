@@ -43,8 +43,8 @@ Geode makes extensive use of C++11 features, so a relatively recent C++ compiler
 If necessary, dependencies can be installed via one of
 
     # Debian/Ubuntu
-    sudo apt-get install python python-numpy scons libboost-dev
-    sudo apt-get python-scipy python-py libpng-dev libjpeg-dev libopenexr-dev # optional
+    sudo apt-get install python python-numpy scons libboost-dev libgmp-dev
+    sudo apt-get install python-scipy python-pytest libpng-dev libjpeg-dev libopenexr-dev # optional
 
     # Homebrew (recommended)
     brew install scons boost openexr
