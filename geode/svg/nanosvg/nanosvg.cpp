@@ -177,6 +177,7 @@ struct SVGAttrib
     char fillRule; // 1 for nonzero (default), 2 for evenodd
     char hasStroke;
     char visible;
+    char CSSclass[512]; // arbitrary restriction to 512, nice.
 };
 
 struct SVGParser
@@ -264,6 +265,7 @@ static struct SVGParser* svgCreateParser()
     p->attr[0].fillRule = 1;
     p->attr[0].hasStroke = 0;
     p->attr[0].visible = 1;
+    p->attr[0].CSSclass[0] = '\0';
 
     return p;
 }
@@ -431,6 +433,8 @@ static void svgCreatePath(struct SVGParser* p, int closed)
     path->strokeColor = attr->strokeColor;
     if (path->hasStroke)
         path->strokeColor |= (unsigned int)(attr->strokeOpacity*255) << 24;
+
+    path->CSSclass = strdup(attr->CSSclass);
 }
 
 static int isnum(char c)
@@ -694,6 +698,10 @@ static int svgParseAttr(struct SVGParser* p, const char* name, const char* value
     else if (strcmp(name, "transform") == 0)
     {
         svgParseTransform(p, value);
+    }
+    else if (strcmp(name, "class") == 0) // save class attribute for applying a CSS later
+    {
+        strncpy(attr->CSSclass, value, 511);
     }
     else
     {
@@ -1664,6 +1672,8 @@ void svgDelete(struct SVGPath* plist)
         next = path->next;
         if (path->pts)
             free(path->pts);
+        if (path->CSSclass)
+            free(path->CSSclass);
         free(path);
         path = next;
     }

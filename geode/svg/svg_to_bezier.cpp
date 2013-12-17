@@ -1,29 +1,36 @@
 #include <geode/svg/svg_to_bezier.h>
 #include <geode/python/wrap.h>
 #include <geode/python/Class.h>
+#include <geode/python/to_python.h>
+#include <geode/python/Ref.h>
 #include <geode/python/stl.h>
+#include <geode/utility/stl.h>
 
 namespace geode {
 
-static vector<Ref<Bezier<2> > > svg_paths_to_beziers(const struct SVGPath* plist) {
-  struct Path {
-    unsigned int elementIndex;
-    vector<Ref<Bezier<2> > > shapes;
-    Path(unsigned int _elementIndex)
-    : elementIndex(_elementIndex)
-    { }
-  };
+GEODE_DEFINE_TYPE(SVGStyledPath)
 
-  std::vector<Path> paths;
+static vector<Ref<SVGStyledPath>> svg_paths_to_beziers(const struct SVGPath* plist) {
+  std::vector<Ref<SVGStyledPath>> paths;
 
-  Path* path = NULL;
+  Ptr<SVGStyledPath> path;
   for (const SVGPath* it = plist; it; it = it->next){
-    //allocate new path when elementIndex changes
+    //allocate new path only when elementIndex changes
     if(!path || path->elementIndex != it->elementIndex) {
       GEODE_ASSERT(!path || it->elementIndex < path->elementIndex); //check that these are monotonic so we can't miss subpaths that should be together
-      paths.push_back(Path(it->elementIndex));
-      path = &paths.back();
+      paths.push_back(new_<SVGStyledPath>(it->elementIndex));
+      path = paths.back();
+
+      // fill in style info
+      path->fillColor = it->fillColor;
+      path->strokeColor = it->strokeColor;
+      path->strokeWidth = it->strokeWidth;
+      path->hasFill = it->hasFill;
+      path->fillRule = it->fillRule;
+      path->hasStroke = it->hasStroke;
+      path->CSSclass = it->CSSclass;
     }
+
     //make new subpath
     path->shapes.push_back(new_<Bezier<2> >());
     Bezier<2>& bez = *path->shapes.back();
@@ -45,27 +52,40 @@ static vector<Ref<Bezier<2> > > svg_paths_to_beziers(const struct SVGPath* plist
       (last->second->pt - prev->second->pt).magnitude() > 1e-8 ? bez.close() : bez.fuse_ends();
     }
   }
-
-  vector<Ref<Bezier<2> > > result;
-  for(auto& p : paths) {
-    for(auto& b : p.shapes)
-      result.push_back(b);
-  }
-  return result;
+  return paths;
 }
 
-vector<Ref<Bezier<2> > > svgfile_to_beziers(const string& filename) {
+vector<Ref<SVGStyledPath>> svgfile_to_styled_beziers(const string& filename) {
   struct SVGPath* plist = svgParseFromFile(filename.c_str(), NULL);
-  vector<Ref<Bezier<2> > > all_parts = svg_paths_to_beziers(plist);
+  auto paths = svg_paths_to_beziers(plist);
   svgDelete(plist);
-  return all_parts;
+  return paths;
 }
-vector<Ref<Bezier<2> > > svgstring_to_beziers(const string& svgstring) {
+
+vector<Ref<SVGStyledPath>> svgstring_to_styled_beziers(const string& svgstring) {
   std::vector<char> str_buf(svgstring.c_str(), svgstring.c_str()+svgstring.size()+1);
   struct SVGPath* plist = svgParse(&str_buf[0], NULL);
-  vector<Ref<Bezier<2> > > all_parts = svg_paths_to_beziers(plist);
+  auto paths = svg_paths_to_beziers(plist);
   svgDelete(plist);
-  return all_parts;
+  return paths;
+}
+
+vector<Ref<Bezier<2>>> svgfile_to_beziers(const string& filename) {
+  auto styled_parts = svgfile_to_styled_beziers(filename);
+  vector<Ref<Bezier<2>>> parts;
+  for (auto part : styled_parts) {
+    extend(parts, part->shapes);
+  }
+  return parts;
+}
+
+vector<Ref<Bezier<2>>> svgstring_to_beziers(const string& svgstring) {
+  auto styled_parts = svgstring_to_styled_beziers(svgstring);
+  vector<Ref<Bezier<2>>> parts;
+  for (auto part : styled_parts) {
+    extend(parts, part->shapes);
+  }
+  return parts;
 }
 
 }
@@ -73,6 +93,18 @@ vector<Ref<Bezier<2> > > svgstring_to_beziers(const string& svgstring) {
 using namespace geode;
 
 void wrap_svg_to_bezier() {
+  typedef SVGStyledPath Self;
+  Class<Self>("SVGStyledPath")
+    .GEODE_FIELD(fillColor)
+    .GEODE_FIELD(strokeColor)
+    .GEODE_FIELD(hasFill)
+    .GEODE_FIELD(hasStroke)
+    .GEODE_FIELD(CSSclass)
+    .GEODE_FIELD(shapes)
+    ;
+
+  GEODE_FUNCTION(svgfile_to_styled_beziers)
+  GEODE_FUNCTION(svgstring_to_styled_beziers)
   GEODE_FUNCTION(svgfile_to_beziers)
   GEODE_FUNCTION(svgstring_to_beziers)
 }

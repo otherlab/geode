@@ -69,6 +69,7 @@ struct SVGPath
   char fillRule; // 1 for nonzero (default), 2 for evenodd
   char hasStroke;
   int closed;
+  char *CSSclass;
   struct SVGPath* next;
 };
 
