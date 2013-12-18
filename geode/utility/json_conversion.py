@@ -19,7 +19,8 @@ from_json_fn['float']  = lambda v: float(v)
 from_json_fn['string'] = lambda v: str(v)
 from_json_fn['bool']   = lambda v: bool(v)
 
-from_json_fn['vec2'] = from_json_fn['vec3'] = from_json_fn['vec4'] = lambda v: array(v)
+#from_json_fn['vec2'] = from_json_fn['vec3'] = from_json_fn['vec4'] = lambda v: array(v)
+from_json_fn['ndarray'] = lambda v : array(v)
 
 from_json_fn['mat22'] = lambda v: Matrix(array(v).reshape(2, 2))
 from_json_fn['mat33'] = lambda v: Matrix(array(v).reshape(3, 3))
@@ -47,8 +48,11 @@ to_json_fn[Box2d] = to_json_fn[Box3d] = lambda v: {
 }
 
 to_json_fn[ndarray] = lambda v: {
-  't': ('vec%s') % len(v),
-  'v': from_array(v)
+  't': 'ndarray',
+  'v': {
+    'shape': from_array(v.shape),
+    'data': from_ndarray(v)
+  }
 }
 to_json_fn[Matrix] = lambda v: {
   't': ('mat%s%s') % (len(v), len(v[0])),
