@@ -277,6 +277,13 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
       print>>sys.stderr, 'FATAL: %s is required'%name
       Exit(1)
 
+  # Do we want to use this external?
+  Help('\n')
+  options(env,('use_'+name,'Use '+name+' if available',1))
+  if not env['use_'+name]:
+    fail()
+    return
+
   for r in requires:
     if not env['use_'+r]:
       if verbose:
@@ -288,6 +295,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,
          'hide':hide,'callback':callback,'name':name}
   env['need_'+name] = default
+  externals[name] = lib
 
   # Make sure empty lists are copied and do not refer to the same object
   for n in lib:
@@ -296,7 +304,6 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
 
   Help('\n')
   options(env,
-    ('use_'+name,'Use '+name+' if available',1),
     (name+'_dir','Base directory for '+name,dir),
     (name+'_include','Include directory for '+name,0),
     (name+'_libpath','Library directory for '+name,0),
@@ -310,13 +317,6 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
     (name+'_requires','Required libraries for '+name,0),
     (name+'_pkgconfig','pkg-config names for '+name,0),
     (name+'_callback','Arbitrary environment modification callback for '+name,0))
-
-  # Do we want to use this external?
-  if env['use_'+name]:
-    externals[name] = lib
-  else:
-    fail()
-    return
 
   # Absorb settings
   if env[name+'_pkgconfig']!=0: lib['pkg-config']=env[name+'_pkgconfig']
