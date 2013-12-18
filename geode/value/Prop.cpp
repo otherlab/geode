@@ -1,5 +1,6 @@
 #include <geode/value/Prop.h>
 #include <geode/value/Listen.h>
+#include <geode/array/Array.h>
 #include <geode/array/NdArray.h>
 #include <geode/array/view.h>
 #include <geode/python/Class.h>
@@ -43,9 +44,18 @@ void PropBase::dump(int indent) const {
 template<class S> static Ref<PropBase> make_prop_shape_helper(const string& n, NdArray<const S> a,
                                                               RawArray<const int> shape_=RawArray<const int>()) {
   const int rank = a.rank();
-  const auto shape = shape_.size() ? shape_ : a.shape.raw();
+  // if shape is not given, we don't care about the shape, and return a variable sized ndarray
+  const Array<const int> varshape(rank);
+  for (int i = 0; i < rank; ++i) (varshape.const_cast_())[i] = -1;
+  const auto shape = shape_.size() ? shape_ : varshape.raw();
   GEODE_ASSERT(rank==shape.size());
   const int fixed = shape.count_matches(-1);
+  if (fixed == rank) {
+    if (rank == 1)
+      return new_<Prop<Array<const S>>>(n,a.flat);
+    else
+      return new_<Prop<NdArray<const S>>>(n,a);
+  }
   if (shape.slice(0,fixed).count_matches(-1)!=fixed)
     throw ValueError(format("Prop: -1's in shape must occur at the beginning, got %s",str(shape)));
   for (int i=fixed;i<rank;i++)
@@ -55,9 +65,7 @@ template<class S> static Ref<PropBase> make_prop_shape_helper(const string& n, N
     if (shape[0]==2) return new_<Prop<Vector<S,2>>>(n,vec(a[0],a[1]));
     if (shape[0]==3) return new_<Prop<Vector<S,3>>>(n,vec(a[0],a[1],a[2]));
     if (shape[0]==4) return new_<Prop<Vector<S,4>>>(n,vec(a[0],a[1],a[2],a[3]));
-  } else if (rank==1 && fixed==1)
-    return new_<Prop<Array<const S>>>(n,a.flat);
-  else if (rank==2 && fixed==1) {
+  } else if (rank==2 && fixed==1) {
     if (shape[1]==2) return new_<Prop<Array<const Vector<S,2>>>>(n,vector_view_own<2>(a.flat));
     if (shape[1]==3) return new_<Prop<Array<const Vector<S,3>>>>(n,vector_view_own<3>(a.flat));
     if (shape[1]==4) return new_<Prop<Array<const Vector<S,4>>>>(n,vector_view_own<4>(a.flat));
