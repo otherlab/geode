@@ -47,6 +47,11 @@ to_json_fn[Box2d] = to_json_fn[Box3d] = lambda v: {
   }
 }
 
+to_json_fn[list] = lambda v: {
+  't': 'list',
+  'v': v # let's hope this works on the client...
+}
+
 to_json_fn[ndarray] = lambda v: {
   't': 'ndarray',
   'v': {
@@ -88,7 +93,10 @@ from_json_fn[TriMesh] = lambda d: d['v']
 
 def to_json(v):
   fn = to_json_fn.get(type(v), None)
-  return fn(v) if callable(fn) else { 't': None, 'v': None }
+  if callable(fn):
+    return fn(v)
+  else:
+    raise TypeError("Don't know how to transscribe type %s to json." % type(v))
 
 def to_json_string(v):
   return json.dumps(to_json(v), allow_nan = False, separators = (',', ':'))
