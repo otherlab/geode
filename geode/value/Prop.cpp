@@ -85,7 +85,8 @@ static Ref<PropBase> make_prop_shape(const string& n, PyObject* value,
     TYPE_CASE(int)
     TYPE_CASE(real)
     #undef TYPE_CASE
-    case NumpyScalar<int64_t>::value: {
+    case NumpyScalar<long>::value:
+    case NumpyScalar<long long>::value: {
       const auto b = from_python<NdArray<const int64_t>>(a.get());
       const auto c = b.as<const int>();
       GEODE_ASSERT(b.flat==c.flat.as<const int64_t>());
