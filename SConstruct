@@ -576,12 +576,13 @@ def program(env,name,cpp=None):
   files = objects(env,cpp)
   bin = env.Program('#'+os.path.join(env['variant_build'],'bin',name),files)
   env.Depends('.',bin)
-  install_or_link(env, env['prefix_bin'], bin)
+  for b in bin:
+    install_or_link(env, env['prefix_bin'], b)
 
 # Install a (possibly directory) resource
 def resource(env,dir):
-  # if dir is a directory, add a dependency for each file found in its subtree
-  if os.path.isdir(str(Dir(dir).srcnode())):
+  # if we are installing, and we're adding a directory, add a dependency for each file found in its subtree
+  if env['install'] and os.path.isdir(str(Dir(dir).srcnode())):
     def visitor(basedir, dirname, names):
       reldir = os.path.relpath(dirname, basedir)
       for name in names:
@@ -590,6 +591,7 @@ def resource(env,dir):
     basedir = str(Dir('.').srcnode())
     os.path.walk(str(Dir(dir).srcnode()), visitor, basedir)
   else:
+    # if we're just making links, a single link is enough even if it's a directory
     install_or_link(env, env['prefix_share'], Dir(dir).srcnode())
 
 # Configure latex
