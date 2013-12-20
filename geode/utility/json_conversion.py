@@ -55,7 +55,7 @@ to_json_fn[list] = lambda v: {
 to_json_fn[ndarray] = lambda v: {
   't': 'ndarray',
   'v': {
-    'shape': from_array(v.shape),
+    'shape': v.shape,
     'data': from_ndarray(v)
   }
 }
