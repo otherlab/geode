@@ -47,11 +47,12 @@ If necessary, dependencies can be installed via one of
     sudo apt-get install python-scipy python-pytest libpng-dev libjpeg-dev libopenexr-dev # optional
 
     # Homebrew (recommended)
-    brew install scons boost openexr
+    brew install scons boost openexr gfortran python
+    sudo pip install --upgrade pip setuptools numpy scipy pytest
 
-    # MacPorts (not recommended)
+    # MacPorts (not recommended).  If you have python 2.7, replace py26 with py27.
     sudo port -v install python26 py26-numpy scons boost
-    sudo port -v install py26-scipy py26-py libpng libjpeg openexr # optional
+    sudo port -v install py26-scipy py26-py libpng jpeg openexr # optional
     sudo port -v install gcc47 # If clang is unavailable
 
 Geode can then be installed from source via
