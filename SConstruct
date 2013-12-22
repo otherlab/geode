@@ -489,16 +489,20 @@ if windows:
   python_libs = []
   projects = []
 
-# target must be a directory!
-def install_or_link(env, target, src):
-  # get the real location of src
-  src = os.path.join(Dir('.').srcnode().abspath, "%s"%src)
-
+# Target must be a directory!
+def install_or_link(env,target,src):
+  # Get the real location of src
+  srcpath = File(src).abspath
+  if not os.path.exists(srcpath):
+    srcpath = File(src).srcnode().abspath
+    if not os.path.exists(srcpath):
+      raise RuntimeError("can't find %s in either source or build directories"%src)
   if env['install']:
-    env.Alias('install', env.Install(target, src))
+    env.Alias('install',env.Install(target,srcpath))
   elif env['develop']:
-    env.Alias('develop', env.Command("%s-->%s"%(src,target), src, "mkdir -p '%s'; ln -sf '%s' '%s'" % (target, src, target)))
-
+    cmd = env.Command([],srcpath,"mkdir -p '%s' && ln -sf '%s' '%s'"%(target,srcpath,target))
+    env.Alias('develop',cmd)
+    env.AlwaysBuild(cmd) # For some reason, generated headers fail to install without this
 
 def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,pyname=None):
   if name in env['skip_libs']:
@@ -750,7 +754,8 @@ def children(env,skip=()):
       child(env,dir)
 
 # Build everything
-Export('child children options external externals library objects program latex clang posix darwin windows resource')
+Export('''child children options external externals library objects program latex
+          clang posix darwin windows resource install_or_link''')
 if os.path.exists(File('#SConscript').abspath):
   child(env,'.')
 else:
