@@ -11,7 +11,8 @@ GEODE_DEFINE_TYPE(Object)
 Object::Object() {
 #ifndef NDEBUG
   const auto self = (PyObject*)this-1;
-  assert(self->ob_refcnt==1); // Partially check that object was constructed inside new_ or a wrapped constructor
+  // Partially check that object was constructed inside new_ or a wrapped constructor
+  assert(self->ob_refcnt==1 && "Maybe object built outside new_, or compile mixes GEODE_PYTHON and !GEODE_PYTHON");
 #endif
 }
 
