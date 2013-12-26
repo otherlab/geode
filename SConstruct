@@ -62,6 +62,8 @@ else:
 # install or develop only if explicitly asked for on the command line
 env['install'] = 'install' in COMMAND_LINE_TARGETS
 env['develop'] = 'develop' in COMMAND_LINE_TARGETS
+if env['develop']:
+  env.Alias('develop',[])
 
 # Base options
 options(env,
@@ -500,9 +502,7 @@ def install_or_link(env,target,src):
   if env['install']:
     env.Alias('install',env.Install(target,srcpath))
   elif env['develop']:
-    cmd = env.Command([],srcpath,"mkdir -p '%s' && ln -sf '%s' '%s'"%(target,srcpath,target))
-    env.Alias('develop',cmd)
-    env.AlwaysBuild(cmd) # For some reason, generated headers fail to install without this
+    env.Execute("d='%s' && mkdir -p $$$$d && ln -sf '%s' $$$$d"%(target,srcpath))
 
 def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,pyname=None):
   if name in env['skip_libs']:
