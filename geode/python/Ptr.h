@@ -127,6 +127,10 @@ public:
   template<class S> bool operator<=(const Ref<S>& o) const { return self<=o.self; }
   template<class S> bool operator>=(const Ref<S>& o) const { return self>=o.self; }
 
+  Ptr<typename boost::remove_const<T>::type> const_cast_() const {
+    typedef typename boost::remove_const<T>::type S;
+    return Ptr<S>(const_cast<S*>(self),owner_);
+  }
 };
 
 template<class T> static inline Ref<T> ref(Ptr<T>& ptr) {
