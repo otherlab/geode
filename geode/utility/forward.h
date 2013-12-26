@@ -36,8 +36,10 @@ template<class A0,class A1=void,class A2=void,class A3=void,class A4=void,class 
 // A list of types
 #ifdef GEODE_VARIADIC
 template<class... Args> struct Types {
+  static const int size = sizeof...(Args);
   typedef Types type;
 };
+template<class... Args> const int Types<Args...>::size;
 #else
 template<class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void,class A6=void,class A7=void,class A8=void,class A9=void> struct Types {
   typedef Types type;
