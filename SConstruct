@@ -493,16 +493,17 @@ if windows:
 
 # Target must be a directory!
 def install_or_link(env,target,src):
-  # Get the real location of src
-  srcpath = File(src).abspath
-  if not os.path.exists(srcpath):
-    srcpath = File(src).srcnode().abspath
+  if env['install'] or env['develop']:
+    # Get the real location of src
+    srcpath = File(src).abspath
     if not os.path.exists(srcpath):
-      raise RuntimeError("can't find %s in either source or build directories"%src)
-  if env['install']:
-    env.Alias('install',env.Install(target,srcpath))
-  elif env['develop']:
-    env.Execute("d='%s' && mkdir -p $$$$d && ln -sf '%s' $$$$d"%(target,srcpath))
+      srcpath = File(src).srcnode().abspath
+      if not os.path.exists(srcpath):
+        raise RuntimeError("can't find %s in either source or build directories"%src)
+    if env['install']:
+      env.Alias('install',env.Install(target,srcpath))
+    elif env['develop']:
+      env.Execute("d='%s' && mkdir -p $$$$d && ln -sf '%s' $$$$d"%(target,srcpath))
 
 def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,pyname=None):
   if name in env['skip_libs']:
