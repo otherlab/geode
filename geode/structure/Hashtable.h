@@ -341,6 +341,38 @@ struct HashtableIter {
   }
 };
 
+// Python conversion
+#ifdef GEODE_PYTHON
+template<class K> struct has_to_python<Hashtable<K>> : public has_to_python<K> {};
+template<class K,class V> struct has_to_python<Hashtable<K,V>> : public mpl::and_<has_to_python<K>,has_to_python<V>> {};
+
+template<class K> PyObject* to_python(const Hashtable<K>& h) {
+  return to_python_set(h);
+}
+
+template<class K,class V> PyObject* to_python(const Hashtable<K,V>& h) {
+  PyObject* dict = PyDict_New();
+  if (!dict) goto fail;
+  for (auto& x : h) {
+    PyObject* k = to_python(x.key());
+    if (!k) goto fail;
+    PyObject* v = to_python(x.data());
+    if (!v) {
+      Py_DECREF(k);
+      goto fail;
+    }
+    const int r = PyDict_SetItem(dict,k,v);
+    Py_DECREF(k);
+    Py_DECREF(v);
+    if (r<0) goto fail;
+  }
+  return dict;
+fail:
+  Py_XDECREF(dict);
+  return 0;
+}
+#endif
+
 }
 namespace std {
 template<class TK,class T> void swap(geode::Hashtable<TK,T>& hash1,geode::Hashtable<TK,T>& hash2) {

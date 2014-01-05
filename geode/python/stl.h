@@ -52,30 +52,12 @@ template<class T> PyObject* to_python(const vector<T>& v) {
   return list;
 }
 
-template<class TS> PyObject* to_python_set(const TS& s) {
-  using namespace geode;
-  using geode::to_python;
-  PyObject* set = PySet_New(0);
-  if (!set) goto fail;
-  for (auto it=s.begin(),end=s.end();it!=end;++it) { // Avoid foreach since pcl needs gcc 4.4
-    PyObject* o = to_python(*it);
-    if (!o) goto fail;
-    int r = PySet_Add(set,o);
-    Py_DECREF(o);
-    if (r<0) goto fail;
-  }
-  return set;
-  fail:
-  Py_XDECREF(set);
-  return 0;
-}
-
 template<class T,class O> static inline PyObject* to_python(const set<T,O>& s) {
-  return to_python_set(s);
+  return geode::to_python_set(s);
 }
 
 template<class T,class H> static inline PyObject* to_python(const tr1::unordered_set<T,H>& s) {
-  return to_python_set(s);
+  return geode::to_python_set(s);
 }
 
 template<class TM> PyObject* to_python_map(const TM& m) {
