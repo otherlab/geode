@@ -77,8 +77,8 @@ public:
     }
   }
 
-  operator SafeBool() const {
-    return safe_bool(self);
+  operator typename SafeBool<Unique>::type() const {
+    return safe_bool<Unique>(self);
   }
 
   Unique(const Unique& rhs) = delete;
