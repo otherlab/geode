@@ -78,7 +78,7 @@ public:
 #endif
   }
 
-  friend int hash_reduce(const ClassTest& self) {
+  GEODE_UNUSED friend int hash_reduce(const ClassTest& self) {
     return self.field;
   }
 

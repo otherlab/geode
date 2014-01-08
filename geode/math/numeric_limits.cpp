@@ -11,10 +11,15 @@ using std::numeric_limits;
 #ifdef GEODE_PYTHON
 
 namespace {
-template<class T> struct Limits : public Object, public numeric_limits<T> {
+template<class T> struct Limits : public Object {
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   static const T min, max, epsilon, round_error, infinity, quiet_NaN, signaling_NaN, denorm_min;
-
+  static const int digits = numeric_limits<T>::digits;
+  static const int digits10 = numeric_limits<T>::digits10;
+  static const int min_exponent = numeric_limits<T>::min_exponent;
+  static const int min_exponent10 = numeric_limits<T>::min_exponent10;
+  static const int max_exponent = numeric_limits<T>::max_exponent;
+  static const int max_exponent10 = numeric_limits<T>::max_exponent10;
   string repr() const {
     // Use separate format calls since Windows lacks variadic templates
     return format("numeric_limits<%s>:\n  min = %g\n  max = %g\n  epsilon = %g\n  round_error = %g\n  quiet_NaN = %g\n",
@@ -23,7 +28,7 @@ template<class T> struct Limits : public Object, public numeric_limits<T> {
          + format("  signaling_NaN = %g\n  denorm_min = %g\n",
                   signaling_NaN,denorm_min)
          + format("  digits = %d\n  digits10 = %d\n  min_exponent = %d\n  min_exponent10 = %d\n  max_exponent = %d\n  max_exponent10 = %d",
-                  this->digits,this->digits10,this->min_exponent,this->min_exponent10,this->max_exponent,this->max_exponent10);
+                  digits,digits10,min_exponent,min_exponent10,max_exponent,max_exponent10);
   }
 };
 #define VALUE(name) template<class T> const T Limits<T>::name = numeric_limits<T>::name();
@@ -35,7 +40,15 @@ VALUE(infinity)
 VALUE(quiet_NaN)
 VALUE(signaling_NaN)
 VALUE(denorm_min)
-#define COUNT(name) template<class T> const int Limits<T>::name = numeric_limits<T>::name;
+#undef VALUE
+#define COUNT(name) template<class T> const int Limits<T>::name;
+COUNT(digits)
+COUNT(digits10)
+COUNT(min_exponent)
+COUNT(min_exponent10)
+COUNT(max_exponent)
+COUNT(max_exponent10)
+#undef COUNT
 
 template<> GEODE_DEFINE_TYPE(Limits<float>)
 template<> GEODE_DEFINE_TYPE(Limits<double>)

@@ -353,8 +353,9 @@ public:
   Class& call() { return *this; }
   Class& setattr() { return *this; }
   Class& getattr() { return *this; }
-
-  static void dealloc(PyObject* self) {
+  Class& hash() { return *this; }
+  Class& compare() { return *this; }
+static void dealloc(PyObject* self) {
     ((T*)(self+1))->~T(); // call destructor
     free(self);
   }
