@@ -217,7 +217,7 @@ void wrap_value_base() {
 #ifdef GEODE_PYTHON
   typedef ValueBase Self;
   Class<Self>("Value")
-    .GEODE_CALL(PyObject*)
+    .GEODE_CALL()
     .GEODE_GET(name)
     .GEODE_METHOD(dirty)
     .GEODE_METHOD(dump)

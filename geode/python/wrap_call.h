@@ -34,20 +34,22 @@ template<class R,class T,class... Args> static inline ternaryfunc wrap_call_help
   return OuterWrapper<R,PyObject*,PyObject*,PyObject*>::template wrap<call_inner_wrapper<R,T,Args...> >;
 }
 
-template<class T,class R,class... Args> static inline ternaryfunc
+template<class T,class... Args> static inline ternaryfunc
 wrap_call() {
+  typedef decltype((*(T*)0)(boost::declval<Args>()...)) R;
   return wrap_call_helper<R,T>(typename Enumerate<Args...>::type());
 }
 
 #else // Unpleasant nonvariadic versions
 
-template<class T,class R,class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void> struct WrapCall;
+template<class T,class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,class A5=void> struct WrapCall;
 
 #define GEODE_WRAP_CALL(n,ARGS,Args) \
   GEODE_WRAP_CALL_2(n,(,GEODE_REMOVE_PARENS(ARGS)),(,GEODE_REMOVE_PARENS(Args)))
 
-#define GEODE_WRAP_CALL_2(n,CARGS,CArgs) \
-  template<class T,class R GEODE_REMOVE_PARENS(CARGS)> struct WrapCall<T,R GEODE_REMOVE_PARENS(CArgs)> { \
+#define GEODE_WRAP_CALL_2(n,CARGS,CArgs,values) \
+  template<class T GEODE_REMOVE_PARENS(CARGS)> struct WrapCall<T GEODE_REMOVE_PARENS(CArgs)> { \
+    typedef decltype((*(T*)0) values) R; \
     /* Inner wrapper: convert arguments and call method */ \
     static R inner_wrapper(PyObject* self,PyObject* args,PyObject* kwargs) { \
       Py_ssize_t size = PyTuple_GET_SIZE(args); \
@@ -62,12 +64,14 @@ template<class T,class R,class A0=void,class A1=void,class A2=void,class A3=void
     } \
   };
 
-GEODE_WRAP_CALL_2(0,(),())
-GEODE_WRAP_CALL(1,(class A0),(A0))
-GEODE_WRAP_CALL(2,(class A0,class A1),(A0,A1))
-GEODE_WRAP_CALL(3,(class A0,class A1,class A2),(A0,A1,A2))
-GEODE_WRAP_CALL(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3))
-GEODE_WRAP_CALL(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4))
+#define V(i) boost::declval<A##i>()
+GEODE_WRAP_CALL_2(0,(),(),())
+GEODE_WRAP_CALL(1,(class A0),(A0),(V(0)))
+GEODE_WRAP_CALL(2,(class A0,class A1),(A0,A1),(V(0),V(1)))
+GEODE_WRAP_CALL(3,(class A0,class A1,class A2),(A0,A1,A2),(V(0),V(1),V(2)))
+GEODE_WRAP_CALL(4,(class A0,class A1,class A2,class A3),(A0,A1,A2,A3),(V(0),V(1),V(2),V(3)))
+GEODE_WRAP_CALL(5,(class A0,class A1,class A2,class A3,class A4),(A0,A1,A2,A3,A4),(V(0),V(1),V(2),V(3),V(4)))
+#undef V
 
 #undef GEODE_WRAP_CALL_2
 #undef GEODE_WRAP_CALL
