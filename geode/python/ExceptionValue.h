@@ -20,6 +20,7 @@ class SavedExceptionBase;
 
 class ExceptionValue {
 public:
+  typedef ExceptionValue Self;
   shared_ptr<SavedExceptionBase> error;
 
   ExceptionValue() {}
@@ -27,8 +28,8 @@ public:
 
   GEODE_CORE_EXPORT void throw_() const;
 
-  operator SafeBool() const { // Allow conversion to bool without allowing conversion to T
-    return safe_bool(error);
+  operator SafeBool<Self>::type() const { // Allow conversion to bool without allowing conversion to T
+    return safe_bool<Self>(error);
   }
 };
 

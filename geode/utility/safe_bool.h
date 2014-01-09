@@ -4,11 +4,15 @@
 #include <geode/utility/config.h>
 namespace geode {
 
-struct SafeBoolHelper{ GEODE_CORE_EXPORT void F(); };
-typedef void (SafeBoolHelper::*SafeBool)();
+namespace {
+template<class T> struct SafeBool {
+  struct Helper { void f() {}; };
+  typedef void (Helper::*type)();
+};
+}
 
-template<class T> static inline SafeBool safe_bool(const T& x) {
-  return x?&SafeBoolHelper::F:0;
+template<class T,class X> static inline typename SafeBool<T>::type safe_bool(const X& x) {
+  return x?&SafeBool<T>::Helper::f:0;
 }
 
 }

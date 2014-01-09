@@ -353,8 +353,9 @@ public:
   Class& call() { return *this; }
   Class& setattr() { return *this; }
   Class& getattr() { return *this; }
-
-  static void dealloc(PyObject* self) {
+  Class& hash() { return *this; }
+  Class& compare() { return *this; }
+static void dealloc(PyObject* self) {
     ((T*)(self+1))->~T(); // call destructor
     free(self);
   }
@@ -404,11 +405,9 @@ const_field(S T::* field) {
 
 #ifdef GEODE_PYTHON
 #ifdef GEODE_VARIADIC
-#define GEODE_CALL(...) \
-  call(wrap_call<Self,__VA_ARGS__>())
+#define GEODE_CALL(...) call(wrap_call<Self,##__VA_ARGS__>())
 #else
-#define GEODE_CALL(...) \
-  call(WrapCall<Self,__VA_ARGS__>::wrap())
+#define GEODE_CALL(...) call(WrapCall<Self,##__VA_ARGS__>::wrap())
 #endif
 #else
 #define GEODE_CALL(...) call()

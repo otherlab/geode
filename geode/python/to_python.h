@@ -103,6 +103,23 @@ static inline PyObject* to_python(uint8_t value) {
   return to_python((int)value);
 }
 
+// Conversion for sets
+template<class TS> PyObject* to_python_set(const TS& s) {
+  PyObject* set = PySet_New(0);
+  if (!set) goto fail;
+  for (auto it=s.begin(),end=s.end();it!=end;++it) { // Avoid foreach since pcl needs gcc 4.4
+    PyObject* o = to_python(*it);
+    if (!o) goto fail;
+    int r = PySet_Add(set,o);
+    Py_DECREF(o);
+    if (r<0) goto fail;
+  }
+  return set;
+  fail:
+  Py_XDECREF(set);
+  return 0;
+}
+
 // Declare has_to_python<T>
 GEODE_VALIDITY_CHECKER(has_to_python,T,to_python(*(T*)0))
 template<> struct has_to_python<void> : public mpl::true_ {};

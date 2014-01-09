@@ -78,7 +78,7 @@ public:
 #endif
   }
 
-  friend int hash_reduce(const ClassTest& self) {
+  GEODE_UNUSED friend int hash_reduce(const ClassTest& self) {
     return self.field;
   }
 
@@ -136,7 +136,7 @@ void wrap_test_class() {
       .GEODE_METHOD(normal)
       .GEODE_METHOD(virtual_)
       .GEODE_METHOD(static_)
-      .GEODE_CALL(int,int)
+      .GEODE_CALL(int)
       .GEODE_GET(prop)
       .GEODE_GETSET(data)
       .GEODE_METHOD(dump_mem)
