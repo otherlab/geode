@@ -113,6 +113,10 @@ public:
     memset(data_,0,m*sizeof(T));
   }
 
+  Vector<int,1> index(const int i) const {
+    return vec(i);
+  }
+
   RawArray slice(int lo, int hi) const {
     assert(unsigned(lo)<=unsigned(hi) && unsigned(hi)<=unsigned(m));
     return RawArray(hi-lo,data_+lo);
@@ -230,6 +234,11 @@ public:
 
   RawArray<T> operator[](const int i) const {
     assert(unsigned(i)<unsigned(m));return RawArray<T>(n,data()+i*n);
+  }
+
+  Vector<int,2> index(const int i) const {
+    int x = i/n;
+    return vec(x, i-x);
   }
 
   RawArray<T> row(int i) const {

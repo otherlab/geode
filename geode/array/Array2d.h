@@ -139,6 +139,11 @@ public:
     return flat[index.x*n+index.y];
   }
 
+  Vector<int,2> index(const int i) const {
+    int x = i/n;
+    return vec(x, i-x);
+  }
+
   T& operator[](const Vector<int,d>& index) const {
     assert(unsigned(index.x)<unsigned(m) && unsigned(index.y)<unsigned(n));
     return flat[index.x*n+index.y];
