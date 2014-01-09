@@ -26,7 +26,7 @@ namespace geode {
 
 using std::string;
 namespace mpl = boost::mpl;
- 
+
 #ifdef GEODE_PYTHON
 
 // Conversion for PyObject*
@@ -86,10 +86,21 @@ static inline PyObject* to_python(const string& value) {
   return PyString_FromStringAndSize(value.c_str(),(Py_ssize_t)value.size());
 }
 
+// uint8_t is a valuable small integer type to use, and we believe most
+// machines and compilers nowadays have signed chars.  Therefore, we are
+// going to do something horrible: make char convert from string, and
+// uint8_t convert from small integers.
+static_assert(!boost::is_same<char,uint8_t>::value, "Different conversions for uint8_t and char (even though they're the same)! Our fault!");
+
 // Conversion from char
 static inline PyObject* to_python(char value) {
   char s[2] = {value,0};
   return PyString_FromString(s);
+}
+
+// Conversion from uint8_t
+static inline PyObject* to_python(uint8_t value) {
+  return to_python((int)value);
 }
 
 // Declare has_to_python<T>

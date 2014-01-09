@@ -298,7 +298,6 @@ public:
       return v;
     }
 
-
     void fill(const T& constant)
     {for(int i=0;i<d;i++) array[i]=constant;}
 

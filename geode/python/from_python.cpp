@@ -9,7 +9,7 @@ namespace geode {
 
 bool FromPython<bool>::convert(PyObject* object) {
   // Accept only exact integers to avoid confusion
-  return FromPython<long>::convert(object)!=0; 
+  return FromPython<long>::convert(object)!=0;
 }
 
 long FromPython<long>::convert(PyObject* object) {
@@ -117,6 +117,15 @@ string FromPython<string>::convert(PyObject* object) {
   if (PyString_AsStringAndSize(object,&buffer,&size))
     throw_python_error();
   return string(buffer,buffer+size);
+}
+
+uint8_t FromPython<uint8_t>::convert(PyObject* object) {
+  long i = FromPython<long>::convert(object);
+  if (i!=(uint8_t)i) {
+    PyErr_SetString(PyExc_OverflowError,"int too large to convert to C uint8_t");
+    throw_python_error();
+  }
+  return (uint8_t)i;
 }
 
 char FromPython<char>::convert(PyObject* object) {

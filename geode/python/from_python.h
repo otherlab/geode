@@ -55,7 +55,14 @@ template<> struct FromPython<float>{GEODE_CORE_EXPORT static float convert(PyObj
 template<> struct FromPython<double>{GEODE_CORE_EXPORT static double convert(PyObject* object);};
 template<> struct FromPython<const char*>{GEODE_CORE_EXPORT static const char* convert(PyObject* object);};
 template<> struct FromPython<string>{GEODE_CORE_EXPORT static string convert(PyObject*);};
+
+// uint8_t is a valuable small integer type to use, and we believe most
+// machines and compilers nowadays have signed chars.  Therefore, we are
+// going to do something horrible: make char convert from string, and
+// uint8_t convert from small integers.
+static_assert(!boost::is_same<char,uint8_t>::value, "Different conversions for uint8_t and char (even though they're the same)! Our fault!");
 template<> struct FromPython<char>{GEODE_CORE_EXPORT static char convert(PyObject* object);};
+template<> struct FromPython<uint8_t>{GEODE_CORE_EXPORT static uint8_t convert(PyObject* object);};
 
 // Conversion to T& for python types
 template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T>>::type>{static T&
