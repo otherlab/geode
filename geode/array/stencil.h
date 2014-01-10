@@ -87,7 +87,9 @@ public:
     for (int i = -r; i < r; ++i) {
       for (int j = -r; j < r; ++j) {
         if (i*i + j*j <= r*r) {
-          v = max(v, a[idx]);
+          Vector<int,2> ii(idx.x+i, idx.y+j);
+          if (a.valid(ii))
+            v = max(v, a[ii]);
         }
       }
     }
