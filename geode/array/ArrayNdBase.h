@@ -95,7 +95,7 @@ public:
     return flat.count_true();
   }
 
-  void fill(const T& constant) {
+  void fill(const T& constant) const {
     flat.fill(constant);
   }
 
