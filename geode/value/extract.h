@@ -6,7 +6,6 @@
 #include <geode/value/Compute.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/curry.h>
-#include <geode/utility/remove_const_reference.h>
 namespace geode {
 
 template<int n,class Tuple> static inline auto extract_helper(const ValueRef<Tuple>& value)
