@@ -27,7 +27,7 @@ public:
 
   template<class TA> explicit Segment(const TA& X)
     : x0(X[0]), x1(X[1]) {
-    BOOST_STATIC_ASSERT(TA::m==2);
+    static_assert(TA::m==2,"");
   }
 
   const TV& X(const int i) const {
@@ -51,7 +51,7 @@ public:
   }
 
   template<class TA> static T size(const TA& X) {
-    BOOST_STATIC_ASSERT(TA::m==2);
+    static_assert(TA::m==2,"");
     return magnitude(X(1)-X(0));
   }
 

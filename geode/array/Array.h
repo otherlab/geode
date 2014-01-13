@@ -29,7 +29,6 @@
 #include <geode/utility/type_traits.h>
 #include <geode/vector/Vector.h>
 #include <geode/utility/const_cast.h>
-#include <boost/mpl/assert.hpp>
 #include <vector>
 namespace geode {
 
@@ -420,8 +419,8 @@ public:
     return data_[--m_];
   }
 
-  Array<const T> pop_elements(const int count) { // return value shares ownership with original
-    BOOST_MPL_ASSERT((has_trivial_destructor<T>));
+  Array<const T> pop_elements(const int count) { // Return value shares ownership with original
+    static_assert(has_trivial_destructor<T>::value,"");
     assert(m_-count>=0);
     m_ -= count;
     return Array<const T>(count,data_+m_,owner_);
@@ -458,7 +457,7 @@ public:
   }
 
   void zero() const {
-    BOOST_MPL_ASSERT((IsScalarVectorSpace<T>));
+    static_assert(IsScalarVectorSpace<T>::value,"");
     memset((void*)data_,0,m_*sizeof(T));
   }
 

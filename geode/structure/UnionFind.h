@@ -142,7 +142,7 @@ public:
 };
 
 template<int n> struct SmallUnionFind : public UnionFindBase<SmallUnionFind<n>,Vector<signed char,n>,Vector<unsigned char,n> > {
-  BOOST_STATIC_ASSERT(0<=n && n<=128);
+  static_assert(0<=n && n<=128,"Large union finds should use UnionFind, not SmallUnionFind");
   
   SmallUnionFind() {
     this->parents.fill(-1);

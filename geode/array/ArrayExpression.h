@@ -5,7 +5,6 @@
 
 #include <geode/array/ArrayIter.h>
 #include <geode/utility/type_traits.h>
-#include <boost/static_assert.hpp>
 namespace geode {
 
 struct ConstantSizeArrayExpressionBase {};
@@ -21,14 +20,14 @@ template<int m,class... Args> struct SameSizeHelper;
 template<int m_> struct SameSizeHelper<m_> { enum {m = m_}; };
 template<int m_,class A,class... Args> struct SameSizeHelper<m_,A,Args...> {
   enum {Am = SizeIfConstant<typename remove_const_reference<A>::type>::m};
-  BOOST_STATIC_ASSERT((m_<0 || Am<0 || m_==Am));
+  static_assert(m_<0 || Am<0 || m_==Am,"");
   enum {m = SameSizeHelper<m_<0?Am:m_,Args...>::m};
 };
 #else
 template<int m_,class A0=void,class A1=void> struct SameSizeHelper {
   enum {m0 = SizeIfConstant<typename remove_const_reference<A0>::type>::m};
   enum {m1 = SizeIfConstant<typename remove_const_reference<A1>::type>::m};
-  BOOST_STATIC_ASSERT((m0<0 || m1<0 || m0==m1));
+  static_assert(m0<0 || m1<0 || m0==m1,"");
   enum {m = m0>=0?m0:m1};
 };
 #endif

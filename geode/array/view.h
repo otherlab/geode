@@ -31,7 +31,7 @@ template<class TA> typename enable_if<IsContiguousArray<TA>,
   RawArray<typename ConstIf<typename ScalarPolicy<typename TA::Element>::type,TA::is_const>::type> >::type
 scalar_view(const TA& array) {
   typedef typename TA::Element TV;
-  BOOST_MPL_ASSERT((IsScalarBlock<TV>));
+  static_assert(IsScalarBlock<TV>::value,"");
   typedef typename ConstIf<typename ScalarPolicy<TV>::type,TA::is_const>::type T;
   return RawArray<T>(sizeof(TV)/sizeof(T)*array.sizes().product(),reinterpret_cast<T*>(array.data()));
 }
@@ -40,7 +40,7 @@ template<class TA> typename enable_if<IsShareableArray<TA>,
   Array<typename ConstIf<typename ScalarPolicy<typename TA::Element>::type,TA::is_const>::type> >::type
 scalar_view_own(const TA& array) {
   typedef typename TA::Element TV;
-  BOOST_MPL_ASSERT((IsScalarBlock<TV>));
+  static_assert(IsScalarBlock<TV>::value,"");
   typedef typename ConstIf<typename ScalarPolicy<TV>::type,TA::is_const>::type T;
   return Array<T>(sizeof(TV)/sizeof(T)*array.sizes().product(),reinterpret_cast<T*>(array.data()),array.borrow_owner());
 }
@@ -49,9 +49,9 @@ template<class TV,class TA> typename enable_if<IsContiguousArray<TA>,
   RawArray<typename ConstIf<TV,TA::is_const>::type> >::type
 vector_view(const TA& array) {
   typedef typename TA::Element T;
-  BOOST_MPL_ASSERT((is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>));
+  static_assert(is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>::value,"");
   const int r = sizeof(TV)/sizeof(T);
-  BOOST_STATIC_ASSERT(r*sizeof(T)==sizeof(TV));
+  static_assert(r*sizeof(T)==sizeof(TV),"");
   const int n = array.size()/r;
   GEODE_ASSERT(r*n==array.size());
   typedef typename ConstIf<TV,TA::is_const>::type TR;
@@ -62,9 +62,9 @@ template<class TV,class TA> typename enable_if<IsShareableArray<TA>,
   Array<typename ConstIf<TV,TA::is_const>::type> >::type
 vector_view_own(const TA& array) {
   typedef typename TA::Element T;
-  BOOST_MPL_ASSERT((is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>));
+  static_assert(is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>::value,"");
   const int r = sizeof(TV)/sizeof(T);
-  BOOST_STATIC_ASSERT(r*sizeof(T)==sizeof(TV));
+  static_assert(r*sizeof(T)==sizeof(TV),"");
   const int n = array.size()/r;
   GEODE_ASSERT(r*n==array.size());
   typedef typename ConstIf<TV,TA::is_const>::type TR;

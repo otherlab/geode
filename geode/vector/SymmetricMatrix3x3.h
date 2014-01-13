@@ -25,7 +25,7 @@ public:
     SymmetricMatrix()
         :x00(),x10(),x20(),x11(),x21(),x22()
     {
-        BOOST_STATIC_ASSERT(sizeof(SymmetricMatrix)==6*sizeof(T));
+        static_assert(sizeof(SymmetricMatrix)==6*sizeof(T),"");
     }
 
     template<class T2> explicit

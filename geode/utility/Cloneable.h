@@ -6,7 +6,6 @@
 #include <geode/utility/debug.h>
 #include <geode/utility/type_traits.h>
 #include <boost/mpl/and.hpp>
-#include <boost/mpl/assert.hpp>
 #include <typeinfo>
 namespace geode {
 
@@ -40,7 +39,7 @@ protected:
 
 template<class TDerived,class TBase=CloneableBase>
 class CloneableAbstract : public TBase {
-  BOOST_MPL_ASSERT((IsCloneable<TBase>));
+  static_assert(IsCloneable<TBase>::value,"");
   using TBase::clone_implementation;using TBase::clone_default_implementation;
   template<class T> friend class CloneArray;
 public:
@@ -56,7 +55,7 @@ public:
 
 template<class TDerived,class TBase=CloneableBase>
 class Cloneable : public TBase {
-  BOOST_MPL_ASSERT((IsCloneable<TBase>));
+  static_assert(IsCloneable<TBase>::value,"");
 public:
 
   TDerived* clone() const {

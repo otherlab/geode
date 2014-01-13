@@ -162,7 +162,7 @@ public:
   // Register this as an iterable class. This uses the iter() and iternext()
   // functions of T.
   Class &iter() {
-    BOOST_STATIC_ASSERT(has_iter<T>::value || has_iternext<T>::value);
+    static_assert(has_iter<T>::value || has_iternext<T>::value,"");
 
     if (type->tp_iternext || type->tp_iter)
       throw TypeError("Iterator already specified");

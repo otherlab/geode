@@ -46,12 +46,12 @@ public:
   }
 
   template<int i> T0& get() {
-    BOOST_STATIC_ASSERT(i==0);
+    static_assert(i==0,"");
     return x;
   }
 
   template<int i> const T0& get() const {
-    BOOST_STATIC_ASSERT(i==0);
+    static_assert(i==0,"");
     return x;
   }
 };

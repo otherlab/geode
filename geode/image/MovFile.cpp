@@ -37,7 +37,7 @@ typedef unsigned short ushort;
 template<class T>
 static inline void convert_endian(T& x)
 {
-    BOOST_STATIC_ASSERT(sizeof(T)<=8);
+    static_assert(sizeof(T)<=8,"");
 #ifndef BOOST_BIG_ENDIAN
     char* p = (char*)&x;
     for(uint i=0;i<sizeof(T)/2;i++)

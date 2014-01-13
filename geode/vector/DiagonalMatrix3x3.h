@@ -28,7 +28,7 @@ public:
     DiagonalMatrix()
         :x00(),x11(),x22()
     {
-        BOOST_STATIC_ASSERT(sizeof(DiagonalMatrix)==3*sizeof(T));
+        static_assert(sizeof(DiagonalMatrix)==3*sizeof(T),"");
     }
 
     template<class T2> explicit

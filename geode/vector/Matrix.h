@@ -22,7 +22,8 @@ class Matrix
 {
 public:
     enum Workaround1 {m=m_,n=n_,size=m_*n_};
-    BOOST_STATIC_ASSERT((!((m>=n && m<=3 && n>=2 && n<=3) || (m==4 && n==4) || (m==0 && n==0)))); // 0x0, 1x1, 2x2, 3x2, 3x3, and 4x4 are specialized
+    static_assert((!((m>=n && m<=3 && n>=2 && n<=3) || (m==4 && n==4) || (m==0 && n==0))),
+      "0x0, 1x1, 2x2, 3x2, 3x3, and 4x4 are specialized");
     static const bool is_const=false;
     typedef T Scalar;
 
@@ -35,7 +36,7 @@ public:
 
     explicit Matrix(const Vector<T,size>& column1)
     {
-        BOOST_STATIC_ASSERT((m==1 || n==1) && size==m+n-1);
+        static_assert((m==1 || n==1) && size==m+n-1,"");
         if (m==1)
           for(int i=0;i<size;i++) x[0][i]=column1[i];
         else
@@ -51,7 +52,7 @@ public:
 
     static Matrix column_major(const T x00,const T x10,const T x01,const T x11,const T x02,const T x12)
     {
-        BOOST_STATIC_ASSERT(m==2 && n==3);
+        static_assert(m==2 && n==3,"");
         Matrix r;
         r.x[0][0]=x00;r.x[1][0]=x10;
         r.x[0][1]=x01;r.x[1][1]=x11;
@@ -182,7 +183,7 @@ public:
     {return PLU_Solve(b);}
 
     T parallelepiped_measure() const
-    {BOOST_STATIC_ASSERT(n==1);return sqrt(sqr_frobenius_norm());}
+    {static_assert(n==1,"");return sqrt(sqr_frobenius_norm());}
 
     T frobenius_norm() const
     {return sqrt(sqr_frobenius_norm());}

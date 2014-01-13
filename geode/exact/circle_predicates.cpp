@@ -258,7 +258,7 @@ template<bool add> struct UpwardsA { template<class TV> static PredicateType<5,T
   return add ? first+second : first-second;
 }};
 template<int i> struct UpwardsB { template<class TV> static PredicateType<3,TV> eval(const TV S0, const TV S1, const TV S2) {
-  BOOST_STATIC_ASSERT(i==1 || i==2);
+  static_assert(i==1 || i==2,"");
   const auto c01 = S1.xy()-S0.xy(),
              c02 = S2.xy()-S0.xy();
   return i==1 ? c01.x*esqr_magnitude(c02) // Negated below

@@ -36,7 +36,7 @@ template<class T,class TArray> class ArrayBase;
 template<class TArray,class Enabler=void> struct CanonicalizeConstArray{typedef TArray type;};
 
 template<class TArray1,class TArray2> struct SameArrayCanonical { static bool same_array(const TArray1& array1,const TArray2& array2) {
-  BOOST_STATIC_ASSERT((!is_same<TArray1,TArray2>::value));
+  static_assert(!is_same<TArray1,TArray2>::value,"");
   return false;
 }};
 

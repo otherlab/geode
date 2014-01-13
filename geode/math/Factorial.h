@@ -10,7 +10,7 @@ template<unsigned d> struct Factorial;
 template<> struct Factorial<0>{enum Workaround {value=1};};
 
 template<unsigned d> struct Factorial {
-  BOOST_STATIC_ASSERT((d<=12));
+  static_assert(d<=12,"d! would overflow int");
   enum Workaround {value=d*Factorial<d-1>::value};
 };
 

@@ -5,7 +5,6 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/type_traits.h>
-#include <boost/static_assert.hpp>
 #include <boost/mpl/bool.hpp>
 #include <stdint.h>
 #include <cstring>
@@ -15,7 +14,7 @@ namespace geode {
 struct Hash;
 using std::string;
 namespace mpl = boost::mpl;
-BOOST_STATIC_ASSERT(sizeof(int)==4);
+static_assert(sizeof(int)==4,"");
 
 template<class T> struct is_packed_pod:public mpl::false_{};
 template<class T> struct is_packed_pod<const T>:public is_packed_pod<T>{};

@@ -157,7 +157,7 @@ public:
     template<class T2> explicit Rotation(const Rotation<Vector<T2,2> >& r)
         :c(r.complex())
     {
-        BOOST_STATIC_ASSERT((!is_same<T,T2>::value));
+        static_assert(!is_same<T,T2>::value,"");
         if(!is_same<T,int>::value) normalize();
     }
 
@@ -291,7 +291,7 @@ public:
     template<class T2> explicit Rotation(const Rotation<T2>& r)
         :q(r.quaternion())
     {
-        BOOST_STATIC_ASSERT((!is_same<T,T2>::value));
+        static_assert(!is_same<T,T2>::value,"");
         if(!is_same<T,int>::value) normalize();
     }
 

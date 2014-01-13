@@ -192,7 +192,7 @@ public:
 
   // Extract a subarray at a fixed value of the given axis
   template<int axis> Subarray<T,2> sub(const int i) const {
-    BOOST_STATIC_ASSERT(axis<2); // For now, the last dimension of a Subarray must be contiguous
+    static_assert(axis<2,"For now, the last dimension of a Subarray must be contiguous");
     assert(unsigned(i)<unsigned(sizes()[axis]));
     return axis==0 ? (*this)[i] : Subarray<T,2>(m,mn,n*mn,data()+i*mn);
   }

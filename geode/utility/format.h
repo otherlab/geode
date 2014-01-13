@@ -16,7 +16,6 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/or.hpp>
 #include <string>
@@ -29,8 +28,7 @@ using std::string;
 GEODE_CORE_EXPORT string format_helper(const char* format,...);
 
 template<class T> static inline typename mpl::if_<is_enum<T>,int,T>::type format_sanitize(const T d) {
-  // Ensure that passing as a vararg is safe
-  BOOST_MPL_ASSERT((mpl::or_<is_fundamental<T>,is_enum<T>,is_pointer<T>>));
+  static_assert(mpl::or_<is_fundamental<T>,is_enum<T>,is_pointer<T>>::value,"Passing as a vararg is not safe");
   return d;
 }
 

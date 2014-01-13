@@ -25,7 +25,7 @@ public:
     Triangle(const TArray& X)
         :X(X)
     {
-        BOOST_STATIC_ASSERT(TArray::m==3);
+        static_assert(TArray::m==3,"");
     }
 
     static T signed_area(const TV& x1,const TV& x2,const TV& x3)
@@ -48,7 +48,7 @@ public:
 
     template<class TArray>
     static T signed_size(const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return signed_area(X[0],X[1],X[2]);}
+    {static_assert(TArray::m==3,"");return signed_area(X[0],X[1],X[2]);}
 
     template<class TArray>
     static T size(const TArray& X)
@@ -65,7 +65,7 @@ public:
 
     template<class TArray>
     static T half_boundary_measure(const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return (T).5*((X[0]-X[1]).magnitude()+(X[1]-X[2]).magnitude()+(X[2]-X[0]).magnitude());}
+    {static_assert(TArray::m==3,"");return (T).5*((X[0]-X[1]).magnitude()+(X[1]-X[2]).magnitude()+(X[2]-X[0]).magnitude());}
 
     T aspect_ratio() const
     {return aspect_ratio(X[0],X[1],X[2]);}
@@ -101,7 +101,7 @@ public:
 
     template<class TArray>
     static Vector<T,3> barycentric_coordinates(const TV& location,const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return barycentric_coordinates(location,X[0],X[1],X[2]);}
+    {static_assert(TArray::m==3,"");return barycentric_coordinates(location,X[0],X[1],X[2]);}
 
     Vector<T,3> barycentric_coordinates(const TV& location) const
     {return barycentric_coordinates(location,X[0],X[1],X[2]);}
@@ -117,7 +117,7 @@ public:
 
     template<class TArray>
     static TV point_from_barycentric_coordinates(const Vector<T,3>& weights,const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return point_from_barycentric_coordinates(weights,X[0],X[1],X[2]);}
+    {static_assert(TArray::m==3,"");return point_from_barycentric_coordinates(weights,X[0],X[1],X[2]);}
 
     Vector<T,3> sum_barycentric_coordinates(const Triangle& embedded_triangle) const
     {return barycentric_coordinates(embedded_triangle.X[0],X)+barycentric_coordinates(embedded_triangle.X[1],X)+barycentric_coordinates(embedded_triangle.X[2],X);}

@@ -26,7 +26,7 @@ public:
     UpperTriangularMatrix()
         :x00(),x01(),x11()
     {
-        BOOST_STATIC_ASSERT(sizeof(UpperTriangularMatrix)==3*sizeof(T));
+        static_assert(sizeof(UpperTriangularMatrix)==3*sizeof(T),"");
     }
 
     template<class T2> explicit

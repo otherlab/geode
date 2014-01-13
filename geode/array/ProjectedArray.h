@@ -7,7 +7,6 @@
 #include <geode/vector/forward.h>
 #include <geode/utility/HasCheapCopy.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/assert.hpp>
 namespace geode {
 
 template<class TArray,class TProjector> struct IsArray<ProjectedArray<TArray,TProjector> >:public mpl::true_{};
@@ -29,7 +28,7 @@ public:
 
   ProjectedArray(TArrayView array)
     : array(array) {
-    BOOST_MPL_ASSERT((is_empty<TProjector>));
+    static_assert(is_empty<TProjector>::value,"Projector must be an empty class");
   }
 
   ProjectedArray(TArrayView array, const TProjector& projector)

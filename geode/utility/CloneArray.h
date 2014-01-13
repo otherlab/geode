@@ -38,7 +38,7 @@ public:
 
 template<class T>
 class CloneArray : public CloneArray<CloneableBase> {
-  BOOST_MPL_ASSERT((IsCloneable<T>));
+  static_assert(IsCloneable<T>::value,"");
   typedef CloneArray<CloneableBase> Base;
 public:
   CloneArray(const T& template_object, const int count)

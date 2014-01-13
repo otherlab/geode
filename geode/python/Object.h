@@ -50,7 +50,7 @@ public:
 template<class T> struct GetSelf {
   typedef T type;
   static T* get(PyObject* object) {
-    BOOST_MPL_ASSERT((is_base_of<Object,T>));
+    static_assert(is_base_of<Object,T>::value,"");
     return (T*)(object+1);
   }
 };

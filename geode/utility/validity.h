@@ -4,8 +4,8 @@
 // For example, we can check whether a type can be multiplied by two as follows:
 //
 //   GEODE_VALIDITY_CHECKER(has_times_two,T,2*(*(T*)0));
-//   BOOST_STATIC_ASSERT(has_times_two<int>::value);
-//   BOOST_STATIC_ASSERT(!has_times_two<void>::value);
+//   static_assert(has_times_two<int>::value,"");
+//   static_assert(!has_times_two<void>::value,"");
 //
 // See http://stackoverflow.com/questions/2127693/sfinae-sizeof-detect-if-expression-compiles
 

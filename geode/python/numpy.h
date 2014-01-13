@@ -113,7 +113,7 @@ template<class T> int numpy_rank(const NdArray<T>& array) {
 // Struct NumpyInfo: Recursively shape information from statically sized types
 
 template<class T> struct NumpyInfo { static void dimensions(npy_intp* dimensions) {
-  BOOST_STATIC_ASSERT(NumpyRank<T>::value==0);
+  static_assert(NumpyRank<T>::value==0,"");
 }};
 
 template<class T> struct NumpyInfo<const T> : public NumpyInfo<T>{};

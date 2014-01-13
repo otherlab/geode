@@ -35,7 +35,7 @@ public:
     template<class TArray>
     Triangle(const TArray& X)
     {
-        BOOST_STATIC_ASSERT(TArray::m==3);
+        static_assert(TArray::m==3,"");
         Plane<T>::operator=(Plane<T>(X[0],X[1],X[2]));
         x1=X[1];x2=X[2];
     }
@@ -68,7 +68,7 @@ public:
 
     template<class TArray>
     static T size(const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return area(X(0),X(1),X(2));}
+    {static_assert(TArray::m==3,"");return area(X(0),X(1),X(2));}
 
     template<class TArray>
     static T signed_size(const TArray& X)
@@ -130,11 +130,11 @@ public:
 
     template<class TArray>
     static TV barycentric_coordinates(const TV& location,const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return barycentric_coordinates(location,X[0],X[1],X[2]);}
+    {static_assert(TArray::m==3,"");return barycentric_coordinates(location,X[0],X[1],X[2]);}
 
     template<class TArray>
     static TV clamped_barycentric_coordinates(const TV& location,const TArray& X)
-    {BOOST_STATIC_ASSERT(TArray::m==3);return clamped_barycentric_coordinates(location,X[0],X[1],X[2]);}
+    {static_assert(TArray::m==3,"");return clamped_barycentric_coordinates(location,X[0],X[1],X[2]);}
 
     TV sum_barycentric_coordinates(const Triangle& embedded_triangle) const
     {return barycentric_coordinates(embedded_triangle.x0)+barycentric_coordinates(embedded_triangle.x1)+barycentric_coordinates(embedded_triangle.x2);}
@@ -150,7 +150,7 @@ public:
 
     template<class TArray>
     static TV point_from_barycentric_coordinates(const TV& weights,const TArray& X) // clockwise vertices
-    {BOOST_STATIC_ASSERT(TArray::m==3);return weights.x*X(0)+weights.y*X(1)+weights.z*X(2);}
+    {static_assert(TArray::m==3,"");return weights.x*X(0)+weights.y*X(1)+weights.z*X(2);}
 
     TV point_from_barycentric_coordinates(const TV& weights) const
     {return point_from_barycentric_coordinates(weights,x0,x1,x2);}

@@ -14,7 +14,7 @@ template<class TArray,class TIndices> // TIndices=RawArray<const int>
 class IndirectArray : public ArrayExpression<typename TArray::Element,IndirectArray<TArray,TIndices>,TIndices> {
   typedef typename remove_reference<TIndices>::type TIndicesNoReference;
   typedef typename mpl::if_<is_reference<TIndices>,const TIndicesNoReference&,const TIndicesNoReference>::type ConstTIndices;
-  BOOST_MPL_ASSERT((mpl::not_<is_const<TIndicesNoReference> >));
+  static_assert(mpl::not_<is_const<TIndicesNoReference>>::value,"");
   typedef typename TArray::Element T;
   typedef ArrayBase<T,IndirectArray<TArray,TIndices> > Base;
   struct Unusable{};
@@ -28,7 +28,7 @@ public:
   template<class TOtherArray>
   IndirectArray(TOtherArray& array, typename add_reference<ConstTIndices>::type indices)
     : array(array), indices(indices) {
-    BOOST_MPL_ASSERT((is_base_of<TArray,TOtherArray>)); // avoid grabbing reference to temporary
+    static_assert(is_base_of<TArray,TOtherArray>::value,"Avoid grabbing reference to temporary");
   }
 
   IndirectArray(const IndirectArray<typename remove_const<TArray>::type,TIndices>& indirect)

@@ -19,10 +19,10 @@ public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
 
   typedef typename TV::Scalar T;
-  BOOST_STATIC_ASSERT(numeric_limits<T>::radix==2);
+  static_assert(numeric_limits<T>::radix==2,"");
   static const int max_bits = numeric_limits<T>::digits;
   typedef typename mpl::if_c<(max_bits<=30),uint32_t,uint64_t>::type TI; // pick an integer large enough to hold T's mantissa
-  BOOST_STATIC_ASSERT(numeric_limits<TI>::digits>max_bits);
+  static_assert(numeric_limits<TI>::digits>max_bits,"");
   enum Workaround {d=TV::m};
 
 private:

@@ -40,7 +40,7 @@ namespace exact {
 // Typedefs for indexed points
 template<int d> struct Point {
   typedef Tuple<int,Vector<Quantized,d>> type;
-  BOOST_STATIC_ASSERT(sizeof(type)==sizeof(int)+4+d*sizeof(Quantized));
+  static_assert(sizeof(type)==sizeof(int)+4+d*sizeof(Quantized),"");
 };
 typedef Vector<Quantized,2> Vec2;
 typedef Vector<Quantized,3> Vec3;

@@ -5,7 +5,6 @@
 
 #include <geode/python/forward.h>
 #include <geode/utility/type_traits.h>
-#include <boost/static_assert.hpp>
 #include <boost/detail/endian.hpp>
 #include <stdint.h>
 #include <string>
@@ -129,7 +128,7 @@ public:
 };
 
 template<class I> inline I cast_uint128(const uint128_t& n) {
-  BOOST_STATIC_ASSERT((is_integral<I>::value && sizeof(I)<=8));
+  static_assert(is_integral<I>::value && sizeof(I)<=8,"");
   return I(n.lo);
 }
 

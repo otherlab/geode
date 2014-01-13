@@ -22,7 +22,7 @@ public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Object Base;
   typedef mpl::if_c<sizeof(real)==4,uint32_t,uint64_t>::type RealBits;
-  BOOST_STATIC_ASSERT(sizeof(RealBits)==sizeof(real));
+  static_assert(sizeof(RealBits)==sizeof(real),"");
 
   uint128_t seed; // Counter mode, so we get to expose key as a mutable field!
 private:

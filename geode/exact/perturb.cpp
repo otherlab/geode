@@ -41,7 +41,7 @@ static const bool verbose = false;
 
 // Our fixed deterministic pseudorandom perturbation sequence.  We limit ourselves to 32 bits so that we can pull four values out of a uint128_t.
 template<int m> inline Vector<ExactInt,m> perturbation(const int level, const int i) {
-  BOOST_STATIC_ASSERT(m<=4);
+  static_assert(m<=4,"");
   const int bits = min(exact::log_bound+1,128/4);
   const auto limit = ExactInt(1)<<(bits-1);
   const uint128_t noise = threefry(level,i);
@@ -503,7 +503,7 @@ void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const b
 
     // Verify that result lies in [-exact::bound,exact::bound];
     const int ratio = sizeof(ExactInt)/sizeof(mp_limb_t);
-    BOOST_STATIC_ASSERT(ratio<=2);
+    static_assert(ratio<=2,"");
     if (s.size() > ratio)
       goto overflow;
     const auto nn = ratio==2 && s.size()==2 ? s[0]|ExactInt(s[1])<<8*sizeof(mp_limb_t) : s[0],

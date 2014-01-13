@@ -44,7 +44,7 @@ public:
     Vector()
         :x()
     {
-        BOOST_STATIC_ASSERT(sizeof(Vector)==sizeof(T));
+        static_assert(sizeof(Vector)==sizeof(T),"");
     }
 
     explicit Vector(const T& x)
@@ -295,7 +295,7 @@ public:
     {return *this;}
 
     template<int d1,int d2> Vector<int,d2-d1> slice() const
-    {BOOST_STATIC_ASSERT((mpl::and_<mpl::less_equal<mpl::int_<0>,mpl::int_<d1> >,mpl::less_equal<mpl::int_<d2>,mpl::int_<1> > >::value));
+    {static_assert(0<=d1 && d1<=d2 && d2<=1,"");
     Vector<T,d2-d1> r;for(int i=d1;i<d2;i++) r[i-d1]=(*this)[i];return r;}
 
     template<int n> void split(Vector<T,n>& v1,Vector<T,1-n>& v2) const
