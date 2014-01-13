@@ -26,8 +26,8 @@ static inline __m128 operator-(__m128 a) { return _mm_castsi128_ps(_mm_castps_si
 
 // Mark __m128 and __m128i as fundamental types
 } namespace GEODE_TYPE_TRAITS {
-template<> struct is_fundamental<__m128> : public mpl::true_{};
-template<> struct is_fundamental<__m128i> : public mpl::true_{};
+template<> struct is_fundamental<__m128> : public boost::mpl::true_{};
+template<> struct is_fundamental<__m128i> : public boost::mpl::true_{};
 } namespace geode {
 
 // fast_select(a,b,0) = a, fast_select(a,b,0xffffffff) = b, and anything else is undefined
