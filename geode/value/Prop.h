@@ -16,8 +16,8 @@
 #include <geode/utility/const_cast.h>
 #include <geode/utility/stl.h>
 #include <geode/utility/str.h>
+#include <geode/utility/type_traits.h>
 #include <geode/vector/Vector.h>
-#include <boost/type_traits/remove_const.hpp>
 #include <boost/scoped_ptr.hpp>
 namespace geode {
 
@@ -294,7 +294,7 @@ public:
 
 template<class T> class PropRef {
 public:
-  typedef typename boost::remove_const<T>::type type;
+  typedef typename remove_const<T>::type type;
   typedef typename CopyConst<Prop<type>,T>::type prop_type;
   Ref<typename CopyConst<Prop<type>,T>::type> self;
 

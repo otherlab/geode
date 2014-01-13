@@ -4,9 +4,7 @@
 #pragma once
 
 #include <geode/array/ArrayExpression.h>
-#include <boost/type_traits/add_const.hpp>
-#include <boost/type_traits/is_base_of.hpp>
-#include <boost/type_traits/add_reference.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 template<class TArray,class TIndices> struct IsArray<IndirectArray<TArray,TIndices> >:public mpl::true_{};
@@ -14,26 +12,26 @@ template<class TArray,class TIndices> struct HasCheapCopy<IndirectArray<TArray,T
 
 template<class TArray,class TIndices> // TIndices=RawArray<const int>
 class IndirectArray : public ArrayExpression<typename TArray::Element,IndirectArray<TArray,TIndices>,TIndices> {
-  typedef typename boost::remove_reference<TIndices>::type TIndicesNoReference;
-  typedef typename mpl::if_<boost::is_reference<TIndices>,const TIndicesNoReference&,const TIndicesNoReference>::type ConstTIndices;
-  BOOST_MPL_ASSERT((mpl::not_<boost::is_const<TIndicesNoReference> >));
+  typedef typename remove_reference<TIndices>::type TIndicesNoReference;
+  typedef typename mpl::if_<is_reference<TIndices>,const TIndicesNoReference&,const TIndicesNoReference>::type ConstTIndices;
+  BOOST_MPL_ASSERT((mpl::not_<is_const<TIndicesNoReference> >));
   typedef typename TArray::Element T;
   typedef ArrayBase<T,IndirectArray<TArray,TIndices> > Base;
   struct Unusable{};
 public:
   typedef T Element;
-  typedef decltype(boost::declval<TArray>()[0]) result_type;
+  typedef decltype(declval<TArray>()[0]) result_type;
 
   TArray& array;
   ConstTIndices indices;
 
   template<class TOtherArray>
-  IndirectArray(TOtherArray& array, typename boost::add_reference<ConstTIndices>::type indices)
+  IndirectArray(TOtherArray& array, typename add_reference<ConstTIndices>::type indices)
     : array(array), indices(indices) {
-    BOOST_MPL_ASSERT((boost::is_base_of<TArray,TOtherArray>)); // avoid grabbing reference to temporary
+    BOOST_MPL_ASSERT((is_base_of<TArray,TOtherArray>)); // avoid grabbing reference to temporary
   }
 
-  IndirectArray(const IndirectArray<typename boost::remove_const<TArray>::type,TIndices>& indirect)
+  IndirectArray(const IndirectArray<typename remove_const<TArray>::type,TIndices>& indirect)
     : array(indirect.array), indices(indirect.indices) {}
 
   int size() const {
@@ -52,7 +50,7 @@ public:
     return Base::operator=(source);
   }
 
-  typename boost::remove_reference<result_type>::type* data() const {
+  typename remove_reference<result_type>::type* data() const {
     return array.data()+offset_if_contiguous(indices);
   }
 

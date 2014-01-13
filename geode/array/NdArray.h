@@ -18,8 +18,8 @@ template<class T> struct FromPython<NdArray<T> >{ static NdArray<T> convert(PyOb
 template<class T>
 class NdArray {
 public:
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
   Array<const int> shape;
   Array<T> flat;

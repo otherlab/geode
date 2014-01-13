@@ -23,7 +23,7 @@ template<class T> struct Limits : public Object {
   string repr() const {
     // Use separate format calls since Windows lacks variadic templates
     return format("numeric_limits<%s>:\n  min = %g\n  max = %g\n  epsilon = %g\n  round_error = %g\n  quiet_NaN = %g\n",
-                  boost::is_same<T,float>::value?"float":"double",
+                  is_same<T,float>::value?"float":"double",
                   min,max,epsilon,round_error,quiet_NaN)
          + format("  signaling_NaN = %g\n  denorm_min = %g\n",
                   signaling_NaN,denorm_min)

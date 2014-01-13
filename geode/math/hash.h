@@ -4,9 +4,9 @@
 #pragma once
 
 #include <geode/utility/config.h>
+#include <geode/utility/type_traits.h>
 #include <boost/static_assert.hpp>
 #include <boost/mpl/bool.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <stdint.h>
 #include <cstring>
 #include <string>
@@ -36,9 +36,9 @@ template<class T> struct is_packed_pod<T*>:public mpl::true_{};
 
 GEODE_CORE_EXPORT Hash hash_reduce(const char* key);
 GEODE_CORE_EXPORT Hash hash_reduce(const string& key);
-template<class T> inline typename boost::enable_if_c<is_packed_pod<T>::value && sizeof(T)<=4,int>::type hash_reduce(const T& key);
-template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>4 && sizeof(T)<=8),Hash>::type hash_reduce(const T& key);
-template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key);
+template<class T> inline typename enable_if_c<is_packed_pod<T>::value && sizeof(T)<=4,int>::type hash_reduce(const T& key);
+template<class T> inline typename enable_if_c<(is_packed_pod<T>::value && sizeof(T)>4 && sizeof(T)<=8),Hash>::type hash_reduce(const T& key);
+template<class T> inline typename enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key);
 
 struct Hash {
   int val;
@@ -132,19 +132,19 @@ template<class TArray> Hash hash_array(const TArray& array) {
   return h;
 }
 
-template<class T> inline typename boost::enable_if_c<is_packed_pod<T>::value && sizeof(T)<=4,int>::type hash_reduce(const T& key) {
+template<class T> inline typename enable_if_c<is_packed_pod<T>::value && sizeof(T)<=4,int>::type hash_reduce(const T& key) {
   int data = 0;
   memcpy(&data,&key,sizeof(key));
   return data;
 }
 
-template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>4 && sizeof(T)<=8),Hash>::type hash_reduce(const T& key) {
+template<class T> inline typename enable_if_c<(is_packed_pod<T>::value && sizeof(T)>4 && sizeof(T)<=8),Hash>::type hash_reduce(const T& key) {
   uint64_t data = 0;
   memcpy(&data,&key,sizeof(key));
   return Hash(data);
 }
 
-template<class T> inline typename boost::enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key) {
+template<class T> inline typename enable_if_c<(is_packed_pod<T>::value && sizeof(T)>8),Hash>::type hash_reduce(const T& key) {
   const int n = (sizeof(T)+3)/4;
   int data[n];
   data[n-1] = 0;

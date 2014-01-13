@@ -20,8 +20,8 @@ template<class F> struct SanitizeFunction {
 #ifdef GEODE_VARIADIC
 
 template<class T,class R,class... Args> struct Method {
-  typedef typename boost::remove_const<T>::type T_;
-  typedef typename mpl::if_<boost::is_const<T>,R(T_::*)(Args...) const,R(T_::*)(Args...)>::type F;
+  typedef typename remove_const<T>::type T_;
+  typedef typename mpl::if_<is_const<T>,R(T_::*)(Args...) const,R(T_::*)(Args...)>::type F;
 
   F f;
 
@@ -58,8 +58,8 @@ template<class T,class R,class A0=void,class A1=void,class A2=void,class A3=void
 
 #define GEODE_SANITIZE_2(CARGS,TRARGS,CArgs,Args,CArgsargs,args) \
   template<class T,class R GEODE_REMOVE_PARENS(CARGS)> struct Method<T,R GEODE_REMOVE_PARENS(CArgs)> { \
-    typedef typename boost::remove_const<T>::type T_; \
-    typedef typename mpl::if_<boost::is_const<T>,R(T_::*) Args const,R(T_::*) Args>::type F; \
+    typedef typename remove_const<T>::type T_; \
+    typedef typename mpl::if_<is_const<T>,R(T_::*) Args const,R(T_::*) Args>::type F; \
     typedef R result_type; \
     \
     F f; \

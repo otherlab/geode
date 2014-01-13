@@ -49,7 +49,7 @@ static void large_partition_loop_test(const uint64_t loop_steps, const int threa
   for (int s=0;s<samples;s++) {
     const auto i = random->uniform<uint64_t>(0,loop_steps);
     const auto t = partition_loop_inverse(loop_steps,threads,i);
-    static_assert(boost::is_same<decltype(t),const int>::value,"");
+    static_assert(is_same<decltype(t),const int>::value,"");
     const auto box = partition_loop(loop_steps,threads,t);
     GEODE_ASSERT(box.contains(i));
   }

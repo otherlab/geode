@@ -17,7 +17,7 @@ template<class TV,int d> struct ScalarViewIsVectorSpace<Array<TV,d> >:public IsS
 template<class TV,int d> struct ScalarViewIsVectorSpace<RawArray<TV,d> >:public IsScalarVectorSpace<TV>{};
 template<class TV,int d> struct ScalarViewIsVectorSpace<Subarray<TV,d> >:public IsScalarVectorSpace<TV>{};
 
-template<class TV> typename boost::enable_if<IsScalarBlock<TV>,RawArray<typename ScalarPolicy<TV>::type> >::type
+template<class TV> typename enable_if<IsScalarBlock<TV>,RawArray<typename ScalarPolicy<TV>::type> >::type
 scalar_view(TV& block) {
   typedef typename ScalarPolicy<TV>::type T;
   return RawArray<T>(sizeof(TV)/sizeof(T),reinterpret_cast<T*>(&block));
@@ -27,7 +27,7 @@ template<class T,bool c> struct ConstIf;
 template<class T> struct ConstIf<T,false>{typedef T type;};
 template<class T> struct ConstIf<T,true>{typedef const T type;};
 
-template<class TA> typename boost::enable_if<IsContiguousArray<TA>,
+template<class TA> typename enable_if<IsContiguousArray<TA>,
   RawArray<typename ConstIf<typename ScalarPolicy<typename TA::Element>::type,TA::is_const>::type> >::type
 scalar_view(const TA& array) {
   typedef typename TA::Element TV;
@@ -36,7 +36,7 @@ scalar_view(const TA& array) {
   return RawArray<T>(sizeof(TV)/sizeof(T)*array.sizes().product(),reinterpret_cast<T*>(array.data()));
 }
 
-template<class TA> typename boost::enable_if<IsShareableArray<TA>,
+template<class TA> typename enable_if<IsShareableArray<TA>,
   Array<typename ConstIf<typename ScalarPolicy<typename TA::Element>::type,TA::is_const>::type> >::type
 scalar_view_own(const TA& array) {
   typedef typename TA::Element TV;
@@ -45,11 +45,11 @@ scalar_view_own(const TA& array) {
   return Array<T>(sizeof(TV)/sizeof(T)*array.sizes().product(),reinterpret_cast<T*>(array.data()),array.borrow_owner());
 }
 
-template<class TV,class TA> typename boost::enable_if<IsContiguousArray<TA>,
+template<class TV,class TA> typename enable_if<IsContiguousArray<TA>,
   RawArray<typename ConstIf<TV,TA::is_const>::type> >::type
 vector_view(const TA& array) {
   typedef typename TA::Element T;
-  BOOST_MPL_ASSERT((boost::is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>));
+  BOOST_MPL_ASSERT((is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>));
   const int r = sizeof(TV)/sizeof(T);
   BOOST_STATIC_ASSERT(r*sizeof(T)==sizeof(TV));
   const int n = array.size()/r;
@@ -58,11 +58,11 @@ vector_view(const TA& array) {
   return RawArray<TR>(n,reinterpret_cast<TR*>(array.data()));
 }
 
-template<class TV,class TA> typename boost::enable_if<IsShareableArray<TA>,
+template<class TV,class TA> typename enable_if<IsShareableArray<TA>,
   Array<typename ConstIf<TV,TA::is_const>::type> >::type
 vector_view_own(const TA& array) {
   typedef typename TA::Element T;
-  BOOST_MPL_ASSERT((boost::is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>));
+  BOOST_MPL_ASSERT((is_same<typename ScalarPolicy<TV>::type,typename ScalarPolicy<TV>::type>));
   const int r = sizeof(TV)/sizeof(T);
   BOOST_STATIC_ASSERT(r*sizeof(T)==sizeof(TV));
   const int n = array.size()/r;

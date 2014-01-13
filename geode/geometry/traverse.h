@@ -35,7 +35,7 @@ template<class Visitor,class TV> static void single_traverse(const BoxTree<TV>& 
 
 // Helper function for doubly recursive traversal of two box trees starting at given nodes
 template<class Visitor,class Thickness,class TV> static void double_traverse_helper(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, RawStack<Vector<int,2>> stack, int n0, int n1, Thickness thickness) {
-  assert((boost::is_same<Thickness,Zero>::value || !!thickness));
+  assert((is_same<Thickness,Zero>::value || !!thickness));
   const int internal0 = tree0.leaves.lo,
             internal1 = tree1.leaves.lo;
   RawArray<const Box<TV>> boxes0 = tree0.boxes,

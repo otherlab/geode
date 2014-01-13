@@ -93,7 +93,7 @@ template<class T> struct NumpyArrayType<NdArray<T> >:public NumpyArrayType<T>{};
 
 // Struct NumpyMinRank/NumpyMaxRank: Extract rank of an array type
 template<class T,class Enable=void> struct NumpyRank;
-template<class T> struct NumpyRank<T,typename boost::enable_if<mpl::and_<NumpyIsScalar<T>,mpl::not_<boost::is_const<T>>>>::type>:public mpl::int_<0>{};
+template<class T> struct NumpyRank<T,typename enable_if<mpl::and_<NumpyIsScalar<T>,mpl::not_<is_const<T>>>>::type>:public mpl::int_<0>{};
 template<class T> struct NumpyRank<const T>:public NumpyRank<T>{};
 
 template<class T,int d> struct NumpyRank<Vector<T,d> >:public mpl::int_<1+NumpyRank<T>::value>{};
@@ -131,7 +131,7 @@ template<class T,int m,int n> struct NumpyInfo<Matrix<T,m,n> > { static void dim
 
 // Function Numpy_Info: Recursively extract type and shape information from dynamically sized types
 
-template<class TV> typename boost::enable_if<NumpyIsStatic<TV> >::type
+template<class TV> typename enable_if<NumpyIsStatic<TV> >::type
 numpy_info(const TV& block, void*& data, npy_intp* dimensions) {
   data = const_cast_(&block);
   NumpyInfo<TV>::dimensions(dimensions);
@@ -162,12 +162,12 @@ numpy_info(const NdArray<T>& array, void*& data, npy_intp* dimensions) {
 
 // Numpy_Shape_Match: Check whether dynamic type can be resized to fit a given numpy array
 
-template<class T> typename boost::enable_if<NumpyIsScalar<T>,bool>::type
+template<class T> typename enable_if<NumpyIsScalar<T>,bool>::type
 numpy_shape_match(mpl::identity<T>,int rank,const npy_intp* dimensions) {
   return true;
 }
 
-template<class TV> typename boost::enable_if<mpl::and_<NumpyIsStatic<TV>,mpl::not_<NumpyIsScalar<TV> > >,bool>::type
+template<class TV> typename enable_if<mpl::and_<NumpyIsStatic<TV>,mpl::not_<NumpyIsScalar<TV> > >,bool>::type
 numpy_shape_match(mpl::identity<TV>, int rank, const npy_intp* dimensions) {
   if (rank!=NumpyRank<TV>::value) return false;
   npy_intp subdimensions[NumpyRank<TV>::value?NumpyRank<TV>::value:1];
@@ -199,7 +199,7 @@ numpy_shape_match(mpl::identity<NdArray<T> >, int rank, const npy_intp* dimensio
 #ifdef GEODE_PYTHON
 
 // to_numpy for static types
-template<class TV> typename boost::enable_if<NumpyIsStatic<TV>,PyObject*>::type
+template<class TV> typename enable_if<NumpyIsStatic<TV>,PyObject*>::type
 to_numpy(const TV& x) {
   // Extract memory layout information
   const int rank = numpy_rank(x);
@@ -218,8 +218,7 @@ to_numpy(const TV& x) {
 }
 
 // to_numpy for shareable array types
-template<class TArray>
-typename boost::enable_if<IsShareable<TArray>,PyObject*>::type
+template<class TArray> typename enable_if<IsShareable<TArray>,PyObject*>::type
 to_numpy(TArray& array) {
   // extract memory layout information
   const int rank = numpy_rank(array);
@@ -245,7 +244,7 @@ to_numpy(TArray& array) {
 }
 
 // from_numpy for static types
-template<class TV> typename boost::enable_if<NumpyIsStatic<TV>,TV>::type
+template<class TV> typename enable_if<NumpyIsStatic<TV>,TV>::type
 from_numpy(PyObject* object) { // Borrows reference to object
   // allow conversion from 0 to static vector/matrix types
   if(PyInt_Check(object) && !PyInt_AS_LONG(object))
@@ -290,7 +289,7 @@ from_numpy_helper(mpl::identity<NdArray<T> >,PyObject* array) {
 }
 
 // from_numpy for shareable arrays
-template<class TArray> typename boost::enable_if<IsShareable<TArray>,TArray>::type
+template<class TArray> typename enable_if<IsShareable<TArray>,TArray>::type
 from_numpy(PyObject* object) { // borrows reference to object
   const int flags = TArray::is_const?NPY_ARRAY_CARRAY_RO:NPY_ARRAY_CARRAY;
   const int rank_range = NumpyRank<TArray>::value;

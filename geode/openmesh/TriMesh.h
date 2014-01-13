@@ -261,7 +261,7 @@ template<class T> struct prop_handle_type<OpenMesh::HPropHandleT<T> >{typedef Ha
 
 template<class Iter> struct HandleIter : public Iter {
   HandleIter(Iter self) : Iter(self) {}
-  auto operator*() const -> decltype(boost::declval<Iter>().handle()) { return this->handle(); }
+  auto operator*() const -> decltype(declval<Iter>().handle()) { return this->handle(); }
 };
 
 template<class Iter> static inline Range<HandleIter<Iter> > handle_range(Iter begin, Iter end) {

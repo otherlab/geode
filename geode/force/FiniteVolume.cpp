@@ -54,11 +54,11 @@ template<class TV,int d> void FiniteVolume<TV,d>::structure(SolidMatrixStructure
   }
 }
 
-template<int d,int m> static inline typename boost::enable_if_c<m==d,const Matrix<T,d,d>&>::type in_plane(const Matrix<T,m>& U) {
+template<int d,int m> static inline typename enable_if_c<m==d,const Matrix<T,d,d>&>::type in_plane(const Matrix<T,m>& U) {
   return U;
 }
 
-template<int d> static inline typename boost::enable_if_c<d==2,Matrix<T,3,2>>::type in_plane(const Matrix<T,3>& U) {
+template<int d> static inline typename enable_if_c<d==2,Matrix<T,3,2>>::type in_plane(const Matrix<T,3>& U) {
   return Matrix<T,3,2>(U.column(0),U.column(1));
 }
 
@@ -116,12 +116,12 @@ template<class TV,int d> void FiniteVolume<TV,d>::add_elastic_force(RawArray<TV>
     }
 }
 
-template<int m,int d> static inline typename boost::enable_if_c<m==d,const DiagonalizedIsotropicStressDerivative<T,m>&>::type
+template<int m,int d> static inline typename enable_if_c<m==d,const DiagonalizedIsotropicStressDerivative<T,m>&>::type
 add_out_of_plane(const IsotropicConstitutiveModel<T,d>& model, const DiagonalMatrix<T,d>& F_hat, const DiagonalizedIsotropicStressDerivative<T,d>& in_plane, int t) {
   return in_plane;
 }
 
-template<int m> static inline typename boost::enable_if_c<m==3,DiagonalizedIsotropicStressDerivative<T,3,2>>::type
+template<int m> static inline typename enable_if_c<m==3,DiagonalizedIsotropicStressDerivative<T,3,2>>::type
 add_out_of_plane(const IsotropicConstitutiveModel<T,2>& model, const DiagonalMatrix<T,2>& F_hat, const DiagonalizedIsotropicStressDerivative<T,2>& in_plane, int t) {
   DiagonalizedIsotropicStressDerivative<T,3,2> A;
   A.A = in_plane;

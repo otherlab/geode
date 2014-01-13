@@ -19,8 +19,6 @@
 #include <geode/python/utility.h>
 #include <geode/utility/config.h>
 #include <geode/utility/Enumerate.h>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
 namespace geode {
 
 typedef PyObject* (*FunctionWrapper)(PyObject* args,void* wrapped);

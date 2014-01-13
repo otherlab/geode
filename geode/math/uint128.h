@@ -4,7 +4,7 @@
 #pragma once
 
 #include <geode/python/forward.h>
-#include <boost/type_traits/is_integral.hpp>
+#include <geode/utility/type_traits.h>
 #include <boost/static_assert.hpp>
 #include <boost/detail/endian.hpp>
 #include <stdint.h>
@@ -129,7 +129,7 @@ public:
 };
 
 template<class I> inline I cast_uint128(const uint128_t& n) {
-  BOOST_STATIC_ASSERT((boost::is_integral<I>::value && sizeof(I)<=8));
+  BOOST_STATIC_ASSERT((is_integral<I>::value && sizeof(I)<=8));
   return I(n.lo);
 }
 

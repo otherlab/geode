@@ -5,11 +5,8 @@
 #include <geode/utility/SanitizeFunction.h>
 #include <geode/utility/Enumerate.h>
 #include <geode/utility/move.h>
+#include <geode/utility/type_traits.h>
 #include <geode/structure/Tuple.h>
-#include <boost/utility/declval.hpp>
-#include <boost/utility/result_of.hpp>
-#include <boost/type_traits/add_const.hpp>
-#include <boost/type_traits/add_reference.hpp>
 namespace geode {
 
 namespace {
@@ -26,13 +23,13 @@ template<class F,class... Args> struct Curry {
     : f(f), args(args...) {}
 
   template<class... Rest> GEODE_ALWAYS_INLINE auto operator()(Rest&&... rest) const
-    -> decltype(boost::declval<const S&>()(boost::declval<const Args&>()...,rest...)) {
+    -> decltype(declval<const S&>()(declval<const Args&>()...,rest...)) {
     return call(Enumerate<Args...>(),geode::forward<Rest>(rest)...);
   }
 
 private:
   template<class... Enum,class... Rest> GEODE_ALWAYS_INLINE auto call(Types<Enum...>, Rest&&... rest) const 
-    -> decltype(boost::declval<const S&>()(boost::declval<const Args&>()...,rest...)) {
+    -> decltype(declval<const S&>()(declval<const Args&>()...,rest...)) {
     return f(args.template get<Enum::index>()...,geode::forward<Rest>(rest)...);
   }
 };
@@ -50,15 +47,15 @@ template<class F> static inline const F& curry(const F& f) {
 #define GEODE_CURRY(n,ARGS,Args,fields,Argsargs,init,args,consts) \
   template<class F,GEODE_REMOVE_PARENS(ARGS)> struct Curry##n { \
     typedef typename SanitizeFunction<F>::type S; \
-    typedef typename boost::add_reference<typename boost::add_const<S>::type>::type CS; \
-    typename boost::add_const<S>::type f; \
+    typedef typename add_reference<typename add_const<S>::type>::type CS; \
+    typename add_const<S>::type f; \
     GEODE_REMOVE_PARENS(fields) \
     Curry##n(CS f,GEODE_REMOVE_PARENS(Argsargs)) : f(f),GEODE_REMOVE_PARENS(init) {} \
-    typename boost::result_of<S consts>::type operator()() const { return f args; } \
-    template<class R0> typename boost::result_of<S(GEODE_REMOVE_PARENS(consts),R0&&)>::type operator()(R0&& r0) const { return f(GEODE_REMOVE_PARENS(args),r0); } \
-    template<class R0,class R1> typename boost::result_of<S(GEODE_REMOVE_PARENS(consts),R0&&,R1&&)>::type operator()(R0&& r0,R1&& r1) const { return f(GEODE_REMOVE_PARENS(args),r0,r1); } \
-    template<class R0,class R1,class R2> typename boost::result_of<S(GEODE_REMOVE_PARENS(consts),R0&&,R1&&,R2&&)>::type operator()(R0&& r0,R1&& r1,R2&& r2) const { return f(GEODE_REMOVE_PARENS(args),r0,r1,r2); } \
-    template<class R0,class R1,class R2,class R3> typename boost::result_of<S(GEODE_REMOVE_PARENS(consts),R0&&,R1&&,R2&&,R3&&)>::type operator()(R0&&r0,R1&&r1,R2&&r2,R3&&r3) const { return f(GEODE_REMOVE_PARENS(args),r0,r1,r2,r3); } \
+    typename result_of<S consts>::type operator()() const { return f args; } \
+    template<class R0> typename result_of<S(GEODE_REMOVE_PARENS(consts),R0&&)>::type operator()(R0&& r0) const { return f(GEODE_REMOVE_PARENS(args),r0); } \
+    template<class R0,class R1> typename result_of<S(GEODE_REMOVE_PARENS(consts),R0&&,R1&&)>::type operator()(R0&& r0,R1&& r1) const { return f(GEODE_REMOVE_PARENS(args),r0,r1); } \
+    template<class R0,class R1,class R2> typename result_of<S(GEODE_REMOVE_PARENS(consts),R0&&,R1&&,R2&&)>::type operator()(R0&& r0,R1&& r1,R2&& r2) const { return f(GEODE_REMOVE_PARENS(args),r0,r1,r2); } \
+    template<class R0,class R1,class R2,class R3> typename result_of<S(GEODE_REMOVE_PARENS(consts),R0&&,R1&&,R2&&,R3&&)>::type operator()(R0&&r0,R1&&r1,R2&&r2,R3&&r3) const { return f(GEODE_REMOVE_PARENS(args),r0,r1,r2,r3); } \
   }; \
   \
   template<class F,GEODE_REMOVE_PARENS(ARGS)> static inline Curry##n<F,GEODE_REMOVE_PARENS(Args)> curry(const F& f,GEODE_REMOVE_PARENS(Argsargs)) { \

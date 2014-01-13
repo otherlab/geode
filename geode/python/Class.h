@@ -33,6 +33,7 @@
 #include <geode/python/Object.h>
 #include <geode/utility/Enumerate.h>
 #include <geode/utility/format.h>
+#include <geode/utility/type_traits.h>
 #ifdef GEODE_PYTHON
 #include <geode/python/wrap_constructor.h>
 #include <geode/python/wrap_field.h>
@@ -44,9 +45,6 @@
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/void.hpp>
 #include <boost/integer.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/add_const.hpp>
-#include <boost/type_traits/remove_pointer.hpp>
 namespace geode {
 
 namespace mpl = boost::mpl;
@@ -58,7 +56,7 @@ GEODE_CORE_EXPORT PyObject* simple_alloc(PyTypeObject* type,Py_ssize_t nitems);
 GEODE_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr);
 
 #define GEODE_BASE_PYTYPE(...) \
-  (boost::is_same<__VA_ARGS__::Base,__VA_ARGS__>::value?0:&__VA_ARGS__::Base::pytype)
+  (is_same<__VA_ARGS__::Base,__VA_ARGS__>::value?0:&__VA_ARGS__::Base::pytype)
 
 // Should appear in the .cpp to define the fields declared by GEODE_DECLARE_TYPE(GEODE_SOMETHING_EXPORT)
 #define GEODE_DEFINE_TYPE(...) \
@@ -124,13 +122,13 @@ protected:
 // Class goes in an unnamed namespace since for given T, Class<T> should appear in only one object file
 namespace {
 
-GEODE_VALIDITY_CHECKER(has_less,T,boost::declval<const T&>()<boost::declval<const T&>())
+GEODE_VALIDITY_CHECKER(has_less,T,declval<const T&>()<declval<const T&>())
 
 template<class T>
 class Class : public ClassBase {
   struct Unusable {};
 public:
-  typedef typename boost::remove_pointer<decltype(GetSelf<T>::get((PyObject*)0))>::type Self;
+  typedef typename remove_pointer<decltype(GetSelf<T>::get((PyObject*)0))>::type Self;
 
   Class(const char* name, bool visible=true)
     : ClassBase(name,visible,&T::pytype,(char*)(typename T::Base*)(T*)1-(char*)(T*)1)
@@ -364,7 +362,7 @@ static void dealloc(PyObject* self) {
 }
 #endif
 
-template<class T,class S> static inline typename boost::add_const<S>::type T::*
+template<class T,class S> static inline typename add_const<S>::type T::*
 const_field(S T::* field) {
   return field;
 }

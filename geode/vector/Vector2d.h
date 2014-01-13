@@ -69,7 +69,7 @@ public:
     explicit Vector(const TVector& v)
         :x(v[0]),y(v[1])
     {
-        BOOST_STATIC_ASSERT((boost::is_same<T,typename TVector::Element>::value && TVector::m==2));
+        BOOST_STATIC_ASSERT((is_same<T,typename TVector::Element>::value && TVector::m==2));
     }
 
     explicit Vector(const complex<T>& c)

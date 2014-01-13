@@ -15,7 +15,7 @@
 #include <geode/utility/HasCheapCopy.h>
 #include <geode/utility/CopyConst.h>
 #include <geode/utility/range.h>
-#include <boost/type_traits/remove_const.hpp>
+#include <geode/utility/type_traits.h>
 #include <iomanip>
 #include <vector>
 namespace geode {
@@ -31,8 +31,8 @@ class RawArray<T_,1> : public ArrayBase<T_,RawArray<T_,1> > {
 public:
   enum Workaroun1 {d=1};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
   typedef T& result_type;
 
 private:
@@ -158,8 +158,8 @@ class RawArray<T,2> {
 public:
   enum Workaroun1 {d=2};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class RawArray<typename mpl::if_c<is_const,Element,const Element>::type,2>;
@@ -347,8 +347,8 @@ class RawArray<T,3> {
 public:
   enum Workaroun1 {d=3};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class RawArray<typename mpl::if_c<is_const,Element,const Element>::type,3>;
@@ -474,8 +474,8 @@ class RawArray<T,4> {
 public:
   enum Workaroun1 {d=4};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class RawArray<typename mpl::if_c<is_const,Element,const Element>::type,4>;

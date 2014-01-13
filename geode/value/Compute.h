@@ -8,7 +8,7 @@
 #include <geode/structure/Tuple.h>
 #include <geode/utility/curry.h>
 #include <geode/utility/format.h>
-#include <geode/utility/remove_const_reference.h>
+#include <geode/utility/type_traits.h>
 #include <boost/function.hpp>
 #include <stdio.h>
 namespace geode {

@@ -21,11 +21,11 @@
 #include <geode/python/Class.h>
 #include <geode/utility/config.h>
 #include <geode/utility/format.h>
+#include <geode/utility/type_traits.h>
 #include <geode/utility/tr1.h>
 #include <geode/python/to_python.h>
 #include <boost/mpl/void.hpp>
 #include <boost/preprocessor/facilities/empty.hpp>
-#include <boost/utility/enable_if.hpp>
 namespace geode {
 
 using std::make_pair;
@@ -70,7 +70,7 @@ template<class E> class PyEnum : public Object {};
     return to_python(it->second); \
   } \
   \
-  template<> EXPORT E FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type>::convert(PyObject* object) { \
+  template<> EXPORT E FromPython<E,typename enable_if<is_enum<E>>::type>::convert(PyObject* object) { \
     return from_python<const PyEnum<E>&>(object).value; \
   } \
   GEODE_DEFINE_TYPE(PyEnum<E>);

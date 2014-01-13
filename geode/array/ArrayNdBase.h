@@ -5,19 +5,18 @@
 
 #include <geode/array/Array.h>
 #include <geode/math/isnan.h>
-#include <boost/utility/enable_if.hpp>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/or.hpp>
 namespace geode {
 
 namespace mpl = boost::mpl;
-using boost::is_same;
 
 template<class T,class TArray>
 class ArrayNdBase {
 public:
   typedef T Element;
   typedef typename ScalarPolicy<T>::type Scalar;
-  static const bool is_const=boost::is_const<T>::value;
+  static const bool is_const = geode::is_const<T>::value;
 
   Array<T> flat; // one-dimensional data storage
 
@@ -82,7 +81,7 @@ public:
     return derived();
   }
 
-  template<class T2> typename boost::enable_if<mpl::or_<IsScalar<T2>,is_same<T,T2> >,TArray&>::type operator*=(const T2 a) {
+  template<class T2> typename enable_if<mpl::or_<IsScalar<T2>,is_same<T,T2> >,TArray&>::type operator*=(const T2 a) {
     flat *= a;
     return derived();
   }

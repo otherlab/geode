@@ -2,8 +2,7 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
-#include <boost/type_traits/is_integral.hpp>
-#include <boost/utility/declval.hpp>
+#include <geode/utility/type_traits.h>
 #include <cassert>
 
 #ifdef GEODE_PYTHON
@@ -15,7 +14,7 @@
 namespace geode {
 
 template<class Iter,class Enable> struct Range {
-  typedef decltype(*boost::declval<Iter>()) Reference;
+  typedef decltype(*declval<Iter>()) Reference;
 
   const Iter lo, hi;
 
@@ -31,7 +30,7 @@ template<class Iter,class Enable> struct Range {
   Reference back() const { assert(lo!=hi); return *(hi-1); }
 };
 
-template<class I> struct Range<I,typename boost::enable_if<boost::is_integral<I>>::type> {
+template<class I> struct Range<I,typename enable_if<is_integral<I>>::type> {
   I lo, hi;
 
   struct Iter {
@@ -69,22 +68,22 @@ template<class Iter> static inline Range<Iter> range(const Iter& lo, const Iter&
 }
 
 template<class I> static inline Range<I> range(I n) {
-  static_assert(boost::is_integral<I>::value,"single argument range must take an integral type");
+  static_assert(is_integral<I>::value,"single argument range must take an integral type");
   return Range<I>(0,n);
 }
 
 template<class Iter,class I> static inline auto operator+(const Range<Iter>& r, const I n)
-  -> typename boost::enable_if<boost::is_integral<I>,decltype(range(r.lo+n,r.hi+n))>::type {
+  -> typename enable_if<is_integral<I>,decltype(range(r.lo+n,r.hi+n))>::type {
   return range(r.lo+n,r.hi+n);
 }
 
 template<class Iter,class I> static inline auto operator-(const Range<Iter>& r, const I n)
-  -> typename boost::enable_if<boost::is_integral<I>,decltype(range(r.lo-n,r.hi-n))>::type {
+  -> typename enable_if<is_integral<I>,decltype(range(r.lo-n,r.hi-n))>::type {
   return range(r.lo-n,r.hi-n);
 }
 
 template<class Iter,class I> static inline auto operator+(const I n, const Range<Iter>& r)
-  -> typename boost::enable_if<boost::is_integral<I>,decltype(range(r.lo+n,r.hi+n))>::type {
+  -> typename enable_if<is_integral<I>,decltype(range(r.lo+n,r.hi+n))>::type {
   return range(r.lo+n,r.hi+n);
 }
 

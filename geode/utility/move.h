@@ -2,10 +2,8 @@
 #pragma once
 
 #include <geode/utility/config.h>
-#include <boost/type_traits/remove_reference.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
-
-using boost::remove_reference;
 
 // Mark an object as safely moveable
 template<class T> GEODE_ALWAYS_INLINE static inline typename remove_reference<T>::type&& move(T&& x) {

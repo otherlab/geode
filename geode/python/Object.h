@@ -27,9 +27,8 @@
 #include <geode/python/forward.h>
 #include <geode/python/new.h>
 #include <geode/utility/config.h>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/void.hpp>
-#include <boost/utility/enable_if.hpp>
-
 namespace geode {
 
 namespace mpl = boost::mpl;
@@ -51,7 +50,7 @@ public:
 template<class T> struct GetSelf {
   typedef T type;
   static T* get(PyObject* object) {
-    BOOST_MPL_ASSERT((boost::is_base_of<Object,T>));
+    BOOST_MPL_ASSERT((is_base_of<Object,T>));
     return (T*)(object+1);
   }
 };
@@ -60,7 +59,7 @@ class WeakRefSupport;
 
 #ifdef GEODE_PYTHON
 
-template<class T, bool has_weakrefs = boost::is_base_of<WeakRefSupport,T>::value >
+template<class T, bool has_weakrefs = is_base_of<WeakRefSupport,T>::value >
 struct WeakRef_Helper {
   static int offset() { return 0; }
   static void clear_refs(PyObject *) {}
@@ -100,7 +99,7 @@ struct ObjectUnusable {};
 
 // Conversion from T& for python types
 template<class T> static inline PyObject*
-to_python(T& value, typename boost::enable_if<boost::is_base_of<Object,T>,ObjectUnusable>::type unusable=ObjectUnusable()) {
+to_python(T& value, typename enable_if<is_base_of<Object,T>,ObjectUnusable>::type unusable=ObjectUnusable()) {
   PyObject* object = (PyObject*)&value-1;
   GEODE_INCREF(object);
   return object;

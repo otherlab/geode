@@ -3,13 +3,12 @@
 //#####################################################################
 #pragma once
 
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/or.hpp>
-#include <boost/type_traits/is_enum.hpp>
-#include <boost/type_traits/is_fundamental.hpp>
 namespace geode {
 
 namespace mpl = boost::mpl;
 
-template<class T> struct HasCheapCopy:public mpl::or_<boost::is_fundamental<T>,boost::is_enum<T> >{};
+template<class T> struct HasCheapCopy:public mpl::or_<is_fundamental<T>,is_enum<T>>{};
 
 }

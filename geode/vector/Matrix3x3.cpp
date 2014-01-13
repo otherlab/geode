@@ -41,7 +41,7 @@ higham_iterate(const T tolerance,const int max_iterations,const bool exit_on_max
 template<class T> void Matrix<T,3>::
 fast_singular_value_decomposition(Matrix<T,3>& U,DiagonalMatrix<T,3>& singular_values,Matrix<T,3>& V) const // 182 mults, 112 adds, 6 divs, 11 sqrts, 1 atan2, 1 sincos
 {
-    if(!boost::is_same<T,double>::value){
+    if(!is_same<T,double>::value){
         Matrix<double,3> U_double,V_double;DiagonalMatrix<double,3> singular_values_double;
         Matrix<double,3>(*this).fast_singular_value_decomposition(U_double,singular_values_double,V_double);
         U=Matrix<T,3>(U_double);singular_values=DiagonalMatrix<T,3>(singular_values_double);V=Matrix<T,3>(V_double);return;}

@@ -14,11 +14,11 @@ namespace geode {
 
 using std::swap;
 
-template<class T> static inline typename boost::disable_if<boost::is_fundamental<T> >::type small_sort(T& a,T& b) {
+template<class T> static inline typename disable_if<is_fundamental<T> >::type small_sort(T& a,T& b) {
   if(b<a) swap(a,b);
 }
 
-template<class T> static inline typename boost::enable_if<boost::is_fundamental<T> >::type small_sort(T& a,T& b) {
+template<class T> static inline typename enable_if<is_fundamental<T> >::type small_sort(T& a,T& b) {
   T min_ab = min(a,b),
     max_ab = max(a,b);
   a = min_ab;

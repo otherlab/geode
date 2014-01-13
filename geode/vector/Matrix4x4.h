@@ -121,7 +121,7 @@ public:
                    x[0][2]-A.x[0][2],x[1][2]-A.x[1][2],x[2][2]-A.x[2][2],x[3][2]-A.x[3][2],x[0][3]-A.x[0][3],x[1][3]-A.x[1][3],x[2][3]-A.x[2][3],x[3][3]-A.x[3][3]);}
 
     template<int p>
-    typename boost::disable_if_c<p==4,Matrix<T,4,p> >::type
+    typename disable_if_c<p==4,Matrix<T,4,p> >::type
     operator*(const Matrix<T,4,p>& A) const
     {Matrix<T,4,p> result;
     for(int i=0;i<4;i++) for(int j=0;j<p;j++) for(int k=0;k<4;k++) result(i,j)+=x[i][k]*A(k,j);

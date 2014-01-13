@@ -3,7 +3,7 @@
 //#####################################################################
 //
 // This is similar to boost::lexical_cast, but simpler and detects
-// operator<< overloads that exist only in the other namespace.
+// operator<< overloads that exist only in the geode namespace.
 //
 //#####################################################################
 #pragma once

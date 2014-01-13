@@ -1,11 +1,9 @@
 #pragma once
 
 #include <geode/array/ArrayExpression.h>
-#include <geode/utility/remove_const_reference.h>
-#include <boost/utility/declval.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
-using boost::declval;
 template<class F,class A> class ArrayMap;
 template<class F,class A> struct IsArray<ArrayMap<F,A>>:public mpl::true_{};
 template<class F,class A> struct HasCheapCopy<ArrayMap<F,A>>:public mpl::true_{};

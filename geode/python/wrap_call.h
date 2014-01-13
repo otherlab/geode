@@ -16,7 +16,7 @@
 #include <boost/mpl/bool.hpp>
 namespace geode {
 
-namespace mpl=boost::mpl;
+namespace mpl = boost::mpl;
 
 #ifdef GEODE_VARIADIC
 
@@ -36,7 +36,7 @@ template<class R,class T,class... Args> static inline ternaryfunc wrap_call_help
 
 template<class T,class... Args> static inline ternaryfunc
 wrap_call() {
-  typedef decltype((*(T*)0)(boost::declval<Args>()...)) R;
+  typedef decltype((*(T*)0)(declval<Args>()...)) R;
   return wrap_call_helper<R,T>(typename Enumerate<Args...>::type());
 }
 
@@ -64,7 +64,7 @@ template<class T,class A0=void,class A1=void,class A2=void,class A3=void,class A
     } \
   };
 
-#define V(i) boost::declval<A##i>()
+#define V(i) declval<A##i>()
 GEODE_WRAP_CALL_2(0,(),(),())
 GEODE_WRAP_CALL(1,(class A0),(A0),(V(0)))
 GEODE_WRAP_CALL(2,(class A0,class A1),(A0,A1),(V(0),V(1)))

@@ -26,7 +26,7 @@ template<class T> struct PythonCast<T*> { static T* cast(PyObject* object) {
 }};
 template<class T> struct PythonCast<T&> { static T& cast(PyObject* object) {
 #ifdef GEODE_PYTHON
-  if (!boost::is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
+  if (!is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
     unregistered_python_type(object,&T::pytype,GEODE_DEBUG_FUNCTION_NAME);
 #endif
   if (is_instance<T>(object))

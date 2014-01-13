@@ -16,9 +16,8 @@
 #include <geode/python/forward.h>
 #include <geode/python/repr.h>
 #include <geode/python/to_python.h>
-#include <boost/type_traits/common_type.hpp>
 #include <geode/python/config.h>
-#include <geode/utility/remove_const_reference.h>
+#include <geode/utility/type_traits.h>
 #include <cmath>
 namespace geode {
 
@@ -30,7 +29,6 @@ using ::std::exp;
 using ::std::sin;
 using ::std::cos;
 using ::std::pow;
-using boost::common_type;
 
 template<class TArray,class TIndices> class IndirectArray;
 
@@ -67,7 +65,7 @@ public:
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
     template<class> class result;
-    template<class V> class result<V(int)>:public mpl::if_<boost::is_const<V>,const T&,T&>{};
+    template<class V> class result<V(int)>:public mpl::if_<is_const<V>,const T&,T&>{};
     enum Workaround1 {dimension=d};
     enum Workaround2 {m=d};
     static const bool is_const=false;
@@ -105,7 +103,7 @@ public:
     template<class TVector>
     explicit Vector(const TVector& v)
     {
-        BOOST_STATIC_ASSERT((boost::is_same<T,typename TVector::Element>::value && TVector::m==d));
+        BOOST_STATIC_ASSERT((is_same<T,typename TVector::Element>::value && TVector::m==d));
         for(int i=0;i<d;i++) array[i]=v[i];
     }
 

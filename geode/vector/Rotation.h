@@ -5,13 +5,13 @@
 
 #include <geode/vector/complex.h>
 #include <geode/vector/Quaternion.h>
-#include <boost/utility/enable_if.hpp>
 #include <geode/array/forward.h>
 #include <geode/math/clamp.h>
 #include <geode/math/constants.h>
 #include <geode/math/robust.h>
 #include <geode/python/to_python.h>
 #include <geode/utility/debug.h>
+#include <geode/utility/type_traits.h>
 #include <geode/vector/Matrix.h>
 namespace geode {
 
@@ -157,8 +157,8 @@ public:
     template<class T2> explicit Rotation(const Rotation<Vector<T2,2> >& r)
         :c(r.complex())
     {
-        BOOST_STATIC_ASSERT((!boost::is_same<T,T2>::value));
-        if(!boost::is_same<T,int>::value) normalize();
+        BOOST_STATIC_ASSERT((!is_same<T,T2>::value));
+        if(!is_same<T,int>::value) normalize();
     }
 
     explicit Rotation(const Matrix<T,2>& A)
@@ -291,8 +291,8 @@ public:
     template<class T2> explicit Rotation(const Rotation<T2>& r)
         :q(r.quaternion())
     {
-        BOOST_STATIC_ASSERT((!boost::is_same<T,T2>::value));
-        if(!boost::is_same<T,int>::value) normalize();
+        BOOST_STATIC_ASSERT((!is_same<T,T2>::value));
+        if(!is_same<T,int>::value) normalize();
     }
 
     Rotation(const T angle,const TV& direction)
@@ -313,10 +313,10 @@ public:
         normalize();
     }
 
-    static Rotation<TV> from_components(const typename mpl::if_<boost::is_same<T,int>,Unusable,T>::type s,const T x,const T y,const T z)
+    static Rotation<TV> from_components(const typename mpl::if_<is_same<T,int>,Unusable,T>::type s,const T x,const T y,const T z)
     {return Rotation<TV>(s,x,y,z).normalized();}
 
-    static Rotation<TV> from_components(const typename mpl::if_<boost::is_same<T,int>,int,Unusable>::type s,const int x,const int y,const int z)
+    static Rotation<TV> from_components(const typename mpl::if_<is_same<T,int>,int,Unusable>::type s,const int x,const int y,const int z)
     {return Rotation<TV>(s,x,y,z);}
 
     const Quaternion<T>& quaternion() const
@@ -449,7 +449,7 @@ public:
     template<class RW>
     void read(std::istream& input)
     {q.template read<RW>(input);
-    if(!boost::is_same<T,int>::value && !is_normalized()) GEODE_FATAL_ERROR("Read nonnormalized rotation");}
+    if(!is_same<T,int>::value && !is_normalized()) GEODE_FATAL_ERROR("Read nonnormalized rotation");}
 
     template<class RW>
     void write(std::ostream& output) const

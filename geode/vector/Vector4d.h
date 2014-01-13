@@ -14,6 +14,7 @@
 #include <geode/math/min.h>
 #include <geode/math/sqr.h>
 #include <geode/math/wrap.h>
+#include <geode/utility/type_traits.h>
 #include <cmath>
 namespace geode {
 
@@ -36,7 +37,7 @@ public:
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
     template<class V> struct result;
-    template<class V> struct result<V(int)>:mpl::if_<boost::is_const<V>,const T&,T&>{};
+    template<class V> struct result<V(int)>:mpl::if_<is_const<V>,const T&,T&>{};
     enum Workaround1 {dimension=4};
     enum Workaround2 {m=4};
     static const bool is_const=false;

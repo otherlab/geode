@@ -3,9 +3,10 @@
 
 #include <geode/math/max.h>
 #include <geode/vector/ScalarPolicy.h>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
-template<class T> typename boost::enable_if<IsScalar<T>,T>::type relative_error(const T& a, const T& b, const T& absolute=1e-30) {
+template<class T> typename enable_if<IsScalar<T>,T>::type relative_error(const T& a, const T& b, const T& absolute=1e-30) {
   return abs(a-b)/max(abs(a),abs(b),absolute);
 }
 

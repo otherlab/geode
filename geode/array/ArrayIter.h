@@ -4,9 +4,7 @@
 #pragma once
 
 #include <geode/array/forward.h>
-#include <geode/utility/remove_const_reference.h>
-#include <boost/type_traits/remove_reference.hpp>
-#include <boost/utility/declval.hpp>
+#include <geode/utility/type_traits.h>
 #include <iterator>
 namespace geode {
 
@@ -15,8 +13,8 @@ template<class TArray> class ArrayIter {
   int index;
 public:
   typedef std::random_access_iterator_tag iterator_category;
-  typedef decltype(boost::declval<TArray>()[0]) reference;
-  typedef typename boost::remove_reference<reference>::type value_type;
+  typedef decltype(declval<TArray>()[0]) reference;
+  typedef typename remove_reference<reference>::type value_type;
   typedef int difference_type;
   typedef value_type* pointer;
 

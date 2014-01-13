@@ -4,9 +4,7 @@
 #pragma once
 
 #include <geode/array/ArrayIter.h>
-#include <geode/utility/remove_const_reference.h>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_base_of.hpp>
+#include <geode/utility/type_traits.h>
 #include <boost/static_assert.hpp>
 namespace geode {
 
@@ -16,7 +14,7 @@ template<> struct ArrayExpressionBase<-1> {};
 
 template<class TA,class Enable=void> struct SizeIfConstant { enum {m = -1}; };
 template<class T,int d> struct SizeIfConstant<Vector<T,d>> { enum {m = d}; };
-template<class TA> struct SizeIfConstant<TA,typename boost::enable_if<boost::is_base_of<ConstantSizeArrayExpressionBase,TA>>::type> { enum {m = TA::m}; };
+template<class TA> struct SizeIfConstant<TA,typename enable_if<is_base_of<ConstantSizeArrayExpressionBase,TA>>::type> { enum {m = TA::m}; };
 
 #ifdef GEODE_VARIADIC
 template<int m,class... Args> struct SameSizeHelper;

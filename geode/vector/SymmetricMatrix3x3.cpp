@@ -17,7 +17,7 @@ namespace geode {
 template<class T> DiagonalMatrix<T,3> SymmetricMatrix<T,3>::
 fast_eigenvalues() const // 24 mults, 20 adds, 1 atan2, 1 sincos, 2 sqrts
 {
-    if(!boost::is_same<T,double>::value) return DiagonalMatrix<T,3>(SymmetricMatrix<double,3>(*this).fast_eigenvalues());
+    if(!is_same<T,double>::value) return DiagonalMatrix<T,3>(SymmetricMatrix<double,3>(*this).fast_eigenvalues());
     // now T is double
     T m=T(1./3)*(x00+x11+x22);
     T a00=x00-m,a11=x11-m,a22=x22-m,a01_sqr=x10*x10,a02_sqr=x20*x20,a12_sqr=x21*x21;
@@ -36,7 +36,7 @@ namespace{
 template<class T> Matrix<T,3>
 fast_eigenvectors(const SymmetricMatrix<T,3>& A,const DiagonalMatrix<T,3>& lambda) // 71 mults, 44 adds, 3 divs, 3 sqrts
 {
-    if(!boost::is_same<T,double>::value) GEODE_FATAL_ERROR();
+    if(!is_same<T,double>::value) GEODE_FATAL_ERROR();
     // T is now always double
 
     // flip if necessary so that first eigenvalue is the most different
@@ -67,7 +67,7 @@ fast_eigenvectors(const SymmetricMatrix<T,3>& A,const DiagonalMatrix<T,3>& lambd
 template<class T> void SymmetricMatrix<T,3>::
 fast_solve_eigenproblem(DiagonalMatrix<T,3>& eigenvalues,Matrix<T,3>& eigenvectors) const // roughly 95 mults, 64 adds, 3 divs, 5 sqrts, 1 atan2, 1 sincos
 {
-    if(!boost::is_same<T,double>::value){
+    if(!is_same<T,double>::value){
         DiagonalMatrix<double,3> eigenvalues_double;Matrix<double,3> eigenvectors_double;
         SymmetricMatrix<double,3>(*this).fast_solve_eigenproblem(eigenvalues_double,eigenvectors_double);
         eigenvalues=DiagonalMatrix<T,3>(eigenvalues_double);eigenvectors=Matrix<T,3>(eigenvectors_double);return;}

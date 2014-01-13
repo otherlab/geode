@@ -11,7 +11,7 @@ class AnalyticImplicit:public Implicit<typename Shape::VectorT>,public Shape
 {
   typedef real T;
   typedef typename Shape::VectorT TV;
-  BOOST_MPL_ASSERT((boost::is_same<T,typename TV::Scalar>));
+  BOOST_MPL_ASSERT((is_same<T,typename TV::Scalar>));
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Implicit<TV> Base;

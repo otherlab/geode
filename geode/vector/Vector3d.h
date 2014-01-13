@@ -38,7 +38,7 @@ public:
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
     template<class V> struct result;
-    template<class V> struct result<V(int)>:mpl::if_<boost::is_const<V>,const T&,T&>{};
+    template<class V> struct result<V(int)>:mpl::if_<is_const<V>,const T&,T&>{};
     enum Workaround1 {dimension=3};
     enum Workaround2 {m=3};
     static const bool is_const=false;
@@ -71,7 +71,7 @@ public:
     explicit Vector(const IndirectArray<TVector,TIndices>& v)
         :x(v[0]),y(v[1]),z(v[2])
     {
-        BOOST_STATIC_ASSERT((boost::is_same<T,typename IndirectArray<TVector,TIndices>::Element>::value && IndirectArray<TVector,TIndices>::m==3));
+        BOOST_STATIC_ASSERT((is_same<T,typename IndirectArray<TVector,TIndices>::Element>::value && IndirectArray<TVector,TIndices>::m==3));
     }
 
     explicit Vector(const Vector<T,2>& vector, const T& z)

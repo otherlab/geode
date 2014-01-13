@@ -284,7 +284,7 @@ protected:
   //  - are relocatable: memcpy'ing the object to different memory is ok
   // We can only check for a trivial constructor here, but that's not a bad start.
   template<class T>
-  PropertyStorage(int size, T const & def = T(), typename boost::enable_if<typename boost::has_trivial_destructor<T>::type>::type* dummy = 0)
+  PropertyStorage(int size, T const & def = T(), typename enable_if<typename has_trivial_destructor<T>::type>::type* dummy = 0)
   : data(sizeof(T) * size), t_size(sizeof(T)), tmp(new uint8_t[t_size]) {
     // initialize content
     for (int i = 0; i < size; ++i) {

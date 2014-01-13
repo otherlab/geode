@@ -20,9 +20,8 @@
 #include <geode/python/exceptions.h>
 #include <geode/python/Object.h>
 #include <geode/utility/config.h>
+#include <geode/utility/type_traits.h>
 #include <geode/utility/validity.h>
-#include <boost/type_traits/is_base_of.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <string>
 namespace geode {
 
@@ -60,14 +59,14 @@ template<> struct FromPython<string>{GEODE_CORE_EXPORT static string convert(PyO
 // machines and compilers nowadays have signed chars.  Therefore, we are
 // going to do something horrible: make char convert from string, and
 // uint8_t convert from small integers.
-static_assert(!boost::is_same<char,uint8_t>::value, "Different conversions for uint8_t and char (even though they're the same)! Our fault!");
+static_assert(!is_same<char,uint8_t>::value, "Different conversions for uint8_t and char (even though they're the same)! Our fault!");
 template<> struct FromPython<char>{GEODE_CORE_EXPORT static char convert(PyObject* object);};
 template<> struct FromPython<uint8_t>{GEODE_CORE_EXPORT static uint8_t convert(PyObject* object);};
 
 // Conversion to T& for python types
-template<class T> struct FromPython<T&,typename boost::enable_if<boost::is_base_of<Object,T>>::type>{static T&
+template<class T> struct FromPython<T&,typename enable_if<is_base_of<Object,T>>::type>{static T&
 convert(PyObject* object) {
-  if (!boost::is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
+  if (!is_same<T,Object>::value && &T::pytype==&T::Base::pytype)
     unregistered_python_type(object,&T::pytype,GEODE_DEBUG_FUNCTION_NAME);
   if (!PyObject_IsInstance(object,(PyObject*)&T::pytype))
     throw_type_error(object,&T::pytype);
@@ -81,10 +80,10 @@ template<> struct has_from_python<void> : public mpl::true_ {};
 #endif
 
 // Conversion to const T& for copy constructible types
-template<class T> struct FromPython<const T&,typename boost::enable_if<has_from_python<T>>::type> : public FromPython<T>{};
+template<class T> struct FromPython<const T&,typename enable_if<has_from_python<T>>::type> : public FromPython<T>{};
 
 // Conversion from enums
-template<class E> struct FromPython<E,typename boost::enable_if<boost::is_enum<E>>::type> { GEODE_CORE_EXPORT static E convert(PyObject*); };
+template<class E> struct FromPython<E,typename enable_if<is_enum<E>>::type> { GEODE_CORE_EXPORT static E convert(PyObject*); };
 
 #endif
 

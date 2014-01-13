@@ -5,11 +5,9 @@
 
 #include <geode/vector/forward.h>
 #include <geode/array/forward.h>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/not.hpp>
-#include <boost/type_traits/add_const.hpp>
-#include <boost/type_traits/is_const.hpp>
-#include <boost/utility/enable_if.hpp>
 namespace geode {
 
 template<class T> struct IsScalar:public mpl::false_{};
@@ -34,8 +32,8 @@ template<class T> struct IsScalarVectorSpace:public IsScalar<T>{}; // true if we
 template<class T> struct IsScalarVectorSpace<const T>:public IsScalarVectorSpace<T>{};
 
 template<class T,class Enabler=void> struct ScalarPolicy{typedef struct Unusable{} type;};
-template<class T> struct ScalarPolicy<const T>{typedef typename boost::add_const<typename ScalarPolicy<T>::type>::type type;};
-template<class T> struct ScalarPolicy<T,typename boost::enable_if<mpl::and_<IsScalar<T>,mpl::not_<boost::is_const<T> > > >::type>{typedef T type;};
-template<class T> struct ScalarPolicy<T,typename boost::enable_if<typename First<mpl::not_<boost::is_const<T> >,typename T::Scalar>::type>::type>{typedef typename T::Scalar type;};
+template<class T> struct ScalarPolicy<const T>{typedef typename add_const<typename ScalarPolicy<T>::type>::type type;};
+template<class T> struct ScalarPolicy<T,typename enable_if<mpl::and_<IsScalar<T>,mpl::not_<is_const<T> > > >::type>{typedef T type;};
+template<class T> struct ScalarPolicy<T,typename enable_if<typename First<mpl::not_<is_const<T> >,typename T::Scalar>::type>::type>{typedef typename T::Scalar type;};
 
 }

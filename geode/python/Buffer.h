@@ -12,13 +12,9 @@
 #include <geode/python/config.h>
 #include <geode/python/forward.h>
 #include <geode/utility/config.h>
-#include <boost/mpl/assert.hpp>
-#include <boost/static_assert.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
+#include <geode/utility/type_traits.h>
 #include <stdlib.h>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 struct Buffer {
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
@@ -34,7 +30,7 @@ public:
   template<class T> static Buffer*
   new_(const int m) {
 #ifndef _WIN32
-    BOOST_MPL_ASSERT((boost::has_trivial_destructor<T>)); // Array<T> never calls destructors, so T cannot have any
+    static_assert(has_trivial_destructor<T>::value,"Array<T> never calls destructors, so T cannot have any");
     Buffer* self = (Buffer*)malloc(16+m*sizeof(T));
 #else
     // Windows doesn't guarantee 16 byte alignment, so use _aligned_malloc
@@ -45,6 +41,6 @@ public:
 };
 
 // Check alignment constraints
-BOOST_STATIC_ASSERT(offsetof(Buffer,data)==16);
+static_assert(offsetof(Buffer,data)==16,"data must be 16 byte aligned for SSE purposes");
 
 }

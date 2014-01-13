@@ -17,7 +17,7 @@
 #include <geode/python/from_python.h>
 #include <geode/python/to_python.h>
 #include <geode/python/function.h>
-#include <boost/type_traits/is_const.hpp>
+#include <geode/utility/type_traits.h>
 
 namespace geode {
 
@@ -55,7 +55,7 @@ wrap_field(const char* name, const S B::* field) { // const fields
   return wrap_field_helper(&T::pytype,name,offset,get_wrapper<T,S>,0);
 }
 
-template<class T,class B,class S> typename boost::disable_if<boost::is_const<S>,PyObject*>::type
+template<class T,class B,class S> typename disable_if<is_const<S>,PyObject*>::type
 wrap_field(const char* name, S B::* field) { // nonconst fields
   // On windows, .* sends null pointers to null pointers, so we use 64 instead.
   size_t offset = (char*)&((*(typename GetSelf<T>::type*)64).*field)-(char*)64;
