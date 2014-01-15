@@ -2,6 +2,7 @@
 #pragma once
 
 #include <geode/utility/config.h> // Must be included first
+#include <boost/mpl/bool.hpp>
 
 // If we're on clang, check for the right header directly.  If we're not,
 // any sufficient recently version of gcc should always have the right header.
@@ -20,6 +21,7 @@ template<class C,class T=void> struct disable_if : public std::enable_if<!C::val
 #else
 
 // No <type_traits> header, so pull everything out of boost.  We need at least boost-1.47.
+#include <boost/version.hpp>
 #if BOOST_VERSION < 104700
 #error "Since we lack the C++11 header <type_traits>, we need at least boost 1.47 for correct type traits."
 #endif
@@ -60,11 +62,12 @@ using GEODE_TYPE_TRAITS::enable_if_c;
 
 namespace geode {
 
+namespace mpl = boost::mpl;
+
 using GEODE_TYPE_TRAITS::add_const;
 using GEODE_TYPE_TRAITS::alignment_of;
 using GEODE_TYPE_TRAITS::common_type;
 using GEODE_TYPE_TRAITS::declval;
-using GEODE_TYPE_TRAITS::has_trivial_destructor;
 using GEODE_TYPE_TRAITS::is_base_of;
 using GEODE_TYPE_TRAITS::is_class;
 using GEODE_TYPE_TRAITS::is_const;
@@ -81,6 +84,13 @@ using GEODE_TYPE_TRAITS::remove_const;
 using GEODE_TYPE_TRAITS::remove_pointer;
 using GEODE_TYPE_TRAITS::remove_reference;
 using GEODE_TYPE_TRAITS::result_of;
+
+// The following don't necessary exist on Mac, so implement them ourselves if possible
+#ifdef __GNUC__
+template<class T> struct has_trivial_destructor : public mpl::bool_<__has_trivial_destructor(T)> {};
+#else
+using GEODE_TYPE_TRAITS::has_trivial_destructor;
+#endif
 
 // Add a few more useful ones
 template<class T> struct remove_const_reference : public remove_const<typename remove_reference<T>::type> {};
