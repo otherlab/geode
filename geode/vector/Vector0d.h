@@ -121,6 +121,9 @@ public:
     static Vector ones()
     {return Vector();}
 
+    static Vector repeat(const T& constant)
+    {return Vector(); }
+
     // For stl
     T* begin() { return 0; }
     T* end() { return 0; }

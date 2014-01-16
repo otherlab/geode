@@ -245,6 +245,9 @@ public:
     static Vector ones()
     {return Vector((T)1);}
 
+    static Vector repeat(const T& constant)
+    {return Vector(constant); }
+
     void fill(const T& constant)
     {x=constant;}
 

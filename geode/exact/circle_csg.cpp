@@ -78,10 +78,9 @@ static Info prune_small_contours(Nested<const ExactCircleArc> arcs) {
       if (circle_intersects_horizontal(arcs.flat,a,y)) {
         const Vertex& a01 = vertices[a];
         const Vertex& a12 = vertices[next[a]];
-        if(arc_is_repeated_vertex(arcs.flat,a01,a12))
-          continue; // Ignore degenerate arcs
+        const bool is_full_circle = arc_is_repeated_vertex(arcs.flat,a01,a12);
         for (const auto ay : circle_horizontal_intersections(arcs.flat,a,y)) {
-          if (circle_arc_contains_horizontal_intersection(arcs.flat,a01,a12,ay)) {
+          if (is_full_circle || circle_arc_contains_horizontal_intersection(arcs.flat,a01,a12,ay)) {
             // Success!  Add this contour our unpruned list
             const int shift = pruned_arcs.total_size()-arcs.offsets[c];
             pruned_arcs.append(arcs[c]);
@@ -199,11 +198,15 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
   for (const int p : range(info.arcs.size())) {
     const auto poly = info.arcs.range(p);
 
+    const bool is_full_circle = (poly.size() == 1); // Check if this poly is a full circle (which won't have meaningful vertices)
+    assert(is_full_circle == (next[poly.front()] == poly.front()));
+
     // Sort intersections along each segment
     for (const int i : poly) {
       const auto other = others[i];
       // Sort intersections along this segment
-      if (other.size() > 1) {
+      // For a full circle starting vertex is arbitrary so even with two points we won't need to sort
+      if (other.size() > 1 + is_full_circle) {
         struct PairOrder {
           Arcs arcs;
           const Vertex start; // The start of the segment
@@ -219,17 +222,23 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
             return circle_arc_intersects_circle(arcs,start,b1,b0);
           }
         };
-        sort(other,PairOrder(arcs,vertices[i]));
+        const Vertex sort_start = is_full_circle ? other[0].reverse() : vertices[i]; // For a full circle use an arbitrary vertex for the start
+        sort(other.slice(0 + is_full_circle, other.size()), PairOrder(arcs,sort_start));
       }
     }
 
     // Find which subarc the horizontal line intersects to determine the start point for walking
     const auto horizontal = info.horizontals[p];
     const int start = horizontal.arc;
-    int substart = 0;
-    for (;substart<others[start].size();substart++)
-      if (circle_arc_contains_horizontal_intersection(arcs,vertices[start],others(start,substart),horizontal))
+    const auto seed_arc_others = others[start];
+    // For a full circle, vertices[start] is just a placeholder so we prefer to use a 'real' intersections from others[start] instead
+    const bool skip_placeholder = (is_full_circle && !seed_arc_others.empty());
+    const Vertex seed_search_start = skip_placeholder ? seed_arc_others.front().reverse() : vertices[start];
+    int substart = skip_placeholder; // Search from 1 if we are using the first intersection as our seed, otherwise start from 0
+    for (;substart<seed_arc_others.size();substart++) { // Grow subsegment until we find the horizontal intersection
+      if (circle_arc_contains_horizontal_intersection(arcs,seed_search_start,seed_arc_others[substart],horizontal))
         break;
+    }
 
     // Compute the depth immediately outside our start point by firing a ray along the positive x axis.
     struct Depth {
@@ -261,7 +270,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
             // If start.left == h.left and start.arc and h.arc are from the same circle, start and h refer to the same symbolic point even though start!=h
             // This will trigger an "identically zero predicate" error when calling horizontal_intersections_rightwards
             // Checking circle_arc_contains_horizontal_intersection before horizontal_intersections_rightwards avoids this unless the arcs overlap
-            // Symbolically identical arcs that overlap aren't intended to be handled by splitting and may occasionally raise an assert here
+            // Symbolically identical arcs that overlap aren't intended to be handled by splitting and can raise an assert here
             if (   start!=h
                 && circle_arc_contains_horizontal_intersection(arcs,vertices[j],vertices[next[j]],h)
                 && horizontal_intersections_rightwards(arcs,start,h))
@@ -272,34 +281,40 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
     };
     Depth ray(tree,next,arcs,vertices,horizontal);
     single_traverse(*tree,ray);
-
     // Walk around the contour, recording all subarcs at the desired depth
     int delta = ray.depth-depth;
-    const auto start_vertex = substart ? others(start,substart-1).reverse() : vertices[start];
-    auto prev = start_vertex;
+    const auto seed_vertex = substart ? others(start,substart-1).reverse() : vertices[start];
+    auto prev = seed_vertex;
     int index = start,
         sub = substart;
     do {
-      if (sub==others.size(index)) { // Jump to the next segment in the contour
+      if (sub==others.size(index)) { // At end of subsegments, step between the input contour arcs
         index++;
         if (index==poly.hi)
           index = poly.lo;
         sub = 0;
         const auto next = vertices[index];
-        // Remember this subsegment if it has the right depth, the advance to the next segment
-        if (!delta)
-          graph.set(prev,next);
-        prev = next;
-      } else { // Walk across a new intersection
-        sub++;
-        const auto next = others(index,sub-1);
-        // Remember this subsegment if it has the right depth, the advance to the next segment
-        if (!delta)
-          graph.set(prev,next);
-        delta += next.left ^ arcs[next.i0].positive ^ arcs[next.i1].positive ? -1 : 1;
-        prev = next.reverse();
+        if(!skip_placeholder) {
+          if (!delta) // Remember this subsegment if it has the right depth
+            graph.set(prev,next);
+          prev = next; // Now look at the segment starting from end of the current one
+          continue; // Check if we returned to the seed and keep going
+        }
+        else {
+          // If we have other intersections, we ignore any placeholder vertices and use the subsegments
+          assert(others.size(index) >= 1); // To do this we must have at least one intersection
+          assert(next != seed_vertex); // Make sure we don't try to skip over our start
+          // We won't have updated prev at this point so it is important that we fall through to subsegment handling without checking loop condition
+        }
       }
-    } while (prev != start_vertex);
+      // If we didn't hit the continue above we need to advance across an arc intersection to a new subsegment
+      sub++;
+      const auto next = others(index,sub-1);
+      if (!delta) // Remember this subsegment if it has the right depth
+        graph.set(prev,next);
+      delta += next.left ^ arcs[next.i0].positive ^ arcs[next.i1].positive ? -1 : 1; // Update depth
+      prev = next.reverse(); // Use this as our new start
+    } while (prev != seed_vertex);
   }
 
   // Walk the graph to produce output polygons
@@ -482,14 +497,6 @@ static Tuple<real, Vec2> arc_radius_and_center(const Vec2 x0, const Vec2 x1, con
 }
 #endif
 
-static int is_big_arc(real arc_q) {
-  const real cmp = abs(arc_q) - 1;
-  if(abs(cmp) > 1e-6) // Check that it isn't close to zero
-    return (cmp > 0);
-  else
-    return -1;
-}
-
 // Starting at v0 and walking around arcs[on_circle] in arcs[on_circle].positive, is v0 reached before v1?
 // This function is used to sort intersections in unravel_helper_arc and could probably be replaced with direct calls to circle_arc_intersects_circle with some very careful case analysis
 static bool vertices_in_order(const Arcs arcs, const int on_circle, const Vertex& v0, const Vertex& v1, const Vertex& v2) {
@@ -562,6 +569,35 @@ static void unravel_helper_arc(const RawArray<ExactCircleArc> arcs, const int c0
   if(!c1_correctly_oriented) {
     arcs[c1].positive = !arcs[c1].positive;
   }
+}
+
+// Compute q values for a quantized arc accounting for perturbations
+// Returns both q value for the arc and for the opposite arc on the same circle
+// One of the returned values will have magnitude <= 1 and the other will have magnitude >= 1
+// opp_q should be -1/q, but this function will correctly handle sign if q is 0
+static Vec2 arc_q_and_opp_q(const Arcs& arcs, const Vertex& v01, const Vertex& v02) {
+  assert(v01.i0 == v02.i0);
+  const auto& arc = arcs[v01.i0];
+  const auto r = arc.radius;
+  const auto l = min(r, 0.5 * (v01.rounded - v02.rounded).magnitude());
+  const auto root = sqrt(max(0.,sqr(r) - sqr(l)));
+
+  const int d0 = arc.positive ? 1 : -1;
+  const int d1 = circle_intersections_ccw(arcs, v01, v02) ? 1 : -1;
+  const bool is_small_arc = (d0*d1 > 0);
+
+  // If l is 0 or very small both q and opposite_q will be 0. We would like to get 0 and +/-inf.
+  // q = (d0*l / (r + d0*d1*root)) or q = ((r - d0*d1*root) / ( d0*l)) are algebraically equivalent, but the latter is numerically unstable as l approaches 0
+  // We factor out signs and get expression for the smaller and larger q values
+  const real abs_q_short = l / (r + root); // ...use this to ensure q will go to zero as l goes to zero
+  const real abs_q_long = (r + root) / l; // i.e. 1./abs_q_short
+
+  const real q =      d0 * (is_small_arc ? abs_q_short : abs_q_long);
+  const real opp_q = -d0 * (is_small_arc ? abs_q_long : abs_q_short);
+
+  assert(max(abs(q), abs(opp_q)) >= 1 && min(abs(q),abs(opp_q)) <= 1);
+
+  return Vec2(q, opp_q);
 }
 
 // This function must have GEODE_NEVER_INLINE to ensure Clang doesn't move IntervalScope initialization above non-interval arithmetic
@@ -648,7 +684,7 @@ GEODE_NEVER_INLINE Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circ
         }
 
         // If we fall through we either don't have an intersection or the intersection point is too far from intended position
-        // In either case we need to add a new helper arc that will have verticies close to the intersection
+        // In either case we need to add a new helper arc that will have vertices close to the intersection
         ExactCircleArc new_e;
         new_e.center = target_position;
         new_e.radius = constructed_arc_endpoint_error_bound();
@@ -691,16 +727,44 @@ GEODE_NEVER_INLINE Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circ
     auto& arc = arcs[i0];
     if(arc.index >= num_in_arcs)
       continue; // skip over helper arcs
-    const real q = input.flat[arc.index].q;
-    const int expected_big = is_big_arc(q);
-    if(expected_big == -1) // If numerical precision can be blamed leave as is (this will happen for a half-circle that could get rounded to just below or above 180 degrees)
-      continue;
+
+    // arc.positive selects one of the two arcs between v10 and v12. However, if two input vertices are close together
+    // their relative angle around the circle may appear flipped after constructions. This can cause us to grab the opposite
+    // arc turning very small angles into very large ones or vice versa. We attempt to compensate for that here.
+    // Cases where we have trouble choosing the correct arc should only arise when endpoints are within our quantization
+    // error of each other. If we had quantized both endpoints to the same point we wouldn't have violated error bounds
+    // therefore we assume any short arc between them should be acceptable.
     const int i1 = next[i0];
-    const Vertex v0 = verts[i0].reverse();
-    const Vertex v1 = verts[i1];
-    const bool is_big = circle_intersections_ccw(arcs, v0, v1) != arc.positive;
-    if(is_big != expected_big)
+    const Vertex v10 = verts[i0].reverse();
+    const Vertex v12 = verts[i1];
+    const real in_q = input.flat[arc.index].q;
+
+    // Since we can only switch arc.positive without affecting adjacent arcs we check which result gets closest to the input and assume
+    // one of the two will be good enough. We could instead compute a padded safety margin and always use the smaller arcs if vertices
+    // are close together, but this would increase worst case quantization errors (small arc just above quantization limits with q = 1.001
+    // could be swapped to q = -0.999 and midpoint would be moved across the circle).
+
+    // We rely on arc_q_and_opp_q to correctly handle degeneracies by checking the appropriate exact predicates and returning 0 or +/-inf
+    const Vec2 q_and_opp_q = arc_q_and_opp_q(arcs, v10, v12);
+    const real& norm_q = q_and_opp_q[0];
+    const real& opp_q = q_and_opp_q[1];
+    // If vertices are degenerate, one of opp_q or norm_q should be infinite, and we will always choose the small arc
+    assert(isfinite(in_q)); // in_q should be inf or nan and would probably break other things first
+    if(abs(opp_q - in_q) < abs(norm_q - in_q)) {
+      // If the opposite arc's q value is closer to the input q value we assume we have degenerate input
       arc.positive = !arc.positive;
+
+      #if CHECK_CONSTRUCTIONS
+      {
+        // If we swapped endpoints they should have overlapping uncertanty
+        const auto& src = source_data[arc.index];
+        const auto x0 = Box<exact::Vec2>(quant(src.x0)).thickened(0.5 + constructed_arc_endpoint_error_bound() + Vertex::tolerance());
+        const auto x1 = Box<exact::Vec2>(quant(src.x1)).thickened(0.5 + constructed_arc_endpoint_error_bound() + Vertex::tolerance());
+        GEODE_ASSERT(x0.intersects(x1));
+        GEODE_ASSERT(abs(in_q) < 2.); // Not an error in quantization, but if caller is creating degenerate arcs with large q values we should warn them.
+      }
+      #endif
+    }
   }
 
   #if CHECK_CONSTRUCTIONS
@@ -716,17 +780,12 @@ GEODE_NEVER_INLINE Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circ
       GEODE_ASSERT(source_data.contains(arc.index));
       SourceData data = source_data[arc.index];
 
-      const int expected_big = data.is_helper ? -1 : is_big_arc(data.q);
       const int i1 = next[i0];
       const Vertex v0 = verts[i0].reverse();
       const Vertex v1 = verts[i1];
       GEODE_ASSERT(v0.i0 == i0);
       GEODE_ASSERT(v1.i0 == i0);
       GEODE_ASSERT(v0.i0==v1.i0);
-      const bool is_big = circle_intersections_ccw(arcs, v0, v1) != arc.positive;
-
-      GEODE_ASSERT(expected_big == -1 || expected_big == is_big);
-
 
       const real error_margin = 2.*allowed_vertex_error*quant.inverse.inv_scale;
       const real v0_error = magnitude(quant.inverse(v0.rounded) - data.x0);
@@ -803,6 +862,9 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
   auto cull = Array<bool>();
   Nested<CircleArc,false> result;
 
+  const auto next = closed_contours_next(input);
+  const auto verts = compute_vertices(input.flat, next);
+
   for (const int p : range(input.size())) {
     const int base = input.offsets[p];
     const auto in = input[p];
@@ -814,23 +876,18 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
       result.append_to_back(CircleArc(quant.inverse(el), in[0].positive ? 1 : -1));
       continue;
     }
-
     out.resize(in.size(),false,false);
     cull.resize(in.size(),false,false);
     const int n = in.size();
     bool culled_prev = false;
     int num_culled = 0;
 
-    for (int j=0,i=n-1;j<n;i=j++)
-      out[j].x = quant.inverse(circle_circle_intersections(input.flat,base+i,base+j)[in[i].left].rounded);
+    for (int i : range(in.size())) {
+      out[i].x = quant.inverse(verts[base+i].rounded);
+    }
     for (int j=0,i=n-1;j<n;i=j++) {
-      const auto x0 = out[i].x,
-                 x1 = out[j].x,
-                 c = quant.inverse(in[i].center);
-      const auto radius = quant.inverse.inv_scale*in[i].radius;
-      const auto half_L = .5*magnitude(x1-x0);
-      const int s = in[i].positive ^ (cross(x1-x0,c-x0)>0) ? -1 : 1;
-      out[i].q = half_L/(radius+s*sqrt(max(0.,sqr(radius)-sqr(half_L)))) * (in[i].positive ? 1 : -1);
+      // Since q is dimensionless we can compute it using the quantized data
+      out[i].q = arc_q_and_opp_q(input.flat, verts[base+i].reverse(), verts[base+j]).x;
 
       if(culled_prev) { // Don't cull more than one arc in a row to avoid large errors for many small arcs (shouldn't have more than one helper arc in a row anyway)
         cull[i] = false;
@@ -851,7 +908,6 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
       }
     }
   }
-
   return result.freeze();
 }
 #endif
@@ -976,6 +1032,30 @@ static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) 
   return unquantize_circle_arcs(e.x,e.y);
 }
 
+static Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circle_handling_test(int seed, int count) {
+  auto rnd = new_<Random>(seed);
+  Nested<ExactCircleArc, false> test_circles;
+  const auto test_center_range = Box<Vec2>(Vec2(0,0)).thickened(100);
+  const real max_test_r = 100.;
+  const auto test_bounds = test_center_range.thickened(max_test_r);
+
+  const auto quant = quantize_circle_arcs(Nested<CircleArc>(), test_bounds).x; // Get appropriate quantizer for test_bounds
+
+  for(int i = 0; i < count; ++i) {
+    test_circles.append_empty();
+    const auto center = quant(rnd->uniform(test_center_range));
+    const Quantized r = max(1, quant.quantize_length(rnd->uniform<real>(0, max_test_r)));
+    test_circles.append_to_back(ExactCircleArc(center,r, test_circles.flat.size(), true, false));
+  }
+
+  const auto unquantized_input = unquantize_circle_arcs(quant, test_circles);
+  const auto union_result = exact_split_circle_arcs(test_circles, 0);
+  const auto unquantized_unions = unquantize_circle_arcs(quant, union_result);
+  const auto overlap_result = exact_split_circle_arcs(test_circles, 1);
+  const auto unquantized_overlaps = unquantize_circle_arcs(quant, overlap_result);
+  return tuple(unquantized_input, unquantized_unions, unquantized_overlaps);
+}
+
 static Vector<CircleArc, 2> make_circle(Vec2 p0, Vec2 p1) { return vec(CircleArc(p0,1),CircleArc(p1,1)); }
 static void random_circle_quantize_test(int seed) {
   auto r = new_<Random>(seed);
@@ -1035,5 +1115,6 @@ void wrap_circle_csg() {
   GEODE_FUNCTION(_set_circle_arc_dtypes)
   GEODE_FUNCTION(circle_arc_quantize_test)
   GEODE_FUNCTION(random_circle_quantize_test)
+  GEODE_FUNCTION(single_circle_handling_test)
 #endif
 }

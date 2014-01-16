@@ -42,13 +42,22 @@ static bool filter_helper(const Interval fast, const bool slow, const int line) 
 #define FILTER(fast,...) filter_helper(fast,__VA_ARGS__,__LINE__)
 #endif
 
-// Check if an arc is degenerate and has the same (symbolic) vertex repeated
+static Vertex make_placeholder_vertex(Arcs arcs, int i0) {
+  Vertex result;
+  result.i0 = i0;
+  result.i1 = i0;
+  result.left = true;
+  result.q0 = result.q1 = 0;
+  result.rounded = exact::Vec2::repeat(numeric_limits<Quantized>::quiet_NaN());
+  return result;
+}
+
+// Check if an arc has the same (symbolic) vertex repeated (should indicate a full circle)
 bool arc_is_repeated_vertex(Arcs arcs, const Vertex& v01, const Vertex& v12) {
   assert(v01.i1 == v12.i0);
   return arcs_from_same_circle(arcs, v01.i0, v12.i1) && 
     (v01.left != v12.left || arcs_from_same_circle(arcs, v01.i0, v12.i0));
 }
-
 
 // Do two circles intersect (degree 2)?
 namespace {
@@ -215,13 +224,13 @@ quadrants:
 }
 
 Box<exact::Vec2> arc_box(Arcs arcs, const Vertex& v01, const Vertex& v12) {
-  const int i1 = v01.i1;
   assert(v01.i1 == v12.i0);
+  const int i1 = v01.i1;
+  if(arc_is_repeated_vertex(arcs, v01, v12)) {
+    return Box<EV2>(arcs[i1].center).thickened(arcs[i1].radius);
+  }
   // Probably not worth accounting for, but vertex.box() must be inside Box<EV2>(arcs[i].center).thickened(arcs[i].radius) for i in [vertex.i1,vertex.i2]
   auto box = bounding_box(v01.rounded,v12.rounded).thickened(Vertex::tolerance());
-  if(arc_is_repeated_vertex(arcs, v01, v12)) {
-    return box;
-  }
   int q0 = v01.q1,
       q1 = v12.q0;
   if (q0==q1) {
@@ -451,6 +460,8 @@ bool circle_intersections_ccw(Arcs arcs, const Vertex v01, const Vertex v02) {
 // Does the (a1,b) intersection occur on the piece of a1 between a0 and a2?  a1 and b are assumed to intersect.
 bool circle_arc_intersects_circle(Arcs arcs, const Vertex a01, const Vertex a12, const Vertex a1b) {
   assert(a01.i1==a12.i0 && a12.i0==a1b.i0);
+  if(arc_is_repeated_vertex(arcs, a01, a12))
+    return true; // Repeated vertex indicates arc covers full circle (If the assumed intersection exists it is part of the arc)
   const auto a10 = a01.reverse();
   const bool flip = !arcs[a01.i1].positive;
   const int q0 = a01.q1,
@@ -531,7 +542,12 @@ Array<Vertex> compute_vertices(Arcs arcs, RawArray<const int> next) {
   Array<Vertex> vertices(arcs.size(),false); // vertices[i] is the start of arcs[i]
   for (int i0=0;i0<arcs.size();i0++) {
     const int i1 = next[i0];
-    vertices[i1] = circle_circle_intersections(arcs,i0,i1)[arcs[i0].left];
+    if(i0 == i1) {
+      vertices[i1] = make_placeholder_vertex(arcs, i0);
+    }
+    else {
+      vertices[i1] = circle_circle_intersections(arcs,i0,i1)[arcs[i0].left];
+    }
   }
   return vertices;
 }
@@ -610,7 +626,7 @@ bool circle_arc_contains_horizontal_intersection(Arcs arcs, const Vertex a01, co
       return flip ^ (((qy-q0)&3)<((q2-q0)&3));
   } else { // a012 starts and ends in the same quadrant
     if(arc_is_repeated_vertex(arcs,a01,a12))
-      return false;
+      return true;
     const bool small = circle_intersections_upwards(arcs,a10,a12) ^ (q0==1 || q0==2);
     return flip ^ small ^ (   q0!=qy
                            || (small ^ qy_down ^  circle_intersection_below_horizontal(arcs,a10,a1y))

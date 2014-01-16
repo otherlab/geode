@@ -276,6 +276,9 @@ public:
     static Vector ones()
     {return Vector(1,1);}
 
+    static Vector repeat(const T& constant)
+    {return Vector(constant,constant); }
+
     Vector xy() const
     {return *this;}
 

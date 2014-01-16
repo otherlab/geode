@@ -64,8 +64,7 @@ def test_circle_reverse():
       assert abs(area_before + area_after) < 1e-7
 
 def test_circle_quantize():
-  # Test quantization for complete circles
-  random_circle_quantize_test(12312)
+  random_circle_quantize_test(12312) # Test quantization for complete circles
   random.seed(37130)
   arcs0 = random_circle_arcs(1,100)
   #arcs0 = random_circle_arcs(20,5)
@@ -166,6 +165,25 @@ def test_circles():
         area = circle_arc_area(arcs1)
         assert allclose(area,circle_arc_area(circle_arc_union(arcs1,arcs1)))
         assert allclose(area,circle_arc_area(circle_arc_intersection(arcs1,arcs1)))
+
+def test_single_circle(show_results=False):
+  seed = 151193
+  max_count = 10
+  for count in range(max_count):
+    num_trials = 1 if count == 0 else 10
+    for trial in range(num_trials):
+      input_arcs, union_arcs, overlap_arcs = single_circle_handling_test(seed + trial*max_count + count, count)
+      if show_results:
+        import pylab
+        plot_args = dict(full=False, label=True, dots=True)
+        pylab.suptitle('seed %d, count %d'%(seed, count))
+        subplot_arcs(input_arcs, 121, "Input arcs", **plot_args)
+        subplot_arcs(union_arcs, 122, "Output of union", **plot_args)
+        pylab.figure()
+        subplot_arcs(input_arcs, 121, "Input arcs", **plot_args)
+        subplot_arcs(overlap_arcs, 122, "Output of overlaps", **plot_args)
+        pylab.show()
+
 
 def debug_offsets():
   import pylab

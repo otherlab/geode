@@ -279,6 +279,9 @@ public:
     static Vector ones()
     {return Vector(1,1,1);}
 
+    static Vector repeat(const T& constant)
+    {return Vector(constant,constant,constant); }
+
     // shifts vector (wrapped) such that element a is first
     Vector<T,3> roll(int a) {
       Vector<T,3> v;

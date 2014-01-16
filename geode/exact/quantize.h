@@ -21,6 +21,10 @@ template<class TS,int d> struct Quantizer {
     TVS operator()(const QV& p) const {
       return center+(inv_scale*TVS(p));
     }
+
+    TS unquantize_length(const Quantized& l) const {
+      return inv_scale*TS(l);
+    }
   };
 
   TVS center;
@@ -36,6 +40,10 @@ template<class TS,int d> struct Quantizer {
 
   QV operator()(const TVS& p) const {
     return QV(floor(scale*(p-shifted_center))); // Transform to -bound <= q <= bound (see config.h)
+  }
+
+  Quantized quantize_length(const TS& l) const {
+    return Quantized(floor(scale*l));
   }
 };
 

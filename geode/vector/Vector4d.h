@@ -268,6 +268,9 @@ public:
     static Vector ones()
     {return Vector(1,1,1,1);}
 
+    static Vector repeat(const T& constant)
+    {return Vector(constant,constant,constant,constant); }
+
     Vector<T,2> horizontal_vector() const
     {return Vector<T,2>(x,z);}
 
