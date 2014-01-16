@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include <limits>
-#include <boost/static_assert.hpp>
 namespace geode {
 
 using std::numeric_limits;
@@ -22,7 +21,7 @@ const double ideal_gas_constant = 8.314472; // J/K/mol
 
 const double inf = numeric_limits<double>::infinity();
 
-template<int d> struct unit_sphere_size{BOOST_STATIC_ASSERT(d<4);static const double value;};
+template<int d> struct unit_sphere_size{static_assert(d<4,"");static const double value;};
 template<int d> const double unit_sphere_size<d>::value=d==0?0:d==1?2:d==2?pi:4*pi/3;
 
 }

@@ -5,8 +5,7 @@
 
 #include <geode/array/ArrayExpression.h>
 #include <geode/vector/ArithmeticPolicy.h>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/mpl/assert.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 template<class T1,class TArray2> class ArrayLeftMultiple;
@@ -44,13 +43,13 @@ operator*(const T1& c, const ArrayBase<T2,TArray2>& array) {
 
 template<class T1,class T2,class TArray2> static inline typename mpl::if_<mpl::true_,ArrayLeftMultiple<T1,TArray2>,typename Product<T1,typename TArray2::Element>::type>::type
 operator/(const ArrayBase<T2,TArray2>& array, const T1& c) {
-  BOOST_MPL_ASSERT((boost::is_floating_point<T1>));
+  static_assert(is_floating_point<T1>::value,"");
   return ArrayLeftMultiple<T1,TArray2>(1/c,array.derived());
 }
 
 template<class T1,class T2,class TArray2> static inline typename mpl::if_<mpl::true_,ArrayLeftMultiple<T1,TArray2>,typename Product<T1,typename TArray2::Element>::type>::type
 operator*(const ArrayBase<T2,TArray2>& array, const T1& c) {
-  BOOST_MPL_ASSERT((boost::is_floating_point<T1>));
+  static_assert(is_floating_point<T1>::value,"");
   return ArrayLeftMultiple<T1,TArray2>(c,array.derived());
 }
 

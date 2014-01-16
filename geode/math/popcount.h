@@ -3,7 +3,6 @@
 //#####################################################################
 #pragma once
 
-#include <boost/static_assert.hpp>
 #include <stdint.h>
 #ifdef _WIN32
 #include <intrin.h>
@@ -17,12 +16,12 @@ static inline int popcount(uint16_t n) {
 }
 
 static inline int popcount(uint32_t n) {
-  BOOST_STATIC_ASSERT(sizeof(int)==4);
+  static_assert(sizeof(int)==4,"");
   return __builtin_popcount(n);
 }
 
 static inline int popcount(uint64_t n) {
-  BOOST_STATIC_ASSERT(sizeof(long)==8);
+  static_assert(sizeof(long)==8,"");
   return __builtin_popcountl(n);
 }
 
@@ -33,7 +32,7 @@ static inline int popcount(uint16_t n) {
 }
 
 static inline int popcount(uint32_t n) {
-  BOOST_STATIC_ASSERT(sizeof(int)==4);
+  static_assert(sizeof(int)==4,"");
   return __popcnt(n);
 }
 

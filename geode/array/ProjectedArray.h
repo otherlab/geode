@@ -6,17 +6,14 @@
 #include <geode/array/forward.h>
 #include <geode/vector/forward.h>
 #include <geode/utility/HasCheapCopy.h>
-#include <geode/utility/remove_const_reference.h>
-#include <boost/type_traits/is_empty.hpp>
-#include <boost/utility/declval.hpp>
-#include <boost/mpl/assert.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 template<class TArray,class TProjector> struct IsArray<ProjectedArray<TArray,TProjector> >:public mpl::true_{};
 template<class TArray,class TProjector> struct HasCheapCopy<ProjectedArray<TArray,TProjector> >:public mpl::true_{};
 
 template<class TArray,class TProjector> struct ProjectedArrayElement {
-  typedef typename remove_const_reference<decltype(boost::declval<TProjector>()(boost::declval<TArray>()[0]))>::type type;
+  typedef typename remove_const_reference<decltype(declval<TProjector>()(declval<TArray>()[0]))>::type type;
 };
 
 template<class TArray,class TProjector>
@@ -31,13 +28,13 @@ public:
 
   ProjectedArray(TArrayView array)
     : array(array) {
-    BOOST_MPL_ASSERT((boost::is_empty<TProjector>));
+    static_assert(is_empty<TProjector>::value,"Projector must be an empty class");
   }
 
   ProjectedArray(TArrayView array, const TProjector& projector)
     : TProjector(projector), array(array) {}
 
-  ProjectedArray(const ProjectedArray<typename boost::remove_const<TArray>::type,TProjector>& projected_array)
+  ProjectedArray(const ProjectedArray<typename remove_const<TArray>::type,TProjector>& projected_array)
     : TProjector(projected_array.projector()), array(projected_array.array) {}
 
   const TProjector& projector() const {
@@ -49,7 +46,7 @@ public:
   }
 
   auto operator[](const int i) const
-    -> decltype(boost::declval<TProjector>()(array[i])) {
+    -> decltype(declval<TProjector>()(array[i])) {
     return TProjector::operator()(array[i]);
   }
 

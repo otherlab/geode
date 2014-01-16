@@ -24,11 +24,8 @@
 #include <geode/vector/Dot.h>
 #include <geode/vector/ScalarPolicy.h>
 #include <geode/utility/STATIC_ASSERT_SAME.h>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/identity.hpp>
-#include <boost/type_traits/is_class.hpp>
-#include <boost/type_traits/is_const.hpp>
-#include <boost/type_traits/remove_const.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <iostream>
 #include <limits>
 namespace geode {
@@ -39,7 +36,7 @@ template<class T,class TArray> class ArrayBase;
 template<class TArray,class Enabler=void> struct CanonicalizeConstArray{typedef TArray type;};
 
 template<class TArray1,class TArray2> struct SameArrayCanonical { static bool same_array(const TArray1& array1,const TArray2& array2) {
-  BOOST_STATIC_ASSERT((!boost::is_same<TArray1,TArray2>::value));
+  static_assert(!is_same<TArray1,TArray2>::value,"");
   return false;
 }};
 
@@ -55,7 +52,7 @@ GEODE_CORE_EXPORT void GEODE_NORETURN(out_of_bounds(const type_info& type, const
 template<class T_,class TArray>
 class ArrayBase {
   struct Unusable{};
-  typedef typename boost::remove_const<T_>::type T;
+  typedef typename remove_const<T_>::type T;
 public:
   typedef T Element;
 
@@ -121,7 +118,7 @@ public:
   IndirectArray<TArray,ARange> prefix(const int prefix_size) const;
 
 private:
-  typedef typename mpl::if_<boost::is_class<T>,T,Unusable>::type TIfClass;
+  typedef typename mpl::if_<is_class<T>,T,Unusable>::type TIfClass;
 public:
 
   template<class TField,TField TIfClass::* field> ProjectedArray<TArray,FieldProjector<TIfClass,TField,field> > project() const {
@@ -133,7 +130,7 @@ public:
 private:
   template<class S> struct ElementOf{typedef typename S::Element type;};
   typedef typename mpl::if_<IsVector<T>,ElementOf<T>,mpl::identity<Unusable> >::type::type ElementOfT;
-  typedef typename mpl::if_<boost::is_const<T_>,const ElementOfT,ElementOfT>::type TOfT;
+  typedef typename mpl::if_<is_const<T_>,const ElementOfT,ElementOfT>::type TOfT;
 public:
 
   bool empty() const {
@@ -169,7 +166,7 @@ public:
     return self;
   }
 
-  template<class T2> typename boost::enable_if<IsScalar<T2>,const TArray&>::type operator+=(const T2& a) const {
+  template<class T2> typename enable_if<IsScalar<T2>,const TArray&>::type operator+=(const T2& a) const {
     const TArray& self = derived();
     int m = self.size();
     for (int i=0;i<m;i++) self[i] += a;
@@ -185,7 +182,7 @@ public:
     return self;
   }
 
-  template<class T2> typename boost::enable_if<mpl::or_<IsScalar<T2>,boost::is_same<T,T2> >,const TArray&>::type operator-=(const T2& a) const {
+  template<class T2> typename enable_if<mpl::or_<IsScalar<T2>,is_same<T,T2> >,const TArray&>::type operator-=(const T2& a) const {
     const TArray& self = derived();
     int m = self.size();
     for (int i=0;i<m;i++) self[i] -= a;
@@ -201,7 +198,7 @@ public:
     return self;
   }
 
-  template<class T2> typename boost::enable_if<mpl::or_<IsScalar<T2>,boost::is_same<T,T2> >,const TArray&>::type operator*=(const T2& a) const {
+  template<class T2> typename enable_if<mpl::or_<IsScalar<T2>,is_same<T,T2> >,const TArray&>::type operator*=(const T2& a) const {
     const TArray& self = derived();int m = self.size();
     for (int i=0;i<m;i++) self[i] *= a;
     return self;
@@ -219,7 +216,7 @@ public:
     return self;
   }
 
-  template<class T2> typename boost::enable_if<mpl::or_<IsScalar<T2>,boost::is_same<T,T2> >,const TArray&>::type operator/=(const T2& a) const {
+  template<class T2> typename enable_if<mpl::or_<IsScalar<T2>,is_same<T,T2> >,const TArray&>::type operator/=(const T2& a) const {
     return *this *= inverse(a);
   }
 
@@ -594,7 +591,7 @@ template<class T,int d> static inline bool isnan(const Array<T,d>& a) {
 }
 
 template<class T,class TArray1,class TArray2> inline typename ScalarPolicy<T>::type dot(const ArrayBase<T,TArray1>& a1_, const ArrayBase<T,TArray2>& a2_) {
-  typedef typename ScalarPolicy<typename boost::remove_const<T>::type>::type Scalar;
+  typedef typename ScalarPolicy<typename remove_const<T>::type>::type Scalar;
   const TArray1& a1 = a1_.derived();
   const TArray2& a2 = a2_.derived();
   assert(a1.size()==a2.size());
@@ -607,7 +604,7 @@ template<class T,class TArray1,class TArray2> inline typename ScalarPolicy<T>::t
 struct InnerUnusable{};
 
 template<class T,class TM,class TArray1,class TArray2> inline typename ScalarPolicy<T>::type
-inner_product(const ArrayBase<TM,TArray1>& m_, const ArrayBase<T,TArray2>& a1_, const ArrayBase<T,TArray2>& a2_, typename boost::enable_if<IsScalar<TM>,InnerUnusable>::type unusable=InnerUnusable()) {
+inner_product(const ArrayBase<TM,TArray1>& m_, const ArrayBase<T,TArray2>& a1_, const ArrayBase<T,TArray2>& a2_, typename enable_if<IsScalar<TM>,InnerUnusable>::type unusable=InnerUnusable()) {
   typedef typename ScalarPolicy<T>::type Scalar;
   const TArray1& m = m_.derived();
   const TArray2 &a1 = a1_.derived(),
@@ -620,7 +617,7 @@ inner_product(const ArrayBase<TM,TArray1>& m_, const ArrayBase<T,TArray2>& a1_, 
 }
 
 template<class T,class TM,class TArray1,class TArray2> inline typename ScalarPolicy<T>::type
-inner_product(const ArrayBase<TM,TArray1>& m_,const ArrayBase<T,TArray2>& a1_,const ArrayBase<T,TArray2>& a2_,typename boost::disable_if<IsScalar<TM>,InnerUnusable>::type unusable=InnerUnusable()) {
+inner_product(const ArrayBase<TM,TArray1>& m_,const ArrayBase<T,TArray2>& a1_,const ArrayBase<T,TArray2>& a2_,typename disable_if<IsScalar<TM>,InnerUnusable>::type unusable=InnerUnusable()) {
   typedef typename ScalarPolicy<T>::type Scalar;
   const TArray1& m = m_.derived();
   const TArray2 &a1 = a1_.derived(),
@@ -652,13 +649,13 @@ template<class T,class TA> const TA& concatenate(const ArrayBase<T,TA>& a) {
   return a.derived();
 }
 
-template<class T0,class T1,class TA0,class TA1> Array<typename boost::remove_const<T0>::type> concatenate(const ArrayBase<T0,TA0>& a0_, const ArrayBase<T1,TA1>& a1_) {
-  STATIC_ASSERT_SAME(typename boost::remove_const<T0>::type, typename boost::remove_const<T1>::type);
+template<class T0,class T1,class TA0,class TA1> Array<typename remove_const<T0>::type> concatenate(const ArrayBase<T0,TA0>& a0_, const ArrayBase<T1,TA1>& a1_) {
+  STATIC_ASSERT_SAME(typename remove_const<T0>::type, typename remove_const<T1>::type);
   const auto& a0 = a0_.derived();
   const auto& a1 = a1_.derived();
   const int m0 = a0.size(),
             m1 = a1.size();
-  Array<typename boost::remove_const<T0>::type> result(m0+m1,false);
+  Array<typename remove_const<T0>::type> result(m0+m1,false);
   result.slice(0,m0) = a0;
   result.slice(m0,m0+m1) = a1;
   return result;

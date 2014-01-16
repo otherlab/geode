@@ -22,11 +22,8 @@
 #include <geode/python/to_python.h>
 #include <geode/math/hash.h>
 #include <geode/utility/debug.h>
-#include <boost/mpl/assert.hpp>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/or.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/is_base_of.hpp>
-#include <boost/type_traits/remove_const.hpp>
 #include <iostream>
 namespace geode {
 
@@ -81,7 +78,7 @@ public:
 
   template<class S> Ref(const Ref<S>& ref)
     : self(RefHelper<T,S>::f(ref.self,ref.owner_)), owner_(ref.owner_) {
-    BOOST_MPL_ASSERT((mpl::or_<boost::is_same<T,PyObject>,boost::is_base_of<T,S> >));
+    static_assert(mpl::or_<is_same<T,PyObject>,is_base_of<T,S>>::value,"");
     GEODE_INCREF(owner_);
   }
 
@@ -152,8 +149,8 @@ public:
   template<class S> bool operator<=(const Ptr<S>& o) const { return self<=o.self; }
   template<class S> bool operator>=(const Ptr<S>& o) const { return self>=o.self; }
 
-  Ref<typename boost::remove_const<T>::type> const_cast_() const {
-    typedef typename boost::remove_const<T>::type S;
+  Ref<typename remove_const<T>::type> const_cast_() const {
+    typedef typename remove_const<T>::type S;
     return Ref<S>(const_cast<S&>(*self),owner_);
   }
 
@@ -166,7 +163,7 @@ public:
 };
 
 template<class T> inline T* ptr_from_python(PyObject* object) {
-  BOOST_MPL_ASSERT((boost::is_base_of<Object,T>));
+  static_assert(is_base_of<Object,T>::value,"");
   return (T*)(object+1);
 }
 
@@ -176,13 +173,13 @@ template<> inline PyObject* ptr_from_python<PyObject>(PyObject* object) {
 
 template<class T> static inline Ref<T>
 ref(T& object) {
-  BOOST_MPL_ASSERT((mpl::or_<boost::is_same<T,PyObject>,boost::is_base_of<Object,T> >));
+  static_assert(mpl::or_<is_same<T,PyObject>,is_base_of<Object,T>>::value,"");
   return Ref<T>(object,ptr_to_python(&object));
 }
 
 template<class T> static inline Ref<T>
 steal_ref(T& object) {
-  BOOST_MPL_ASSERT((mpl::or_<boost::is_same<T,PyObject>,boost::is_base_of<Object,T> >));
+  static_assert(mpl::or_<is_same<T,PyObject>,is_base_of<Object,T>>::value,"");
   return Ref<T>(object,ptr_to_python(&object),typename Ref<T>::Steal());
 }
 

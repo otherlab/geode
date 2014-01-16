@@ -3,18 +3,16 @@
 //#####################################################################
 #pragma once
 
+#include <geode/utility/type_traits.h>
 #include <cmath>
 #include <cfloat>
 #include <cassert>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_fundamental.hpp>
-#include <boost/type_traits/is_integral.hpp>
 namespace geode {
 
 using ::std::abs;
 
 template<class T> static inline auto inverse(const T& x)
-  -> typename boost::disable_if<boost::is_fundamental<T>,decltype(x.inverse())>::type {
+  -> typename disable_if<is_fundamental<T>,decltype(x.inverse())>::type {
   return x.inverse();
 }
 
@@ -33,7 +31,7 @@ template<class I> struct IntInverse {
   IntInverse(I a) : a(a) {}
 };
 
-template<class I> static inline typename boost::enable_if<boost::is_integral<I>,IntInverse<I>>::type inverse(const I x) {
+template<class I> static inline typename enable_if<is_integral<I>,IntInverse<I>>::type inverse(const I x) {
   assert(x!=0);
   return IntInverse<I>(x);
 }

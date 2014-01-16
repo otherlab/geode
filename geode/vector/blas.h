@@ -287,7 +287,7 @@ WRAP(void stedc(RawArray<T> d, RawArray<T> e, Array<T,2>& z, Array<char>& work))
   BC(stedc)(compz,&n,d.data(),e.data(),z.data(),&ldz,&lwork_T,&query,&liwork,&query,&info);
   GEODE_ASSERT(!info);
   int lwork=(int)lwork_T;
-  BOOST_STATIC_ASSERT(sizeof(T)/sizeof(int)*sizeof(int)==sizeof(T));
+  static_assert(sizeof(T)/sizeof(int)*sizeof(int)==sizeof(T),"");
   work.preallocate(lwork*sizeof(T)+liwork*sizeof(int));
   BC(stedc)(compz,&n,d.data(),e.data(),z.data(),&ldz,reinterpret_cast<T*>(work.data()),&lwork,
     reinterpret_cast<int*>(work.data()+lwork*sizeof(T)),&liwork,&info);
@@ -308,7 +308,7 @@ WRAP(void stegr(RawArray<T> d,RawArray<T> e,Box<T> range,Array<T>& w,Array<T,2>&
       isuppz.data(),&lwork_T,&query,&liwork,&query,&info);
   GEODE_ASSERT(!info);
   int lwork=(int)lwork_T;
-  BOOST_STATIC_ASSERT(sizeof(T)/sizeof(int)*sizeof(int)==sizeof(T));
+  static_assert(sizeof(T)/sizeof(int)*sizeof(int)==sizeof(T),"");
   work.preallocate(lwork*sizeof(T)+liwork*sizeof(int));
   BC(stegr)(jobz,ran,&n,d.data(),e.data(),&range.min,&range.max,&unused,&unused,&unused_T,&m,w.data(),z.data(),&ldz,
       isuppz.data(),reinterpret_cast<T*>(work.data()),&lwork,reinterpret_cast<int*>(work.data()+lwork*sizeof(T)),&liwork,&info);

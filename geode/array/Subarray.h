@@ -19,8 +19,8 @@ class Subarray<T_,1> : public ArrayBase<T_,Subarray<T_,1> > {
 public:
   enum Workaroun1 {d=1};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class Subarray<Element,2>;
@@ -33,11 +33,11 @@ public:
   const int stride; // stride of outer dimension (inner is assumed contiguous)
 
   template<class T2>
-  Subarray(const Array<T2>& source, typename boost::enable_if<mpl::or_<boost::is_same<T2,T>,boost::is_same<T2,Element> >,Unusable>::type unusable=Unusable())
+  Subarray(const Array<T2>& source, typename enable_if<mpl::or_<is_same<T2,T>,is_same<T2,Element> >,Unusable>::type unusable=Unusable())
     : data_(source.data()), m(source.size()), stride(1) {}
 
   template<class T2>
-  Subarray(const RawArray<T2>& source, typename boost::enable_if<mpl::or_<boost::is_same<T2,T>,boost::is_same<T2,Element> >,Unusable>::type unusable=Unusable())
+  Subarray(const RawArray<T2>& source, typename enable_if<mpl::or_<is_same<T2,T>,is_same<T2,Element> >,Unusable>::type unusable=Unusable())
     : data_(source.data()), m(source.size()), stride(1) {}
 
   template<class T2>
@@ -100,8 +100,8 @@ class Subarray<T,2> {
 public:
   enum Workaroun1 {d=2};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class Subarray<typename mpl::if_c<is_const,Element,const Element>::type,2>;
@@ -188,7 +188,7 @@ public:
     for (int i=0;i<m;i++) for (int j=0;j<n;j++) data_[i*stride+j] = constant;
   }
 
-  template<class T2> typename boost::enable_if<mpl::or_<IsScalar<T2>,boost::is_same<T,T2> >,Subarray&>::type operator*=(const T2& a) {
+  template<class T2> typename enable_if<mpl::or_<IsScalar<T2>,is_same<T,T2> >,Subarray&>::type operator*=(const T2& a) {
     for (int i=0;i<m;i++) for (int j=0;j<n;j++) data_[i*stride+j] *= a;
     return *this;
   }

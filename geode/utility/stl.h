@@ -5,10 +5,9 @@
 #include <geode/utility/move.h>
 #include <geode/utility/pass.h>
 #include <geode/utility/tr1.h>
-#include <geode/utility/remove_const_reference.h>
 #include <geode/utility/equals.h>
+#include <geode/utility/type_traits.h>
 #include <boost/shared_ptr.hpp>
-#include <boost/type_traits.hpp>
 #include <vector>
 #include <deque>
 #include <queue>
@@ -40,7 +39,7 @@ template<typename T, typename... Args> typename std::vector<T> make_vector(Args&
   return result;
 }
 template<typename... Args> struct make_vector_result {
-  typedef typename remove_const_reference<typename boost::common_type<Args...>::type>::type type;
+  typedef typename remove_const_reference<typename common_type<Args...>::type>::type type;
 };
 
 template<typename... Args> typename std::vector<typename make_vector_result<Args...>::type> make_vector(Args&&... args) {

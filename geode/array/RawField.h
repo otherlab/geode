@@ -23,8 +23,8 @@ template<class T,class Id> struct FromPython<RawField<T,Id> >{static inline RawF
 template<class T,class Id>
 class RawField {
 public:
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
   typedef T& result_type;
 
   RawArray<T> flat;

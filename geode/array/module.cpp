@@ -89,6 +89,7 @@ Array<uint8_t> array_write_test(const string& filename, RawArray<const real,2> a
 
 void wrap_array() {
   GEODE_WRAP(nested_array)
+  GEODE_WRAP(stencil)
 
   // for testing purposes
   GEODE_FUNCTION(empty_array)

@@ -36,17 +36,17 @@ public:
 
   Box(const T xmin, const T xmax)
     : min(xmin), max(xmax) {
-    BOOST_STATIC_ASSERT(d==1);
+    static_assert(d==1,"");
   }
 
   Box(const T xmin, const T xmax, const T ymin, const T ymax)
     : min(xmin,ymin), max(xmax,ymax) {
-    BOOST_STATIC_ASSERT(d==2);
+    static_assert(d==2,"");
   }
 
   Box(const T xmin, const T xmax, const T ymin, const T ymax, const T zmin, const T zmax)
     : min(xmin,ymin,zmin), max(xmax,ymax,zmax) {
-    BOOST_STATIC_ASSERT(d==3);
+    static_assert(d==3,"");
   }
 
   Box(const TV& min, const TV& max)
@@ -60,7 +60,7 @@ public:
 
   Box(const Box<TV>& box, const Frame<Vector<T,1> >& frame) // Allow 1d boxes to be used as oriented boxes
     : min(box.min), max(box.max) {
-    BOOST_STATIC_ASSERT(d==1);
+    static_assert(d==1,"");
   }
 
   Box<TV> axis_aligned_bounding_box() const {
@@ -144,21 +144,21 @@ public:
   }
 
   void corners(Array<TV>& corners) const {
-    BOOST_STATIC_ASSERT(d==1);
+    static_assert(d==1,"");
     corners.resize(2);
     corners[0] = min;
     corners[1] = max;
   }
 
   void corners(Array<TV,2>& corners) const {
-    BOOST_STATIC_ASSERT(d==2);
+    static_assert(d==2,"");
     corners.resize(2,2);
     for (int i=0;i<=1;i++) for (int j=0;j<=1;j++)
       corners(i,j) = TV(i?max.x:min.x,j?max.y:min.y);
   }
 
   void corners(Array<TV,3>& corners) const {
-    BOOST_STATIC_ASSERT(d==3);
+    static_assert(d==3,"");
     corners.resize(2,2,2);
     for (int i=0;i<=1;i++) for (int j=0;j<=1;j++) for (int k=0;k<=1;k++)
       corners(i,j,k) = TV(i?max.x:min.x,j?max.y:min.y,k?max.z:min.z);
@@ -169,7 +169,7 @@ public:
   }
 
   T surface_area() const {
-    BOOST_STATIC_ASSERT(d==3);
+    static_assert(d==3,"");
     Vector<T,3> size(sizes());
     return 2*(size.x*(size.y+size.z)+size.y*size.z);
   }
@@ -326,7 +326,7 @@ public:
   }
 
   Box<Vector<T,d-1> > vertical_box() const {
-    BOOST_STATIC_ASSERT(d==2);
+    static_assert(d==2,"");
     return Box<Vector<T,d-1> >(min.vertical_vector(),max.vertical_vector());
   }
 

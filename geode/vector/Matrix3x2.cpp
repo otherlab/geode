@@ -11,7 +11,7 @@ using namespace geode;
 template<class T> void Matrix<T,3,2>::
 fast_singular_value_decomposition(Matrix<T,3,2>& U,DiagonalMatrix<T,2>& singular_values,Matrix<T,2>& V) const
 {
-    if(!boost::is_same<T,double>::value){
+    if(!is_same<T,double>::value){
         Matrix<double,3,2> U_double;DiagonalMatrix<double,2> singular_values_double;Matrix<double,2> V_double;
         Matrix<double,3,2>(*this).fast_singular_value_decomposition(U_double,singular_values_double,V_double);
         U=Matrix<T,3,2>(U_double);singular_values=DiagonalMatrix<T,2>(singular_values_double);V=Matrix<T,2>(V_double);return;}

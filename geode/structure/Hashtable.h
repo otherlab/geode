@@ -9,14 +9,11 @@
 
 #include <geode/array/forward.h>
 #include <geode/array/Array.h>
-
 #include <geode/math/hash.h>
 #include <geode/math/integer_log.h>
-#include <vector>
-
+#include <geode/utility/type_traits.h>
 #include <boost/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-
+#include <vector>
 namespace geode {
 
 using std::vector;
@@ -29,8 +26,8 @@ enum HashtableEntryState{EntryFree,EntryActive,EntryDeleted};
 
 template<class TK,class T> class HashtableEntry {
 public:
-  typename boost::aligned_storage<sizeof(TK), boost::alignment_of<TK>::value>::type TKbuf;
-  typename boost::aligned_storage<sizeof(T), boost::alignment_of<T>::value>::type Tbuf;
+  typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
+  typename boost::aligned_storage<sizeof(T), alignment_of<T>::value>::type Tbuf;
 
   inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
   inline T & data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
@@ -53,7 +50,7 @@ private:
 
 template<class TK> class HashtableEntry<TK,unit> : public unit {
 public:
-  typename boost::aligned_storage<sizeof(TK), boost::alignment_of<TK>::value>::type TKbuf;
+  typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
 
   inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
   unit& data() {return *this;}
@@ -84,7 +81,7 @@ public:
   typedef T Element;
   typedef HashtableIter<TK,T> iterator;
   typedef HashtableIter<TK,const T> const_iterator;
-  typedef typename remove_const_reference<decltype(boost::declval<Entry>().value())>::type value_type;
+  typedef typename remove_const_reference<decltype(declval<Entry>().value())>::type value_type;
 private:
   vector<Entry> table_;
   int size_;
@@ -298,7 +295,7 @@ public:
 
 template<class TK,class T>
 struct HashtableIter {
-  typedef HashtableEntry<TK,typename boost::remove_const<T>::type> Entry;
+  typedef HashtableEntry<TK,typename remove_const<T>::type> Entry;
 
   const RawArray<const Entry> table;
   int index;

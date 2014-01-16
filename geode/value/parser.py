@@ -102,7 +102,9 @@ def parse(props,description,positional=[]):
         try:
           prop.set(values)
         except ValueError:
-          raise ValueError("property '%s' expects one of %s, got '%s'"%(self.dest,', '.join(map(lambda s: "'%s'" % s,prop.allowed)),values))
+          if prop.allowed:
+            raise ValueError("property '%s' expects one of %s, got '%s'"%(self.dest,', '.join(map(lambda s: "'%s'" % s,prop.allowed)),values))
+          raise
         props_set.add(name)
 
   bools = dict((s,bool(i)) for i,ss in enumerate(('0 no false','1 yes true')) for s in ss.split())
@@ -125,7 +127,8 @@ def parse(props,description,positional=[]):
     return Frames(f[:3],Rotation.from_sv(sv[0],sv[1:]))
 
   def convert_vector(dtype,s):
-    return asarray(ast.literal_eval(s),dtype)
+    v = asarray(ast.literal_eval(s.strip()),dtype)
+    return v if v.ndim else v[None]
 
   def converter(prop):
     try:

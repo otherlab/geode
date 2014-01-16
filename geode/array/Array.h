@@ -26,12 +26,10 @@
 #include <geode/utility/format.h>
 #include <geode/utility/config.h>
 #include <geode/utility/range.h>
+#include <geode/utility/type_traits.h>
 #include <geode/vector/Vector.h>
-#include <boost/mpl/assert.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <geode/utility/const_cast.h>
 #include <vector>
-
 namespace geode {
 
 using std::swap;
@@ -55,8 +53,8 @@ template<class T_>
 class Array<T_,1> : public ArrayBase<T_,Array<T_>> {
   typedef T_ T;
 public:
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const = boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
   typedef T& result_type;
   enum Workaround1 {dimension=1};
   enum Workaround2 {d=dimension};
@@ -122,7 +120,7 @@ public:
   }
 
   template<class TArray>
-  explicit Array(const TArray& source, typename boost::enable_if<IsShareableArray<TArray>,Unusable>::type unused=Unusable())
+  explicit Array(const TArray& source, typename enable_if<IsShareableArray<TArray>,Unusable>::type unused=Unusable())
     : m_(source.size()), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
@@ -229,7 +227,7 @@ public:
     return *this;
   }
 
-  template<class TArray> typename boost::enable_if<IsShareableArray<TArray>,Array&>::type operator=(const TArray& source) {
+  template<class TArray> typename enable_if<IsShareableArray<TArray>,Array&>::type operator=(const TArray& source) {
     assert(source.owner_ || !source.data_);
     PyObject* owner_save = owner_;
     // Share a reference to the source buffer without copying it
@@ -272,7 +270,7 @@ private:
     int m_ = this->m_; // teach compiler that m_ is constant
     if (copy_existing_elements)
       for (int i=0;i<m_;i++)
-        ((typename boost::remove_const<T>::type*)new_owner->data)[i] = data_[i];
+        ((typename remove_const<T>::type*)new_owner->data)[i] = data_[i];
     GEODE_XDECREF(owner_);
     max_size_ = max_size_new;
     data_ = (T*)new_owner->data;
@@ -375,7 +373,7 @@ public:
   }
 
   template<class TArray> void extend(const TArray& append_array) {
-    STATIC_ASSERT_SAME(typename boost::remove_const<T>::type,typename boost::remove_const<typename TArray::value_type>::type);
+    STATIC_ASSERT_SAME(typename remove_const<T>::type,typename remove_const<typename TArray::value_type>::type);
     int append_m = append_array.size(),
         m_new = m_+append_m;
     preallocate(m_new);
@@ -421,8 +419,8 @@ public:
     return data_[--m_];
   }
 
-  Array<const T> pop_elements(const int count) { // return value shares ownership with original
-    BOOST_MPL_ASSERT((boost::has_trivial_destructor<T>));
+  Array<const T> pop_elements(const int count) { // Return value shares ownership with original
+    static_assert(has_trivial_destructor<T>::value,"");
     assert(m_-count>=0);
     m_ -= count;
     return Array<const T>(count,data_+m_,owner_);
@@ -459,16 +457,16 @@ public:
   }
 
   void zero() const {
-    BOOST_MPL_ASSERT((IsScalarVectorSpace<T>));
+    static_assert(IsScalarVectorSpace<T>::value,"");
     memset((void*)data_,0,m_*sizeof(T));
   }
 
-  template<class T2> typename boost::enable_if<boost::is_same<T2,Element>,Array<T>>::type as() const {
+  template<class T2> typename enable_if<is_same<T2,Element>,Array<T>>::type as() const {
     return *this;
   }
 
-  template<class T2> typename boost::disable_if<boost::is_same<T2,Element>,Array<T2>>::type as() const {
-    Array<typename boost::remove_const<T2>::type> copy(m_,false);
+  template<class T2> typename disable_if<is_same<T2,Element>,Array<T2>>::type as() const {
+    Array<typename remove_const<T2>::type> copy(m_,false);
     for (int i=0;i<m_;i++) copy[i] = T2(data_[i]);
     return copy;
   }

@@ -9,6 +9,9 @@
 #include <geode/vector/Vector.h>
 namespace geode {
 
+// sys/termios.h on Mac was defining B0 as a macro.  Don't.
+#undef B0
+
 // Evaluate predicate(X+epsilon)>0 for a certain infinitesimal perturbation epsilon.  The predicate must be a multivariate polynomial of at most
 // the given degree.  The permutation chosen is deterministic, independent of the predicate, and guaranteed to work for all possible polynomials.
 // Each coordinate of the X array contains (1) the value and (2) the index of the value, which is used to look up the fixed perturbation.

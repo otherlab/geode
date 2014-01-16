@@ -16,9 +16,8 @@
 #include <geode/python/forward.h>
 #include <geode/python/repr.h>
 #include <geode/python/to_python.h>
-#include <boost/type_traits/common_type.hpp>
 #include <geode/python/config.h>
-#include <geode/utility/remove_const_reference.h>
+#include <geode/utility/type_traits.h>
 #include <cmath>
 namespace geode {
 
@@ -30,7 +29,6 @@ using ::std::exp;
 using ::std::sin;
 using ::std::cos;
 using ::std::pow;
-using boost::common_type;
 
 template<class TArray,class TIndices> class IndirectArray;
 
@@ -58,7 +56,7 @@ GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,4,double)
 template<class T,int d>
 class Vector
 {
-    BOOST_STATIC_ASSERT(d>3);
+    static_assert(d>4,"Smaller vector sizes are explicitly specialized");
     struct Unusable{};
 public:
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
@@ -67,7 +65,7 @@ public:
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
     template<class> class result;
-    template<class V> class result<V(int)>:public mpl::if_<boost::is_const<V>,const T&,T&>{};
+    template<class V> class result<V(int)>:public mpl::if_<is_const<V>,const T&,T&>{};
     enum Workaround1 {dimension=d};
     enum Workaround2 {m=d};
     static const bool is_const=false;
@@ -81,23 +79,23 @@ public:
 
     Vector(const T& x0,const T& x1,const T& x2,const T& x3)
     {
-        BOOST_STATIC_ASSERT(d==4);array[0]=x0;array[1]=x1;array[2]=x2;array[3]=x3;
+        static_assert(d==4,"");array[0]=x0;array[1]=x1;array[2]=x2;array[3]=x3;
     }
 
     Vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4)
     {
-        BOOST_STATIC_ASSERT(d==5);array[0]=x0;array[1]=x1;array[2]=x2;array[3]=x3;array[4]=x4;
+        static_assert(d==5,"");array[0]=x0;array[1]=x1;array[2]=x2;array[3]=x3;array[4]=x4;
     }
 
     Vector(const T& x0,const T& x1,const T& x2,const T& x3,const T& x4,const T& x5)
     {
-        BOOST_STATIC_ASSERT(d==6);array[0]=x0;array[1]=x1;array[2]=x2;array[3]=x3;array[4]=x4;array[5]=x5;
+        static_assert(d==6,"");array[0]=x0;array[1]=x1;array[2]=x2;array[3]=x3;array[4]=x4;array[5]=x5;
     }
 
     template<class T2,int d2>
     explicit Vector(const Vector<T2,d2>& v)
     {
-        BOOST_STATIC_ASSERT(d2<=d);
+        static_assert(d2<=d,"");
         for(int i=0;i<d2;i++) array[i]=T(v[i]);
         for(int i=d2;i<d;i++) array[i]=T();
     }
@@ -105,7 +103,7 @@ public:
     template<class TVector>
     explicit Vector(const TVector& v)
     {
-        BOOST_STATIC_ASSERT((boost::is_same<T,typename TVector::Element>::value && TVector::m==d));
+        static_assert(is_same<T,typename TVector::Element>::value && TVector::m==d,"");
         for(int i=0;i<d;i++) array[i]=v[i];
     }
 
@@ -301,39 +299,38 @@ public:
       return v;
     }
 
-
     void fill(const T& constant)
     {for(int i=0;i<d;i++) array[i]=constant;}
 
     void get(T& element0,T& element1,T& element2,T& element3) const
-    {BOOST_STATIC_ASSERT(d==4);element0=array[0];element1=array[1];element2=array[2];element3=array[3];}
+    {static_assert(d==4,"");element0=array[0];element1=array[1];element2=array[2];element3=array[3];}
 
     void get(T& element0,T& element1,T& element2,T& element3,T& element4) const
-    {BOOST_STATIC_ASSERT(d==5);element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];}
+    {static_assert(d==5,"");element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];}
 
     void get(T& element0,T& element1,T& element2,T& element3,T& element4,T& element5) const
-    {BOOST_STATIC_ASSERT(d==6);element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];element5=array[5];}
+    {static_assert(d==6,"");element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];element5=array[5];}
 
     void get(T& element0,T& element1,T& element2,T& element3,T& element4,T& element5,T& element6) const
-    {BOOST_STATIC_ASSERT(d==7);element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];element5=array[5];element6=array[6];}
+    {static_assert(d==7,"");element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];element5=array[5];element6=array[6];}
 
     void get(T& element0,T& element1,T& element2,T& element3,T& element4,T& element5,T& element6,T& element7) const
-    {BOOST_STATIC_ASSERT(d==8);element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];element5=array[5];element6=array[6];element7=array[7];}
+    {static_assert(d==8,"");element0=array[0];element1=array[1];element2=array[2];element3=array[3];element4=array[4];element5=array[5];element6=array[6];element7=array[7];}
 
     void set(const T& element0,const T& element1,const T& element2,const T& element3)
-    {BOOST_STATIC_ASSERT(d==4);array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;}
+    {static_assert(d==4,"");array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;}
 
     void set(const T& element0,const T& element1,const T& element2,const T& element3,const T& element4)
-    {BOOST_STATIC_ASSERT(d==5);array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;}
+    {static_assert(d==5,"");array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;}
 
     void set(const T& element0,const T& element1,const T& element2,const T& element3,const T& element4,const T& element5)
-    {BOOST_STATIC_ASSERT(d==6);array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;array[5]=element5;}
+    {static_assert(d==6,"");array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;array[5]=element5;}
 
     void set(const T& element0,const T& element1,const T& element2,const T& element3,const T& element4,const T& element5,const T& element6)
-    {BOOST_STATIC_ASSERT(d==7);array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;array[5]=element5;array[6]=element6;}
+    {static_assert(d==7,"");array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;array[5]=element5;array[6]=element6;}
 
     void set(const T& element0,const T& element1,const T& element2,const T& element3,const T& element4,const T& element5,const T& element6,const T& element7)
-    {BOOST_STATIC_ASSERT(d==8);array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;array[5]=element5;array[6]=element6;array[7]=element7;}
+    {static_assert(d==8,"");array[0]=element0;array[1]=element1;array[2]=element2;array[3]=element3;array[4]=element4;array[5]=element5;array[6]=element6;array[7]=element7;}
 
     template<class TFunction>
     static Vector map(const TFunction& f,const Vector& v)
@@ -373,13 +370,13 @@ public:
     return r;}
 
     Vector<T,4> sorted() const
-    {BOOST_STATIC_ASSERT(d==4);Vector<T,4> r(*this);small_sort(r[0],r[1],r[2],r[3]);return r;}
+    {static_assert(d==4,"");Vector<T,4> r(*this);small_sort(r[0],r[1],r[2],r[3]);return r;}
 
     Vector reversed() const
     {Vector r;for(int i=0;i<d;i++) r.array[d-1-i]=array[i];return r;}
 
     template<int d1,int d2> Vector<T,d2-d1> slice() const
-    {BOOST_STATIC_ASSERT((mpl::and_<mpl::less_equal<mpl::int_<0>,mpl::int_<d1> >,mpl::less_equal<mpl::int_<d2>,mpl::int_<d> > >::value));
+    {static_assert(0<=d1 && d1<=d2 && d2<=d,"");
     Vector<T,d2-d1> r;for(int i=d1;i<d2;i++) r[i-d1]=(*this)[i];return r;}
 
     template<int n> void split(Vector<T,n>& v1,Vector<T,d-n>& v2) const

@@ -9,7 +9,6 @@
 
 #include <cassert>
 #include <stdint.h>
-#include <boost/static_assert.hpp>
 namespace geode {
 
 inline int integer_log(uint32_t v) { // this works for any v, but it is slower
@@ -52,13 +51,13 @@ static inline bool power_of_two(const uint64_t v) {
 }
 
 inline uint32_t next_power_of_two(uint32_t v) {
-  BOOST_STATIC_ASSERT(sizeof(v)==4);v--;
+  static_assert(sizeof(v)==4,"");v--;
   v|=v>>1;v|=v>>2;v|=v>>4;v|=v>>8;v|=v>>16;
   return v+1;
 }
 
 inline uint64_t next_power_of_two(uint64_t v) {
-  BOOST_STATIC_ASSERT(sizeof(v)==8);v--;
+  static_assert(sizeof(v)==8,"");v--;
   v|=v>>1;v|=v>>2;v|=v>>4;v|=v>>8;v|=v>>16;v|=v>>32;
   return v+1;
 }

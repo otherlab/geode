@@ -5,7 +5,6 @@
 #include <geode/python/stl.h>
 #include <geode/python/wrap.h>
 #include <geode/utility/format.h>
-#include <boost/static_assert.hpp>
 #include <iostream>
 namespace geode {
 
@@ -53,7 +52,7 @@ done:
 }
 
 uint128_t FromPython<uint128_t>::convert(PyObject* object) {
-  BOOST_STATIC_ASSERT(sizeof(long long)==sizeof(uint64_t));
+  static_assert(sizeof(long long)==sizeof(uint64_t),"");
   PyObject* n = PyNumber_Int(object);
   if (!n) throw_python_error();
   uint64_t lo = PyInt_AsUnsignedLongLongMask(n);

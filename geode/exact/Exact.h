@@ -31,10 +31,10 @@ static inline void mpn_sqr(mp_limb_t* rp, const mp_limb_t* sp, mp_size_t n) {
 // Exact<d> holds a signed integer with exactly d*sizeof(Quantized) bytes, suitable
 // for representing the values of polynomial predicates of degree d.
 template<int d> struct Exact {
-  BOOST_STATIC_ASSERT(d>=1);
+  static_assert(d>=1,"");
   static const int degree = d;
   static const int ratio = sizeof(Quantized)/sizeof(mp_limb_t);
-  BOOST_STATIC_ASSERT(sizeof(Quantized)==ratio*sizeof(mp_limb_t)); // Ensure limb counts are always integral
+  static_assert(sizeof(Quantized)==ratio*sizeof(mp_limb_t),"Limb counts must be integral");
   static const int limbs = d*ratio;
 
   // 2's complement, little endian array of GMP limbs
@@ -47,7 +47,7 @@ template<int d> struct Exact {
   explicit Exact(Uninit) {}
 
   explicit Exact(const ExactInt x) {
-    BOOST_STATIC_ASSERT(d==1 && sizeof(x)==sizeof(n) && limbs<=2);
+    static_assert(d==1 && sizeof(x)==sizeof(n) && limbs<=2,"");
     memcpy(n,&x,sizeof(x));
 #ifdef BOOST_BIG_ENDIAN
     if (limbs==2) // Convert from big endian limb order to little endian

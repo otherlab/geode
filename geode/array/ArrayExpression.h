@@ -4,10 +4,7 @@
 #pragma once
 
 #include <geode/array/ArrayIter.h>
-#include <geode/utility/remove_const_reference.h>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_base_of.hpp>
-#include <boost/static_assert.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 struct ConstantSizeArrayExpressionBase {};
@@ -16,21 +13,21 @@ template<> struct ArrayExpressionBase<-1> {};
 
 template<class TA,class Enable=void> struct SizeIfConstant { enum {m = -1}; };
 template<class T,int d> struct SizeIfConstant<Vector<T,d>> { enum {m = d}; };
-template<class TA> struct SizeIfConstant<TA,typename boost::enable_if<boost::is_base_of<ConstantSizeArrayExpressionBase,TA>>::type> { enum {m = TA::m}; };
+template<class TA> struct SizeIfConstant<TA,typename enable_if<is_base_of<ConstantSizeArrayExpressionBase,TA>>::type> { enum {m = TA::m}; };
 
 #ifdef GEODE_VARIADIC
 template<int m,class... Args> struct SameSizeHelper;
 template<int m_> struct SameSizeHelper<m_> { enum {m = m_}; };
 template<int m_,class A,class... Args> struct SameSizeHelper<m_,A,Args...> {
   enum {Am = SizeIfConstant<typename remove_const_reference<A>::type>::m};
-  BOOST_STATIC_ASSERT((m_<0 || Am<0 || m_==Am));
+  static_assert(m_<0 || Am<0 || m_==Am,"");
   enum {m = SameSizeHelper<m_<0?Am:m_,Args...>::m};
 };
 #else
 template<int m_,class A0=void,class A1=void> struct SameSizeHelper {
   enum {m0 = SizeIfConstant<typename remove_const_reference<A0>::type>::m};
   enum {m1 = SizeIfConstant<typename remove_const_reference<A1>::type>::m};
-  BOOST_STATIC_ASSERT((m0<0 || m1<0 || m0==m1));
+  static_assert(m0<0 || m1<0 || m0==m1,"");
   enum {m = m0>=0?m0:m1};
 };
 #endif

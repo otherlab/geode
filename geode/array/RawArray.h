@@ -15,7 +15,7 @@
 #include <geode/utility/HasCheapCopy.h>
 #include <geode/utility/CopyConst.h>
 #include <geode/utility/range.h>
-#include <boost/type_traits/remove_const.hpp>
+#include <geode/utility/type_traits.h>
 #include <iomanip>
 #include <vector>
 namespace geode {
@@ -31,8 +31,8 @@ class RawArray<T_,1> : public ArrayBase<T_,RawArray<T_,1> > {
 public:
   enum Workaroun1 {d=1};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
   typedef T& result_type;
 
 private:
@@ -109,8 +109,12 @@ public:
   }
 
   void zero() const {
-    BOOST_MPL_ASSERT((IsScalarVectorSpace<T>));
+    static_assert(IsScalarVectorSpace<T>::value,"");
     memset(data_,0,m*sizeof(T));
+  }
+
+  Vector<int,1> index(const int i) const {
+    return vec(i);
   }
 
   RawArray slice(int lo, int hi) const {
@@ -154,8 +158,8 @@ class RawArray<T,2> {
 public:
   enum Workaroun1 {d=2};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class RawArray<typename mpl::if_c<is_const,Element,const Element>::type,2>;
@@ -230,6 +234,11 @@ public:
 
   RawArray<T> operator[](const int i) const {
     assert(unsigned(i)<unsigned(m));return RawArray<T>(n,data()+i*n);
+  }
+
+  Vector<int,2> index(const int i) const {
+    int x = i/n;
+    return vec(x, i-x);
   }
 
   RawArray<T> row(int i) const {
@@ -338,8 +347,8 @@ class RawArray<T,3> {
 public:
   enum Workaroun1 {d=3};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class RawArray<typename mpl::if_c<is_const,Element,const Element>::type,3>;
@@ -450,7 +459,7 @@ public:
 
   // Extract a subarray at a fixed value of the given axis
   template<int axis> Subarray<T,2> sub(const int i) const {
-    BOOST_STATIC_ASSERT(axis<2); // For now, the last dimension of a Subarray must be contiguous
+    static_assert(axis<2,"For now, the last dimension of a Subarray must be contiguous");
     assert(unsigned(i)<unsigned(sizes()[axis]));
     return axis==0 ? (*this)[i] : Subarray<T,2>(m,mn,n*mn,data()+i*mn);
   }
@@ -465,8 +474,8 @@ class RawArray<T,4> {
 public:
   enum Workaroun1 {d=4};
   enum Workaround1 {dimension=d};
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
 
 private:
   friend class RawArray<typename mpl::if_c<is_const,Element,const Element>::type,4>;

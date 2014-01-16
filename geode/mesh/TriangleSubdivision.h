@@ -31,12 +31,12 @@ protected:
 public:
   ~TriangleSubdivision();
 
-  template<class TV,int d> Array<typename boost::remove_const<TV>::type,d> linear_subdivide(const Array<TV,d>& X) const {
-    return linear_subdivide(RawArray<typename boost::add_const<TV>::type,d>(X));
+  template<class TV,int d> Array<typename remove_const<TV>::type,d> linear_subdivide(const Array<TV,d>& X) const {
+    return linear_subdivide(RawArray<typename add_const<TV>::type,d>(X));
   }
 
-  template<class TV,int d> Array<typename boost::remove_const<TV>::type,d> loop_subdivide(const Array<TV,d>& X) const {
-    return loop_subdivide(RawArray<typename boost::add_const<TV>::type,d>(X));
+  template<class TV,int d> Array<typename remove_const<TV>::type,d> loop_subdivide(const Array<TV,d>& X) const {
+    return loop_subdivide(RawArray<typename add_const<TV>::type,d>(X));
   }
 
   template<class TV> GEODE_CORE_EXPORT Array<TV> linear_subdivide(RawArray<const TV> X) const;

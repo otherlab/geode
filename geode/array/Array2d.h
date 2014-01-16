@@ -21,7 +21,7 @@ class Array<T_,2> : public ArrayNdBase<T_,Array<T_,2> >
 public:
   enum Workaround1 {dimension=2};
   enum Workaround2 {d=dimension};
-  typedef typename boost::remove_const<T>::type Element;
+  typedef typename remove_const<T>::type Element;
   typedef ArrayNdBase<T,Array> Base;
 
   using Base::flat; // one-dimensional data storage
@@ -29,7 +29,7 @@ public:
 
 private:
   struct Unusable{};
-  typedef typename mpl::if_<boost::is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
+  typedef typename mpl::if_<is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
 public:
 
   int m,n; // sizes
@@ -103,7 +103,7 @@ public:
 
   template<class TArray> void copy(const TArray& source) const {
     assert(sizes()==source.sizes());
-    if (boost::is_same<TArray,Array<Element,2> >::value || boost::is_same<TArray,Array<const Element,2> >::value)
+    if (is_same<TArray,Array<Element,2> >::value || is_same<TArray,Array<const Element,2> >::value)
       memcpy(flat.data(),source.data(),flat.size()*sizeof(T));
     else
       for (int i=0;i<m;i++) for (int j=0;j<n;j++)
@@ -137,6 +137,11 @@ public:
   T& operator()(const Vector<int,d>& index) const {
     assert(unsigned(index.x)<unsigned(m) && unsigned(index.y)<unsigned(n));
     return flat[index.x*n+index.y];
+  }
+
+  Vector<int,2> index(const int i) const {
+    int x = i/n;
+    return vec(x, i-x);
   }
 
   T& operator[](const Vector<int,d>& index) const {
@@ -235,7 +240,7 @@ public:
     return Subarray<T>(flat,0,min(m,n)*(n+1)-n,n+1);
   }
 
-  template<class T2> const Array<typename mpl::if_<boost::is_same<T2,Element>,T,T2>::type,2> as() const {
+  template<class T2> const Array<typename mpl::if_<is_same<T2,Element>,T,T2>::type,2> as() const {
     return flat.template as<T2>().reshape_own(m,n);
   }
 

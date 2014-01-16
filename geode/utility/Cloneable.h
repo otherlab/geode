@@ -4,10 +4,8 @@
 #pragma once
 
 #include <geode/utility/debug.h>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/and.hpp>
-#include <boost/mpl/assert.hpp>
-#include <boost/type_traits/is_base_of.hpp>
-#include <boost/type_traits/is_convertible.hpp>
 #include <typeinfo>
 namespace geode {
 
@@ -15,8 +13,8 @@ class CloneableBase; // Cloneable abstract base classes inherit from this direct
 template<class T> class CloneArray;
 
 template<class T> struct IsCloneable : public boost::mpl::and_<
-  boost::is_base_of<CloneableBase,T>, // must eventually derive from CloneableBase
-  boost::is_convertible<T*,CloneableBase*> >{}; // ensure derivation isn't ambiguous
+  is_base_of<CloneableBase,T>, // must eventually derive from CloneableBase
+  is_convertible<T*,CloneableBase*> >{}; // ensure derivation isn't ambiguous
 
 class CloneableBase {
 public:
@@ -41,7 +39,7 @@ protected:
 
 template<class TDerived,class TBase=CloneableBase>
 class CloneableAbstract : public TBase {
-  BOOST_MPL_ASSERT((IsCloneable<TBase>));
+  static_assert(IsCloneable<TBase>::value,"");
   using TBase::clone_implementation;using TBase::clone_default_implementation;
   template<class T> friend class CloneArray;
 public:
@@ -57,7 +55,7 @@ public:
 
 template<class TDerived,class TBase=CloneableBase>
 class Cloneable : public TBase {
-  BOOST_MPL_ASSERT((IsCloneable<TBase>));
+  static_assert(IsCloneable<TBase>::value,"");
 public:
 
   TDerived* clone() const {

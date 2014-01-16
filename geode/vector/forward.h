@@ -8,7 +8,7 @@
 #include <boost/mpl/and.hpp>
 namespace geode {
 
-namespace mpl=boost::mpl;
+namespace mpl = boost::mpl;
 
 template<class T,int d> class GEODE_CORE_CLASS_EXPORT Vector;
 

@@ -12,7 +12,7 @@ namespace geode {
 
 template<class TV_> class CubicHinges : public Force<TV_> {
   typedef TV_ TV;
-  BOOST_MPL_ASSERT((boost::is_same<typename TV::Scalar,real>));
+  static_assert(is_same<typename TV::Scalar,real>::value,"");
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Force<TV> Base;

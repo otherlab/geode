@@ -5,10 +5,8 @@
 
 #include <geode/value/Value.h>
 #include <geode/utility/move.h>
-#include <boost/type_traits/remove_reference.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
-
-using boost::remove_reference;
 
 class GEODE_CORE_CLASS_EXPORT Action {
 private:

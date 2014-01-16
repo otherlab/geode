@@ -37,7 +37,7 @@ template<> void RawArray<double,2>::transpose() {
 }
 #endif
 
-template<class T> Array<typename boost::remove_const<T>::type,2> RawArray<T,2>::transposed() const {
+template<class T> Array<typename remove_const<T>::type,2> RawArray<T,2>::transposed() const {
   Array<Element,2> A(n,m,false);
   for (int i=0;i<m;i++) for (int j=0;j<n;j++)
     A(j,i) = flat[i*n+j];

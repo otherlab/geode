@@ -8,9 +8,8 @@
 #include <geode/python/try_convert.h>
 #include <geode/python/ExceptionValue.h>
 #include <geode/utility/Optional.h>
+#include <geode/utility/type_traits.h>
 #include <geode/vector/Vector.h>
-#include <boost/type_traits/is_const.hpp>
-#include <boost/type_traits/is_reference.hpp>
 extern void wrap_value_base();
 
 #include <geode/python/Ptr.h>
@@ -20,8 +19,6 @@ namespace geode {
 
 using std::vector;
 using std::type_info;
-using boost::is_const;
-using boost::is_reference;
 
 class GEODE_CORE_CLASS_EXPORT ValueBase : public Object, public WeakRefSupport {
 public:
@@ -130,7 +127,7 @@ template<class T> class GEODE_CORE_CLASS_EXPORT Value : public ValueBase
 {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
-  static_assert(!boost::is_same<T,char*>::value && !boost::is_same<T,const char*>::value,"T can't be char*");
+  static_assert(!is_same<T,char*>::value && !is_same<T,const char*>::value,"T can't be char*");
 public:
   typedef ValueBase Base;
     typedef T ValueType;

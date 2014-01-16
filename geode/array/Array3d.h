@@ -21,7 +21,7 @@ class Array<T_,3> : public ArrayNdBase<T_,Array<T_,3> >
 public:
   enum Workaround1 {dimension=3};
   enum Workaround2 {d=dimension};
-  typedef typename boost::remove_const<T>::type Element;
+  typedef typename remove_const<T>::type Element;
   typedef ArrayNdBase<T,Array> Base;
 
   using Base::flat; // one-dimensional data storage
@@ -29,7 +29,7 @@ public:
 
 private:
   struct Unusable{};
-  typedef typename mpl::if_<boost::is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
+  typedef typename mpl::if_<is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
 public:
 
   int m, n, mn; // sizes
@@ -192,7 +192,7 @@ public:
 
   // Extract a subarray at a fixed value of the given axis
   template<int axis> Subarray<T,2> sub(const int i) const {
-    BOOST_STATIC_ASSERT(axis<2); // For now, the last dimension of a Subarray must be contiguous
+    static_assert(axis<2,"For now, the last dimension of a Subarray must be contiguous");
     assert(unsigned(i)<unsigned(sizes()[axis]));
     return axis==0 ? (*this)[i] : Subarray<T,2>(m,mn,n*mn,data()+i*mn);
   }

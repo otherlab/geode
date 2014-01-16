@@ -20,7 +20,7 @@ class Array<T_,4> : public ArrayNdBase<T_,Array<T_,4> > {
 public:
   enum Workaround1 {dimension=4};
   enum Workaround2 {d=dimension};
-  typedef typename boost::remove_const<T>::type Element;
+  typedef typename remove_const<T>::type Element;
   typedef ArrayNdBase<T,Array> Base;
 
   using Base::flat; // one-dimensional data storage
@@ -28,7 +28,7 @@ public:
 
 private:
   struct Unusable{};
-  typedef typename mpl::if_<boost::is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
+  typedef typename mpl::if_<is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
 public:
 
   Vector<int,4> shape;

@@ -15,13 +15,9 @@
 #pragma once
 
 #include <geode/utility/config.h>
-#include <boost/mpl/assert.hpp>
+#include <geode/utility/type_traits.h>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/or.hpp>
-#include <boost/type_traits/is_fundamental.hpp>
-#include <boost/type_traits/is_enum.hpp>
-#include <boost/type_traits/is_pointer.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <string>
 namespace geode {
 
@@ -31,9 +27,8 @@ using std::string;
 // Unfortunately, since format_helper is called indirectly through format, we can't use gcc's format attribute.
 GEODE_CORE_EXPORT string format_helper(const char* format,...);
 
-template<class T> static inline typename mpl::if_<boost::is_enum<T>,int,T>::type format_sanitize(const T d) {
-  // Ensure that passing as a vararg is safe
-  BOOST_MPL_ASSERT((mpl::or_<boost::is_fundamental<T>,boost::is_enum<T>,boost::is_pointer<T>>));
+template<class T> static inline typename mpl::if_<is_enum<T>,int,T>::type format_sanitize(const T d) {
+  static_assert(mpl::or_<is_fundamental<T>,is_enum<T>,is_pointer<T>>::value,"Passing as a vararg is not safe");
   return d;
 }
 

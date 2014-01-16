@@ -13,8 +13,7 @@
 #include <geode/python/exceptions.h>
 #include <geode/python/utility.h>
 #include <geode/utility/config.h>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 using std::exception;

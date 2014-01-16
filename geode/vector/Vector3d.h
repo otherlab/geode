@@ -38,7 +38,7 @@ public:
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
     template<class V> struct result;
-    template<class V> struct result<V(int)>:mpl::if_<boost::is_const<V>,const T&,T&>{};
+    template<class V> struct result<V(int)>:mpl::if_<is_const<V>,const T&,T&>{};
     enum Workaround1 {dimension=3};
     enum Workaround2 {m=3};
     static const bool is_const=false;
@@ -48,7 +48,7 @@ public:
     Vector()
         :x(),y(),z()
     {
-        BOOST_STATIC_ASSERT(sizeof(Vector)==3*sizeof(T));
+        static_assert(sizeof(Vector)==3*sizeof(T),"");
     }
 
     Vector(const T& x,const T& y,const T& z)
@@ -71,7 +71,7 @@ public:
     explicit Vector(const IndirectArray<TVector,TIndices>& v)
         :x(v[0]),y(v[1]),z(v[2])
     {
-        BOOST_STATIC_ASSERT((boost::is_same<T,typename IndirectArray<TVector,TIndices>::Element>::value && IndirectArray<TVector,TIndices>::m==3));
+        static_assert(is_same<T,typename IndirectArray<TVector,TIndices>::Element>::value && IndirectArray<TVector,TIndices>::m==3,"");
     }
 
     explicit Vector(const Vector<T,2>& vector, const T& z)
@@ -360,7 +360,7 @@ public:
     {return Vector(z,y,x);}
 
     template<int d1,int d2> Vector<T,d2-d1> slice() const
-    {BOOST_STATIC_ASSERT((mpl::and_<mpl::less_equal<mpl::int_<0>,mpl::int_<d1> >,mpl::less_equal<mpl::int_<d2>,mpl::int_<3> > >::value));
+    {static_assert(0<=d1 && d1<=d2 && d2<=3,"");
     Vector<T,d2-d1> r;for(int i=d1;i<d2;i++) r[i-d1]=(*this)[i];return r;}
 
     template<int n> void split(Vector<T,n>& v1,Vector<T,3-n>& v2) const

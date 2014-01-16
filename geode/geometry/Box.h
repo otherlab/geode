@@ -8,11 +8,10 @@
 //#####################################################################
 #pragma once
 
-#include <geode/utility/config.h>
 #include <geode/array/RawArray.h>
 #include <geode/geometry/BoxScalar.h>
 #include <geode/geometry/BoxVector.h>
-#include <boost/type_traits/remove_const.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 using std::numeric_limits;
@@ -63,10 +62,10 @@ extern template GEODE_CORE_EXPORT Box<Vector<real,3>> bounding_box(const RawArra
 #endif
 
 template<class T> static inline Box<typename Array<T>::value_type> bounding_box(const Array<T>& points) {
-  return bounding_box(RawArray<typename boost::add_const<T>::type>(points));
+  return bounding_box(RawArray<typename add_const<T>::type>(points));
 }
 
-template<class T> static inline Box<typename boost::remove_const<T>::type> bounding_box(const Nested<T>& points) {
+template<class T> static inline Box<typename remove_const<T>::type> bounding_box(const Nested<T>& points) {
   return bounding_box(points.flat);
 }
 

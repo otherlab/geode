@@ -43,7 +43,7 @@ public:
   }
 
   template<class S> Ptr(const Ptr<S>& ptr) {
-    BOOST_MPL_ASSERT((mpl::or_<boost::is_same<T,PyObject>,boost::is_base_of<T,S> >));
+    static_assert(mpl::or_<is_same<T,PyObject>,is_base_of<T,S>>::value,"");
     if (ptr.self) {
       self = RefHelper<T,S>::f(ptr.self,ptr.owner_);
       owner_ = ptr.owner_;
@@ -127,8 +127,8 @@ public:
   template<class S> bool operator<=(const Ref<S>& o) const { return self<=o.self; }
   template<class S> bool operator>=(const Ref<S>& o) const { return self>=o.self; }
 
-  Ptr<typename boost::remove_const<T>::type> const_cast_() const {
-    typedef typename boost::remove_const<T>::type S;
+  Ptr<typename remove_const<T>::type> const_cast_() const {
+    typedef typename remove_const<T>::type S;
     return Ptr<S>(const_cast<S*>(self),owner_);
   }
 };
@@ -143,7 +143,7 @@ template<class T> static inline Ref<T> ref(const Ptr<T>& ptr) {
 
 template<class T> static inline Ptr<T>
 ptr(T* object) {
-  BOOST_MPL_ASSERT((boost::is_base_of<Object,T>));
+  static_assert(is_base_of<Object,T>::value,"");
   return object ? Ptr<T>(object,ptr_to_python(object)) : Ptr<T>();
 }
 

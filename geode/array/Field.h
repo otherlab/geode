@@ -25,8 +25,8 @@ class Field {
 private:
   struct Unusable {};
 public:
-  typedef typename boost::remove_const<T>::type Element;
-  static const bool is_const=boost::is_const<T>::value;
+  typedef typename remove_const<T>::type Element;
+  static const bool is_const = geode::is_const<T>::value;
   typedef T& result_type;
 
   Array<T> flat;

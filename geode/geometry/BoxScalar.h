@@ -18,7 +18,6 @@
 #include <geode/math/Zero.h>
 #include <geode/python/forward.h>
 #include <geode/utility/STATIC_ASSERT_SAME.h>
-#include <boost/mpl/assert.hpp>
 #include <cassert>
 #include <limits>
 #include <cfloat>
@@ -31,7 +30,7 @@ template<class T> struct FromPython<Box<T> >{GEODE_CORE_EXPORT static Box<T> con
 
 template<class T> class Box {
 public:
-  BOOST_MPL_ASSERT((IsScalar<T>)); // See BoxVector.h for the Vector version
+  static_assert(IsScalar<T>::value,"See BoxVector.h for the Vector version");
   typedef T Scalar;
 
   T min,max;
