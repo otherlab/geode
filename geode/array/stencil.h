@@ -46,7 +46,7 @@ void apply_stencil(F &f, int w, const Array<T,d> a, const Array<T,d> b) {
     int aj = i-(w+1);
 
     // make a proxy array so we get the index from a flat index
-    auto slice = a[i];
+    auto slice = a[0];
 
     // traverse along other directions, and store in b
     int n = a.sizes().template slice<1,d>().product();
