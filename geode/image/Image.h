@@ -64,17 +64,17 @@ public:
     static void threshold(Array<Vector<T,3>,2>& image,const T threshold,const Vector<T,3>& low_color,const Vector<T,3>& high_color)
     {for(int i=0;i<image.m;i++) for(int j=0;j<image.n;j++) image(i,j)=image(i,j).magnitude()<threshold?low_color:high_color;}
 
-//#####################################################################
-GEODE_CORE_EXPORT static Array<Vector<T,3>,2> read(const string& filename);
-GEODE_CORE_EXPORT static Array<Vector<T,4>,2> read_alpha(const string& filename);
-GEODE_CORE_EXPORT static void write(const string& filename,RawArray<const Vector<T,3>,2> image);
-GEODE_CORE_EXPORT static void write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image);
-GEODE_CORE_EXPORT static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,3>,2> image);
-GEODE_CORE_EXPORT static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,4>,2> image);
-GEODE_CORE_EXPORT static Array<Vector<T,3>,2> gamma_compress(Array<const Vector<T,3>,2> image,const real gamma);
-GEODE_CORE_EXPORT static Array<Vector<T,3>,2> dither(Array<const Vector<T,3>,2> image);
-GEODE_CORE_EXPORT static bool is_supported(const string& filename);
-GEODE_CORE_EXPORT static Array<Vector<T,3>,2> median(const vector<Array<const Vector<T,3>,2> >& images);
-//#####################################################################
+    //#####################################################################
+    GEODE_CORE_EXPORT static Array<Vector<T,3>,2> read(const string& filename);
+    GEODE_CORE_EXPORT static Array<Vector<T,4>,2> read_alpha(const string& filename);
+    GEODE_CORE_EXPORT static void write(const string& filename,RawArray<const Vector<T,3>,2> image);
+    GEODE_CORE_EXPORT static void write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image);
+    GEODE_CORE_EXPORT static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,3>,2> image);
+    GEODE_CORE_EXPORT static std::vector<unsigned char> write_png_to_memory(RawArray<const Vector<T,4>,2> image);
+    GEODE_CORE_EXPORT static Array<Vector<T,3>,2> gamma_compress(Array<const Vector<T,3>,2> image,const real gamma);
+    GEODE_CORE_EXPORT static Array<Vector<T,3>,2> dither(Array<const Vector<T,3>,2> image);
+    GEODE_CORE_EXPORT static bool is_supported(const string& filename);
+    GEODE_CORE_EXPORT static Array<Vector<T,3>,2> median(const vector<Array<const Vector<T,3>,2> >& images);
+    //#####################################################################
 };
 }
