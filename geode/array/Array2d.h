@@ -208,6 +208,10 @@ public:
     return flat.reshape(m_new,n_new,mn_new);
   }
 
+  const Array<T,1>& reshape_own(int m_new) const {
+    return flat.reshape_own(m_new);
+  }
+
   const Array<T,2> reshape_own(int m_new,int n_new) const {
     return flat.reshape_own(m_new,n_new);
   }

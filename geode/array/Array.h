@@ -327,6 +327,11 @@ public:
     return RawArray<T>(m_new,data());
   }
 
+  const Array<T>& reshape_own(int m_new) const {
+    assert(m_new==m_);
+    return *this;
+  }
+
   RawArray<T,2> reshape(int m_new,int n_new) const {
     assert(m_new*n_new==m_);
     return RawArray<T,2>(m_new,n_new,data());

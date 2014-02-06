@@ -178,6 +178,14 @@ public:
     return flat.reshape(m_new,n_new);
   }
 
+  const Array<T>& reshape_own(int m_new) const {
+    return flat.reshape_own(m_new);
+  }
+
+  Array<T,2> reshape_own(int m_new,int n_new) const {
+    return flat.reshape_own(m_new,n_new);
+  }
+
   void swap(Array& other) {
     flat.swap(other.flat);
     swap(m,other.m);
