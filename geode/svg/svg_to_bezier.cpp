@@ -49,7 +49,7 @@ static vector<Ref<SVGStyledPath>> svg_paths_to_beziers(const struct SVGPath* pli
       --last;
       auto prev = last;
       --prev;
-      (last->second->pt - prev->second->pt).magnitude() > 1e-8 ? bez.close() : bez.fuse_ends();
+      (last->second->pt - prev->second->pt).magnitude() > 1e-3*bez.bounding_box().sizes().magnitude() ? bez.close() : bez.fuse_ends();
     }
   }
   return paths;
