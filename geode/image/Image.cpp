@@ -8,6 +8,7 @@
 #include <geode/image/ExrFile.h>
 #include <geode/python/Class.h>
 #include <geode/python/stl.h>
+#include <geode/utility/convert_case.h>
 #include <geode/random/Random.h>
 #include <geode/utility/path.h>
 #include <geode/utility/Log.h>
@@ -23,7 +24,7 @@ template<> GEODE_DEFINE_TYPE(Image<double>)
 
 template<class T> Array<Vector<T,3>,2> Image<T>::read(const string& filename)
 {
-  string ext = path::extension(filename);
+  string ext = to_lower(path::extension(filename));
   if(ext==".jpg" || ext==".jpeg") return JpgFile<T>::read(filename);
   else if(ext==".png") return PngFile<T>::read(filename);
   else if(ext==".exr") return ExrFile<T>::read(filename);
@@ -32,7 +33,7 @@ template<class T> Array<Vector<T,3>,2> Image<T>::read(const string& filename)
 
 template<class T> Array<Vector<T,4>,2> Image<T>::read_alpha(const string& filename)
 {
-  string ext = path::extension(filename);
+  string ext = to_lower(path::extension(filename));
   if(ext==".png") return PngFile<T>::read_alpha(filename);
   GEODE_FATAL_ERROR(format("Image file extension unknown or without alpha from filename '%s' extension '%s'",filename,ext));
 }
@@ -40,7 +41,7 @@ template<class T> Array<Vector<T,4>,2> Image<T>::read_alpha(const string& filena
 template<class T> void Image<T>::
 write(const string& filename,RawArray<const Vector<T,3>,2> image)
 {
-    string ext = path::extension(filename);
+    string ext = to_lower(path::extension(filename));
     if(ext==".jpg" || ext==".jpeg") JpgFile<T>::write(filename,image);
     else if(ext==".png") PngFile<T>::write(filename,image);
     else if(ext==".exr") ExrFile<T>::write(filename,image);
@@ -50,7 +51,7 @@ write(const string& filename,RawArray<const Vector<T,3>,2> image)
 template<class T> void Image<T>::
 write_alpha(const string& filename,RawArray<const Vector<T,4>,2> image)
 {
-    string ext = path::extension(filename);
+    string ext = to_lower(path::extension(filename));
     if(ext==".png") PngFile<T>::write(filename,image);
     else if(ext==".jpg") GEODE_FATAL_ERROR(format("No support for alpha channel with extension '%s' for filename '%s'",ext,filename));
     else GEODE_FATAL_ERROR(format("Unknown image file extension from filename '%s' extension '%s'",filename,ext));
