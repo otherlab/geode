@@ -138,7 +138,9 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
     // exchange it for either the previous or the next point
     if (forced[forced_idx] == i && !ignore_forced) {
       forced_idx++;
-      if (fabs(sample_d-distance) < step/2) {
+      if (fabs(sample_d-distance) < step/2 &&
+          (int)samples.size() < (int)res-2 // cannot skip a sample if this is the last
+         ) {
         // get rid of the next sample
         // (implicitly by change in sample_d below)
         if (debug)
@@ -169,7 +171,8 @@ template<int d> Array<Vector<real,d>> Bezier<d>::alen_evaluate(const InvertibleB
     std::cout << "  samples: " << samples.size() << " res+1: " << res+1 << " sample_d: " << sample_d << " len: " << total_length << std::endl;
 
   GEODE_ASSERT(samples.size() >= 2);
-  if(samples.size() != res+1) std::cout << "incorrect number of samples! expected " << res+1 << ", found " << samples.size() << std::endl;
+  if (samples.size() != res+1)
+    std::cout << "incorrect number of samples! expected " << res+1 << ", found " << samples.size() << std::endl;
   GEODE_ASSERT(samples.size() == res+1);
   return samples;
 }
