@@ -60,7 +60,11 @@ TriangleTopology::TriangleTopology(TriangleSoup const &soup)
 TriangleTopology::~TriangleTopology() {}
 
 Ref<TriangleTopology> TriangleTopology::copy() const {
-  return new_<TriangleTopology>(*this, true);
+  return new_<TriangleTopology>(*this,true);
+}
+
+Ref<MutableTriangleTopology> TriangleTopology::mutate() const {
+  return new_<MutableTriangleTopology>(*this,true);
 }
 
 HalfedgeId TriangleTopology::halfedge(VertexId v0, VertexId v1) const {
@@ -1648,6 +1652,7 @@ void wrap_corner_mesh() {
     Class<Self>("TriangleTopology")
       .GEODE_INIT(const TriangleSoup&)
       .GEODE_METHOD(copy)
+      .GEODE_METHOD(mutate)
       .GEODE_GET(n_vertices)
       .GEODE_GET(n_boundary_edges)
       .GEODE_GET(n_edges)

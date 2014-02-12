@@ -16,6 +16,7 @@ namespace geode {
 struct TriangleTopologyOutgoing;
 struct TriangleTopologyIncoming;
 template<class Id> struct TriangleTopologyIter;
+class MutableTriangleTopology;
 
 // A TriangleTopology consists of vertices and faces connected into an oriented manifold,
 // plus special boundary halfedges along each boundary curve.  Treating boundary
@@ -149,6 +150,7 @@ public:
 
   // Copy the mesh
   GEODE_CORE_EXPORT Ref<TriangleTopology> copy() const;
+  GEODE_CORE_EXPORT Ref<MutableTriangleTopology> mutate() const;
 
   // Count various features, excluding erased ids.  If you want to include deletions, use faces_.size() and such.
   int n_vertices()       const { return n_vertices_; }
