@@ -18,5 +18,6 @@ GEODE_CORE_EXPORT string repr(PyObject* x);
 GEODE_CORE_EXPORT string repr(const float x);
 GEODE_CORE_EXPORT string repr(const double x);
 GEODE_CORE_EXPORT string repr(const long double x);
+GEODE_CORE_EXPORT string repr(const string& s);
 
 }

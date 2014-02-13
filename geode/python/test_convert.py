@@ -1,4 +1,5 @@
 from geode import *
+import ast
 
 def test_list():
   x = [1,2,3]
@@ -23,3 +24,11 @@ def test_enum():
   assert a==aa
   assert a is aa
   assert str(a)=='EnumTestA'
+
+def test_str_repr():
+  for i in xrange(256):
+    c = chr(i)
+    r = str_repr_test(c)
+    assert ast.literal_eval(r)==c
+    if c != "'":
+      assert repr(c)==r

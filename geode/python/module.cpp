@@ -78,6 +78,10 @@ template<class TC> static TC convert_test(const TC& c) {
   return c;
 }
 
+string str_repr_test(const string& s) {
+  return repr(s);
+}
+
 namespace python {
 
 void add_object(const char* name, PyObject* object) {
@@ -119,6 +123,7 @@ void wrap_python() {
   python::function("set_convert_test",convert_test<unordered_set<int> >);
   python::function("dict_convert_test",convert_test<unordered_map<int,string> >);
   python::function("enum_convert_test",convert_test<EnumTest>);
+  GEODE_FUNCTION(str_repr_test)
 
   GEODE_ENUM(EnumTest)
   GEODE_ENUM_VALUE(EnumTestA)

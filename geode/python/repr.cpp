@@ -37,4 +37,29 @@ string repr(const long double x) {
   return buffer;
 }
 
+string repr(const string& s) {
+  string r;
+  r.push_back('\'');
+  for (const char c : s)
+    switch (c) {
+      case '\t': r.push_back('\\'); r.push_back('t'); break;
+      case '\n': r.push_back('\\'); r.push_back('n'); break;
+      case '\r': r.push_back('\\'); r.push_back('r'); break;
+      case '\'': r.push_back('\\'); r.push_back('\''); break;
+      case '\\': r.push_back('\\'); r.push_back('\\'); break;
+      default:
+        if (' '<=c && c<='~')
+          r.push_back(c);
+        else {
+          r.push_back('\\');
+          r.push_back('x');
+          const uint8_t a = uint8_t(c)/16, b = c&15;
+          r.push_back(a+(a<10?'0':'a'-10));
+          r.push_back(b+(b<10?'0':'a'-10));
+        }
+    }
+  r.push_back('\'');
+  return r;
+}
+
 }
