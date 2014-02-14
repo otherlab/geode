@@ -126,26 +126,6 @@ def write_obj(file,mesh,X):
   else:
     raise TypeError('unknown mesh type %s'%type(mesh))
 
-def read_stl(file):
-  f = open(file)
-  header = f.read(80)
-  count, = struct.unpack('<I',f.read(4))
-  X,triangles = [],[]
-  id = {}
-  for t in xrange(count):
-    nx,ny,nz,v0x,v0y,v0z,v1x,v1y,v1z,v2x,v2y,v2z,c = struct.unpack('<ffffffffffffH',f.read(12*4+2))
-    tri = []
-    for x in (v0x,v0y,v0z),(v1x,v1y,v1z),(v2x,v2y,v2z):
-      try:
-        i = id[x]
-      except KeyError:
-        i = len(X)
-        X.append(x)
-        id[x] = i
-      tri.append(i)
-    triangles.append(tri)
-  return TriangleSoup(triangles),array(X,dtype=real)
-
 def merge_meshes(surfaces):
   tris = []
   X = []

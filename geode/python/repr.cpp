@@ -38,9 +38,13 @@ string repr(const long double x) {
 }
 
 string repr(const string& s) {
+  return repr(s.c_str());
+}
+
+string repr(const char* s) {
   string r;
   r.push_back('\'');
-  for (const char c : s)
+  while (const char c = *s++)
     switch (c) {
       case '\t': r.push_back('\\'); r.push_back('t'); break;
       case '\n': r.push_back('\\'); r.push_back('n'); break;
