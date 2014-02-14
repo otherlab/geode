@@ -91,6 +91,10 @@ Use `type=debug` for a much slower build with many more assertions:
 
 The following flags can be used to disable optional components:
 
+    # Command line
+    scons use_python=0 use_openexr=0 use_libpng=0 use_libjpeg=0 use_openmesh=0
+
+    # In config.py
     use_python = 0
     use_openexr = 0
     use_libpng = 0
