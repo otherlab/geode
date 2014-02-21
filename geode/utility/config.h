@@ -64,8 +64,10 @@ typedef double real;
 
 #ifdef __clang__
 #  define GEODE_HAS_FEATURE(feature) __has_feature(feature)
+#  define GEODE_HAS_INCLUDE(header) __has_include(header)
 #else
 #  define GEODE_HAS_FEATURE(feature) false
+#  define GEODE_HAS_INCLUDE(header) false
 #endif
 
 #if !defined(__clang__) || GEODE_HAS_FEATURE(cxx_noexcept)
