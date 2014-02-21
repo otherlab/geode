@@ -403,7 +403,7 @@ const_field(S T::* field) {
 
 #ifdef GEODE_PYTHON
 #ifdef GEODE_VARIADIC
-#define GEODE_CALL(...) call(wrap_call<Self,##__VA_ARGS__>())
+#define GEODE_CALL(...) call(wrap_call<Self>(Types<__VA_ARGS__>()))
 #else
 #define GEODE_CALL(...) call(WrapCall<Self,##__VA_ARGS__>::wrap())
 #endif

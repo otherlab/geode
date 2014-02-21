@@ -34,8 +34,7 @@ template<class R,class T,class... Args> static inline ternaryfunc wrap_call_help
   return OuterWrapper<R,PyObject*,PyObject*,PyObject*>::template wrap<call_inner_wrapper<R,T,Args...> >;
 }
 
-template<class T,class... Args> static inline ternaryfunc
-wrap_call() {
+template<class T,class... Args> static inline ternaryfunc wrap_call(Types<Args...>) {
   typedef decltype((*(T*)0)(declval<Args>()...)) R;
   return wrap_call_helper<R,T>(typename Enumerate<Args...>::type());
 }
