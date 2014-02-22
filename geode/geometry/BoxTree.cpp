@@ -19,14 +19,6 @@ template<> GEODE_DEFINE_TYPE(BoxTree<Vector<real,3>>)
 
 namespace {
 
-template<class T,int d> inline T center(const Vector<T,d>& x, int axis) {
-  return x[axis];
-}
-
-template<class T,int d> inline T center(const Box<Vector<T,d>>& box, int axis) {
-  return (T).5*(box.min[axis]+box.max[axis]);
-}
-
 struct CenterCompare {
   int axis;
 
