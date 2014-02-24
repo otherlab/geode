@@ -3,14 +3,13 @@
 #pragma once
 
 #include <geode/mesh/TriangleSoup.h>
-#include <geode/utility/range.h>
 #include <geode/mesh/ids.h>
 #include <geode/array/Field.h>
+#include <geode/array/UntypedArray.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/structure/Tuple.h>
-
+#include <geode/utility/range.h>
 #include <exception>
-
 namespace geode {
 
 struct TriangleTopologyOutgoing;
@@ -246,161 +245,10 @@ public:
   inline Range<IdIter<HalfedgeId>> all_halfedges() const;
   inline Range<IdIter<HalfedgeId>> all_interior_halfedges() const;
   inline Range<IdIter<HalfedgeId>> all_boundary_edges() const;
-
 };
 
-// A property container. Properties are addressed by id, which is typed so we
-// can return a typed property array, and also distinguish simple updating
-// properties from interpolating ones.
-class PropertyStorage: public Object {
-public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
-  typedef Object Base;
-
-private:
-  Array<uint8_t> data;
-  const int t_size;
-  uint8_t *tmp; // memory used for swapping
-protected:
-  PropertyStorage(PropertyStorage const &o, bool copy = false)
-  : data(copy ? o.data.copy() : o.data), t_size(o.t_size), tmp(new uint8_t[t_size])
- {}
-
-  // construct the object at position i
-  void construct(int i) {
-    memset(data.data()+i*t_size, 0, t_size);
-  }
-
-  // destroy the object at position i
-  void destroy(int i) {
-  }
-
-  // This constructor should create function pointers that can create and destroy
-  // objects of type T (similar to allocator<T>::construct and allocator<T>::destroy)
-  // and store then as boost::functions that don't require the type information any
-  // longer. Potentially should also make something similar for operator= to enable
-  // swapping/moving objects around.
-  // Currently, storage should only be used with types for which:
-  //  - memory filled with 0x0 is a valid object
-  //  - have a trivial destructor
-  //  - are relocatable: memcpy'ing the object to different memory is ok
-  // We can only check for a trivial constructor here, but that's not a bad start.
-  template<class T>
-  PropertyStorage(int size, T const & def = T(), typename enable_if<typename has_trivial_destructor<T>::type>::type* dummy = 0)
-  : data(sizeof(T) * size), t_size(sizeof(T)), tmp(new uint8_t[t_size]) {
-    // initialize content
-    for (int i = 0; i < size; ++i) {
-      construct(i);
-    }
-  }
-
-public:
-
-  ~PropertyStorage() {
-    delete[] tmp;
-  }
-
-  // deep copy
-  Ref<PropertyStorage> copy() const {
-    return new_<PropertyStorage>(*this, true);
-  }
-
-  int size() const {
-    return data.size()/t_size;
-  }
-
-  // maintenance functions without need for types (using element size only)
-  void resize(int n) {
-    int s = size();
-
-    for (int i = n; i < s; ++i) {
-      destroy(i);
-    }
-
-    data.resize(n*t_size);
-
-    for (int i = s; i < (int)n; ++i) {
-      construct(i);
-    }
-  }
-
-  int grow(int n) {
-    int s = size();
-    GEODE_ASSERT(s+n >= 0);
-    resize(s+n);
-    return size();
-  }
-
-  void extend(PropertyStorage const &other) {
-    GEODE_ASSERT(other.t_size == t_size);
-    int n = size();
-    grow(other.size());
-    memcpy(data.data()+t_size*n, other.data.data(), t_size * other.size());
-  }
-
-  void swap(int i, int j) {
-    if (i == j)
-      return;
-    memcpy(tmp, data.data()+i*t_size, t_size);
-    memcpy(data.data()+i*t_size, data.data()+j*t_size, t_size);
-    memcpy(data.data()+j*t_size, tmp, t_size);
-  }
-
-  void apply_permutation(RawArray<const int> permutation) {
-    GEODE_ASSERT(permutation.size() == size());
-    Array<uint8_t> newdata((permutation.max()+1)*t_size);
-    for (int i = 0; i < permutation.size(); ++i) {
-      if (permutation[i] >= 0) {
-        //std::cout << "moving old id " << i << " to new id " << permutation[i] << std::endl;
-        assert(permutation[i]*(int)t_size < newdata.size());
-        memcpy(newdata.data()+t_size*permutation[i], data.data()+t_size*i, t_size);
-      }
-    }
-    data = newdata;
-  }
-
-  // typed access to data
-
-  template<class T>
-  void append(T const &t) {
-    resize(size()+1);
-    get<T>(size()-1) = t;
-  }
-
-  template<class T>
-  T const &get(int i) const {
-    assert(sizeof(T) == t_size);
-    assert(i < data.size()/t_size && i >= 0);
-    return ((T*)data.data())[i];
-  }
-
-  template<class T>
-  T &get(int i) {
-    assert(sizeof(T) == t_size);
-    assert(i < data.size()/t_size && i >= 0);
-    return ((T*)data.data())[i];
-  }
-
-  template<class T>
-  T &set(int i, T const &t) {
-    return get<T>(i) = t;
-  }
-
-  template<class T>
-  Array<T> get() {
-    return Array<T>(size(), (T*)data.data(), data.owner());
-  }
-
-  template<class T>
-  Array<const T> get() const {
-    return Array<const T>(size(), (T const *)data.data(), data.owner());
-  }
-
-};
-
-// A mutable topology, with attached data (properties) on vertices, faces, or
-// halfedges, which are maintained through topological operations using user-defined
-// schemes
+// A mutable topology, with attached fields on vertices, faces, or halfedges, which are maintained through
+// topological operations using user-defined schemes.
 class MutableTriangleTopology: public TriangleTopology {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
@@ -422,10 +270,13 @@ protected:
   // The linked list of erased boundary edges
   HalfedgeId& mutable_erased_boundaries_;
 
-  Hashtable<Tuple<int,string>,Ref<PropertyStorage>> vertex_storage;
-  Hashtable<Tuple<int,string>,Ref<PropertyStorage>> face_storage;
-  Hashtable<Tuple<int,string>,Ref<PropertyStorage>> halfedge_storage;
-  int max_property_id;
+  vector<UntypedArray> vertex_fields,
+                       face_fields,
+                       halfedge_fields;
+  Hashtable<int,int> id_to_vertex_field,
+                     id_to_face_field,
+                     id_to_halfedge_field;
+  int next_field_id;
 
   GEODE_CORE_EXPORT MutableTriangleTopology();
   GEODE_CORE_EXPORT MutableTriangleTopology(const TriangleTopology& mesh, bool copy = false);
@@ -437,64 +288,43 @@ public:
 
   ~MutableTriangleTopology();
 
-  // property management
-
-#define PROPERTY_ACCESS_FUNCTIONS(primitive, id_type, storage, size_expr) \
-  template<class T> \
-  PropertyId<T,id_type,false> add_##primitive##_property(int id = invalid_id) {\
-    if (id == invalid_id)\
-      id = max_property_id++;\
-    else\
-      max_property_id = max(max_property_id, id+1);\
-    int n = size_expr;\
-    auto tup = tuple(id,string(typeid(T).name()));\
-    GEODE_ASSERT(!storage.contains(tup));\
-    storage.insert(tup, new_<PropertyStorage>(n, T()));\
-    return PropertyId<T,id_type,false>(id);\
-  }\
-  template<class T>\
-  bool has_##primitive##_property(PropertyId<T,id_type,false> id) const {\
-    if (!id.valid())\
-      return false;\
-    return storage.contains(tuple(id.id,string(typeid(T).name())));\
-  }\
-  template<class T>\
-  void remove_##primitive##_property(PropertyId<T,id_type,false> id) {\
-    storage.erase(tuple(id.id,string(typeid(T).name())));\
-  }\
-  template<class T>\
-  T &property(PropertyId<T,id_type,false> id, id_type vi) {\
-    assert(id.valid());\
-    return storage.get(tuple(id.id,string(typeid(T).name())))->get(vi.id);\
-  }\
-  template<class T>\
-  T const &property(PropertyId<T,id_type,false> id, id_type vi) const {\
-    assert(id.valid());\
-    return storage.get(tuple(id.id,string(typeid(T).name())))->get(vi.id);\
-  }\
-  template<class T>\
-  const Field<T,id_type> property(PropertyId<T,id_type,false> id) {\
-    assert(id.valid());\
-    return Field<T,id_type>(storage.get(tuple(id.id,string(typeid(T).name())))->template get<T>());\
-  }\
-  template<class T>\
-  const Field<const T,id_type> property(PropertyId<T,id_type,false> id) const {\
-    assert(id.valid());\
-    return Field<T,id_type>(storage.get(tuple(id.id,string(typeid(T).name())))->template get<T>());\
-  }\
+  // Field management
+#define FIELD_ACCESS_FUNCTIONS(prim, Id, size_expr) \
+  template<class T> FieldId<T,Id> add_##prim##_field(int id = invalid_id) { \
+    if (id == invalid_id) \
+      id = next_field_id++; \
+    else \
+      next_field_id = max(next_field_id,id+1); \
+    GEODE_ASSERT(!id_to_##prim##_field.contains(id)); \
+    prim##_fields.push_back(UntypedArray(Types<T>(),(size_expr))); \
+    id_to_##prim##_field.set(id,int(prim##_fields.size()-1)); \
+    return FieldId<T,Id>(id); \
+  } \
+  template<class T> bool has_##prim##_field(const FieldId<T,Id> id) const { \
+    return id.valid() && id_to_##prim##_field.contains(id); \
+  } \
+  template<class T> void remove_##prim##_field(const FieldId<T,Id> id) { \
+    remove_field_helper(id_to_##prim##_field,prim##_fields,id.id); \
+  } \
+  template<class T> const Field<T,Id>& field(const FieldId<T,Id> id) { \
+    return prim##_fields[id_to_##prim##_field.get(id)].template get<T,Id>(); \
+  } \
+  template<class T> const Field<const T,Id> field(const FieldId<T,Id> id) const { \
+    return prim##_fields[id_to_##prim##_field.get(id)].template get<const T,Id>(); \
+  }
+  FIELD_ACCESS_FUNCTIONS(vertex,   VertexId,   vertex_to_edge_.size())
+  FIELD_ACCESS_FUNCTIONS(face,     FaceId,     faces_.size())
+  FIELD_ACCESS_FUNCTIONS(halfedge, HalfedgeId, faces_.size()*3)
+  #undef FIELD_ACCESS_FUNCTIONS
 
   #ifdef GEODE_PYTHON
-    PyObject *add_vertex_property_py(PyObject *dtype, int id);
-    PyObject *add_face_property_py(PyObject *dtype, int id);
-    PyObject *add_halfedge_property_py(PyObject *dtype, int id);
-    bool has_property_py(PyPropertyId const &id) const;
-    void remove_property_py(PyPropertyId const &id);
-    PyObject *property_py(PyPropertyId const &id);
+    PyObject* add_vertex_field_py(PyObject* dtype, const int id);
+    PyObject* add_face_field_py(PyObject* dtype, const int id);
+    PyObject* add_halfedge_field_py(PyObject* dtype, const int id);
+    bool has_field_py(const PyFieldId& id) const;
+    void remove_field_py(const PyFieldId& id);
+    PyObject* field_py(const PyFieldId& id);
   #endif
-
-  PROPERTY_ACCESS_FUNCTIONS(vertex, VertexId, vertex_storage, vertex_to_edge_.size())
-  PROPERTY_ACCESS_FUNCTIONS(face, FaceId, face_storage, faces_.size())
-  PROPERTY_ACCESS_FUNCTIONS(halfedge, HalfedgeId, halfedge_storage, faces_.size()*3)
 
   // publish the hidden construction methods from TriangleTopology
   using TriangleTopology::unsafe_boundary_link;
@@ -515,7 +345,8 @@ public:
   // Add n isolated vertices and return the first id (new ids are contiguous)
   GEODE_CORE_EXPORT VertexId add_vertices(int n);
 
-  // Add a new face.  If the result would not be manifold, no change is made and ValueError is thrown (TODO: throw a better exception).
+  // Add a new face.  If the result would not be manifold, no change is made and ValueError is thrown.
+  // TODO: throw a better exception.
   GEODE_CORE_EXPORT FaceId add_face(Vector<VertexId,3> v);
 
   // Add many new faces (return the first id, new ids are contiguous)
@@ -525,12 +356,12 @@ public:
   // WARNING: The all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
   GEODE_CORE_EXPORT HalfedgeId flip_edge(HalfedgeId e) GEODE_WARN_UNUSED_RESULT;
 
-  // Permute vertices: vertices v becomes vertex permutation[v]
+  // Permute vertices: vertex v becomes vertex permutation[v]
   GEODE_CORE_EXPORT void permute_vertices(RawArray<const int> permutation, bool check=false);
 
   // Add another TriangleTopology, assuming the vertex sets are disjoint.
   // Returns the offsets of the other vertex, face, and boundary ids in the new arrays.
-  GEODE_CORE_EXPORT Tuple<int,int,int> add(MutableTriangleTopology const &other);
+  GEODE_CORE_EXPORT Vector<int,3> add(MutableTriangleTopology const &other);
 
   // split the halfedge h with a new vertex c, which splits the adjacent face
   // into itself and a face nf. The halfedge h (for which now dst(.) == c), and
@@ -540,17 +371,17 @@ public:
 
   // Split a face into three by inserting a new vertex. Two new faces are created.
   // The id of the new vertex is returned. The two new faces (added at the end)
-  // have properties that are newly initialized, the existing face's area changes,
-  // but its properties are not touched. The halfedge properties of the original
-  // face are copied to the halfedges that are their obivous equivalent (their
+  // have field that are newly initialized; the existing face's area changes
+  // but its field are not touched. The halfedge fields of the original
+  // face are copied to the halfedges that are their obvious equivalent (their
   // indices change). The new halfedges (all those connected to the new vertex)
   // are newly initialized.
   GEODE_CORE_EXPORT VertexId split_face(FaceId f);
 
   // Split a face into three by inserting an existing isolated vertex in the center.
   // Afterwards, face(halfedge(c))==f. The two new faces (added at the end)
-  // have properties that are newly initialized, the existing face's area changes,
-  // but its properties are not touched. The halfedge properties of the original
+  // have fields that are newly initialized; the existing face's area changes
+  // but its fields are not touched. The halfedge fields of the original
   // face are copied to the halfedges that are their obivous equivalent (their
   // indices change). The new halfedges (all those connected to the new vertex)
   // are newly initialized.
@@ -574,7 +405,7 @@ public:
   // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
   // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
   // For any field f, use f.permute() to create a field that works with the new ids
-  GEODE_CORE_EXPORT Tuple<Array<int>,Array<int>,Array<int>> collect_garbage();
+  GEODE_CORE_EXPORT Vector<Array<int>,3> collect_garbage();
 
   // Collect unused boundary halfedges.  Returns old_to_new map.  This can be called after construction
   // from triangle soup, since unordered face addition leaves behind garbage boundary halfedges.
@@ -586,10 +417,10 @@ public:
 
   // Flip an edge assuming is_flip_safe(e). If that is not the case, this may leave the mesh in a broken state.
   // WARNING: all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
-  // Both faces keep their properties. The halfedge properties on the outer halfedges are
+  // Both faces keep their fields. The halfedge fields on the outer halfedges are
   // moved to their corresponding new indices, but the interior halfedges (on the
-  // flipped edge) keep their properties, the interior halfedge of face 1 before
-  // will have the same properties before and after.
+  // flipped edge) keep their fields, the interior halfedge of face 1 before
+  // will have the same fields before and after.
   GEODE_CORE_EXPORT HalfedgeId unsafe_flip_edge(HalfedgeId e) GEODE_WARN_UNUSED_RESULT;
 
   // Remove a face from the mesh, shuffling face and halfedge ids in the process.
@@ -600,9 +431,6 @@ public:
   // This exists solely to erase sentinel vertices created by Delaunay.
   GEODE_CORE_EXPORT void erase_last_vertex_with_reordering();
 };
-
-
-
 
 
 // Mesh walking routines
@@ -859,5 +687,7 @@ inline Range<IdIter<HalfedgeId>> TriangleTopology::all_halfedges() const {
 inline Range<IdIter<HalfedgeId>> TriangleTopology::all_interior_halfedges() const {
   return Range<IdIter<HalfedgeId>>(HalfedgeId(0),HalfedgeId(faces_.size()*3));
 }
+
+GEODE_EXPORT void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& fields, const int id);
 
 }

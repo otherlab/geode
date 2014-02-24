@@ -1,25 +1,24 @@
 // A corner data structure representing oriented triangle meshes.
 
 #include <geode/mesh/TriangleTopology.h>
-#include <geode/python/numpy.h>
 #include <geode/array/convert.h>
-#include <geode/vector/convert.h>
+#include <geode/array/Nested.h>
+#include <geode/array/permute.h>
+#include <geode/python/numpy.h>
 #include <geode/python/Class.h>
 #include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/Log.h>
+#include <geode/vector/convert.h>
 #include <boost/dynamic_bitset.hpp>
-#include <geode/array/Nested.h>
-
 namespace geode {
 
 using Log::cout;
 using std::endl;
 
 GEODE_DEFINE_TYPE(TriangleTopology)
-GEODE_DEFINE_TYPE(PropertyStorage)
 GEODE_DEFINE_TYPE(MutableTriangleTopology)
 
 static string str_halfedge(HalfedgeId e) {
@@ -471,11 +470,11 @@ MutableTriangleTopology::MutableTriangleTopology()
   , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
   , mutable_boundaries_(const_cast_(boundaries_).const_cast_())
   , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
-  , max_property_id(100)
+  , next_field_id(100)
 {}
 
 MutableTriangleTopology::MutableTriangleTopology(const TriangleTopology& mesh, bool copy)
-  : TriangleTopology(mesh, copy)
+  : TriangleTopology(mesh,copy)
   , mutable_n_vertices_(const_cast_(n_vertices_))
   , mutable_n_faces_(const_cast_(n_faces_))
   , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
@@ -483,11 +482,11 @@ MutableTriangleTopology::MutableTriangleTopology(const TriangleTopology& mesh, b
   , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
   , mutable_boundaries_(const_cast_(boundaries_).const_cast_())
   , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
-  , max_property_id(100)
+  , next_field_id(100)
 {}
 
 MutableTriangleTopology::MutableTriangleTopology(const MutableTriangleTopology& mesh, bool copy)
-  : TriangleTopology(mesh, copy)
+  : TriangleTopology(mesh,copy)
   , mutable_n_vertices_(const_cast_(n_vertices_))
   , mutable_n_faces_(const_cast_(n_faces_))
   , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
@@ -495,17 +494,14 @@ MutableTriangleTopology::MutableTriangleTopology(const MutableTriangleTopology& 
   , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
   , mutable_boundaries_(const_cast_(boundaries_).const_cast_())
   , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
-  , max_property_id(mesh.max_property_id)
+  , id_to_vertex_field(mesh.id_to_vertex_field)
+  , id_to_face_field(mesh.id_to_face_field)
+  , id_to_halfedge_field(mesh.id_to_halfedge_field)
+  , next_field_id(mesh.next_field_id)
 {
-  for (auto const &p : mesh.vertex_storage) {
-    vertex_storage.set(p.key(), copy ? p.data()->copy() : p.data());
-  }
-  for (auto const &p : mesh.face_storage) {
-    face_storage.set(p.key(), copy ? p.data()->copy() : p.data());
-  }
-  for (auto const &p : mesh.halfedge_storage) {
-    halfedge_storage.set(p.key(), copy ? p.data()->copy() : p.data());
-  }
+  for (const auto& p : mesh.vertex_fields)     vertex_fields.push_back(copy ? p.copy() : p);
+  for (const auto& p : mesh.face_fields)         face_fields.push_back(copy ? p.copy() : p);
+  for (const auto& p : mesh.halfedge_fields) halfedge_fields.push_back(copy ? p.copy() : p);
 }
 
 MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces)
@@ -517,7 +513,7 @@ MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> f
   , mutable_vertex_to_edge_(const_cast_(vertex_to_edge_).const_cast_())
   , mutable_boundaries_(const_cast_(boundaries_).const_cast_())
   , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
-  , max_property_id(100)
+  , next_field_id(100)
 {
   add_faces(faces);
 }
@@ -532,7 +528,7 @@ MutableTriangleTopology::~MutableTriangleTopology() {}
 HalfedgeId MutableTriangleTopology::unsafe_new_boundary(const VertexId src, const HalfedgeId reverse) {
   HalfedgeId e = TriangleTopology::unsafe_new_boundary(src, reverse);
 
-  // Take care of boundary properties
+  // Take care of boundary fields
   // ...
 
   return e;
@@ -549,22 +545,19 @@ VertexId MutableTriangleTopology::add_vertex() {
 
 VertexId MutableTriangleTopology::add_vertices(int n) {
   VertexId id = internal_add_vertices(n);
-  for (auto &s : vertex_storage)
-    s.data()->grow(n);
+  for (auto& s : vertex_fields)
+    s.extend(n);
   return id;
 }
 
-// Add a new face.  If the result would not be manifold, no change is made and ValueError is thrown (TODO: throw a better exception).
 FaceId MutableTriangleTopology::add_face(Vector<VertexId,3> v) {
-  FaceId id = internal_add_face(v);
+  const FaceId id = internal_add_face(v);
 
   // Take care of halfedges that transitioned from/to boundary
-  // ...
-
-  for (auto &s : face_storage)
-    s.data()->grow(1);
-  for (auto &s : halfedge_storage)
-    s.data()->grow(3);
+  for (auto& s : face_fields)
+    s.extend(1);
+  for (auto& s : halfedge_fields)
+    s.extend(3);
 
   return id;
 }
@@ -574,17 +567,15 @@ FaceId MutableTriangleTopology::add_faces(RawArray<const Vector<int,3>> vs) {
   FaceId id = internal_add_faces(vs);
 
   // Take care of halfedges that transitioned from/to boundary
-  // ...
-
-  for (auto &s : face_storage)
-    s.data()->grow(vs.size());
-  for (auto &s : halfedge_storage)
-    s.data()->grow(3*vs.size());
+  for (auto& s : face_fields)
+    s.extend(vs.size());
+  for (auto& s : halfedge_fields)
+    s.extend(3*vs.size());
 
   return id;
 }
 
-inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
+static inline HalfedgeId permute_halfedge(HalfedgeId h, RawArray<const int> face_permutation, RawArray<const int> boundary_permutation) {
   assert(h.id != erased_id);
   if (!h.valid())
     return h;
@@ -594,7 +585,7 @@ inline static HalfedgeId apply_halfedge_permutation(HalfedgeId h, RawArray<const
     return HalfedgeId(-1-boundary_permutation[-1-h.id]);
 }
 
-inline static HalfedgeId apply_halfedge_offsets(HalfedgeId h, int face_offset, int boundary_offset) {
+static inline HalfedgeId offset_halfedge(HalfedgeId h, int face_offset, int boundary_offset) {
   if (h.id != erased_id && h.valid()) {
     if (h.id >= 0) {
       h = HalfedgeId(h.id + face_offset*3);
@@ -605,50 +596,50 @@ inline static HalfedgeId apply_halfedge_offsets(HalfedgeId h, int face_offset, i
   return h;
 }
 
-Tuple<int, int, int> MutableTriangleTopology::add(MutableTriangleTopology const &other) {
-  // the first indices
-  int base_vertex = vertex_to_edge_.size();
-  int base_face = faces_.size();
-  int base_boundary = boundaries_.size();
+Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other) {
+  // Record first indices
+  const int base_vertex = vertex_to_edge_.size();
+  const int base_face = faces_.size();
+  const int base_boundary = boundaries_.size();
 
-  // add things from other to the end
+  // Add things from other to the end
   mutable_vertex_to_edge_.extend(other.vertex_to_edge_);
   mutable_faces_.extend(other.faces_);
   mutable_boundaries_.extend(other.boundaries_);
 
-  // renumber all new primitives
+  // Renumber all new primitives
 
-  // reflect id changes in newly added arrays
+  // Reflect id changes in newly added arrays
   for (auto& h : mutable_vertex_to_edge_.flat.slice(base_vertex, vertex_to_edge_.size()))
-    h = apply_halfedge_offsets(h, base_face, base_boundary);
+    h = offset_halfedge(h, base_face, base_boundary);
   for (auto& f : mutable_faces_.flat.slice(base_face, faces_.size())) {
     if (f.vertices.x.id == erased_id)
       continue;
     for (auto& v : f.vertices)
       v = VertexId(v.id + base_vertex);
     for (auto &h : f.neighbors)
-      h = apply_halfedge_offsets(h, base_face, base_boundary);
+      h = offset_halfedge(h, base_face, base_boundary);
   }
   for (auto& b : mutable_boundaries_.slice(base_boundary, boundaries_.size())) {
     if (b.src.id == erased_id) {
-      // maintain the free list
-      b.next = apply_halfedge_offsets(b.next, base_face, base_boundary);
+      // Maintain the free list
+      b.next = offset_halfedge(b.next, base_face, base_boundary);
       continue;
     }
     assert(b.src.valid());
     b.src = VertexId(b.src.id + base_vertex);
-    b.next = apply_halfedge_offsets(b.next, base_face, base_boundary);
-    b.prev = apply_halfedge_offsets(b.prev, base_face, base_boundary);
-    b.reverse = apply_halfedge_offsets(b.reverse, base_face, base_boundary);
+    b.next = offset_halfedge(b.next, base_face, base_boundary);
+    b.prev = offset_halfedge(b.prev, base_face, base_boundary);
+    b.reverse = offset_halfedge(b.reverse, base_face, base_boundary);
   }
 
-  // attach the free list
+  // Attach the free list
   if (other.erased_boundaries_.valid()) {
-    // attach this at the end of our free list
+    // Attach this at the end of our free list
     HalfedgeId bid = HalfedgeId(other.erased_boundaries_.id - base_boundary);
 
     if (erased_boundaries_.valid()) {
-      // go to the end of our free list
+      // Go to the end of our free list
       int end = -1-erased_boundaries_.id;
       while (mutable_boundaries_[end].next.valid()) {
         assert(mutable_boundaries_[end].src.id == erased_id);
@@ -660,33 +651,32 @@ Tuple<int, int, int> MutableTriangleTopology::add(MutableTriangleTopology const 
     }
   }
 
-  // maintain counts
+  // Maintain counts
   mutable_n_vertices_ += other.n_vertices_;
   mutable_n_faces_ += other.n_faces_;
   mutable_n_boundary_edges_ += other.n_boundary_edges_;
 
-  // Take care of boundary properties
+  // Take care of boundary fields
   // ...
 
-  // Take care to add/update properties. Only properties that exist in *this
+  // Add/update fields. Only fields that exist in *this
   // are considered, and extended if they also exist in other.
-  for (auto &s : vertex_storage)
-    if (other.vertex_storage.contains(s.key()))
-      s.data()->extend(other.vertex_storage.get(s.key()));
-    else
-      s.data()->grow(other.vertex_storage.get(s.key())->size());
-  for (auto &s : face_storage)
-    if (other.face_storage.contains(s.key()))
-      s.data()->extend(other.face_storage.get(s.key()));
-    else
-      s.data()->grow(other.face_storage.get(s.key())->size());
-  for (auto &s : halfedge_storage)
-    if (other.halfedge_storage.contains(s.key()))
-      s.data()->extend(other.halfedge_storage.get(s.key()));
-    else
-      s.data()->grow(other.halfedge_storage.get(s.key())->size());
+  #define FIELD(prim, size_expr) \
+    for (auto& it : id_to_##prim##_field) { \
+      const int d = it.data(); \
+      const int s = other.id_to_##prim##_field.get_default(it.key(),-1); \
+      if (s >= 0) \
+        prim##_fields[d].extend(other.prim##_fields[s]); \
+      else \
+        prim##_fields[d].extend(size_expr); \
+    }
+  FIELD(vertex, other.vertex_to_edge_.size())
+  FIELD(face,   other.faces_.size())
+  FIELD(halfedge, 3*other.faces_.size())
+  #undef FIELD
 
-  return tuple(base_vertex, base_face, base_boundary);
+  // Return index offsets
+  return vec(base_vertex,base_face,base_boundary);
 }
 
 void MutableTriangleTopology::split_face(const FaceId f, const VertexId c) {
@@ -706,25 +696,23 @@ void MutableTriangleTopology::split_face(const FaceId f, const VertexId c) {
     mutable_faces_[fs[i]].neighbors[2] = HalfedgeId(3*fs[ip].id+1); \
     if (i && mutable_vertex_to_edge_[v[i]].id==3*f.id+i) \
       mutable_vertex_to_edge_[v[i]] = HalfedgeId(3*fs[i].id); }
-
   UPDATE(0)
   UPDATE(1)
   UPDATE(2)
-
   #undef UPDATE
 
   mutable_vertex_to_edge_[c] = halfedge(f,2);
 
-  // Take care to add/update properties on all involved halfedges and faces
-  for (auto &s : face_storage)
-    s.data()->grow(2);
-  for (auto &s : halfedge_storage) {
-    s.data()->grow(6);
-    // move halfedge data from its original position (in the face f) to
+  // Add/update fields on all involved halfedges and faces
+  for (auto& s : face_fields)
+    s.extend(2);
+  for (auto& s : halfedge_fields) {
+    s.extend(6);
+    // Move halfedge data from its original position (in the face f) to
     // where it now belongs: to the reverse of f's original neighbors.
-    for (int i = 0; i < 3; ++i) {
+    for (int i=0;i<3;i++) {
       assert(!is_boundary(reverse(n[i])));
-      s.data()->swap(3*f.id+i, reverse(n[i]).id);
+      s.swap(3*f.id+i,reverse(n[i]).id);
     }
   }
 }
@@ -738,76 +726,75 @@ VertexId MutableTriangleTopology::split_face(FaceId f) {
 Vector<HalfedgeId,2> MutableTriangleTopology::unsafe_split_halfedge(HalfedgeId h, FaceId nf, VertexId c) {
   assert(!is_boundary(h));
 
-  // remember the old structure
+  // Remember the old structure
   auto f = face(h);
   auto v = faces_[f].vertices;
   auto n = faces_[f].neighbors;
   auto hf = halfedges(f);
 
-  // which halfedge are we splitting?
+  // Which halfedge are we splitting?
   int i = hf.find(h);
   assert(i != -1);
   int iv = (i+1)%3;
 
-  // insert new vertex into existing face
+  // Insert new vertex into existing face
   mutable_faces_[f].vertices[iv] = c;
 
-  // set the vertices of the new face
-  mutable_faces_[nf].vertices = vec(c, v[iv], v[(i+2)%3]);
+  // Set the vertices of the new face
+  mutable_faces_[nf].vertices = vec(c,v[iv],v[(i+2)%3]);
 
-  // fix the halfedge connectivity of the new face (excluding the other face yet to be split)
+  // Fix the halfedge connectivity of the new face (excluding the other face yet to be split)
   unsafe_set_reverse(nf, 1, n[iv]);
   unsafe_set_reverse(nf, 2, hf[iv]);
 
-  // if our face provided the halfedge for the vertex dest(h), we need to change it
+  // If our face provided the halfedge for the vertex dest(h), we need to change it
   if (face(halfedge(v[iv])) == f) {
     mutable_vertex_to_edge_[v[iv]] = reverse(n[iv]);
   }
 
-  // move halfedge data from its original position (in the face f) to
+  // Move halfedge data from its original position (in the face f) to
   // where it now belongs: to the reverse of f's original neighbors. This moves
   // only one of the halfedges.
-  for (auto &s : halfedge_storage)
-    s.data()->swap(hf[iv].id, reverse(n[iv]).id);
+  for (auto& s : halfedge_fields)
+    s.swap(hf[iv].id,reverse(n[iv]).id);
 
   // return the now dangling halfedges
-  return vec(h, halfedge(nf,0));
+  return vec(h,halfedge(nf,0));
 }
 
 void MutableTriangleTopology::split_edge(HalfedgeId h, VertexId c) {
-
-  // make sure h is not the boundary (if there is a boundary)
+  // Make sure h is not the boundary (if there is a boundary)
   if (is_boundary(h))
     h = reverse(h);
 
-  auto hr = reverse(h);
+  const auto hr = reverse(h);
 
   // check for a boundary
-  bool h_is_boundary = is_boundary(hr);
+  const bool h_is_boundary = is_boundary(hr);
 
   // first, grow the storage by the right amount, so we don't do that in pieces
-  int n_new_faces = h_is_boundary ? 1 : 2;
-  int base_faces = faces_.size();
+  const int n_new_faces = h_is_boundary ? 1 : 2;
+  const int base_faces = faces_.size();
   mutable_n_faces_ += n_new_faces;
   mutable_faces_.flat.resize(base_faces + n_new_faces);
-  for (auto &s : face_storage)
-    s.data()->grow(n_new_faces);
-  for (auto &s : halfedge_storage)
-    s.data()->grow(n_new_faces*3);
+  for (auto& s : face_fields)
+    s.extend(n_new_faces);
+  for (auto& s : halfedge_fields)
+    s.extend(3*n_new_faces);
 
   if (h_is_boundary) {
     // Take care of changed boundary edges
     // ...
   }
 
-  auto dangling = unsafe_split_halfedge(h, FaceId(base_faces), c);
+  const auto dangling = unsafe_split_halfedge(h,FaceId(base_faces),c);
 
-  // now deal with reverse(h)
+  // Now deal with reverse(h)
   Vector<HalfedgeId,2> dangling2;
   if (!h_is_boundary)
-    dangling2 = unsafe_split_halfedge(hr, FaceId(base_faces+1), c);
+    dangling2 = unsafe_split_halfedge(hr,FaceId(base_faces+1),c);
   else {
-    // deal with a boundary edge hr
+    // Deal with a boundary edge hr
     dangling2.x = hr;
     dangling2.y = unsafe_new_boundary(c, HalfedgeId());
 
@@ -815,11 +802,11 @@ void MutableTriangleTopology::split_edge(HalfedgeId h, VertexId c) {
     unsafe_boundary_link(hr, dangling2.y);
   }
 
-  // connect the dangling halfedges
+  // Connect the dangling halfedges
   unsafe_set_reverse(face(dangling.x), dangling.x.id%3, dangling2.y);
   unsafe_set_reverse(face(dangling.y), dangling.y.id%3, dangling2.x);
 
-  // make sure vertex is connected
+  // Make sure vertex is connected
   mutable_vertex_to_edge_[c] = dangling2.y;
 }
 
@@ -864,14 +851,14 @@ HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
   if (oe1==p1) oe1 = HalfedgeId(3*f1.id);
 
   // Faces stay the same
-  // Take care to add/update properties on all involved halfedges
-  for (auto &s : halfedge_storage) {
-    // move halfedge data from its original position to where it now belongs:
+  // Take care to add/update fields on all involved halfedges
+  for (auto& s : halfedge_fields) {
+    // Move halfedge data from its original position to where it now belongs:
     // to the reverse of the original reverses (which haven't changed).
-    s.data()->swap(n0.id, reverse(rn0).id);
-    s.data()->swap(n1.id, reverse(rn1).id);
-    s.data()->swap(p0.id, reverse(rp0).id);
-    s.data()->swap(p1.id, reverse(rp1).id);
+    s.swap(n0.id,reverse(rn0).id);
+    s.swap(n1.id,reverse(rn1).id);
+    s.swap(p0.id,reverse(rp0).id);
+    s.swap(p1.id,reverse(rp1).id);
   }
 
   return HalfedgeId(3*f0.id);
@@ -879,18 +866,17 @@ HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
 
 void MutableTriangleTopology::erase_last_vertex_with_reordering() {
   const VertexId v(vertex_to_edge_.size()-1);
-  // erase all incident faces
-  while (!isolated(v)) {
+  // Erase all incident faces
+  while (!isolated(v))
     erase_face_with_reordering(face(reverse(halfedge(v))));
-  }
 
   // Remove the vertex
   mutable_vertex_to_edge_.flat.pop();
   mutable_n_vertices_--;
 
-  // take care of vertex storage
-  for (auto &s : vertex_storage)
-    s.data()->grow(-1);
+  // Take care of vertex storage
+  for (auto& s : vertex_fields)
+    s.extend(-1);
 }
 
 void MutableTriangleTopology::erase_face_with_reordering(const FaceId f) {
@@ -942,25 +928,24 @@ void MutableTriangleTopology::erase_face_with_reordering(const FaceId f) {
     }
   }
 
-  // Take care of boundary properties
+  // Take care of boundary fields
   // ...
 
   // Remove the erased face
   mutable_faces_.flat.pop();
   mutable_n_faces_--;
 
-  // update the properties on halfedges and faces
-  for (auto &s : face_storage) {
-    s.data()->swap(f.id, f1.id);
-    s.data()->grow(-1);
+  // Update the fields on halfedges and faces
+  for (auto& s : face_fields) {
+    s.swap(f.id,f1.id);
+    s.extend(-1);
   }
-  for (auto &s : halfedge_storage) {
-    // move halfedge data from its original position (in the face f) to
+  for (auto& s : halfedge_fields) {
+    // Move halfedge data from its original position (in the face f) to
     // where it now belongs: to the reverse of f's original neighbors.
-    for (int i = 0; i < 3; ++i) {
-      s.data()->swap(3*f.id+i, 3*f1.id+i);
-    }
-    s.data()->grow(-3);
+    for (int i=0;i<3;i++)
+      s.swap(3*f.id+i,3*f1.id+i);
+    s.extend(-3);
   }
 }
 
@@ -992,9 +977,10 @@ void MutableTriangleTopology::permute_vertices(RawArray<const int> permutation, 
     if (b.src.id!=erased_id)
       b.src = VertexId(permutation[b.src.id]);
 
-  // permute properties
-  for (auto &s : vertex_storage)
-    s.data()->apply_permutation(permutation);
+  // Permute fields
+  Array<char> work;
+  for (auto& s : vertex_fields)
+    inplace_partial_permute(s,permutation,work);
 }
 
 // erase the given vertex. erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
@@ -1061,17 +1047,17 @@ void MutableTriangleTopology::erase(FaceId f, bool erase_isolated) {
     }
   }
 
-  // add/update properties on boundaries
+  // Add/update fields on boundaries
   // ...
 
-  // erase the face
+  // Erase the face
   unsafe_set_erased(f);
 }
 
 // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
 // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
 // Note: non-boundary halfedges don't change order within triangles, so halfedge 3*f+i is now 3*permutation[f]+i
-Tuple<Array<int>,Array<int>,Array<int>> MutableTriangleTopology::collect_garbage() {
+Vector<Array<int>,3> MutableTriangleTopology::collect_garbage() {
   Array<int> vertex_permutation(vertex_to_edge_.size()), face_permutation(faces_.size()), boundary_permutation(boundaries_.size());
 
   // first, compact vertex indices (because we only ever decrease ids, we can do this in place)
@@ -1124,43 +1110,36 @@ Tuple<Array<int>,Array<int>,Array<int>> MutableTriangleTopology::collect_garbage
   // reflect id changes in other arrays
   for (auto& h : mutable_vertex_to_edge_.flat) {
     assert(h.id != erased_id);
-    h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
+    h = permute_halfedge(h, face_permutation, boundary_permutation);
   }
   for (auto& f : mutable_faces_.flat) {
     assert(f.vertices.x.id != erased_id);
     for (auto& v : f.vertices)
       v = VertexId(vertex_permutation[v.id]);
     for (auto &h : f.neighbors)
-      h = apply_halfedge_permutation(h, face_permutation, boundary_permutation);
+      h = permute_halfedge(h, face_permutation, boundary_permutation);
   }
   for (auto& b : mutable_boundaries_) {
     assert(b.src.id != erased_id);
     assert(b.src.valid());
     b.src = VertexId(vertex_permutation[b.src.id]);
-    b.next = apply_halfedge_permutation(b.next, face_permutation, boundary_permutation);
-    b.prev = apply_halfedge_permutation(b.prev, face_permutation, boundary_permutation);
-    b.reverse = apply_halfedge_permutation(b.reverse, face_permutation, boundary_permutation);
+    b.next = permute_halfedge(b.next, face_permutation, boundary_permutation);
+    b.prev = permute_halfedge(b.prev, face_permutation, boundary_permutation);
+    b.reverse = permute_halfedge(b.reverse, face_permutation, boundary_permutation);
   }
 
-  for (auto &s : vertex_storage)
-    s.data()->apply_permutation(vertex_permutation);
-  for (auto &s : face_storage)
-    s.data()->apply_permutation(face_permutation);
+  Array<char> work;
+  for (auto& s : vertex_fields)
+    inplace_partial_permute(s,vertex_permutation,work);
+  for (auto& s : face_fields)
+    inplace_partial_permute(s,face_permutation,work);
+  for (auto& s : halfedge_fields)
+    inplace_partial_permute(s,face_permutation,work,3);
 
-  // make a halfedge permutation
-  Array<int> halfedge_permutation(face_permutation.size()*3);
-  for (int i = 0; i < face_permutation.size(); ++i) {
-    halfedge_permutation[3*i+0] = 3*face_permutation[i];
-    halfedge_permutation[3*i+1] = 3*face_permutation[i]+1;
-    halfedge_permutation[3*i+2] = 3*face_permutation[i]+2;
-  }
-  for (auto &s : halfedge_storage)
-    s.data()->apply_permutation(halfedge_permutation);
-
-  // also apply permutation to boundary fields
+  // Also apply permutation to boundary fields
   // ...
 
-  return tuple(vertex_permutation, face_permutation, boundary_permutation);
+  return vec(vertex_permutation,face_permutation,boundary_permutation);
 }
 
 Array<int> TriangleTopology::internal_collect_boundary_garbage() {
@@ -1210,109 +1189,111 @@ bool TriangleTopology::is_garbage_collected() const {
 
 #ifdef GEODE_PYTHON
 
-#define ADDPROP(primitive, ...) \
-    case NumpyScalar<__VA_ARGS__>::value: { \
-      auto pid = to_python(add_##primitive##_property<__VA_ARGS__>(id));\
-      return pid; \
+#define ADD_FIELD_HELPER(prim, ...) \
+  case NumpyScalar<__VA_ARGS__>::value: \
+    return to_python(add_##prim##_field<__VA_ARGS__>(id));
+
+#define ADD_FIELD(prim, d, ...) \
+  ADD_FIELD_HELPER(prim,mpl::if_c<d==0,__VA_ARGS__,Vector<__VA_ARGS__,d>>::type)
+
+#define ADD_FIELDS(prim,d) \
+  ADD_FIELD(prim,d,bool) \
+  ADD_FIELD(prim,d,char) \
+  ADD_FIELD(prim,d,unsigned char) \
+  ADD_FIELD(prim,d,short) \
+  ADD_FIELD(prim,d,unsigned short) \
+  ADD_FIELD(prim,d,int) \
+  ADD_FIELD(prim,d,unsigned int) \
+  ADD_FIELD(prim,d,long) \
+  ADD_FIELD(prim,d,unsigned long) \
+  ADD_FIELD(prim,d,long long) \
+  ADD_FIELD(prim,d,unsigned long long) \
+  ADD_FIELD(prim,d,float) \
+  ADD_FIELD(prim,d,double)
+
+#define MAKE_PY_FIELD(prim) \
+  PyObject* MutableTriangleTopology::add_##prim##_field_py(PyObject* object, const int id) { \
+    PyArray_Descr* dtype; \
+    if (!PyArray_DescrConverter(object,&dtype)) \
+      return NULL; \
+    const Ref<> save = steal_ref(*(PyObject*)dtype); \
+    if (!dtype->subarray) \
+      switch (dtype->type_num) { ADD_FIELDS(prim,0) } \
+    else { \
+      const int subtype = dtype->subarray->base->type_num; \
+      const auto shape = from_python<Array<const int>>(dtype->subarray->shape); \
+      if (shape.size() == 1) \
+        switch (shape[0]) { \
+          case 2: switch (subtype) { ADD_FIELDS(prim,2) } break; \
+          case 3: switch (subtype) { ADD_FIELDS(prim,3) } break; \
+          case 4: switch (subtype) { ADD_FIELDS(prim,4) } break; \
+        } \
+    } \
+    const auto s = steal_ref_check(PyObject_Str((PyObject*)dtype)); \
+    throw TypeError(format("Fields of type %s unavailable from Python",from_python<const char*>(s))); \
+  }
+MAKE_PY_FIELD(vertex)
+MAKE_PY_FIELD(face)
+MAKE_PY_FIELD(halfedge)
+
+bool MutableTriangleTopology::has_field_py(const PyFieldId& id) const {
+  // Check if the field id exists
+  const auto& id_to_field = id.prim == PyFieldId::Vertex ? id_to_vertex_field
+                          : id.prim == PyFieldId::Face   ? id_to_face_field
+                                                         : id_to_halfedge_field;
+  const int i = id_to_field.get_default(id.id,-1);
+  if (i < 0)
+    return false;
+
+  // Check if the type matches
+  const auto& fields = id.prim == PyFieldId::Vertex ? vertex_fields
+                     : id.prim == PyFieldId::Face   ? face_fields
+                                                    : halfedge_fields;
+  const auto& field = fields[i];
+  return field.type() == id.type;
+}
+
+void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& fields, const int id) {
+  const int i = id_to_field.get_default(id,-1);
+  if (i >= 0) {
+    id_to_field.erase(id);
+    const int j = int(fields.size())-1;
+    if (i < j) {
+      fields[i] = fields.back();
+      for (auto& h : id_to_field)
+        if (h.data() == j) {
+          h.data() = i;
+          break;
+        }
     }
-
-#define ADDSPROPS(primitive) \
-    ADDPROP(primitive,bool)\
-    ADDPROP(primitive,char)\
-    ADDPROP(primitive,unsigned char)\
-    ADDPROP(primitive,short)\
-    ADDPROP(primitive,unsigned short)\
-    ADDPROP(primitive,int)\
-    ADDPROP(primitive,unsigned int)\
-    ADDPROP(primitive,long)\
-    ADDPROP(primitive,unsigned long)\
-    ADDPROP(primitive,long long)\
-    ADDPROP(primitive,unsigned long long)\
-    ADDPROP(primitive,float)\
-    ADDPROP(primitive,double)
-
-#define ADDVPROPS(primitive,d) \
-    ADDPROP(primitive,Vector<bool,d>)\
-    ADDPROP(primitive,Vector<char,d>)\
-    ADDPROP(primitive,Vector<unsigned char,d>)\
-    ADDPROP(primitive,Vector<short,d>)\
-    ADDPROP(primitive,Vector<unsigned short,d>)\
-    ADDPROP(primitive,Vector<int,d>)\
-    ADDPROP(primitive,Vector<unsigned int,d>)\
-    ADDPROP(primitive,Vector<long,d>)\
-    ADDPROP(primitive,Vector<unsigned long,d>)\
-    ADDPROP(primitive,Vector<long long,d>)\
-    ADDPROP(primitive,Vector<unsigned long long,d>)\
-    ADDPROP(primitive,Vector<float,d>)\
-    ADDPROP(primitive,Vector<double,d>)
-
-#define MAKE_PY_PROPERTY(primitive) \
-PyObject *MutableTriangleTopology::add_##primitive##_property_py(PyObject *object, int id) { \
-  PyArray_Descr* dtype;\
-  if (!PyArray_DescrConverter(object,&dtype))\
-    return NULL;\
-  const Ref<> save = steal_ref(*(PyObject*)dtype);\
-  int type = dtype->type_num;\
-  \
-  if (dtype->subarray == NULL) {\
-    switch (type) {\
-      ADDSPROPS(primitive)\
-      default:\
-        Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));\
-        throw TypeError(format("properties of type %s unavailable from Python",from_python<const char*>(s)));\
-    }\
-  } else {\
-    type = dtype->subarray->base->type_num;\
-    auto shape = from_python<Array<const int>>(dtype->subarray->shape);\
-    switch (shape.size()) {\
-      case 1:\
-        switch (shape[0]) {\
-          case 2:\
-            switch (type) {\
-              ADDVPROPS(primitive,2)\
-              default:\
-                Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));\
-                throw TypeError(format("properties of type %s unavailable from Python",from_python<const char*>(s)));\
-            }\
-          case 3:\
-            switch (type) {\
-              ADDVPROPS(primitive,3)\
-              default:\
-                Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));\
-                throw TypeError(format("properties of type %s unavailable from Python",from_python<const char*>(s)));\
-            }\
-          case 4:\
-            switch (type) {\
-              ADDVPROPS(primitive,4)\
-              default:\
-                Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));\
-                throw TypeError(format("properties of type %s unavailable from Python",from_python<const char*>(s)));\
-            }\
-        }\
-      default:\
-        Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));\
-        throw TypeError(format("properties of type %s unavailable from Python",from_python<const char*>(s)));\
-    }\
-  }\
+    fields.pop_back();
+  }
 }
 
-MAKE_PY_PROPERTY(vertex)
-MAKE_PY_PROPERTY(face)
-MAKE_PY_PROPERTY(halfedge)
+void MutableTriangleTopology::remove_field_py(const PyFieldId& id) {
+  auto& id_to_field = id.prim == PyFieldId::Vertex ? id_to_vertex_field
+                    : id.prim == PyFieldId::Face   ? id_to_face_field
+                                                   : id_to_halfedge_field;
+  auto& fields = id.prim == PyFieldId::Vertex ? vertex_fields
+               : id.prim == PyFieldId::Face   ? face_fields
+                                              : halfedge_fields;
+  remove_field_helper(id_to_field,fields,id.id);
+}
 
-bool MutableTriangleTopology::has_property_py(PyPropertyId const &id) const {
-
-  GEODE_ASSERT(id.fancy == false);
-
-#define CASE(...) \
-  if (id.type_id == typeid(__VA_ARGS__).name()) { \
-    switch (id.id_type) {\
-      case PyPropertyId::idVertex: return has_vertex_property(PropertyId<__VA_ARGS__,VertexId,false>(id.id)); \
-      case PyPropertyId::idFace: return has_face_property(PropertyId<__VA_ARGS__,FaceId,false>(id.id)); \
-      case PyPropertyId::idHalfedge: return has_halfedge_property(PropertyId<__VA_ARGS__,HalfedgeId,false>(id.id)); \
-    } \
-  }
-
+PyObject* MutableTriangleTopology::field_py(const PyFieldId& id) {
+  const auto& id_to_field = id.prim == PyFieldId::Vertex ? id_to_vertex_field
+                          : id.prim == PyFieldId::Face   ? id_to_face_field
+                                                         : id_to_halfedge_field;
+  const auto& fields = id.prim == PyFieldId::Vertex ? vertex_fields
+                     : id.prim == PyFieldId::Face   ? face_fields
+                                                    : halfedge_fields;
+  const int i = id_to_field.get_default(id.id,-1);
+  if (i < 0)
+    throw KeyError("no such mesh field");
+  const UntypedArray& field = fields[i];
+  #define CASE(...) \
+    if (field.type() == typeid(__VA_ARGS__)) \
+      return to_python(field.get<__VA_ARGS__>());
   CASE(bool)
   CASE(char)
   CASE(unsigned char)
@@ -1365,156 +1346,8 @@ bool MutableTriangleTopology::has_property_py(PyPropertyId const &id) const {
   CASE(Vector<unsigned long long,4>)
   CASE(Vector<float,4>)
   CASE(Vector<double,4>)
-
   #undef CASE
-
-  throw std::runtime_error(format("Can't handle python conversion of properties of type %s", id.type_id));
-  return false;
-}
-
-void MutableTriangleTopology::remove_property_py(PyPropertyId const &id) {
-
-  GEODE_ASSERT(id.fancy == false);
-
-#define CASE(...) \
-  if (id.type_id == typeid(__VA_ARGS__).name()) { \
-    switch (id.id_type) {\
-      case PyPropertyId::idVertex: remove_vertex_property(PropertyId<__VA_ARGS__,VertexId,false>(id.id)); \
-      case PyPropertyId::idFace: remove_face_property(PropertyId<__VA_ARGS__,FaceId,false>(id.id)); \
-      case PyPropertyId::idHalfedge: remove_halfedge_property(PropertyId<__VA_ARGS__,HalfedgeId,false>(id.id)); \
-    } \
-    return;\
-  }
-
-  CASE(bool)
-  CASE(char)
-  CASE(unsigned char)
-  CASE(short)
-  CASE(unsigned short)
-  CASE(int)
-  CASE(unsigned int)
-  CASE(long)
-  CASE(unsigned long)
-  CASE(long long)
-  CASE(unsigned long long)
-  CASE(float)
-  CASE(double)
-  CASE(Vector<bool,2>)
-  CASE(Vector<char,2>)
-  CASE(Vector<unsigned char,2>)
-  CASE(Vector<short,2>)
-  CASE(Vector<unsigned short,2>)
-  CASE(Vector<int,2>)
-  CASE(Vector<unsigned int,2>)
-  CASE(Vector<long,2>)
-  CASE(Vector<unsigned long,2>)
-  CASE(Vector<long long,2>)
-  CASE(Vector<unsigned long long,2>)
-  CASE(Vector<float,2>)
-  CASE(Vector<double,2>)
-  CASE(Vector<bool,3>)
-  CASE(Vector<char,3>)
-  CASE(Vector<unsigned char,3>)
-  CASE(Vector<short,3>)
-  CASE(Vector<unsigned short,3>)
-  CASE(Vector<int,3>)
-  CASE(Vector<unsigned int,3>)
-  CASE(Vector<long,3>)
-  CASE(Vector<unsigned long,3>)
-  CASE(Vector<long long,3>)
-  CASE(Vector<unsigned long long,3>)
-  CASE(Vector<float,3>)
-  CASE(Vector<double,3>)
-  CASE(Vector<bool,4>)
-  CASE(Vector<char,4>)
-  CASE(Vector<unsigned char,4>)
-  CASE(Vector<short,4>)
-  CASE(Vector<unsigned short,4>)
-  CASE(Vector<int,4>)
-  CASE(Vector<unsigned int,4>)
-  CASE(Vector<long,4>)
-  CASE(Vector<unsigned long,4>)
-  CASE(Vector<long long,4>)
-  CASE(Vector<unsigned long long,4>)
-  CASE(Vector<float,4>)
-  CASE(Vector<double,4>)
-
-#undef CASE
-
-  throw std::runtime_error(format("Can't handle python conversion of properties of type %s", id.type_id));
-}
-
-
-PyObject *MutableTriangleTopology::property_py(PyPropertyId const &id) {
-
-  GEODE_ASSERT(id.fancy == false);
-
-#define CASE(...) \
-  if (id.type_id == typeid(__VA_ARGS__).name()) { \
-    switch (id.id_type) {\
-      case PyPropertyId::idVertex: return to_python(property(PropertyId<__VA_ARGS__,VertexId,false>(id.id))); \
-      case PyPropertyId::idFace: return to_python(property(PropertyId<__VA_ARGS__,FaceId,false>(id.id))); \
-      case PyPropertyId::idHalfedge: return to_python(property(PropertyId<__VA_ARGS__,HalfedgeId,false>(id.id))); \
-    } \
-  }
-
-  CASE(bool)
-  CASE(char)
-  CASE(unsigned char)
-  CASE(short)
-  CASE(unsigned short)
-  CASE(int)
-  CASE(unsigned int)
-  CASE(long)
-  CASE(unsigned long)
-  CASE(long long)
-  CASE(unsigned long long)
-  CASE(float)
-  CASE(double)
-  CASE(Vector<bool,2>)
-  CASE(Vector<char,2>)
-  CASE(Vector<unsigned char,2>)
-  CASE(Vector<short,2>)
-  CASE(Vector<unsigned short,2>)
-  CASE(Vector<int,2>)
-  CASE(Vector<unsigned int,2>)
-  CASE(Vector<long,2>)
-  CASE(Vector<unsigned long,2>)
-  CASE(Vector<long long,2>)
-  CASE(Vector<unsigned long long,2>)
-  CASE(Vector<float,2>)
-  CASE(Vector<double,2>)
-  CASE(Vector<bool,3>)
-  CASE(Vector<char,3>)
-  CASE(Vector<unsigned char,3>)
-  CASE(Vector<short,3>)
-  CASE(Vector<unsigned short,3>)
-  CASE(Vector<int,3>)
-  CASE(Vector<unsigned int,3>)
-  CASE(Vector<long,3>)
-  CASE(Vector<unsigned long,3>)
-  CASE(Vector<long long,3>)
-  CASE(Vector<unsigned long long,3>)
-  CASE(Vector<float,3>)
-  CASE(Vector<double,3>)
-  CASE(Vector<bool,4>)
-  CASE(Vector<char,4>)
-  CASE(Vector<unsigned char,4>)
-  CASE(Vector<short,4>)
-  CASE(Vector<unsigned short,4>)
-  CASE(Vector<int,4>)
-  CASE(Vector<unsigned int,4>)
-  CASE(Vector<long,4>)
-  CASE(Vector<unsigned long,4>)
-  CASE(Vector<long long,4>)
-  CASE(Vector<unsigned long long,4>)
-  CASE(Vector<float,4>)
-  CASE(Vector<double,4>)
-
-#undef CASE
-
-  throw std::runtime_error(format("Can't handle python conversion of properties of type %s", id.type_id));
-  return NULL;
+  throw TypeError(format("Can't handle python conversion of fields of type %s", id.type.name()));
 }
 
 #endif
@@ -1714,12 +1547,12 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(collect_garbage)
       .GEODE_METHOD(collect_boundary_garbage)
       #ifdef GEODE_PYTHON
-      .GEODE_METHOD_2("add_vertex_property", add_vertex_property_py)
-      .GEODE_METHOD_2("add_face_property", add_face_property_py)
-      .GEODE_METHOD_2("add_halfedge_property", add_halfedge_property_py)
-      .GEODE_METHOD_2("has_property", has_property_py)
-      .GEODE_METHOD_2("remove_property", remove_property_py)
-      .GEODE_METHOD_2("property", property_py)
+      .GEODE_METHOD_2("add_vertex_field",add_vertex_field_py)
+      .GEODE_METHOD_2("add_face_field",add_face_field_py)
+      .GEODE_METHOD_2("add_halfedge_field",add_halfedge_field_py)
+      .GEODE_METHOD_2("has_field",has_field_py)
+      .GEODE_METHOD_2("remove_field",remove_field_py)
+      .GEODE_METHOD_2("field",field_py)
       #endif
       .GEODE_METHOD(permute_vertices)
       ;

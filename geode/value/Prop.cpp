@@ -75,9 +75,12 @@ template<class S> static Ref<PropBase> make_prop_shape_helper(const string& n, N
 
 static Ref<PropBase> make_prop_shape(const string& n, PyObject* value,
                                      RawArray<const int> shape=RawArray<const int>()) {
-  const Ptr<> a = steal_ptr(numpy_from_any(value,0,0,0,0,0));
-  if (!a)
+  Ptr<> a;
+  try {
+    a = numpy_from_any(value,0,0,0,0);
+  } catch (const exception& e) {
     throw TypeError(format("make_prop_shape: numpy array convertible type expected, got %s",a->ob_type->tp_name));
+  }
   switch (PyArray_TYPE((PyArrayObject*)a.get())) {
     #define TYPE_CASE(S) \
       case NumpyScalar<S>::value: \
@@ -118,8 +121,14 @@ Ref<PropBase> make_prop(const string& n, PyObject* value) {
       if (frames_check<TV3>(value))
         return new_<Prop<Frame<TV3>>>(n,from_python<Frame<TV3>>(value));
     }
-    if (auto a = steal_ptr(numpy_from_any(value,0,0,0,0,0)))
-      return make_prop_shape(n,a.get());
+    Ptr<> a;
+    try {
+      a = numpy_from_any(value,0,0,0,0);
+    } catch (const exception&) {
+      PyErr_Clear();
+    }
+    if (a)
+      return make_prop_shape(n,&*a);
   }
 
   // Default to a property containing an arbitrary python object

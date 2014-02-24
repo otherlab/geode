@@ -17,7 +17,7 @@ template<class T,class Id> static inline PyObject* to_python(const Field<T,Id>& 
 }
 
 template<class T,class Id> struct FromPython<Field<T,Id> >{static inline Field<T,Id> convert(PyObject* object) {
-  return Field<T,Id>(from_python<Array<T> >(object));
+  return Field<T,Id>(from_python<Array<T>>(object));
 }};
 
 template<class T,class Id>
@@ -98,19 +98,6 @@ public:
     flat.preallocate(m_new, copy_existing_elements);
   }
 
-  // permute the field such that fnew[permutation[i]] = f[i]. Negative values in permutation signify deletion.
-  void permute(RawArray<const int> permutation) {
-    GEODE_ASSERT(permutation.size() == flat.size());
-    Array<T> newflat(permutation.max()+1);
-    for (int i = 0; i < permutation.size(); ++i) {
-      if (permutation[i] >= 0) {
-        assert(permutation[i] < newflat.size());
-        newflat[permutation[i]] = flat[i];
-      }
-    }
-    flat = newflat;
-  }
-
   Field<Element,Id> copy() const {
     Field<Element,Id> copy;
     copy.flat.copy(flat);
@@ -124,7 +111,6 @@ public:
   const Field<Element,Id>& const_cast_() const {
     return *(const Field<Element,Id>*)this;
   }
-
 };
 
 }

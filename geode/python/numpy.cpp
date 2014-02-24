@@ -35,10 +35,26 @@ PyArray_Descr* numpy_descr_from_type(int type_num) {
   return PyArray_DescrFromType(type_num);
 }
 
-PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context) {
+Ref<> numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_rank, int max_rank, int requirements) {
   if (op==Py_None) // PyArray_FromAny silently converts None to a singleton nan, which is not cool
-    throw TypeError("expected numpy array, got None");
-  return PyArray_FromAny(op,dtype,min_depth,max_depth,requirements,context);
+    throw TypeError("Expected array, got None");
+
+  // Perform the conversion
+  PyObject* const array = PyArray_FromAny(op,dtype,0,0,requirements,0);
+  if (!array)
+    throw_python_error();
+
+  // Numpy produces uninformative error messages on rank mismatch, so we roll our own.
+  const int rank = PyArray_NDIM((PyArrayObject*)array);
+  if (   (min_rank && rank<min_rank)
+      || (max_rank && rank>max_rank))
+    throw ValueError(min_rank==max_rank ? format("Expected array with rank %d, got rank %d",min_rank,rank)
+                            : !min_rank ? format("Expected array with rank <= %d, got rank %d",max_rank,rank)
+                            : !max_rank ? format("Expected array with rank >= %d, got rank %d",min_rank,rank)
+                            : format("Expected array with %d <= rank <= %d, got rank %d",min_rank,max_rank,rank));
+
+  // Success!
+  return steal_ref(*array);
 }
 
 PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj) {

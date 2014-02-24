@@ -110,28 +110,29 @@ INSTANTIATION_HELPER(real,3)
 #ifdef GEODE_PYTHON
 
 static void bounding_box_py_helper(const int depth, Array<Box<real>>& box, PyObject* object) {
-  if (const auto array = numpy_from_any(object,NumpyDescr<real>::descr(),0,100,NPY_ARRAY_CARRAY_RO,0)) {
+  Ptr<> array;
+  try {
+    array = numpy_from_any(object,NumpyDescr<real>::descr(),0,100,NPY_ARRAY_CARRAY_RO);
+  } catch (const exception&) {
+    PyErr_Clear();
+  }
+  if (array) {
     // object is a rectangular numpy array
-    const int rank = PyArray_NDIM((PyArrayObject*)array);
-    if (!rank) {
-      GEODE_DECREF(array);
+    const int rank = PyArray_NDIM((PyArrayObject*)array.get());
+    if (!rank)
       throw TypeError("bounding_box: possibly nested array of vectors expected, found a bare scalar");
-    }
-    const ssize_t d = PyArray_DIMS((PyArrayObject*)array)[rank-1];
+    const ssize_t d = PyArray_DIMS((PyArrayObject*)array.get())[rank-1];
     GEODE_ASSERT(0<=d && d<=numeric_limits<int>::max());
     if (!box.size())
       box.resize(int(d));
-    if (box.size() != d) {
-      GEODE_DECREF(array);
+    if (box.size() != d)
       throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),d));
-    }
-    const ssize_t count = PyArray_SIZE((PyArrayObject*)array)/d;
+    const ssize_t count = PyArray_SIZE((PyArrayObject*)array.get())/d;
     GEODE_ASSERT(0<=count && count<=numeric_limits<int>::max());
-    const real* data = (const real*)PyArray_DATA((PyArrayObject*)array);
+    const real* data = (const real*)PyArray_DATA((PyArrayObject*)array.get());
     for (int i=0;i<int(count);i++)
       for (int j=0;j<d;j++)
         box[j].enlarge(data[i*d+j]);
-    GEODE_DECREF(array);
   } else {
     if (depth > 20)
       throw RuntimeError("bounding_box: maximum recursion depth exceeded, maybe you passed in a str?");

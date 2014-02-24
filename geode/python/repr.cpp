@@ -37,14 +37,11 @@ string repr(const long double x) {
   return buffer;
 }
 
-string repr(const string& s) {
-  return repr(s.c_str());
-}
-
-string repr(const char* s) {
+static string str_repr(const char* s, const size_t n) {
   string r;
   r.push_back('\'');
-  while (const char c = *s++)
+  for (size_t i=0;i!=n;i++) {
+    const char c = s[i];
     switch (c) {
       case '\t': r.push_back('\\'); r.push_back('t'); break;
       case '\n': r.push_back('\\'); r.push_back('n'); break;
@@ -62,8 +59,17 @@ string repr(const char* s) {
           r.push_back(b+(b<10?'0':'a'-10));
         }
     }
+  }
   r.push_back('\'');
   return r;
+}
+
+string repr(const string& s) {
+  return str_repr(s.c_str(),s.size());
+}
+
+string repr(const char* s) {
+  return str_repr(s,strlen(s));
 }
 
 }

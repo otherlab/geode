@@ -506,20 +506,6 @@ public:
     return argmax_magnitude_helper(IsScalar<T>());
   }
 
-  template<class TArray1,class TArrayInt> static void permute(const TArray1& source,TArray1& destination,const TArrayInt& permutation) {
-    STATIC_ASSERT_SAME(T,typename TArray1::Element);
-    STATIC_ASSERT_SAME(int,typename TArrayInt::Element);
-    int m = permutation.size();
-    for (int i=0;i<m;i++) destination[i] = source[permutation[i]];
-  }
-
-  template<class TArray1,class TArrayInt> static void unpermute(const TArray1& source,TArray1& destination,const TArrayInt& permutation) {
-    STATIC_ASSERT_SAME(T,typename TArray1::Element);
-    STATIC_ASSERT_SAME(int,typename TArrayInt::Element);
-    int m = permutation.size();
-    for (int i=0;i<m;i++) destination[permutation[i]] = source[i];
-  }
-
   template<class TArray1> void remove_sorted_indices(const TArray1& index) {
     STATIC_ASSERT_SAME(int,typename TArray1::Element);
     TArray& self = derived();

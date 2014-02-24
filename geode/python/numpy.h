@@ -38,7 +38,7 @@ GEODE_CORE_EXPORT void write_numpy(const string& filename, int rank, const npy_i
 #ifdef GEODE_PYTHON
 GEODE_CORE_EXPORT bool is_numpy_array(PyObject* o);
 GEODE_CORE_EXPORT PyArray_Descr* numpy_descr_from_type(int type_num);
-GEODE_CORE_EXPORT PyObject* numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context);
+GEODE_CORE_EXPORT Ref<> numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_rank, int max_rank, int requirements);
 GEODE_CORE_EXPORT PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj);
 GEODE_CORE_EXPORT PyTypeObject* numpy_array_type();
 GEODE_CORE_EXPORT PyTypeObject* numpy_recarray_type();
@@ -220,24 +220,24 @@ to_numpy(const TV& x) {
 // to_numpy for shareable array types
 template<class TArray> typename enable_if<IsShareable<TArray>,PyObject*>::type
 to_numpy(TArray& array) {
-  // extract memory layout information
+  // Extract memory layout information
   const int rank = numpy_rank(array);
   void* data;
   Array<npy_intp> dimensions(rank,false);
   numpy_info(array,data,dimensions.data());
 
-  // verify ownership
+  // Verify ownership
   PyObject* owner = array.owner();
   if (!owner && data)
     throw_not_owned();
 
-  // wrap the existing array as a numpy array without copying data
+  // Wrap the existing array as a numpy array without copying data
   PyObject* numpy = numpy_new_from_descr(NumpyArrayType<TArray>::type(),NumpyDescr<TArray>::descr(),rank,dimensions.data(),0,data,NPY_ARRAY_CARRAY,0);
   if (!numpy) return 0;
   PyArray_ENABLEFLAGS((PyArrayObject*)numpy,NPY_ARRAY_C_CONTIGUOUS);
   if (TArray::is_const) PyArray_CLEARFLAGS((PyArrayObject*)numpy, NPY_ARRAY_WRITEABLE);
 
-  // let numpy array share ownership with array
+  // Let numpy array share ownership with array
   if (owner)
     PyArray_SetBaseObject((PyArrayObject*)numpy, owner);
   return numpy;
@@ -246,51 +246,46 @@ to_numpy(TArray& array) {
 // from_numpy for static types
 template<class TV> typename enable_if<NumpyIsStatic<TV>,TV>::type
 from_numpy(PyObject* object) { // Borrows reference to object
-  // allow conversion from 0 to static vector/matrix types
+  // Allow conversion from 0 to static vector/matrix types
   if(PyInt_Check(object) && !PyInt_AS_LONG(object))
     return TV();
 
-  // convert object to an array with the correct type and rank
+  // Convert object to an array with the correct type and rank
   static const int rank = NumpyRank<TV>::value;
-  PyObject* array = numpy_from_any(object,NumpyDescr<TV>::descr(),rank,rank,NPY_ARRAY_CARRAY_RO|NPY_ARRAY_FORCECAST,0);
-  if (!array) throw_python_error();
+  const auto array = numpy_from_any(object,NumpyDescr<TV>::descr(),rank,rank,NPY_ARRAY_CARRAY_RO|NPY_ARRAY_FORCECAST);
 
-  // ensure appropriate dimensions
-  if (!numpy_shape_match(mpl::identity<TV>(),rank,PyArray_DIMS((PyArrayObject*)array))) {
-    Py_DECREF(array);
+  // Ensure appropriate dimensions
+  if (!numpy_shape_match(mpl::identity<TV>(),rank,PyArray_DIMS((PyArrayObject*)&*array)))
     throw_dimension_mismatch();
-  }
 
-  TV result = *(const TV*)(PyArray_DATA((PyArrayObject*)array));
-  Py_DECREF(array);
-  return result;
+  return *(const TV*)(PyArray_DATA((PyArrayObject*)&*array));
 }
 
 // Build an Array<T,d> from a compatible numpy array
 template<class T,int d> inline Array<T,d>
-from_numpy_helper(mpl::identity<Array<T,d> >, PyObject* array) {
-  PyObject* base = PyArray_BASE((PyArrayObject*)array);
+from_numpy_helper(mpl::identity<Array<T,d>>, PyObject& array) {
+  PyObject* base = PyArray_BASE((PyArrayObject*)&array);
   Vector<int,d> counts;
   for (int i=0;i<d;i++){
-    counts[i] = (int)PyArray_DIMS((PyArrayObject*)array)[i];
-    GEODE_ASSERT(counts[i]==PyArray_DIMS((PyArrayObject*)array)[i]);}
-  return Array<T,d>(counts,(T*)PyArray_DATA((PyArrayObject*)array),base?base:array);
+    counts[i] = (int)PyArray_DIMS((PyArrayObject*)&array)[i];
+    GEODE_ASSERT(counts[i]==PyArray_DIMS((PyArrayObject*)&array)[i]);}
+  return Array<T,d>(counts,(T*)PyArray_DATA((PyArrayObject*)&array),base?base:&array);
 }
 
 // Build an NdArray<T,d> from a compatible numpy array
 template<class T> inline NdArray<T>
-from_numpy_helper(mpl::identity<NdArray<T> >,PyObject* array) {
-  PyObject* base = PyArray_BASE((PyArrayObject*)array);
-  Array<int> shape(PyArray_NDIM((PyArrayObject*)array)-NumpyRank<T>::value,false);
+from_numpy_helper(mpl::identity<NdArray<T>>, PyObject& array) {
+  PyObject* base = PyArray_BASE((PyArrayObject*)&array);
+  Array<int> shape(PyArray_NDIM((PyArrayObject*)&array)-NumpyRank<T>::value,false);
   for (int i=0;i<shape.size();i++){
-    shape[i] = (int)PyArray_DIMS((PyArrayObject*)array)[i];
-    GEODE_ASSERT(shape[i]==PyArray_DIMS((PyArrayObject*)array)[i]);}
-  return NdArray<T>(shape,(T*)PyArray_DATA((PyArrayObject*)array),base?base:array);
+    shape[i] = (int)PyArray_DIMS((PyArrayObject*)&array)[i];
+    GEODE_ASSERT(shape[i]==PyArray_DIMS((PyArrayObject*)&array)[i]);}
+  return NdArray<T>(shape,(T*)PyArray_DATA((PyArrayObject*)&array),base?base:&array);
 }
 
 // from_numpy for shareable arrays
 template<class TArray> typename enable_if<IsShareable<TArray>,TArray>::type
-from_numpy(PyObject* object) { // borrows reference to object
+from_numpy(PyObject* object) { // Borrows reference to object
   const int flags = TArray::is_const?NPY_ARRAY_CARRAY_RO:NPY_ARRAY_CARRAY;
   const int rank_range = NumpyRank<TArray>::value;
   PyArray_Descr* const descr = NumpyDescr<TArray>::descr();
@@ -301,24 +296,19 @@ from_numpy(PyObject* object) { // borrows reference to object
     check_numpy_conversion(object,flags,rank_range,descr);
     if (!numpy_shape_match(mpl::identity<TArray>(),PyArray_NDIM((PyArrayObject*)object),PyArray_DIMS((PyArrayObject*)object)))
       throw_dimension_mismatch();
-    return from_numpy_helper(mpl::identity<TArray>(),object);
+    return from_numpy_helper(mpl::identity<TArray>(),*object);
   } else if (!TArray::is_const)
     throw_type_error(object,numpy_array_type());
 
   // If we're converting to a const array, and the input isn't already numpy, allow any matching nested sequence
-  PyObject* array = numpy_from_any(object,descr,min_rank,max_rank,flags,0);
-  if(!array) throw_python_error();
+  const auto array = numpy_from_any(object,descr,min_rank,max_rank,flags);
 
   // Ensure appropriate dimension
-  int rank = PyArray_NDIM((PyArrayObject*)array);
-  if (!numpy_shape_match(mpl::identity<TArray>(),rank,PyArray_DIMS((PyArrayObject*)array))) {
-    Py_DECREF(array);
+  const int rank = PyArray_NDIM((PyArrayObject*)&*array);
+  if (!numpy_shape_match(mpl::identity<TArray>(),rank,PyArray_DIMS((PyArrayObject*)&*array)))
     throw_dimension_mismatch();
-  }
 
-  TArray result = from_numpy_helper(mpl::identity<TArray>(),array);
-  Py_DECREF(array);
-  return result;
+  return from_numpy_helper(mpl::identity<TArray>(),array);
 }
 
 #endif

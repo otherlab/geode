@@ -256,7 +256,7 @@ public:
   template<class TArray> void copy(const TArray& source) const {
     // Const, so no resizing allowed
     STATIC_ASSERT_SAME(T,typename TArray::value_type);
-    int source_m = source.size();
+    const int source_m = source.size();
     assert(m_==source_m);
     if (!same_array(*this,source))
       for (int i=0;i<source_m;i++)
@@ -267,7 +267,7 @@ private:
   void grow_buffer(const int max_size_new, const bool copy_existing_elements=true) {
     if (max_size_>=max_size_new) return;
     Buffer* new_owner = Buffer::new_<T>(max_size_new);
-    int m_ = this->m_; // teach compiler that m_ is constant
+    const int m_ = this->m_; // teach compiler that m_ is constant
     if (copy_existing_elements)
       for (int i=0;i<m_;i++)
         ((typename remove_const<T>::type*)new_owner->data)[i] = data_[i];

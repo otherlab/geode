@@ -128,7 +128,7 @@ def test_halfedge_construction():
 def test_corner_construction():
   construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
 
-def test_properties():
+def test_fields():
   random.seed(813177)
   nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
   for soup in nanosphere,icosahedron_mesh()[0],torus_topology(4,5),double_torus_mesh(),cylinder_topology(6,5):
@@ -137,76 +137,66 @@ def test_properties():
     mesh.add_vertices(soup.nodes())
     mesh.add_faces(soup.elements)
 
-    # make a prop
-    propid1 = mesh.add_vertex_property('int32', invalid_id)
-    assert mesh.has_property(propid1)
+    # Make a field
+    Vi = mesh.add_vertex_field('int32',invalid_id)
+    assert mesh.has_field(Vi)
 
-    # check size
-    prop1 = mesh.property(propid1)
-    assert prop1.shape == (mesh.n_vertices,)
+    # Check size
+    V = mesh.field(Vi)
+    assert V.shape==(mesh.n_vertices,)
 
-    # remove a prop
-    mesh.remove_property(propid1)
-    assert not mesh.has_property(propid1)
+    # Remove a field
+    mesh.remove_field(Vi)
+    assert not mesh.has_field(Vi)
 
-    # permute vertices and check invariants
-    print 'permuting vertices...'
-    vprop = mesh.add_vertex_property('i', invalid_id)
-    assert mesh.has_property(vprop)
-    vdata = mesh.property(vprop)
+    # Permute vertices and check invariants
+    Vi = mesh.add_vertex_field('i',invalid_id)
+    assert mesh.has_field(Vi)
+    V = mesh.field(Vi)
+    for v in mesh.all_vertices():
+      V[v] = mesh.halfedge(v)
+    perm = random.permutation(mesh.n_vertices).astype(int32)
+    mesh.permute_vertices(perm,False)
 
-    for vertex in mesh.all_vertices():
-      vdata[vertex] = mesh.halfedge(vertex)
+    # Update field data (vertex fields are invalidated by permute_vertices)
+    V = mesh.field(Vi)
+    for v in mesh.all_vertices():
+      assert V[v] == mesh.halfedge(v)
+    mesh.remove_field(Vi)
 
-    perm = array(random.permutation(mesh.n_vertices),dtype=int32)
-    mesh.permute_vertices(perm, False)
-
-    # update property data (vertex properties are invalidated by permute_vertices)
-    vdata = mesh.property(vprop)
-
-    for vertex in mesh.all_vertices():
-      assert vdata[vertex] == mesh.halfedge(vertex)
-
-    mesh.remove_property(vprop)
-
-    # randomly remove some faces (but no vertices) and collect garbage and check invariants
+    # Randomly remove some faces (but no vertices) and collect garbage and check invariants
     print 'garbage collection test for faces...'
 
-    # make another (vector) prop, which is stored as face colors
-    fprop = mesh.add_face_property('3i', face_color_id)
-    assert mesh.has_property(fprop)
+    # Make another (vector) field, which is stored as face colors
+    Fi = mesh.add_face_field('3i',face_color_id)
+    assert mesh.has_field(Fi)
+    F = mesh.field(Fi)
+    assert F.shape == (mesh.n_faces,3)
 
-    # get the property memory
-    fdata = mesh.property(fprop)
-    assert fdata.shape == (mesh.n_faces,3)
-
-    # write vertex ids into it
-    for face in mesh.all_faces():
-      fdata[face] = mesh.face_vertices(face)
-      # delete around 50% of faces (but not vertices)
-      if random.uniform() > .5:
-        #print 'erasing face %s, vertices %s' % (face, mesh.face_vertices(face))
-        mesh.erase_face(face, False)
+    # Write vertex ids into it
+    nf = mesh.n_faces
+    for f in mesh.all_faces():
+      F[f] = mesh.face_vertices(f)
+      # Delete half of the faces (but not vertices)
+      if random_permute(nf,131371,f)<nf//2:
+        mesh.erase_face(f,False)
 
     mesh.collect_garbage()
-    fdata = mesh.property(fprop)
+    F = mesh.field(Fi)
 
-    # since we didn't delete any vertices, their ordering hasn't changed, and we
+    # Since we didn't delete any vertices, their ordering hasn't changed, and we
     # should be connected to the same vertices as before
-    for face in mesh.all_faces():
-      #print "face: %s, vertices %s, stored %s" % (face, fdata[face], mesh.face_vertices(face))
-      assert all(fdata[face] == mesh.face_vertices(face))
+    for f in mesh.all_faces():
+      assert all(F[f] == mesh.face_vertices(f))
+    mesh.remove_field(Fi)
 
-    mesh.remove_property(fprop)
-
-    # split some faces, check that the content of new faces is as expected
+    # Split some faces, check that the content of new faces is as expected
     # (we're already checking consistency)
 
-    # flip some edges, check that the content of affected faces is as expected
+    # Flip some edges, check that the content of affected faces is as expected
     # (we're already checking consistency)
 
 if __name__=='__main__':
-  test_properties()
+  test_fields()
   test_corner_construction()
   test_halfedge_construction()
-

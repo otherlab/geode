@@ -66,35 +66,27 @@ GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,HalfedgeId)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexId)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceId)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,HalfedgeId)
-
-GEODE_DEFINE_ID_INTERNAL(PropertyId, (PropertyId<T, Id, Fancy>), (template<class T, class Id, bool Fancy=false>), (class T, class Id, bool Fancy))
+GEODE_DEFINE_ID_INTERNAL(FieldId, (FieldId<T,Id>), (template<class T,class Id>), (class T,class Id))
 
 #ifdef GEODE_PYTHON
 
-class PyPropertyId: public Object {
+class PyFieldId : public Object {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef Object Base;
 
   const int id;
-  const string type_id;
-  const enum {idVertex, idFace, idHalfedge} id_type;
-  const bool fancy;
+  const type_info& type;
+  const enum {Vertex, Face, Halfedge} prim;
 
-  template<class T, bool Fancy>
-  PyPropertyId(PropertyId<T,VertexId,Fancy> const &id)
-  : id(id.id), type_id(typeid(T).name()), id_type(idVertex), fancy(Fancy) {}
-  template<class T, bool Fancy>
-  PyPropertyId(PropertyId<T,FaceId,Fancy> const &id)
-  : id(id.id), type_id(typeid(T).name()), id_type(idFace), fancy(Fancy) {}
-  template<class T, bool Fancy>
-  PyPropertyId(PropertyId<T,HalfedgeId,Fancy> const &id)
-  : id(id.id), type_id(typeid(T).name()), id_type(idHalfedge), fancy(Fancy) {}
+protected:
+  template<class T> PyFieldId(FieldId<T,VertexId> id)   : id(id.id), type(typeid(T)), prim(Vertex) {}
+  template<class T> PyFieldId(FieldId<T,FaceId> id)     : id(id.id), type(typeid(T)), prim(Face) {}
+  template<class T> PyFieldId(FieldId<T,HalfedgeId> id) : id(id.id), type(typeid(T)), prim(Halfedge) {}
 };
 
-template<class T, class id_type, bool Fancy>
-static inline PyObject* to_python(PropertyId<T,id_type,Fancy> const &i) {
-  return to_python(new_<PyPropertyId>(i));
+template<class T, class Id> static inline PyObject* to_python(FieldId<T,Id> i) {
+  return to_python(new_<PyFieldId>(i));
 }
 
 #endif

@@ -32,6 +32,7 @@ template<class T> class NdArray;
 
 template<class T,class Id> class Field;
 template<class T,class Id> class RawField;
+class UntypedArray;
 
 template<class TArray,class TProjector> class ProjectedArray;
 template<class TStruct,class TField,TField TStruct::* field> struct FieldProjector;
