@@ -17,6 +17,7 @@
 namespace geode {
 
 using std::vector;
+using std::ostream;
 template<class TK,class T> struct HashtableIter;
 template<class TK,class T> class Hashtable;
 
@@ -90,6 +91,10 @@ public:
 
   Hashtable(const int estimated_max_size=5) {
     initialize_new_table(estimated_max_size);
+  }
+
+  Hashtable(const Tuple<>&) { // Allow conversion from empty tuples
+    initialize_new_table(5);
   }
 
   ~Hashtable() {}
@@ -337,6 +342,28 @@ struct HashtableIter {
       index++;
   }
 };
+
+template<class K> ostream& operator<<(ostream& output, const Hashtable<K>& h) {
+  output << "set([";
+  bool first = true;
+  for (const auto& v : h) {
+    if (first) first = false;
+    else output << ',';
+    output << v;
+  }
+  return output << "])";
+}
+
+template<class K,class V> ostream& operator<<(ostream& output, const Hashtable<K,V>& h) {
+  output << '{';
+  bool first = true;
+  for (const auto& v : h) {
+    if (first) first = false;
+    else output << ',';
+    output << v.key() << ':' << v.data();
+  }
+  return output << '}';
+}
 
 // Python conversion
 #ifdef GEODE_PYTHON

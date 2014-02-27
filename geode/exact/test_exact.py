@@ -10,29 +10,45 @@ def test_predicates():
 def test_constructions():
   construction_tests()
 
-def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False):
-  random.seed(8711)
-  for n in range(3,10)+[50,100,563,1025,2000,-2000]+benchmark*[1<<20,-1<<20]:
-    if n<0 and not origin:
-      continue
-    if n>0 and circle: name,X = 'circle',polar(random.uniform(0,2*pi,n))
-    elif n>0:          name,X = 'gaussian',random.randn(abs(n),2)
-    else:              name,X = 'origin',zeros((-n,2))
-    with Log.scope('delaunay %s %d, validate %d'%(name,n,not benchmark)):
-      mesh = delaunay_points(X,validate=not benchmark)
-      if not benchmark:
-        mesh.assert_consistent()
-        assert mesh.n_vertices==abs(n)
-        assert len(mesh.boundary_loops())==1
-      if 0:
-        Log.write('tris = %s'%compact_str(mesh.elements()))
-        Log.write('X = %s'%compact_str(X))
-    if cgal:
-      from other.tim import cgal
-      with Log.scope('cgal delaunay %d'%n):
-        nf = cgal.cgal_time_delaunay_points(X)
-        if n>0 and mesh.n_faces!=nf:
-          Log.write('expected %d faces, got %d'%(mesh.n_faces,nf))
+def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False,constrain=True):
+  def simple(ns):
+    return ((n,i,0) for i,n in enumerate(ns))
+  cases = [simple(range(3,10)),
+           [(12,11781,2),(13,19797,1),(14,41832,2),(15,22242,1),(50,27007,2+2*1024)], # Hit Chew fan cases
+           simple([50,100,563,1025,2000,-2000]+benchmark*[1<<20,-1<<20])]
+  for case in cases:
+    for n,seed,chew in case:
+      random.seed(seed)
+      for c in (False,)+(True,)*(constrain and abs(n)<200):
+        if n<0 and not origin:
+          continue
+        if n>0 and circle: name,X = 'circle',polar(random.uniform(0,2*pi,n))
+        elif n>0:          name,X = 'gaussian',random.randn(abs(n),2)
+        else:              name,X = 'origin',zeros((-n,2))
+        if c:
+          old_chew = chew_fan_count()
+          with Log.scope('greedy edges'):
+            edges = greedy_nonintersecting_edges(X,3*n//2)
+            Log.write('sought %d, got %d'%(3*n//2,len(edges)))
+        else:
+          edges = zeros((0,2),dtype=int32)
+        with Log.scope('delaunay %s %d, seed %d, validate %d'%(name,n,seed,not benchmark)):
+          mesh = delaunay_points(X,validate=not benchmark,edges=edges)
+          if not benchmark:
+            mesh.assert_consistent()
+            assert mesh.n_vertices==abs(n)
+            assert len(mesh.boundary_loops())==1
+          if 0:
+            Log.write('tris = %s'%compact_str(mesh.elements()))
+            Log.write('X = %s'%compact_str(X))
+        if c:
+          assert chew_fan_count()==old_chew+chew,'expected chew %d, got %d'%(chew,chew_fan_count()-old_chew)
+        if cgal:
+          from other.tim import cgal
+          with Log.scope('cgal delaunay %d'%n):
+            nf = cgal.cgal_time_delaunay_points(X)
+            if n>0 and mesh.n_faces!=nf:
+              Log.write('expected %d faces, got %d'%(mesh.n_faces,nf))
 
 def test_polygon():
   k = 4 # Use random quads to get occasional concave vertices
@@ -69,7 +85,7 @@ if __name__=='__main__':
     cgal = '-c' in sys.argv
     circle = '-d' in sys.argv
     Mesh = HalfedgeMesh if '-h' in sys.argv else TriangleTopology
-    test_delaunay(Mesh=Mesh,benchmark=True,origin=False,cgal=cgal,circle=circle)
+    test_delaunay(Mesh=Mesh,benchmark=True,origin=False,cgal=cgal,circle=circle,constrain=False)
   else:
     test_predicates()
     test_constructions()

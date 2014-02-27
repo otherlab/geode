@@ -4,7 +4,7 @@ from __future__ import division
 from geode import *
 from geode.exact import *
 from geode.value import parser
-from other.gui import *
+from gui import *
 from OpenGL import GL
 import time
 import sys
@@ -16,6 +16,7 @@ frequency = props.add('frequency',1.).set_category('delaunay')
 seed = props.add('seed',1718).set_category('delaunay')
 mode = props.add('mode','well').set_allowed('well circle degenerate'.split()).set_category('delaunay')
 validate = props.add('validate',False).set_category('delaunay')
+constrain = props.add('constrain',True).set_category('delaunay')
 
 current_time = Prop('time',0.)
 
@@ -80,7 +81,8 @@ def current():
 
 @cache
 def delaunay():
-  return delaunay_points(current(),validate=validate())
+  edges = ((0,1),) if constrain() else zeros((0,2),int32)
+  return delaunay_points(current(),edges=edges,validate=validate())
 
 class DelaunayScene(Scene):
   def render(self,*args):

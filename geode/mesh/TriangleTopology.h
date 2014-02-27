@@ -104,6 +104,15 @@ protected:
     boundaries_.const_cast_()[-1-n.id].prev = p;
   }
 
+  // Link two interior edges together (without ensuring consistency)
+  void unsafe_interior_link(const HalfedgeId e0, const HalfedgeId e1) {
+    const auto& faces = faces_.const_cast_().flat;
+    const int f0 = e0.id/3,
+              f1 = e1.id/3;
+    faces[f0].neighbors[e0.id-3*f0] = e1;
+    faces[f1].neighbors[e1.id-3*f1] = e0;
+  }
+
   // Link an interior halfedge with an arbitrary opposite halfedge (without ensuring consistency)
   inline void unsafe_set_reverse(FaceId f, int i, HalfedgeId r) {
     faces_.const_cast_()[f].neighbors[i] = r;
@@ -161,17 +170,19 @@ public:
   GEODE_CORE_EXPORT bool is_garbage_collected() const;
 
   // Walk around the mesh.  These always succeed given valid ids, but may return invalid ids as a result (e.g., the face of a boundary halfedge).
-  inline HalfedgeId halfedge(VertexId v)        const;
-  inline HalfedgeId prev    (HalfedgeId e)      const;
-  inline HalfedgeId next    (HalfedgeId e)      const;
-  inline HalfedgeId reverse (HalfedgeId e)      const;
-  inline VertexId   src     (HalfedgeId e)      const;
-  inline VertexId   dst     (HalfedgeId e)      const;
-  inline FaceId     face    (HalfedgeId e)      const;
-  inline VertexId   vertex  (FaceId f, int i=0) const;
-  inline HalfedgeId halfedge(FaceId f, int i=0) const;
-  inline HalfedgeId left    (HalfedgeId e)      const;
-  inline HalfedgeId right   (HalfedgeId e)      const;
+  inline HalfedgeId halfedge(VertexId v)           const;
+  inline HalfedgeId prev    (HalfedgeId e)         const;
+  inline HalfedgeId next    (HalfedgeId e)         const;
+  inline HalfedgeId reverse (HalfedgeId e)         const;
+  inline VertexId   src     (HalfedgeId e)         const;
+  inline VertexId   dst     (HalfedgeId e)         const;
+  inline FaceId     face    (HalfedgeId e)         const;
+  inline VertexId   vertex  (FaceId f, int i=0)    const;
+  inline HalfedgeId halfedge(FaceId f, int i=0)    const;
+  inline HalfedgeId left    (HalfedgeId e)         const;
+  inline HalfedgeId right   (HalfedgeId e)         const;
+  inline VertexId   opposite(HalfedgeId e)         const;
+  inline HalfedgeId opposite(FaceId f, VertexId v) const;
 
   // Check id validity or deletion.  A erased id is considered invalid.
   inline bool valid(VertexId v)   const;
@@ -352,8 +363,9 @@ public:
   // Add many new faces (return the first id, new ids are contiguous)
   GEODE_CORE_EXPORT FaceId add_faces(RawArray<const Vector<int,3>> vs);
 
-  // Flip the two triangles adjacent to a given halfedge.  The routines throw an exception if is_flip_safe fails; call unsafe_flip_edge if you've already checked.
-  // WARNING: The all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
+  // Flip the two triangles adjacent to a given halfedge.  The routines throw an exception if is_flip_safe fails;
+  // call unsafe_flip_edge if you've already checked.  WARNING: The halfedge ids in the two adjacent faces are
+  // changed, and the new id of the argument edge is returned.  The returned edge is e topologically rotated right.
   GEODE_CORE_EXPORT HalfedgeId flip_edge(HalfedgeId e) GEODE_WARN_UNUSED_RESULT;
 
   // Permute vertices: vertex v becomes vertex permutation[v]
@@ -485,6 +497,17 @@ inline FaceId TriangleTopology::face(HalfedgeId e) const {
 }
 inline HalfedgeId TriangleTopology::left(HalfedgeId e)  const { return reverse(prev(e)); }
 inline HalfedgeId TriangleTopology::right(HalfedgeId e) const { return next(reverse(e)); }
+
+inline VertexId TriangleTopology::opposite(HalfedgeId e) const {
+  assert(!is_boundary(e));
+  return dst(next(e));
+}
+
+inline HalfedgeId TriangleTopology::opposite(FaceId f, VertexId v) const {
+  assert(valid(f) && faces_[f].vertices.contains(v));
+  const auto& vs = faces_[f].vertices;
+  return HalfedgeId(3*f.id+(vs.x==v?1:vs.y==v?2:0));
+}
 
 // Check id validity or deletion.  A erased id is considered invalid.
 inline bool TriangleTopology::valid(VertexId v) const {

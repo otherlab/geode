@@ -13,8 +13,8 @@ else:
 if not has_exact():
   raise ImportError('geode/exact is unavailable since geode was compiled without gmp support')
 
-def delaunay_points(X,validate=False):
-  return delaunay_points_py(X,validate)
+def delaunay_points(X,edges=zeros((0,2),dtype=int32),validate=False):
+  return delaunay_points_py(X,edges,validate)
 
 def polygon_union(*polys):
   '''The union of possibly intersecting polygons, assuming consistent ordering'''

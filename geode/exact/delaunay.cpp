@@ -33,8 +33,9 @@ static const bool self_check = false;
 static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u)<<64);
 
 // For details and analysis of the algorithm, see
+//
 //   Leonidas Guibas, Donald Knuth, Micha Sharir, "Randomized incremental construction of Delaunay and Voronoi diagrams".
-
+//
 // We define a BSP DAG based on the history of the algorithm.  Internal nodes correspond to halfspace tests against edges
 // (which may no longer exist), and leaf nodes are currently existing triangles.  It's a DAG rather than a tree because
 // we need to be able to incrementally replace leaf nodes with new subtrees, and it's impossible to ensure a unique path
@@ -50,11 +51,18 @@ static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u
 // Randomized incremental Delaunay by itself has terrible cache properties, since the mesh is accessed in nearly purely
 // random order.  Therefore, we use the elegant partial randomization idea of
 //
-//    Nina Amenta, Sunghee Choi, Gunter Rote, "Incremental Constructions con BRIO".
+//   Nina Amenta, Sunghee Choi, Gunter Rote, "Incremental Constructions con BRIO".
 //
 // which randomly assigns vertices into bins of exponentially increasing size, then applies a spatial sort within each bin.
 // The random choice of bin is sufficient to ensure an O(n log n) worst case time, and the spatial sort produces a relatively
 // cache coherent access pattern.
+//
+// For constrained Delaunay, we first perform randomized incremental insertion and then enforce constraints
+// in random order using Shewchunk and Brown's algorithm:
+//
+//   Jonathan Richard Shewchuk and Brielin C. Brown. "Fast segment insertion and incremental construction of
+//   constrained delaunay triangulations." In Proceedings of the 29th annual symposium on Symposium on
+//   computational geometry, pp. 299-308. ACM, 2013.
 
 namespace {
 struct Node {
@@ -194,7 +202,11 @@ GEODE_UNUSED static void check_bsp(const TriangleTopology& mesh, RawArray<const 
   }
 }
 
-GEODE_COLD static void assert_delaunay(const TriangleTopology& mesh, RawField<const Point,VertexId> X, const bool oriented_only=false) {
+GEODE_COLD static void assert_delaunay(const char* prefix,
+                                       const TriangleTopology& mesh, RawField<const Point,VertexId> X,
+                                       const Hashtable<Vector<VertexId,2>>& constrained=Tuple<>(),
+                                       const bool oriented_only=false,
+                                       const bool check_boundary=true) {
   // Verify that all faces are correctly oriented
   for (const auto f : mesh.faces()) {
     const auto v = mesh.vertices(f);
@@ -203,17 +215,41 @@ GEODE_COLD static void assert_delaunay(const TriangleTopology& mesh, RawField<co
   if (oriented_only)
     return;
   // Verify that all internal edges are Delaunay
-  for (const auto e : mesh.interior_halfedges())
-    if (!mesh.is_boundary(mesh.reverse(e)) && mesh.src(e)<mesh.dst(e))
-      if (!is_delaunay(mesh,X,e))
-        throw RuntimeError(format("non delaunay edge: e%d, v%d v%d",e.id,mesh.src(e).id,mesh.dst(e).id));
-  // Verify that all boundary vertices are convex
-  for (const auto e : mesh.boundary_edges()) {
-    const auto v0 = mesh.src(mesh.prev(e)),
-               v1 = mesh.src(e),
-               v2 = mesh.dst(e);
-    GEODE_ASSERT(triangle_oriented(X,v2,v1,v0));
+  if (!constrained.size()) {
+    for (const auto e : mesh.interior_halfedges())
+      if (!mesh.is_boundary(mesh.reverse(e)) && mesh.src(e)<mesh.dst(e))
+        if (!is_delaunay(mesh,X,e))
+          throw RuntimeError(format("%snon delaunay edge: e%d, v%d v%d",prefix,e.id,mesh.src(e).id,mesh.dst(e).id));
+  } else {
+    for (const auto v : constrained)
+      if (!mesh.halfedge(v.x,v.y).valid())
+        throw RuntimeError(format("%smissing constraint edge: v%d v%d",prefix,v.x.id,v.y.id));
+    for (const auto e : mesh.interior_halfedges()) {
+      const auto s = mesh.src(e), d = mesh.dst(e);
+      if (!mesh.is_boundary(mesh.reverse(e)) && s<d && !constrained.contains(vec(s,d)))
+        if (!is_delaunay(mesh,X,e))
+          throw RuntimeError(format("%snon delaunay edge: e%d, v%d v%d",prefix,e.id,mesh.src(e).id,mesh.dst(e).id));
+    }
   }
+  // Verify that all boundary vertices are convex
+  if (check_boundary)
+    for (const auto e : mesh.boundary_edges()) {
+      const auto v0 = mesh.src(mesh.prev(e)),
+                 v1 = mesh.src(e),
+                 v2 = mesh.dst(e);
+      GEODE_ASSERT(triangle_oriented(X,v2,v1,v0));
+    }
+}
+
+GEODE_COLD static void assert_delaunay(const char* prefix,
+                                       const TriangleTopology& mesh, RawField<const EV,VertexId> X,
+                                       const Hashtable<Vector<VertexId,2>>& constrained=Tuple<>(),
+                                       const bool oriented_only=false,
+                                       const bool check_boundary=true) {
+  Field<Point,VertexId> Xp(X.size(),false);
+  for (const int i : range(X.size()))
+    Xp.flat[i] = tuple(i,X.flat[i]);
+  assert_delaunay(prefix,mesh,Xp,constrained,oriented_only,check_boundary);
 }
 
 // This routine assumes the sentinel points have already been added, and processes points in order
@@ -228,7 +264,7 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
   mesh->add_face(vec(VertexId(n+0),VertexId(n+1),VertexId(n+2)));
   if (self_check) {
     mesh->assert_consistent();
-    assert_delaunay(mesh,X);
+    assert_delaunay("self check 0: ",mesh,X);
   }
 
   // The randomized incremental construction algorithm uses the history of the triangles
@@ -291,7 +327,7 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
     stack[1] = tuple(mesh->next(e1),vec(vs.y,vs.z));
     stack[2] = tuple(mesh->next(e2),vec(vs.z,vs.x));
     if (self_check)
-      assert_delaunay(mesh,X,true);
+      assert_delaunay("self check 1: ",mesh,X,Tuple<>(),true);
     while (stack.size()) {
       const auto evs = stack.pop();
       auto e = mesh->vertices(evs.x)==evs.y ? evs.x : mesh->halfedge(evs.y.x,evs.y.y);
@@ -318,12 +354,12 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
         stack.extend(vec(tuple(e0,mesh->vertices(e0)),
                          tuple(e1,mesh->vertices(e1))));
         if (self_check)
-          assert_delaunay(mesh,X,true);
+          assert_delaunay("self check 2: ",mesh,X,Tuple<>(),true);
       }
     }
     if (self_check) {
       mesh->assert_consistent();
-      assert_delaunay(mesh,X);
+      assert_delaunay("self check 3: ",mesh,X);
     }
   }
 
@@ -333,10 +369,355 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
 
   // If desired, check that the final mesh is Delaunay
   if (validate)
-    assert_delaunay(mesh,X);
+    assert_delaunay("delaunay validate: ",mesh,X);
 
   // Return the mesh with the sentinels removed
   return mesh;
+}
+
+// InsertVertex in the paper
+static void insert_cavity_vertex_helper(MutableTriangleTopology& mesh, RawField<const Point,VertexId> X,
+                                        RawField<bool,VertexId> marked, const HalfedgeId vw) {
+  // If wv is a boundary edge, or we're already Delaunay and properly oriented, we're done
+  const auto wv = mesh.reverse(vw);
+  if (mesh.is_boundary(wv))
+    return;
+  const auto u = mesh.opposite(vw),
+             v = mesh.src(vw),
+             w = mesh.dst(vw),
+             x = mesh.opposite(wv);
+  const auto Xu = X[u],
+             Xv = X[v],
+             Xw = X[w],
+             Xx = X[x];
+  const bool in = incircle(Xu,Xv,Xw,Xx);
+  if (!in && triangle_oriented(Xu,Xv,Xw))
+    return;
+
+  // Flip edge and recurse
+  const auto xu = mesh.flip_edge(wv);
+  assert(mesh.vertices(xu)==vec(x,u));
+  const auto vx = mesh.prev(xu),
+             xw = mesh.next(mesh.reverse(xu)); // Grab this now before the recursive call changes uvx
+  insert_cavity_vertex_helper(mesh,X,marked,vx),
+  insert_cavity_vertex_helper(mesh,X,marked,xw);
+  if (!in)
+    marked[u] = marked[v] = marked[w] = marked[x] = true;
+}
+static void insert_cavity_vertex(MutableTriangleTopology& mesh, RawField<const Point,VertexId> X,
+                                 RawField<bool,VertexId> marked,
+                                 const VertexId u, const VertexId v, const VertexId w) {
+#ifndef NDEBUG
+  {
+    const auto vw = mesh.halfedge(v);
+    assert(mesh.is_boundary(vw) && mesh.dst(vw)==w);
+  }
+#endif
+  mesh.add_face(vec(u,v,w));
+  const auto vw = mesh.prev(mesh.reverse(mesh.halfedge(u)));
+  assert(mesh.vertices(vw)==vec(v,w));
+  insert_cavity_vertex_helper(mesh,X,marked,vw);
+}
+
+// Allow unit tests to count how many times chew_fan is called.  Finding a Chew fan case
+// is quite difficult, so it's important to verify that we've hit them.  Since chew_fan
+// is called incredibly rarely, the slight slowdown is irrelevant.
+static int chew_fan_count_ = 0;
+static int chew_fan_count() {
+  return chew_fan_count_;
+}
+
+// Delaunay retriangulate a triangle fan
+static void chew_fan(MutableTriangleTopology& parent_mesh, RawField<const Point,VertexId> X,
+                     const VertexId u, RawArray<HalfedgeId> fan, Random& random) {
+  chew_fan_count_ += 1;
+#ifndef NDEBUG
+  for (const auto e : fan)
+    assert(parent_mesh.opposite(e)==u);
+  for (int i=0;i<fan.size()-1;i++)
+    GEODE_ASSERT(parent_mesh.src(fan[i])==parent_mesh.dst(fan[i+1]));
+#endif
+  const int n = fan.size();
+  if (n < 2)
+    return;
+  chew_fan_count_ += 1024*n;
+
+  // Collect vertices
+  const Field<VertexId,VertexId> vertices(n+2,false);
+  vertices.flat[0] = u;
+  vertices.flat[1] = parent_mesh.src(fan[n-1]);
+  for (int i=0;i<n;i++)
+    vertices.flat[i+2] = parent_mesh.dst(fan[n-1-i]);
+
+  // Delete original vertices
+  for (const auto e : fan)
+    parent_mesh.erase(parent_mesh.face(e));
+
+  // Make the vertices into a doubly linked list
+  const Field<VertexId,VertexId> prev(n+2,false),
+                                 next(n+2,false);
+  prev.flat[0].id = n+1;
+  next.flat[n+1].id = 0;
+  for (int i=0;i<n+1;i++) {
+    prev.flat[i+1].id = i;
+    next.flat[i].id = i+1;
+  }
+
+  // Randomly shuffle the vertices, then pulling elements off the linked list in reverse order of our final shuffle.
+  const Array<VertexId> pi(n+2,false);
+  for (int i=0;i<n+2;i++)
+    pi[i].id = i;
+  random.shuffle(pi);
+  for (int i=n+1;i>=0;i--) {
+    const auto j = pi[i];
+    prev[next[j]] = prev[j];
+    next[prev[j]] = next[j];
+  }
+
+  // Make a new singleton mesh
+  const auto mesh = new_<MutableTriangleTopology>();
+  mesh->add_vertices(n+2);
+  small_sort(pi[0],pi[1],pi[2]);
+  mesh->add_face(vec(pi[0],pi[1],pi[2]));
+
+  // Insert remaining vertices
+  Array<HalfedgeId> work;
+  for (int i=3;i<n+2;i++) {
+    const auto j = pi[i];
+    const auto f = mesh->add_face(vec(j,next[j],prev[j]));
+    work.append(mesh->reverse(mesh->opposite(f,j)));
+    while (work.size()) {
+      auto e = work.pop();
+      if (   !mesh->is_boundary(e)
+          && incircle(X[vertices[mesh->src(e)]],
+                      X[vertices[mesh->dst(e)]],
+                      X[vertices[mesh->opposite(e)]],
+                      X[vertices[mesh->opposite(mesh->reverse(e))]])) {
+        work.append(mesh->reverse(mesh->next(e)));
+        work.append(mesh->reverse(mesh->prev(e)));
+        e = mesh->unsafe_flip_edge(e);
+      }
+    }
+  }
+
+  // Copy triangles back to parent
+  for (const auto f : mesh->faces()) {
+    const auto vs = mesh->vertices(f);
+    parent_mesh.add_face(vec(vertices[vs.x],vertices[vs.y],vertices[vs.z]));
+  }
+}
+
+// Retriangulate a cavity formed when a constraint edge is inserted, following Shewchuck and Brown.
+// The cavity is defined by a counterclockwise list of vertices v[0] to v[m-1] as in Shewchuck and Brown, Figure 5.
+static void cavity_delaunay(MutableTriangleTopology& parent_mesh, RawField<const EV,VertexId> X,
+                            RawArray<const VertexId> cavity, Random& random) {
+  // Since the algorithm generates meshes which may be inconsistent with the outer mesh, and the cavity
+  // array may have duplicate vertices, we use a temporary mesh and then copy the triangles over when done.
+  // In the temporary, vertices are indexed consecutively from 0 to m-1.
+  const int m = cavity.size();
+  assert(m >= 3);
+  const auto mesh = new_<MutableTriangleTopology>();
+  Field<Point,VertexId> Xc(m,false);
+  for (const int i : range(m))
+    Xc.flat[i] = tuple(cavity[i].id,X[cavity[i]]);
+  mesh->add_vertices(m);
+  const auto xs = Xc.flat[0],
+             xe = Xc.flat[m-1];
+
+  // Set up data structures for prev, next, pi in the paper
+  const Field<VertexId,VertexId> prev(m,false),
+                                 next(m,false);
+  for (int i=0;i<m-1;i++) {
+    next.flat[i] = VertexId(i+1);
+    prev.flat[i+1] = VertexId(i);
+  }
+  const Array<VertexId> pi_(m-2,false);
+  for (int i=1;i<=m-2;i++)
+    pi_[i-1] = VertexId(i);
+  #define PI(i) pi_[(i)-1]
+
+  // Randomly shuffle [1,m-2], subject to vertices closer to xs-xe than both their neighbors occurring later
+  for (int i=m-2;i>=2;i--) {
+    int j;
+    for (;;) {
+      j = random.uniform<int>(0,i)+1;
+      const auto pj = PI(j);
+      if (!(   segment_directions_oriented(xe,xs,Xc[pj],Xc[prev[pj]])
+            && segment_directions_oriented(xe,xs,Xc[pj],Xc[next[pj]])))
+        break;
+    }
+    swap(PI(i),PI(j));
+    // Remove PI(i) from the list
+    const auto pi = PI(i);
+    next[prev[pi]] = next[pi];
+    prev[next[pi]] = prev[pi];
+  }
+
+  // Add the first triangle
+  mesh->add_face(vec(VertexId(0),PI(1),VertexId(m-1)));
+
+  // Add remaining triangles, flipping to ensure Delaunay
+  const Field<bool,VertexId> marked(m);
+  Array<HalfedgeId> fan;
+  bool used_chew = false;
+  for (int i=2;i<m-1;i++) {
+    const auto pi = PI(i);
+    insert_cavity_vertex(mesh,Xc,marked,pi,next[pi],prev[pi]);
+    if (marked[pi]) {
+      used_chew = true;
+      marked[pi] = false;
+      // Retriangulate the fans of triangles that have all three vertices marked
+      auto e = mesh->reverse(mesh->halfedge(pi));
+      auto v = mesh->src(e);
+      bool mv = marked[v];
+      marked[v] = false;
+      fan.clear();
+      do {
+        const auto h = mesh->prev(e);
+        e = mesh->reverse(mesh->next(e));
+        v = mesh->src(e);
+        const bool mv2 = marked[v];
+        marked[v] = false;
+        if (mv) {
+          if (mv2)
+            fan.append(h);
+          if (!mv2 || mesh->is_boundary(e)) {
+            chew_fan(mesh,Xc,pi,fan,random);
+            fan.clear();
+          }
+        }
+        mv = mv2;
+      } while (!mesh->is_boundary(e));
+    }
+  }
+  #undef PI
+
+  // If we ran Chew's algorithm, validate the output.  I haven't tested this
+  // case enough to be confident of its correctness.
+  if (used_chew)
+    assert_delaunay("Failure in extreme special case.  If this triggers, please email geode-dev@googlegroups.com: ",
+                    mesh,Xc,Tuple<>(),false,false);
+
+  // Copy triangles from temporary mesh to real mesh
+  for (const auto f : mesh->faces()) {
+    const auto v = mesh->vertices(f);
+    parent_mesh.add_face(vec(cavity[v.x.id],cavity[v.y.id],cavity[v.z.id]));
+  }
+}
+
+GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mesh, RawField<const EV,VertexId> X,
+                                                    RawArray<const Vector<int,2>> edges, const bool validate) {
+  if (!edges.size())
+    return;
+  IntervalScope scope;
+  Hashtable<Vector<VertexId,2>> constrained;
+  Array<VertexId> left_cavity, right_cavity; // List of vertices for both cavities
+  const auto random = new_<Random>(key+7);
+  for (int i=0;i<edges.size();i++) {
+    // Randomly choose an edge to ensure optimal time complexity
+    const auto edge = edges[int(random_permute(edges.size(),key+5,i))].sorted();
+    auto v0 = VertexId(edge.x),
+         v1 = VertexId(edge.y);
+    const auto vs = vec(v0,v1);
+    GEODE_ASSERT(mesh.valid(v0) && mesh.valid(v1));
+
+    {
+      // Check if the edge already exists in the triangulation.  To ensure optimal complexity,
+      // we loop around both vertices interleaved so that our time is O(min(degree(v0),degree(v1))).
+      const auto s0 = mesh.halfedge(v0),
+                 s1 = mesh.halfedge(v1);
+      {
+        auto e0 = s0,
+             e1 = s1;
+        do {
+          if (mesh.dst(e0)==v1 || mesh.dst(e1)==v0)
+            goto success; // The edge already exists, so there's nothing to be done.
+          e0 = mesh.left(e0);
+          e1 = mesh.left(e1);
+        } while (e0!=s0 && e1!=s1);
+      }
+
+      // Find a triangle touching v0 or v1 containing part of the v0-v1 segment.
+      // As above, we loop around both vertices interleaved.
+      auto e0 = s0;
+      {
+        auto e1 = s1;
+        if (mesh.is_boundary(e0)) e0 = mesh.left(e0);
+        if (mesh.is_boundary(e1)) e1 = mesh.left(e1);
+        const auto x0 = tuple(v0.id,X[v0]),
+                   x1 = tuple(v1.id,X[v1]);
+        const auto e0d = mesh.dst(e0),
+                   e1d = mesh.dst(e1);
+        bool e0o = triangle_oriented(x0,tuple(e0d.id,X[e0d]),x1),
+             e1o = triangle_oriented(x1,tuple(e1d.id,X[e1d]),x0);
+        for (;;) { // No need to check for an end condition, since we're guaranteed to terminate
+          const auto n0 = mesh.left(e0),
+                     n1 = mesh.left(e1);
+          const auto n0d = mesh.dst(n0),
+                     n1d = mesh.dst(n1);
+          const bool n0o = triangle_oriented(x0,tuple(n0d.id,X[n0d]),x1),
+                     n1o = triangle_oriented(x1,tuple(n1d.id,X[n1d]),x0);
+          if (e0o && !n0o)
+            break;
+          if (e1o && !n1o) {
+            // Swap v0 with v1 and e0 with e1 so that our ray starts at v0
+            swap(v0,v1);
+            swap(e0,e1);
+            break;
+          }
+          e0 = n0;
+          e1 = n1;
+          e0o = n0o;
+          e1o = n1o;
+        }
+      }
+
+      // If we only need to walk one step, the retriangulation is a single edge flip
+      auto cut = mesh.reverse(mesh.next(e0));
+      if (mesh.dst(mesh.next(cut))==v1) {
+        cut = mesh.flip_edge(cut);
+        goto success;
+      }
+
+      // Walk from v0 to v1, collecting the two cavities.
+      const auto x0 = tuple(v0.id,X[v0]),
+                 x1 = tuple(v1.id,X[v1]);
+      right_cavity.copy(vec(v0,mesh.dst(cut)));
+      left_cavity .copy(vec(v0,mesh.src(cut)));
+      mesh.erase(mesh.face(e0));
+      for (;;) {
+        if (constrained.contains(vec(mesh.src(cut),mesh.dst(cut)).sorted()))
+          throw ValueError(format("delaunay: Constraints (%d,%d) and (%d,%d) intersect",
+                                  v0.id,v1.id,mesh.src(cut).id,mesh.dst(cut).id));
+        const auto n = mesh.reverse(mesh.next(cut)),
+                   p = mesh.reverse(mesh.prev(cut));
+        const auto v = mesh.src(n);
+        mesh.erase(mesh.face(cut));
+        if (v == v1) {
+          left_cavity.append(v);
+          right_cavity.append(v);
+          break;
+        } else if (triangle_oriented(x0,x1,tuple(v.id,X[v]))) {
+          left_cavity.append(v);
+          cut = n;
+        } else {
+          right_cavity.append(v);
+          cut = p;
+        }
+      }
+
+      // Retriangulate both cavities
+      left_cavity.reverse();
+      cavity_delaunay(mesh,X,left_cavity,random),
+      cavity_delaunay(mesh,X,right_cavity,random);
+    }
+    success:
+    constrained.set(vs);
+  }
+
+  // If desired, check that the final mesh is constrained Delaunay
+  if (validate)
+    assert_delaunay("constrained delaunay validate: ",mesh,X,constrained);
 }
 
 template<int axis> static inline int spatial_partition(RawArray<Point> X, Random& random) {
@@ -383,7 +764,7 @@ static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random)
 
 // Prepare a list of points for Delaunay triangulation: randomly assign into logarithmic bins, sort within bins, and add sentinels.
 // For details, see Amenta et al., Incremental Constructions con BRIO.
-template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs& Xin) {
+static Array<Point> partially_sorted_shuffle(RawArray<const EV> Xin) {
   const int n = Xin.size();
   Array<Point> X(n+3,false);
 
@@ -415,28 +796,56 @@ template<class Inputs> static Array<Point> partially_sorted_shuffle(const Inputs
   return X;
 }
 
-template<class Inputs> static inline Ref<TriangleTopology> delaunay_helper(const Inputs& Xin, bool validate) {
-  const int n = Xin.size();
+Ref<TriangleTopology> exact_delaunay_points(RawArray<const EV> X, RawArray<const Vector<int,2>> edges,
+                                            const bool validate) {
+  const int n = X.size();
   GEODE_ASSERT(n>=3);
 
   // Quantize all input points, reorder, and add sentinels
-  Field<const Point,VertexId> X(partially_sorted_shuffle(Xin));
+  Field<const Point,VertexId> Xp(partially_sorted_shuffle(X));
 
   // Compute Delaunay triangulation
-  const auto mesh = deterministic_exact_delaunay(X,validate);
+  const auto mesh = deterministic_exact_delaunay(Xp,validate);
 
   // Undo the vertex permutation
-  mesh->permute_vertices(X.flat.slice(0,n).project<int,&Point::x>().copy());
+  mesh->permute_vertices(Xp.flat.slice(0,n).project<int,&Point::x>().copy());
+
+  // Insert constraint edges in random order
+  add_constraint_edges(mesh,RawField<const EV,VertexId>(X),edges,validate);
+
+  // All done!
   return mesh;
 }
 
-Ref<TriangleTopology> delaunay_points(RawArray<const Vector<real,2>> X, bool validate) {
-  return delaunay_helper(amap(quantizer(bounding_box(X)),X),validate);
+Ref<TriangleTopology> delaunay_points(RawArray<const Vector<real,2>> X, RawArray<const Vector<int,2>> edges,
+                                      const bool validate) {
+  return exact_delaunay_points(amap(quantizer(bounding_box(X)),X).copy(),edges,validate);
 }
 
-// Same as above, but points are already quantized
-Ref<TriangleTopology> exact_delaunay_points(RawArray<const EV> X, bool validate) {
-  return delaunay_helper(X,validate);
+// Greedily compute a set of nonintersecting edges in a point cloud for testing purposes
+// Warning: Takes O(n^3) time.
+static Array<Vector<int,2>> greedy_nonintersecting_edges(RawArray<const Vector<real,2>> X, const int limit) {
+  const auto E = amap(quantizer(bounding_box(X)),X).copy();
+  const int n = E.size();
+  Array<Vector<int,2>> edges;
+  IntervalScope scope;
+  for (const int i : range(n*n)) {
+    const int pi = int(random_permute(n*n,key+14,i));
+    const int a = pi/n,
+              b = pi-n*a;
+    if (a < b) {
+      const auto Ea = tuple(a,E[a]),
+                 Eb = tuple(b,E[b]);
+      for (const auto e : edges)
+        if (!e.contains(a) && !e.contains(b) && segments_intersect(Ea,Eb,tuple(e.x,E[e.x]),tuple(e.y,E[e.y])))
+          goto skip;
+      edges.append(vec(a,b));
+      if (edges.size()==limit || edges.size()==3*n-6)
+        break;
+      skip:;
+    }
+  }
+  return edges;
 }
 
 }
@@ -444,4 +853,6 @@ using namespace geode;
 
 void wrap_delaunay() {
   GEODE_FUNCTION_2(delaunay_points_py,delaunay_points)
+  GEODE_FUNCTION(greedy_nonintersecting_edges)
+  GEODE_FUNCTION(chew_fan_count)
 }

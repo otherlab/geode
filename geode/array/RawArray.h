@@ -12,6 +12,7 @@
 #include <geode/array/ArrayBase.h>
 #include <geode/vector/Vector.h>
 #include <geode/python/from_python.h>
+#include <geode/structure/forward.h>
 #include <geode/utility/HasCheapCopy.h>
 #include <geode/utility/CopyConst.h>
 #include <geode/utility/range.h>
@@ -45,6 +46,9 @@ public:
   const int m;
 
   RawArray()
+    : data_(0), m(0) {}
+
+  RawArray(const Tuple<>&) // Allow conversion from empty tuples
     : data_(0), m(0) {}
 
   RawArray(const Array<Element>& source)

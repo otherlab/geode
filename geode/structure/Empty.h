@@ -4,6 +4,7 @@
 #pragma once
 
 #include <geode/structure/forward.h>
+#include <geode/array/forward.h>
 #include <iostream> // needed to avoid header bug on Mac OS X
 #include <geode/math/choice.h>
 #include <geode/math/hash.h>
