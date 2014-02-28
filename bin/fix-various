@@ -10,7 +10,7 @@ def log(s):
   print>>sys.stderr, s
 
 include_pattern = re.compile(r'^#include\s+(["<])([\w/.]+)([">])\s*$')
-bases = [os.path.dirname(os.path.dirname(__file__))
+bases = [os.path.dirname(os.path.dirname(__file__))]
 
 def find(head,tail):
   head,tail = os.path.split(path)
