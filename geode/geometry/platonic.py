@@ -111,7 +111,7 @@ def surface_of_revolution(base,axis,radius,height,resolution,closed=False,period
 def revolve_around_curve(curve,radius,resolution,tangent=None,closed=False,periodic=False):
   '''Construct a surface via variable radius thickening of a curve.
   closed can be either a single bool or an array of two bools (one for each end).
-  For each closed end, height should have one more point than radius.'''
+  For each closed end, curve should have one more point than radius.'''
   closed = asarray(closed,dtype=int32)
   c0,c1 = closed if closed.ndim else (closed,closed)
   curve = asarray(curve)
