@@ -136,6 +136,7 @@ template<class TV> std::ostream& operator<<(std::ostream& output, Segment<TV> co
 /********* Segment / Point *********/
 
 template<int d> GEODE_CORE_EXPORT real segment_point_distance(Segment<Vector<real,d>> s, Vector<real,d> p);
+template<int d> GEODE_CORE_EXPORT real segment_point_sqr_distance(Segment<Vector<real,d>> s, Vector<real,d> p);
 
 // Snap a point to the closest point on a segment, and return (closest,weight).
 template<int d> GEODE_CORE_EXPORT Tuple<Vector<real,d>,real> segment_closest_point(Segment<Vector<real,d>> s, Vector<real,d> p);

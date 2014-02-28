@@ -128,17 +128,21 @@ template<int d> Tuple<Vector<T,d>,T> segment_closest_point(const Segment<Vector<
   return tuple(s.x0+w*v,w);
 }
 
-template<int d> T segment_point_distance(Segment<Vector<T,d>> s, Vector<T,d> p) {
+template<int d> T segment_point_sqr_distance(Segment<Vector<T,d>> s, Vector<T,d> p) {
   const auto u = p-s.x0,
              v = s.x1-s.x0;
   const T uv = dot(u,v);
   if (uv <= 0)
-    return magnitude(u);
+    return sqr_magnitude(u);
   const T vv = sqr_magnitude(v);
   if (uv >= vv)
-    return magnitude(p-s.x1);
+    return sqr_magnitude(p-s.x1);
   // sqrt(uu-sqr(uv)/vv) would be faster, but is less accurate for extremely small distances
-  return magnitude(u-uv/vv*v);
+  return sqr_magnitude(u-uv/vv*v);
+}
+
+template<int d> T segment_point_distance(Segment<Vector<T,d>> s, Vector<T,d> p) {
+  return sqrt(segment_point_sqr_distance(s,p));
 }
 
 Tuple<T,TV3,T> line_point_distance_and_normal(Segment<TV3> s, TV3 p) {
@@ -430,6 +434,7 @@ template<int d> static void segment_tests(const int steps) {
   template GEODE_CORE_EXPORT T interpolation_fraction(const Segment<Vector<T,d>>&,const Vector<T,d>); \
   template GEODE_CORE_EXPORT T clamped_interpolation_fraction(const Segment<Vector<T,d>>&,const Vector<T,d>); \
   template GEODE_CORE_EXPORT T segment_point_distance(Segment<Vector<T,d>>,Vector<T,d>); \
+  template GEODE_CORE_EXPORT T segment_point_sqr_distance(Segment<Vector<T,d>>,Vector<T,d>); \
   template GEODE_CORE_EXPORT T segment_segment_distance(Segment<Vector<T,d>>,Segment<Vector<T,d>>); \
   template GEODE_CORE_EXPORT Tuple<T,Vector<T,d>,T> segment_point_distance_and_normal(Segment<Vector<T,d>> s, Vector<T,d> p); \
   template GEODE_CORE_EXPORT Tuple<T,TV3,TV2> segment_segment_distance_and_normal(const Segment<Vector<T,d>>,const Segment<Vector<T,d>>);
