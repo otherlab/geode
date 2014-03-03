@@ -31,6 +31,13 @@ class Nested(object):
     object.__setattr__(self,"flat",ascontiguousarray(flat,dtype=dtype))
 
   @staticmethod
+  def manual(offsets,flat):
+    self = object.__new__(Nested)
+    object.__setattr__(self,'offsets',offsets)
+    object.__setattr__(self,'flat',flat)
+    return self
+
+  @staticmethod
   def zeros(lengths,dtype=int32):
     lengths = asarray(lengths)
     assert all(lengths>=0)
@@ -49,6 +56,9 @@ class Nested(object):
     self.offsets.setflags(write=False)
     object.__setattr__(self,'flat',empty(self.offsets[-1],dtype=dtype))
     return self
+
+  def copy(self):
+    return Nested.manual(self.offsets,self.flat.copy())
 
   def __setattr__(*args):
     raise TypeError('Nested attributes cannot be set')
