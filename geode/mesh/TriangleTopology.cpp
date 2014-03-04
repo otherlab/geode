@@ -98,6 +98,7 @@ VertexId TriangleTopology::internal_add_vertex() {
 }
 
 VertexId TriangleTopology::internal_add_vertices(int n) {
+  GEODE_ASSERT(n >= 0);
   int id = n_vertices_;
   const_cast<int&>(n_vertices_) += n;
   const_cast_(vertex_to_edge_).const_cast_().flat.resize(vertex_to_edge_.size()+n);
@@ -397,6 +398,7 @@ bool TriangleTopology::has_isolated_vertices() const {
 }
 
 int TriangleTopology::degree(VertexId v) const {
+  GEODE_ASSERT(valid(v));
   int degree = 0;
   for (GEODE_UNUSED auto _ : outgoing(v))
     degree++;
@@ -1187,6 +1189,26 @@ bool TriangleTopology::is_garbage_collected() const {
          n_boundary_edges_ == boundaries_.size();
 }
 
+Array<VertexId> TriangleTopology::vertex_one_ring(VertexId v) const {
+  GEODE_ASSERT(valid(v));
+  Array<VertexId> result;
+  for (auto h : outgoing(v)) {
+    result.append(dst(h));
+  }
+  return result;
+}
+
+inline Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
+  GEODE_ASSERT(valid(v));
+  Array<FaceId> faces;
+  for (const auto h : outgoing(v)) {
+    const auto f = face(h);
+    if (f.valid())
+      faces.append(f);
+  }
+  return faces;
+}
+
 #ifdef GEODE_PYTHON
 
 #define ADD_FIELD_HELPER(prim, ...) \
@@ -1476,10 +1498,77 @@ template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<FaceId>>);
 template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<HalfedgeId>>);
 #endif
 
+static string id_error(const TriangleTopology& mesh, const VertexId x) {
+  return x.id==invalid_id              ? "invalid vertex id"
+       : x.id==erased_id               ? "erased vertex id"
+       : format(  !mesh.vertex_to_edge_.valid(x) ? "out of range vertex %d"
+                : mesh.erased(x)                 ? "erased vertex %d"
+                                                 : "internal error on vertex %d",x.id);
+}
+static string id_error(const TriangleTopology& mesh, const FaceId x) {
+  return x.id==invalid_id              ? "invalid face id"
+       : x.id==erased_id               ? "erased face id"
+       : format(  !mesh.faces_.valid(x) ? "out of range face %d"
+                : mesh.erased(x)        ? "erased face %d"
+                                        : "internal error on face %d",x.id);
+}
+static string id_error(const TriangleTopology& mesh, const HalfedgeId x) {
+  if (x.id==invalid_id) return "invalid halfedge id";
+  if (x.id==erased_id) return "erased halfedge id";
+    return format(  (x.id>=0 ? !mesh.faces_.valid(FaceId(x.id/3))
+                             : !mesh.boundaries_.valid(-1-x.id)) ? "out of range interior halfedge %d"
+                  : mesh.erased(x)                               ? "interior halfedge %d in erased face"
+                                                                 : "internal error on halfedge %d",x.id);
+}
+
+// Safe versions of functions for python
+#define MAKE_SAFE_2(ff,f,Id) \
+  decltype((*(const TriangleTopology*)0).f(Id())) TriangleTopology::safe_##ff(Id x) const { \
+    if (!valid(x)) \
+      throw ValueError(format("TriangleTopology::" #ff ": %s",id_error(*this,x))); \
+    return f(x); \
+  }
+#define MAKE_SAFE(f,Id) MAKE_SAFE_2(f,f,Id)
+MAKE_SAFE(halfedge,VertexId)
+MAKE_SAFE(prev,    HalfedgeId)
+MAKE_SAFE(next,    HalfedgeId)
+MAKE_SAFE(src,     HalfedgeId)
+MAKE_SAFE(dst,     HalfedgeId)
+MAKE_SAFE(face,    HalfedgeId)
+MAKE_SAFE(left,    HalfedgeId)
+MAKE_SAFE(right,   HalfedgeId)
+MAKE_SAFE_2(face_vertices,    vertices, FaceId)
+MAKE_SAFE_2(face_halfedges,   halfedges,FaceId)
+MAKE_SAFE_2(halfedge_vertices,vertices, HalfedgeId)
+MAKE_SAFE_2(face_faces,       faces,    FaceId)
+MAKE_SAFE_2(halfedge_faces,   faces,    HalfedgeId)
+MAKE_SAFE(outgoing,VertexId)
+MAKE_SAFE(incoming,VertexId)
+
+HalfedgeId TriangleTopology::safe_halfedge_between(VertexId v0, VertexId v1) const {
+  const bool b0 = !valid(v0),
+             b1 = !valid(v1);
+  if (b0 || b1)
+    throw ValueError(format("TriangleTopology::halfedge_between: %s vertex error: %s",
+      b0 ? "first" : "second",id_error(*this,b0 ? v0 : v1)));
+  return halfedge(v0,v1);
+}
+
+#define SAFE_ERASE(prim,Id) \
+  void MutableTriangleTopology::safe_erase_##prim(Id x, bool erase_isolated) { \
+    if (!valid(x)) \
+      throw ValueError(format("MutableTriangleTopology::erase_" #prim ": %s",id_error(*this,x))); \
+    erase(x); \
+  }
+SAFE_ERASE(face,FaceId)
+SAFE_ERASE(vertex,VertexId)
+SAFE_ERASE(halfedge,HalfedgeId)
+
 }
 using namespace geode;
 
 void wrap_corner_mesh() {
+  #define SAFE_METHOD(name) GEODE_METHOD_2(#name,safe_##name)
   {
     typedef TriangleTopology Self;
     Class<Self>("TriangleTopology")
@@ -1491,21 +1580,21 @@ void wrap_corner_mesh() {
       .GEODE_GET(n_edges)
       .GEODE_GET(n_faces)
       .GEODE_GET(chi)
-      .GEODE_OVERLOADED_METHOD(HalfedgeId(Self::*)(VertexId)const, halfedge)
-      .GEODE_METHOD(prev)
-      .GEODE_METHOD(next)
-      .GEODE_METHOD(src)
-      .GEODE_METHOD(dst)
-      .GEODE_METHOD(face)
-      .GEODE_METHOD(left)
-      .GEODE_METHOD(right)
-      .method("face_vertices", static_cast<Vector<VertexId,3>(Self::*)(FaceId)const>(&Self::vertices))
-      .method("face_halfedges", static_cast<Vector<HalfedgeId,3>(Self::*)(FaceId)const>(&Self::halfedges))
-      .method("halfedge_vertices", static_cast<Vector<VertexId,2>(Self::*)(HalfedgeId)const>(&Self::vertices))
-      .method("face_faces", static_cast<Vector<FaceId,3>(Self::*)(FaceId)const>(&Self::faces))
-      .method("halfedge_faces", static_cast<Vector<FaceId,2>(Self::*)(HalfedgeId)const>(&Self::faces))
-      .GEODE_METHOD(outgoing)
-      .GEODE_METHOD(incoming)
+      .SAFE_METHOD(halfedge)
+      .SAFE_METHOD(prev)
+      .SAFE_METHOD(next)
+      .SAFE_METHOD(src)
+      .SAFE_METHOD(dst)
+      .SAFE_METHOD(face)
+      .SAFE_METHOD(left)
+      .SAFE_METHOD(right)
+      .SAFE_METHOD(face_vertices)
+      .SAFE_METHOD(face_halfedges)
+      .SAFE_METHOD(halfedge_vertices)
+      .SAFE_METHOD(face_faces)
+      .SAFE_METHOD(halfedge_faces)
+      .SAFE_METHOD(outgoing)
+      .SAFE_METHOD(incoming)
       .GEODE_METHOD(vertex_one_ring)
       .GEODE_METHOD(incident_faces)
       .GEODE_OVERLOADED_METHOD_2(HalfedgeId(Self::*)(VertexId, VertexId)const, "halfedge_between", halfedge)
@@ -1541,9 +1630,9 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(add_vertices)
       .GEODE_METHOD(add_face)
       .GEODE_METHOD(add_faces)
-      .GEODE_OVERLOADED_METHOD_2(void(Self::*)(FaceId,bool), "erase_face", erase)
-      .GEODE_OVERLOADED_METHOD_2(void(Self::*)(VertexId,bool), "erase_vertex", erase)
-      .GEODE_OVERLOADED_METHOD_2(void(Self::*)(HalfedgeId,bool), "erase_halfedge", erase)
+      .SAFE_METHOD(erase_face)
+      .SAFE_METHOD(erase_vertex)
+      .SAFE_METHOD(erase_halfedge)
       .GEODE_METHOD(collect_garbage)
       .GEODE_METHOD(collect_boundary_garbage)
       #ifdef GEODE_PYTHON
