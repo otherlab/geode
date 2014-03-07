@@ -210,8 +210,8 @@ public:
   inline Range<TriangleTopologyIncoming> incoming(VertexId v) const;
   inline Vector<FaceId,2> faces(HalfedgeId e) const; // vec(face(e), face(reverse(e)))
 
-  inline Array<VertexId> vertex_one_ring(VertexId v) const;
-  inline Array<FaceId> incident_faces(VertexId v) const;
+  Array<VertexId> vertex_one_ring(VertexId v) const;
+  Array<FaceId> incident_faces(VertexId v) const;
 
   // Iterate over vertices, edges, or faces, skipping erased entries.
   inline Range<TriangleTopologyIter<VertexId>>   vertices()           const;
@@ -256,6 +256,24 @@ public:
   inline Range<IdIter<HalfedgeId>> all_halfedges() const;
   inline Range<IdIter<HalfedgeId>> all_interior_halfedges() const;
   inline Range<IdIter<HalfedgeId>> all_boundary_edges() const;
+
+  // Safe versions of functions for python
+  HalfedgeId safe_halfedge(VertexId v) const;
+  HalfedgeId safe_prev    (HalfedgeId e) const;
+  HalfedgeId safe_next    (HalfedgeId e) const;
+  VertexId   safe_src     (HalfedgeId e) const;
+  VertexId   safe_dst     (HalfedgeId e) const;
+  FaceId     safe_face    (HalfedgeId e) const;
+  HalfedgeId safe_left    (HalfedgeId e) const;
+  HalfedgeId safe_right   (HalfedgeId e) const;
+  Vector<VertexId,3>   safe_face_vertices    (FaceId f) const;
+  Vector<HalfedgeId,3> safe_face_halfedges   (FaceId f) const;
+  Vector<VertexId,2>   safe_halfedge_vertices(HalfedgeId e) const;
+  Vector<FaceId,3>     safe_face_faces       (FaceId f) const;
+  Vector<FaceId,2>     safe_halfedge_faces   (HalfedgeId e) const;
+  Range<TriangleTopologyOutgoing> safe_outgoing(VertexId v) const;
+  Range<TriangleTopologyIncoming> safe_incoming(VertexId v) const;
+  HalfedgeId safe_halfedge_between(VertexId v0, VertexId v1) const;
 };
 
 // A mutable topology, with attached fields on vertices, faces, or halfedges, which are maintained through
@@ -442,6 +460,11 @@ public:
   // Remove the last vertex from the mesh, shuffling face and halfedge ids in the process.
   // This exists solely to erase sentinel vertices created by Delaunay.
   GEODE_CORE_EXPORT void erase_last_vertex_with_reordering();
+
+  // Safe versions of functions for Python
+  void safe_erase_face    (FaceId f,     bool erase_isolated=false);
+  void safe_erase_vertex  (VertexId v,   bool erase_isolated=false);
+  void safe_erase_halfedge(HalfedgeId e, bool erase_isolated=false);
 };
 
 
@@ -610,22 +633,6 @@ inline Range<TriangleTopologyIncoming> TriangleTopology::incoming(VertexId v) co
   const auto e = halfedge(v);
   const TriangleTopologyIncoming c(*this,e,e.valid());
   return Range<TriangleTopologyIncoming>(c,c);
-}
-
-inline Array<VertexId> TriangleTopology::vertex_one_ring(VertexId v) const {
-  Array<VertexId> result;
-  for (auto h : outgoing(v)) {
-    result.append(dst(h));
-  }
-  return result;
-}
-
-inline Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
-  Array<FaceId> result;
-  for (auto h : outgoing(v)) {
-    result.append(face(h));
-  }
-  return result;
 }
 
 // Use only throw vertices(), faces(), or boundary_edges()
