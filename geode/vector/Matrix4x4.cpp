@@ -69,9 +69,15 @@ cofactor_matrix() const
     return Matrix(y[0],y[1],y[2],y[3],y[4],y[5],y[6],y[7],y[8],y[9],y[10],y[11],y[12],y[13],y[14],y[15]);
 }
 
-typedef real T;
-template Matrix<T,4> Matrix<T,4>::operator*(const Matrix&) const;
-template void Matrix<T,4>::invert();
-template Matrix<T,4> Matrix<T,4>::inverse() const;
-template Matrix<T,4> Matrix<T,4>::cofactor_matrix() const;
+template Matrix<float,4> Matrix<float,4>::operator*(const Matrix&) const;
+template void Matrix<float,4>::invert();
+template Matrix<float,4> Matrix<float,4>::inverse() const;
+template Matrix<float,4> Matrix<float,4>::cofactor_matrix() const;
+
+template Matrix<double,4> Matrix<double,4>::operator*(const Matrix&) const;
+template void Matrix<double,4>::invert();
+template Matrix<double,4> Matrix<double,4>::inverse() const;
+template Matrix<double,4> Matrix<double,4>::cofactor_matrix() const;
+
+
 }
