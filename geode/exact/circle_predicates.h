@@ -4,18 +4,18 @@
 #include <geode/exact/Interval.h>
 namespace geode {
 
-// Unfortunately, circular arc CSG requires a rather large number of predicates, all doing extremely similar things.  In particular,
-// most of these routines answer questions about the relative positions of intersections between arcs.  Therefore, we precompute
-// these intersections wherever possible, so that most questions can be answered with fast interval queries.  This mechanism also
-// allows testing to be integrated into each routine, via a compile time flag that answers a question the fast way *and* the slow way
-// and asserts consistency.
+// Unfortunately, circular arc CSG requires a rather large number of predicates, all doing extremely similar things.
+// In particular, most of these routines answer questions about the relative positions of intersections between arcs.
+// Therefore, we precompute these intersections wherever possible, so that most questions can be answered with fast
+// interval queries.  This mechanism also allows testing to be integrated into each routine, via a compile time flag
+// that answers a question the fast way *and* the slow way and asserts consistency.
 
 // A precomputed intersection of two arcs
 struct Vertex {
   int i0,i1; // Flat indices of the previous and next circle
   bool left; // True if the intersection is to the left of the (i,j) segment
   uint8_t q0,q1; // Quadrants relative to i0's center and i1's center, respectively
-  exact::Vec2 rounded; // The nearly exactly rounded intersect, differing from the exact intersection by at most vertex::tolerance.
+  exact::Vec2 rounded; // The nearly exactly rounded intersect, differing from the exact intersection by at most Vertex::tolerance.
 
   static Quantized tolerance() { return 2; }
 
