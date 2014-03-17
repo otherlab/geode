@@ -122,7 +122,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
     const auto contour = unpruned[p];
 
     // This assert checks for contours that are a single repeated point
-    // prune_small_contours will removing these, but they shouldn't be generated in the first place.
+    // prune_small_contours will remove these, but they shouldn't be generated in the first place.
     assert(!(contour.size()==2 && contour[0].left!=contour[1].left));
 
     for (const auto& arc : contour)
