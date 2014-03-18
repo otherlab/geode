@@ -447,8 +447,8 @@ static Tuple<Quantized, Vector<Quantized,2>> construct_circle_radius_and_center(
 
 #if CHECK_CONSTRUCTIONS
   // Check that min_r correctly computed
-  GEODE_ASSERT(!is_negative(small_mul(4,sqr(min_r)) - d_sqr));
-  GEODE_ASSERT((min_r == min_valid_r) || is_negative(small_mul(4,sqr(min_r - Exact<1>(1))) - d_sqr)); // Check that we are at min_r or subtracting 1 gives in imaginary root
+  GEODE_ASSERT(!is_negative(sqr(min_r<<1) - d_sqr));
+  GEODE_ASSERT((min_r == min_valid_r) || is_negative(sqr((min_r<<1) - Exact<1>(2)) - d_sqr)); // Check that we are at min_r or subtracting 1 gives in imaginary root
 #endif
 
   const Quantized qr = round(magnitude(.25*abs(q+1/q)*(x0-x1)));
@@ -459,9 +459,9 @@ static Tuple<Quantized, Vector<Quantized,2>> construct_circle_radius_and_center(
   const Vector<Quantized,2> midpoint = snap_div(ex0 + ex1, Exact<1>(2), false);
 
   assert(is_nonzero(d_sqr));
-  const Exact<2> c_root_num = small_mul(4,sqr(r)) - d_sqr;
+  const Exact<2> c_root_num = sqr(r<<1) - d_sqr;
   assert(!is_negative(c_root_num));
-  const Exact<2> c_root_denom = small_mul(4, d_sqr);
+  const Exact<2> c_root_denom = d_sqr<<2;
   const auto ortho = delta.orthogonal_vector();
 
   const Vector<Quantized,2> h = ((q>0)^(abs(q)>1)?1:-1)*Vector<Quantized, 2>(sign(ortho))*snap_div(emul(c_root_num,esqr(ortho)), c_root_denom, true);

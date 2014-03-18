@@ -427,16 +427,6 @@ template<bool add> bool circle_intersections_upwards(Arcs arcs, const Vertex a, 
 
 // Are the intersections of two circles with a third counterclockwise?  In other words, is the triangle c0,x01,x02 positively oriented?
 // The two intersections are assumed to exist.
-namespace {
-// ai is true if we're the coefficient of the ith sqrt
-template<bool a0,bool a1> struct Ordered { static Exact<6-2*(a0+a1)> eval(const LV3 S0, const LV3 S1, const LV3 S2) {
-  const auto c0 = S0.xy(), c1 = S1.xy(), c2 = S2.xy();
-  const auto dc1 = c1-c0, dc2 = c2-c0;
-  return choice<a0>(Alpha::eval(S0,S1),One())
-       * choice<a1>(Alpha::eval(S0,S2),One())
-       * small_mul(a0 && !a1 ? -1 : 1, choice<a0!=a1>(edet(dc1,dc2),edot(dc1,dc2)));
-}};
-}
 static bool circle_intersections_ccw_helper(Arcs arcs, const Vertex v0, const Vertex v1) {
   assert(v0.i0==v1.i0);
   // Perform case analysis based on the two quadrants
