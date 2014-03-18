@@ -3,6 +3,8 @@
 #include <geode/exact/Exact.h>
 #include <geode/array/alloca.h>
 #include <geode/array/Subarray.h>
+#include <geode/python/wrap.h>
+#include <geode/random/Random.h>
 namespace geode {
 
 RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x) {
@@ -64,4 +66,67 @@ string mpz_str(Subarray<const mp_limb_t,2> limbs, const bool hex) {
   return s;
 }
 
+template<int a> static string hex(const Exact<a> x) {
+  return mpz_str(asarray(x.n),true);
+}
+
+template<int a> static inline Exact<a> random_exact(Random& random) {
+  Exact<a> x(uninit);
+  for (int i=0;i<x.limbs;i++)
+    x.n[i] = random.bits<mp_limb_t>();
+  return x;
+}
+
+static void fast_exact_tests() {
+#if !GEODE_FAST_EXACT
+  cout << "No fast exact arithmetic" << endl;
+#else
+  const auto random = new_<Random>(1823131);
+  for (int i=0;i<32;i++) {
+    #define SAME(a) { \
+      const auto x = random_exact<a>(random), \
+                 y = random_exact<a>(random), \
+                 p = x + y, \
+                 m = x - y, \
+                 s = x << 2; \
+      const auto xx = sqr(x); \
+      Exact<a> r(uninit); \
+      mpn_add_n(r.n,x.n,y.n,r.limbs); \
+      GEODE_ASSERT(r == p,format("add %d:\n    x %s\n    y %s\n  x+y %s\n    r %s",a,hex(x),hex(y),hex(p),hex(r))); \
+      mpn_sub_n(r.n,x.n,y.n,r.limbs); \
+      GEODE_ASSERT(r == m); \
+      mpn_lshift(r.n,x.n,x.limbs,2); \
+      GEODE_ASSERT(r == s); \
+      Exact<2*a> rr(uninit); \
+      const auto ax = is_negative(x) ? -x : x; \
+      mpn_sqr(rr.n,ax.n,x.limbs); \
+      GEODE_ASSERT(rr == xx,format("sqr %d:\n   x %s\n  xx %s\n   r %s",a,hex(x),hex(xx),hex(rr))); }
+    #define MUL(a,b) { \
+      const auto x = random_exact<a>(random); \
+      const auto y = random_exact<b>(random); \
+      const auto xy = x*y; \
+      Exact<a+b> r(uninit); \
+      mpn_mul(r.n,x.n,x.limbs,y.n,y.limbs); \
+      if (is_negative(x)) mpn_sub_n(r.n+x.limbs,r.n+x.limbs,y.n,y.limbs); \
+      if (is_negative(y)) mpn_sub_n(r.n+y.limbs,r.n+y.limbs,x.n,x.limbs); \
+      GEODE_ASSERT(r == xy,format("mul %d %d:\n   x %s\n   y %s\n  xy %s\n   r %s", \
+                                  a,b,hex(x),hex(y),hex(xy),hex(r))); }
+    SAME(1)
+    SAME(2)
+    SAME(3)
+    MUL(1,1)
+    MUL(2,2)
+    MUL(3,3)
+    MUL(2,1)
+    MUL(3,1)
+    MUL(3,2)
+  }
+#endif
+}
+
+}
+using namespace geode;
+
+void wrap_exact_exact() {
+  GEODE_FUNCTION(fast_exact_tests)
 }

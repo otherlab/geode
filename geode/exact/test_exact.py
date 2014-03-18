@@ -4,6 +4,9 @@ from __future__ import division
 from geode import *
 import sys
 
+def test_fast_exact():
+  fast_exact_tests()
+
 def test_predicates():
   predicate_tests()
 
@@ -87,6 +90,7 @@ if __name__=='__main__':
     Mesh = HalfedgeMesh if '-h' in sys.argv else TriangleTopology
     test_delaunay(Mesh=Mesh,benchmark=True,origin=False,cgal=cgal,circle=circle,constrain=False)
   else:
+    test_fast_exact()
     test_predicates()
     test_constructions()
     test_delaunay()

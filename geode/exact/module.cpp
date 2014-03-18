@@ -3,8 +3,8 @@
 #include <geode/exact/circle_csg.h>
 using namespace geode;
 
-
 void wrap_exact() {
+  GEODE_WRAP(exact_exact)
   GEODE_WRAP(perturb)
   GEODE_WRAP(predicates)
   GEODE_WRAP(constructions)
