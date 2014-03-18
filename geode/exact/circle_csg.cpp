@@ -223,7 +223,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
           }
         };
         const Vertex sort_start = is_full_circle ? other[0].reverse() : vertices[i]; // For a full circle use an arbitrary vertex for the start
-        sort(other.slice(0 + is_full_circle, other.size()), PairOrder(arcs,sort_start));
+        sort(other.slice(is_full_circle,other.size()),PairOrder(arcs,sort_start));
       }
     }
 
