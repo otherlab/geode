@@ -55,7 +55,7 @@ static Vertex make_placeholder_vertex(Arcs arcs, int i0) {
 // Check if an arc has the same (symbolic) vertex repeated (should indicate a full circle)
 bool arc_is_repeated_vertex(Arcs arcs, const Vertex& v01, const Vertex& v12) {
   assert(v01.i1 == v12.i0);
-  return arcs_from_same_circle(arcs, v01.i0, v12.i1) && 
+  return arcs_from_same_circle(arcs, v01.i0, v12.i1) &&
     (v01.left != v12.left || arcs_from_same_circle(arcs, v01.i0, v12.i0));
 }
 
@@ -401,9 +401,9 @@ template<bool add,class P3> GEODE_ALWAYS_INLINE static inline bool perturbed_upw
     //   F sA> -2 A Bi sqrt(Ci)
     //   F^2 sAsF> 4 A^2 Bi^2 Ci
     //   F^2 - 4 A^2 Bi^2 Ci sAsF> 0
-    //   E sAsF> 0 
+    //   E sAsF> 0
     // since we have
-    //   E = F^2 - 4 A^2 Bi^2 Ci = D^2 - 4 B1^2 B2^2 C1 C2 // The formula for E from above 
+    //   E = F^2 - 4 A^2 Bi^2 Ci = D^2 - 4 B1^2 B2^2 C1 C2 // The formula for E from above
     sign_flips = sA*sF;
   }
 
