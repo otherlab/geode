@@ -61,6 +61,9 @@ template<class I> struct Range<I,typename enable_if<is_integral<I>>::type> {
   I back() const { assert(lo<hi); return hi-1; }
 
   bool contains(I i) const { return lo <= i && i < hi; }
+
+  bool operator==(const Range r) const { return lo==r.lo && hi==r.hi; }
+  bool operator!=(const Range r) const { return lo!=r.lo || hi!=r.hi; }
 };
 
 template<class Iter> static inline Range<Iter> range(const Iter& lo, const Iter& hi) {

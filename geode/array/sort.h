@@ -1,6 +1,4 @@
-//#####################################################################
-// Functions Sort and Stable_Sort
-//#####################################################################
+// sort and stable_sort
 #pragma once
 
 #include <geode/array/Array.h>

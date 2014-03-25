@@ -55,7 +55,7 @@ static Vertex make_placeholder_vertex(Arcs arcs, int i0) {
 // Check if an arc has the same (symbolic) vertex repeated (should indicate a full circle)
 bool arc_is_repeated_vertex(Arcs arcs, const Vertex& v01, const Vertex& v12) {
   assert(v01.i1 == v12.i0);
-  return arcs_from_same_circle(arcs, v01.i0, v12.i1) && 
+  return arcs_from_same_circle(arcs, v01.i0, v12.i1) &&
     (v01.left != v12.left || arcs_from_same_circle(arcs, v01.i0, v12.i0));
 }
 
@@ -153,13 +153,13 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
 #if CHECK
       check_linear = linear;
 #endif
-      if (small(linear,1)) {
+      if (small(linear,.5)) {
         const auto beta_hat = assume_safe_sqrt((sqr_r0*(sqr_dc<<2))-sqr(alpha_hat));
         const auto quadratic = half_inv_sqr_dc*beta_hat*rotate_left_90(dc);
 #if CHECK
         check_quadratic = quadratic;
 #endif
-        if (small(quadratic,1) && !CHECK) {
+        if (small(quadratic,.5) && !CHECK) {
           const auto sl = snap(linear),
                      sq = snap(quadratic);
           v.x.rounded = sl-sq;
@@ -172,7 +172,7 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
 
   {
     // If intervals fail, evaluate and round using symbolic perturbation.  For simplicity, we round the sqrt part
-    // separately from the rational part, at the cost of a maximum error of 2.  The full formula is
+    // separately from the rational part, at the cost of a maximum error of 1 (1/2+1/2).  The full formula is
     //
     //   X = FR +- perp(sqrt(FS))
     #define MOST \
@@ -205,10 +205,10 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
     fs = rotate_left_90(fs*EV2(axis_less<0>(X[0],X[1])?1:-1,
                                axis_less<1>(X[0],X[1])?1:-1));
 #if CHECK
-    GEODE_ASSERT(   check_linear.x.thickened(1).contains(fr.x)
-                 && check_linear.y.thickened(1).contains(fr.y));
-    GEODE_ASSERT(   check_quadratic.x.thickened(1).contains(fs.x)
-                 && check_quadratic.y.thickened(1).contains(fs.y));
+    GEODE_ASSERT(   check_linear.x.thickened(.5).contains(fr.x)
+                 && check_linear.y.thickened(.5).contains(fr.y));
+    GEODE_ASSERT(   check_quadratic.x.thickened(.5).contains(fs.x)
+                 && check_quadratic.y.thickened(.5).contains(fs.y));
 #endif
     v.x.rounded = fr - fs;
     v.y.rounded = fr + fs;
@@ -401,9 +401,9 @@ template<bool add,class P3> GEODE_ALWAYS_INLINE static inline bool perturbed_upw
     //   F sA> -2 A Bi sqrt(Ci)
     //   F^2 sAsF> 4 A^2 Bi^2 Ci
     //   F^2 - 4 A^2 Bi^2 Ci sAsF> 0
-    //   E sAsF> 0 
+    //   E sAsF> 0
     // since we have
-    //   E = F^2 - 4 A^2 Bi^2 Ci = D^2 - 4 B1^2 B2^2 C1 C2 // The formula for E from above 
+    //   E = F^2 - 4 A^2 Bi^2 Ci = D^2 - 4 B1^2 B2^2 C1 C2 // The formula for E from above
     sign_flips = sA*sF;
   }
 
@@ -417,6 +417,13 @@ template<bool add,class P3> GEODE_ALWAYS_INLINE static inline bool perturbed_upw
 
 template<bool add> bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b) {
   assert(a!=b && a.i0==b.i0);
+  if (!add) {
+    // Check x coordinates of intervals in addition to y coordinates for additional pruning
+    assert(a.q0 == b.q0);
+    const int s = weak_sign(b.p().x-a.p().x);
+    if (s)
+      return !(a.q0 & 1) ^ (s > 0);
+  }
   return FILTER(add ? a.p().y+b.p().y-2*arcs[a.i0].center.y : b.p().y-a.p().y,
                (   arcs_from_same_circle(arcs,a.i1,b.i1)
                 || (arcs_from_same_circle(arcs,a.i0,b.i1) && arcs_from_same_circle(arcs,a.i1,a.i0)))
