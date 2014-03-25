@@ -40,7 +40,8 @@ bool Random::bit() { return bits<bool>(); }
 template  uint8_t Random::bits();
 template uint16_t Random::bits();
 template uint32_t Random::bits();
-template uint64_t Random::bits();
+template unsigned long Random::bits();
+template unsigned long long Random::bits();
 
 #define INT(I,UI) \
   template<> I Random::uniform(const I a, const I b) { \

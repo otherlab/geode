@@ -141,7 +141,7 @@ public:
 
   Vector<int,2> index(const int i) const {
     int x = i/n;
-    return vec(x, i-x);
+    return vec(x, i-x*n);
   }
 
   T& operator[](const Vector<int,d>& index) const {
