@@ -44,7 +44,7 @@ template<> struct FromPython<CBLAS_TRANSPOSE>{GEODE_CORE_EXPORT static CBLAS_TRA
 #define DECLARE(name,...)
 #define BC(name) BOOST_PP_CAT(a,name)
 #else
-#define DECLARE(name,...) extern "C" { void BOOST_PP_CAT(a,BOOST_PP_CAT(name,_))(__VA_ARGS__); }
+#define DECLARE(name,...) extern "C" { int BOOST_PP_CAT(a,BOOST_PP_CAT(name,_))(__VA_ARGS__); }
 #define BC(name) BOOST_PP_CAT(a,BOOST_PP_CAT(name,_))
 #endif
 
