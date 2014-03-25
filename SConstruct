@@ -243,7 +243,7 @@ if env['Werror']:
 
 # Relax a few warnings for clang
 if clang:
-  env.Append(CXXFLAGS=' -Wno-array-bounds -Wno-unknown-pragmas') # for Python and OpenMP, respectively
+  env.Append(CXXFLAGS=' -Wno-array-bounds -Wno-unknown-pragmas -Wno-deprecated') # for Python and OpenMP, respectively
 
 if env['type']=='release' or env['type']=='profile' or env['type']=='optdebug':
   env.Append(CPPDEFINES=['NDEBUG'])
