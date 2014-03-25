@@ -153,13 +153,13 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
 #if CHECK
       check_linear = linear;
 #endif
-      if (small(linear,1)) {
+      if (small(linear,.5)) {
         const auto beta_hat = assume_safe_sqrt((sqr_r0*(sqr_dc<<2))-sqr(alpha_hat));
         const auto quadratic = half_inv_sqr_dc*beta_hat*rotate_left_90(dc);
 #if CHECK
         check_quadratic = quadratic;
 #endif
-        if (small(quadratic,1) && !CHECK) {
+        if (small(quadratic,.5) && !CHECK) {
           const auto sl = snap(linear),
                      sq = snap(quadratic);
           v.x.rounded = sl-sq;
@@ -172,7 +172,7 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
 
   {
     // If intervals fail, evaluate and round using symbolic perturbation.  For simplicity, we round the sqrt part
-    // separately from the rational part, at the cost of a maximum error of 2.  The full formula is
+    // separately from the rational part, at the cost of a maximum error of 1 (1/2+1/2).  The full formula is
     //
     //   X = FR +- perp(sqrt(FS))
     #define MOST \
@@ -205,10 +205,10 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
     fs = rotate_left_90(fs*EV2(axis_less<0>(X[0],X[1])?1:-1,
                                axis_less<1>(X[0],X[1])?1:-1));
 #if CHECK
-    GEODE_ASSERT(   check_linear.x.thickened(1).contains(fr.x)
-                 && check_linear.y.thickened(1).contains(fr.y));
-    GEODE_ASSERT(   check_quadratic.x.thickened(1).contains(fs.x)
-                 && check_quadratic.y.thickened(1).contains(fs.y));
+    GEODE_ASSERT(   check_linear.x.thickened(.5).contains(fr.x)
+                 && check_linear.y.thickened(.5).contains(fr.y));
+    GEODE_ASSERT(   check_quadratic.x.thickened(.5).contains(fs.x)
+                 && check_quadratic.y.thickened(.5).contains(fs.y));
 #endif
     v.x.rounded = fr - fs;
     v.y.rounded = fr + fs;
