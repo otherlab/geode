@@ -417,6 +417,13 @@ template<bool add,class P3> GEODE_ALWAYS_INLINE static inline bool perturbed_upw
 
 template<bool add> bool circle_intersections_upwards(Arcs arcs, const Vertex a, const Vertex b) {
   assert(a!=b && a.i0==b.i0);
+  if (!add) {
+    // Check x coordinates of intervals in addition to y coordinates for additional pruning
+    assert(a.q0 == b.q0);
+    const int s = weak_sign(b.p().x-a.p().x);
+    if (s)
+      return !(a.q0 & 1) ^ (s > 0);
+  }
   return FILTER(add ? a.p().y+b.p().y-2*arcs[a.i0].center.y : b.p().y-a.p().y,
                (   arcs_from_same_circle(arcs,a.i1,b.i1)
                 || (arcs_from_same_circle(arcs,a.i0,b.i1) && arcs_from_same_circle(arcs,a.i1,a.i0)))
