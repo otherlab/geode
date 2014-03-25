@@ -134,18 +134,6 @@ static bool mpz_nonzero(RawArray<const mp_limb_t> x) {
   return !x.contains_only(0);
 }
 
-// x <<= count
-static inline void mpz_lshift(RawArray<mp_limb_t> x, const int count) {
-  assert(0<count && count<int(8*sizeof(mp_limb_t)));
-  mpn_lshift(x.data(),x.data(),x.size(),count);
-}
-
-// x += y
-static inline void mpz_add(RawArray<mp_limb_t> x, RawArray<const mp_limb_t> y) {
-  assert(x.size()==y.size());
-  mpn_add_n(x.data(),x.data(),y.data(),x.size());
-}
-
 // x -= y
 static inline void mpz_sub(RawArray<mp_limb_t> x, RawArray<const mp_limb_t> y) {
   assert(x.size()==y.size());
