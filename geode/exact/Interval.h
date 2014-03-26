@@ -19,6 +19,9 @@ using std::ostream;
 // Intervals are treated as scalars so that they are preserved through various arithmetic operations
 template<> struct IsScalar<Interval> : public mpl::true_ {};
 
+// Use packed hashing
+template<> struct is_packed_pod<Interval> : public mpl::true_ {};
+
 struct Interval {
   typedef IntervalScope Scope;
 

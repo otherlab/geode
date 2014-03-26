@@ -137,6 +137,10 @@ struct HorizontalVertex {
   GEODE_UNUSED friend ostream& operator<<(ostream& output, const HorizontalVertex h) {
     return output<<format("(%d,%s,%c)",h.arc,repr(h.y),h.left?'L':'R');
   }
+
+  friend Hash hash_reduce(const HorizontalVertex v) {
+    return Hash(v.arc,v.left,v.q0,v.y,v.x);
+  }
 };
 
 // Does a circle intersect a horizontal line (degree 1)?
