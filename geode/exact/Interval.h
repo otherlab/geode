@@ -164,20 +164,20 @@ inline Interval Interval::operator*(const Interval x) const {
   Interval r;
   if (b <= 0) {
     if (d <= 0) {
-      r.nlo = -b * d;
+      r.nlo = b * -d;
       r.hi  = na * nc;
-    } else if (-nc <= 0 && 0 <= d) {
+    } else if (0 <= nc && 0 <= d) {
       r.nlo = na * d;
       r.hi  = na * nc;
     } else {
       r.nlo = na * d;
       r.hi  = b * -nc;
     }
-  } else if (-na <= 0 && 0 <= b) {
+  } else if (0 <= na && 0 <= b) {
     if (d <= 0) {
       r.nlo = b * nc;
       r.hi  = na * nc;
-    } else if (-nc <= 0 && 0 <= d) {
+    } else if (0 <= nc && 0 <= d) {
       r.nlo = max(na * d, b * nc);
       r.hi  = max(na * nc, b * d);
     } else {
@@ -187,12 +187,12 @@ inline Interval Interval::operator*(const Interval x) const {
   } else {
     if (d <= 0) {
       r.nlo = b * nc;
-      r.hi  = -na * d;
-    } else if (-nc <= 0 && 0 <= d) {
+      r.hi  = na * -d;
+    } else if (0 <= nc && 0 <= d) {
       r.nlo = b * nc;
       r.hi  = b * d;
     } else {
-      r.nlo = -na * nc;
+      r.nlo = na * -nc;
       r.hi  = b * d;
     }
   }
@@ -201,15 +201,20 @@ inline Interval Interval::operator*(const Interval x) const {
   return r;
 }
 
+// Clang does not understand rounding modes, and therefore assumes that x * -x = -(x * x).  Therefore,
+// we use tweak multiplication to get the lower bound in sqr.
 static inline Interval sqr(const Interval x) {
   assert(fegetround() == FE_UPWARD);
   Interval s;
+  GEODE_CLANG_ONLY(static const double tweak = 2*numeric_limits<double>::epsilon()-1;)
   if (x.nlo < 0) { // x > 0
     s.nlo = x.nlo * -x.nlo;
     s.hi = x.hi * x.hi;
+    GEODE_CLANG_ONLY(s.nlo = tweak * s.hi;)
   } else if (x.hi < 0) { // x < 0
     s.nlo = x.hi * -x.hi;
     s.hi = x.nlo * x.nlo;
+    GEODE_CLANG_ONLY(s.nlo = tweak * s.hi;)
   } else { // 0 in x
     s.nlo = 0;
     s.hi = sqr(max(x.nlo,x.hi));
@@ -218,10 +223,12 @@ static inline Interval sqr(const Interval x) {
   return s;
 }
 
+/* TODO: cube currently has incorrect rounding behavior.
 static inline Interval cube(const Interval x) {
   assert(fegetround() == FE_UPWARD);
   return Interval(-(x.nlo*x.nlo*x.nlo),x.hi*x.hi*x.hi);
 }
+*/
 
 // Provide shifts as special functions since they're exact
 GEODE_ALWAYS_INLINE static inline Interval operator<<(const Interval x, const int p) {
@@ -258,9 +265,12 @@ static inline Interval assume_safe_sqrt(const Interval x) {
   Interval s;
   // The upper bound is easy
   s.hi = sqrt(x.hi);
-  // For the lower bound, we multiply by 1-3ep < (1+e)^-2 (rounding towards zero in the multiplication) to avoid switching rounding modes.
-  const double tweak = 1-3*numeric_limits<double>::epsilon();
-  s.nlo = x.nlo>=0 ? 0 : -sqrt(-(tweak*x.nlo));
+  // For the lower bound, we multiply by 1-4ep < (1+e)(1+e)^-2 to avoid switching rounding modes.
+  // The factor of (1+e)^-2 handles the upwards rounding of sqrt, and the factor of (1+e) handles
+  // the upwards rounding of the multiplication.  The latter is required because clang replaces
+  // -(tweak*x) with (-tweak)*x.
+  const double tweak = 4*numeric_limits<double>::epsilon()-1;
+  s.nlo = x.nlo>=0 ? 0 : -sqrt(tweak*x.nlo);
   assert(-s.nlo <= s.hi);
   return s;
 }

@@ -16,6 +16,12 @@ typedef double real;
 #endif
 }
 
+#ifdef __clang__
+#define GEODE_CLANG_ONLY(...) __VA_ARGS__
+#else
+#define GEODE_CLANG_ONLY(...)
+#endif
+
 #define GEODE_NO_EXPORT // For documentation purposes
 
 #ifndef _WIN32
