@@ -106,7 +106,7 @@ public:
   }
 
   Array(const Array& source)
-    : m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
+    : Base(), m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
     GEODE_XINCREF(owner_);

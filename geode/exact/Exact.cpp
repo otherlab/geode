@@ -94,7 +94,7 @@ static void fast_exact_tests() {
       mpn_add_n(r.n,x.n,y.n,r.limbs); \
       GEODE_ASSERT(r == p,format("add %d:\n    x %s\n    y %s\n  x+y %s\n    r %s",a,hex(x),hex(y),hex(p),hex(r))); \
       mpn_sub_n(r.n,x.n,y.n,r.limbs); \
-      GEODE_ASSERT(r == m); \
+      GEODE_ASSERT(r == m,format("sub %d:\n    x %s\n    y %s\n  x-y %s\n    r %s",a,hex(x),hex(y),hex(m),hex(r))); \
       mpn_lshift(r.n,x.n,x.limbs,2); \
       GEODE_ASSERT(r == s); \
       Exact<2*a> rr(uninit); \
@@ -123,6 +123,15 @@ static void fast_exact_tests() {
   }
 #endif
 }
+
+#if 0 // Single operation routines for easy inspection of assembly
+
+Exact<2> inspect_two_limb_add(const Exact<2> x, const Exact<2> y) { return x+y; }
+Exact<4> inspect_four_limb_add(const Exact<4> x, const Exact<4> y) { return x+y; }
+Exact<4> inspect_four_limb_sub(const Exact<4> x, const Exact<4> y) { return x-y; }
+Exact<8> inspect_four_limb_mul(const Exact<4> x, const Exact<4> y) { return x*y; }
+
+#endif
 
 }
 using namespace geode;

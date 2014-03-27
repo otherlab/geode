@@ -46,9 +46,11 @@ static inline __m128d fast_select(__m128d a, __m128d b, __m128i mask) {
 }
 
 // Convenience version of fast_select
-template<class T,class M> static inline auto sse_if(M mask, T a, T b)
-  -> decltype(fast_select(b,a,mask)) {
+template<class T> static inline T sse_if(__m128i mask, T a, T b) {
   return fast_select(b,a,mask);
+}
+template<class T> static inline T sse_if(__m128d mask, T a, T b) {
+  return fast_select(b,a,_mm_castpd_si128(mask));
 }
 
 inline __m128 min(__m128 a, __m128 b) {

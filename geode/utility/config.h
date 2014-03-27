@@ -18,8 +18,13 @@ typedef double real;
 
 #ifdef __clang__
 #define GEODE_CLANG_ONLY(...) __VA_ARGS__
+#define GEODE_CLANG_VERSION_GE(major,minor) \
+  (   !defined(CLANG_VERSION_MAJOR) \
+   || (    CLANG_VERSION_MAJOR>(major) \
+       || (CLANG_VERSION_MAJOR==(major) && CLANG_VERSION_MINOR>=(minor))))
 #else
 #define GEODE_CLANG_ONLY(...)
+#define GEODE_CLANG_VERSION_GE(major,minor) false
 #endif
 
 #define GEODE_NO_EXPORT // For documentation purposes
