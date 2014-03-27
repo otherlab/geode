@@ -9,6 +9,7 @@
 #ifdef __SSE__
 #include <xmmintrin.h>
 #include <emmintrin.h>
+#include <smmintrin.h>
 namespace geode {
 
 // Declaring these is legal on Windows, and they already exist for clang/gcc.
