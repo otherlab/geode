@@ -7,6 +7,9 @@ import sys
 def test_fast_exact():
   fast_exact_tests()
 
+def test_interval():
+  interval_tests(1024)
+
 def test_predicates():
   predicate_tests()
 

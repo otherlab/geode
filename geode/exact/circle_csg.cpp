@@ -253,7 +253,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
       Depth(const BoxTree<EV2>& tree, Next next, Arcs arcs, Vertices vertices, const HorizontalVertex start)
         : tree(tree), next(next), arcs(arcs), vertices(vertices)
         , start(start)
-        , start_xmin(ceil(-start.x.nlo)) // Safe to round up since we'll be comparing against conservative integer boxes
+        , start_xmin(ceil(start.x.box().min)) // Safe to round up since we'll be comparing against conservative integer boxes
         // If we intersect no other arcs, the depth depends on the orientation of direction = (1,0) relative to the starting arc
         , depth(local_horizontal_depth(arcs,start)) {}
 
@@ -374,7 +374,7 @@ static bool tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs, const int i, 
   // Conservatively check if circles might be too far apart to intersect (i.e. ri+rj <= dc)
   if(!certainly_less(dc_interval,Interval(ri)+Interval(rj))) {
     const auto d_interval = (dc_interval-Interval(ri)-Interval(rj))*Interval(.5);
-    const auto d = Quantized(floor(d_interval.hi + 1)); // Quantize up
+    const auto d = Quantized(floor(d_interval.box().max + 1)); // Quantize up
     ri += d;
     rj += d;
     changed = true;
@@ -382,7 +382,7 @@ static bool tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs, const int i, 
   // Conservatively check if inner circle is too small to intersect (i.e. abs(ri-rj) >= dc)
   if(!certainly_less(Interval(abs(ri-rj)),dc_interval)) {
     Quantized& small_r = ri<rj?ri:rj; // We will grow the smaller radius
-    small_r = max(ri,rj)-Quantized(ceil(-dc_interval.nlo-1));
+    small_r = max(ri,rj)-Quantized(ceil(dc_interval.box().min-1));
     changed = true;
   }
 

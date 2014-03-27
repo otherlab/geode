@@ -1,9 +1,11 @@
 #include <geode/python/module.h>
 #include <geode/python/wrap.h>
 #include <geode/exact/circle_csg.h>
+#include <geode/exact/Interval.h>
 using namespace geode;
 
 void wrap_exact() {
+  GEODE_WRAP(interval)
   GEODE_WRAP(exact_exact)
   GEODE_WRAP(perturb)
   GEODE_WRAP(predicates)

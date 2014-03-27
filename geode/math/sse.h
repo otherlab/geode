@@ -40,8 +40,22 @@ static inline __m128 fast_select(__m128 a, __m128 b, __m128i mask) {
   return _mm_castsi128_ps(fast_select(_mm_castps_si128(a),_mm_castps_si128(b),mask));
 }
 
+static inline __m128d fast_select(__m128d a, __m128d b, __m128i mask) {
+  return _mm_castsi128_pd(fast_select(_mm_castpd_si128(a),_mm_castpd_si128(b),mask));
+}
+
+// Convenience version of fast_select
+template<class T,class M> static inline auto sse_if(M mask, T a, T b)
+  -> decltype(fast_select(b,a,mask)) {
+  return fast_select(b,a,mask);
+}
+
 inline __m128 min(__m128 a, __m128 b) {
   return _mm_min_ps(a,b);
+}
+
+inline __m128d min(__m128d a, __m128d b) {
+  return _mm_min_pd(a,b);
 }
 
 // This exist as a primitive in SSE4, but we do it ourselves to be SSE2 compatible
@@ -53,8 +67,13 @@ inline __m128 max(__m128 a, __m128 b) {
   return _mm_max_ps(a,b);
 }
 
+inline __m128d max(__m128d a, __m128d b) {
+  return _mm_max_pd(a,b);
+}
+
 template<class T> struct pack_type;
 template<> struct pack_type<float>{typedef __m128 type;};
+template<> struct pack_type<double>{typedef __m128d type;};
 template<> struct pack_type<int32_t>{typedef __m128i type;};
 template<> struct pack_type<int64_t>{typedef __m128i type;};
 template<> struct pack_type<uint32_t>{typedef __m128i type;};
@@ -63,6 +82,10 @@ template<> struct pack_type<uint64_t>{typedef __m128i type;};
 // Same as _mm_set_ps, but without the bizarre reversed ordering
 template<class T> static inline typename pack_type<T>::type pack(T x0, T x1);
 template<class T> static inline typename pack_type<T>::type pack(T x0, T x1, T x2, T x3);
+
+template<> inline __m128d pack<double>(double x0, double x1) {
+  return _mm_set_pd(x1,x0);
+}
 
 template<> inline __m128 pack<float>(float x0, float x1, float x2, float x3) {
   return _mm_set_ps(x3,x2,x1,x0);
@@ -92,12 +115,32 @@ template<> inline float expand(float x) {
   return x;
 }
 
+template<> inline double expand(double x) {
+  return x;
+}
+
 template<> inline __m128 expand(float x) {
   return _mm_set_ps1(x);
 }
 
+template<> inline __m128d expand(double x) {
+  return _mm_set1_pd(x);
+}
+
 static inline __m128 sqrt(__m128 a) {
   return _mm_sqrt_ps(a);
+}
+
+static inline __m128d sqrt(__m128d a) {
+  return _mm_sqrt_pd(a);
+}
+
+static inline __m128 ceil(__m128 a) {
+  return _mm_ceil_ps(a);
+}
+
+static inline __m128d ceil(__m128d a) {
+  return _mm_ceil_pd(a);
 }
 
 static inline __m128 abs(__m128 a) {
