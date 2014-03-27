@@ -27,8 +27,9 @@ template<class T> struct HasCheapCopy<RawArray<T> >:public mpl::true_{};
 template<class T,int d> struct FromPython<RawArray<T,d> >:public FromPython<Array<T,d> >{};
 
 template<class T_>
-class RawArray<T_,1> : public ArrayBase<T_,RawArray<T_,1> > {
+class RawArray<T_,1> : public ArrayBase<T_,RawArray<T_,1>> {
   typedef T_ T;
+  typedef ArrayBase<T,RawArray<T,1>> Base;
 public:
   enum Workaroun1 {d=1};
   enum Workaround1 {dimension=d};
@@ -63,13 +64,13 @@ public:
   }
 
   RawArray(const RawArray<Element>& source)
-    : data_(source.data_), m(source.m) {}
+    : Base(), data_(source.data_), m(source.m) {}
 
   RawArray(const RawArray<const Element>& source)
-    : data_(source.data_), m(source.m) {}
+    : Base(), data_(source.data_), m(source.m) {}
 
   RawArray(typename CopyConst<std::vector<Element,std::allocator<Element> >,T>::type& source)
-    : data_(source.size()?&source[0]:0), m((int)source.size()) {}
+    : Base(), data_(source.size()?&source[0]:0), m((int)source.size()) {}
 
   RawArray(const int m, T* data)
     : data_(data), m(m) {}
