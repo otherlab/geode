@@ -370,7 +370,7 @@ struct Interval {
   bool contains(const Interval x) const {
     // -nlo <= -x.nlo && x.hi <= hi;
     // x.nlo <= nlo && x.hi <= hi;
-    return _mm_movemask_epi8(_mm_cmple_pd(x.s,s)) == 0xffff;
+    return _mm_movemask_epi8(_mm_castpd_si128(_mm_cmple_pd(x.s,s))) == 0xffff;
   }
 
   bool contains_zero() const {
@@ -435,17 +435,17 @@ struct Interval {
 
 static inline bool certainly_negative(const Interval x) {
   // x.hi < 0
-  return _mm_movemask_epi8(_mm_cmplt_pd(x.s,_mm_setzero_pd())) & 0x0100;
+  return _mm_movemask_epi8(_mm_castpd_si128(_mm_cmplt_pd(x.s,_mm_setzero_pd()))) & 0x0100;
 }
 
 static inline bool certainly_positive(const Interval x) {
   // x.nlo < 0
-  return _mm_movemask_epi8(_mm_cmplt_pd(x.s,_mm_setzero_pd())) & 0x0001;
+  return _mm_movemask_epi8(_mm_castpd_si128(_mm_cmplt_pd(x.s,_mm_setzero_pd()))) & 0x0001;
 }
 
 static inline bool certainly_zero(const Interval x) {
   // !x.nlo && !x.hi
-  return _mm_movemask_epi8(_mm_cmpeq_pd(x.s,_mm_setzero_pd())) == 0xffff;
+  return _mm_movemask_epi8(_mm_castpd_si128(_mm_cmpeq_pd(x.s,_mm_setzero_pd()))) == 0xffff;
 }
 
 static inline bool certainly_opposite_sign(const Interval a, const Interval b) {
@@ -455,7 +455,7 @@ static inline bool certainly_opposite_sign(const Interval a, const Interval b) {
 
 static inline bool certainly_less(const Interval a, const Interval b) {
   // a.hi < -b.nlo
-  return _mm_movemask_epi8(_mm_cmplt_pd(_mm_shuffle_pd(a.s,a.s,1),-b.s)) & 1;
+  return _mm_movemask_epi8(_mm_castpd_si128(_mm_cmplt_pd(_mm_shuffle_pd(a.s,a.s,1),-b.s))) & 1;
 }
 
 // +-1 if the interval is definitely nonzero, otherwise zero
@@ -538,7 +538,7 @@ GEODE_ALWAYS_INLINE static inline Interval operator<<(const Interval x, const in
 GEODE_ALWAYS_INLINE static inline Interval operator>>(const Interval x, const int p) {
   assert(unsigned(p)<32);
   const double y = 1./(1<<p);
-  return Interval(x*expand<__m128d>(y));
+  return Interval(x.s*expand<__m128d>(y));
 }
 
 // Valid only for intervals that don't contain zero
@@ -604,7 +604,7 @@ static inline Interval abs(const Interval x) {
              y = _mm_shuffle_pd(lo,hi,0);      // abs(x) if xlo > 0
   // Trues if x.nlo > 0
   const auto flag = _mm_cmpgt_pd(_mm_shuffle_pd(x.s,x.s,0),zero);
-  return Interval(fast_select(x.s,y,flag));
+  return Interval(sse_if(flag,y,x.s));
 }
 
 #endif // GEODE_INTERVAL_SSE
