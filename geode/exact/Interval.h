@@ -29,7 +29,7 @@ template<> struct IsScalar<Interval> : public mpl::true_ {};
 template<> struct is_packed_pod<Interval> : public mpl::true_ {};
 
 // If possible, use SSE to speed up interval arithmetic.
-#if defined(__SSE__)
+#if defined(__SSE4_1__)
 #define GEODE_INTERVAL_SSE 1
 #else
 #define GEODE_INTERVAL_SSE 0

@@ -9,7 +9,9 @@
 #ifdef __SSE__
 #include <xmmintrin.h>
 #include <emmintrin.h>
+#ifdef __SSE4_1__
 #include <smmintrin.h>
+#endif
 namespace geode {
 
 // Declaring these is legal on Windows, and they already exist for clang/gcc.
@@ -138,6 +140,7 @@ static inline __m128d sqrt(__m128d a) {
   return _mm_sqrt_pd(a);
 }
 
+#ifdef __SSE4_1__
 static inline __m128 ceil(__m128 a) {
   return _mm_ceil_ps(a);
 }
@@ -145,6 +148,7 @@ static inline __m128 ceil(__m128 a) {
 static inline __m128d ceil(__m128d a) {
   return _mm_ceil_pd(a);
 }
+#endif
 
 static inline __m128 abs(__m128 a) {
   return _mm_castsi128_ps(_mm_castps_si128(a)&_mm_set1_epi32(~(1<<31)));
