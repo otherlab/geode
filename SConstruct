@@ -512,13 +512,16 @@ if windows:
   python_libs = []
   projects = []
 
+def dir_or_file(path):
+  return Entry(path).disambiguate() # either File or Dir
+
 # Target must be a directory!
 def install_or_link(env,target,src):
   if env['install'] or env['develop']:
     # Get the real location of src
-    srcpath = File(src).abspath
+    srcpath = dir_or_file(src).abspath
     if not os.path.exists(srcpath):
-      srcpath = File(src).srcnode().abspath
+      srcpath = dir_or_file(src).srcnode().abspath
       if not os.path.exists(srcpath):
         raise RuntimeError("can't find %s in either source or build directories"%src)
     if env['install']:
@@ -607,19 +610,20 @@ def program(env,name,cpp=None):
     install_or_link(env, env['prefix_bin'], b)
 
 # Install a (possibly directory) resource
-def resource(env,dir):
-  # if we are installing, and we're adding a directory, add a dependency for each file found in its subtree
-  if env['install'] and os.path.isdir(str(Dir(dir).srcnode())):
+def resource(env,path):
+  # If we are installing, and we're adding a directory, add a dependency for each file found in its subtree
+  node = dir_or_file(path).srcnode()
+  if env['install'] and os.path.isdir(str(node)):
     def visitor(basedir, dirname, names):
       reldir = os.path.relpath(dirname, basedir)
       for name in names:
         fullname = os.path.join(dirname, name)
         install_or_link(env, os.path.join(env['prefix_share'], reldir), fullname)
     basedir = str(Dir('.').srcnode())
-    os.path.walk(str(Dir(dir).srcnode()), visitor, basedir)
+    os.path.walk(str(node), visitor, basedir)
   else:
     # if we're just making links, a single link is enough even if it's a directory
-    install_or_link(env, env['prefix_share'], Dir(dir).srcnode())
+    install_or_link(env, env['prefix_share'], node)
 
 # Configure latex
 def configure_latex():
