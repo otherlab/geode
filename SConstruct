@@ -268,35 +268,61 @@ env.Replace(prefix_lib=env.subst(env['prefix_lib']))
 
 # External libraries
 externals = {}
-def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
-             copy=(),frameworkpath=(),frameworks=(),requires=(),hide=False,callback=None,
-             headers=None,configure=None,preamble=(),body=(),required=False):
-  if name in externals:
-    raise RuntimeError("Trying to redefine the external %s"%name)
+lazy_externals = {}
 
-  def fail():
-    if required:
-      print>>sys.stderr, 'FATAL: %s is required'%name
-      Exit(1)
+def external(env,name,**kwargs):
+  '''Add an external library.  See external_helper for keyword argument details.'''
+  if name in externals or name in lazy_externals:
+    raise RuntimeError("Trying to redefine the external %s"%name)
 
   # Do we want to use this external?
   Help('\n')
   options(env,('use_'+name,'Use '+name+' if available',1))
-  if not env['use_'+name]:
-    fail()
-    return
+  if env['use_'+name]:
+    # Remember for lazy configuration
+    lazy_externals[name] = env,kwargs
+    env['need_'+name] = kwargs.get('default',False)
+  else:
+    fail_external(name,kwargs.get('default',False))
 
+def has_external(name):
+  if name in externals:
+    return True
+  force_external(name)
+  return name in externals
+
+def force_external(name):
+  try:
+    env,kwargs = lazy_externals[name]
+  except KeyError:
+    return
+  external_helper(env,name,**kwargs)
+
+def fail_external(name,required):
+  env['use_'+name] = 0
+  if name in externals:
+    del externals[name]
+  if name in lazy_externals:
+    del lazy_externals[name]
+  if required:
+    print>>sys.stderr, 'FATAL: %s is required.  See config.log for error details.'%name
+    Exit(1)
+
+def external_helper(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
+             copy=(),frameworkpath=(),frameworks=(),requires=(),hide=False,callback=None,
+             headers=None,configure=None,preamble=(),body=(),required=False):
   for r in requires:
+    force_external(r)
     if not env['use_'+r]:
       if verbose:
         print 'disabling %s: no %s'%(name,r)
-      fail()
+      fail_external(name,required)
       return
 
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,
          'hide':hide,'callback':callback,'name':name}
-  env['need_'+name] = default
+  del lazy_externals[name]
   externals[name] = lib
 
   # Make sure empty lists are copied and do not refer to the same object
@@ -347,16 +373,11 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
   if env[name+'_copy']!=0: lib['copy'] = env[name+'_copy']
   if env[name+'_callback']!=0: lib['callback'] = env[name+'_callback']
 
-  # SConscripts can override this to restrict flags to certain files
-  env[name+'_pattern'] = None
-
   # Check whether the external is usable
   if configure is not None:
     has = configure if isinstance(configure,bool) else configure(env,lib)
     if not has:
-      env['use_'+name] = 0
-      del externals[name]
-      fail()
+      fail_external(name,required)
   else:
     assert headers is not None
 
@@ -364,7 +385,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
     env_conf = env.Clone()
     env_conf['need_'+name] = 1
     env_conf = link_flags(env_conf)
-    libraries = [externals[n] for n in externals.keys() if env_conf['need_'+n]]
+    libraries = [externals[n] for n in externals.keys() if env_conf.get('need_'+n)]
     def absorb(source,**kwargs):
       for k,v in kwargs.iteritems():
         env_conf[k] = v
@@ -379,9 +400,7 @@ def external(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=
       return r
     conf = env_conf.Configure(custom_tests={'Check':check})
     if not conf.Check():
-      env['use_'+name] = 0
-      del externals[name]
-      fail()
+      fail_external(name,required)
     conf.Finish()
 
 # Library configuration.  Local directories must go first or scons will try to install unexpectedly
@@ -394,14 +413,16 @@ if posix:
 # Account for library dependencies
 def add_dependencies(env):
   libs = []
-  for a,lib in externals.iteritems():
-    if env['need_'+a]:
+  for name in tuple(lazy_externals.iterkeys()):
+    if env.get('need_'+name):
+      force_external(name)
+  for name,lib in externals.iteritems():
+    if env.get('need_'+name):
       libs += lib['requires']
-
   while libs:
-    a = libs.pop()
-    env['need_'+a] = 1
-    libs.extend(externals[a]['requires'])
+    name = libs.pop()
+    env['need_'+name] = 1
+    libs.extend(externals[name]['requires'])
 
 # Linker flags
 all_uses = []
@@ -414,7 +435,7 @@ def link_flags(env):
   workaround = env.get('need_qt',0)
 
   for name,lib in externals.items():
-    if env_link['need_'+name]:
+    if env_link.get('need_'+name):
       all_uses.append('need_'+name)
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
       env_link.AppendUnique(LIBPATH=lib['libpath'])
@@ -454,7 +475,7 @@ def objects_helper(env,source,libraries,builder):
     frameworks,frameworkpath = [],[]
   cxxflags = str(env['CXXFLAGS'])
   for lib in libraries:
-    pattern = env[lib['name']+'_pattern']
+    pattern = env.get(lib['name']+'_pattern')
     if pattern and source and not pattern.search(File(source).abspath):
       continue
     cppdefines_reversed.extend(lib['flags'][::-1])
@@ -522,6 +543,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     print 'Warning: library %s has no input source files'%name
   if env.get('need_qt',0): # Qt gets confused if we only set options on the builder
     env = env.Clone()
+    force_external('qt')
     qt = externals['qt']
     env.Append(CPPDEFINES=qt['flags'],CXXFLAGS=qt['cxxflags'])
 
@@ -610,12 +632,15 @@ def configure_latex():
   if not conf.Check():
     latex_env['use_latex'] = 0
   conf.Finish()
-if latex_env['use_latex']:
-  configure_latex()
+latex_configured = False
 
 # Turn a latex document into a pdf
 def latex(name):
   if latex_env['use_latex']:
+    global latex_configured
+    if not latex_configured:
+      latex_configured = True
+      configure_latex()
     pdf = os.path.join('#'+Dir('.').srcnode().path,name+'.pdf')
     latex_env.PDF(pdf,name+'.tex')
 
@@ -713,13 +738,14 @@ def blas_variants():
   body = ['  cblas_dscal(0,1,0,1);']
   external(env,'atlas',libs=['cblas','lapack','atlas'],headers=['cblas.h'],body=body)
   external(env,'openblas',libs=['lapack','blas'],headers=['cblas.h'],body=body)
-  if darwin: external(env,'accelerate',frameworks=['Accelerate'],headers=['Accelerate/Accelerate.h'],body=body)
+  if darwin:  external(env,'accelerate',frameworks=['Accelerate'],headers=['Accelerate/Accelerate.h'],body=body)
   if windows: external(env,'mkl',flags=['GEODE_MKL'],headers=['mkl_cblas.h'],body=body,libs='mkl_intel_lp64 mkl_intel_thread mkl_core mkl_mc iomp5 mkl_lapack'.split())
   else:       external(env,'mkl',flags=['GEODE_MKL'],headers=['mkl_cblas.h'],body=body,linkflags='-Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_mc -liomp5 -lmkl_lapack -Wl,--end-group -fopenmp -pthread')
 blas_variants()
 def configure_blas(env,blas):
   kinds = ['accelerate']*darwin+['openblas','atlas','mkl']
   for kind in kinds:
+    force_external(kind)
     if env['use_'+kind]:
       print 'configuring blas: using %s'%kind
       blas['requires'] = [kind]
@@ -755,7 +781,7 @@ def children(env,skip=()):
       child(env,dir)
 
 # Build everything
-Export('''child children options external externals library objects program latex
+Export('''child children options external has_external library objects program latex
           clang posix darwin windows resource install_or_link''')
 if os.path.exists(File('#SConscript').abspath):
   child(env,'.')
