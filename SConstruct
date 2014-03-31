@@ -275,15 +275,25 @@ def external(env,name,**kwargs):
   if name in externals or name in lazy_externals:
     raise RuntimeError("Trying to redefine the external %s"%name)
 
+  def fail():
+    env['use_'+name] = 0
+    if name in externals:
+      del externals[name]
+    if name in lazy_externals:
+      del lazy_externals[name]
+    if kwargs.get('required'):
+      print>>sys.stderr, 'FATAL: %s is required.  See config.log for error details.'%name
+      Exit(1)
+
   # Do we want to use this external?
   Help('\n')
   options(env,('use_'+name,'Use '+name+' if available',1))
   if env['use_'+name]:
     # Remember for lazy configuration
-    lazy_externals[name] = env,kwargs
+    lazy_externals[name] = env,kwargs,fail
     env['need_'+name] = kwargs.get('default',False)
   else:
-    fail_external(name,kwargs.get('default',False))
+    fail()
 
 def has_external(name):
   if name in externals:
@@ -293,30 +303,20 @@ def has_external(name):
 
 def force_external(name):
   try:
-    env,kwargs = lazy_externals[name]
+    env,kwargs,fail = lazy_externals[name]
   except KeyError:
     return
-  external_helper(env,name,**kwargs)
-
-def fail_external(name,required):
-  env['use_'+name] = 0
-  if name in externals:
-    del externals[name]
-  if name in lazy_externals:
-    del lazy_externals[name]
-  if required:
-    print>>sys.stderr, 'FATAL: %s is required.  See config.log for error details.'%name
-    Exit(1)
+  external_helper(env,name,fail=fail,**kwargs)
 
 def external_helper(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
              copy=(),frameworkpath=(),frameworks=(),requires=(),hide=False,callback=None,
-             headers=None,configure=None,preamble=(),body=(),required=False):
+             headers=None,configure=None,preamble=(),body=(),required=False,fail=None):
   for r in requires:
     force_external(r)
     if not env['use_'+r]:
       if verbose:
         print 'disabling %s: no %s'%(name,r)
-      fail_external(name,required)
+      fail()
       return
 
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
@@ -377,7 +377,7 @@ def external_helper(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',c
   if configure is not None:
     has = configure if isinstance(configure,bool) else configure(env,lib)
     if not has:
-      fail_external(name,required)
+      fail()
   else:
     assert headers is not None
 
@@ -400,7 +400,7 @@ def external_helper(env,name,default=0,dir=0,flags='',cxxflags='',linkflags='',c
       return r
     conf = env_conf.Configure(custom_tests={'Check':check})
     if not conf.Check():
-      fail_external(name,required)
+      fail()
     conf.Finish()
 
 # Library configuration.  Local directories must go first or scons will try to install unexpectedly
