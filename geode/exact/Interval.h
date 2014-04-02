@@ -589,9 +589,15 @@ template<int m> static inline Vector<Quantized,m> snap(const Vector<Interval,m>&
 template<int m> static inline Box<Vector<Quantized,m>> snap_box(const Vector<Interval,m>& xs) {
   Box<Vector<Quantized,m>> box;
   for (int i=0;i<m;i++) {
+#ifdef __SSE4_1__
     const auto b = ceil(xs[i].s);
     box.min[i] = b.min;
     box.max[i] = b.max;
+#else
+    const auto b = xs[i].box();
+    box.min[i] = floor(b.min);
+    box.max[i] =  ceil(b.max);
+#endif
   }
   return box;
 }
