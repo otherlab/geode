@@ -5,14 +5,12 @@
 #include <geode/array/NdArray.h>
 #include <geode/array/ProjectedArray.h>
 #include <geode/structure/Hashtable.h>
-#include <geode/python/Class.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
 namespace geode {
 
 typedef real T;
 typedef Vector<T,3> TV;
-GEODE_DEFINE_TYPE(Pins)
 
 Pins::Pins(Array<const int> particles, Array<const T> mass, Array<const TV> targets, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : particles(particles)
@@ -131,12 +129,4 @@ T Pins::strain_rate(RawArray<const TV> V) const {
   return 0;
 }
 
-}
-using namespace geode;
-
-void wrap_pins() {
-  typedef Pins Self;
-  Class<Self>("Pins")
-    .GEODE_INIT(Array<const int>,Array<const T>,Array<const TV>,NdArray<const T>,NdArray<const T>)
-    ;
 }

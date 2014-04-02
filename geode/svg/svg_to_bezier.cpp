@@ -1,14 +1,7 @@
 #include <geode/svg/svg_to_bezier.h>
-#include <geode/python/wrap.h>
-#include <geode/python/Class.h>
-#include <geode/python/to_python.h>
-#include <geode/python/Ref.h>
-#include <geode/python/stl.h>
+#include <geode/utility/Ref.h>
 #include <geode/utility/stl.h>
-
 namespace geode {
-
-GEODE_DEFINE_TYPE(SVGStyledPath)
 
 static vector<Ref<SVGStyledPath>> svg_paths_to_beziers(const struct SVGPath* plist) {
   std::vector<Ref<SVGStyledPath>> paths;
@@ -88,23 +81,4 @@ vector<Ref<Bezier<2>>> svgstring_to_beziers(const string& svgstring) {
   return parts;
 }
 
-}
-
-using namespace geode;
-
-void wrap_svg_to_bezier() {
-  typedef SVGStyledPath Self;
-  Class<Self>("SVGStyledPath")
-    .GEODE_FIELD(fillColor)
-    .GEODE_FIELD(strokeColor)
-    .GEODE_FIELD(hasFill)
-    .GEODE_FIELD(hasStroke)
-    .GEODE_FIELD(CSSclass)
-    .GEODE_FIELD(shapes)
-    ;
-
-  GEODE_FUNCTION(svgfile_to_styled_beziers)
-  GEODE_FUNCTION(svgstring_to_styled_beziers)
-  GEODE_FUNCTION(svgfile_to_beziers)
-  GEODE_FUNCTION(svgstring_to_beziers)
 }

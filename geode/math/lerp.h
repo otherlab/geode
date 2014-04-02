@@ -1,6 +1,6 @@
 #pragma once
 
-#include <geode/python/forward.h>
+#include <geode/utility/config.h>
 namespace geode {
 
 template<class T>

@@ -9,13 +9,10 @@
 #include <geode/geometry/Sphere.h>
 #include <geode/geometry/traverse.h>
 #include <geode/math/integer_log.h>
-#include <geode/python/Class.h>
 namespace geode {
+
 using std::cout;
 using std::endl;
-
-template<> GEODE_DEFINE_TYPE(BoxTree<Vector<real,2>>)
-template<> GEODE_DEFINE_TYPE(BoxTree<Vector<real,3>>)
 
 namespace {
 
@@ -192,23 +189,5 @@ any_box_intersection(const Shape& shape) const {
   template GEODE_CORE_EXPORT bool BoxTree<Vector<T,d>>::any_box_intersection(const Sphere<Vector<T,d>>&) const;
 INSTANTIATE(real,2)
 INSTANTIATE(real,3)
-}
-using namespace geode;
 
-void wrap_box_tree() {
-  {typedef Vector<real,2> TV;
-  typedef BoxTree<TV> Self;
-  Class<Self>("BoxTree2d")
-    .GEODE_INIT(RawArray<const TV>,int)
-    .GEODE_FIELD(p)
-    .GEODE_METHOD(check)
-    ;}
-
-  {typedef Vector<real,3> TV;
-  typedef BoxTree<TV> Self;
-  Class<Self>("BoxTree3d")
-    .GEODE_INIT(RawArray<const TV>,int)
-    .GEODE_FIELD(p)
-    .GEODE_METHOD(check)
-    ;}
 }

@@ -10,13 +10,11 @@
 #include <geode/array/ArrayNdBase.h>
 #include <geode/array/Subarray.h>
 #include <geode/geometry/Box.h>
-#include <geode/python/exceptions.h>
+#include <geode/utility/exceptions.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
-template<class T_>
-class Array<T_,2> : public ArrayNdBase<T_,Array<T_,2> >
-{
+template<class T_> class Array<T_,2> : public ArrayNdBase<T_,Array<T_,2> > {
   typedef T_ T;
 public:
   enum Workaround1 {dimension=2};
@@ -45,7 +43,7 @@ public:
     : Base((assert(m>=0 && n>=0),
             m*n),uninit), m(m), n(n) {}
 
-  Array(const int m, const int n, T* data, PyObject* owner)
+  Array(const int m, const int n, T* data, const shared_ptr<const Owner>& owner)
     : Base((assert(m>=0 && n>=0),
             Array<T>(m*n,data,owner)))
     , m(m), n(n) {}
@@ -56,7 +54,7 @@ public:
   Array(const Vector<int,d> sizes, Uninit)
     : Array(sizes.x,sizes.y,uninit) {}
 
-  Array(const Vector<int,d> sizes, T* data, PyObject* owner)
+  Array(const Vector<int,d> sizes, T* data, const shared_ptr<const Owner>& owner)
     : Array(sizes.x,sizes.y,data,owner) {}
 
   Array(const Array& source)
@@ -257,7 +255,7 @@ public:
 
   Array<T,2> slice_own(int imin,int imax) const {
     assert(unsigned(imin)<=unsigned(imax) && unsigned(imax)<=unsigned(m));
-    return Array<T,2>(imax-imin,n,data()+imin*n,flat.borrow_owner());
+    return Array<T,2>(imax-imin,n,data()+imin*n,flat.owner());
   }
 
   const Subarray<T,2> slice(int imin,int imax,int jmin,int jmax) const {

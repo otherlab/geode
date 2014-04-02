@@ -2,7 +2,6 @@
 #include <geode/exact/circle_offsets.h>
 #include <geode/exact/circle_quantization.h>
 #include <geode/exact/ExactArcGraph.h>
-
 namespace geode {
 
 static constexpr Pb PS = Pb::Implicit;

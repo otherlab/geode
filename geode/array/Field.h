@@ -13,16 +13,7 @@ namespace geode {
 
 template<class T,class Id> struct HasCheapCopy<Field<T,Id> >:public mpl::true_{};
 
-template<class T,class Id> static inline PyObject* to_python(const Field<T,Id>& field) {
-  return to_python(field.flat);
-}
-
-template<class T,class Id> struct FromPython<Field<T,Id> >{static inline Field<T,Id> convert(PyObject* object) {
-  return Field<T,Id>(from_python<Array<T>>(object));
-}};
-
-template<class T,class Id>
-class Field {
+template<class T,class Id> class Field {
 private:
   struct Unusable {};
 public:

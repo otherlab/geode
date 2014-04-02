@@ -2,7 +2,6 @@
 
 #include <geode/exact/polynomial.h>
 #include <geode/array/alloca.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 using std::cout;
@@ -207,8 +206,8 @@ static ExactInt evaluate(RawArray<const uint8_t,2> lambda, RawArray<const ExactI
   return sum;
 }
 
-static void in_place_interpolating_polynomial_test(const int degree, RawArray<const uint8_t,2> lambda, 
-                                                   RawArray<const ExactInt> coefs, const bool verbose) {
+void in_place_interpolating_polynomial_test(const int degree, RawArray<const uint8_t,2> lambda, 
+                                            RawArray<const ExactInt> coefs, const bool verbose) {
   const int precision = sizeof(ExactInt)/sizeof(mp_limb_t);
   const auto values = GEODE_RAW_ALLOCA(lambda.m*precision,mp_limb_t).reshape(lambda.m,precision);
   for (int k=0;k<lambda.m;k++)
@@ -247,10 +246,4 @@ static void in_place_interpolating_polynomial_test(const int degree, RawArray<co
   }
 }
 
-}
-using namespace geode;
-
-void wrap_polynomial() {
-  GEODE_FUNCTION_2(polynomial_monomials,monomials)
-  GEODE_FUNCTION(in_place_interpolating_polynomial_test)
 }

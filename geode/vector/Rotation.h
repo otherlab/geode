@@ -9,7 +9,6 @@
 #include <geode/math/clamp.h>
 #include <geode/math/constants.h>
 #include <geode/math/robust.h>
-#include <geode/python/to_python.h>
 #include <geode/utility/debug.h>
 #include <geode/utility/type_traits.h>
 #include <geode/vector/Matrix.h>
@@ -23,10 +22,6 @@ template<class TV> class Rotation;
 
 template<class TV> struct IsScalarBlock<Rotation<TV> >:public mpl::and_<mpl::bool_<(TV::m>1)>,IsScalarBlock<TV> >{};
 template<class TV> struct is_packed_pod<Rotation<TV> >:public mpl::and_<mpl::bool_<(TV::m>1)>,is_packed_pod<typename TV::Scalar> >{};
-
-template<class TV> GEODE_CORE_EXPORT PyObject* to_python(const Rotation<TV>& q);
-template<class TV> struct FromPython<Rotation<TV> >{GEODE_CORE_EXPORT static Rotation<TV> convert(PyObject* object);};
-template<class TV> GEODE_CORE_EXPORT bool rotations_check(PyObject* object);
 
 //#####################################################################
 // 1D
@@ -472,5 +467,14 @@ inline std::ostream& operator<<(std::ostream& output,const Rotation<Vector<T,3> 
 template<class T>
 inline std::istream& operator>>(std::istream& input,Rotation<Vector<T,3> >& r)
 {Quaternion<T> q;input>>q;r=Rotation<Vector<T,3> >::from_quaternion(q);return input;}
+
+// For testing and python use
+template<class TV> GEODE_CORE_EXPORT Rotation<TV> rotation_test(const Rotation<TV>& r);
+template<class TV> GEODE_CORE_EXPORT Array<Rotation<TV>> rotation_array_test(Array<const Rotation<TV>> r);
+#if 0
+GEODE_CORE_EXPORT PyObject* rotation_from_matrix(NdArray<const real> A);
+#endif
+GEODE_CORE_EXPORT NdArray<Rotation<Vector<real,3>>> rotation_from_euler_angles_3d(NdArray<const Vector<real,3>> theta);
+GEODE_CORE_EXPORT NdArray<Vector<real,3>> rotation_euler_angles_3d(NdArray<const Rotation<Vector<real,3>>> R);
 
 }

@@ -4,6 +4,7 @@
 
 #include <geode/mesh/ids.h>
 #include <geode/array/Field.h>
+#include <geode/math/uint128.h>
 namespace geode {
 
 struct OutgoingCirculator;
@@ -19,7 +20,7 @@ struct OutgoingCirculator;
 
 class HalfedgeMesh : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   // We deliberately expose the internals publically, so that users with special requirements
@@ -199,5 +200,10 @@ inline Range<OutgoingCirculator> HalfedgeMesh::outgoing(VertexId v) const {
   const OutgoingCirculator c(*this,e,e.valid());
   return Range<OutgoingCirculator>(c,c);
 }
+
+// For testing purposes
+GEODE_CORE_EXPORT int halfedge_random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint128_t key);
+GEODE_CORE_EXPORT void halfedge_random_face_splits(HalfedgeMesh& mesh, const int splits, const uint128_t key);
+GEODE_CORE_EXPORT void halfedge_mesh_destruction_test(HalfedgeMesh& mesh, const uint128_t key);
 
 }

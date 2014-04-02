@@ -11,16 +11,16 @@
 
 #include <geode/array/Array.h>
 #include <geode/array/Nested.h>
-#include <geode/python/Object.h>
-#include <geode/python/Ptr.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Object.h>
+#include <geode/utility/Ptr.h>
+#include <geode/utility/Ref.h>
 #include <geode/vector/Vector.h>
 #include <geode/structure/Tuple.h>
 namespace geode {
 
 class SegmentSoup : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef Vector<real,2> TV2;
   static const int d = 1;
@@ -43,8 +43,9 @@ protected:
 public:
   ~SegmentSoup();
 
-  int nodes() const
-  {return node_count;}
+  int nodes() const {
+    return node_count;
+  }
 
   Ref<const SegmentSoup> segment_soup() const {
     return ref(*this);

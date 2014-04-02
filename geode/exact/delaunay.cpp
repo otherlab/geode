@@ -7,7 +7,6 @@
 #include <geode/array/amap.h>
 #include <geode/array/RawField.h>
 #include <geode/math/integer_log.h>
-#include <geode/python/wrap.h>
 #include <geode/random/permute.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Tuple.h>
@@ -421,7 +420,7 @@ static void insert_cavity_vertex(MutableTriangleTopology& mesh, RawField<const P
 // is quite difficult, so it's important to verify that we've hit them.  Since chew_fan
 // is called incredibly rarely, the slight slowdown is irrelevant.
 static int chew_fan_count_ = 0;
-static int chew_fan_count() {
+int chew_fan_count() {
   return chew_fan_count_;
 }
 
@@ -825,7 +824,7 @@ Ref<TriangleTopology> delaunay_points(RawArray<const Vector<real,2>> X, RawArray
 
 // Greedily compute a set of nonintersecting edges in a point cloud for testing purposes
 // Warning: Takes O(n^3) time.
-static Array<Vector<int,2>> greedy_nonintersecting_edges(RawArray<const Vector<real,2>> X, const int limit) {
+Array<Vector<int,2>> greedy_nonintersecting_edges(RawArray<const Vector<real,2>> X, const int limit) {
   const auto E = amap(quantizer(bounding_box(X)),X).copy();
   const int n = E.size();
   Array<Vector<int,2>> edges;
@@ -849,11 +848,4 @@ static Array<Vector<int,2>> greedy_nonintersecting_edges(RawArray<const Vector<r
   return edges;
 }
 
-}
-using namespace geode;
-
-void wrap_delaunay() {
-  GEODE_FUNCTION_2(delaunay_points_py,delaunay_points)
-  GEODE_FUNCTION(greedy_nonintersecting_edges)
-  GEODE_FUNCTION(chew_fan_count)
 }

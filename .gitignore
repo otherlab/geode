@@ -17,4 +17,3 @@ config.log
 build
 dist
 *.egg-info
-*.so

@@ -10,11 +10,11 @@ namespace geode {
 
 class Listen : public Object, public Action {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 private:
-  Ref<const ValueBase> value;
-  function<void()> f;
+  const Ref<const ValueBase> value;
+  const function<void()> f;
 
   GEODE_CORE_EXPORT Listen(const ValueBase& value, const function<void()>& f);
 public:
@@ -26,11 +26,11 @@ public:
 
 class BatchListen : public Object, public Action {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 private:
-  vector<Ref<const ValueBase>> values;
-  function<void()> f;
+  const vector<Ref<const ValueBase>> values;
+  const function<void()> f;
 
   GEODE_CORE_EXPORT BatchListen(const vector<Ref<const ValueBase>>& values, const function<void()>& f);
 public:

@@ -46,4 +46,8 @@ template<class I,class TI> inline TI partition_loop_inverse(const I loop_steps, 
                                : 0); // Only occurs if loop_steps==0
 }
 
+// For testing purposes
+GEODE_CORE_EXPORT void partition_loop_test(const int loop_steps, const int threads);
+GEODE_CORE_EXPORT void large_partition_loop_test(const uint64_t loop_steps, const int threads, const int samples);
+
 }

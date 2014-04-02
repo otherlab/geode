@@ -6,10 +6,7 @@
 #include <geode/random/Sobol.h>
 #include <geode/geometry/Box.h>
 #include <geode/math/integer_log.h>
-#include <geode/python/Class.h>
 namespace geode {
-
-typedef real T;
 
 namespace {
 template<class T> struct Helper {
@@ -46,28 +43,11 @@ template<class TV> TV Sobol<TV>::vector() {
 }
 
 #define INSTANTIATE(d) \
-  template<> GEODE_DEFINE_TYPE(Sobol<Vector<T,d>>) \
-  template class Sobol<Vector<T,d>>;
+  template class Sobol<Vector<float,d>>; \
+  template class Sobol<Vector<double,d>>;
 INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)
 INSTANTIATE(4)
 
-}
-using namespace geode;
-
-template<int d> static void wrap_helper() {
-  typedef Sobol<Vector<T,d>> Self;
-  static char name[8] = "Sobol?d";
-  name[5] = '0'+d;
-  Class<Self>(name)
-    .GEODE_INIT(Box<Vector<T,d>>)
-    .GEODE_METHOD(vector)
-    ;
-}
-
-void wrap_sobol() {
-  wrap_helper<1>();
-  wrap_helper<2>();
-  wrap_helper<3>();
 }

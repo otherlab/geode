@@ -6,7 +6,7 @@
 #define LEAVE_WINDOWS_DEFINES_ALONE
 #endif
 
-#include <geode/python/config.h> // Must be included first
+#include <geode/utility/config.h> // Must be included first
 #ifdef GEODE_LIBPNG
 #define PNG_SKIP_SETJMP_CHECK // Both png and python want to be included first
 #include <png.h>

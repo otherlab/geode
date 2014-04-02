@@ -2,7 +2,6 @@
 // Function format
 //#####################################################################
 #include <geode/utility/format.h>
-#include <geode/python/wrap.h>
 #include <vector>
 #include <cstdarg>
 #include <cstdio>
@@ -71,7 +70,8 @@ static void check_identity_format(const string& t) {
     GEODE_FATAL_ERROR("format(\"%s\",t).size() != t.size()");
   }
 }
-static void format_test() {
+
+void format_test() {
   const string short_test_string = "this is a test";
   const string digits_62 = "12345678901234567890123456789012345678901234567890123456789012";
   const string digits_63 = "123456789012345678901234567890123456789012345678901234567890123";
@@ -95,9 +95,4 @@ static void format_test() {
   check_identity_format(digits_70);
 }
 
-}
-using namespace geode;
-
-void wrap_format() {
-  GEODE_FUNCTION(format_test);
 }

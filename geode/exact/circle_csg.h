@@ -70,4 +70,9 @@ static inline CircleArc operator+(const CircleArc& c, const Vector<real,2>& t) {
 // Hashing for circle arcs
 template<> struct is_packed_pod<CircleArc> : public mpl::true_{};
 
-} // namespace geode
+// For testing purposes
+GEODE_CORE_EXPORT Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs);
+GEODE_CORE_EXPORT Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circle_handling_test(int seed, int count);
+GEODE_CORE_EXPORT void random_circle_quantize_test(int seed);
+
+}

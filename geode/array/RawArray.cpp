@@ -3,7 +3,6 @@
 //#####################################################################
 #include <geode/array/RawArray.h>
 #include <geode/array/Array2d.h>
-#include <geode/python/numpy.h>
 #include <geode/vector/Vector.h>
 #include <geode/utility/process.h>
 #if defined(GEODE_BLAS) && defined(GEODE_MKL)
@@ -152,14 +151,12 @@ template void RawArray<real,2>::permute_rows(RawArray<const int>,int) const;
 template void RawArray<real,2>::permute_columns(RawArray<const int>,int) const;
 
 TemporaryOwner::TemporaryOwner()
-  : owner(new_<Object>()) {
-  GEODE_ASSERT(owner->ob_refcnt==1);
-}
+  : owner(new Owner) {}
 
 TemporaryOwner::~TemporaryOwner() {
-  if (owner->ob_refcnt!=1) {
-    cerr<<"fatal: Reference to temporary memory area stolen by python (ob_refcnt = "
-        <<owner->ob_refcnt<<" != 1)."<<endl;
+  const auto count = owner.use_count();
+  if (count != 1) {
+    cerr <<"Fatal: Reference to temporary memory area stolen by python (use_count = "<<count<<" != 1)."<<endl;
     process::backtrace();
     GEODE_FATAL_ERROR("Reference to temporary memory area stolen by python");
   }

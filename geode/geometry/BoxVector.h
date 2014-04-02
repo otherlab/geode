@@ -23,9 +23,6 @@ namespace geode {
 
 using std::numeric_limits;
 
-template<class T,int d> GEODE_CORE_EXPORT PyObject* to_python(const Box<Vector<T,d>>& box);
-template<class T,int d> struct FromPython<Box<Vector<T,d>>>{GEODE_CORE_EXPORT static Box<Vector<T,d>> convert(PyObject* object);};
-
 template<class T,int d_> class Box<Vector<T,d_>> {
   typedef Vector<T,d_> TV;
 public:

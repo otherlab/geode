@@ -6,7 +6,7 @@
 #include <geode/geometry/Box.h>
 #include <geode/math/constants.h>
 #include <geode/math/pow.h>
-#include <geode/python/repr.h>
+#include <geode/utility/repr.h>
 #include <geode/utility/format.h>
 #include <geode/array/Array.h>
 namespace geode {

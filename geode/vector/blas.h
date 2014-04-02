@@ -32,8 +32,6 @@ namespace geode {
 // Problem-dependent parameter inspection
 template<class T> GEODE_CORE_EXPORT int ilaenv(int ispec,const char* name,const char* opts,int m,int n);
 
-template<> struct FromPython<CBLAS_TRANSPOSE>{GEODE_CORE_EXPORT static CBLAS_TRANSPOSE convert(PyObject* object);};
-
 #define WRAP(declaration) \
   static declaration GEODE_UNUSED; \
   static declaration

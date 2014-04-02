@@ -6,15 +6,12 @@
 #include <geode/array/IndirectArray.h>
 #include <geode/array/view.h>
 #include <geode/structure/Hashtable.h>
-#include <geode/python/Class.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
 namespace geode {
 
 typedef real T;
 typedef Vector<T,3> TV;
-template<> GEODE_DEFINE_TYPE(BindingSprings<2>)
-template<> GEODE_DEFINE_TYPE(BindingSprings<3>)
 
 template<int k> BindingSprings<k>::BindingSprings(Array<const int> nodes, Array<const Vector<int,k>> parents, Array<const Vector<T,k>> weights, Array<const T> mass, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : mass(mass)
@@ -164,17 +161,4 @@ template<int k> T BindingSprings<k>::strain_rate(RawArray<const TV> V) const {
   return 0;
 }
 
-}
-using namespace geode;
-
-void wrap_binding_springs() {
-  {typedef BindingSprings<2> Self;
-  Class<Self>("BindingSprings2d")
-    .GEODE_INIT(Array<const int>,Array<const Vector<int,2>>,Array<const Vector<T,2>>,Array<const T>,NdArray<const T>,NdArray<const T>)
-    ;}
-
-  {typedef BindingSprings<3> Self;
-  Class<Self>("BindingSprings3d")
-    .GEODE_INIT(Array<const int>,Array<const Vector<int,3>>,Array<const Vector<T,3>>,Array<const T>,NdArray<const T>,NdArray<const T>)
-    ;}
 }

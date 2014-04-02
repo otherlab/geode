@@ -4,7 +4,6 @@
 #include <geode/array/view.h>
 #include <geode/math/copysign.h>
 #include <geode/geometry/Triangle3d.h>
-#include <geode/python/Class.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/normalize.h>
 #include <geode/vector/SolidMatrix.h>
@@ -16,9 +15,6 @@ using std::endl;
 typedef real T;
 typedef Vector<T,2> TV2;
 typedef Vector<T,3> TV3;
-
-template<> GEODE_DEFINE_TYPE(CubicHinges<TV2>)
-template<> GEODE_DEFINE_TYPE(CubicHinges<TV3>)
 
 // In both 2d and 3d cases, we want to approximate the nonlinear energy
 //
@@ -437,23 +433,5 @@ template<class TV> void CubicHinges<TV>::add_elastic_gradient_block_diagonal(Raw
 
 template class CubicHinges<TV2>;
 template class CubicHinges<TV3>;
-}
-using namespace geode;
 
-template<int d> static void wrap_helper() {
-  typedef Vector<T,d+1> TV;
-  typedef CubicHinges<TV> Self;
-  Class<Self>(d==1?"CubicHinges2d":"CubicHinges3d")
-    .GEODE_INIT(Array<const Vector<int,d+2>>,RawArray<const T>,RawArray<const TV>)
-    .GEODE_METHOD(slow_elastic_energy)
-    .GEODE_METHOD(angles)
-    .GEODE_FIELD(stiffness)
-    .GEODE_FIELD(damping)
-    .GEODE_FIELD(simple_hessian)
-    ;
-}
-
-void wrap_cubic_hinges() {
-  wrap_helper<1>();
-  wrap_helper<2>();
 }

@@ -329,11 +329,3 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
 }
 
 }
-
-#include <geode/python/wrap.h>
-
-using namespace geode;
-
-void wrap_lower_hull() {
-  GEODE_FUNCTION(lower_hull)
-}

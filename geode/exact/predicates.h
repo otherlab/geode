@@ -93,4 +93,7 @@ GEODE_CORE_EXPORT GEODE_PURE bool triangles_oriented(const P3 a0, const P3 a1, c
 #undef P3
 #undef P2
 
+// For testing purposes
+GEODE_CORE_EXPORT void predicate_tests();
+
 }

@@ -12,7 +12,7 @@ template<class TV> class LinearBendingElements : public Force<TV> {
   typedef typename TV::Scalar T;
   enum Workaround {d=TV::m};
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
   typedef typename mpl::if_c<d==2,SegmentSoup,TriangleSoup>::type Mesh;
 

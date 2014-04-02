@@ -36,4 +36,8 @@ static inline int factorial_limbs(const int d) {
 // assumed to be zero.  The result is scaled by degree! to avoid the need for rational arithmetic.
 void scaled_univariate_in_place_interpolating_polynomial(Subarray<mp_limb_t,2> A);
 
+// For testing purposes
+void in_place_interpolating_polynomial_test(const int degree, RawArray<const uint8_t,2> lambda, 
+                                            RawArray<const ExactInt> coefs, const bool verbose);
+
 }

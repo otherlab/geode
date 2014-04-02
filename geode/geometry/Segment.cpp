@@ -6,7 +6,6 @@
 #include <geode/math/clamp.h>
 #include <geode/math/givens.h>
 #include <geode/math/copysign.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Tuple.h>
 #include <geode/vector/Vector.h>
@@ -18,14 +17,6 @@ typedef Vector<real,2> TV2;
 typedef Vector<real,3> TV3;
 using std::cout;
 using std::endl;
-
-#ifdef GEODE_PYTHON
-template<class TV> PyObject* to_python(const Segment<TV>& seg) {
-  return to_python(tuple(seg.x0,seg.x1));
-}
-template PyObject* to_python(const Segment<Vector<real,2>>&);
-template PyObject* to_python(const Segment<Vector<real,3>>&);
-#endif
 
 template<class TV> real interpolation_fraction(const Segment<TV>& s, const TV p) {
   const TV v = s.x1-s.x0;
@@ -340,7 +331,7 @@ template<int d> static Vector<Vector<T,d>,4> random_degenerate_tetrahedron(Rando
   return X;
 }
 
-template<int d> static void segment_tests(const int steps) {
+template<int d> void segment_tests(const int steps) {
   const T tol = d==2 ? 1e-14 : 1e-13;
   typedef Vector<T,d> TV;
   typedef Vector<T,3> TV3;
@@ -442,10 +433,4 @@ template<int d> static void segment_tests(const int steps) {
 INSTANTIATE(2)
 INSTANTIATE(3)
 
-}
-using namespace geode;
-
-void wrap_segment() {
-  GEODE_FUNCTION_2(segment_tests_2d,segment_tests<2>)
-  GEODE_FUNCTION_2(segment_tests_3d,segment_tests<3>)
 }

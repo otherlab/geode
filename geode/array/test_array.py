@@ -18,12 +18,9 @@ def test_basic():
 
 def test_resize():
   a = array_test(empty_array(),20)
-  print type(a.base)
   assert len(a)==20
-  assert base_refcnt(a)==1 # Can't use sys.getrefcount(a.base) since it's version dependent
   a = array_test(a,10)
-  assert base_refcnt(a)==1
-  str(a.base)
+  assert len(a)==10
 
 def test_sharing():
   a = zeros(5,dtype=int32)

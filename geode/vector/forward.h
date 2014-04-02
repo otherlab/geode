@@ -59,13 +59,4 @@ template<int d,class TV,class Result> struct EnableForSize<d,TV,Result,mpl::int_
 template<class T,int d,class TV,class Result,class D=mpl::int_<d>> struct EnableForVectorLike;
 template<class TV,int d,class Result> struct EnableForVectorLike<typename TV::Element,d,TV,Result,mpl::int_<TV::m>> { typedef Result type; };
 
-// Declare vector conversions.  See vector/convert.h for the matching GEODE_DEFINE_VECTOR_CONVERSIONS.
-#ifdef GEODE_PYTHON
-#define GEODE_DECLARE_VECTOR_CONVERSIONS(EXPORT,d,...) \
-  EXPORT PyObject* to_python(const Vector<__VA_ARGS__,d>& v); \
-  template<> struct FromPython<Vector<__VA_ARGS__,d>> { EXPORT static Vector<__VA_ARGS__,d> convert(PyObject* o); };
-#else
-#define GEODE_DECLARE_VECTOR_CONVERSIONS(...) // non-python stub
-#endif
-
 }

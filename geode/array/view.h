@@ -42,7 +42,7 @@ scalar_view_own(const TA& array) {
   typedef typename TA::Element TV;
   static_assert(IsScalarBlock<TV>::value,"");
   typedef typename ConstIf<typename ScalarPolicy<TV>::type,TA::is_const>::type T;
-  return Array<T>(sizeof(TV)/sizeof(T)*array.sizes().product(),reinterpret_cast<T*>(array.data()),array.borrow_owner());
+  return Array<T>(sizeof(TV)/sizeof(T)*array.sizes().product(),reinterpret_cast<T*>(array.data()),array.owner());
 }
 
 template<class TV,class TA> typename enable_if<IsContiguousArray<TA>,
@@ -68,7 +68,7 @@ vector_view_own(const TA& array) {
   const int n = array.size()/r;
   GEODE_ASSERT(r*n==array.size());
   typedef typename ConstIf<TV,TA::is_const>::type TR;
-  return Array<TR>(n,reinterpret_cast<TR*>(array.data()),array.borrow_owner());
+  return Array<TR>(n,reinterpret_cast<TR*>(array.data()),array.owner());
 }
 
 template<int d,class TA> inline RawArray<typename ConstIf<Vector<typename TA::Element,d>,TA::is_const>::type>

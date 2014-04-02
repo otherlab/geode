@@ -14,7 +14,7 @@ template<class TV_> class CubicHinges : public Force<TV_> {
   typedef TV_ TV;
   static_assert(is_same<typename TV::Scalar,real>::value,"");
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
   enum Workaround {d=TV::m-1}; // Topological mesh dimension
   typedef real T;

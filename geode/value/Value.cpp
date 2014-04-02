@@ -3,11 +3,8 @@
 #include <geode/value/Action.h>
 #include <geode/value/Prop.h>
 #include <geode/value/convert.h>
-#include <geode/python/Class.h>
-#include <geode/python/stl.h>
-#include <geode/python/wrap.h>
 #include <geode/utility/const_cast.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Ref.h>
 #include <geode/utility/Hasher.h>
 #include <iostream>
 namespace geode {
@@ -16,8 +13,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::exception;
-
-GEODE_DEFINE_TYPE(ValueBase)
 
 // Link list of actions which have pending signals.  The fact that this is a two-sided doubly-linked list
 // is important, since Actions need to be able to delete their links from the pending list if they
@@ -67,7 +62,7 @@ inline void ValueBase::signal_pending() {
       try {
         action->input_changed();
       } catch (const exception& e) {
-        print_and_clear_exception("Value: squelching exception in an Action",e);
+        save(e)->print(cerr,"Value: squelching exception in an Action");
       }
     }
   }
@@ -111,19 +106,19 @@ void ValueBase::pull() const {
       update();
     } catch (exception& e) {
       dirty_ = false;
-      error = ExceptionValue(e);
+      error = save(e);
       throw;
     }
     GEODE_ASSERT(!dirty_);
   } else if (error)
-    error.throw_();
+    error->throw_();
 }
 
 vector<Ref<const ValueBase>> ValueBase::dependents() const {
   vector<Ref<const ValueBase>> result;
   for (ValueBase::Link* link=actions; link; link=link->value_next) {
     // make sure we have a value here, don't put other things in the
-    auto value_p = dynamic_cast<ValueBase*>(link->action);
+    auto value_p = dynamic_cast<const ValueBase*>(link->action);
     if (value_p)
       result.push_back(ref(*value_p));
   }
@@ -165,13 +160,11 @@ vector<Ref<const ValueBase>> ValueBase::all_dependencies() const {
 }
 
 
-#ifdef GEODE_PYTHON
 // For testing purposes
-static ValueRef<int> value_test(ValueRef<int> value) {
+ValueRef<int> value_test(ValueRef<int> value) {
   return value;
 }
-static void value_ptr_test(Ptr<Value<int>> value) {}
-#endif
+void value_ptr_test(Ptr<Value<int>> value) {}
 
 bool ValueBase::is_prop() const {
   return dynamic_cast<const PropBase*>(this)!=0;
@@ -200,8 +193,8 @@ bool ValueBase::get_hidden() const            { return prop().hidden; }
 bool ValueBase::get_required() const          { return prop().required; }
 char ValueBase::get_abbrev() const            { return prop().abbrev; }
 
-#ifdef GEODE_PYTHON
-ValueBase& ValueBase::set_python(PyObject* value_)  { prop().set_python(value_); return *this; }
+#if 0 // Value python support
+ValueBase& ValueBase::set(PyObject* value_)         { prop().set(value_); return *this; }
 ValueBase& ValueBase::set_allowed(PyObject* v)      { prop().set_allowed_python(v); return *this; }
 ValueBase& ValueBase::set_min_py(PyObject* m)       { prop().set_min_python(m); return *this; }
 ValueBase& ValueBase::set_max_py(PyObject* m)       { prop().set_max_python(m); return *this; }
@@ -210,44 +203,4 @@ PyObject* ValueBase::get_default() const      { return prop().default_python(); 
 PyObject* ValueBase::get_allowed() const      { return prop().allowed_python(); }
 #endif
 
-}
-using namespace geode;
-
-void wrap_value_base() {
-#ifdef GEODE_PYTHON
-  typedef ValueBase Self;
-  Class<Self>("Value")
-    .GEODE_CALL()
-    .GEODE_GET(name)
-    .GEODE_METHOD(dirty)
-    .GEODE_METHOD(dump)
-    .GEODE_METHOD(dependents)
-    .GEODE_METHOD(all_dependents)
-    .GEODE_METHOD(dependencies)
-    .GEODE_METHOD(all_dependencies)
-    .GEODE_METHOD(signal)
-    .GEODE_METHOD(is_prop)
-    // The following work only if the object is a Prop
-    .GEODE_METHOD_2("set",set_python)
-    .property("help",&Self::get_help)
-    .property("hidden",&Self::get_hidden)
-    .property("required",&Self::get_required)
-    .property("category",&Self::get_category)
-    .property("abbrev",&Self::get_abbrev)
-    .property("allowed",&Self::get_allowed)
-    .property("default",&Self::get_default)
-    .GEODE_METHOD(set_help)
-    .GEODE_METHOD(set_hidden)
-    .GEODE_METHOD(set_required)
-    .GEODE_METHOD(set_abbrev)
-    .GEODE_METHOD(set_allowed)
-    .GEODE_METHOD(set_category)
-    .GEODE_METHOD_2("set_min",set_min_py)
-    .GEODE_METHOD_2("set_max",set_max_py)
-    .GEODE_METHOD_2("set_step",set_step_py)
-    ;
-
-  GEODE_FUNCTION(value_test)
-  GEODE_FUNCTION(value_ptr_test)
-#endif
 }

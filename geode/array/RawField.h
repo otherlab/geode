@@ -14,16 +14,7 @@ namespace geode {
 
 template<class T,class Id> struct HasCheapCopy<RawField<T,Id>>:public mpl::true_{};
 
-template<class T,class Id> static inline PyObject* to_python(const RawField<T,Id>& field) {
-  return to_python(field.flat);
-}
-
-template<class T,class Id> struct FromPython<RawField<T,Id>>{static inline Field<T,Id> convert(PyObject* object) {
-  return Field<T,Id>(from_python<Array<T>>(object));
-}};
-
-template<class T,class Id>
-class RawField {
+template<class T,class Id> class RawField {
 public:
   typedef typename remove_const<T>::type Element;
   static const bool is_const = geode::is_const<T>::value;

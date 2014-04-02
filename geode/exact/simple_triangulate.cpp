@@ -5,7 +5,6 @@
 #include <geode/exact/math.h>
 #include <geode/exact/scope.h>
 #include <geode/array/sort.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 #include <geode/utility/curry.h>
 namespace geode {
@@ -92,8 +91,8 @@ static TV random_in_triangle(Random& random, const TV p0, const TV p1, const TV 
   return t0*p0+t1*p1+(1-t0-t1)*p2;
 }
 
-static void simple_triangulate_test(const int seed, const int left, const int right,
-                                                    const int interior, const int edges) {
+void simple_triangulate_test(const int seed, const int left, const int right,
+                                             const int interior, const int edges) {
   IntervalScope scope;
   const auto random = new_<Random>(seed);
   const int boundary = 2+left+right;
@@ -172,9 +171,4 @@ static void simple_triangulate_test(const int seed, const int left, const int ri
   GEODE_ASSERT(constrained.size()==added+3*(P.X.size()-n));
 }
 
-}
-using namespace geode;
-
-void wrap_simple_triangulate() {
-  GEODE_FUNCTION(simple_triangulate_test)
 }

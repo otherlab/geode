@@ -17,4 +17,8 @@ GEODE_CORE_EXPORT Ref<TriangleTopology> exact_delaunay_points(RawArray<const Vec
                                                               RawArray<const Vector<int,2>> edges=Tuple<>(),
                                                               const bool validate=false);
 
+// For testing purposes
+GEODE_CORE_EXPORT int chew_fan_count();
+GEODE_CORE_EXPORT Array<Vector<int,2>> greedy_nonintersecting_edges(RawArray<const Vector<real,2>> X, const int limit);
+
 }

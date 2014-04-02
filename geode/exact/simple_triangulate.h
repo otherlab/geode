@@ -259,4 +259,8 @@ add_constraint_edge(Policy& P, MutableTriangleTopology& mesh,
   constrain(P,constrained,v0,v1,v01);
 }
 
+// For testing purposes
+void simple_triangulate_test(const int seed, const int left, const int right,
+                                             const int interior, const int edges);
+
 }

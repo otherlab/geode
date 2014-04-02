@@ -5,7 +5,6 @@
 #include <OpenMesh/Tools/Decimater/ModNormalFlippingT.hh>
 #include <OpenMesh/Tools/Decimater/ModBaseT.hh>
 #include <geode/geometry/Triangle3d.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 typedef real T;
@@ -67,10 +66,5 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
   return count;
 }
 
-}
-using namespace geode;
-
-void wrap_openmesh_decimate() {
-  GEODE_FUNCTION_2(decimate_openmesh,decimate)
 }
 #endif // GEODE_OPENMESH

@@ -2,8 +2,6 @@
 #include <geode/vector/magnitude.h>
 #include <geode/vector/normalize.h>
 #include <geode/geometry/AnalyticImplicit.h>
-#include <geode/python/from_python.h>
-#include <geode/python/to_python.h>
 namespace geode {
 
 typedef real T;
@@ -105,17 +103,5 @@ string Cylinder::repr() const {
 ostream& operator<<(ostream& output, const Cylinder& cylinder) {
   return output<<cylinder.repr();
 }
-
-#ifdef GEODE_PYTHON
-
-PyObject* to_python(const Cylinder& cylinder) {
-  return to_python(new_<AnalyticImplicit<Cylinder>>(cylinder));
-}
-
-Cylinder FromPython<Cylinder>::convert(PyObject* object) {
-  return from_python<AnalyticImplicit<Cylinder>&>(object);
-}
-
-#endif
 
 }

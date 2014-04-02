@@ -8,7 +8,7 @@
 #include <geode/geometry/Triangle3d.h>
 #include <geode/array/ProjectedArray.h>
 #include <geode/array/ConstantMap.h>
-#include <geode/python/wrap.h>
+#include <geode/structure/Tuple.h>
 #include <geode/utility/Log.h>
 #include <limits>
 namespace geode {
@@ -170,8 +170,7 @@ surface_levelset(const ParticleTree<TV>& particles, const SimplexTree<TV,d>& sur
 INSTANTIATE(1)
 INSTANTIATE(2)
 
-// For testing purposes
-static Tuple<Array<T>,Array<TV>,Array<int>,Array<TV>>
+Tuple<Array<T>,Array<TV>,Array<int>,Array<TV>>
 slow_surface_levelset(const ParticleTree<TV>& particles, const SimplexTree<TV,2>& surface) {
   Array<T> distances(particles.X.size(),uninit);
   Array<TV> directions(particles.X.size(),uninit);
@@ -197,13 +196,4 @@ slow_surface_levelset(const ParticleTree<TV>& particles, const SimplexTree<TV,2>
   return tuple(distances,directions,simplices,weights);
 }
 
-}
-using namespace geode;
-
-void wrap_surface_levelset() {
-  GEODE_FUNCTION_2(surface_levelset_c3d,static_cast<Tuple<Array<T>,Array<TV>,Array<int>,Array<T>>(*)(
-    const ParticleTree<TV>&,const SimplexTree<TV,1>&,T,bool)>(surface_levelset))
-  GEODE_FUNCTION_2(surface_levelset_s3d,static_cast<Tuple<Array<T>,Array<TV>,Array<int>,Array<TV>>(*)(
-    const ParticleTree<TV>&,const SimplexTree<TV,2>&,T,bool)>(surface_levelset))
-  GEODE_FUNCTION(slow_surface_levelset)
 }

@@ -1,4 +1,4 @@
-#include <geode/python/config.h> // Must be included first
+#include <geode/utility/config.h> // Must be included first
 #ifdef GEODE_OPENEXR
 #include <OpenEXR/ImfRgbaFile.h>
 #include <OpenEXR/ImfArray.h>

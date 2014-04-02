@@ -151,8 +151,7 @@ template<class T> inline typename enable_if_c<(is_packed_pod<T>::value && sizeof
   return h;
 }
 
-template<class T>
-inline int hash(const T& key) {
+template<class T> static inline int hash(const T& key) {
   return Hash(hash_reduce(key)).val;
 }
 

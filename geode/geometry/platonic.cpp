@@ -2,9 +2,7 @@
 
 #include <geode/geometry/platonic.h>
 #include <geode/mesh/TriangleSubdivision.h>
-#include <geode/python/wrap.h>
 #include <geode/vector/normalize.h>
-
 namespace geode {
 
 typedef real T;
@@ -12,7 +10,7 @@ typedef Vector<T,3> TV;
 typedef Vector<int,3> IV;
 
 template<class IV> static Array<const IV> frozen_copy(RawArray<const IV> X) {
-  return Array<const IV>(X.size(),X.data(),&*Ref<>(new_<Object>()));
+  return Array<const IV>(X.size(),X.data(),new_sp<const Owner>());
 }
 
 Tuple<Ref<TriangleSoup>,Array<TV>> octahedron_mesh() {
@@ -85,12 +83,4 @@ Tuple<Ref<TriangleSoup>,Array<TV>> cube_mesh(TV const &min, TV const &max) {
   return tuple(new_<TriangleSoup>(faces), vh);
 }
 
-}
-using namespace geode;
-
-void wrap_platonic() {
-  GEODE_FUNCTION(octahedron_mesh)
-  GEODE_FUNCTION(icosahedron_mesh)
-  GEODE_FUNCTION_2(sphere_mesh_py,sphere_mesh)
-  GEODE_FUNCTION(double_torus_mesh)
 }

@@ -13,7 +13,7 @@ template<class TV> class ParticleTree : public BoxTree<TV>
 {
   typedef typename TV::Scalar T;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef BoxTree<TV> Base;
   using Base::leaves;using Base::prims;using Base::boxes;using Base::update_nonleaf_boxes;
   using Base::nodes;

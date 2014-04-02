@@ -5,7 +5,6 @@
 #include <geode/force/DiagonalizedIsotropicStressDerivative.h>
 #include <geode/math/cube.h>
 #include <geode/math/pow.h>
-#include <geode/python/Class.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/Matrix.h>
 #include <geode/vector/DiagonalMatrix.h>
@@ -18,7 +17,7 @@ using std::endl;
 
 template<class T,int d> class NeoHookean : public IsotropicConstitutiveModel<T,d> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef IsotropicConstitutiveModel<T,d> Base;
   using Base::lambda;using Base::mu;using Base::alpha;using Base::beta;
   using Base::failure_threshold;
@@ -132,20 +131,4 @@ public:
   }
 };
 
-typedef real T;
-template<> GEODE_DEFINE_TYPE(NeoHookean<T,2>)
-template<> GEODE_DEFINE_TYPE(NeoHookean<T,3>)
-}
-using namespace geode;
-
-void wrap_neo_hookean() {
-  {typedef NeoHookean<T,2> Self;
-  Class<Self>("NeoHookean2d")
-    .GEODE_INIT(T,T,T,T)
-    ;}
-
-  {typedef NeoHookean<T,3> Self;
-  Class<Self>("NeoHookean3d")
-    .GEODE_INIT(T,T,T,T)
-    ;}
 }

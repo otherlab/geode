@@ -1,7 +1,7 @@
 #include <geode/config.h>
 #ifdef GEODE_OPENMESH
 
-#include "triangulator.h"
+#include <geode/openmesh/triangulator.h>
 #include <geode/structure/Tuple.h>
 #include <geode/mesh/TriangleSoup.h>
 #include <geode/array/Array.h>

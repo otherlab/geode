@@ -1,6 +1,5 @@
 #include <geode/image/color_utils.h>
 #include <geode/array/NdArray.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 Vector<real,3> hsv_to_rgb(Vector<real,3> cin) {
@@ -70,16 +69,11 @@ Vector<real,3> rgb_to_hsv(Vector<real,3> const &cin) {
   return cout;
 }
 
-static inline NdArray<Vector<real,3>> wheel_color_py(NdArray<const real> hues) {
+NdArray<Vector<real,3>> wheel_color(NdArray<const real> hues) {
   NdArray<Vector<real,3>> colors(hues.shape,uninit);
   for (int i=0;i<hues.flat.size();i++)
     colors.flat[i] = wheel_color(hues.flat[i]);
   return colors;
 }
 
-}
-using namespace geode;
-
-void wrap_color_utils() {
-  GEODE_FUNCTION_2(wheel_color,wheel_color_py)
 }

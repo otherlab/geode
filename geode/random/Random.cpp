@@ -2,13 +2,10 @@
 // Class Random
 //#####################################################################
 #include <geode/random/Random.h>
-#include <geode/python/Class.h>
 #include <geode/vector/Frame.h>
 #include <geode/vector/Rotation.h>
-#include <geode/python/stl.h>
 namespace geode {
 
-GEODE_DEFINE_TYPE(Random)
 using std::vector;
 
 Random::Random(uint128_t seed)
@@ -84,7 +81,7 @@ real Random::normal() {
 }
 
 // The result should consist of all (dependent) binomially distributed random values
-static vector<Array<int>> random_bits_test(Random& random, int steps) {
+vector<Array<int>> random_bits_test(Random& random, int steps) {
   vector<Array<int>> all;
   #define WIDTH(w) \
     { \
@@ -168,18 +165,4 @@ template<class TV> Frame<TV> Random::frame(const TV& v0,const TV& v1) {
 INSTANTIATE(2)
 INSTANTIATE(3)
 
-}
-using namespace geode;
-
-void wrap_Random() {
-  typedef Random Self;
-  Class<Self>("Random")
-    .GEODE_INIT(uint128_t)
-    .GEODE_FIELD(seed)
-    .GEODE_METHOD_2("normal",normal_py)
-    .GEODE_METHOD_2("uniform",uniform_py)
-    .GEODE_METHOD_2("uniform_int",uniform_int_py)
-    ;
-
-  GEODE_FUNCTION(random_bits_test)
 }

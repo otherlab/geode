@@ -2,7 +2,6 @@
 // Class Array<T,2>
 //#####################################################################
 #include <geode/array/Array2d.h>
-#include <geode/python/numpy.h>
 #include <geode/vector/Vector.h>
 #if defined(GEODE_BLAS) && defined(GEODE_MKL)
 #include <geode/vector/blas.h>

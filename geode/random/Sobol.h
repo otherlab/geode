@@ -3,7 +3,7 @@
 
 #include <geode/random/forward.h>
 #include <geode/array/Array.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 #include <geode/vector/Vector.h>
 #include <limits>
 namespace geode {
@@ -11,10 +11,9 @@ namespace geode {
 template<class TV> class Box;
 using std::numeric_limits;
 
-template<class TV>
-class Sobol : public Object {
+template<class TV> class Sobol : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
 
   typedef typename TV::Scalar T;
   static_assert(numeric_limits<T>::radix==2,"");

@@ -8,10 +8,9 @@
 #include <geode/vector/Vector.h>
 namespace geode {
 
-template<class TV>
-class Gravity : public Force<TV> {
+template<class TV> class Gravity : public Force<TV> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
   typedef typename TV::Scalar T;
   enum {m=TV::m};

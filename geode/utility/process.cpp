@@ -4,11 +4,13 @@
 #include <geode/utility/process.h>
 #include <geode/utility/debug.h>
 #include <geode/utility/Log.h>
-#include <geode/python/wrap.h>
 #include <geode/vector/Vector.h>
 #include <iomanip>
 #include <stdio.h>
 #include <cstring>
+#if __linux__
+#include <unistd.h>
+#endif
 #ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -90,7 +92,7 @@ size_t memory_usage() {
   size_t size = 0;
   int r = fscanf(file,"%zu",&size);
   fclose(file);
-  return r==1?getpagesize()*size:0;
+  return r==1 ? getpagesize()*size : 0;
 
 #elif defined(__APPLE__)
   // Actually, ru_idrss and ru_isrss don't work on Mac either.  See http://miknight.blogspot.com/2005/11/resident-set-size-in-mac-os-x.html.
@@ -118,7 +120,7 @@ static void float_exception_handler(int sig_number, siginfo_t* info, void *data)
       info->si_code==FPE_FLTINV?"FP invalid operation":info->si_code==FPE_FLTSUB?"subscript out of range":"unknown")
       << "\", from address 0x"<<std::hex<<(unsigned long)info->si_addr<<endl;
   backtrace();
-  Log::finish();
+  log_finish();
   exit(sig_number);
 }
 
@@ -246,7 +248,7 @@ void backtrace_and_abort(int signal_number, siginfo_t* info, void *data) {
       signal_name = *names;
   Log::cerr<<"\n*** Error: SIGNAL "<<(signal_name?signal_name:"Unknown")<<" ("<<signal_number<<")\n"<<endl;
   if (signal_number!=SIGUSR2) {
-    Log::finish();
+    log_finish();
     exit(signal_number);
   }
 }
@@ -269,12 +271,4 @@ void set_backtrace(const bool enable) {
 
 #endif
 }
-}
-using namespace geode;
-using namespace process;
-
-void wrap_process() {
-  GEODE_FUNCTION(cpu_times)
-  GEODE_FUNCTION(memory_usage)
-  GEODE_FUNCTION(max_memory_usage)
 }

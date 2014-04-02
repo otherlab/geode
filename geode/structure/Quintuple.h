@@ -7,8 +7,6 @@
 #include <iostream> // needed to avoid header bug on Mac OS X
 #include <geode/math/choice.h>
 #include <geode/math/hash.h>
-#include <geode/python/from_python.h>
-#include <geode/python/to_python.h>
 namespace geode {
 
 template<class T0,class T1,class T2,class T3,class T4>

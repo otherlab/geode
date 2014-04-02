@@ -10,7 +10,7 @@
 
 #include <sstream>
 #include <geode/utility/stl.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Ref.h>
 namespace geode {
 
 using std::string;

@@ -1,5 +1,5 @@
 //#####################################################################
-// Header Arrays/forward
+// Header Array/forward
 //#####################################################################
 #pragma once
 
@@ -34,6 +34,8 @@ template<class TArray,class TProjector> class ProjectedArray;
 template<class TStruct,class TField,TField TStruct::* field> struct FieldProjector;
 struct IndexProjector;
 struct PointerProjector;
+
+template<class T,class TA> class ArrayPlusScalar;
 
 template<class TArray,class TNew> struct Rebind;
 template<class T,int d,class TNew> struct Rebind<Array<T,d>,TNew>{typedef Array<TNew,d> type;};

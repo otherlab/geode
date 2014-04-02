@@ -7,7 +7,6 @@
 #include <geode/exact/perturb.h>
 #include <geode/array/Array3d.h>
 #include <geode/array/ConstantMap.h>
-#include <geode/python/wrap.h>
 #include <geode/structure/Hashtable.h>
 namespace geode {
 
@@ -378,7 +377,7 @@ struct BadRatio1 { template<class TV> static ConstructType<2,5,TV> eval(const TV
   return tuple(emul(s,r.x),s*r.y);
 }};
 }
-static void irreducible_test() {
+void irreducible_test() {
   warn = false;
 
   // Test irreducibility
@@ -409,9 +408,4 @@ INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)
 
-}
-using namespace geode;
-
-void wrap_irreducible() {
-  GEODE_FUNCTION(irreducible_test)
 }

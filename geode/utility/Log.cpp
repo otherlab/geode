@@ -8,20 +8,21 @@
 #include <geode/utility/LogScope.h>
 #include <geode/utility/str.h>
 #include <geode/utility/time.h>
+#include <geode/utility/Unique.h>
 #include <sstream>
 #include <iostream>
 namespace geode {
-namespace Log {
 
 using std::string;
 using std::stringbuf;
 using std::streambuf;
 using std::ostream;
+static void dump_log_helper();
 
 namespace {
 FILE* log_file=0;
-scoped_ptr<streambuf> cout_buffer;
-scoped_ptr<streambuf> cerr_buffer;
+Unique<streambuf> cout_buffer;
+Unique<streambuf> cerr_buffer;
 bool cout_initialized = false;
 bool cerr_initialized = false;
 
@@ -37,7 +38,7 @@ bool suppress_timing;
 
 template<class T>
 struct InitializationHelper {
-  scoped_ptr<T> object;
+  Unique<T> object;
   bool& initialized;
 
   InitializationHelper(T* object, bool& initialized)
@@ -54,12 +55,9 @@ struct LogClass {
   LogClass();
   ~LogClass();
 };
-scoped_ptr<LogClass> private_instance;
+Unique<LogClass> private_instance;
 
-}
-static void dump_log_helper();
-
-void initialize() {
+static void initialize() {
   if(!private_instance) new LogClass();
 }
 
@@ -115,7 +113,7 @@ class LogCoutBuffer : public stringbuf {
   }
 };
 
-class LogCerrBuffer:public stringbuf {
+class LogCerrBuffer : public stringbuf {
   int sync() {
     initialize();
     if (!suppress_cerr) {
@@ -147,9 +145,9 @@ class LogCerrBuffer:public stringbuf {
 LogClass::LogClass() {
   private_instance.reset(this);
   cout_buffer.reset(new LogCoutBuffer);
-  cout.rdbuf(cout_buffer.get());
+  Log::cout.rdbuf(cout_buffer.get());
   cerr_buffer.reset(new LogCerrBuffer);
-  cerr.rdbuf(cerr_buffer.get());
+  Log::cerr.rdbuf(cerr_buffer.get());
   root = new LogScope(0,0,root_name,root_name,verbosity_level);
   current_entry = root;
   root->start(log_file);
@@ -164,14 +162,16 @@ LogClass::~LogClass() {
   log_file = 0;
   log_file_temporary = false;
   if (cout_initialized)
-    cout.rdbuf(std::cout.rdbuf());
+    Log::cout.rdbuf(std::cout.rdbuf());
   if (cerr_initialized)
-    cerr.rdbuf(std::cerr.rdbuf());
+    Log::cerr.rdbuf(std::cerr.rdbuf());
   delete root;
   root = 0;
 }
 
-void cache_initial_output() {
+} // unnamed namespace
+
+void log_cache_initial_output() {
   if (!log_file) {
     log_file = tmpfile();
     if (!log_file) GEODE_FATAL_ERROR("Couldn't create temporary log file");
@@ -179,30 +179,32 @@ void cache_initial_output() {
   }
 }
 
-ostream& cout_Helper() {
+namespace Log {
+ostream& cout_helper() {
   static InitializationHelper<ostream> helper(new ostream(std::cout.rdbuf()),cout_initialized); // Necessary for DLLs to work. Cannot use static class data across dlls
   return *helper.object;
 }
 
-ostream& cerr_Helper() {
+ostream& cerr_helper() {
   static InitializationHelper<ostream> helper(new ostream(std::cerr.rdbuf()),cerr_initialized); // Necessary for DLLs to work. Cannot use static class data across dlls
   return *helper.object;
 }
+}
 
-bool initialized() {
+bool log_initialized() {
   return bool(private_instance);
 }
 
-void configure(const string& root_name_input, const bool suppress_cout_input, const bool suppress_timing_input, const int verbosity_level_input) {
-  root_name = root_name_input;
-  suppress_cout = suppress_cout_input;
+void log_configure(const string& name, const bool suppress_cout_in, const bool suppress_timing_in, const int verbosity) {
+  root_name = name;
+  suppress_cout = suppress_cout_in;
   suppress_cerr = false;
-  suppress_timing = suppress_timing_input;
-  verbosity_level = verbosity_level_input-1;
+  suppress_timing = suppress_timing_in;
+  verbosity_level = verbosity-1;
   initialize();
 }
 
-void copy_to_file(const string& filename,const bool append) {
+void log_copy_to_file(const string& filename, const bool append) {
   initialize();
   FILE* temporary_file = 0;
   if (log_file && log_file_temporary){
@@ -245,27 +247,27 @@ void copy_to_file(const string& filename,const bool append) {
   log_file_temporary = false;
 }
 
-void finish() {
+void log_finish() {
   private_instance.reset();
 }
 
-bool is_timing_suppressed() {
+bool log_is_timing_suppressed() {
   initialize();
   return suppress_timing;
 }
 
-void time_helper(const string& label) {
+void log_time_helper(const string& label) {
   // Always called after is_timing_suppressed, so no need to call initialized()
   current_entry = current_entry->get_new_item(log_file,label);
   current_entry->start(log_file);
 }
 
-void stop_time() {
-  if(!is_timing_suppressed())
+void log_stop_time() {
+  if (!log_is_timing_suppressed())
     current_entry=current_entry->get_stop_time(log_file);
 }
 
-template<class TValue> void stat(const string& label, const TValue& value) {
+template<class TValue> void log_stat(const string& label, const TValue& value) {
   initialize();
   if (suppress_timing) return;
   string s = str(value);
@@ -285,26 +287,26 @@ template<class TValue> void stat(const string& label, const TValue& value) {
   }
 }
 
-template void stat(const string&,const int&);
-template void stat(const string&,const bool&);
-template void stat(const string&,const float&);
-template void stat(const string&,const double&);
+template void log_stat(const string&,const int&);
+template void log_stat(const string&,const bool&);
+template void log_stat(const string&,const float&);
+template void log_stat(const string&,const double&);
 
-void push_scope(const string& name) {
+void log_push_scope(const string& name) {
   initialize();
   if (suppress_timing) return;
   current_entry = current_entry->get_new_scope(log_file,name);
   current_entry->start(log_file);
 }
 
-void pop_scope() {
+void log_pop_scope() {
   if (!current_entry) return;
   initialize();
   if (suppress_timing) return;
   current_entry = current_entry->get_pop_scope(log_file);
 }
 
-void reset() {
+void log_reset() {
   initialize();
   if (suppress_timing) return;
   delete root;
@@ -328,10 +330,21 @@ static void dump_log_helper() {
   }
 }
 
-void dump_log() {
+void log_dump() {
   initialize();
   dump_log_helper();
 }
 
+void log_print(const string& str) {
+  Log::cout << str << std::endl;
 }
+
+void log_error(const string& str) {
+  Log::cerr << str << std::endl;
+}
+
+void log_flush() {
+  Log::cout << std::flush;
+}
+
 }

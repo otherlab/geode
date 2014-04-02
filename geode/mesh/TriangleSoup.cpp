@@ -6,15 +6,12 @@
 #include <geode/array/sort.h>
 #include <geode/array/view.h>
 #include <geode/structure/Hashtable.h>
-#include <geode/python/Class.h>
 namespace geode {
 
 using std::cout;
 using std::endl;
 typedef real T;
 typedef Vector<T,3> TV3;
-
-GEODE_DEFINE_TYPE(TriangleSoup)
 
 #ifndef _WIN32
 const int TriangleSoup::d;
@@ -353,32 +350,4 @@ Array<int> TriangleSoup::nonmanifold_nodes(bool allow_boundary) const {
   return nonmanifold;
 }
 
-}
-using namespace geode;
-
-void wrap_triangle_mesh() {
-  typedef TriangleSoup Self;
-  Class<Self>("TriangleSoup")
-    .GEODE_INIT(Array<const Vector<int,3>>)
-    .GEODE_FIELD(d)
-    .GEODE_FIELD(elements)
-    .GEODE_FIELD(vertices)
-    .GEODE_METHOD(segment_soup)
-    .GEODE_METHOD(triangle_mesh)
-    .GEODE_METHOD(triangle_edges)
-    .GEODE_METHOD(incident_elements)
-    .GEODE_METHOD(adjacent_elements)
-    .GEODE_METHOD(boundary_mesh)
-    .GEODE_METHOD(bending_tuples)
-    .GEODE_METHOD(nodes_touched)
-    .GEODE_METHOD(area)
-    .GEODE_METHOD(volume)
-    .GEODE_METHOD(surface_area)
-    .GEODE_METHOD(vertex_areas)
-    .GEODE_METHOD(vertex_normals)
-    .GEODE_METHOD(element_normals)
-    .GEODE_METHOD(nodes)
-    .GEODE_METHOD(nonmanifold_nodes)
-    .GEODE_METHOD(sorted_neighbors)
-    ;
 }

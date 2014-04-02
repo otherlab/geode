@@ -2,8 +2,7 @@
 // Class uint128_t
 //#####################################################################
 #include <geode/math/uint128.h>
-#include <geode/python/stl.h>
-#include <geode/python/wrap.h>
+#include <geode/utility/debug.h>
 #include <geode/utility/format.h>
 #include <iostream>
 namespace geode {
@@ -30,52 +29,7 @@ ostream& operator<<(ostream& output, __int128_t n) {
 }
 #endif
 
-#ifdef GEODE_PYTHON
-
-static PyObject* p64;
-
-PyObject* to_python(uint128_t n) {
-  PyObject *lo=0,*hi=0,*shi=0,*r=0;
-  lo = PyLong_FromUnsignedLongLong(uint64_t(n&~0L));
-  uint64_t nhi = (n>>64)&~0L;
-  if (!nhi || !lo) return lo;
-  hi = PyLong_FromUnsignedLongLong(nhi);
-  if (!hi) goto done;
-  shi = PyNumber_Lshift(hi,p64);
-  if (!shi) goto done;
-  r = PyNumber_Add(shi,lo);
-done:
-  Py_XDECREF(lo);
-  Py_XDECREF(hi);
-  Py_XDECREF(shi);
-  return r;
-}
-
-uint128_t FromPython<uint128_t>::convert(PyObject* object) {
-  static_assert(sizeof(long long)==sizeof(uint64_t),"");
-  PyObject* n = PyNumber_Int(object);
-  if (!n) throw_python_error();
-  uint64_t lo = PyInt_AsUnsignedLongLongMask(n);
-  if (lo==(uint64_t)-1 && PyErr_Occurred()){Py_DECREF(n);throw_python_error();}
-  PyObject* phi = PyNumber_Rshift(n,p64);
-  Py_DECREF(n);
-  if (!phi) throw_python_error();
-  uint64_t hi;
-  if (PyInt_Check(phi)) {
-    long shi = PyInt_AS_LONG(phi);
-    if (shi < 0) {
-      hi = -1;
-      PyErr_SetString(PyExc_OverflowError,"can't convert negative number to uint128_t");
-    } else
-      hi = shi;
-  } else
-    hi = PyLong_AsUnsignedLongLong(phi);
-  Py_DECREF(phi);
-  if (hi==(uint64_t)-1 && PyErr_Occurred()) throw_python_error();
-  return (uint128_t(hi)<<64)|lo;
-}
-
-static std::vector<uint128_t> uint128_test(uint128_t x,uint128_t y) {
+vector<uint128_t> uint128_test(uint128_t x, uint128_t y) {
   // Test shifts
   static const int shifts[] = {0,1,63,64,65,127};
   for (const int s : shifts) {
@@ -96,17 +50,4 @@ static std::vector<uint128_t> uint128_test(uint128_t x,uint128_t y) {
   return r;
 }
 
-#endif
-
-}
-using namespace geode;
-
-void wrap_uint128() {
-#ifdef GEODE_PYTHON
-  p64 = PyInt_FromLong(64);
-  if (!p64) throw_python_error();
-
-  GEODE_FUNCTION(uint128_test)
-  GEODE_FUNCTION_2(uint128_str_test,static_cast<string(*)(uint128_t)>(str))
-#endif
 }

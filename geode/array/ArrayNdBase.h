@@ -28,12 +28,8 @@ public:
     return static_cast<const TArray&>(*this);
   }
 
-  PyObject* owner() const {
+  const shared_ptr<const Owner>& owner() const {
     return flat.owner();
-  }
-
-  PyObject* borrow_owner() const {
-    return flat.borrow_owner();
   }
 
   T* data() const {

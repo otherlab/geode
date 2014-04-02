@@ -1,13 +1,9 @@
 #include <geode/value/PropManager.h>
-#include <geode/python/Class.h>
-#include <geode/python/stl.h>
 namespace geode {
 
 using std::pair;
 using std::cout;
 using std::endl;
-
-GEODE_DEFINE_TYPE(PropManager)
 
 PropManager::PropManager()
   : frozen(false) {}
@@ -75,7 +71,7 @@ Prop<string>& PropManager::get_or_add(const string& name, const char* default_) 
   return get_or_add(name,string(default_));
 }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 PropBase& PropManager::add_python(const string& name, PyObject* default_) {
   return add(make_prop(name,default_));
 }
@@ -96,23 +92,4 @@ PropBase& PropManager::getattr(const string& name) const {
 
 #endif
 
-}
-using namespace geode;
-
-void wrap_prop_manager() {
-#ifdef GEODE_PYTHON
-  typedef PropManager Self;
-  Class<Self>("PropManager")
-    .GEODE_INIT()
-    .method("add_existing",static_cast<PropBase&(Self::*)(PropBase&)>(&Self::add))
-    .method("get",static_cast<PropBase&(Self::*)(const string&)const>(&Self::get))
-    .GEODE_METHOD_2("add",add_python)
-    .GEODE_METHOD_2("get_or_add",get_or_add_python)
-    .GEODE_METHOD(contains)
-    .GEODE_CONST_FIELD(items)
-    .GEODE_CONST_FIELD(order)
-    .GEODE_FIELD(frozen)
-    .getattr()
-    ;
-#endif
 }

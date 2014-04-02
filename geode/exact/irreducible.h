@@ -24,4 +24,7 @@ template<int m> void
 inexact_assert_lowest_terms(void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>),
                             const int degree, const int inputs, const int outputs, const char* name);
 
+// For testing purposes
+void irreducible_test();
+
 }

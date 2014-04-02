@@ -10,8 +10,6 @@
 #include <geode/solver/powell.h>
 #include <geode/solver/brent.h>
 #include <geode/array/Array2d.h>
-#include <geode/python/function.h>
-#include <geode/python/wrap.h>
 #include <geode/utility/curry.h>
 namespace geode {
 
@@ -98,13 +96,8 @@ static T f_py(const function<T(Array<const T>)>& f, RawArray<const T> p) {
   return f(owner.share(p));
 }
 
-static Tuple<T,int> powell_py(const function<T(Array<const T>)>& f, RawArray<T> x, T scale, T xtol, T ftol, int maxiter) {
+Tuple<T,int> powell_py(const function<T(Array<const T>)>& f, RawArray<T> x, T scale, T xtol, T ftol, int maxiter) {
   return powell(curry(f_py,f),x,scale,xtol,ftol,maxiter);
 }
 
-}
-using namespace geode;
-
-void wrap_powell() {
-  GEODE_FUNCTION_2(powell,powell_py)
 }

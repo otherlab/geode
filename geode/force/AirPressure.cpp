@@ -5,7 +5,6 @@
 #include <geode/array/ConstantMap.h>
 #include <geode/math/constants.h>
 #include <geode/mesh/TriangleSoup.h>
-#include <geode/python/Class.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
@@ -17,9 +16,7 @@ using std::endl;
 typedef real T;
 typedef Vector<T,3> TV;
 
-GEODE_DEFINE_TYPE(AirPressure)
-
-AirPressure::AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,int side)
+AirPressure::AirPressure(Ref<const TriangleSoup> mesh, Array<const TV> X, bool closed, int side)
   : mesh(mesh)
   , closed(closed)
   , side(side)
@@ -198,17 +195,4 @@ T AirPressure::strain_rate(RawArray<const TV> V) const {
   return 0;
 }
 
-}
-using namespace geode;
-
-void wrap_air_pressure() {
-  typedef AirPressure Self;
-  Class<Self>("AirPressure")
-    .GEODE_INIT(Ref<TriangleSoup>,Array<const TV>,bool,int)
-    .GEODE_FIELD(temperature)
-    .GEODE_FIELD(amount)
-    .GEODE_FIELD(pressure)
-    .GEODE_FIELD(skip_rotation_terms)
-    .GEODE_FIELD(initial_volume)
-    ;
 }

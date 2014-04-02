@@ -1,7 +1,6 @@
 // Base 64 encoding and decoding
 
 #include <geode/utility/base64.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 using std::numeric_limits;
@@ -98,10 +97,4 @@ string base64_decode(const string& src) {
   return dst;
 }
 
-}
-using namespace geode;
-
-void wrap_base64() {
-  GEODE_FUNCTION_2(base64_encode,static_cast<string(*)(const string&)>(base64_encode))
-  GEODE_FUNCTION(base64_decode)
 }

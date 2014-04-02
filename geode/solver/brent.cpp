@@ -8,8 +8,6 @@
 // *****END NOTICE************
 
 #include <geode/solver/brent.h>
-#include <geode/python/function.h>
-#include <geode/python/wrap.h>
 #include <geode/math/copysign.h>
 
 
@@ -173,10 +171,4 @@ Tuple<T,T,int> brent_py(const function<T(T)>& f, RawArray<const T> bracket, cons
   throw TypeError(format("brent: expected (a,b) or (a,b,c) for bracket, got size %d",bracket.size()));
 }
 
-}
-using namespace geode;
-
-void wrap_brent() {
-  GEODE_FUNCTION(bracket)
-  GEODE_FUNCTION_2(brent,brent_py)
 }

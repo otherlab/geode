@@ -2,15 +2,11 @@
 
 from __future__ import absolute_import
 from . import Log
+from ..xdress.wrap import resource_py,cache
 import platform
 import tempfile
 import types
 import os
-
-if platform.system()=='Windows':
-  from other_all import resource_py,cache
-else:
-  from ..geode_wrap import resource_py,cache
 
 def curry(f,*a,**k):
   def g(*a2,**k2):

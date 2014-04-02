@@ -10,7 +10,6 @@
 #include <geode/array/sort.h>
 #include <geode/geometry/BoxTree.h>
 #include <geode/geometry/traverse.h>
-#include <geode/python/wrap.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/Log.h>
 #include <geode/utility/str.h>
@@ -29,7 +28,7 @@ static Array<Box<EV>> segment_boxes(RawArray<const int> next, RawArray<const EV>
 }
 
 // Does x1 + t*dir head outwards from the local polygon portion x0,x1,x2?
-// A version of local_outwards specialized to dir = (1,0): does x1 + t*(1,0) head outwards from x0,x1,x2?
+// This version is specialized to dir = (1,0): does x1 + t*(1,0) head outwards from x0,x1,x2?
 static inline bool local_outwards_x_axis(const Perturbed2 x0, const Perturbed2 x1, const Perturbed2 x2) {
   // If x1 is convex,  we're outwards if dir is to the right of *either* segment.
   // If x1 is concave, we're outwards if dir is to the right of *both* segments.
@@ -200,9 +199,4 @@ Nested<Vec2> split_polygons(Nested<const Vec2> polys, const int depth) {
   return amap(quant.inverse,exact_split_polygons(amap(quant,polys),depth));
 }
 
-}
-using namespace geode;
-
-void wrap_polygon_csg() {
-  GEODE_FUNCTION(split_polygons)
 }

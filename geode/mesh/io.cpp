@@ -4,8 +4,6 @@
 #include <geode/mesh/PolygonSoup.h>
 #include <geode/array/view.h>
 #include <geode/geometry/Triangle3d.h>
-#include <geode/python/cast.h>
-#include <geode/python/wrap.h>
 #include <geode/utility/endian.h>
 #include <geode/utility/function.h>
 #include <geode/utility/path.h>
@@ -72,7 +70,7 @@ struct StlTri {
 static_assert(sizeof(StlTri)==12*4+2,"");
 
 // See http://en.wikipedia.org/wiki/STL_file for details
-static Tuple<Ref<TriangleSoup>,Array<TV>> read_stl(const string& filename) {
+static Tuple<Ref<const TriangleSoup>,Array<TV>> read_stl(const string& filename) {
   if (is_binary(filename)) {
     File f(filename,"rb");
 
@@ -113,7 +111,7 @@ static Tuple<Ref<TriangleSoup>,Array<TV>> read_stl(const string& filename) {
       }
       tris.append(tri);
     }
-    return tuple(new_<TriangleSoup>(tris,X.size()),X);
+    return tuple(new_<const TriangleSoup>(tris,X.size()),X);
   } else { // ASCII
     File f(filename,"r");
 
@@ -181,7 +179,7 @@ static Tuple<Ref<TriangleSoup>,Array<TV>> read_stl(const string& filename) {
       }
       ns++;
     }
-    return tuple(new_<TriangleSoup>(tris,X.size()),X);
+    return tuple(new_<const TriangleSoup>(tris,X.size()),X);
   }
 }
 
@@ -205,7 +203,7 @@ static void write_stl(const string& filename, RawArray<const Vector<int,3>> tris
 
 static const char* white = " \t\v\f\r\n";
 
-static Tuple<Ref<PolygonSoup>,Array<TV>> read_obj(const string& filename) {
+static Tuple<Ref<const PolygonSoup>,Array<TV>> read_obj(const string& filename) {
   File f(filename,"r");
 
   // Parse file
@@ -280,7 +278,7 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_obj(const string& filename) {
     throw IOError(format("invalid obj file %s: %d vertices != %d texcoords",filename,X.size(),texcoords.size()));
 
   // TODO: Don't discard normal and texcoord information
-  return tuple(new_<PolygonSoup>(counts,vertices,X.size()),X);
+  return tuple(new_<const PolygonSoup>(counts,vertices,X.size()),X);
 }
 
 static void write_obj_helper(File& f, RawArray<const TV> X) {
@@ -506,7 +504,7 @@ protected:
 };
 }
 
-static Tuple<Ref<PolygonSoup>,Array<TV>> read_ply(const string& filename) {
+static Tuple<Ref<const PolygonSoup>,Array<TV>> read_ply(const string& filename) {
   File f(filename,"rb");
   Line line;
   try {
@@ -672,7 +670,7 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_ply(const string& filename) {
       throw IOError("face element missing vertex_indices");
     const auto vertices = face->prop_names.get("vertex_indices");
     if (const auto* v = dynamic_cast<PlyPropList<uint8_t,int>*>(&*vertices))
-      return tuple(new_<PolygonSoup>(v->counts,v->flat,X.size()),X);
+      return tuple(new_<const PolygonSoup>(v->counts,v->flat,X.size()),X);
     else
       throw IOError(format("face.vertex_indices has unsupported type %s",vertices->type()));
   } catch (const IOError& e) {
@@ -773,15 +771,16 @@ static void write_x3d(const string& filename, const PolygonSoup& soup, RawArray<
   },X);
 }
 
-static Tuple<Ref<TriangleSoup>,Array<TV>> convert(const Tuple<Ref<PolygonSoup>,Array<TV>>& d) {
+static Tuple<Ref<const TriangleSoup>,Array<TV>> convert(const Tuple<Ref<const PolygonSoup>,Array<TV>>& d) {
   return tuple(d.x->triangle_mesh(),d.y);
 }
 
-static Tuple<Ref<PolygonSoup>,Array<TV>> convert(const Tuple<Ref<TriangleSoup>,Array<TV>>& d) {
-  return tuple(new_<PolygonSoup>(arange(d.x->elements.size()).copy(),scalar_view_own(d.x->elements),d.y.size()),d.y);
+static Tuple<Ref<const PolygonSoup>,Array<TV>> convert(const Tuple<Ref<const TriangleSoup>,Array<TV>>& d) {
+  return tuple(new_<const PolygonSoup>(arange(d.x->elements.size()).copy(),
+                                       scalar_view_own(d.x->elements),d.y.size()),d.y);
 }
 
-Tuple<Ref<TriangleSoup>,Array<TV>> read_soup(const string& filename) {
+Tuple<Ref<const TriangleSoup>,Array<TV>> read_soup(const string& filename) {
   const auto ext = path::extension(filename);
   if      (ext == ".stl") return         read_stl(filename);
   else if (ext == ".obj") return convert(read_obj(filename));
@@ -790,7 +789,7 @@ Tuple<Ref<TriangleSoup>,Array<TV>> read_soup(const string& filename) {
     throw ValueError(format("unsupported mesh filename '%s', expected one of .stl, .obj, .ply",filename));
 }
 
-Tuple<Ref<PolygonSoup>,Array<TV>> read_polygon_soup(const string& filename) {
+Tuple<Ref<const PolygonSoup>,Array<TV>> read_polygon_soup(const string& filename) {
   const auto ext = path::extension(filename);
   if      (ext == ".stl") return convert(read_stl(filename));
   else if (ext == ".obj") return         read_obj(filename);
@@ -799,9 +798,9 @@ Tuple<Ref<PolygonSoup>,Array<TV>> read_polygon_soup(const string& filename) {
     throw ValueError(format("unsupported mesh filename '%s', expected one of .stl, .obj, .ply",filename));
 }
 
-Tuple<Ref<TriangleTopology>,Array<TV>> read_mesh(const string& filename) {
+Tuple<Ref<const TriangleTopology>,Array<TV>> read_mesh(const string& filename) {
   const auto soup = read_soup(filename);
-  return tuple(new_<TriangleTopology>(soup.x),soup.y);
+  return tuple(new_<const TriangleTopology>(soup.x),soup.y);
 }
 
 static void write_helper(const string& filename, RawArray<const Vector<int,3>> tris, RawArray<const TV> X) {
@@ -839,6 +838,8 @@ void write_mesh(const string& filename, const MutableTriangleTopology& mesh) {
   write_helper(filename,mesh.elements(),mesh.field(pos_id).flat);
 }
 
+#if 0 // Value python support
+>>>>>>> IN PROGRESS xdress conversion
 static void write_mesh_py(const string& filename, PyObject* mesh, RawArray<const TV> X) {
   if (auto* soup = python_cast<TriangleSoup*>(mesh))
     write_mesh(filename,*soup,X);
@@ -849,13 +850,6 @@ static void write_mesh_py(const string& filename, PyObject* mesh, RawArray<const
   else
     throw TypeError(format("expected TriangleSoup or TriangleTopology, got %s",mesh->ob_type->tp_name));
 }
+#endif
 
-}
-using namespace geode;
-
-void wrap_mesh_io() {
-  GEODE_FUNCTION(read_soup)
-  GEODE_FUNCTION(read_polygon_soup)
-  GEODE_FUNCTION(read_mesh)
-  GEODE_FUNCTION_2(write_mesh,write_mesh_py)
 }

@@ -4,7 +4,7 @@
 #pragma once
 
 #include <geode/utility/format.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #include <geode/value/Prop.h>
 #include <stdexcept>
 #include <string>
@@ -13,7 +13,7 @@ namespace geode {
 
 class PropManager : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
 
   typedef unordered_map<string,Ref<PropBase>> Props;
   Props items;
@@ -63,7 +63,7 @@ public:
   GEODE_CORE_EXPORT Prop<string>& add(const string& name, const char* default_);
   GEODE_CORE_EXPORT Prop<string>& get_or_add(const string& name, const char* default_);
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
   PropBase& add_python(const string& name, PyObject* default_);
   PropBase& get_or_add_python(const string& name, PyObject* default_);
   PropBase& getattr(const string& name) const;

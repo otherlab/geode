@@ -12,7 +12,7 @@ class StrainMeasureHex : public Object {
   typedef real T;
   typedef Vector<T,3> TV;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   const int nodes;

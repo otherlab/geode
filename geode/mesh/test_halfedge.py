@@ -61,7 +61,7 @@ def test_collapse():
       m.collapse(he)
       m.assert_consistent(True)
 
-def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
+def construction_test(Mesh,random_edge_flips,random_face_splits,mesh_destruction_test):
   random.seed(813177)
   nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
   print
@@ -153,7 +153,7 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       assert mesh.n_vertices==mesh.n_edges==mesh.n_faces==0
 
 def test_halfedge_construction():
-  construction_test(HalfedgeMesh)
+  construction_test(HalfedgeMesh,halfedge_random_edge_flips,halfedge_random_face_splits,halfedge_mesh_destruction_test)
 
 def test_corner_construction():
   construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)

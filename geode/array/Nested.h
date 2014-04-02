@@ -13,11 +13,9 @@
 namespace geode {
 
 using std::ostream;
-GEODE_CORE_EXPORT bool is_nested_array(PyObject* object);
 GEODE_CORE_EXPORT Array<int> nested_array_offsets(RawArray<const int> lengths);
 
-template<class T,bool frozen> // frozen=true
-class Nested {
+template<class T,bool frozen> class Nested { // frozen=true
   struct Unusable {};
 public:
   typedef typename Array<T>::Element Element;
@@ -231,6 +229,17 @@ public:
   }
 };
 
+// Class to express that a function can accept either flat or nested inputs.
+// MaybeNested is just a nested array, but can be implicit constructed from an array.
+template<class T> class MaybeNested : public Nested<T> {
+public:
+  MaybeNested(const Nested<T> a)
+    : Nested<T>(a) {}
+
+  MaybeNested(const Array<T> a)
+    : Nested<T>(nested_array_offsets(asarray(vec(a.size()))),a) {}
+};
+
 template<class T,bool f> inline ostream& operator<<(ostream& output, const Nested<T,f>& a) {
   output << '[';
   for (int i=0;i<a.size();i++) {
@@ -284,12 +293,5 @@ template<class T,bool f0,bool f1> Nested<typename remove_const<T>::type,false> c
 template<class T,bool f> static inline Hash hash_reduce(const Nested<T,f>& a) {
   return Hash(a.offsets,a.flat);
 }
-
-#ifdef GEODE_PYTHON
-template<class T> PyObject* to_python(const Nested<T>& array); // Defined in array/convert.h
-template<class T> struct FromPython<Nested<T>>{ static Nested<T> convert(PyObject* object);}; // Defined in array/convert.h
-GEODE_CORE_EXPORT PyObject* nested_array_to_python_helper(PyObject* offsets, PyObject* flat);
-GEODE_CORE_EXPORT Vector<Ref<>,2> nested_array_from_python_helper(PyObject* object); // Assumes is_nested_array(object)
-#endif
 
 } // namespace geode

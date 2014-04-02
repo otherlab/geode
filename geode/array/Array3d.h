@@ -10,7 +10,7 @@
 #include <geode/array/ArrayNdBase.h>
 #include <geode/array/Subarray.h>
 #include <geode/geometry/Box.h>
-#include <geode/python/exceptions.h>
+#include <geode/utility/exceptions.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
@@ -45,7 +45,7 @@ public:
     : Base((assert(m>=0 && n>=0 && mn>=0),
             m*n*mn),uninit),m(m),n(n),mn(mn) {}
 
-  Array(const int m, const int n, const int mn, T* data, PyObject* owner)
+  Array(const int m, const int n, const int mn, T* data, const shared_ptr<const Owner>& owner)
     : Base((assert(m>=0 && n>=0 && mn>=0),
             m*n*mn),data,owner), m(m), n(n), mn(mn) {}
 
@@ -55,7 +55,7 @@ public:
   Array(const Vector<int,d> sizes, Uninit)
     : Array(sizes.x,sizes.y,sizes.z,uninit) {}
 
-  Array(const Vector<int,d> sizes, T* data, PyObject* owner)
+  Array(const Vector<int,d> sizes, T* data, const shared_ptr<const Owner>& owner)
     : Array(sizes.x,sizes.y,sizes.z,data,owner) {}
 
   Array(const Array& source)

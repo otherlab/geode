@@ -2,8 +2,6 @@
 
 #include <geode/utility/resource.h>
 #include <geode/array/Array.h>
-#include <geode/python/wrap.h>
-#include <geode/python/utility.h>
 #if defined(_WIN32)
 #define WINDOWS_MEAN_AND_LEAN
 #include <windows.h>
@@ -81,17 +79,4 @@ string resource(const string& path0, const string& path1, const string& path2) {
   return path::join(helper(),path0,path1,path2);
 }
 
-}
-using namespace geode;
-
-void wrap_resource() {
-#ifdef GEODE_PYTHON
-  // Python is active, so set the executable path to the script directory
-  Ref<> sys = steal_ref_check(PyImport_ImportModule("sys"));
-  Ref<> argv = python_field(sys,"argv");
-  Ref<> argv0 = steal_ref_check(PySequence_GetItem(&*argv,0));
-  helper() = path::dirname(from_python<string>(argv0));
-#endif
-  GEODE_FUNCTION(resource_path)
-  GEODE_FUNCTION_2(resource_py,static_cast<string(*)(const string&)>(resource))
 }

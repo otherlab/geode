@@ -25,18 +25,15 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/Hasher.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #include <geode/math/lerp.h>
 #include <geode/image/color_utils.h>
 #include <geode/utility/const_cast.h>
 #include <geode/utility/range.h>
 
-#include <geode/python/from_python.h>
-#include <geode/python/to_python.h>
-#include <geode/python/stl.h>
-#include <geode/python/Object.h>
-#include <geode/python/Ptr.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Object.h>
+#include <geode/utility/Ptr.h>
+#include <geode/utility/Ref.h>
 
 #include <geode/array/Array.h>
 #include <geode/array/RawField.h>
@@ -130,14 +127,7 @@ struct vector_traits<geode::OVec<T,d> >
 
 namespace geode {
 
-template<class T,int d>
-struct FromPython<OVec<T,d> > {
-  static OVec<T,d> convert(PyObject* object) {
-    return OVec<T,d>(FromPython<Vector<T,d> >::convert(object));
-  }
-};
-
-// declare TriMesh base class
+// Declare TriMesh base class
 struct MeshTraits : public OpenMesh::DefaultTraits
 {
   typedef OVec<real,3> Point;
@@ -177,79 +167,9 @@ template<class T> struct HandleToProp<T,VertexHandle> { typedef OpenMesh::VPropH
 template<class T> struct HandleToProp<T,FaceHandle>   { typedef OpenMesh::FPropHandleT<T> type; };
 template<class T> struct HandleToProp<T,EdgeHandle>   { typedef OpenMesh::EPropHandleT<T> type; };
 
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexHandle)
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexHandle)
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceHandle)
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceHandle)
-
-}
-
-namespace OpenMesh {
-
-// overloaded functions need to be in the same namespace as their arguments to be found by
-// the compiler (or declared before the declaration of whatever uses them)
-
-// python interface for handles
-#ifdef GEODE_PYTHON
-static inline PyObject* to_python(BaseHandle h) {
-  return ::geode::to_python(h.idx());
-}
-#endif
 }
 
 namespace geode {
-
-#ifdef GEODE_PYTHON
-
-template<> struct FromPython<VertexHandle> {
-  static VertexHandle convert(PyObject* object) {
-    return VertexHandle((unsigned int)from_python<int>(object));
-  }
-};
-
-template<> struct FromPython<FaceHandle> {
-  static FaceHandle convert(PyObject* object) {
-    return FaceHandle((unsigned int)from_python<int>(object));
-  }
-};
-
-template<> struct FromPython<EdgeHandle> {
-  static EdgeHandle convert(PyObject* object) {
-    return EdgeHandle((unsigned int)from_python<int>(object));
-  }
-};
-
-template<> struct FromPython<HalfedgeHandle> {
-  static HalfedgeHandle convert(PyObject* object) {
-    return HalfedgeHandle((unsigned int)from_python<int>(object));
-  }
-};
-
-template<class T> struct FromPython<OpenMesh::VPropHandleT<T>> {
-  static OpenMesh::VPropHandleT<T> convert(PyObject* object) {
-    return OpenMesh::VPropHandleT<T>((unsigned int)from_python<int>(object));
-  }
-};
-
-template<class T> struct FromPython<OpenMesh::HPropHandleT<T>> {
-  static OpenMesh::HPropHandleT<T> convert(PyObject* object) {
-    return OpenMesh::HPropHandleT<T>((unsigned int)from_python<int>(object));
-  }
-};
-
-template<class T> struct FromPython<OpenMesh::FPropHandleT<T>> {
-  static OpenMesh::FPropHandleT<T> convert(PyObject* object) {
-    return OpenMesh::FPropHandleT<T>((unsigned int)from_python<int>(object));
-  }
-};
-
-template<class T> struct FromPython<OpenMesh::EPropHandleT<T>> {
-  static OpenMesh::EPropHandleT<T> convert(PyObject* object) {
-    return OpenMesh::EPropHandleT<T>((unsigned int)from_python<int>(object));
-  }
-};
-
-#endif
 
 template<class P> struct prop_handle_type;
 template<class T> struct prop_handle_type<OpenMesh::FPropHandleT<T> >{typedef FaceHandle type;};
@@ -267,9 +187,9 @@ template<class Iter> static inline Range<HandleIter<Iter> > handle_range(Iter be
 }
 
 // TriMesh class
-class GEODE_CORE_CLASS_EXPORT TriMesh: public Object, public OTriMesh {
+class GEODE_CORE_CLASS_EXPORT TriMesh : public Object, public OTriMesh {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef real T;
   typedef Vector<T,3> TV;

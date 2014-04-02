@@ -8,7 +8,7 @@ namespace geode {
 
 class ThickShell : public Implicit<Vector<double,3>> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef double T;
   typedef Vector<T,3> TV;
   typedef Implicit<TV> Base;
@@ -23,7 +23,7 @@ public:
 protected:
   ThickShell(const SegmentSoup& mesh, Array<const TV> X, Array<const T> radii);
   ThickShell(const TriangleSoup& mesh, Array<const TV> X, Array<const T> radii);
-  ThickShell(Ref<> mesh, Array<const TV> X, Array<const T> radii);
+  ThickShell(const Object& mesh, Array<const TV> X, Array<const T> radii);
 public:
   ~ThickShell();
 

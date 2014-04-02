@@ -33,6 +33,7 @@ using std::vector;
 using GEODE_SMART_PTR_NAMESPACE::const_pointer_cast;
 using GEODE_SMART_PTR_NAMESPACE::static_pointer_cast;
 using GEODE_SMART_PTR_NAMESPACE::dynamic_pointer_cast;
+using GEODE_SMART_PTR_NAMESPACE::enable_shared_from_this;
 
 template<class T> struct is_smart_pointer<shared_ptr<T>> : public mpl::true_ {};
 

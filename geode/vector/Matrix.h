@@ -14,12 +14,7 @@
 #include <iomanip>
 namespace geode {
 
-template<class T,int m,int n> GEODE_CORE_EXPORT PyObject* to_python(const Matrix<T,m,n>& matrix);
-template<class T,int m,int n> struct FromPython<Matrix<T,m,n> >{GEODE_CORE_EXPORT static Matrix<T,m,n> convert(PyObject* object);};
-
-template<class T,int m_,int n_> // n_=m_
-class Matrix
-{
+template<class T,int m_,int n_> class Matrix { // n_=m_
 public:
     enum Workaround1 {m=m_,n=n_,size=m_*n_};
     static_assert((!((m>=n && m<=3 && n>=2 && n<=3) || (m==4 && n==4) || (m==0 && n==0))),
@@ -238,5 +233,8 @@ template<class T,int m,int n> inline DiagonalMatrix<T,(m<n?m:n)> fast_singular_v
   A.fast_singular_value_decomposition(U,D,V);
   return D;
 }
+
+// For python use
+GEODE_CORE_EXPORT NdArray<real> fast_singular_values(const NdArray<const real>& A);
 
 }

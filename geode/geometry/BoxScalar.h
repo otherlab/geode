@@ -16,7 +16,6 @@
 #include <geode/math/min.h>
 #include <geode/math/maxabs.h>
 #include <geode/math/Zero.h>
-#include <geode/python/forward.h>
 #include <geode/utility/STATIC_ASSERT_SAME.h>
 #include <cassert>
 #include <limits>
@@ -24,9 +23,6 @@
 namespace geode {
 
 using std::numeric_limits;
-
-template<class T> GEODE_CORE_EXPORT PyObject* to_python(const Box<T>& self);
-template<class T> struct FromPython<Box<T> >{GEODE_CORE_EXPORT static Box<T> convert(PyObject* object);};
 
 template<class T> class Box {
 public:

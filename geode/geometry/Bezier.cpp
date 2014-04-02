@@ -1,18 +1,13 @@
-#include "Bezier.h"
+#include <geode/geometry/Bezier.h>
 #include <geode/vector/Matrix4x4.h>
 #include <geode/vector/Matrix.h>
 #include <geode/utility/stl.h>
-#include <geode/python/Class.h>
-#include <geode/python/stl.h>
 #include <geode/geometry/polygon.h>
 #include <iostream>
 namespace geode {
 
 using std::cout;
 using std::endl;
-
-template<> GEODE_DEFINE_TYPE(Bezier<2>)
-template<> GEODE_DEFINE_TYPE(Knot<2>)
 
 static double interpolate(double v0, double v1, double v2, double v3, double t) {
   Vector<real,4> i(v0,v1,v2,v3);
@@ -450,50 +445,9 @@ template struct PointSolve<3>;
 template struct Span<2>;
 template struct Span<3>;
 
-#ifdef GEODE_PYTHON
-
-PyObject* to_python(const InvertibleBox& self) {
-  return to_python(tuple(self.begin,self.end));
-}
-
-InvertibleBox FromPython<InvertibleBox>::convert(PyObject* object) {
-  const auto extents = from_python<Tuple<real,real>>(object);
-  return InvertibleBox(extents.x,extents.y);
-}
-
-#endif
-
 std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib) {
   os << "[" << ib.begin << ", " << ib.end << "]";
   return os;
 }
 
-}
-using namespace geode;
-
-void wrap_bezier() {
-  {
-    typedef Knot<2> Self;
-    Class<Self>("Knot")
-      .GEODE_INIT()
-      .GEODE_FIELD(pt)
-      .GEODE_FIELD(tangent_in)
-      .GEODE_FIELD(tangent_out)
-      ;
-  }
-  {
-    typedef Bezier<2> Self;
-    typedef Array<Vector<real,2>>(Self::*eval_t)(int)const;
-    Class<Self>("Bezier")
-      .GEODE_INIT()
-      .GEODE_FIELD(knots)
-      .GEODE_METHOD(t_max)
-      .GEODE_METHOD(t_min)
-      .GEODE_METHOD(closed)
-      .GEODE_METHOD(close)
-      .GEODE_METHOD(fuse_ends)
-      .GEODE_OVERLOADED_METHOD(eval_t, evaluate)
-      .GEODE_METHOD(append_knot)
-      ;
-  }
 }

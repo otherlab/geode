@@ -3,7 +3,7 @@
 #include <geode/svg/nanosvg/nanosvg.h>
 #include <geode/geometry/Bezier.h>
 #include <geode/array/Array.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Ref.h>
 #include <vector>
 namespace geode {
 
@@ -13,7 +13,7 @@ using std::string;
 // a path (all subpaths) and its style
 class SVGStyledPath: public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
 
   unsigned int fillColor;
   unsigned int strokeColor;

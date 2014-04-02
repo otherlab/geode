@@ -5,7 +5,6 @@
 #include <geode/array/sort.h>
 #include <geode/array/view.h>
 #include <geode/structure/Tuple.h>
-#include <geode/python/Class.h>
 #include <geode/vector/DiagonalMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
 #include <geode/geometry/Box.h>
@@ -14,57 +13,40 @@ namespace geode {
 
 typedef real T;
 
-GEODE_DEFINE_TYPE(SolidMatrixStructure)
-template<> GEODE_DEFINE_TYPE(SolidMatrixBase<Vector<T,2>>)
-template<> GEODE_DEFINE_TYPE(SolidMatrixBase<Vector<T,3>>)
-template<> GEODE_DEFINE_TYPE(SolidMatrix<Vector<T,2>>)
-template<> GEODE_DEFINE_TYPE(SolidMatrix<Vector<T,3>>)
-template<> GEODE_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,2>>)
-template<> GEODE_DEFINE_TYPE(SolidDiagonalMatrix<Vector<T,3>>)
-
-SolidMatrixStructure::
-SolidMatrixStructure(int n)
+SolidMatrixStructure::SolidMatrixStructure(int n)
   : n(n) {
   GEODE_ASSERT(n>=0);
 }
 
-SolidMatrixStructure::
-SolidMatrixStructure(const SolidMatrixStructure& src)
+SolidMatrixStructure::SolidMatrixStructure(const SolidMatrixStructure& src)
   : n(src.n), sparse(src.sparse), outers(src.outers) {}
 
-SolidMatrixStructure::
-~SolidMatrixStructure()
+SolidMatrixStructure::~SolidMatrixStructure()
 {}
 
-Ref<SolidMatrixStructure> SolidMatrixStructure::
-copy() const {
+Ref<SolidMatrixStructure> SolidMatrixStructure::copy() const {
   return new_<SolidMatrixStructure>(*this);
 }
 
-void SolidMatrixStructure::
-add_entry(int i,int j) {
+void SolidMatrixStructure::add_entry(int i,int j) {
   GEODE_ASSERT(unsigned(i)<unsigned(n) && unsigned(j)<unsigned(n));
   if (i!=j)
     sparse.set(vec(i,j).sorted());
 }
 
-void SolidMatrixStructure::
-add_outer(int m,Array<const int> nodes) {
+void SolidMatrixStructure::add_outer(int m,Array<const int> nodes) {
   GEODE_ASSERT(m>=1);
   if (nodes.size())
     GEODE_ASSERT(0<=nodes.min() && nodes.max()<n);
   outers.push_back(tuple(m,nodes));
 }
 
-template<class TV> SolidMatrixBase<TV>::
-SolidMatrixBase(int n)
+template<class TV> SolidMatrixBase<TV>::SolidMatrixBase(int n)
   : n(n) {}
 
-template<class TV> SolidMatrixBase<TV>::
-~SolidMatrixBase() {}
+template<class TV> SolidMatrixBase<TV>::~SolidMatrixBase() {}
 
-template<class TV> SolidMatrix<TV>::
-SolidMatrix(const SolidMatrixStructure& structure)
+template<class TV> SolidMatrix<TV>::SolidMatrix(const SolidMatrixStructure& structure)
   : Base(structure.n), next_outer(0) {
   // Allocate sparse component
   Array<int> lengths(structure.n,uninit);
@@ -95,8 +77,7 @@ SolidMatrix(const SolidMatrixStructure& structure)
   }
 }
 
-template<class TV> SolidMatrix<TV>::
-SolidMatrix(const SolidMatrix& A)
+template<class TV> SolidMatrix<TV>::SolidMatrix(const SolidMatrix& A)
   : Base(A.size())
   , sparse_j(A.sparse_j)
   , sparse_A(A.sparse_A.copy())
@@ -105,28 +86,23 @@ SolidMatrix(const SolidMatrix& A)
     const_cast_(outers).push_back(tuple(outer.x,outer.y,outer.z.copy()));
 }
 
-template<class TV> SolidMatrix<TV>::
-~SolidMatrix()
+template<class TV> SolidMatrix<TV>::~SolidMatrix()
 {}
 
-template<class TV> Ref<SolidMatrix<TV>> SolidMatrix<TV>::
-copy() const {
+template<class TV> Ref<SolidMatrix<TV>> SolidMatrix<TV>::copy() const {
   return new_<SolidMatrix>(*this);
 }
 
-template<class TV> bool SolidMatrix<TV>::
-valid() const {
+template<class TV> bool SolidMatrix<TV>::valid() const {
   return next_outer==(int)outers.size();
 }
 
-template<class TV> void SolidMatrix<TV>::
-zero() {
+template<class TV> void SolidMatrix<TV>::zero() {
   sparse_A.flat.zero();
   next_outer = 0;
 }
 
-template<class TV> inline int SolidMatrix<TV>::
-find_entry(int i,int j) const {
+template<class TV> inline int SolidMatrix<TV>::find_entry(int i,int j) const {
   assert(i<=j);
   RawArray<const int> row_j = sparse_j[i];
   for (int k=0;k<row_j.size();k++)
@@ -135,22 +111,19 @@ find_entry(int i,int j) const {
   throw KeyError(format("SolidMatrix::find_entry: index (%d,%d) doesn't exist",i,j));
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_entry(int i,int j,const Matrix<T,d>& a) {
+template<class TV> void SolidMatrix<TV>::add_entry(int i,int j,const Matrix<T,d>& a) {
   if (i<=j)
     sparse_A(i,find_entry(i,j)) += a;
   else
     sparse_A(j,find_entry(j,i)) += a.transposed();
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_entry(int i,int j,T a) {
+template<class TV> void SolidMatrix<TV>::add_entry(int i,int j,T a) {
   if (i>j) swap(i,j);
   sparse_A(i,find_entry(i,j)) += a;
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_outer(T B,RawArray<const TV> U) {
+template<class TV> void SolidMatrix<TV>::add_outer(T B,RawArray<const TV> U) {
   int o = next_outer++;
   GEODE_ASSERT(o<(int)outers.size());
   GEODE_ASSERT(outers[o].x.size()==U.size());
@@ -159,8 +132,7 @@ add_outer(T B,RawArray<const TV> U) {
     outers[o].z.copy(U);
 }
 
-template<class TV> void SolidMatrix<TV>::
-scale(T s) {
+template<class TV> void SolidMatrix<TV>::scale(T s) {
   GEODE_ASSERT(valid());
   if (s==1)
     return;
@@ -175,24 +147,21 @@ scale(T s) {
   }
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_scalar(T s) {
+template<class TV> void SolidMatrix<TV>::add_scalar(T s) {
   GEODE_ASSERT(valid());
   if (s)
     for(int i=0;i<sparse_j.size();i++)
       sparse_A(i,0) += s;
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_diagonal_scalars(RawArray<const T> s) {
+template<class TV> void SolidMatrix<TV>::add_diagonal_scalars(RawArray<const T> s) {
   GEODE_ASSERT(valid());
   GEODE_ASSERT(s.size()==sparse_j.size());
   for (int i=0;i<sparse_j.size();i++)
     sparse_A(i,0) += s[i];
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_partial_scalar(RawArray<const int> nodes, T s) {
+template<class TV> void SolidMatrix<TV>::add_partial_scalar(RawArray<const int> nodes, T s) {
   GEODE_ASSERT(valid());
   const int n = sparse_j.size();
   if (s)
@@ -202,15 +171,13 @@ add_partial_scalar(RawArray<const int> nodes, T s) {
     }
 }
 
-template<class TV> typename SolidMatrix<TV>::TMatrix SolidMatrix<TV>::
-entry(int i,int j) const {
+template<class TV> typename SolidMatrix<TV>::TMatrix SolidMatrix<TV>::entry(int i,int j) const {
   GEODE_ASSERT(valid() && !outers.size());
   return i<=j?sparse_A(i,find_entry(i,j))
              :sparse_A(j,find_entry(j,i)).transposed();
 }
 
-template<class TV> Tuple<Array<int>,Array<int>,Array<typename TV::Scalar>> SolidMatrix<TV>::
-entries() const {
+template<class TV> Tuple<Array<int>,Array<int>,Array<typename TV::Scalar>> SolidMatrix<TV>::entries() const {
   GEODE_ASSERT(valid() && !outers.size());
   Array<int> I,J;
   Array<T> C;
@@ -226,8 +193,7 @@ entries() const {
   return tuple(J,I,C);
 }
 
-template<class TV> void SolidMatrix<TV>::
-add_multiply_outers(RawArray<const TV> x, RawArray<TV> y) const {
+template<class TV> void SolidMatrix<TV>::add_multiply_outers(RawArray<const TV> x, RawArray<TV> y) const {
   GEODE_ASSERT(valid() && x.size()==size() && y.size()==size());
   for (int o=0;o<(int)outers.size();o++) {
     RawArray<const int> nodes = outers[o].x;
@@ -244,8 +210,7 @@ add_multiply_outers(RawArray<const TV> x, RawArray<TV> y) const {
   }
 }
 
-template<class TV> void SolidMatrix<TV>::
-multiply(RawArray<const TV> x, RawArray<TV> y) const {
+template<class TV> void SolidMatrix<TV>::multiply(RawArray<const TV> x, RawArray<TV> y) const {
   y.zero();
   add_multiply_outers(x,y);
   for (int i=0;i<sparse_j.size();i++) {
@@ -287,8 +252,7 @@ inner_product(RawArray<const TV> x, RawArray<const TV> y) const {
   return sum;
 }
 
-template<class TV> Box<typename TV::Scalar> SolidMatrix<TV>::
-diagonal_range() const {
+template<class TV> Box<typename TV::Scalar> SolidMatrix<TV>::diagonal_range() const {
   GEODE_ASSERT(!outers.size());
   Box<T> range = Box<T>::empty_box();
   for(int i=0;i<size();i++) {
@@ -298,8 +262,7 @@ diagonal_range() const {
   return range;
 }
 
-template<class TV> Array<typename TV::Scalar,2> SolidMatrix<TV>::
-dense() const {
+template<class TV> Array<typename TV::Scalar,2> SolidMatrix<TV>::dense() const {
   GEODE_ASSERT(valid());
   const int n = sparse_j.size();
   Array<TMatrix,2> dense(n,n);
@@ -330,8 +293,7 @@ dense() const {
   return final;
 }
 
-template<class TV> Ref<SolidDiagonalMatrix<TV>> SolidMatrix<TV>::
-inverse_block_diagonal() const {
+template<class TV> Ref<SolidDiagonalMatrix<TV>> SolidMatrix<TV>::inverse_block_diagonal() const {
   GEODE_ASSERT(!outers.size());
   const auto diagonal = new_<SolidDiagonalMatrix<TV>>(size(),uninit);
   for(int i=0;i<size();i++)
@@ -347,11 +309,9 @@ template<class TV> SolidDiagonalMatrix<TV>::
 SolidDiagonalMatrix(const int size, Uninit)
   : Base(size), A(size,uninit) {}
 
-template<class TV> SolidDiagonalMatrix<TV>::
-~SolidDiagonalMatrix() {}
+template<class TV> SolidDiagonalMatrix<TV>::~SolidDiagonalMatrix() {}
 
-template<class TV> void SolidDiagonalMatrix<TV>::
-multiply(RawArray<const TV> x,RawArray<TV> y) const {
+template<class TV> void SolidDiagonalMatrix<TV>::multiply(RawArray<const TV> x,RawArray<TV> y) const {
   for (int i=0;i<A.size();i++)
     y[i] = A[i]*x[i];
 }
@@ -371,48 +331,4 @@ template class SolidMatrix<Vector<T,3>>;
 template class SolidDiagonalMatrix<Vector<T,2>>;
 template class SolidDiagonalMatrix<Vector<T,3>>;
 
-}
-using namespace geode;
-
-template<int d> static void wrap_helper() {
-  {typedef SolidMatrixBase<Vector<T,d>> Self;
-  Class<Self>(d==2?"SolidMatrixBase2d":"SolidMatrixBase3d")
-    .GEODE_METHOD(multiply)
-    ;}
-
-  {typedef SolidMatrix<Vector<T,d>> Self;
-  Class<Self>(d==2?"SolidMatrix2d":"SolidMatrix3d")
-    .GEODE_INIT(const SolidMatrixStructure&)
-    .GEODE_METHOD(copy)
-    .GEODE_METHOD(size)
-    .GEODE_METHOD(zero)
-    .GEODE_METHOD(scale)
-    .method("add_entry",static_cast<void(Self::*)(int,int,const Matrix<T,d>&)>(&Self::add_entry))
-    .GEODE_METHOD(add_scalar)
-    .GEODE_METHOD(add_diagonal_scalars)
-    .GEODE_METHOD(add_partial_scalar)
-    .GEODE_METHOD(add_outer)
-    .GEODE_METHOD(entries)
-    .GEODE_METHOD(inverse_block_diagonal)
-    .GEODE_METHOD(inner_product)
-    .GEODE_METHOD(diagonal_range)
-    .GEODE_METHOD(dense)
-    ;}
-
-  {typedef SolidDiagonalMatrix<Vector<T,d>> Self;
-  Class<Self>(d==2?"SolidDiagonalMatrix2d":"SolidDiagonalMatrix3d")
-    .GEODE_METHOD(inner_product)
-    ;}
-}
-
-void wrap_solid_matrix() {
-  {typedef SolidMatrixStructure Self;
-  Class<Self>("SolidMatrixStructure")
-    .GEODE_INIT(int)
-    .GEODE_METHOD(copy)
-    .GEODE_METHOD(add_entry)
-    .GEODE_METHOD(add_outer)
-    ;}
-  wrap_helper<2>();
-  wrap_helper<3>();
 }

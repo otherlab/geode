@@ -71,10 +71,9 @@ void apply_stencil(F &f, int w, const Array<T,d> a, const Array<T,d> b) {
 
 // This is a sample stencil that computes the maximum over a spherical area of
 // radius r (on a 2D array)
-template<class T>
-class MaxStencil: public Object {
+template<class T> class MaxStencil : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef T value_type;
 
   int r;

@@ -1,8 +1,8 @@
 // Robust constructive solid geometry for circular arc polygons in the plane
 
-#include <geode/array/convert.h>
 #include <geode/array/Field.h>
 #include <geode/array/NestedField.h>
+#include <geode/array/IndirectArray.h>
 #include <geode/array/sort.h>
 #include <geode/exact/circle_csg.h>
 #include <geode/exact/circle_quantization.h>
@@ -14,8 +14,6 @@
 #include <geode/geometry/BoxTree.h>
 #include <geode/geometry/polygon.h>
 #include <geode/geometry/traverse.h>
-#include <geode/python/stl.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
 namespace geode {
@@ -145,7 +143,7 @@ Nested<CircleArc> canonicalize_circle_arcs(Nested<const CircleArc> polys) {
   return new_polys;
 }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
 // Instantiate Python conversions for arrays of circular arcs
 namespace {
@@ -166,8 +164,9 @@ static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
   Py_INCREF(  exact);
   NumpyDescr<     CircleArc  >::d = (PyArray_Descr*)inexact;
 }
+#endif
 
-static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
+Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
   IntervalScope scope;
   const auto quant = make_arc_quantizer(approximate_bounding_box(arcs));
   auto g = ExactArcGraph<Pb::Implicit>();
@@ -175,8 +174,7 @@ static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) 
   return g.unquantize_circle_arcs(quant, edges);
 }
 
-
-static Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circle_handling_test(int seed, int count) {
+Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circle_handling_test(int seed, int count) {
   const auto test_center_range = Box<Vec2>(Vec2(0,0)).thickened(100);
   const real max_test_r = 100.;
   const auto test_bounds = test_center_range.thickened(max_test_r);
@@ -203,8 +201,11 @@ static Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circl
   return tuple(unquantized_input, unquantized_unions, unquantized_overlaps);
 }
 
-static Vector<CircleArc, 2> make_circle(Vec2 p0, Vec2 p1) { return vec(CircleArc(p0,1),CircleArc(p1,1)); }
-static void random_circle_quantize_test(int seed) {
+static Vector<CircleArc,2> make_circle(Vec2 p0, Vec2 p1) {
+  return vec(CircleArc(p0,1),CircleArc(p1,1));
+}
+
+void random_circle_quantize_test(int seed) {
   auto r = new_<Random>(seed);
   {
     // First check that we can split without hitting any asserts
@@ -245,18 +246,5 @@ static void random_circle_quantize_test(int seed) {
     GEODE_ASSERT(unioned.size() <= arcs.size());
   }
 }
-#endif
-} // namespace geode
-using namespace geode;
 
-void wrap_circle_csg() {
-  GEODE_FUNCTION(split_circle_arcs)
-  GEODE_FUNCTION(canonicalize_circle_arcs)
-  GEODE_FUNCTION_2(circle_arc_area,static_cast<real(*)(Nested<const CircleArc>)>(circle_arc_area))
-#ifdef GEODE_PYTHON
-  GEODE_FUNCTION(_set_circle_arc_dtypes)
-  GEODE_FUNCTION(circle_arc_quantize_test)
-  GEODE_FUNCTION(random_circle_quantize_test)
-  GEODE_FUNCTION(single_circle_handling_test)
-#endif
 }

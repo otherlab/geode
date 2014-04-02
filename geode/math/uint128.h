@@ -3,18 +3,20 @@
 //#####################################################################
 #pragma once
 
-#include <geode/python/forward.h>
 #include <geode/utility/type_traits.h>
 #include <stdint.h>
 #include <string>
+#include <vector>
 namespace geode {
 
 using std::string;
 using std::ostream;
+using std::vector;
 
 #if defined(__GNUC__) && defined(__LP64__)
 
 // Use the native integer type if possible
+typedef  __int128_t  int128_t;
 typedef __uint128_t uint128_t;
 
 template<class I> static inline I cast_uint128(const uint128_t& n) {
@@ -137,12 +139,13 @@ template<> struct uint_t<128> { typedef uint128_t exact; };
 
 GEODE_CORE_EXPORT string str(uint128_t n);
 GEODE_CORE_EXPORT ostream& operator<<(ostream& output, uint128_t n);
-GEODE_CORE_EXPORT PyObject* to_python(uint128_t n);
-template<> struct FromPython<uint128_t>{GEODE_CORE_EXPORT static uint128_t convert(PyObject* object);};
 
 #if defined(__GNUC__) && defined(__LP64__)
-GEODE_CORE_EXPORT string str(__int128_t n);
-GEODE_CORE_EXPORT ostream& operator<<(ostream& output, __int128_t n);
+GEODE_CORE_EXPORT string str(int128_t n);
+GEODE_CORE_EXPORT ostream& operator<<(ostream& output, int128_t n);
 #endif
+
+// For testing purposes
+GEODE_CORE_EXPORT vector<uint128_t> uint128_test(uint128_t x, uint128_t y);
 
 }

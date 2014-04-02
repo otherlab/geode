@@ -5,7 +5,6 @@
 
 #include <geode/openmesh/curvature.h>
 #include <geode/array/Field.h>
-#include <geode/python/wrap.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/normalize.h>
 #include <geode/math/copysign.h>
@@ -117,11 +116,5 @@ Field<T,VertexHandle> gaussian_curvatures(const TriMesh& mesh) {
   return K;
 }
 
-}
-using namespace geode;
-
-void wrap_curvature() {
-  GEODE_FUNCTION(mean_curvatures)
-  GEODE_FUNCTION(gaussian_curvatures)
 }
 #endif

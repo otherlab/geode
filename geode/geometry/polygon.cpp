@@ -3,7 +3,7 @@
 #include <geode/math/constants.h>
 #include <geode/utility/Hasher.h>
 #include <geode/utility/str.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #include <geode/vector/Vector2d.h>
 #include <geode/vector/normalize.h>
 #include <geode/geometry/Box.h>
@@ -57,15 +57,11 @@ T polygon_area(RawArray<const Vec2> poly) {
   return .5*area;
 }
 
-T polygon_area(Nested<const Vec2> polys) {
+T polygon_area(MaybeNested<const Vec2> polys) {
   T area = 0;
   for (auto poly : polys)
     area += polygon_area(poly);
   return area;
-}
-
-T polygon_area_py(PyObject* object) {
-  return polygon_area(polygons_from_python(object));
 }
 
 T open_polygon_length(RawArray<const Vec2> poly) {
@@ -514,27 +510,6 @@ Ref<SegmentSoup> nested_array_offsets_to_segment_soup(RawArray<const int> offset
   return new_<SegmentSoup>(segments);
 }
 
-Nested<const Vec2> polygons_from_python(PyObject* object) {
-#ifdef GEODE_PYTHON
-  try {
-    const auto polys = from_python<NdArray<const Vec2>>(object);
-    if (!polys.rank() || polys.rank()>2)
-      throw TypeError(format("polygons_from_python: expected rank 1 or 2 array, got rank %d",polys.rank()));
-    const int count = polys.rank()==1?1:polys.shape[0];
-    Nested<const Vec2> nested;
-    nested.offsets = (polys.shape.back()*arange(count+1)).copy();
-    nested.flat = polys.flat;
-    return nested;
-  } catch (const exception&) {
-    PyErr_Clear();
-    // numpy conversion failed, try a nested array
-    return from_python<Nested<const Vec2>>(object);
-  }
-#else
-  GEODE_NOT_IMPLEMENTED("No python support");
-#endif
-}
-
 Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
   // Find the minimal point in each polygon under lexicographic order
   Array<int> mins(polys.size());
@@ -586,16 +561,4 @@ Array<int> closed_contours_next_from_offsets(RawArray<const int> offsets) {
   return next;
 }
 
-}
-using namespace geode;
-
-#include <geode/python/wrap.h>
-#include <geode/python/function.h>
-#include <geode/python/from_python.h>
-#include <geode/vector/convert.h>
-
-void wrap_polygon() {
-  GEODE_FUNCTION_2(polygon_area,polygon_area_py)
-  GEODE_FUNCTION(polygons_from_index_list)
-  GEODE_FUNCTION(canonicalize_polygons)
 }

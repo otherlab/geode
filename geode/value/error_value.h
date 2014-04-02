@@ -4,7 +4,6 @@
 #pragma once
 
 #include <geode/value/Value.h>
-#include <geode/python/ExceptionValue.h>
 namespace geode {
 
 template<class T> class ErrorValue : public Value<T> {
@@ -12,16 +11,16 @@ public:
   GEODE_NEW_FRIEND
   typedef Value<T> Base;
 private:
-  ExceptionValue error;
+  const Ref<const SavedException> error;
 
   ErrorValue(const exception& error)
-    : error(error) {}
+    : error(save(error)) {}
 
   void update() const {
-    error.throw_();
+    error->throw_();
   }
 
-  void dump(int indent) const {
+  void dump(const int indent) const {
     printf("%*sErrorValue<%s>\n",2*indent,"",typeid(T).name());
   }
 };

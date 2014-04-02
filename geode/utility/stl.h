@@ -1,10 +1,12 @@
+// Convenience routines for STL containers
 #pragma once
 
-#include <geode/python/config.h> // Must be included first
+#include <geode/utility/config.h>
+#include <geode/utility/forward.h>
 #include <geode/math/hash.h>
 #include <geode/utility/move.h>
 #include <geode/utility/pass.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #include <geode/utility/equals.h>
 #include <geode/utility/smart_ptr.h>
 #include <geode/utility/type_traits.h>

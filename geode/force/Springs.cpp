@@ -7,14 +7,12 @@
 #include <geode/array/view.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/math/cube.h>
-#include <geode/python/Class.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
 #include <geode/vector/normalize.h>
 namespace geode {
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(Springs<Vector<real,3>>)
 
 template<class TV> Springs<TV>::Springs(Array<const Vector<int,2>> springs, Array<const T> mass, Array<const TV> X, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : springs(springs)
@@ -264,20 +262,4 @@ template<class TV> Box<T> Springs<TV>::limit_strain(RawArray<TV> X) const {
   return F_range_before-1;
 }
 
-}
-using namespace geode;
-
-void wrap_springs() {
-  typedef real T;
-  typedef Vector<T,3> TV;
-  typedef Springs<TV> Self;
-  Class<Self>("Springs")
-    .GEODE_INIT(Array<const Vector<int,2>>,Array<const T>,Array<const TV>,NdArray<const T>,NdArray<const T>)
-    .GEODE_METHOD(restlengths)
-    .GEODE_FIELD(springs)
-    .GEODE_FIELD(resist_compression)
-    .GEODE_FIELD(strain_range)
-    .GEODE_FIELD(off_axis_damping)
-    .GEODE_METHOD(limit_strain)
-    ;
 }

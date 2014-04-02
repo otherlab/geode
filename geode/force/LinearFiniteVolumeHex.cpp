@@ -1,7 +1,6 @@
 #include <geode/force/LinearFiniteVolumeHex.h>
 #include <geode/array/view.h>
 #include <geode/math/Factorial.h>
-#include <geode/python/Class.h>
 #include <geode/utility/const_cast.h>
 #include <geode/vector/normalize.h>
 #include <geode/vector/SolidMatrix.h>
@@ -11,7 +10,6 @@ namespace geode {
 
 typedef real T;
 typedef Vector<T,3> TV;
-GEODE_DEFINE_TYPE(LinearFiniteVolumeHex)
 
 LinearFiniteVolumeHex::LinearFiniteVolumeHex(const StrainMeasureHex& strain, const T density, const T youngs_modulus, const T poissons_ratio, const T rayleigh_coefficient)
   : strain(ref(strain))
@@ -142,12 +140,4 @@ void LinearFiniteVolumeHex::add_damping_gradient(SolidMatrix<TV>& matrix) const 
   GEODE_NOT_IMPLEMENTED();
 }
 
-}
-using namespace geode;
-
-void wrap_linear_finite_volume_hex() {
-  typedef LinearFiniteVolumeHex Self;
-  Class<Self>("LinearFiniteVolumeHex")
-    .GEODE_INIT(const StrainMeasureHex&,T,T,T,T)
-    ;
 }

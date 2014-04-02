@@ -2,13 +2,12 @@
 #pragma once
 
 #include <geode/value/Compute.h>
-#include <geode/python/from_python.h>
-#include <geode/python/Ptr.h>
+#include <geode/utility/Ptr.h>
 #include <geode/utility/format.h>
 #include <iostream>
 namespace geode {
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
 template<class T> static T convert_helper(const ValueRef<Ptr<>>& value) {
   Ptr<> v = value();

@@ -5,7 +5,7 @@
 
 #include <geode/random/counter.h>
 #include <geode/array/view.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 #include <geode/vector/Vector.h>
 #include <cmath>
 #include <ctime>
@@ -17,7 +17,7 @@ template<class TV> class Box;
 
 class Random : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef mpl::if_c<sizeof(real)==4,uint32_t,uint64_t>::type RealBits;
   static_assert(sizeof(RealBits)==sizeof(real),"");
@@ -116,5 +116,8 @@ template<> inline real Random::uniform(const real a, const real b) { // in [a,b)
   assert(a<b);
   return a+ldexp(b-a,-8*(int)sizeof(real))*bits<RealBits>();
 }
+
+// For testing purposes
+GEODE_CORE_EXPORT vector<Array<int>> random_bits_test(Random& random, const int steps);
 
 }

@@ -4,10 +4,7 @@
 #include <geode/utility/SanitizeFunction.h>
 namespace geode {
 
-using namespace geode;
-
 namespace {
-
 template<class F,class G> struct Compose {
   typedef typename SanitizeFunction<F>::type SF;
   typedef typename SanitizeFunction<G>::type SG;
@@ -42,7 +39,6 @@ template<class F,class G> struct Compose {
 
 #endif
 };
-
 }
 
 template<class F,class G> static inline Compose<F,G> compose(const F& f, const G& g) {

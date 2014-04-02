@@ -3,18 +3,13 @@
 #include <geode/mesh/TriangleTopology.h>
 #include <geode/mesh/SegmentSoup.h>
 #include <geode/mesh/TriangleSoup.h>
-#include <geode/geometry/SimplexTree.h>
-#include <geode/array/convert.h>
 #include <geode/array/Nested.h>
 #include <geode/array/permute.h>
-#include <geode/python/numpy.h>
-#include <geode/python/Class.h>
-#include <geode/python/wrap.h>
+#include <geode/geometry/SimplexTree.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/Log.h>
-#include <geode/vector/convert.h>
 #include <geode/structure/UnionFind.h>
 namespace geode {
 
@@ -23,9 +18,6 @@ using std::endl;
 typedef real T;
 typedef Vector<T,2> TV2;
 typedef Vector<T,3> TV3;
-
-GEODE_DEFINE_TYPE(TriangleTopology)
-GEODE_DEFINE_TYPE(MutableTriangleTopology)
 
 static string str_halfedge(HalfedgeId e) {
   return e.valid() ? e.id>=0 ? format("e%d:%d",e.id/3,e.id%3)
@@ -1706,7 +1698,7 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
   }
 }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
 #define ADD_FIELD_HELPER(prim, ...) \
   case NumpyScalar<__VA_ARGS__>::value: \
@@ -1869,7 +1861,7 @@ PyObject* MutableTriangleTopology::field_py(const PyFieldId& id) {
 
 #endif
 
-static int corner_random_edge_flips(MutableTriangleTopology& mesh, const int attempts, const uint128_t key) {
+int corner_random_edge_flips(MutableTriangleTopology& mesh, const int attempts, const uint128_t key) {
   int flips = 0;
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
@@ -1887,7 +1879,7 @@ static int corner_random_edge_flips(MutableTriangleTopology& mesh, const int att
   return flips;
 }
 
-static void corner_random_face_splits(MutableTriangleTopology& mesh, const int splits, const uint128_t key) {
+void corner_random_face_splits(MutableTriangleTopology& mesh, const int splits, const uint128_t key) {
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
     for (int a=0;a<splits;a++) {
@@ -1903,7 +1895,7 @@ static void corner_random_face_splits(MutableTriangleTopology& mesh, const int s
   }
 }
 
-static void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const uint128_t key) {
+void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const uint128_t key) {
   const auto random = new_<Random>(key);
 
   // make two copies, rip one apart using the reordering deletion, and one
@@ -1984,6 +1976,14 @@ static void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const ui
     }
   }
 }
+
+#if 0 // Value python support
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIncoming>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyOutgoing>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<VertexId>>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<FaceId>>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<HalfedgeId>>);
+#endif
 
 static string id_error(const TriangleTopology& mesh, const VertexId x) {
   return x.id==invalid_id              ? "invalid vertex id"
@@ -2151,6 +2151,7 @@ T TriangleTopology::cos_dihedral(RawField<const TV3,VertexId> X, const HalfedgeI
 PER_DIMENSION(TV2)
 PER_DIMENSION(TV3)
 
+#if 0 // Value python support
 Ref<> TriangleTopology::edge_tree_py(Array<const T,2> X) const {
   if (X.n==2)      return to_python_ref(edge_tree(Field<const TV2,VertexId>(vector_view_own<2>(X.flat))));
   else if (X.n==3) return to_python_ref(edge_tree(Field<const TV3,VertexId>(vector_view_own<3>(X.flat))));
@@ -2162,6 +2163,7 @@ Ref<> TriangleTopology::face_tree_py(Array<const T,2> X) const {
   else if (X.n==3) return to_python_ref(face_tree(Field<const TV3,VertexId>(vector_view_own<3>(X.flat))));
   throw ValueError(format("TriangleTopology::face_tree: Expected 2D or 3D vectors, got shape %s",str(X.sizes())));
 }
+#endif
 
 #define SAFE_ERASE(prim,Id) \
   void MutableTriangleTopology::safe_erase_##prim(Id x, bool erase_isolated) { \
@@ -2173,139 +2175,4 @@ SAFE_ERASE(face,FaceId)
 SAFE_ERASE(vertex,VertexId)
 SAFE_ERASE(halfedge,HalfedgeId)
 
-}
-using namespace geode;
-
-#include <geode/python/pyrange.h>
-
-#ifdef GEODE_PYTHON
-namespace geode {
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIncoming>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyOutgoing>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<VertexId>>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<FaceId>>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<HalfedgeId>>);
-}
-#endif
-
-void wrap_corner_mesh() {
-  #define SAFE_METHOD(name) GEODE_METHOD_2(#name,safe_##name)
-  {
-    typedef TriangleTopology Self;
-    Class<Self>("TriangleTopology")
-      .GEODE_INIT(const TriangleSoup&)
-      .GEODE_METHOD(copy)
-      .GEODE_METHOD(mutate)
-      .GEODE_GET(n_vertices)
-      .GEODE_GET(n_boundary_edges)
-      .GEODE_GET(n_edges)
-      .GEODE_GET(n_faces)
-      .GEODE_GET(allocated_vertices)
-      .GEODE_GET(allocated_faces)
-      .GEODE_GET(allocated_halfedges)
-      .GEODE_GET(chi)
-      .SAFE_METHOD(halfedge)
-      .SAFE_METHOD(prev)
-      .SAFE_METHOD(next)
-      .SAFE_METHOD(src)
-      .SAFE_METHOD(dst)
-      .SAFE_METHOD(face)
-      .SAFE_METHOD(left)
-      .SAFE_METHOD(right)
-      .SAFE_METHOD(face_vertices)
-      .SAFE_METHOD(face_halfedges)
-      .SAFE_METHOD(halfedge_vertices)
-      .SAFE_METHOD(face_faces)
-      .SAFE_METHOD(halfedge_faces)
-      .SAFE_METHOD(outgoing)
-      .SAFE_METHOD(incoming)
-      .GEODE_METHOD(vertex_one_ring)
-      .GEODE_METHOD(incident_faces)
-      .GEODE_METHOD(face_soup)
-      .GEODE_OVERLOADED_METHOD_2(HalfedgeId(Self::*)(VertexId, VertexId)const, "halfedge_between", halfedge)
-      .GEODE_METHOD(common_halfedge)
-      .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, FaceId)const, "common_vertex_between_faces", common_vertex)
-      .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, HalfedgeId)const, "common_vertex_between_face_and_halfedge", common_vertex)
-      .GEODE_METHOD(elements)
-      .GEODE_METHOD(degree)
-      .GEODE_METHOD(surface_components)
-      .GEODE_METHOD(has_boundary)
-      .GEODE_METHOD(is_manifold)
-      .GEODE_METHOD(is_manifold_with_boundary)
-      .GEODE_METHOD(has_isolated_vertices)
-      .GEODE_METHOD(boundary_loops)
-      .GEODE_METHOD(assert_consistent)
-      .GEODE_METHOD(dump_internals)
-      .GEODE_METHOD(all_vertices)
-      .GEODE_METHOD(all_faces)
-      .GEODE_METHOD(all_halfedges)
-      .GEODE_METHOD(all_boundary_edges)
-      .GEODE_METHOD(all_interior_halfedges)
-      .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<VertexId>>(Self::*)() const, vertices)
-      .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<FaceId>>(Self::*)() const, faces)
-      .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<HalfedgeId>>(Self::*)() const, halfedges)
-      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(VertexId) const, "vertex_valid", valid)
-      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(FaceId) const, "face_valid", valid)
-      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(HalfedgeId) const, "halfedge_valid", valid)
-      .GEODE_METHOD(boundary_edges)
-      .GEODE_METHOD(interior_halfedges)
-      .GEODE_METHOD(is_garbage_collected)
-      .GEODE_METHOD_2("edge_tree",edge_tree_py)
-      .GEODE_METHOD_2("face_tree",face_tree_py)
-      ;
-  }
-  {
-    typedef MutableTriangleTopology Self;
-    Class<Self>("MutableTriangleTopology")
-      .GEODE_INIT()
-      .GEODE_METHOD(copy)
-      .GEODE_METHOD(add)
-      .GEODE_METHOD(flip)
-      .GEODE_METHOD(flipped)
-      .GEODE_METHOD(add_vertex)
-      .GEODE_METHOD(add_vertices)
-      .GEODE_METHOD(add_face)
-      .GEODE_METHOD(add_faces)
-      .SAFE_METHOD(erase_face)
-      .SAFE_METHOD(erase_vertex)
-      .SAFE_METHOD(erase_halfedge)
-      .GEODE_METHOD(split_nonmanifold_vertex)
-      .GEODE_METHOD(split_nonmanifold_vertices)
-      .GEODE_METHOD(split_along_edge)
-      .GEODE_METHOD(is_collapse_safe)
-      .GEODE_METHOD(collapse)
-      .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(HalfedgeId),"split_edge",split_edge)
-      .GEODE_OVERLOADED_METHOD_2(void(Self::*)(HalfedgeId,VertexId),"split_edge_with_vertex",split_edge)
-      .GEODE_METHOD(collect_garbage)
-      .GEODE_METHOD(collect_boundary_garbage)
-      #ifdef GEODE_PYTHON
-      .GEODE_METHOD_2("add_vertex_field",add_vertex_field_py)
-      .GEODE_METHOD_2("add_face_field",add_face_field_py)
-      .GEODE_METHOD_2("add_halfedge_field",add_halfedge_field_py)
-      .GEODE_METHOD_2("has_field",has_field_py)
-      .GEODE_METHOD_2("has_vertex_field",has_vertex_field_py)
-      .GEODE_METHOD_2("has_face_field",has_face_field_py)
-      .GEODE_METHOD_2("has_halfedge_field",has_halfedge_field_py)
-      .GEODE_METHOD_2("remove_field",remove_field_py)
-      .GEODE_METHOD_2("remove_vertex_field",remove_vertex_field_py)
-      .GEODE_METHOD_2("remove_face_field",remove_face_field_py)
-      .GEODE_METHOD_2("remove_halfedge_field",remove_halfedge_field_py)
-      .GEODE_METHOD_2("field",field_py)
-      .GEODE_METHOD_2("vertex_field",vertex_field_py)
-      .GEODE_METHOD_2("face_field",face_field_py)
-      .GEODE_METHOD_2("halfedge_field",halfedge_field_py)
-      #endif
-      .GEODE_METHOD(permute_vertices)
-      ;
-  }
-  // For testing purposes
-  GEODE_FUNCTION(corner_random_edge_flips)
-  GEODE_FUNCTION(corner_random_face_splits)
-  GEODE_FUNCTION(corner_mesh_destruction_test)
-
-  GEODE_PYTHON_RANGE(TriangleTopologyIncoming, "IncomingHalfedgeIter")
-  GEODE_PYTHON_RANGE(TriangleTopologyOutgoing, "OutgoingHalfedgeIter")
-  GEODE_PYTHON_RANGE(TriangleTopologyIter<VertexId>, "SkippingVertexIter")
-  GEODE_PYTHON_RANGE(TriangleTopologyIter<FaceId>, "SkippingFaceIter")
-  GEODE_PYTHON_RANGE(TriangleTopologyIter<HalfedgeId>, "SkippingHalfedgeIter")
 }

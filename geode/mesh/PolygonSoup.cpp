@@ -6,10 +6,7 @@
 #include <geode/mesh/TriangleSoup.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/const_cast.h>
-#include <geode/python/Class.h>
 namespace geode {
-
-GEODE_DEFINE_TYPE(PolygonSoup)
 
 PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices, const int min_nodes)
   : counts(counts)
@@ -28,7 +25,7 @@ PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices, con
 
 PolygonSoup::~PolygonSoup() {}
 
-Ref<SegmentSoup> PolygonSoup::segment_soup() const {
+Ref<const SegmentSoup> PolygonSoup::segment_soup() const {
   if (!segment_soup_) {
     Hashtable<Vector<int,2>> hash;
     Array<Vector<int,2>> segments;
@@ -40,12 +37,12 @@ Ref<SegmentSoup> PolygonSoup::segment_soup() const {
       }
       offset += counts[p];
     }
-    segment_soup_ = new_<SegmentSoup>(segments,nodes());
+    segment_soup_ = new_<const SegmentSoup>(segments,nodes());
   }
-  return ref(segment_soup_);
+  return geode::ref(segment_soup_);
 }
 
-Ref<TriangleSoup> PolygonSoup::triangle_mesh() const {
+Ref<const TriangleSoup> PolygonSoup::triangle_mesh() const {
   if (!triangle_mesh_) {
     Array<Vector<int,3> > triangles(half_edge_count-2*counts.size());
     int offset=0, t=0;
@@ -56,20 +53,7 @@ Ref<TriangleSoup> PolygonSoup::triangle_mesh() const {
     }
     triangle_mesh_ = new_<TriangleSoup>(triangles,nodes());
   }
-  return ref(triangle_mesh_);
+  return geode::ref(triangle_mesh_);
 }
 
-}
-using namespace geode;
-
-void wrap_polygon_mesh() {
-  typedef PolygonSoup Self;
-  Class<Self>("PolygonSoup")
-    .GEODE_INIT(Array<const int>,Array<const int>)
-    .GEODE_FIELD(counts)
-    .GEODE_FIELD(vertices)
-    .GEODE_METHOD(segment_soup)
-    .GEODE_METHOD(triangle_mesh)
-    .GEODE_METHOD(nodes)
-    ;
 }

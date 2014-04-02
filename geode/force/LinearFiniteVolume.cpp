@@ -1,7 +1,6 @@
 #include <geode/force/LinearFiniteVolume.h>
 #include <geode/array/view.h>
 #include <geode/math/Factorial.h>
-#include <geode/python/Class.h>
 #include <geode/utility/const_cast.h>
 #include <geode/vector/normalize.h>
 #include <geode/vector/SolidMatrix.h>
@@ -10,9 +9,6 @@
 namespace geode {
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(LinearFiniteVolume<Vector<T,2>,2>)
-template<> GEODE_DEFINE_TYPE(LinearFiniteVolume<Vector<T,3>,2>)
-template<> GEODE_DEFINE_TYPE(LinearFiniteVolume<Vector<T,3>,3>)
 
 namespace {
 template<class T,int d> inline Vector<T,d> normal(const Matrix<T,d>& A) {
@@ -180,22 +176,5 @@ template<class TV,int d> void LinearFiniteVolume<TV,d>::add_damping_gradient(Sol
 template class LinearFiniteVolume<Vector<T,2>,2>;
 template class LinearFiniteVolume<Vector<T,3>,2>;
 template class LinearFiniteVolume<Vector<T,3>,3>;
-}
-using namespace geode;
 
-void wrap_linear_finite_volume() {
-  {typedef LinearFiniteVolume<Vector<T,2>,2> Self;
-  Class<Self>("LinearFiniteVolume2d")
-    .GEODE_INIT(Array<const Vector<int,3>>,Array<const Vector<T,2>>,T,T,T,T)
-    ;}
-
-  {typedef LinearFiniteVolume<Vector<T,3>,2> Self;
-  Class<Self>("LinearFiniteVolumeS3d")
-    .GEODE_INIT(Array<const Vector<int,3>>,Array<const Vector<T,3>>,T,T,T,T)
-    ;}
-
-  {typedef LinearFiniteVolume<Vector<T,3>,3> Self;
-  Class<Self>("LinearFiniteVolume3d")
-    .GEODE_INIT(Array<const Vector<int,4>>,Array<const Vector<T,3>>,T,T,T,T)
-    ;}
 }

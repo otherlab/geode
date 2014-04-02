@@ -12,7 +12,7 @@ class FrameImplicit:public Implicit<TV>
 {
   typedef typename TV::Scalar T;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Implicit<TV> Base;
 
   Frame<TV> frame;

@@ -9,7 +9,6 @@
 #include <geode/geometry/Triangle2d.h>
 #include <geode/geometry/Triangle3d.h>
 #include <geode/array/IndirectArray.h>
-#include <geode/python/Class.h>
 #include <geode/random/Random.h>
 
 // Windows silliness
@@ -359,14 +358,14 @@ template<class TV,int d> typename SimplexTree<TV,d>::T SimplexTree<TV,d>::distan
 }
 
 #define INSTANTIATE(m,d) \
-  template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,m>,d>) \
   template class SimplexTree<Vector<real,m>,d>;
 INSTANTIATE(2,1)
 INSTANTIATE(2,2)
 INSTANTIATE(3,1)
 INSTANTIATE(3,2)
 
-template<class T, int d> static int ray_traversal_test(const SimplexTree<Vector<T,d>,d-1>& tree, const int rays, const T half_thickness) {
+template<class T,int d> int ray_traversal_test(const SimplexTree<Vector<T,d>,d-1>& tree, const int rays,
+                                               const T half_thickness) {
   typedef Vector<T,d> TV;
   const auto box = tree.bounding_box();
   const auto random = new_<Random>(819371111);
@@ -389,27 +388,4 @@ template<class T, int d> static int ray_traversal_test(const SimplexTree<Vector<
   return hits;
 }
 
-}
-using namespace geode;
-
-template<class TV,int d> static void wrap_helper() {
-  typedef SimplexTree<TV,d> Self;
-  static const string name = format("%sTree%dd",(d==1?"Segment":"Triangle"),TV::m);
-  Class<Self>(name.c_str())
-    .GEODE_INIT(const typename Self::Mesh&,Array<const TV>,int)
-    .GEODE_FIELD(mesh)
-    .GEODE_FIELD(X)
-    .GEODE_FIELD(d)
-    .GEODE_METHOD(update)
-    .GEODE_METHOD(closest_point)
-    .GEODE_METHOD(distance)
-    ;
-}
-
-void wrap_simplex_tree() {
-  wrap_helper<Vector<real,2>,1>();
-  wrap_helper<Vector<real,2>,2>();
-  wrap_helper<Vector<real,3>,1>();
-  wrap_helper<Vector<real,3>,2>();
-  GEODE_FUNCTION_2(ray_traversal_test,ray_traversal_test<real,3>)
 }

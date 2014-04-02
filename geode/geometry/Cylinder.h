@@ -40,7 +40,5 @@ public:
 };
 
 GEODE_CORE_EXPORT ostream& operator<<(ostream& output, const Cylinder& cylinder);
-GEODE_CORE_EXPORT PyObject* to_python(const Cylinder& cylinder);
-template<> struct FromPython<Cylinder>{ GEODE_CORE_EXPORT static Cylinder convert(PyObject* object); };
 
 }

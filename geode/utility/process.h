@@ -5,11 +5,14 @@
 
 #include <geode/utility/config.h>
 #include <geode/vector/forward.h>
+#include <cstdint>
 #ifndef _WIN32
 #include <fenv.h>
 #endif
 namespace geode {
 namespace process {
+
+using std::size_t;
 
 // CPU usage for (user,system)
 GEODE_CORE_EXPORT Vector<double,2> cpu_times();

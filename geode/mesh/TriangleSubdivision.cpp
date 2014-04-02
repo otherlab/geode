@@ -9,14 +9,12 @@
 #include <geode/array/IndirectArray.h>
 #include <geode/math/constants.h>
 #include <geode/math/cube.h>
-#include <geode/python/Class.h>
 #include <geode/structure/Hashtable.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #include <geode/vector/SparseMatrix.h>
 namespace geode {
 
 typedef real T;
-GEODE_DEFINE_TYPE(TriangleSubdivision)
 
 static Ref<TriangleSoup> make_fine_mesh(const TriangleSoup& coarse_mesh) {
   Ref<const SegmentSoup> segments=coarse_mesh.segment_soup();
@@ -206,17 +204,4 @@ NdArray<T> TriangleSubdivision::loop_subdivide_python(NdArray<const T> X) const 
     GEODE_FATAL_ERROR("expected rank 1 or 2");
 }
 
-}
-using namespace geode;
-
-void wrap_triangle_subdivision() {
-  typedef TriangleSubdivision Self;
-  Class<Self>("TriangleSubdivision")
-    .GEODE_INIT(TriangleSoup&)
-    .GEODE_FIELD(coarse_mesh)
-    .GEODE_FIELD(fine_mesh)
-    .GEODE_FIELD(corners)
-    .GEODE_METHOD_2("linear_subdivide",linear_subdivide_python)
-    .GEODE_METHOD_2("loop_subdivide",loop_subdivide_python)
-    ;
 }

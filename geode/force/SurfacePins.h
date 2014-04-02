@@ -17,14 +17,14 @@ namespace geode {
 
 class SurfacePins : public Force<Vector<real,3>> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef real T;
   typedef Vector<T,3> TV;
   typedef Force<TV> Base;
   enum {m=TV::m};
 
   const Array<const int> particles;
-  Ref<TriangleSoup> target_mesh;
+  const Ref<const TriangleSoup> target_mesh;
   const Array<const TV> target_X;
 private:
   int max_node;
@@ -35,7 +35,8 @@ private:
   const Ref<SimplexTree<TV,2>> target_tree;
   const Array<CloseInfo<2>> info;
 protected:
-  SurfacePins(Array<const int> particles, Array<const T> mass, TriangleSoup& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio);
+  SurfacePins(Array<const int> particles, Array<const T> mass, const TriangleSoup& target_mesh,
+              Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio);
 public:
   ~SurfacePins();
 

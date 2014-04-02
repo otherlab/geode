@@ -6,7 +6,6 @@
 #include <geode/exact/perturb.h>
 #include <geode/exact/scope.h>
 #include <geode/array/RawArray.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 namespace geode {
 
@@ -183,7 +182,7 @@ bool triangles_oriented(const P3 a0, const P3 a1, const P3 a2,
 
 // Unit tests.  Warning: These do not check the geometric correctness of the predicates, only properties of exact computation and perturbation.
 
-static void predicate_tests() {
+void predicate_tests() {
   IntervalScope scope;
   typedef Vector<double,2> TV2;
   typedef Vector<Quantized,2> QV2;
@@ -220,9 +219,4 @@ static void predicate_tests() {
   }
 }
 
-}
-using namespace geode;
-
-void wrap_predicates() {
-  GEODE_FUNCTION(predicate_tests)
 }

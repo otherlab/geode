@@ -15,7 +15,7 @@ class LinearFiniteVolume:public Force<TV>
   enum {d=d_};
 public:
   typedef Force<TV> Base;
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
 
   const Array<const Vector<int,d+1>> elements;
   T youngs_modulus;

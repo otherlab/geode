@@ -4,30 +4,27 @@
 #pragma once
 
 #include <geode/value/forward.h>
-#include <geode/python/Object.h>
-#include <geode/python/try_convert.h>
-#include <geode/python/ExceptionValue.h>
+#include <geode/utility/exceptions.h>
+#include <geode/utility/Object.h>
+#include <geode/utility/Optional.h>
 #include <geode/utility/type_traits.h>
+#include <geode/utility/Ptr.h>
 #include <geode/vector/Vector.h>
-extern void wrap_value_base();
-
-#include <geode/python/Ptr.h>
 #include <vector>
-
 namespace geode {
 
 using std::vector;
 using std::type_info;
 
-class GEODE_CORE_CLASS_EXPORT ValueBase : public Object, public WeakRefSupport {
+class GEODE_CORE_CLASS_EXPORT ValueBase : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 private:
   friend class Action;
   template<class T> friend class Value;
-  mutable bool dirty_; // are we up to date?
-  mutable ExceptionValue error; // is the value an exception?
+  mutable bool dirty_; // Are we up to date?
+  mutable Ptr<const SavedException> error; // Is the value an exception?
 
 private:
   string name_;
@@ -48,14 +45,6 @@ protected:
 
 public:
   GEODE_CORE_EXPORT virtual ~ValueBase();
-
-#ifdef GEODE_PYTHON
-  virtual PyObject* get_python() const = 0;
-
-  PyObject* operator()() const {
-    return get_python();
-  }
-#endif
 
   bool is_prop() const;
   virtual const type_info& type() const = 0;
@@ -106,9 +95,8 @@ private:
   bool get_hidden() const;
   bool get_required() const;
   char get_abbrev() const;
-  friend void ::wrap_value_base();
-#ifdef GEODE_PYTHON
-  ValueBase& set_python(PyObject* value_);
+#if 0 // TODO: Value python support
+  ValueBase& set(PyObject* value_);
   ValueBase& set_allowed(PyObject* v);
   ValueBase& set_min_py(PyObject* m);
   ValueBase& set_max_py(PyObject* m);
@@ -146,7 +134,7 @@ protected:
   void set_dirty() const {
     if (!dirty_) {
       dirty_ = true;
-      error = ExceptionValue();
+      error.clear();
       static_cast<const T*>(static_cast<const void*>(&buffer))->~T();
       signal();
     }
@@ -159,7 +147,7 @@ protected:
     if (!dirty_)
       static_cast<const T*>(static_cast<const void*>(&buffer))->~T();
     dirty_ = false;
-    error = ExceptionValue();
+    error.clear();
     new (&buffer) T(value);
     signal();
   }
@@ -170,7 +158,7 @@ public:
     return *static_cast<const T*>(static_cast<const void*>(&buffer));
   }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
   PyObject* get_python() const {
     pull();
     return try_to_python(*static_cast<const T*>(static_cast<const void*>(&buffer)));
@@ -189,8 +177,7 @@ public:
 };
 
 
-template<class T> class ValueRef
-{
+template<class T> class ValueRef {
   static_assert(!is_const<T>::value,"T can't be const");
   static_assert(!is_reference<T>::value,"T can't be a reference");
 public:
@@ -231,13 +218,10 @@ public:
     output << "ValueRef(" << v.self->name() << ')';
     return output;
   }
-
 };
 
-template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {
-  return to_python(*value.self);
-}
-
-// from_python<ValueRef<T>> is declared in convert.h to avoid circularity
+// For testing purposes
+GEODE_CORE_EXPORT ValueRef<int> value_test(ValueRef<int> value);
+GEODE_CORE_EXPORT void value_ptr_test(Ptr<Value<int>> value);
 
 }

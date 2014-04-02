@@ -1,11 +1,8 @@
-#include "Listen.h"
-#include <geode/python/Class.h>
-#include <geode/python/function.h>
-#include <geode/python/wrap.h>
+#include <geode/value/Listen.h>
+#include <geode/utility/Log.h>
 namespace geode {
 
-GEODE_DEFINE_TYPE(Listen)
-GEODE_DEFINE_TYPE(BatchListen)
+using Log::cerr;
 
 Listen::Listen(const ValueBase& value, const function<void()>& f)
   : value(ref(value))
@@ -20,7 +17,7 @@ void Listen::input_changed() const {
     Executing e; // register no dependencies during execution
     f();
   } catch (const exception& e) {
-    print_and_clear_exception("Listen: exception in listener callback",e);
+    save(e)->print(cerr,"Listen: exception in listener callback");
   }
   depend_on(*value);
 }
@@ -39,7 +36,7 @@ void BatchListen::input_changed() const {
     Executing e; // register no dependencies during execution
     f();
   } catch (const exception& e) {
-    print_and_clear_exception("Listen: exception in listener callback",e);
+    save(e)->print(cerr,"Listen: exception in listener callback");
   }
   for(const auto v : values)
     depend_on(*v);
@@ -53,11 +50,4 @@ Ref<BatchListen> batch_listen(const vector<Ref<const ValueBase>>& values, const 
   return new_<BatchListen>(values,f);
 }
 
-}
-using namespace geode;
-
-void wrap_listen() {
-  typedef Listen Self;
-  Class<Self>("Listen");
-  GEODE_FUNCTION_2(listen, static_cast<Ref<Listen>(*)(const ValueBase&,const function<void()>&)>(listen))
 }

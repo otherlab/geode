@@ -2,7 +2,6 @@
 
 #include <geode/force/SimpleShell.h>
 #include <geode/force/StrainMeasure.h>
-#include <geode/python/Class.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/normalize.h>
 #include <geode/vector/DiagonalMatrix.h>
@@ -16,8 +15,6 @@ typedef real T;
 typedef Vector<T,3> TV;
 typedef SymmetricMatrix<T,2> SM2;
 typedef StrainMeasure<T,2> Strain;
-
-GEODE_DEFINE_TYPE(SimpleShell)
 
 SimpleShell::SimpleShell(const TriangleSoup& mesh, RawArray<const Matrix<T,2>> Dm, const T density)
   : density(density)
@@ -291,16 +288,4 @@ T SimpleShell::strain_rate(RawArray<const TV> V) const {
   return strain_rate;
 }
 
-}
-using namespace geode;
-
-void wrap_simple_shell() {
-  typedef SimpleShell Self;
-  Class<Self>("SimpleShell")
-    .GEODE_INIT(const TriangleSoup&,RawArray<const Matrix<T,2>>,T)
-    .GEODE_FIELD(density)
-    .GEODE_FIELD(stretch_stiffness)
-    .GEODE_FIELD(shear_stiffness)
-    .GEODE_FIELD(F_threshold)
-    ;
 }

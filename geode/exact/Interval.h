@@ -11,7 +11,7 @@
 #include <geode/geometry/Box.h>
 #include <geode/math/constants.h>
 #include <geode/math/sse.h>
-#include <geode/python/repr.h>
+#include <geode/utility/repr.h>
 #include <geode/utility/rounding.h>
 namespace geode {
 
@@ -616,4 +616,7 @@ inline Box<Vec2> bounding_box(const Vector<Interval,2>& i) {
   return Box<Vec2>(Vec2(bx.min,by.min),Vec2(bx.max,by.max));
 }
 
-} // namespace geode
+// For testing purposes
+GEODE_CORE_EXPORT void interval_tests(const int steps);
+
+}

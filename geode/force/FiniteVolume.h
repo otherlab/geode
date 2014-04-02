@@ -4,19 +4,18 @@
 #pragma once
 
 #include <geode/force/Force.h>
-#include <geode/python/Ptr.h>
+#include <geode/utility/Ptr.h>
 #include <geode/vector/Matrix.h>
 #include <geode/force/StrainMeasure.h>
 #include <geode/force/ConstitutiveModel.h>
 namespace geode {
 
-template<class TV,int d_>
-class FiniteVolume : public Force<TV> {
+template<class TV,int d_> class FiniteVolume : public Force<TV> {
   typedef typename TV::Scalar T;
   enum {m=TV::m};
   enum {d=d_};
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
 
   Ref<StrainMeasure<T,d>> strain;

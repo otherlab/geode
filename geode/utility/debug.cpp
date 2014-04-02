@@ -1,5 +1,5 @@
 // Assertions and other debugging utilities
-#include <geode/python/exceptions.h>
+#include <geode/utility/exceptions.h>
 #include <geode/utility/debug.h>
 #include <geode/utility/format.h>
 #include <geode/utility/process.h>

@@ -6,8 +6,6 @@
 #include <geode/math/copysign.h>
 #include <geode/mesh/SegmentSoup.h>
 #include <geode/mesh/TriangleSoup.h>
-#include <geode/python/cast.h>
-#include <geode/python/Class.h>
 #include <geode/utility/Log.h>
 #include <geode/utility/str.h>
 #include <geode/vector/normalize.h>
@@ -16,7 +14,6 @@ namespace geode {
 
 typedef double T;
 typedef Vector<T,3> TV;
-GEODE_DEFINE_TYPE(ThickShell)
 using Log::cout;
 using std::endl;
 
@@ -32,22 +29,23 @@ ThickShell::ThickShell(const TriangleSoup& mesh, Array<const TV> X, Array<const 
   GEODE_ASSERT(radii.size()==mesh.nodes());
 }
 
-static Array<const Vector<int,3>> py_tris(Ref<> mesh) {
-  if (auto* m = python_cast<TriangleSoup*>(&*mesh))
+static Array<const Vector<int,3>> py_tris(const Object& mesh) {
+  if (const auto* m = dynamic_cast<const TriangleSoup*>(&mesh))
     return m->elements;
+  // Errors will be handled in py_segs below
   return Array<const Vector<int,3>>();
 }
 
-static Array<const Vector<int,2>> py_segs(Ref<> mesh) {
-  if (auto* m = python_cast<TriangleSoup*>(&*mesh))
+static Array<const Vector<int,2>> py_segs(const Object& mesh) {
+  if (const auto* m = dynamic_cast<const TriangleSoup*>(&mesh))
     return m->segment_soup()->elements;
-  else if (auto* m = python_cast<SegmentSoup*>(&*mesh))
+  else if (const auto* m = dynamic_cast<const SegmentSoup*>(&mesh))
     return m->elements;
   else
-    throw TypeError(format("ThickShell: expected SegmentSoup or TriangleSoup, got %s",mesh->ob_type->tp_name));
+    throw TypeError(format("ThickShell: expected SegmentSoup or TriangleSoup, got %s",typeid(mesh).name()));
 }
 
-ThickShell::ThickShell(Ref<> mesh, Array<const TV> X, Array<const T> radii)
+ThickShell::ThickShell(const Object& mesh, Array<const TV> X, Array<const T> radii)
   : tris(py_tris(mesh)), segs(py_segs(mesh)), X(X), radii(radii) {
   const int nodes = max(tris.size()?scalar_view(tris).max()+1:0,segs.size()?scalar_view(segs).max()+1:0);
   GEODE_ASSERT(X.size()==nodes);
@@ -172,12 +170,4 @@ string ThickShell::repr() const {
   return format("ThickShell(TriangleSoup(%s),%s,%s)",str(tris),str(X),str(radii));
 }
 
-}
-using namespace geode;
-
-void wrap_thick_shell() {
-  typedef ThickShell Self;
-  Class<Self>("ThickShell")
-    .GEODE_INIT(Ref<>,Array<const TV>,Array<const T>)
-    ;
 }

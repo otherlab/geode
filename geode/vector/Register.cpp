@@ -4,7 +4,6 @@
 #include <geode/vector/Register.h>
 #include <geode/array/RawArray.h>
 #include <geode/array/Array2d.h>
-#include <geode/python/wrap.h>
 #include <geode/vector/Frame.h>
 #include <geode/vector/DiagonalMatrix.h>
 #include <geode/vector/Matrix.h>
@@ -130,7 +129,7 @@ Matrix<T,4> affine_register(RawArray<const Vector<T,3>> X0, RawArray<const Vecto
   return affine_register_helper(X0,X1,mass);
 }
 
-#ifdef GEODE_PYTHON
+#if 0
 Ref<PyObject> rigid_register_python(RawArray<const T,2> X0, RawArray<const T,2> X1) {
   GEODE_ASSERT(X0.n==X1.n);
   if (X0.n==2)
@@ -152,12 +151,4 @@ Ref<PyObject> affine_register_python(RawArray<const T,2> X0, RawArray<const T,2>
 }
 #endif
 
-}
-using namespace geode;
-
-void wrap_register() {
-#ifdef GEODE_PYTHON
-  GEODE_FUNCTION_2(rigid_register,rigid_register_python)
-  GEODE_FUNCTION_2(affine_register,affine_register_python)
-#endif
 }

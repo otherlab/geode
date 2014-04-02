@@ -254,4 +254,12 @@ template<int a, int b> Vector<Quantized,2> snap_div(const Vector<Exact<a>,2> num
   return result;
 }
 
-} // namespace geode
+// For testing purposes
+GEODE_CORE_EXPORT Array<const uint8_t,2> perturb_monomials(const int degree, const int variables);
+template<int m> GEODE_CORE_EXPORT void perturbed_sign_test();
+GEODE_CORE_EXPORT void in_place_interpolating_polynomial_test(const int degree, RawArray<const uint8_t,2> lambda,
+                                                              RawArray<const ExactInt> coefs, const bool verbose);
+GEODE_CORE_EXPORT Array<Quantized> snap_divs_test(RawArray<mp_limb_t,2> values, const bool take_sqrt);
+GEODE_CORE_EXPORT void perturbed_ratio_test();
+
+}

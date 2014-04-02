@@ -12,11 +12,9 @@
 #include <geode/vector/Vector.h>
 namespace geode {
 
-template<class TV>
-class EtherDrag:public Force<TV>
-{
+template<class TV> class EtherDrag : public Force<TV> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
   typedef real T;
   enum {m=TV::m};

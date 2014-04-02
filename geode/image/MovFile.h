@@ -10,7 +10,7 @@ class QtAtom;
 
 class MovWriter : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef real T;
 private:

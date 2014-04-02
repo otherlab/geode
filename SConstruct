@@ -103,11 +103,13 @@ options(env,
   ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
   ('python','Python executable','python'),
   ('mpicc','MPI wrapper compiler (used only to extract flags)','<detect>'),
+  ('xdress','Xdress script','xdress'),
   ('qtdir','Top level Qt dir (autodetect by default)',''))
 assert env['real'] in ('float','double')
 
-# Make a pristine environment for latex use
+# Make pristine environments for latex and xdress use
 latex_env = env.Clone()
+xdress_env = env.Clone()
 
 # Extra flag options
 env.Append(CXXFLAGS=env['cxxflags_extra'])
@@ -528,7 +530,7 @@ def install_or_link(env,target,src):
     elif env['develop']:
       env.Execute("d='%s' && mkdir -p $$$$d && ln -sf '%s' $$$$d"%(target,srcpath))
 
-def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,pyname=None):
+def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
   if name in env['skip_libs']:
     return
   sources = []
@@ -587,11 +589,19 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     for l in lib:
       install_or_link(env, env['prefix_lib'], l)
     if env['use_python']:
-      if pyname is None:
-        pyname = name
-      module = os.path.join('#'+Dir('.').srcnode().path,pyname)
-      module = python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath])
-      python_env.Depends(module,lib) # scons doesn't always notice this (obvious) dependency
+      targets = '''wrap.pxd wrap.pyx cpp_wrap.pxd
+                   dtypes.pxd dtypes.pyx __init__.pxd __init__.py
+                   stlcontainers.pxd stlcontainers.pyx xdress_extra_types.h
+                   xdress_extra_types.pxd xdress_extra_types.pyx'''
+      targets = [os.path.join('xdress',t) for t in targets.split()]
+      env.Command(targets,['xdressrc.py']+headers,
+          '$xdress --rc $SOURCE --packagedir ${TARGET.dir} '
+        + '--builddir ${TARGET.dir}/tmp -p clang --extra-parser-args=-std=c++11')
+      if 0:
+        pyname = name+'_xdress'
+        module = os.path.join('#'+Dir('.').srcnode().path,pyname)
+        module = python_env.LoadableModule(module,source=[],LIBS=name,LIBPATH=[libpath])
+        python_env.Depends(module,lib) # scons doesn't always notice this (obvious) dependency
 
 def config_header(env,name,extra=()):
   """Generate a configuration header in the current directory"""

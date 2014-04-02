@@ -5,7 +5,6 @@
 #include <geode/array/Field.h>
 #include <geode/array/view.h>
 #include <geode/utility/prioritize.h>
-#include <geode/python/Class.h>
 #include <geode/math/isfinite.h>
 #include <geode/math/copysign.h>
 #include <geode/structure/UnionFind.h>
@@ -18,7 +17,6 @@
 #include <geode/utility/stl.h>
 #include <geode/openmesh/triangulator.h>
 #include <geode/vector/Frame.h>
-#include <geode/vector/convert.h>
 #include <geode/array/NdArray.h>
 #include <iostream>
 #include <queue>
@@ -31,30 +29,6 @@ using std::endl;
 using std::pair;
 using std::make_pair;
 typedef Vector<real,2> TV2;
-
-GEODE_DEFINE_TYPE(TriMesh)
-
-#ifdef GEODE_PYTHON
-namespace {
-// for vector conversions
-template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::VertexHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::EdgeHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::HalfedgeHandle>:public mpl::true_{};
-template<> struct NumpyIsScalar<OpenMesh::FaceHandle>:public mpl::true_{};
-
-template<> struct NumpyScalar<OpenMesh::BaseHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::VertexHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
-template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
-}
-#endif
-
-GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexHandle)
-GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexHandle)
-GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceHandle)
-GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceHandle)
 
 TriMesh::TriMesh() {}
 
@@ -1763,105 +1737,4 @@ Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) {
 }
 
 }
-
-// Reduce template bloat
-/* See header.
-namespace OpenMesh {
-template class PropertyT<int>;
-template class PropertyT<geode::OVec<geode::real,2>>;
-template class PropertyT<geode::OVec<geode::real,3>>;
-template class PropertyT<geode::OVec<unsigned char,4>>;
-template class PropertyT<VectorT<double,3>>;
-template class PolyMeshT<AttribKernelT<FinalMeshItemsT<geode::MeshTraits,true>,TriConnectivity>>;
-}
-*/
-
-#include <geode/python/function.h>
-
-using namespace geode;
-
-void wrap_trimesh() {
-  typedef TriMesh Self;
-
-  // need to specify exact type for overloaded functions
-  typedef Box<Vector<real,3> > (TriMesh::*box_Method)() const;
-  typedef TriMesh::FaceHandle (TriMesh::*fh_Method_vh_vh_vh)(TriMesh::VertexHandle, TriMesh::VertexHandle, TriMesh::VertexHandle);
-  typedef Vector<TriMesh::VertexHandle, 3> (TriMesh::*Vvh3_Method_fh)(TriMesh::FaceHandle ) const;
-  typedef Vector<TriMesh::VertexHandle, 2> (TriMesh::*Vvh2_Method_eh)(TriMesh::EdgeHandle ) const;
-
-  typedef void (TriMesh::*v_Method_str)(string const &);
-  typedef void (TriMesh::*v_CMethod_str)(string const &) const;
-
-  typedef void (TriMesh::*v_Method_r_vec3)(real, const Vector<real, 3>&);
-  typedef void (TriMesh::*v_Method_vec3_vec3)(Vector<real, 3>, const Vector<real, 3>&);
-
-  typedef Ref<TriMesh> (TriMesh::*Mesh_CMethod_vfh)(vector<FaceHandle> const &faces) const;
-
-  Class<Self>("TriMesh")
-    .GEODE_INIT()
-    .GEODE_METHOD(copy)
-    .GEODE_METHOD(add_vertex)
-    .GEODE_OVERLOADED_METHOD(fh_Method_vh_vh_vh, add_face)
-    .GEODE_METHOD(add_vertices)
-    .GEODE_METHOD(add_faces)
-    .GEODE_METHOD(add_mesh)
-    .GEODE_METHOD(n_vertices)
-    .GEODE_METHOD(n_faces)
-    .GEODE_METHOD(n_edges)
-    .GEODE_METHOD(n_halfedges)
-    .GEODE_METHOD(remove_infinite_vertices)
-    .GEODE_OVERLOADED_METHOD(v_Method_str, read)
-    .GEODE_OVERLOADED_METHOD(v_CMethod_str, write)
-    .GEODE_METHOD(write_with_normals)
-    .GEODE_OVERLOADED_METHOD(box_Method, bounding_box)
-    .GEODE_METHOD(mean_edge_length)
-    .GEODE_OVERLOADED_METHOD_2(Vvh3_Method_fh, "face_vertex_handles", vertex_handles)
-    .GEODE_OVERLOADED_METHOD_2(Vvh2_Method_eh, "edge_vertex_handles", vertex_handles)
-    .GEODE_METHOD(vertex_one_ring)
-    .GEODE_METHOD(smooth_normal)
-    .GEODE_METHOD(add_cylinder)
-    .GEODE_METHOD(add_sphere)
-    .GEODE_METHOD(add_box)
-    .GEODE_METHOD(vertex_shortest_path)
-    .GEODE_METHOD(elements)
-    .GEODE_METHOD(invert)
-    .GEODE_METHOD(to_vertex_handle)
-    .GEODE_METHOD(from_vertex_handle)
-    .GEODE_METHOD(select_faces)
-    .GEODE_OVERLOADED_METHOD(Mesh_CMethod_vfh, extract_faces)
-    .GEODE_METHOD_2("X",X_python)
-    .GEODE_METHOD_2("set_X",set_X_python)
-    .GEODE_METHOD(set_vertex_normals)
-    .GEODE_METHOD(set_vertex_colors)
-    .GEODE_METHOD(face_texcoords)
-    .GEODE_METHOD(set_face_texcoords)
-    .GEODE_METHOD(component_meshes)
-    .GEODE_METHOD(largest_connected_component)
-    .GEODE_METHOD(request_vertex_normals)
-    .GEODE_METHOD(request_face_normals)
-    .GEODE_METHOD(update_face_normals)
-    .GEODE_METHOD(update_vertex_normals)
-    .GEODE_METHOD(update_normals)
-    .GEODE_METHOD(request_face_colors)
-    .GEODE_METHOD(request_vertex_colors)
-    .GEODE_METHOD_2("request_face_texcoords",request_halfedge_texcoords2D)
-    .GEODE_METHOD(request_halfedge_texcoords2D)
-    .GEODE_OVERLOADED_METHOD(real(Self::*)()const,volume)
-    .GEODE_OVERLOADED_METHOD(real(Self::*)()const,area)
-    .GEODE_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)
-    .GEODE_OVERLOADED_METHOD_2(v_Method_vec3_vec3, "scale_anisotropic", scale)
-    .GEODE_OVERLOADED_METHOD(void(Self::*)(Matrix<real,4>const&),transform)
-    .GEODE_METHOD(translate)
-    .GEODE_METHOD(boundary_loops)
-    .GEODE_METHOD(face_tree)
-    .GEODE_METHOD(edge_tree)
-    .GEODE_METHOD(point_tree)
-    .GEODE_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
-    .GEODE_OVERLOADED_METHOD_2(OTriMesh::Point (Self::*)(FaceHandle,Vector<real,3>const&)const, "interpolated_point", point)
-    .GEODE_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
-    .GEODE_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
-    .GEODE_OVERLOADED_METHOD_2(Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
-    ;
-}
-
 #endif // GEODE_OPENMESH

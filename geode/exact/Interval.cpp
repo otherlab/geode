@@ -4,7 +4,6 @@
 #include <geode/exact/scope.h>
 #include <geode/exact/Exact.h>
 #include <geode/random/Random.h>
-#include <geode/python/wrap.h>
 #include <geode/utility/Log.h>
 namespace geode {
 
@@ -121,7 +120,7 @@ static inline bool implies(const bool a, const bool b) {
   return !a || b;
 }
 
-static void interval_tests(const int steps) {
+void interval_tests(const int steps) {
   cout << "GEODE_INTERVAL_SSE = "<<GEODE_INTERVAL_SSE<<endl;
   IntervalScope scope;
   const auto random = new_<Random>(1218131);
@@ -157,9 +156,4 @@ static void interval_tests(const int steps) {
   }
 }
 
-}
-using namespace geode;
-
-void wrap_interval() {
-  GEODE_FUNCTION(interval_tests)
 }

@@ -24,5 +24,6 @@ if windows:
 env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need_gmp=1)
 
 skip = () if env['use_gmp'] else ('exact',)
-config_header(env,'config.h',extra=['#include <geode/python/config.h>','#include <geode/utility/config.h>'])
-library(env,'geode',pyname='geode_wrap',skip=skip)
+skip = skip + ('python-hide',)
+config_header(env,'config.h',extra=['#include <geode/utility/config.h>'])
+library(env,'geode',skip=skip)

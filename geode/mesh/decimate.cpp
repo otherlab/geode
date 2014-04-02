@@ -1,7 +1,6 @@
 // Quadric-based mesh decimation
 
 #include <geode/mesh/decimate.h>
-#include <geode/python/wrap.h>
 #include <geode/structure/Heap.h>
 #include <geode/vector/SymmetricMatrix.h>
 namespace geode {
@@ -234,10 +233,4 @@ decimate(const TriangleTopology& mesh, RawField<const TV,VertexId> X,
   return Tuple<Ref<const TriangleTopology>,Field<const TV,VertexId>>(rmesh,rX);
 }
 
-}
-using namespace geode;
-
-void wrap_decimate() {
-  GEODE_FUNCTION(decimate)
-  GEODE_FUNCTION(decimate_inplace)
 }

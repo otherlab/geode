@@ -6,14 +6,12 @@
 #include <geode/array/IndirectArray.h>
 #include <geode/array/view.h>
 #include <geode/structure/Hashtable.h>
-#include <geode/python/Class.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
 namespace geode {
 
 typedef real T;
 typedef Vector<T,3> TV;
-GEODE_DEFINE_TYPE(ParticleBindingSprings)
 
 ParticleBindingSprings::ParticleBindingSprings(Array<const Vector<int,2>> nodes, Array<const T> mass, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : mass(mass)
@@ -142,12 +140,4 @@ T ParticleBindingSprings::strain_rate(RawArray<const TV> V) const {
   return 0;
 }
 
-}
-using namespace geode;
-
-void wrap_particle_binding_springs() {
-  typedef ParticleBindingSprings Self;
-  Class<Self>("ParticleBindingSprings")
-    .GEODE_INIT(Array<const Vector<int,2>>,Array<const T>,NdArray<const T>,NdArray<const T>)
-    ;
 }

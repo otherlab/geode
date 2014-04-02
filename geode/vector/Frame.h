@@ -14,13 +14,7 @@ template<class TV> struct HasCheapCopy<Frame<TV> >:public mpl::true_{};
 template<class TV> struct IsScalarBlock<Frame<TV> >:public IsScalarBlock<TV>{};
 template<class TV> struct is_packed_pod<Frame<TV> >:public is_packed_pod<typename TV::Scalar>{};
 
-template<class TV> GEODE_CORE_EXPORT PyObject* to_python(const Frame<TV>& q);
-template<class TV> struct FromPython<Frame<TV> >{GEODE_CORE_EXPORT static Frame<TV> convert(PyObject* object);};
-template<class TV> GEODE_CORE_EXPORT bool frames_check(PyObject* object);
-
-template<class TV>
-class Frame
-{
+template<class TV> class Frame {
     typedef typename TV::Scalar T;
     enum Workaround {d=TV::m};
 public:
@@ -97,7 +91,7 @@ template<class T> Frame<Vector<T,2> > rotation_around(const Vector<T,2>& center,
     return Frame<Vector<T,2> >(center)*Frame<Vector<T,2> >(Rotation<Vector<T,2> >::from_angle(theta))*Frame<Vector<T,2> >(center).inverse();
 }
 
-// global functions
+// Global functions
 template<class TV> inline std::istream& operator>>(std::istream& input,Frame<TV>& f)
 {input>>f.t>>f.r;return input;}
 
@@ -106,5 +100,12 @@ template<class TV> inline std::ostream& operator<<(std::ostream& output,const Fr
 
 template<class TV> static inline string repr(const Frame<TV>& f)
 {return format("Frames(%s,%s)",tuple_repr(f.t),repr(f.r));}
+
+// For python and testing purposes
+template<class TV> GEODE_CORE_EXPORT Frame<TV> frame_test(const Frame<TV>& f1, const Frame<TV>& f2, const TV x);
+template<class TV> GEODE_CORE_EXPORT Array<Frame<TV>> frame_array_test(const Frame<TV>& f1,
+                                                                       Array<const Frame<TV>> f2, const TV x);
+template<class TV> GEODE_CORE_EXPORT Array<Frame<TV>> frame_interpolation(Array<const Frame<TV>> f1,
+                                                                          Array<const Frame<TV>> f2, const real s);
 
 }

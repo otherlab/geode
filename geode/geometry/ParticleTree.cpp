@@ -5,15 +5,12 @@
 #include <geode/geometry/Sphere.h>
 #include <geode/geometry/traverse.h>
 #include <geode/array/IndirectArray.h>
-#include <geode/python/Class.h>
 #include <geode/structure/UnionFind.h>
 namespace geode {
 using std::cout;
 using std::endl;
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(ParticleTree<Vector<T,2>>)
-template<> GEODE_DEFINE_TYPE(ParticleTree<Vector<T,3>>)
 
 template<class TV> ParticleTree<TV>::
 ParticleTree(Array<const TV> X,int leaf_size)
@@ -141,22 +138,5 @@ template<class TV> Tuple<TV,int> ParticleTree<TV>::closest_point_py(TV point, T 
   template GEODE_CORE_EXPORT void ParticleTree<Vector<T,d>>::intersection(const Sphere<Vector<T,d>>&,Array<int>&) const;
 INSTANTIATE(2)
 INSTANTIATE(3)
-}
-using namespace geode;
 
-template<int d> static void wrap_helper() {
-  typedef Vector<T,d> TV;
-  typedef ParticleTree<TV> Self;
-  Class<Self>(d==2?"ParticleTree2d":"ParticleTree3d")
-    .GEODE_INIT(Array<const TV>,int)
-    .GEODE_FIELD(X)
-    .GEODE_METHOD(update)
-    .GEODE_METHOD(remove_duplicates)
-    .GEODE_METHOD_2("closest_point",closest_point_py)
-    ;
-}
-
-void wrap_particle_tree() {
-  wrap_helper<2>();
-  wrap_helper<3>();
 }

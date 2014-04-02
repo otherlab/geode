@@ -9,7 +9,6 @@
 #include <geode/exact/scope.h>
 #include <geode/array/RawArray.h>
 #include <geode/geometry/Segment.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 #include <geode/utility/Log.h>
 namespace geode {
@@ -47,7 +46,7 @@ static bool check_intersection(const EV2 a0, const EV2 a1, const EV2 b0, const E
   return false;
 }
 
-static void construction_tests() {
+void construction_tests() {
   Log::Scope log("construction tests");
   IntervalScope scope;
 
@@ -147,9 +146,4 @@ static void construction_tests() {
   }
 }
 
-}
-using namespace geode;
-
-void wrap_constructions() {
-  GEODE_FUNCTION(construction_tests)
 }

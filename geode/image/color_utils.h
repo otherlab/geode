@@ -18,4 +18,7 @@ static inline Vector<real,3> wheel_color(int i, int n) {
   return wheel_color(real(i)/n);
 }
 
+// For python use
+GEODE_CORE_EXPORT NdArray<Vector<real,3>> wheel_color(NdArray<const real> hues);
+
 }

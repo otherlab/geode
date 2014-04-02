@@ -1,12 +1,8 @@
 #include <geode/mesh/HalfedgeGraph.h>
-#include <geode/python/Class.h>
 #include <geode/structure/Tuple.h>
 #include <geode/array/RawField.h>
 #include <geode/array/Nested.h>
-
 namespace geode {
-
-GEODE_DEFINE_TYPE(HalfedgeGraph)
 
 HalfedgeGraph::HalfedgeGraph() {}
 
@@ -594,4 +590,3 @@ Nested<HalfedgeId> extract_region(const HalfedgeGraph& g, const RawField<const b
 }
 
 } // namespace geode
-

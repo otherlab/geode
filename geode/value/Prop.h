@@ -6,10 +6,8 @@
 #include <geode/value/forward.h>
 #include <geode/value/Value.h>
 #include <geode/math/clamp.h>
-#include <geode/python/Ref.h>
-#include <geode/python/Ptr.h>
-#include <geode/python/try_convert.h>
-#include <geode/python/stl.h>
+#include <geode/utility/Ref.h>
+#include <geode/utility/Ptr.h>
 #include <geode/structure/forward.h>
 #include <geode/utility/CopyConst.h>
 #include <geode/utility/format.h>
@@ -17,6 +15,7 @@
 #include <geode/utility/stl.h>
 #include <geode/utility/str.h>
 #include <geode/utility/type_traits.h>
+#include <geode/utility/Unique.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
@@ -39,8 +38,8 @@ public:
   virtual bool same_default(PropBase& other) const = 0;
   virtual string value_str(bool use_default = false) const = 0;
 
-#ifdef GEODE_PYTHON
-  virtual void set_python(PyObject* value_) = 0;
+#if 0 // Value python support
+  virtual void set(PyObject* value_) = 0;
   virtual PyObject* default_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual PyObject* allowed_python() const = 0;
@@ -74,8 +73,9 @@ public:
   GEODE_CORE_EXPORT void dump(int indent) const ;
 };
 
-inline Ref<PropBase> ref(PropBase& prop) {
-  return Ref<PropBase>(prop,to_python(prop.base()));
+static inline Ref<PropBase> ref(PropBase& prop) {
+  // Use shared_ptr's aliasing constructor
+  return Ref<PropBase>(shared_ptr<PropBase>(prop.base().shared_from_this(),&prop),Ref<PropBase>::Safe());
 }
 
 template<class T,bool enable> struct PropClamp;
@@ -91,16 +91,18 @@ template<class T> struct PropClamp<T,false> {
     return self();
   }
 
+#if 0 // Value python support
   void set_min_python(PyObject* v){throw ValueError(format("non-clampable prop cannot set min"));}
   void set_max_python(PyObject* v){ throw ValueError(format("non-clampable prop cannot set max"));}
   void set_step_python(PyObject* v){ throw ValueError(format("non-clampable prop cannot set step"));}
+#endif
 };
 
 template<class T> struct PropClamp<T,true> {
   T min,max,step;
 private:
   typedef PropClamp Self;
-  scoped_ptr<Tuple<PropRef<T>,Ref<Listen>,real>> prop_min, prop_max, prop_step;
+  Unique<Tuple<PropRef<T>,Ref<Listen>,real>> prop_min, prop_max, prop_step;
 
 protected:
   GEODE_CORE_EXPORT PropClamp();
@@ -130,7 +132,7 @@ public:
     return self();
   }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
   void set_min_python(PyObject* v){
     set_min(from_python<T>(v));
   }
@@ -222,7 +224,7 @@ public:
     return *this;
   }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
   void set_python(PyObject* value_) {
     set(try_from_python<T>(value_));
@@ -334,7 +336,7 @@ template<class T> inline std::ostream& operator<<(std::ostream& output, const Pr
   return output<<ref();
 }
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
 GEODE_CORE_EXPORT PyObject* to_python(const PropBase& prop);
 GEODE_CORE_EXPORT PyObject* ptr_to_python(const PropBase* prop);
@@ -358,5 +360,8 @@ template<class T> struct FromPython<PropRef<T>> {
 };
 
 #endif
+
+// For testing purposes
+GEODE_CORE_EXPORT Ref<PropBase> unusable_prop_test();
 
 }

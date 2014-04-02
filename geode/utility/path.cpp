@@ -2,7 +2,7 @@
 
 #include <geode/utility/path.h>
 #include <geode/utility/format.h>
-#include <geode/python/exceptions.h>
+#include <geode/utility/exceptions.h>
 
 #ifdef _WIN32
 #define WINDOWS_LEAN_AND_MEAN

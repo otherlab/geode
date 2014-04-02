@@ -2,7 +2,6 @@
 
 #include <geode/geometry/offset_mesh.h>
 #include <geode/exact/mesh_csg.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 typedef real T;
@@ -424,11 +423,4 @@ rough_offset_mesh(const TriangleTopology& mesh, RawField<const TV,VertexId> X, c
   return tuple(new_<const TriangleTopology>(S.x),Field<const TV,VertexId>(S.y));
 }
 
-}
-using namespace geode;
-
-void wrap_offset_mesh() {
-  GEODE_FUNCTION(rough_preoffset_shell) // For testing purposes
-  GEODE_FUNCTION(rough_offset_shell)
-  GEODE_FUNCTION(rough_offset_mesh)
 }

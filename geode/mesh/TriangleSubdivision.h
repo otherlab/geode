@@ -8,15 +8,15 @@
 #pragma once
 
 #include <geode/mesh/TriangleSoup.h>
-#include <geode/python/Object.h>
-#include <geode/python/Ptr.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Object.h>
+#include <geode/utility/Ptr.h>
+#include <geode/utility/Ref.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
 class TriangleSubdivision : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   typedef real T;

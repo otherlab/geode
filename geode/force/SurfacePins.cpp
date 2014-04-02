@@ -7,7 +7,6 @@
 #include <geode/structure/Pair.h>
 #include <geode/geometry/ParticleTree.h>
 #include <geode/geometry/SimplexTree.h>
-#include <geode/python/Class.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
@@ -18,9 +17,9 @@ using std::endl;
 
 typedef real T;
 typedef Vector<T,3> TV;
-GEODE_DEFINE_TYPE(SurfacePins)
 
-SurfacePins::SurfacePins(Array<const int> particles, Array<const T> mass, TriangleSoup& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
+SurfacePins::SurfacePins(Array<const int> particles, Array<const T> mass, const TriangleSoup& target_mesh,
+                         Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : particles(particles)
   , target_mesh(ref(target_mesh))
   , target_X(target_X)
@@ -149,13 +148,4 @@ T SurfacePins::strain_rate(RawArray<const TV> V) const {
   return 0;
 }
 
-}
-using namespace geode;
-
-void wrap_surface_pins() {
-  typedef SurfacePins Self;
-  Class<Self>("SurfacePins")
-    .GEODE_INIT(Array<const int>,Array<const T>,TriangleSoup&,Array<const TV>,NdArray<const T>,NdArray<const T>)
-    .GEODE_METHOD(closest_points)
-    ;
 }

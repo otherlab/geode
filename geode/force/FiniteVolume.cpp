@@ -8,7 +8,6 @@
 #include <geode/force/StrainMeasure.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/math/Factorial.h>
-#include <geode/python/Class.h>
 #include <geode/vector/DiagonalMatrix.h>
 #include <geode/vector/Matrix.h>
 #include <geode/vector/SolidMatrix.h>
@@ -21,14 +20,13 @@ using Log::cout;
 using std::endl;
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(FiniteVolume<Vector<T,2>,2>)
-template<> GEODE_DEFINE_TYPE(FiniteVolume<Vector<T,3>,2>)
-template<> GEODE_DEFINE_TYPE(FiniteVolume<Vector<T,3>,3>)
 
-template<class TV,int d> FiniteVolume<TV,d>::FiniteVolume(StrainMeasure<T,d>& strain, T density, ConstitutiveModel<T,d>& model, Ptr<PlasticityModel<T,d>> plasticity)
-  : strain(ref(strain))
+template<class TV,int d> FiniteVolume<TV,d>::FiniteVolume(StrainMeasure<T,d>& strain, T density,
+                                                          ConstitutiveModel<T,d>& model,
+                                                          Ptr<PlasticityModel<T,d>> plasticity)
+  : strain(geode::ref(strain))
   , density(density)
-  , model(ref(model))
+  , model(geode::ref(model))
   , plasticity(plasticity)
   , Be_scales(strain.elements.size(),uninit)
   , stress_derivatives_valid(false)
@@ -303,19 +301,5 @@ template<class TV,int d> typename TV::Scalar FiniteVolume<TV,d>::strain_rate(Raw
 template class FiniteVolume<Vector<T,2>,2>;
 template class FiniteVolume<Vector<T,3>,2>;
 template class FiniteVolume<Vector<T,3>,3>;
-}
-using namespace geode;
 
-template<int m,int d> static void wrap_helper() {
-  typedef FiniteVolume<Vector<T,m>,d> Self;
-  static const string name = format("FiniteVolume%s",d==3?"3d":m==3?"S3d":"2d");
-  Class<Self>(name.c_str())
-    .GEODE_INIT(StrainMeasure<T,d>&,T,ConstitutiveModel<T,d>&,Ptr<PlasticityModel<T,d>>)
-    ;
-}
-
-void wrap_finite_volume() {
-  wrap_helper<2,2>();
-  wrap_helper<3,2>();
-  wrap_helper<3,3>();
 }

@@ -20,7 +20,7 @@
 // Copyright (C) 2002-2004 Maxim Shemanarev (McSeem)
 // This source hsa been altered from Version 1.1
 
-#include "nanosvg.h"
+#include <geode/svg/nanosvg/nanosvg.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

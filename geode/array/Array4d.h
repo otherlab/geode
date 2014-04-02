@@ -10,7 +10,7 @@
 #include <geode/array/ArrayNdBase.h>
 #include <geode/array/Subarray.h>
 #include <geode/geometry/Box.h>
-#include <geode/python/exceptions.h>
+#include <geode/utility/exceptions.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
@@ -45,7 +45,7 @@ public:
             shape.x*shape.y*shape.z*shape.w),uninit)
     , shape(shape) {}
 
-  Array(const Vector<int,d> shape, T* data, PyObject* owner)
+  Array(const Vector<int,d> shape, T* data, const shared_ptr<const Owner>& owner)
     : Base((assert(shape.min()>=0),
             shape.product()),data,owner)
     , shape(shape) {}

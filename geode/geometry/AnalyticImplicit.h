@@ -6,14 +6,12 @@
 #include <geode/geometry/Implicit.h>
 namespace geode {
 
-template<class Shape>
-class AnalyticImplicit:public Implicit<typename Shape::VectorT>,public Shape
-{
+template<class Shape> class AnalyticImplicit : public Implicit<typename Shape::VectorT>, public Shape {
   typedef real T;
   typedef typename Shape::VectorT TV;
   static_assert(is_same<T,typename TV::Scalar>::value,"");
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Implicit<TV> Base;
 
 protected:

@@ -25,7 +25,7 @@ namespace geode {
 // Unlike in HalfedgeMesh, an invalid face id doesn't indicate the boundary face
 class HalfedgeGraph : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   struct OutgoingCirculator;

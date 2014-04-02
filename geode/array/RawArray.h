@@ -11,11 +11,11 @@
 #include <geode/array/forward.h>
 #include <geode/array/ArrayBase.h>
 #include <geode/vector/Vector.h>
-#include <geode/python/from_python.h>
 #include <geode/structure/forward.h>
 #include <geode/utility/HasCheapCopy.h>
 #include <geode/utility/CopyConst.h>
 #include <geode/utility/range.h>
+#include <geode/utility/smart_ptr.h>
 #include <geode/utility/type_traits.h>
 #include <iomanip>
 #include <vector>
@@ -23,8 +23,6 @@ namespace geode {
 
 template<class T> struct IsArray<RawArray<T> >:public mpl::true_{};
 template<class T> struct HasCheapCopy<RawArray<T> >:public mpl::true_{};
-
-template<class T,int d> struct FromPython<RawArray<T,d> >:public FromPython<Array<T,d> >{};
 
 template<class T_>
 class RawArray<T_,1> : public ArrayBase<T_,RawArray<T_,1>> {
@@ -587,12 +585,12 @@ template<class T> static inline std::ostream& operator<<(std::ostream& output,co
 }
 
 struct TemporaryOwner {
-  Ref<PyObject> owner;
-  GEODE_CORE_EXPORT TemporaryOwner(); // creates owner with reference count 1
-  GEODE_CORE_EXPORT ~TemporaryOwner(); // bails if reference count isn't back to 1
+  const shared_ptr<const Owner> owner;
+  GEODE_CORE_EXPORT TemporaryOwner(); // Creates owner with reference count 1
+  GEODE_CORE_EXPORT ~TemporaryOwner(); // Bails if reference count isn't back to 1
 
   template<class T,int d> Array<T,d> share(RawArray<T,d> array) {
-    return Array<T,d>(array.sizes(),array.data(),&*owner);
+    return Array<T,d>(array.sizes(),array.data(),owner);
   }
 };
 

@@ -1,3 +1,4 @@
+// Ranges of integers or iterators
 #pragma once
 
 #include <geode/utility/config.h>
@@ -5,7 +6,6 @@
 #include <geode/utility/type_traits.h>
 #include <geode/utility/validity.h>
 #include <cassert>
-
 namespace geode {
 
 GEODE_VALIDITY_CHECKER(has_subtract,T,declval<T>()-declval<T>())
@@ -74,7 +74,7 @@ template<class Iter> static inline Range<Iter> range(const Iter& lo, const Iter&
 }
 
 template<class I> static inline Range<I> range(I n) {
-  static_assert(is_integral<I>::value,"single argument range must take an integral type");
+  static_assert(is_integral<I>::value,"Single argument range must take an integral type");
   return Range<I>(0,n);
 }
 

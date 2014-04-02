@@ -22,6 +22,13 @@ def find(head,tail):
   return tail
 
 fixed = {'':''}
+for h in 'Object Ref Ptr Buffer exceptions repr new'.split():
+  fixed['geode/python/%s.h'%h] = 'geode/utility/%s.h'%h
+for h in 'forward from_python to_python wrap stl numpy module Class function cast'.split():
+  fixed['geode/python/%s.h'%h] = None
+fixed['geode/utility/tr1.h'] = 'geode/utility/unordered.h'
+fixed['geode/array/convert.h'] = None
+
 def fix(path):
   try:
     return fixed[path]
@@ -38,7 +45,14 @@ for line in fileinput.input(inplace=1):
     scope = m.group(1)
     path = m.group(2) 
     if scope=='"':
-      log('relative include: "%s"'%path)
+      name = fileinput.filename()
+      if 'random123' not in name:
+        log('relative include in %s: "%s"'%(name,path))
+    elif path in fixed:
+      correct = fixed[path]
+      if correct is None:
+        continue # Delete the include
+      line = '#include <%s>\n'%correct
     elif path.lower().startswith('other/'):
       line = '#include <%s>\n'%os.path.normpath(fix(path))
 

@@ -11,12 +11,8 @@
 namespace geode {
 
 using std::ostream;
-// this cannot be GEODE_CORE_EXPORT, since it's defined as a template in headers
-template<class T> PyObject* to_python(const NdArray<T>& array);
-template<class T> struct FromPython<NdArray<T>>{ static NdArray<T> convert(PyObject* object);};
 
-template<class T>
-class NdArray {
+template<class T> class NdArray {
 public:
   typedef typename remove_const<T>::type Element;
   static const bool is_const = geode::is_const<T>::value;
@@ -42,7 +38,7 @@ public:
     assert(shape.product()==flat.size());
   }
 
-  NdArray(Array<const int> shape, T* data, PyObject* owner)
+  NdArray(Array<const int> shape, T* data, const shared_ptr<const Owner>& owner)
     : shape(shape), flat(shape.product(),data,owner) {
     assert(!shape.size() || shape.min()>=0);
   }
@@ -66,7 +62,7 @@ public:
 
   template<int m> NdArray(const Array<Vector<T,m>>& array)
     : shape(asarray(vec(array.size(),m)).copy())
-    , flat(m*array.size(),reinterpret_cast<T*>(array.data()),array.borrow_owner()) {}
+    , flat(m*array.size(),reinterpret_cast<T*>(array.data()),array.owner()) {}
 
   template<class TArray1> bool operator==(const TArray1& v) const {
     return shape == v.shape && flat == v.flat;
@@ -88,7 +84,7 @@ public:
     return shape.size();
   }
 
-  PyObject* owner() const {
+  const shared_ptr<const Owner>& owner() const {
     return flat.owner();
   }
 
@@ -105,7 +101,7 @@ public:
     GEODE_ASSERT(rank()==d);
     Vector<int,d> shape_;
     for (int i=0;i<d;i++) shape_[i] = shape[i];
-    return Array<T,d>(shape_,flat.data(),flat.borrow_owner());
+    return Array<T,d>(shape_,flat.data(),flat.owner());
   }
 
   template<class S> NdArray<S> as() const {

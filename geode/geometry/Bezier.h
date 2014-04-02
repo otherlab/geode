@@ -3,10 +3,10 @@
 #include <geode/vector/Vector.h>
 #include <geode/structure/Tuple.h>
 #include <geode/geometry/Box.h>
-#include <geode/python/Object.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Object.h>
+#include <geode/utility/Ref.h>
 #include <geode/math/constants.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #include <map>
 namespace geode {
 
@@ -19,19 +19,15 @@ using std::make_pair;
 // the max value might be less than the min value. This class is used instead to avoid accidentally calling functions like size that wouldn't
 // be meaningful in this case.
 class InvertibleBox {
- public:
+public:
   InvertibleBox(real _begin, real _end) : begin(_begin), end(_end) {}
   real begin;
   real end;
 };
-GEODE_CORE_EXPORT PyObject* to_python(const InvertibleBox& self);
-template<> struct FromPython<InvertibleBox>{GEODE_CORE_EXPORT static InvertibleBox convert(PyObject* object);};
-
 GEODE_CORE_EXPORT std::ostream& operator<<(std::ostream& os, const InvertibleBox& ib);
 
-
-template <int d> struct Knot : public Object{
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+template<int d> struct Knot : public Object {
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef Vector<real,d> TV;
   TV pt;
@@ -84,7 +80,7 @@ template<int d> struct Span{
 
 template<int d> class Bezier : public Object{
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 private:
   typedef real T;

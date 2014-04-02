@@ -3,9 +3,7 @@
 #include <geode/array/Array.h>
 #include <geode/array/NdArray.h>
 #include <geode/array/view.h>
-#include <geode/python/Class.h>
-#include <geode/python/numpy.h>
-#include <geode/python/Ptr.h>
+#include <geode/utility/Ptr.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/const_cast.h>
 #include <geode/utility/curry.h>
@@ -40,7 +38,7 @@ void PropBase::dump(int indent) const {
 // Since PropBase doesn't by itself inherit from Object due to multiple inheritance woes,
 // we need a special wrapper class to expose Prop<T> to python.
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 template<class S> static Ref<PropBase> make_prop_shape_helper(const string& n, NdArray<const S> a,
                                                               RawArray<const int> shape_=RawArray<const int>()) {
   const int rank = a.rank();
@@ -176,7 +174,7 @@ template<class T> void PropClamp<T,true>::maximize() {
 template struct PropClamp<int,true>;
 template struct PropClamp<double,true>;
 
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
 PyObject* to_python(const PropBase& prop) {
   return to_python(prop.base());
@@ -200,7 +198,9 @@ PropBase& prop_from_python(PyObject* object, const type_info& goal) {
     return self;
   throw TypeError(format("expected Prop<%s>, got Prop<%s>",goal.name(),self.type().name()));
 }
+#endif
 
+#if 0 // Value python support
 namespace {
 struct Unusable {
   bool operator==(Unusable) const { return true; }
@@ -209,20 +209,10 @@ struct Unusable {
 }
 
 // A Prop with a non-python convertible type
-static Ref<PropBase> unusable_prop_test() {
+Ref<PropBase> unusable_prop_test() {
   static_assert(has_to_python<int>::value,"");
   return new_<Prop<Unusable>>("unusable",Unusable());
 }
-
 #endif
 
-}
-using namespace geode;
-
-void wrap_prop() {
-#ifdef GEODE_PYTHON
-  GEODE_FUNCTION(make_prop)
-  GEODE_FUNCTION(make_prop_shape)
-  GEODE_FUNCTION(unusable_prop_test)
-#endif
 }

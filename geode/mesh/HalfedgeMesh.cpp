@@ -3,17 +3,13 @@
 #include <geode/mesh/HalfedgeMesh.h>
 #include <geode/utility/str.h>
 #include <geode/array/Nested.h>
-#include <geode/python/Class.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/Log.h>
-#include <geode/vector/convert.h>
 namespace geode {
 
 using Log::cout;
 using std::endl;
-
-GEODE_DEFINE_TYPE(HalfedgeMesh)
 
 HalfedgeMesh::HalfedgeMesh() {}
 
@@ -505,7 +501,7 @@ void HalfedgeMesh::dump_internals() const {
   cout << endl;
 }
 
-static int random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint128_t key) {
+int halfedge_random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint128_t key) {
   int flips = 0;
   if (mesh.n_halfedges()) {
     const auto random = new_<Random>(key);
@@ -520,7 +516,7 @@ static int random_edge_flips(HalfedgeMesh& mesh, const int attempts, const uint1
   return flips;
 }
 
-static void random_face_splits(HalfedgeMesh& mesh, const int splits, const uint128_t key) {
+void halfedge_random_face_splits(HalfedgeMesh& mesh, const int splits, const uint128_t key) {
   if (mesh.n_faces()) {
     const auto random = new_<Random>(key);
     for (int a=0;a<splits;a++) {
@@ -531,7 +527,7 @@ static void random_face_splits(HalfedgeMesh& mesh, const int splits, const uint1
   }
 }
 
-static void mesh_destruction_test(HalfedgeMesh& mesh, const uint128_t key) {
+void halfedge_mesh_destruction_test(HalfedgeMesh& mesh, const uint128_t key) {
   const auto random = new_<Random>(key);
   while (mesh.n_vertices()) {
     const int target = random->uniform<int>(0,1+2*mesh.n_faces());
@@ -543,34 +539,4 @@ static void mesh_destruction_test(HalfedgeMesh& mesh, const uint128_t key) {
   }
 }
 
-}
-using namespace geode;
-
-void wrap_halfedge_mesh() {
-  typedef HalfedgeMesh Self;
-  Class<Self>("HalfedgeMesh")
-    .GEODE_INIT()
-    .GEODE_METHOD(copy)
-    .GEODE_GET(n_vertices)
-    .GEODE_GET(n_halfedges)
-    .GEODE_GET(n_edges)
-    .GEODE_GET(n_faces)
-    .GEODE_GET(chi)
-    .GEODE_METHOD(elements)
-    .GEODE_METHOD(has_boundary)
-    .GEODE_METHOD(is_manifold)
-    .GEODE_METHOD(is_manifold_with_boundary)
-    .GEODE_METHOD(boundary_loops)
-    .GEODE_METHOD(add_vertex)
-    .GEODE_METHOD(add_vertices)
-    .GEODE_METHOD(add_face)
-    .GEODE_METHOD(add_faces)
-    .GEODE_METHOD(assert_consistent)
-    .GEODE_METHOD(dump_internals)
-    ;
-
-  // For testing purposes
-  GEODE_FUNCTION(random_edge_flips)
-  GEODE_FUNCTION(random_face_splits)
-  GEODE_FUNCTION(mesh_destruction_test)
 }

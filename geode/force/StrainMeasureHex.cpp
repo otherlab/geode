@@ -3,7 +3,6 @@
 //#####################################################################
 #include <geode/force/StrainMeasureHex.h>
 #include <geode/array/view.h>
-#include <geode/python/Class.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/Matrix.h>
 namespace geode {
@@ -13,7 +12,6 @@ using std::endl;
 
 typedef real T;
 typedef Vector<T,3> TV;
-GEODE_DEFINE_TYPE(StrainMeasureHex)
 
 static Vector<Matrix<T,8,3>,8> initialize_Hg() {
   Vector<Matrix<T,8,3>,8> H;
@@ -78,13 +76,4 @@ Matrix<T,3> StrainMeasureHex::gradient(RawArray<const TV> X,int hex,TV w) const 
   return gradient;
 }
 
-}
-using namespace geode;
-
-void wrap_strain_measure_hex() {
-  typedef StrainMeasureHex Self;
-  Class<Self>("StrainMeasureHex")
-    .GEODE_INIT(Array<const Vector<int,8>>,Array<const Vector<T,3>>)
-    .GEODE_FIELD(elements)
-    ;
 }

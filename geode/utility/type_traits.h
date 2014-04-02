@@ -3,6 +3,7 @@
 
 #include <geode/utility/config.h> // Must be included first
 #include <geode/utility/mpl.h>
+#include <cstdint>
 
 // If we're on clang, check for the right header directly.  If we're not,
 // any sufficient recently version of gcc should always have the right header.

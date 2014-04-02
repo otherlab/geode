@@ -3,7 +3,6 @@
 #include <geode/exact/Exact.h>
 #include <geode/array/alloca.h>
 #include <geode/array/Subarray.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 namespace geode {
 
@@ -77,7 +76,7 @@ template<int a> static inline Exact<a> random_exact(Random& random) {
   return x;
 }
 
-static void fast_exact_tests() {
+void fast_exact_tests() {
 #if !GEODE_FAST_EXACT
   cout << "No fast exact arithmetic" << endl;
 #else
@@ -133,9 +132,4 @@ Exact<8> inspect_four_limb_mul(const Exact<4> x, const Exact<4> y) { return x*y;
 
 #endif
 
-}
-using namespace geode;
-
-void wrap_exact_exact() {
-  GEODE_FUNCTION(fast_exact_tests)
 }

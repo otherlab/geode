@@ -4,9 +4,7 @@
 // such as an inverse map.  The stl versions don't handle this case; we do.
 #pragma once
 
-#include <geode/math/min.h>
-#include <geode/math/max.h>
-#include <geode/utility/range.h>
+#include <geode/array/Array.h>
 namespace geode {
 
 // Usage: struct Heap : public HeapBase<Heap> { ... };
@@ -70,5 +68,8 @@ private:
   bool first_(const int i, const int j) const { return static_cast<const Derived&>(*this).first(i,j); }
   void swap_(const int i, const int j) { return static_cast<Derived&>(*this).swap(i,j); }
 };
+
+// For testing purposes
+Array<int> heapsort_test(RawArray<const int> input);
 
 }

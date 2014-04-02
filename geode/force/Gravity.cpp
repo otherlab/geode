@@ -2,11 +2,9 @@
 // Class Gravity
 //#####################################################################
 #include <geode/force/Gravity.h>
-#include <geode/python/Class.h>
 namespace geode {
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(Gravity<Vector<real,3> >)
 
 template<class TV> Gravity<TV>::Gravity(Array<const T> mass)
   : mass(mass) {
@@ -59,15 +57,4 @@ template<class TV> void Gravity<TV>::add_elastic_gradient(SolidMatrix<TV>& matri
 
 template<class TV> void Gravity<TV>::add_damping_gradient(SolidMatrix<TV>& matrix) const {}
 
-}
-using namespace geode;
-
-void wrap_gravity() {
-  typedef real T;
-  typedef Vector<T,3> TV;
-  typedef Gravity<TV> Self;
-  Class<Self>("Gravity")
-    .GEODE_INIT(Array<const T>)
-    .GEODE_FIELD(gravity)
-    ;
 }

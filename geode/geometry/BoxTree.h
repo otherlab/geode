@@ -15,16 +15,15 @@
 
 #include <geode/array/Array.h>
 #include <geode/geometry/Box.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 #include <geode/vector/Vector.h>
 #include <geode/utility/range.h>
 namespace geode {
 
-template<class TV> class BoxTree : public Object
-{
+template<class TV> class BoxTree : public Object {
   typedef typename TV::Scalar T;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   const int leaf_size;

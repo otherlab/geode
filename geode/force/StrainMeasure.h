@@ -10,7 +10,7 @@ namespace geode {
 
 template<class T,int d> class StrainMeasure : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   const int nodes;

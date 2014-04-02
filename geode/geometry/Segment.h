@@ -98,8 +98,6 @@ public:
   }
 };
 
-template<class TV> GEODE_CORE_EXPORT PyObject* to_python(const Segment<TV>& seg);
-
 template<class TV> static inline Segment<TV> simplex(const TV& x0, const TV& x1) {
   return Segment<TV>(x0,x1);
 }
@@ -172,5 +170,8 @@ GEODE_CORE_EXPORT Tuple<real,Vector<real,3>,real> line_point_distance_and_normal
 // For exactly or nearly parallel lines, the distance will be between 0 and the actual distance+epsilon.
 // This is intentional and correct: the result will be backward stable since a slight change can produce any such value.
 GEODE_CORE_EXPORT Tuple<real,Vector<real,3>,Vector<real,2>> line_line_distance_and_normal(Segment<Vector<real,3>> s0, Segment<Vector<real,3>> s1);
+
+// For testing purposes
+template<int d> GEODE_CORE_EXPORT void segment_tests(const int steps);
 
 }

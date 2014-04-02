@@ -21,4 +21,7 @@ exact_split_soup(const TriangleSoup& faces, Array<const exact::Vec3> X, const in
 GEODE_CORE_EXPORT Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>>
 exact_split_soup(const TriangleSoup& faces, Array<const exact::Vec3> X, Array<const int> depth_weights, const int depth);
 
+// For testing purposes
+double mesh_signature(const TriangleSoup& mesh, RawArray<const Vec3> X);
+
 }

@@ -3,7 +3,6 @@
 #include <geode/random/permute.h>
 #include <geode/random/counter.h>
 #include <geode/math/integer_log.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 // For details, see
@@ -72,10 +71,4 @@ uint64_t random_unpermute(const uint64_t n, const uint128_t key, uint64_t x) {
   return x;
 }
 
-}
-using namespace geode;
-
-void wrap_permute() {
-  GEODE_FUNCTION(random_permute)
-  GEODE_FUNCTION(random_unpermute)
 }

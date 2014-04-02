@@ -2,7 +2,6 @@
 
 #include <geode/structure/Heap.h>
 #include <geode/array/Array.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 namespace {
@@ -29,7 +28,7 @@ struct HeapTest : public HeapBase<HeapTest> {
 };
 }
 
-static Array<int> heapsort_test(RawArray<const int> input) {
+Array<int> heapsort_test(RawArray<const int> input) {
   HeapTest H(input.copy());
   H.make();
   GEODE_ASSERT(H.is_heap());
@@ -41,9 +40,4 @@ static Array<int> heapsort_test(RawArray<const int> input) {
   return order;
 }
 
-}
-using namespace geode;
-
-void wrap_heap() {
-  GEODE_FUNCTION(heapsort_test)
 }

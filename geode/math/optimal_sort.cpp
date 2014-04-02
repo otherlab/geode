@@ -3,7 +3,6 @@
 #include <geode/math/optimal_sort.h>
 #include <geode/math/popcount.h>
 #include <geode/array/sort.h>
-#include <geode/python/wrap.h>
 #include <geode/random/Random.h>
 #include <geode/utility/format.h>
 namespace geode {
@@ -11,7 +10,7 @@ namespace geode {
 using std::cout;
 using std::endl;
 
-static void optimal_sort_test() {
+GEODE_CORE_EXPORT void optimal_sort_test() {
   // From Bundala and Zavodny (2013). Optimal Sorting Networks. http://arxiv.org/pdf/1310.6271v2.pdf.
   static const int optimal[16+2] = {0,0,1,3,3,5,5,6,6,7,7,8,8,9,9,9,9};
   #define L() levels++;
@@ -47,7 +46,7 @@ static void optimal_sort_test() {
 static int count;
 
 // Compare optimal sort against std::sort
-static void optimal_sort_stats() {
+GEODE_CORE_EXPORT void optimal_sort_stats() {
   Array<int> optimal(11);
   #define C(i,j) count++;
   #define STAT(n) \
@@ -80,10 +79,4 @@ static void optimal_sort_stats() {
   }
 }
 
-}
-using namespace geode;
-
-void wrap_optimal_sort() {
-  GEODE_FUNCTION(optimal_sort_test)
-  GEODE_FUNCTION(optimal_sort_stats)
 }

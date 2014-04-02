@@ -1,6 +1,4 @@
-//#####################################################################
-// Class Array<T>
-//#####################################################################
+// Array<T>: A shareable, one-dimensional array
 //
 // Array represents a flat, one-dimensional array.  The array buffer can be shared between multiple instances
 // without copying, since it is managed by an arbitrary PyObject.  By default, the owning PyObject is a Buffer,
@@ -13,15 +11,12 @@
 // Note that Array always owns its own data; owner is allowed to be null only for empty arrays.  RawArray
 // should be used in threaded code to avoid reference counting for thread safety and speed, and is returned
 // by slice and similar functions by default.
-//
-//#####################################################################
 #pragma once
 
 #include <geode/array/ArrayBase.h>
 #include <geode/array/RawArray.h>
-#include <geode/python/Buffer.h>
-#include <geode/python/exceptions.h>
-#include <geode/python/forward.h>
+#include <geode/utility/Buffer.h>
+#include <geode/utility/exceptions.h>
 #include <geode/utility/debug.h>
 #include <geode/utility/format.h>
 #include <geode/utility/config.h>
@@ -43,12 +38,6 @@ template<class TArray> struct IsShareableArray<const TArray>:public IsShareableA
 // Array<T> is shareable
 template<class T> struct IsShareableArray<Array<T>>:public mpl::true_{};
 
-// This cannot be GEODE_CORE_EXPORT, since it's defined as a template in headers
-template<class T,int d> PyObject* to_python(const Array<T,d>& array);
-template<class T,int d> struct FromPython<Array<T,d>>{static Array<T,d> convert(PyObject* object);};
-template<class T,int d> struct has_to_python<Array<T,d>> : public has_to_python<T> {};
-template<class T,int d> struct has_from_python<Array<T,d>> : public has_from_python<T> {};
-
 template<class T_>
 class Array<T_,1> : public ArrayBase<T_,Array<T_>> {
   typedef T_ T;
@@ -67,20 +56,20 @@ private:
   struct Unusable{};
 
   int m_;
-  int max_size_; // buffer size
+  int max_size_; // Buffer size
   T* data_;
-  PyObject* owner_; // python object that owns the buffer
+  shared_ptr<const Owner> owner_; // Object that owns the buffer
 public:
 
   Array()
-    : m_(0), max_size_(0), data_(0), owner_(0) {}
+    : m_(0), max_size_(0), data_(0) {}
 
   explicit Array(const int m_)
     : m_(m_), max_size_(m_) {
     assert(m_>=0);
-    Buffer* buffer = Buffer::new_<T>(m_);
+    const auto buffer = Buffer::new_<T>(m_);
     data_ = (T*)buffer->data;
-    owner_ = (PyObject*)buffer;
+    owner_ = buffer;
     if (IsScalarVectorSpace<T>::value)
       memset((void*)data_,0,m_*sizeof(T));
     else
@@ -91,9 +80,9 @@ public:
   explicit Array(const int m_, Uninit)
     : m_(m_), max_size_(m_) {
     assert(m_>=0);
-    auto buffer = Buffer::new_<T>(m_);
+    const auto buffer = Buffer::new_<T>(m_);
     data_ = (T*)buffer->data;
-    owner_ = (PyObject*)buffer;
+    owner_ = buffer;
   }
 
   explicit Array(const Vector<int,d> sizes)
@@ -105,24 +94,18 @@ public:
   Array(const Array& source)
     : Base(), m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
-    // Share a reference to the source buffer without copying it
-    GEODE_XINCREF(owner_);
   }
 
   Array(typename mpl::if_c<is_const,const Array<Element>&,Unusable>::type source)
     : m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
-    // Share a reference to the source buffer without copying it
-    GEODE_XINCREF(owner_);
   }
 
   template<class TA>
   explicit Array(const TA& source, typename enable_if<IsShareableArray<TA>,Unusable>::type unused=Unusable())
     : m_(source.size()), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
-    assert(owner_ || !data_);
-    // Share a reference to the source buffer without copying it
     STATIC_ASSERT_SAME(Element,typename TA::Element);
-    GEODE_XINCREF(owner_);
+    assert(owner_ || !data_);
   }
 
   explicit Array(const NdArray<T>& array) {
@@ -132,18 +115,13 @@ public:
     owner_ = array.owner();
   }
 
-  Array(const int m_, T* data, PyObject* owner)
+  Array(const int m_, T* data, const shared_ptr<const Owner>& owner)
     : m_(m_), max_size_(m_), data_(data), owner_(owner) {
     assert(owner_ || !data_);
-    GEODE_XINCREF(owner_);
   }
 
-  Array(const Vector<int,1> sizes, T* data, PyObject* owner)
+  Array(const Vector<int,1> sizes, T* data, const shared_ptr<const Owner>& owner)
     : Array(sizes.x,data,owner) {}
-
-  ~Array() {
-    GEODE_XDECREF(owner_);
-  }
 
   RawArray<T> raw() const { // Return a non-owning array for use in threaded code where reference counting is bad
     return RawArray<T>(m_,data_);
@@ -179,12 +157,7 @@ public:
     return data_;
   }
 
-  PyObject* owner() const {
-    GEODE_XINCREF(owner_);
-    return owner_;
-  }
-
-  PyObject* borrow_owner() const {
+  const shared_ptr<const Owner>& owner() const {
     return owner_;
   }
 
@@ -209,29 +182,19 @@ public:
   }
 
   Array& operator=(const Array& source) {
-    PyObject* owner_save = owner_;
-    // Share a reference to the source buffer without copying it
-    GEODE_XINCREF(source.owner_);
     owner_ = source.owner_;
     m_ = source.m_;
     max_size_ = source.max_size_;
     data_ = source.data_;
-    // Call decref last in case of side effects or this==&source
-    GEODE_XDECREF(owner_save);
     return *this;
   }
 
   template<class TArray> typename enable_if<IsShareableArray<TArray>,Array&>::type operator=(const TArray& source) {
     assert(source.owner_ || !source.data_);
-    PyObject* owner_save = owner_;
-    // Share a reference to the source buffer without copying it
-    GEODE_XINCREF(source.owner_);
     owner_ = source.owner_;
     m_ = source.m_;
     max_size_ = source.max_size_;
     data_ = source.data_;
-    // Call decref last in case of side effects or this==&source
-    GEODE_XDECREF(owner_save);
     return *this;
   }
 
@@ -261,14 +224,13 @@ public:
 private:
   void grow_buffer(const int max_size_new) {
     if (max_size_>=max_size_new) return;
-    Buffer* new_owner = Buffer::new_<T>(max_size_new);
+    const auto new_owner = Buffer::new_<T>(max_size_new);
     const int m_ = this->m_; // Teach compiler that m_ is constant
     for (int i=0;i<m_;i++)
       ((Element*)new_owner->data)[i] = data_[i];
-    GEODE_XDECREF(owner_);
     max_size_ = max_size_new;
     data_ = (T*)new_owner->data;
-    owner_ = (PyObject*)new_owner;
+    owner_ = new_owner;
   }
 public:
 
@@ -297,13 +259,12 @@ public:
     if (m_==m_new) return;
     int m_end = geode::min(m_,m_new);
     if (max_size_!=m_new) {
-      Buffer* new_owner = Buffer::new_<T>(m_new);
+      const auto new_owner = Buffer::new_<T>(m_new);
       for (int i=0;i<m_end;i++)
         new_owner->data[i] = data_[i];
-      GEODE_XDECREF(owner_);
       max_size_ = m_new;
       data_ = (T*)new_owner->data;
-      owner_ = (PyObject*)new_owner;
+      owner_ = new_owner;
     }
     if (m_new>m_end) {
       if (IsScalarVectorSpace<T>::value)
@@ -322,10 +283,9 @@ public:
       Buffer* new_owner = Buffer::new_<T>(m_new);
       for (int i=0;i<m_end;i++)
         new_owner->data[i] = data_[i];
-      GEODE_XDECREF(owner_);
       max_size_ = m_new;
       data_ = (T*)new_owner->data;
-      owner_ = (PyObject*)new_owner;
+      owner_ = new_owner;
     }
     m_ = m_new;
   }
@@ -545,6 +505,13 @@ template<class T,int d> static inline       Array<T>& flat(      Array<T,d>& A) 
 template<class T>       static inline       Array<T>& flat(      Array<T,1>& A) { return A; }
 template<class T,int d> static inline const Array<T>& flat(const Array<T,d>& A) { return A.flat; }
 template<class T>       static inline const Array<T>& flat(const Array<T,1>& A) { return A; }
+
+// For testing purposes
+GEODE_CORE_EXPORT Array<int> empty_array_test();
+GEODE_CORE_EXPORT Array<int> array_test(Array<int> array, int resize);
+GEODE_CORE_EXPORT Array<const int> const_array_test(Array<const int> array);
+GEODE_CORE_EXPORT void nested_test();
+GEODE_CORE_EXPORT Nested<const int> nested_convert_test(Nested<const int> a);
 
 }
 namespace std{

@@ -8,13 +8,12 @@
 #pragma once
 
 #include <geode/array/RawArray.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 namespace geode {
 
-template<class TV>
-class Force : public Object {
+template<class TV> class Force : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef typename TV::Scalar T;
   static const int d = TV::m;

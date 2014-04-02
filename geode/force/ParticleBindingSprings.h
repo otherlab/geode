@@ -20,7 +20,7 @@ struct ParticleBindingInfo {
 
 class ParticleBindingSprings : public Force<Vector<real,3>> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef real T;
   typedef Vector<T,3> TV;
   typedef Force<TV> Base;

@@ -5,15 +5,11 @@
 #include <geode/vector/SparseMatrix.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
-#include <geode/python/Class.h>
 namespace geode {
 
 typedef real T;
 using Log::cout;
 using std::endl;
-
-template<> GEODE_DEFINE_TYPE(LinearBendingElements<Vector<T,2>>)
-template<> GEODE_DEFINE_TYPE(LinearBendingElements<Vector<T,3>>)
 
 template<class TV> static Ref<SparseMatrix> matrix_helper(const SegmentSoup& mesh,Array<const TV> X) {
   GEODE_ASSERT(mesh.nodes()<=X.size());
@@ -192,20 +188,5 @@ template<class TV> void LinearBendingElements<TV>::add_damping_gradient(SolidMat
 
 template class LinearBendingElements<Vector<T,2>>;
 template class LinearBendingElements<Vector<T,3>>;
-}
-using namespace geode;
 
-template<int d> static void wrap_helper() {
-  typedef Vector<T,d> TV;
-  typedef LinearBendingElements<TV> Self;
-  Class<Self>(d==2?"LinearBendingElements2d":"LinearBendingElements3d")
-    .GEODE_INIT(const typename Self::Mesh&,Array<const TV>)
-    .GEODE_FIELD(stiffness)
-    .GEODE_FIELD(damping)
-    ;
-}
-
-void wrap_linear_bending() {
-  wrap_helper<2>();
-  wrap_helper<3>();
 }

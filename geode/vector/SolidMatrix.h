@@ -18,7 +18,7 @@
 #include <geode/array/Nested.h>
 #include <geode/array/Array2d.h>
 #include <geode/structure/Hashtable.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 #include <geode/vector/Matrix.h>
 #include <geode/vector/Vector.h>
 #include <geode/structure/Triple.h>
@@ -26,7 +26,7 @@ namespace geode {
 
 class SolidMatrixStructure : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
 
 private:
   template<class TV> friend class SolidMatrix;
@@ -53,7 +53,7 @@ public:
 
 template<class TV> class SolidMatrixBase : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef typename TV::Scalar T;
 
@@ -77,7 +77,7 @@ template<class TV> class SolidMatrix : public SolidMatrixBase<TV> {
   typedef Matrix<T,d> TMatrix;
   struct Unusable {};
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef SolidMatrixBase<TV> Base;
   using Base::size;
 
@@ -135,7 +135,7 @@ template<class TV> class SolidDiagonalMatrix : public SolidMatrixBase<TV> {
   enum {d=TV::m};
   typedef SymmetricMatrix<T,d> SM;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef SolidMatrixBase<TV> Base;
 
   const Array<SM> A;

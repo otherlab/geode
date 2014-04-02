@@ -22,7 +22,7 @@ class SimpleShell : public Force<Vector<real,3>> {
   typedef Vector<T,3> TV;
   typedef SymmetricMatrix<T,2> SM2;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
 
   const T density;

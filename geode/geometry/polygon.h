@@ -2,9 +2,9 @@
 
 #include <geode/structure/Tuple.h>
 #include <geode/array/Array.h>
+#include <geode/array/Nested.h>
 #include <geode/mesh/forward.h>
-#include <geode/python/Ptr.h>
-
+#include <geode/utility/Ptr.h>
 namespace geode {
 
 template<class TV, int d> class SimplexTree;
@@ -14,7 +14,7 @@ GEODE_CORE_EXPORT Nested<Vec2> polygons_from_index_list(RawArray<const Vec2> pos
 
 // Compute signed area of polygon(s)
 GEODE_CORE_EXPORT real polygon_area(RawArray<const Vec2> poly);
-GEODE_CORE_EXPORT real polygon_area(Nested<const Vec2> polys);
+GEODE_CORE_EXPORT real polygon_area(MaybeNested<const Vec2> polys);
 
 // Compute the length of an open polygon
 GEODE_CORE_EXPORT real open_polygon_length(RawArray<const Vec2> poly);
@@ -44,9 +44,6 @@ GEODE_CORE_EXPORT Ref<SegmentSoup> nested_array_offsets_to_segment_soup(RawArray
 template<class TV> static inline Tuple<Ref<SegmentSoup>,Array<TV>> to_segment_soup(const Nested<TV>& polys, bool open) {
   return tuple(nested_array_offsets_to_segment_soup(polys.offsets,open),polys.flat);
 }
-
-// Make it easy to overload python functions to work with one or many polygons
-GEODE_CORE_EXPORT Nested<const Vec2> polygons_from_python(PyObject* object);
 
 // Reorder some polygons into canonical form, assuming nondegeneracy.  Primarily for debugging and unit test purposes.
 GEODE_CORE_EXPORT Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys);

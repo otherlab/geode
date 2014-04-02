@@ -2,6 +2,7 @@
 // Class SimplexTree
 //#####################################################################
 #pragma once
+
 #include <geode/utility/config.h>
 #include <geode/geometry/forward.h>
 #include <geode/geometry/BoxTree.h>
@@ -14,7 +15,7 @@ namespace geode {
 template<class TV,int d_> class SimplexTree : public BoxTree<TV> {
   typedef typename TV::Scalar T;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef BoxTree<TV> Base;
   static const int d = d_;
   typedef typename mpl::if_c<d==1,SegmentSoup,TriangleSoup>::type Mesh;
@@ -45,5 +46,9 @@ public:
   // Returns closest_point,simplex,weights.  If nothing is found, simplex = -1 and closet_point = inf.
   GEODE_CORE_EXPORT Tuple<TV,int,Weights> closest_point(const TV point, const T max_distance=inf) const;
 };
+
+// For testing purposes
+template<class T,int d> GEODE_CORE_EXPORT int ray_traversal_test(const SimplexTree<Vector<T,d>,d-1>& tree,
+                                                                 const int rays, const T half_thickness);
 
 }

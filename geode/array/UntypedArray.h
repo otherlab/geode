@@ -9,10 +9,10 @@ namespace geode {
 
 class UntypedArray {
   // This part is ABI compatible with Array<T>
-  int m_;           // Size in elements
-  int max_size_;    // Buffer size in elements
-  char* data_;      // max_size_*t_size_ bytes
-  PyObject* owner_; // Python object that owns the buffer
+  int m_;                         // Size in elements
+  int max_size_;                  // Buffer size in elements
+  char* data_;                    // max_size_*t_size_ bytes
+  shared_ptr<const Owner> owner_; // Object that owns the buffer
 
   // Type information
   int t_size_;
@@ -25,15 +25,13 @@ public:
     : m_(0)
     , max_size_(0)
     , data_(0)
-    , owner_(0)
     , t_size_(t_size)
     , type_(type)
   {}
 
   // Create an empty untyped array
   template<class T> UntypedArray(Types<T>)
-    : UntypedArray(&typeid(T), sizeof(T))
-  {
+    : UntypedArray(&typeid(T), sizeof(T)) {
     static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
   }
 
@@ -52,7 +50,7 @@ public:
     static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
     const auto buffer = Buffer::new_<T>(m_);
     data_ = buffer->data;
-    owner_ = (PyObject*)buffer;
+    owner_ = buffer;
   }
 
   // Share ownership with an untyped array
@@ -64,8 +62,6 @@ public:
     , t_size_(o.t_size_)
     , type_(o.type_) {
     assert(owner_ || !data_);
-    // Share a reference to the source buffer without copying it
-    GEODE_XINCREF(owner_);
   }
 
   // Copy an UntypedArray.  Use via copy() below
@@ -76,7 +72,7 @@ public:
     , type_(o.type_) {
     const auto buffer = Buffer::new_<char>(m_*t_size_);
     data_ = buffer->data;
-    owner_ = (PyObject*)buffer;
+    owner_ = buffer;
     memcpy(data_,o.data_,m_*t_size_);
   }
 
@@ -94,22 +90,13 @@ public:
   }
 
   UntypedArray& operator=(const UntypedArray& o) {
-    PyObject* const owner_save = owner_;
-    // Share a reference to o without copying it
-    GEODE_XINCREF(o.owner_);
+    owner_ = o.owner_;
     m_ = o.m_;
     max_size_ = o.max_size_;
     data_ = o.data_;
-    owner_ = o.owner_;
     t_size_ = o.t_size_;
     type_ = o.type_;
-    // Call decref last in case of side effects or this==&o
-    GEODE_XDECREF(owner_save);
     return *this;
-  }
-
-  ~UntypedArray() {
-    GEODE_XDECREF(owner_);
   }
 
   // Copy all aspects of an UntypedArray, except give it a new size (and don't copy any data)
@@ -146,10 +133,9 @@ private:
     const auto new_owner = Buffer::new_<char>(max_size_new*t_size_);
     if (copy_existing)
       memcpy(new_owner->data,data_,t_size_*m_);
-    GEODE_XDECREF(owner_);
     max_size_ = max_size_new;
     data_ = new_owner->data;
-    owner_ = (PyObject*)new_owner;
+    owner_ = new_owner;
   }
 public:
 

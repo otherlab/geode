@@ -2,13 +2,11 @@
 // Class EtherDrag
 //#####################################################################
 #include <geode/force/EtherDrag.h>
-#include <geode/python/Class.h>
 #include <geode/vector/SolidMatrix.h>
 #include <geode/vector/SymmetricMatrix.h>
 namespace geode {
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(EtherDrag<Vector<real,3> >)
 
 template<class TV> EtherDrag<TV>::
 EtherDrag(Array<const T> mass, T drag)
@@ -79,14 +77,4 @@ strain_rate(RawArray<const TV> V) const {
   return 0;
 }
 
-}
-using namespace geode;
-
-void wrap_ether_drag() {
-  typedef real T;
-  typedef Vector<T,3> TV;
-  typedef EtherDrag<TV> Self;
-  Class<Self>("EtherDrag")
-    .GEODE_INIT(Array<const T>,T)
-    ;
 }

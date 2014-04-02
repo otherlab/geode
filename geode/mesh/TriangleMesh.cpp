@@ -1,5 +1,4 @@
 #include <geode/mesh/TriangleMesh.h>
-#include <geode/python/Class.h>
 
 namespace geode {
 

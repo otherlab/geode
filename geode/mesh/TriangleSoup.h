@@ -12,9 +12,9 @@
 #include <geode/array/Array.h>
 #include <geode/array/Nested.h>
 #include <geode/mesh/forward.h>
-#include <geode/python/Object.h>
-#include <geode/python/Ptr.h>
-#include <geode/python/Ref.h>
+#include <geode/utility/Object.h>
+#include <geode/utility/Ptr.h>
+#include <geode/utility/Ref.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
@@ -23,7 +23,7 @@ class TriangleSoup : public Object {
   typedef Vector<T,2> TV2;
   typedef Vector<T,3> TV3;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   static const int d = 2;
 
@@ -50,7 +50,7 @@ public:
     return node_count;
   }
 
-  // to match PolygonSoup
+  // To match PolygonSoup
   Ref<const TriangleSoup> triangle_mesh() const {
     return ref(*this);
   }

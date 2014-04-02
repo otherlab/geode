@@ -1,7 +1,7 @@
 // Released into the public-domain by Robert Bridson, 2009.
 // Modified by Tyson Brochu, 2011.
 
-#include "Expansion.h"
+#include <geode/exact/Expansion.h>
 #include <cassert>
 #include <cmath>
 #include <iostream>

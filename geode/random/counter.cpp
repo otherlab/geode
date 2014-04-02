@@ -4,7 +4,6 @@
 #define __STDC_CONSTANT_MACROS
 #include <geode/random/counter.h>
 #include <geode/random/random123/threefry.h>
-#include <geode/python/wrap.h>
 namespace geode {
 
 uint128_t threefry(uint128_t key, uint128_t ctr) {
@@ -18,9 +17,4 @@ uint128_t threefry(uint128_t key, uint128_t ctr) {
   return (uint128_t(r.v[1])<<64)|r.v[0];
 }
 
-}
-using namespace geode;
-
-void wrap_counter() {
-  GEODE_FUNCTION(threefry)
 }

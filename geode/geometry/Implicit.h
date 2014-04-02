@@ -4,19 +4,19 @@
 #pragma once
 
 #include <geode/geometry/Box.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 #include <geode/vector/Vector.h>
 namespace geode {
 
-template<class TV>
-class Implicit:public Object
-{
+template<class TV> class Implicit : public Object {
   typedef typename TV::Scalar T;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   static const int d = TV::m;
 
+protected:
   Implicit();
+public:
   virtual ~Implicit();
 
   virtual T phi(const TV& X) const=0;

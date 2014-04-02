@@ -94,4 +94,7 @@ template<class A0,class A1,class A2,class A3,class A4,class A5,class A6,class A7
 
 #endif
 
+// For testing purposes
+GEODE_CORE_EXPORT void format_test();
+
 }

@@ -6,50 +6,47 @@
 #include <geode/array/ProjectedArray.h>
 #include <geode/array/view.h>
 #include <geode/vector/Vector.h>
-#include <geode/python/Class.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/Log.h>
 #include <geode/utility/const_cast.h>
 namespace geode {
 
 typedef real T;
-GEODE_DEFINE_TYPE(SparseMatrix)
 
-static void
-sort_rows(SparseMatrix& self)
-{
-    // Use insertion sort since we expect rows to be small
-    for(int i=0;i<self.rows();i++){
-        RawArray<int> J = self.J[i].const_cast_();
-        RawArray<T> A = self.A[i];
-        for(int a=1;a<J.size();a++){
-            int ja=J[a];
-            T aa=A[a];
-            int b=a-1;
-            for(;b>=0 && J[b]>ja;b--){
-                J[b+1]=J[b];
-                A[b+1]=A[b];}
-            J[b+1]=ja;
-            A[b+1]=aa;}}
+static void sort_rows(SparseMatrix& self) {
+  // Use insertion sort since we expect rows to be small
+  for (int i=0;i<self.rows();i++) {
+    RawArray<int> J = self.J[i].const_cast_();
+    RawArray<T> A = self.A[i];
+    for (int a=1;a<J.size();a++) {
+      const int ja = J[a];
+      const T aa = A[a];
+      int b = a-1;
+      for (;b>=0 && J[b]>ja;b--) {
+        J[b+1] = J[b];
+        A[b+1] = A[b];
+      }
+      J[b+1] = ja;
+      A[b+1] = aa;
+    }
+  }
 }
 
-SparseMatrix::
-SparseMatrix(Nested<int> J,Array<T> A)
-    :J(J),A(Nested<T>::reshape_like(A,J)),cholesky(false)
-{
-    GEODE_ASSERT(!J.flat.size() || J.flat.min()>=0);
-    columns_ = J.size()?J.flat.max()+1:0;
+SparseMatrix::SparseMatrix(Nested<int> J, Array<T> A)
+  : J(J), A(Nested<T>::reshape_like(A,J)), cholesky(false) {
+  GEODE_ASSERT(!J.flat.size() || J.flat.min()>=0);
+  columns_ = J.size()?J.flat.max()+1:0;
 
-    // Run an insertion sort on each row
-    sort_rows(*this);
+  // Run an insertion sort on each row
+  sort_rows(*this);
 }
 
 SparseMatrix::SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vector<int,2>& sizes)
   : cholesky(false) {
   // Count rows and columns
-  int rows=0;
+  int rows = 0;
   for (auto& k : entries)
-    rows=max(rows,k.x[0]+1);
+    rows = max(rows,k.x[0]+1);
   if (sizes.x>=0) {
     GEODE_ASSERT(rows<=sizes.x);
     rows = sizes.x;
@@ -67,7 +64,7 @@ SparseMatrix::SparseMatrix(const Hashtable<Vector<int,2>,T>& entries, const Vect
   // Fill in entries
   for (auto& k : entries) {
     int i,j;k.x.get(i,j);
-    int index = J.offsets[i]+--lengths[i];
+    const int index = J.offsets[i]+--lengths[i];
     const_cast_(J.flat[index]) = j;
     A.flat[index] = k.y;
   }
@@ -256,22 +253,4 @@ operator<<(std::ostream& output,const SparseMatrix& A)
     return output;
 }
 
-}
-using namespace geode;
-
-void wrap_sparse_matrix()
-{
-    typedef SparseMatrix Self;
-    Class<Self>("SparseMatrix")
-        .GEODE_INIT(Nested<int>,Array<T>)
-        .GEODE_METHOD(rows)
-        .GEODE_METHOD(columns)
-        .GEODE_FIELD(J)
-        .GEODE_FIELD(A)
-        .GEODE_METHOD_2("multiply",multiply_python)
-        .GEODE_METHOD(solve_forward_substitution)
-        .GEODE_METHOD(solve_backward_substitution)
-        .GEODE_METHOD(incomplete_cholesky_factorization)
-        .GEODE_METHOD(gauss_seidel_solve)
-        ;
 }

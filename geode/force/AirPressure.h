@@ -31,12 +31,12 @@ namespace geode {
 
 class AirPressure : public Force<Vector<real,3>> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef real T;
   typedef Vector<T,3> TV;
   typedef Force<TV> Base;
 
-  const Ref<TriangleSoup> mesh;
+  const Ref<const TriangleSoup> mesh;
   const bool closed;
   const int side; // +1 for air on the inside of the mesh, -1 for air on the outside
   T temperature; // in Kelvin
@@ -51,7 +51,7 @@ private:
   Array<TV> normals; // area weighted times two
 
 protected:
-  AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,int side); // defaults to 1 atm
+  AirPressure(Ref<const TriangleSoup> mesh,Array<const TV> X,bool closed,int side); // defaults to 1 atm
 public:
   ~AirPressure();
 

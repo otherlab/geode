@@ -6,7 +6,6 @@
 #include <geode/array/alloca.h>
 #include <geode/array/Array2d.h>
 #include <geode/array/Array3d.h>
-#include <geode/python/wrap.h>
 #include <geode/random/counter.h>
 #include <geode/utility/move.h>
 #include <geode/vector/Matrix.h>
@@ -66,7 +65,7 @@ template<int m, class TL, class TS> inline Vector<ExactInt,m> packed_perturbatio
   return result;
 }
 
-// Our fixed deterministic pseudorandom perturbation sequence.  We limit ourselves to 32 bits so that we can pull four values out of a uint128_t.
+// Our fixed deterministic pseudorandom perturbation sequence. We limit ourselves to 32 bits so that we can pull four values out of a uint128_t.
 template<int m> inline Vector<ExactInt,m> perturbation(const int level, const int i) {
   static_assert(m<=4,"");
   const int bits = min(exact::log_bound+1,128/4);
@@ -435,7 +434,7 @@ template<class PerturbedT> bool perturbed_ratio(RawArray<Quantized> result, void
 // Everything that follows is for testing purposes
 
 // Safely expose snap_divs to python for testing purposes
-static Array<Quantized> snap_divs_test(RawArray<mp_limb_t,2> values, const bool take_sqrt) {
+Array<Quantized> snap_divs_test(RawArray<mp_limb_t,2> values, const bool take_sqrt) {
   GEODE_ASSERT(values.m && !values.back().contains_only(0));
   Array<Quantized> result(values.m-1);
   snap_divs(result,values,take_sqrt);
@@ -475,7 +474,7 @@ template<class In> static void nasty_predicate(RawArray<mp_limb_t> result, RawAr
   nasty_pow(result,edet(X[0],p1,p2));
 }
 
-template<int m> static void perturbed_sign_test() {
+template<int m> void perturbed_sign_test() {
   for (const int power : vec(1,2,3))
     for (const int index : range(20)) {
       if (verbose)
@@ -546,7 +545,7 @@ static void nasty_denominator(RawArray<mp_limb_t> result, RawArray<const Vector<
   mpz_set(result,d);
 }
 
-static void perturbed_ratio_test() {
+void perturbed_ratio_test() {
   typedef Vector<Quantized,2> EV;
   for (const int power : vec(1,2))
     for (const int index : range(20)) {
@@ -579,13 +578,4 @@ INSTANTIATE(3)
 
 template bool perturbed_sign(void(*const)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,2>>), const int,
                              RawArray<const exact::ImplicitlyPerturbedCenter>);
-}
-using namespace geode;
-
-void wrap_perturb() {
-  GEODE_FUNCTION_2(perturbed_sign_test_1,perturbed_sign_test<1>)
-  GEODE_FUNCTION_2(perturbed_sign_test_2,perturbed_sign_test<2>)
-  GEODE_FUNCTION_2(perturbed_sign_test_3,perturbed_sign_test<3>)
-  GEODE_FUNCTION(snap_divs_test)
-  GEODE_FUNCTION(perturbed_ratio_test)
 }

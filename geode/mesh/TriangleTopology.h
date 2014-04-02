@@ -10,6 +10,7 @@
 #include <geode/geometry/Triangle2d.h>
 #include <geode/geometry/Segment.h>
 #include <geode/array/UntypedArray.h>
+#include <geode/math/uint128.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/range.h>
@@ -72,7 +73,7 @@ class MutableTriangleTopology;
 
 class TriangleTopology : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
   typedef Vector<real,2> TV2;
   typedef Vector<real,3> TV3;
@@ -367,7 +368,7 @@ public:
 // topological operations using user-defined schemes.
 class MutableTriangleTopology: public TriangleTopology {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef TriangleTopology Base;
 
   typedef Base::FaceInfo FaceInfo;
@@ -446,6 +447,7 @@ public:
   FIELD_ACCESS_FUNCTIONS(halfedge, HalfedgeId, faces_.size()*3)
   #undef FIELD_ACCESS_FUNCTIONS
 
+#if 0 // Value python support
   #ifdef GEODE_PYTHON
     PyObject* add_vertex_field_py(PyObject* dtype, const int id);
     PyObject* add_face_field_py(PyObject* dtype, const int id);
@@ -463,6 +465,7 @@ public:
     PyObject* face_field_py(int id);
     PyObject* halfedge_field_py(int id);
   #endif
+#endif
 
   // set the src entry of an existing boundary halfedge
   inline void unsafe_set_src(HalfedgeId he, VertexId src);
@@ -903,5 +906,10 @@ inline Range<IdIter<HalfedgeId>> TriangleTopology::all_interior_halfedges() cons
 }
 
 GEODE_EXPORT void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& fields, const int id);
+
+// For testing purposes
+GEODE_CORE_EXPORT int corner_random_edge_flips(MutableTriangleTopology& mesh, const int attempts, const uint128_t key);
+GEODE_CORE_EXPORT void corner_random_face_splits(MutableTriangleTopology& mesh, const int splits, const uint128_t key);
+GEODE_CORE_EXPORT void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const uint128_t key);
 
 }

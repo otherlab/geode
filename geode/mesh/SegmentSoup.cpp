@@ -5,18 +5,14 @@
 #include <geode/array/Nested.h>
 #include <geode/array/sort.h>
 #include <geode/array/view.h>
-#include <geode/python/Class.h>
 #include <geode/utility/const_cast.h>
 #include <geode/utility/stl.h>
-#include <geode/vector/convert.h>
 #include <geode/vector/normalize.h>
 #include <vector>
 namespace geode {
 
 using std::vector;
 typedef Vector<real,2> TV2;
-
-GEODE_DEFINE_TYPE(SegmentSoup)
 
 #ifndef _WIN32
 const int SegmentSoup::d;
@@ -192,24 +188,4 @@ Array<const Vector<int,3>> SegmentSoup::bending_tuples() const {
   return bending_tuples_;
 }
 
-}
-using namespace geode;
-
-void wrap_segment_soup() {
-  typedef SegmentSoup Self;
-  Class<Self>("SegmentSoup")
-    .GEODE_INIT(Array<const Vector<int,2>>)
-    .GEODE_FIELD(d)
-    .GEODE_FIELD(vertices)
-    .GEODE_FIELD(elements)
-    .GEODE_METHOD(segment_soup)
-    .GEODE_METHOD(incident_elements)
-    .GEODE_METHOD(adjacent_elements)
-    .GEODE_METHOD(nodes)
-    .GEODE_METHOD(neighbors)
-    .GEODE_METHOD(element_normals)
-    .GEODE_METHOD(nonmanifold_nodes)
-    .GEODE_METHOD(polygons)
-    .GEODE_METHOD(bending_tuples)
-    ;
 }

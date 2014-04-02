@@ -1,9 +1,7 @@
-//#####################################################################
-// File interrupts
-//#####################################################################
+// Check for interrupts
+
 #include <geode/utility/interrupts.h>
-#include <geode/python/exceptions.h>
-#include <geode/python/config.h>
+#include <geode/utility/exceptions.h>
 #include <vector>
 namespace geode {
 
@@ -26,18 +24,5 @@ bool interrupted() {
 void add_interrupt_checker(void (*checker)()) {
   interrupt_checkers.push_back(checker);
 }
-
-#ifdef GEODE_PYTHON
-void check_python_interrupts() {
-  bool error = false;
-  #pragma omp critical
-  {
-    if (PyErr_Occurred() || PyErr_CheckSignals())
-      error = true;
-  }
-  if (error)
-    throw_python_error();
-}
-#endif
 
 }

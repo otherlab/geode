@@ -18,8 +18,6 @@
 #include <geode/math/mean.h>
 #include <geode/math/optimal_sort.h>
 #include <geode/mesh/TriangleSoup.h>
-#include <geode/python/function.h>
-#include <geode/python/wrap.h>
 #include <geode/random/permute.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
@@ -1439,7 +1437,7 @@ static TV signature(const TV p) {
 
 // Perform a surface integral of a vector field over a mesh using degree-7 quadrature.
 // Intended for testing purposes.  Quadrature rule from http://arxiv.org/pdf/1111.3827.pdf.
-static double mesh_signature(const TriangleSoup& mesh, RawArray<const TV> X) {
+double mesh_signature(const TriangleSoup& mesh, RawArray<const TV> X) {
   GEODE_ASSERT(mesh.nodes()<=X.size());
   const auto f = signature;
   double sum = 0;
@@ -1464,19 +1462,4 @@ static double mesh_signature(const TriangleSoup& mesh, RawArray<const TV> X) {
   return sum;
 }
 
-}
-using namespace geode;
-
-void wrap_mesh_csg() {
-  typedef Tuple<Ref<const TriangleSoup>,Array<Vec3>> (*split_fn)(const TriangleSoup&, Array<const Vector<double,3>>, const int);
-  GEODE_OVERLOADED_FUNCTION(split_fn,split_soup)
-  typedef Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>> (*exact_split_fn)(const TriangleSoup&, Array<const exact::Vec3>, const int);
-  GEODE_OVERLOADED_FUNCTION(exact_split_fn,exact_split_soup)
-
-  typedef Tuple<Ref<const TriangleSoup>,Array<Vec3>> (*split_depth_fn)(const TriangleSoup&, Array<const Vector<double,3>>, Array<const int>, const int);
-  GEODE_OVERLOADED_FUNCTION_2(split_depth_fn,"split_soup_with_weight",split_soup)
-  typedef Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>> (*exact_split_depth_fn)(const TriangleSoup&, Array<const exact::Vec3>, Array<const int>, const int);
-  GEODE_OVERLOADED_FUNCTION_2(exact_split_depth_fn,"exact_split_soup_with_weight",exact_split_soup)
-
-  GEODE_FUNCTION(mesh_signature)
 }

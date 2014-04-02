@@ -1,10 +1,8 @@
 #include <geode/value/Compute.h>
-#include <geode/python/from_python.h>
-#include <geode/python/Ptr.h>
-#include <geode/python/Class.h>
+#include <geode/utility/Ptr.h>
 #include <geode/utility/format.h>
 namespace geode {
-#ifdef GEODE_PYTHON
+#if 0 // Value python support
 
 static PyObject* empty_tuple = 0;
 
@@ -72,23 +70,5 @@ static Ref<ValueBase> cache_named_inner(PyObject* f, string const &name) {
   return new_<CachePython>(f, name);
 }
 
-#endif
-}
-using namespace geode;
-
-void wrap_compute() {
-#ifdef GEODE_PYTHON
-  empty_tuple = PyTuple_New(0);
-  GEODE_ASSERT(empty_tuple);
-
-  typedef CachePython Self;
-  Class<Self>("Cache")
-    .GEODE_FIELD(f)
-    .GEODE_GET(name)
-    .repr()
-    ;
-
-  GEODE_FUNCTION_2(cache,cache_py)
-  GEODE_FUNCTION_2(cache_named_inner,cache_named_inner)
 #endif
 }

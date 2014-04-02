@@ -2,7 +2,6 @@
 // Class RotatedLinear
 //#####################################################################
 #include <geode/force/IsotropicConstitutiveModel.h>
-#include <geode/python/Class.h>
 #include <geode/vector/DiagonalMatrix.h>
 #include <geode/vector/Matrix.h>
 #include <geode/vector/SymmetricMatrix.h>
@@ -11,7 +10,7 @@ namespace geode {
 template<class T,int d> class RotatedLinear : public IsotropicConstitutiveModel<T,d> {
   typedef Vector<T,d> TV;
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef IsotropicConstitutiveModel<T,d> Base;
   using Base::lambda;using Base::mu;using Base::alpha;using Base::beta;
 
@@ -70,20 +69,5 @@ public:
 };
 
 typedef real T;
-template<> GEODE_DEFINE_TYPE(RotatedLinear<T,2>)
-template<> GEODE_DEFINE_TYPE(RotatedLinear<T,3>)
 
-}
-using namespace geode;
-
-void wrap_rotated_linear() {
-  {typedef RotatedLinear<T,2> Self;
-  Class<Self>("RotatedLinear2d")
-    .GEODE_INIT(NdArray<const T>,NdArray<const T>,NdArray<const T>)
-    ;}
-
-  {typedef RotatedLinear<T,3> Self;
-  Class<Self>("RotatedLinear3d")
-    .GEODE_INIT(NdArray<const T>,NdArray<const T>,NdArray<const T>)
-    ;}
 }

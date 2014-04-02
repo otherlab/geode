@@ -23,7 +23,7 @@ template<class TV> struct SpringInfo {
 
 template<class TV> class Springs:public Force<TV> {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Force<TV> Base;
   typedef real T;
   enum {m=TV::m};

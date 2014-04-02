@@ -6,13 +6,13 @@
 #include <geode/array/NdArray.h>
 #include <geode/force/forward.h>
 #include <geode/force/DiagonalizedIsotropicStressDerivative.h>
-#include <geode/python/Object.h>
+#include <geode/utility/Object.h>
 #include <geode/utility/debug.h>
 namespace geode {
 
 template<class T,int d> class ConstitutiveModel : public Object {
 public:
-  GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+  GEODE_NEW_FRIEND
   typedef Object Base;
 
   NdArray<T> lambda,mu; // constant or spatially varying Lame coefficients (used by almost all derived models)

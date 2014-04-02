@@ -1,7 +1,7 @@
 #pragma once
 
 #include <geode/openmesh/TriMesh.h>
-#include <geode/utility/tr1.h>
+#include <geode/utility/unordered.h>
 #ifdef GEODE_OPENMESH
 namespace geode {
 

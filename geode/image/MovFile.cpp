@@ -5,7 +5,7 @@
 // we need config.h to not undefine far, which is used in jpeglib.h
 #define LEAVE_WINDOWS_DEFINES_ALONE
 #endif
-#include <geode/python/config.h>
+#include <geode/utility/config.h>
 #ifdef GEODE_LIBJPEG
 extern "C"{
 #ifdef _WIN32
@@ -17,7 +17,6 @@ extern "C"{
 #undef HAVE_PROTOTYPES
 #undef HAVE_STDLIB_H
 #endif
-#include <geode/python/Class.h>
 #include <geode/image/Image.h>
 #include <geode/image/MovFile.h>
 #include <geode/utility/endian.h>
@@ -29,8 +28,6 @@ extern "C"{
 #include <stdio.h>
 namespace geode {
 
-GEODE_DEFINE_TYPE(MovWriter)
-
 typedef unsigned int uint;
 typedef unsigned short ushort;
 
@@ -39,106 +36,94 @@ template<class T> static void write(FILE* fp, const T num) {
   fwrite(&flip,sizeof(T),1,fp);
 }
 
-static void write_identity_matrix(FILE* fp)
-{
-    write(fp,(uint)0x10000);write(fp,(uint)0x00000);write(fp,(uint)0); // 16.16 fixed pt
-    write(fp,(uint)0x00000);write(fp,(uint)0x10000);write(fp,(uint)0); // 16.16 fixed pt
-    write(fp,(uint)0x00000);write(fp,(uint)0x00000);write(fp,(uint)0x40000000); // 2.30 fixed pt
+static void write_identity_matrix(FILE* fp) {
+  write(fp,(uint)0x10000);write(fp,(uint)0x00000);write(fp,(uint)0); // 16.16 fixed pt
+  write(fp,(uint)0x00000);write(fp,(uint)0x10000);write(fp,(uint)0); // 16.16 fixed pt
+  write(fp,(uint)0x00000);write(fp,(uint)0x00000);write(fp,(uint)0x40000000); // 2.30 fixed pt
 }
 
-class QtAtom
-{
-    FILE *fp;
-    long start_offset;
-    //const char* type;
+class QtAtom {
+  FILE *fp;
+  long start_offset;
 public:
-    QtAtom(FILE* fp,const char* type)
-        :fp(fp)//,type(type)
-    {
-        start_offset=ftell(fp);
-        uint dummy;
-        fwrite(&dummy,4,1,fp);
-        fputs(type,fp);
-    }
+  QtAtom(FILE* fp,const char* type)
+    : fp(fp) {
+    start_offset=ftell(fp);
+    uint dummy;
+    fwrite(&dummy,4,1,fp);
+    fputs(type,fp);
+  }
 
-    ~QtAtom()
-    {
-        const uint atom_size = to_big_endian(uint(ftell(fp)-start_offset));
-        fseek(fp,start_offset,SEEK_SET);
-        fwrite(&atom_size,4,1,fp);
-        fseek(fp,0,SEEK_END);
-    }
+  ~QtAtom() {
+    const uint atom_size = to_big_endian(uint(ftell(fp)-start_offset));
+    fseek(fp,start_offset,SEEK_SET);
+    fwrite(&atom_size,4,1,fp);
+    fseek(fp,0,SEEK_END);
+  }
 
-    long offset()
-    {return start_offset;}
+  long offset() {
+    return start_offset;
+  }
 };
 
-MovWriter::
-MovWriter(const std::string& filename,const int frames_per_second)
-    :frames_per_second(frames_per_second),width(0),height(0)
-{
-    GEODE_ASSERT(enabled());
-    fp=fopen(filename.c_str(),"wb");
-    if(!fp) GEODE_FATAL_ERROR(format("Failed to open %s for writing",filename));
-    current_mov=new QtAtom(fp,"mdat");
+MovWriter::MovWriter(const std::string& filename,const int frames_per_second)
+  : frames_per_second(frames_per_second),width(0),height(0) {
+  GEODE_ASSERT(enabled());
+  fp=fopen(filename.c_str(),"wb");
+  if(!fp) GEODE_FATAL_ERROR(format("Failed to open %s for writing",filename));
+  current_mov=new QtAtom(fp,"mdat");
 }
 
-MovWriter::
-~MovWriter()
-{
-    delete current_mov;
-    write_footer();
-    fclose(fp);
+MovWriter::~MovWriter() {
+  delete current_mov;
+  write_footer();
+  fclose(fp);
 }
 
-void MovWriter::
-add_frame(const Array<Vector<T,3>,2>& image)
-{
+void MovWriter::add_frame(const Array<Vector<T,3>,2>& image) {
 #ifdef GEODE_LIBJPEG
 /*
-    static int frame=0;
-    Image<T>::write(format("capture.%02d.jpg",frame),image);
-    frame++;
+  static int frame=0;
+  Image<T>::write(format("capture.%02d.jpg",frame),image);
+  frame++;
 */
 
-    struct jpeg_compress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-    if(width==0 && height==0){width=image.m;height=image.n;}
-    if(width!=image.m || height!=image.n) throw RuntimeError("Frame does not have same size as previous frame(s)");
+  struct jpeg_compress_struct cinfo;
+  struct jpeg_error_mgr jerr;
+  if(width==0 && height==0){width=image.m;height=image.n;}
+  if(width!=image.m || height!=image.n) throw RuntimeError("Frame does not have same size as previous frame(s)");
 
-    cinfo.err=jpeg_std_error(&jerr);
-    jpeg_create_compress(&cinfo);
-    long frame_begin=ftell(fp);
-    jpeg_stdio_dest(&cinfo,fp);
-    cinfo.image_width=image.m;
-    cinfo.image_height=image.n;
-    cinfo.input_components=3;
-    cinfo.in_color_space=JCS_RGB; // colorspace of input image
-    jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo,95,TRUE); // limit to baseline-Jpeg values
-    jpeg_start_compress(&cinfo,TRUE);
+  cinfo.err=jpeg_std_error(&jerr);
+  jpeg_create_compress(&cinfo);
+  long frame_begin=ftell(fp);
+  jpeg_stdio_dest(&cinfo,fp);
+  cinfo.image_width=image.m;
+  cinfo.image_height=image.n;
+  cinfo.input_components=3;
+  cinfo.in_color_space=JCS_RGB; // colorspace of input image
+  jpeg_set_defaults(&cinfo);
+  jpeg_set_quality(&cinfo,95,TRUE); // limit to baseline-Jpeg values
+  jpeg_start_compress(&cinfo,TRUE);
 
-    int row_stride=cinfo.image_width*3; // JSAMPLEs per row in image_buffer
-    JSAMPLE* row=new JSAMPLE[row_stride];
-    JSAMPROW row_pointer[]={row};
-    while(cinfo.next_scanline < cinfo.image_height){
-        int index=0;
-        for(int i=0;i<image.m;i++){ // copy row
-            Vector<unsigned char,3> pixel=Image<T>::to_byte_color(image(i,image.n-cinfo.next_scanline-1));
-            row[index++]=pixel.x;row[index++]=pixel.y;row[index++]=pixel.z;}
-        jpeg_write_scanlines(&cinfo,row_pointer,1);}
-    delete[] row;
-    jpeg_finish_compress(&cinfo);
-    jpeg_destroy_compress(&cinfo);
-    long frame_end=ftell(fp);
-    sample_lengths.append(int(frame_end-frame_begin));
-    sample_offsets.append(int(frame_begin-current_mov->offset()));
+  int row_stride=cinfo.image_width*3; // JSAMPLEs per row in image_buffer
+  JSAMPLE* row=new JSAMPLE[row_stride];
+  JSAMPROW row_pointer[]={row};
+  while(cinfo.next_scanline < cinfo.image_height){
+    int index=0;
+    for(int i=0;i<image.m;i++){ // copy row
+      Vector<unsigned char,3> pixel=Image<T>::to_byte_color(image(i,image.n-cinfo.next_scanline-1));
+      row[index++]=pixel.x;row[index++]=pixel.y;row[index++]=pixel.z;}
+    jpeg_write_scanlines(&cinfo,row_pointer,1);}
+  delete[] row;
+  jpeg_finish_compress(&cinfo);
+  jpeg_destroy_compress(&cinfo);
+  long frame_end=ftell(fp);
+  sample_lengths.append(int(frame_end-frame_begin));
+  sample_offsets.append(int(frame_begin-current_mov->offset()));
 #endif
 }
 
-void MovWriter::
-write_footer()
-{
+void MovWriter::write_footer() {
     const int frames=sample_offsets.size();
     GEODE_ASSERT(sample_offsets.size()==sample_lengths.size());
     QtAtom a(fp,"moov");
@@ -268,26 +253,12 @@ write_footer()
                             for(int i=0;i<sample_offsets.size();i++) write(fp,(uint)sample_offsets(i));}}}}} // offset from begin of file
 }
 
-bool MovWriter::
-enabled()
-{
+bool MovWriter::enabled() {
 #ifdef GEODE_LIBJPEG
-    return true;
+  return true;
 #else
-    return false;
+  return false;
 #endif
 }
-}
 
-using namespace geode;
-
-void wrap_mov()
-{
-    typedef MovWriter Self;
-    Class<Self>("MovWriter")
-        .GEODE_INIT(const string&,int)
-        .GEODE_METHOD(add_frame)
-        .GEODE_METHOD(write_footer)
-        .GEODE_METHOD(enabled)
-        ;
 }
