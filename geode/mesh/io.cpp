@@ -11,6 +11,7 @@
 #include <boost/detail/endian.hpp>
 #include <boost/function.hpp>
 #include <boost/integer.hpp>
+#include <errno.h>
 namespace geode {
 
 typedef real T;
