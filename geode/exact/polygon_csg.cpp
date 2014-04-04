@@ -28,7 +28,7 @@ static Array<Box<EV>> segment_boxes(RawArray<const int> next, RawArray<const EV>
   return boxes;
 }
 
-// Does x1 + t*d head outwards from the local polygon portion x0,x1,x2?
+// Does x1 + t*dir head outwards from the local polygon portion x0,x1,x2?
 // A version of local_outwards specialized to dir = (1,0): does x1 + t*(1,0) head outwards from x0,x1,x2?
 static inline bool local_outwards_x_axis(const Point2 x0, const Point2 x1, const Point2 x2) {
   // If x1 is convex,  we're outwards if dir is to the right of *either* segment.
