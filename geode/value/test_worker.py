@@ -23,7 +23,10 @@ def remote(conn):
   done.set(True)
 
 def test_worker():
-  for command in None,[__file__,'--worker']:
+  command_file = __file__
+  if command_file.endswith('.pyc'):
+    command_file=command_file[:-3]+'py'
+  for command in None,[command_file,'--worker']:
     props = PropManager()
     x = props.add('x',3)
     props.add('y',5)
