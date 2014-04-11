@@ -100,10 +100,11 @@ def test_distributions():
     print '%s: chi^2 = %g, p = %g'%(name,chi2,p)
     assert p>.4
     # Check independence of adjacent entries
-    observed = histogram2d(X[:-1],X[1:],cuts)[0]
-    chi2,p,_,_ = scipy.stats.chi2_contingency(observed)
-    print '%s independence: chi^2 = %g, p = %g'%(name,chi2,p)
-    assert p>.4
+    if 'chi2_contingency' in dir(scipy.stats):
+      observed = histogram2d(X[:-1],X[1:],cuts)[0]
+      chi2,p,_,_ = scipy.stats.chi2_contingency(observed)
+      print '%s independence: chi^2 = %g, p = %g'%(name,chi2,p)
+      assert p>.4
   # Test normal
   test('normal',scipy.stats.norm,arange(-3,3.001,.03),random.normal(n))
   # Test uniform
