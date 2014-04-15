@@ -1,6 +1,6 @@
 //#####################################################################
 // Class Triangle<Vector<T,3> >
-//##################################################################### 
+//#####################################################################
 #include <geode/geometry/Triangle3d.h>
 #include <geode/array/Array.h>
 #include <geode/math/constants.h>
@@ -23,6 +23,84 @@ change_size(const T delta)
     T scale=1+delta*(T).5*perimeter/area_;
     Vector<T,3> incenter=point_from_barycentric_coordinates(edge_lengths/perimeter);
     x0=incenter+(x0-incenter)*scale;x1=incenter+(x1-incenter)*scale;x2=incenter+(x2-incenter)*scale;
+}
+
+template<class T> bool Triangle<Vector<T,3>>::
+intersection(Triangle<Vector<T,3>> const &t, Segment<Vector<T,3>> &result) const {
+  // compute phi values for our own triangle in t's plane
+  double d0 = t.phi(x0);
+  double d1 = t.phi(x1);
+  double d2 = t.phi(x2);
+  int sd0 = (int)sign(d0);
+  int sd1 = (int)sign(d1);
+  int sd2 = (int)sign(d2);
+
+  // all our points on one side of t, no intersection
+  if (sd0 == sd1 && sd1 == sd2)
+    return false;
+
+  // compute phi values for t in our plane
+  double td0 = phi(t.x0);
+  double td1 = phi(t.x1);
+  double td2 = phi(t.x2);
+  int tsd0 = (int)sign(td0);
+  int tsd1 = (int)sign(td1);
+  int tsd2 = (int)sign(td2);
+
+  // all t's points on one side, no intersection
+  if (tsd0 == tsd1 && tsd1 == tsd2)
+    return false;
+
+  // define a ray through the plane/plane intersection
+  Ray<Vector<T,3>> L;
+  if (!this.intersection(t, L)) {
+    return false;
+  }
+
+  // compute ray parameters for our own triangle intesection
+  real tx0 = L.parameter(x0);
+  real tx1 = L.parameter(x1);
+  real tx2 = L.parameter(x2);
+  real t0, t1;
+  if (sd0 == sd1) {
+    t0 = lerp(0, d2, d0, tx2, tx0);
+    t1 = lerp(0, d2, d1, tx2, tx1);
+  } else if (sd1 == sd2) {
+    t0 = lerp(0, d0, d1, tx0, tx1);
+    t1 = lerp(0, d0, d2, tx0, tx2);
+  } else {
+    t0 = lerp(0, d1, d0, tx1, tx0);
+    t1 = lerp(0, d1, d2, tx1, tx2);
+  }
+
+  // compute and intersect with ray parameters for t
+  real ttx0 = L.parameter(t.x0);
+  real ttx1 = L.parameter(t.x1);
+  real ttx2 = L.parameter(t.x2);
+  real tt0, tt1;
+  if (tsd0 == tsd1) {
+    tt0 = lerp(0, td2, td0, ttx2, ttx0);
+    tt1 = lerp(0, td2, td1, ttx2, ttx1);
+  } else if (tsd1 == tsd2) {
+    tt0 = lerp(0, td0, td1, ttx0, ttx1);
+    tt1 = lerp(0, td0, td2, ttx0, ttx2);
+  } else {
+    tt0 = lerp(0, td1, td0, ttx1, ttx0);
+    tt1 = lerp(0, td1, td2, ttx1, ttx2);
+  }
+
+  // check if intersection non-empty
+  Box<real> b(min(t0,t1), max(t0,t1)), tb(min(tt0, tt1), max(tt0, tt1));
+  auto r = Box<real>::intersect(b, tb);
+
+  if (r.empty())
+    return false;
+
+  // fill result
+  result.x0 = L.point(r.min);
+  result.x1 = L.point(r.max);
+
+  return true;
 }
 
 template<class T> bool Triangle<Vector<T,3>>::
@@ -62,7 +140,7 @@ intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
     Vector<T,3> plane_point(ray.point(ray.t_max));
     Plane<T> edge_plane_12(cross(x1-x0,n).normalized(),x0),edge_plane_23(cross(x2-x1,n).normalized(),x1),
                      edge_plane_31(cross(x0-x2,n).normalized(),x2);
-    if(!edge_plane_12.outside(plane_point,thickness) && !edge_plane_23.outside(plane_point,thickness) && !edge_plane_31.outside(plane_point,thickness))return true; // intersects face of triangle wedge 
+    if(!edge_plane_12.outside(plane_point,thickness) && !edge_plane_23.outside(plane_point,thickness) && !edge_plane_31.outside(plane_point,thickness))return true; // intersects face of triangle wedge
     else ray.restore_intersection_information(ray_temp);
 
     // check for intersection with the sides of the wedge
@@ -90,12 +168,12 @@ lazy_intersection(Ray<Vector<T,3> >& ray) const
 {
     T save_t_max=ray.t_max;int save_aggregate_id=ray.aggregate_id;
     if(!Plane<T>::lazy_intersection(ray)) return false; // otherwise intersects the plane
-    if(lazy_planar_point_inside_triangle(ray.point(ray.t_max))) return true; // intersects the face of the triangle 
+    if(lazy_planar_point_inside_triangle(ray.point(ray.t_max))) return true; // intersects the face of the triangle
     else{ray.t_max=save_t_max;ray.aggregate_id=save_aggregate_id;return false;} // reset ray
 }
 
 template<class T> bool Triangle<Vector<T,3> >::
-closest_non_intersecting_point(Ray<Vector<T,3> >& ray,const T thickness_over_2) const 
+closest_non_intersecting_point(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
 {
     Ray<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
     if(!intersection(ray,thickness_over_2)) return false;
@@ -145,13 +223,13 @@ lazy_planar_point_inside_triangle(const Vector<T,3>& point) const
 
 template<class T> T Triangle<Vector<T,3> >::
 minimum_edge_length() const
-{      
+{
     return min((x1-x0).magnitude(),(x2-x1).magnitude(),(x0-x2).magnitude());
 }
 
 template<class T> T Triangle<Vector<T,3> >::
 maximum_edge_length() const
-{      
+{
     return max((x1-x0).magnitude(),(x2-x1).magnitude(),(x0-x2).magnitude());
 }
 
@@ -187,7 +265,7 @@ closest_point(const Vector<T,3>& location) const
     return tuple(closest,weights);
 }
 
-template<class T> T Triangle<Vector<T,3>>::distance(const Vector<T,3>& location) const {   
+template<class T> T Triangle<Vector<T,3>>::distance(const Vector<T,3>& location) const {
     return magnitude(location-closest_point(location).x);
 }
 
