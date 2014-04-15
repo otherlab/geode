@@ -90,6 +90,7 @@ public:
     static std::string name()
     {return "Plane<T>";}
 
+    bool intersection(Plane<T> const &, Ray<Vector<T,3> > &ray) const;
     bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2,const T distance,const T rate_of_approach) const;
     bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const;
     template<class TThickness> bool intersection(const Box<TV>& box,const TThickness thickness_over_2=Zero()) const;
