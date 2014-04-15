@@ -298,4 +298,6 @@ template<class T> static inline T operator*(const T& x, const SmallShift s) {
 RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x);
 RawArray<const mp_limb_t> trim(RawArray<const mp_limb_t> x);
 
+template<int d> Exact<d> abs(Exact<d> e) { return is_negative(e) ? -e : e; }
+
 }
