@@ -71,6 +71,20 @@ public:
     memcpy(data_,o.data_,m_*t_size_);
   }
 
+  // Share ownership with an input field
+  template<class T, class Id>
+  UntypedArray(const Field<T,Id> &f)
+    : m_(f.size())
+    , max_size_(f.flat.max_size_)
+    , data_(f.flat.data())
+    , owner_(f.flat.owner())
+    , t_size_(sizeof(T))
+    , type_(&typeid(T))
+  {
+    static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
+    assert(owner_ || !data_);
+  }
+
   UntypedArray& operator=(const UntypedArray& o) {
     PyObject* const owner_save = owner_;
     // Share a reference to o without copying it
@@ -130,7 +144,7 @@ public:
   }
 
   void resize(const int m_new, const bool initialize_new=true, const bool copy_existing=true) {
-    preallocate(m_new,copy_existing);  
+    preallocate(m_new,copy_existing);
     if (initialize_new && m_new>m_)
       memset(data_+m_*t_size_,0,(m_new-m_)*t_size_);
     m_ = m_new;
