@@ -28,17 +28,11 @@ static Array<Box<EV>> segment_boxes(RawArray<const int> next, RawArray<const EV>
   return boxes;
 }
 
-// Does x1 + t*d head outwards from the local polygon portion x0,x1,x2?
-static inline bool local_outwards(const Point2 x0, const Point2 x1, const Point2 x2, const Point2 dir) {
-  // If x1 is convex,  we're outwards if dir is to the right of *either* segment.
-  // If x1 is concave, we're outwards if dir is to the right of *both* segments.
-  const bool convex = triangle_oriented(x0,x1,x2);
-  return !convex ^ (   (convex ^ segment_to_direction_oriented(x0,x1,dir))
-                    || (convex ^ segment_to_direction_oriented(x1,x2,dir)));
-}
-
+// Does x1 + t*dir head outwards from the local polygon portion x0,x1,x2?
 // A version of local_outwards specialized to dir = (1,0): does x1 + t*(1,0) head outwards from x0,x1,x2?
 static inline bool local_outwards_x_axis(const Point2 x0, const Point2 x1, const Point2 x2) {
+  // If x1 is convex,  we're outwards if dir is to the right of *either* segment.
+  // If x1 is concave, we're outwards if dir is to the right of *both* segments.
   const bool out0 = upwards(x0,x1),
              out1 = upwards(x1,x2);
   return out0==out1 ? out0 : triangle_oriented(x0,x1,x2);
