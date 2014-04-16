@@ -967,8 +967,8 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
         if(!cull[i])
           result.append_to_back(out[i]);
       }
-      // Quantization can introduce self intersections so we cull any miniscule slivers
-      // This is not an ideal solution, but I don't know a better alternative
+      // Quantization can introduce tiny self intersecting loops that remain after splitting so we attempt to cull any miniscule slivers.
+      // This doesn't feel like a robust solution, but I don't know a better alternative. Future versions of this function might leave slivers for caller to handle.
       if(result.back().size() <= 3) {
         // If the entire arc is thin, area will be less than thickness * perimeter / 2
         // We can use diagonal of bounding box as an estimate for perimeter / 2
