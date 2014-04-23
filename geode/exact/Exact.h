@@ -1,6 +1,7 @@
 // Multiprecision integer arithmetic for exact geometric predicates
 #pragma once
 
+#include <geode/config.h>
 #ifndef GEODE_GMP
 #error geode/exact requires gmp support: recompile with use_gmp=1 or check config.log for gmp errors
 #endif

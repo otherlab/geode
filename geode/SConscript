@@ -1,12 +1,28 @@
-Import('env library')
+Import('env external library config_header windows')
 import re
 
-openexr_pattern = re.compile(r'ExrFile')
-env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need_gmp=1,
-                libpng_pattern=re.compile(r'PngFile'),
-                libjpeg_pattern=re.compile(r'JpgFile|MovFile'),
-                imath_pattern=openexr_pattern,
-                openexr_pattern=openexr_pattern)
+external(env,'gmp',flags=['GEODE_GMP'],libs=['gmp'],headers=['gmp.h'])
+external(env,'zlib',flags=['GEODE_ZLIB'],libs=['z'],headers=['zlib.h'])
+external(env,'libpng',flags=['GEODE_LIBPNG'],libs=['png'],requires=['zlib'] if windows else [],headers=['png.h'])
+external(env,'libjpeg',flags=['GEODE_LIBJPEG'],libs=['jpeg'],headers=[],
+  preamble=['#include <stdio.h>',
+            'extern "C" {',
+            '#ifdef _WIN32',
+            '#undef HAVE_STDDEF_H',
+            '#endif',
+            '#include <jpeglib.h>',
+            '}'])
+external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],
+  cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
+external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],requires=['imath'],
+  headers=['OpenEXR/ImfRgbaFile.h'])
+external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],
+  libs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'],headers=['OpenMesh/Core/Utils/Endian.hh'])
+if windows:
+  external(env,'shellapi',default=windows,libs=['Shell32.lib'])
+
+env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need_gmp=1)
 
 skip = () if env['use_gmp'] else ('exact',)
+config_header(env,'config.h',extra=['#include <geode/python/config.h>','#include <geode/utility/config.h>'])
 library(env,'geode',pyname='geode_wrap',skip=skip)

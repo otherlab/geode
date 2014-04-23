@@ -1,3 +1,4 @@
+#include <geode/config.h>
 #ifdef GEODE_PYTHON
 #include <geode/python/wrap_property.h>
 #include <geode/utility/const_cast.h>

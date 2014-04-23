@@ -1,6 +1,7 @@
 // Set colors on a TriMesh
-#ifdef GEODE_OPENMESH
 
+#include <geode/config.h>
+#ifdef GEODE_OPENMESH
 #include <geode/openmesh/visualize.h>
 namespace geode {
 

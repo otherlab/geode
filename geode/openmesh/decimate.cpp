@@ -1,3 +1,4 @@
+#include <geode/config.h>
 #ifdef GEODE_OPENMESH
 #include <geode/openmesh/decimate.h>
 #include <OpenMesh/Tools/Decimater/ModQuadricT.hh>
