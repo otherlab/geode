@@ -169,7 +169,7 @@ public:
 
     Vector operator&(const T& a) const
     {return Vector(x&a);}
-    
+
     T sqr_magnitude() const
     {return sqr(x);}
 
@@ -198,6 +198,9 @@ public:
     {return 0;}
 
     int argmax() const
+    {return 0;}
+
+    int dominant_axis() const
     {return 0;}
 
     bool elements_equal() const
@@ -266,7 +269,7 @@ public:
 
     bool contains(const T& element) const
     {return x==element;}
-  
+
     template<class TArray>
     bool contains_all(const TArray& elements) const
     {STATIC_ASSERT_SAME(typename TArray::Element,T);
