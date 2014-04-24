@@ -4,6 +4,7 @@
 #include <geode/geometry/Plane.h>
 #include <geode/geometry/Ray.h>
 #include <geode/geometry/Segment.h>
+#include <geode/vector/Matrix3x3.h>
 namespace geode {
 
 template<class T> bool Plane<T>::
