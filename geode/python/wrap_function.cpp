@@ -1,6 +1,7 @@
 //#####################################################################
 // Function wrap_function
 //#####################################################################
+#include <geode/config.h>
 #ifdef GEODE_PYTHON
 #include <geode/python/wrap_function.h>
 namespace geode {

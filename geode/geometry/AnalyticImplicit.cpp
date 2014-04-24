@@ -61,6 +61,16 @@ repr() const
     return Shape::repr();
 }
 
+template AnalyticImplicit<Box<Vector<T,1>>>::~AnalyticImplicit();
+template AnalyticImplicit<Box<Vector<T,2>>>::~AnalyticImplicit();
+template AnalyticImplicit<Box<Vector<T,3>>>::~AnalyticImplicit();
+template AnalyticImplicit<Sphere<Vector<T,2>>>::~AnalyticImplicit();
+template AnalyticImplicit<Sphere<Vector<T,3>>>::~AnalyticImplicit();
+template AnalyticImplicit<Capsule<Vector<T,2>>>::~AnalyticImplicit();
+template AnalyticImplicit<Capsule<Vector<T,3>>>::~AnalyticImplicit();
+template AnalyticImplicit<Cylinder>::~AnalyticImplicit();
+template AnalyticImplicit<Plane<T>>::~AnalyticImplicit();
+
 }
 using namespace geode;
 using namespace python;

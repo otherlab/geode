@@ -80,10 +80,18 @@ GEODE_CORE_EXPORT real circle_arc_area(Nested<const CircleArc> arcs);
 GEODE_CORE_EXPORT void reverse_arcs(RawArray<CircleArc> arcs);
 GEODE_CORE_EXPORT void reverse_arcs(Nested<CircleArc> arcs);
 
+GEODE_CORE_EXPORT void exact_reverse_arcs(RawArray<ExactCircleArc> arcs);
+GEODE_CORE_EXPORT void exact_reverse_arcs(Nested<ExactCircleArc> arcs);
+
 // Quantize from approximate to exact representations, taking care to ensure validity of the quantized result.
 // If min_bounds isn't empty the Quantizer will use an appropriate scale to work with other features inside of min_bounds
 GEODE_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Box<Vector<real,2>> min_bounds=Box<Vector<real,2>>::empty_box());
 GEODE_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input);
+
+// Returns a center and radius for a circle that passes within constructed_arc_endpoint_error_bound() units of each quantized vertex and has approxamently the correct curvature
+GEODE_CORE_EXPORT Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const Vector<Quantized, 2> x0, const Vector<Quantized, 2> x1, const real q);
+GEODE_CORE_EXPORT Quantized constructed_arc_endpoint_error_bound();
+GEODE_CORE_EXPORT Quantizer<real,2> make_arc_quantizer(const Box<Vector<real,2>> arc_bounds);
 
 // exact_split_circle_arcs prunes away contours that are too small to intersect with a horizontal line.  Normally this can be
 // ignored, but we expose it here for use in benchmarking highly degenerate cases.

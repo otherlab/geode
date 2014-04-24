@@ -1,4 +1,6 @@
 // Measure the mean and Gaussian curvatures of meshes
+
+#include <geode/config.h>
 #ifdef GEODE_OPENMESH
 
 #include <geode/openmesh/curvature.h>

@@ -1,6 +1,7 @@
 //#####################################################################
 // Function Wrap_Constructor
 //#####################################################################
+#include <geode/config.h>
 #ifdef GEODE_PYTHON
 #include <geode/python/wrap_constructor.h>
 namespace geode {
