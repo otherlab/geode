@@ -67,6 +67,10 @@ public:
     return flat.size();
   }
 
+  bool empty() const {
+    return flat.empty();
+  }
+
   T& operator[](Id i) const {
     return flat[i.idx()];
   }
