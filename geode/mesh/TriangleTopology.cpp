@@ -1250,7 +1250,7 @@ Array<VertexId> TriangleTopology::vertex_one_ring(VertexId v) const {
   return result;
 }
 
-inline Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
+Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
   GEODE_ASSERT(valid(v));
   Array<FaceId> faces;
   for (const auto h : outgoing(v)) {
