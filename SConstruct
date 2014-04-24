@@ -305,7 +305,7 @@ def force_external(name):
     return
   external_helper(env,name,fail=fail,**kwargs)
 
-def external_helper(env,name,default=0,dir=0,flags=(),cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),
+def external_helper(env,name,default=0,dir=0,flags=(),cxxflags='',linkflags='',cpppath=(),libpath=(),rpath=0,libs=(),publiclibs=(),
              copy=(),frameworkpath=(),frameworks=(),requires=(),hide=False,callback=None,
              headers=None,configure=None,preamble=(),body=(),required=False,fail=None):
   for r in requires:
@@ -318,7 +318,7 @@ def external_helper(env,name,default=0,dir=0,flags=(),cxxflags='',linkflags='',c
 
   lib = {'dir':dir,'flags':flags,'cxxflags':cxxflags,'linkflags':linkflags,'cpppath':cpppath,'libpath':libpath,
          'rpath':rpath,'libs':libs,'copy':copy,'frameworkpath':frameworkpath,'frameworks':frameworks,'requires':requires,
-         'hide':hide,'callback':callback,'name':name}
+         'publiclibs':publiclibs,'hide':hide,'callback':callback,'name':name}
   del lazy_externals[name]
   externals[name] = lib
 
@@ -334,6 +334,7 @@ def external_helper(env,name,default=0,dir=0,flags=(),cxxflags='',linkflags='',c
     (name+'_libpath','Library directory for '+name,0),
     (name+'_rpath','Extra rpath directory for '+name,0),
     (name+'_libs','Libraries for '+name,0),
+    (name+'_publiclibs','Public (re-exported) libraries for '+name,0),
     (name+'_copy','Copy these files to the binary output directory for ' + name,0),
     (name+'_frameworks','Frameworks for '+name,0),
     (name+'_frameworkpath','Framework path for '+name,0),
@@ -363,6 +364,7 @@ def external_helper(env,name,default=0,dir=0,flags=(),cxxflags='',linkflags='',c
   if env[name+'_rpath']!=0: lib['rpath'] = sanitize(env[name+'_rpath'])
   elif lib['rpath']==0: lib['rpath'] = [Dir(d).abspath for d in lib['libpath']]
   if env[name+'_libs']!=0: lib['libs'] = env[name+'_libs']
+  if env[name+'_publiclibs']!=0: lib['publiclibs'] = env[name+'_publiclibs']
   if env[name+'_frameworks']!=0: lib['frameworks'] = env[name+'_frameworks']
   if env[name+'_frameworkpath']!=0: lib['frameworkpath'] = sanitize(env[name+'_frameworkpath'])
   if env[name+'_cxxflags']!=0: lib['cxxflags'] = env[name+'_cxxflags']
@@ -437,6 +439,10 @@ def link_flags(env):
     if env_link.get('need_'+name):
       all_uses.append('need_'+name)
       env_link.Append(LINKFLAGS=lib['linkflags'],LIBS=lib['libs'],FRAMEWORKPATH=lib['frameworkpath'],FRAMEWORKS=lib['frameworks'])
+      if darwin:
+        env_link.Append(LINKFLAGS=' '.join('-Xlinker -reexport-l%s'%n for n in lib['publiclibs']))
+      else:
+	env_link.Append(LIBS=lib['publiclibs'])
       env_link.AppendUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
