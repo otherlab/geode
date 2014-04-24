@@ -1,6 +1,7 @@
 //#####################################################################
 // Function wrap_field
 //#####################################################################
+#include <geode/config.h>
 #ifdef GEODE_PYTHON
 #include <geode/python/wrap_field.h>
 namespace geode {

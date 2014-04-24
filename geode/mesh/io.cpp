@@ -835,6 +835,12 @@ void write_mesh(const string& filename, const TriangleTopology& mesh, RawArray<c
   write_helper(filename,mesh.elements(),X);
 }
 
+void write_mesh(const string& filename, const MutableTriangleTopology& mesh) {
+  FieldId<Vector<real,3>, VertexId> pos_id(vertex_position_id);
+  GEODE_ASSERT(mesh.has_field(pos_id));
+  write_helper(filename,mesh.elements(),mesh.field(pos_id).flat);
+}
+
 static void write_mesh_py(const string& filename, PyObject* mesh, RawArray<const TV> X) {
   if (auto* soup = python_cast<TriangleSoup*>(mesh))
     write_mesh(filename,*soup,X);

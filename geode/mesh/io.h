@@ -17,4 +17,8 @@ GEODE_EXPORT void write_mesh(const string& filename, const TriangleSoup& soup, R
 GEODE_EXPORT void write_mesh(const string& filename, const PolygonSoup& soup, RawArray<const Vector<real,3>> X);
 GEODE_EXPORT void write_mesh(const string& filename, const TriangleTopology& mesh, RawArray<const Vector<real,3>> X);
 
+// write a mesh to a file, assuming the mesh position are stored with the default
+// id and have type Vector<real,3>. 
+GEODE_EXPORT void write_mesh(const string &filename, const MutableTriangleTopology &mesh);
+
 }

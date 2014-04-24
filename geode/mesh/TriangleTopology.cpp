@@ -1,6 +1,9 @@
 // A corner data structure representing oriented triangle meshes.
 
 #include <geode/mesh/TriangleTopology.h>
+#include <geode/mesh/SegmentSoup.h>
+#include <geode/mesh/TriangleSoup.h>
+#include <geode/geometry/SimplexTree.h>
 #include <geode/array/convert.h>
 #include <geode/array/Nested.h>
 #include <geode/array/permute.h>
@@ -13,6 +16,7 @@
 #include <geode/utility/Log.h>
 #include <geode/vector/convert.h>
 #include <boost/dynamic_bitset.hpp>
+
 namespace geode {
 
 using Log::cout;
@@ -91,6 +95,33 @@ HalfedgeId TriangleTopology::common_halfedge(FaceId f0, FaceId f1) const {
         return reverse(e);
   }
   return HalfedgeId();
+}
+
+VertexId TriangleTopology::common_vertex(FaceId f, HalfedgeId e) const {
+  if (f.valid() && e.valid()) {
+    VertexId s = src(e);
+    VertexId d = dst(e);
+    for (const auto v : vertices(f)) {
+      if (d == v) {
+        return d;
+      }
+      if (s == v) {
+        return s;
+      }
+    }
+  }
+  return VertexId();
+}
+
+VertexId TriangleTopology::common_vertex(FaceId f0, FaceId f1) const {
+  if (f0.valid() && f1.valid()) {
+    auto v1 = vertices(f1);
+    for (const auto v : vertices(f0)) {
+      if (v1.contains(v))
+        return v;
+    }
+  }
+  return VertexId();
 }
 
 VertexId TriangleTopology::internal_add_vertex() {
@@ -824,6 +855,27 @@ HalfedgeId MutableTriangleTopology::flip_edge(HalfedgeId e) {
   return unsafe_flip_edge(e);
 }
 
+bool MutableTriangleTopology::unsafe_replace_vertex(FaceId id, VertexId oldv, VertexId newv) {
+  for (int i = 0; i < 3; ++i) {
+    if (faces_[id].vertices[i] == oldv) {
+      mutable_faces_[id].vertices[i] = newv;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool MutableTriangleTopology::ensure_boundary_halfedge(VertexId v) {
+  bool is_boundary_now = is_boundary(halfedge(v));
+  for (auto he : outgoing(v)) {
+    if (is_boundary(he) && !is_boundary_now) {
+      unsafe_set_halfedge(v, he);
+      return true;
+    }
+  }
+  return false;
+}
+
 HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
   const auto e1 = reverse(e0);
   const auto f0 = face(e0),
@@ -1554,6 +1606,128 @@ HalfedgeId TriangleTopology::safe_halfedge_between(VertexId v0, VertexId v1) con
   return halfedge(v0,v1);
 }
 
+Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> TriangleTopology::edge_segment_soup() const {
+  Array<Vector<int,2>> edges;
+  Array<HalfedgeId> indices;
+
+  for (auto i : halfedges()) {
+    // only store the smaller of the two indices
+    HalfedgeId r = reverse(i);
+    if (!is_boundary(r) && r < i)
+      continue;
+
+    edges.append(vec(src(i).idx(), dst(i).idx()));
+    indices.append(i);
+  }
+
+  return tuple(new_<SegmentSoup>(edges), indices);
+}
+
+Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_triangle_soup() const {
+  Array<Vector<int,3>> facets;
+  Array<FaceId> indices;
+
+  for (auto i : faces()) {
+    auto verts = vertices(i);
+    facets.append(vec(verts.x.idx(), verts.y.idx(), verts.z.idx()));
+    indices.append(i);
+  }
+
+  return tuple(new_<TriangleSoup>(facets), indices);
+}
+
+template<class TV>
+GEODE_CORE_EXPORT typename TV::value_type TriangleTopology::angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const {
+  auto p = prev(id);
+  auto v1 = (pos[dst(id)] - pos[src(id)]);
+  auto mag = v1.sqr_magnitude();
+  if (mag)
+    v1 *= 1/sqrt(mag);
+  else
+    v1 = TV();
+  auto v2 = (pos[src(p)] - pos[src(id)]);
+  mag = v2.sqr_magnitude();
+  if (mag)
+    v2 *= 1/sqrt(mag);
+  else
+    v2 = TV();
+  return atan2(cross(v1, v2).magnitude(), dot(v1, v2));
+}
+
+template GEODE_CORE_EXPORT real TriangleTopology::angle_at(HalfedgeId id, Field<Vector<real,3>, VertexId> const &pos) const;
+
+template<class TV>
+GEODE_CORE_EXPORT TV TriangleTopology::normal(FaceId id, Field<TV, VertexId> const &pos) const {
+  auto v = vertices(id);
+  auto N = cross(pos[v.y] - pos[v.x], pos[v.z] - pos[v.x]);
+  auto mag = N.sqr_magnitude();
+  if (mag)
+    return N/sqrt(mag);
+  else
+    return TV();
+}
+
+template GEODE_CORE_EXPORT Vector<real,3> TriangleTopology::normal(FaceId id, Field<Vector<real,3>, VertexId> const &pos) const;
+
+template<class TV>
+GEODE_CORE_EXPORT TV TriangleTopology::normal(VertexId id, Field<TV, VertexId> const &pos) const {
+  real total_angle = 0;
+  TV N = TV();
+
+  for (auto he : outgoing(id)) {
+    auto f = face(he);
+    if (f.valid()) {
+      auto angle = angle_at(he, pos);
+      total_angle += angle;
+      N += normal(f, pos);
+    }
+  }
+
+  if (total_angle)
+    N /= total_angle;
+
+  return N;
+}
+
+template GEODE_CORE_EXPORT Vector<real,3> TriangleTopology::normal(VertexId id, Field<Vector<real,3>, VertexId> const &pos) const;
+
+
+template<class TV>
+GEODE_CORE_EXPORT Triangle<TV> TriangleTopology::triangle(FaceId id, Field<TV, VertexId> const &pos) const {
+  auto verts = vertices(id);
+  return Triangle<TV>(pos[verts.x], pos[verts.y], pos[verts.z]);
+}
+
+template GEODE_CORE_EXPORT Triangle<Vector<real,2>> TriangleTopology::triangle(FaceId id, Field<Vector<real,2>, VertexId> const &pos) const;
+template GEODE_CORE_EXPORT Triangle<Vector<real,3>> TriangleTopology::triangle(FaceId id, Field<Vector<real,3>, VertexId> const &pos) const;
+
+template<class TV>
+GEODE_CORE_EXPORT Segment<TV> TriangleTopology::segment(HalfedgeId id, Field<TV, VertexId> const &pos) const {
+  auto verts = vertices(id);
+  return Segment<TV>(pos[verts.x], pos[verts.y]);
+}
+
+template GEODE_CORE_EXPORT Segment<Vector<real,2>> TriangleTopology::segment(HalfedgeId id, Field<Vector<real,2>, VertexId> const &pos) const;
+template GEODE_CORE_EXPORT Segment<Vector<real,3>> TriangleTopology::segment(HalfedgeId id, Field<Vector<real,3>, VertexId> const &pos) const;
+
+template<class TV>
+GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
+  auto soup = edge_segment_soup();
+  return tuple(new_<SimplexTree<TV,1>>(soup.x, pos.flat, leaf_size), soup.y);
+}
+
+template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,2>,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<Vector<real,2>, VertexId> const &pos, int) const;
+template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,3>,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<Vector<real,3>, VertexId> const &pos, int) const;
+
+template<class TV>
+GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
+  auto soup = face_triangle_soup();
+  return tuple(new_<SimplexTree<TV,2>>(soup.x, pos.flat, leaf_size), soup.y);
+}
+
+template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,2>,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<Vector<real,2>, VertexId> const &pos, int) const;
+template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,3>,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<Vector<real,3>, VertexId> const &pos, int) const;
+
 #define SAFE_ERASE(prim,Id) \
   void MutableTriangleTopology::safe_erase_##prim(Id x, bool erase_isolated) { \
     if (!valid(x)) \
@@ -1599,6 +1773,8 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(incident_faces)
       .GEODE_OVERLOADED_METHOD_2(HalfedgeId(Self::*)(VertexId, VertexId)const, "halfedge_between", halfedge)
       .GEODE_METHOD(common_halfedge)
+      .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, FaceId)const, "common_vertex_between_faces", common_vertex)
+      .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, HalfedgeId)const, "common_vertex_between_face_and_halfedge", common_vertex)
       .GEODE_METHOD(elements)
       .GEODE_METHOD(degree)
       .GEODE_METHOD(has_boundary)
@@ -1626,6 +1802,7 @@ void wrap_corner_mesh() {
     Class<Self>("MutableTriangleTopology")
       .GEODE_INIT()
       .GEODE_METHOD(copy)
+      .GEODE_METHOD(add)
       .GEODE_METHOD(add_vertex)
       .GEODE_METHOD(add_vertices)
       .GEODE_METHOD(add_face)

@@ -177,7 +177,7 @@ public:
 
     Vector& operator|=(const Vector& v)
     {x|=v.x;y|=v.y;return *this;}
-    
+
     Vector operator>>(const int a) const
     {return Vector(x>>a, y>>a);}
 
@@ -223,6 +223,9 @@ public:
     int argmax() const
     {return geode::argmax(x,y);}
 
+    int dominant_axis() const
+    {return geode::argmax(abs(x), abs(y));}
+
     bool elements_equal() const
     {return x==y;}
 
@@ -259,7 +262,7 @@ public:
 
     T product() const
     {return x*y;}
-  
+
     Vector swap() const {
       return Vector(y,x);
     }
@@ -458,9 +461,9 @@ cross(const T& v1,const Vector<T,2>& v2) // v1 is out of plane
 template<class T> inline T
 angle(const Vector<T,2>& v)
 {return atan2(v.y,v.x);}
-  
+
 template<class T> inline Vector<T,2>
-polar(const T& a) 
+polar(const T& a)
 { return Vector<T,2>(cos(a), sin(a)); }
 
 template<class T> inline T angle_between(const Vector<T,2>& u, const Vector<T,2>& v) {

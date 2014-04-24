@@ -5,6 +5,9 @@
 #include <geode/mesh/TriangleSoup.h>
 #include <geode/mesh/ids.h>
 #include <geode/array/Field.h>
+#include <geode/geometry/Triangle3d.h>
+#include <geode/geometry/Triangle2d.h>
+#include <geode/geometry/Segment.h>
 #include <geode/array/UntypedArray.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/structure/Tuple.h>
@@ -44,7 +47,7 @@ class MutableTriangleTopology;
 // 3. If e is a halfedge, either e or reverse(e) is not a boundary.
 // 4. There are no self loops: src(e) != dst(e).
 // 5. There is at most one edge between each pair of vertices.
-// 6. For any face f, src(3*f+i) = faces_[f].vertices[i]
+// 6. For any face f, src(halfedge(f,i)) = src(3*f+i) = faces_[f].vertices[i] = vertex(f,i)
 //
 // Performance considerations:
 // 1. IMPORTANT: Since boundary halfedges are stored specially, removing a single face in the interior
@@ -87,7 +90,7 @@ public:
     VertexId src; // If erased, src = erased_id
   };
   const Field<const FaceInfo,FaceId> faces_;
-  const Field<const HalfedgeId,VertexId> vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased
+  const Field<const HalfedgeId,VertexId> vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased, boundary if on the boundary
   const Array<const BoundaryInfo> boundaries_; // If HalfedgeId(-1-b) is a boundary halfedge, boundaries_[b] is its info
 
   // The linked list of erased boundary edges
@@ -154,6 +157,7 @@ protected:
   GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
 
 public:
+
   ~TriangleTopology();
 
   // Copy the mesh
@@ -223,9 +227,21 @@ public:
   // Find a halfedge between two vertices, or return an invalid id if none exists.
   GEODE_CORE_EXPORT HalfedgeId halfedge(VertexId v0, VertexId v1) const;
 
-  // Find the halfedge between two faces, or return an invalid id if none exists.  The halfedge belongs to the first face.
+  // Find a halfedge between two faces, or return an invalid id if none exists.  The halfedge belongs to the first face.
   // This function works correctly if the input faces are invalid.
   GEODE_CORE_EXPORT HalfedgeId common_halfedge(FaceId f0, FaceId f1) const;
+
+  // Find the common vertex between a face and a halfedge, or return an invalid id if none exists.
+  // If there are two common vertices (the halfedge is part of an edge of the face), this function
+  // will return dst(he).
+  // This function works correctly if the inputs are invalid (it will return an invalid id)
+  GEODE_CORE_EXPORT VertexId common_vertex(FaceId f, HalfedgeId he) const;
+
+  // Find a common vertex between two faces, or return an invalid id if none exists.
+  // If there is more than one common vertex, this function will return the one
+  // coming first in f0.
+  // This function works correctly if the inputs are invalid.
+  GEODE_CORE_EXPORT VertexId common_vertex(FaceId f0, FaceId f1) const;
 
   // Extract all triangles as a flat array
   Array<Vector<int,3>> elements() const;
@@ -274,6 +290,47 @@ public:
   Range<TriangleTopologyOutgoing> safe_outgoing(VertexId v) const;
   Range<TriangleTopologyIncoming> safe_incoming(VertexId v) const;
   HalfedgeId safe_halfedge_between(VertexId v0, VertexId v1) const;
+
+  // make fields that fit this mesh
+  #define CREATE_FIELD(prim, Id, size_expr) \
+    template<class T> Field<T,Id> create_compatible_##prim##_field() const { \
+      return Field<T,Id>(size_expr); \
+    }
+  CREATE_FIELD(vertex, VertexId,   vertex_to_edge_.size())
+  CREATE_FIELD(face, FaceId,     faces_.size())
+  CREATE_FIELD(halfedge, HalfedgeId, faces_.size()*3)
+
+  // Get a SegmentMesh containing the edges (and an array containing the halfedge ids corresponding to the edges stored in the mesh -- only one per edge, the one with the larger index. The tree will contain no boundary halfedges)
+  GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_segment_soup() const;
+
+  // Get a TriangleMesh containing the edges (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
+  GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_triangle_soup() const;
+
+  // the following functions require passing in a field containing positions for the vertices
+
+  // compute the angle between a halfedge he and prev(he)
+  template<class TV>
+  GEODE_CORE_EXPORT typename TV::value_type angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const;
+
+  // compute a face normal
+  template<class TV>
+  GEODE_CORE_EXPORT TV normal(FaceId id, Field<TV, VertexId> const &pos) const;
+  // compute a vertex normal (angle-weighted)
+  template<class TV>
+  GEODE_CORE_EXPORT TV normal(VertexId id, Field<TV, VertexId> const &pos) const;
+
+  // get primitives filled with geometry from the given field
+  template<class TV>
+  GEODE_CORE_EXPORT Triangle<TV> triangle(FaceId id, Field<TV, VertexId> const &pos) const;
+  template<class TV>
+  GEODE_CORE_EXPORT Segment<TV> segment(HalfedgeId id, Field<TV, VertexId> const &pos) const;
+
+  // get trees, and a map from tree indices to mesh IDs (only valid primitives are added to the tree)
+  template<class TV>
+  GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> edge_tree(Field<TV, VertexId> const &pos, int leaf_size = 1) const;
+  template<class TV>
+  GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree(Field<TV, VertexId> const &pos, int leaf_size = 1) const;
+
 };
 
 // A mutable topology, with attached fields on vertices, faces, or halfedges, which are maintained through
@@ -319,6 +376,17 @@ public:
 
   // Field management
 #define FIELD_ACCESS_FUNCTIONS(prim, Id, size_expr) \
+  template<class T> FieldId<T,Id> add_field(Field<T,Id> &f, int id = invalid_id) { \
+    if (id == invalid_id) \
+      id = next_field_id++; \
+    else \
+      next_field_id = max(next_field_id,id+1); \
+    GEODE_ASSERT(!id_to_##prim##_field.contains(id)); \
+    GEODE_ASSERT(f.size() == (size_expr)); \
+    prim##_fields.push_back(UntypedArray(f)); \
+    id_to_##prim##_field.set(id,int(prim##_fields.size()-1)); \
+    return FieldId<T,Id>(id); \
+  } \
   template<class T> FieldId<T,Id> add_##prim##_field(int id = invalid_id) { \
     if (id == invalid_id) \
       id = next_field_id++; \
@@ -329,17 +397,17 @@ public:
     id_to_##prim##_field.set(id,int(prim##_fields.size()-1)); \
     return FieldId<T,Id>(id); \
   } \
-  template<class T> bool has_##prim##_field(const FieldId<T,Id> id) const { \
-    return id.valid() && id_to_##prim##_field.contains(id); \
+  template<class T> bool has_field(const FieldId<T,Id> id) const { \
+    return id.valid() && id_to_##prim##_field.contains(id.id); \
   } \
-  template<class T> void remove_##prim##_field(const FieldId<T,Id> id) { \
+  template<class T> void remove_field(const FieldId<T,Id> id) { \
     remove_field_helper(id_to_##prim##_field,prim##_fields,id.id); \
   } \
   template<class T> const Field<T,Id>& field(const FieldId<T,Id> id) { \
-    return prim##_fields[id_to_##prim##_field.get(id)].template get<T,Id>(); \
+    return prim##_fields[id_to_##prim##_field.get(id.id)].template get<T,Id>(); \
   } \
-  template<class T> const Field<const T,Id> field(const FieldId<T,Id> id) const { \
-    return prim##_fields[id_to_##prim##_field.get(id)].template get<const T,Id>(); \
+  template<class T> const Field<const T,Id>& field(const FieldId<T,Id> id) const { \
+    return prim##_fields[id_to_##prim##_field.get(id.id)].template get<const T,Id>(); \
   }
   FIELD_ACCESS_FUNCTIONS(vertex,   VertexId,   vertex_to_edge_.size())
   FIELD_ACCESS_FUNCTIONS(face,     FaceId,     faces_.size())
@@ -355,10 +423,17 @@ public:
     PyObject* field_py(const PyFieldId& id);
   #endif
 
+  // set the src entry of an existing boundary halfedge
+  inline void unsafe_set_src(HalfedgeId he, VertexId src);
+
+  // set the vertex_to_edge entry without any checks
+  inline void unsafe_set_halfedge(VertexId src, HalfedgeId he);
+
   // publish the hidden construction methods from TriangleTopology
   using TriangleTopology::unsafe_boundary_link;
   using TriangleTopology::unsafe_set_erased;
   using TriangleTopology::unsafe_set_reverse;
+  using TriangleTopology::unsafe_interior_link;
 
   // we have to overwrite this -- it needs to take care of fields for us
   HalfedgeId unsafe_new_boundary(const VertexId src, const HalfedgeId reverse);
@@ -445,6 +520,16 @@ public:
   // The remaining functions are mainly for internal use, or for external routines that perform direct surgery
   // on the internal structure.  Use with caution!
 
+  // In face id, replace vertex oldv with vertex newv. Returns whether anything was done. Replaces at most one instance of oldv.
+  GEODE_CORE_EXPORT bool unsafe_replace_vertex(FaceId id, VertexId oldv, VertexId newv);
+
+  // Make sure that if the given vertex has a boundary halfedge, its associated
+  // halfedge is a boundary halfedge (this function is always safe to call,
+  // and can be used to repair the vertex->halfedge pointers after low-level
+  // operations that may have disturbed the boundaries). Returns whether the
+  // halfedge association was changed.
+  GEODE_CORE_EXPORT bool ensure_boundary_halfedge(VertexId v);
+
   // Flip an edge assuming is_flip_safe(e). If that is not the case, this may leave the mesh in a broken state.
   // WARNING: all halfedge ids in the two adjacent faces are changed, and the new id of the argument edge is returned.
   // Both faces keep their fields. The halfedge fields on the outer halfedges are
@@ -497,6 +582,17 @@ inline HalfedgeId TriangleTopology::reverse(HalfedgeId e) const {
   }
   return boundaries_[-1-e.id].reverse;
 }
+
+inline void MutableTriangleTopology::unsafe_set_src(HalfedgeId he, VertexId src) {
+  assert(valid(he) && is_boundary(he));
+  mutable_boundaries_[-1-he.id].src = src;
+}
+
+inline void MutableTriangleTopology::unsafe_set_halfedge(VertexId v, HalfedgeId he) {
+  assert(valid(v));
+  mutable_vertex_to_edge_[v] = he;
+}
+
 inline VertexId TriangleTopology::src(HalfedgeId e) const {
   assert(valid(e));
   if (e.id>=0) {
@@ -661,8 +757,9 @@ template<class Id> struct TriangleTopologyIter {
   // prefix
   TriangleTopologyIter &operator++() {
     assert(i != end); // don't let them iterate past the end
-    i.id++;
-    while (i!=end && mesh.erased(i)) i.id++;
+    do { 
+      i.id++;
+    } while (i!=end && mesh.erased(i));
     return *this;
   }
 
