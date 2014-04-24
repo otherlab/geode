@@ -5,6 +5,9 @@
 #include <geode/mesh/TriangleSoup.h>
 #include <geode/mesh/ids.h>
 #include <geode/array/Field.h>
+#include <geode/geometry/Triangle3d.h>
+#include <geode/geometry/Triangle2d.h>
+#include <geode/geometry/Segment.h>
 #include <geode/array/UntypedArray.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/structure/Tuple.h>
@@ -288,26 +291,26 @@ public:
   Range<TriangleTopologyIncoming> safe_incoming(VertexId v) const;
   HalfedgeId safe_halfedge_between(VertexId v0, VertexId v1) const;
 
-  // make a field that fits this mesh
-  #define CREATE_FIELD(Id, size_expr) \
-    template<class T, class Id> Field<T,Id> create_compatible_field() { \
+  // make fields that fit this mesh
+  #define CREATE_FIELD(prim, Id, size_expr) \
+    template<class T> Field<T,Id> create_compatible_##prim##_field() const { \
       return Field<T,Id>(size_expr); \
     }
-  CREATE_FIELD(VertexId,   vertex_to_edge_.size())
-  CREATE_FIELD(FaceId,     faces_.size())
-  CREATE_FIELD(HalfedgeId, faces_.size()*3)
+  CREATE_FIELD(vertex, VertexId,   vertex_to_edge_.size())
+  CREATE_FIELD(face, FaceId,     faces_.size())
+  CREATE_FIELD(halfedge, HalfedgeId, faces_.size()*3)
 
   // Get a SegmentMesh containing the edges (and an array containing the halfedge ids corresponding to the edges stored in the mesh -- only one per edge, the one with the larger index. The tree will contain no boundary halfedges)
-  GEODE_CORE_EXPORT Tuple<Ref<const SegmentSoup>,Array<HalfedgeId>> edge_segment_soup() const;
+  GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_segment_soup() const;
 
   // Get a TriangleMesh containing the edges (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
-  GEODE_CORE_EXPORT Tuple<Ref<const TriangleSoup>,Array<FaceId>> face_triangle_soup() const;
+  GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_triangle_soup() const;
 
   // the following functions require passing in a field containing positions for the vertices
 
   // compute the angle between a halfedge he and prev(he)
   template<class TV>
-  GEODE_CORE_EXPORT TV::value_type angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const;
+  GEODE_CORE_EXPORT typename TV::value_type angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const;
 
   // compute a face normal
   template<class TV>
@@ -324,9 +327,9 @@ public:
 
   // get trees, and a map from tree indices to mesh IDs (only valid primitives are added to the tree)
   template<class TV>
-  GEODE_CORE_EXPORT Tuple<Ref<const SimplexTree<TV,2>>, Array<HalfedgeId>> edge_tree(Field<TV, VertexId> const &) const;
+  GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> edge_tree(Field<TV, VertexId> const &pos, int leaf_size = 1) const;
   template<class TV>
-  GEODE_CORE_EXPORT Tuple<Ref<const SimplexTree<TV,3>>, Array<FaceId>> face_tree(Field<TV, VertexId> const &) const;
+  GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree(Field<TV, VertexId> const &pos, int leaf_size = 1) const;
 
 };
 
@@ -395,16 +398,16 @@ public:
     return FieldId<T,Id>(id); \
   } \
   template<class T> bool has_field(const FieldId<T,Id> id) const { \
-    return id.valid() && id_to_##prim##_field.contains(id); \
+    return id.valid() && id_to_##prim##_field.contains(id.id); \
   } \
   template<class T> void remove_field(const FieldId<T,Id> id) { \
     remove_field_helper(id_to_##prim##_field,prim##_fields,id.id); \
   } \
   template<class T> const Field<T,Id>& field(const FieldId<T,Id> id) { \
-    return prim##_fields[id_to_##prim##_field.get(id)].template get<T,Id>(); \
+    return prim##_fields[id_to_##prim##_field.get(id.id)].template get<T,Id>(); \
   } \
-  template<class T> const Field<const T,Id> field(const FieldId<T,Id> id) const { \
-    return prim##_fields[id_to_##prim##_field.get(id)].template get<const T,Id>(); \
+  template<class T> const Field<const T,Id>& field(const FieldId<T,Id> id) const { \
+    return prim##_fields[id_to_##prim##_field.get(id.id)].template get<const T,Id>(); \
   }
   FIELD_ACCESS_FUNCTIONS(vertex,   VertexId,   vertex_to_edge_.size())
   FIELD_ACCESS_FUNCTIONS(face,     FaceId,     faces_.size())
@@ -430,6 +433,7 @@ public:
   using TriangleTopology::unsafe_boundary_link;
   using TriangleTopology::unsafe_set_erased;
   using TriangleTopology::unsafe_set_reverse;
+  using TriangleTopology::unsafe_interior_link;
 
   // we have to overwrite this -- it needs to take care of fields for us
   HalfedgeId unsafe_new_boundary(const VertexId src, const HalfedgeId reverse);
@@ -586,7 +590,7 @@ inline void MutableTriangleTopology::unsafe_set_src(HalfedgeId he, VertexId src)
 
 inline void MutableTriangleTopology::unsafe_set_halfedge(VertexId v, HalfedgeId he) {
   assert(valid(v));
-  mutable_vertex_to_edge_[v.id] = he;
+  mutable_vertex_to_edge_[v] = he;
 }
 
 inline VertexId TriangleTopology::src(HalfedgeId e) const {
@@ -753,8 +757,9 @@ template<class Id> struct TriangleTopologyIter {
   // prefix
   TriangleTopologyIter &operator++() {
     assert(i != end); // don't let them iterate past the end
-    i.id++;
-    while (i!=end && mesh.erased(i)) i.id++;
+    do { 
+      i.id++;
+    } while (i!=end && mesh.erased(i));
     return *this;
   }
 

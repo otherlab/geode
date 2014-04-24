@@ -1,7 +1,19 @@
 #include <geode/mesh/intersections.h>
 #include <geode/utility/stl.h>
+#include <geode/utility/prioritize.h>
+#include <geode/geometry/SimplexTree.h>
+#include <geode/geometry/traverse.h>
+#include <geode/geometry/Ray.h>
+#include <geode/math/fallback_sort.h>
+#include <geode/vector/Rotation.h>
+
+// should be eliminated by move to all exact predicates, we need a new
+// (likely non-delaunay) triangulator who can work without constructions
+#include <geode/exact/delaunay.h>
 
 namespace geode {
+
+const bool debug_intersections = true;
 
 /*
 
@@ -16,14 +28,14 @@ typedef Vector<real,3> TV;
 
 struct edge_face_intersection_helper {
   TriangleTopology const &mesh;
-  Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree;
-  Tuple<Ref<SimplexTree<TV,2>>, Array<HalfedgeId>> edge_tree;
+  Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree;
+  Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> edge_tree;
 
   std::vector<Intersection> intersections;
 
   edge_face_intersection_helper(TriangleTopology const &mesh,
-                                Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree,
-                                Tuple<Ref<SimplexTree<TV,2>>, Array<HalfedgeId>> edge_tree)
+                                Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree,
+                                Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> edge_tree)
   : mesh(mesh), face_tree(face_tree), edge_tree(edge_tree) {}
 
   inline bool cull(int nf, int ne) const {
@@ -46,16 +58,8 @@ struct edge_face_intersection_helper {
 
     // TODO EXACT
     if (face.intersection(ray)) {
-      Intersection intersection;
-      intersection.type = itEF;
-      // make sure that the edge we store is the internal halfedge with the smallest index
-      if (mesh.is_boundary(h))
-        intersection.data.ef.edge = reverse(h);
-      else
-        intersection.data.ef.edge = h;
-      intersection.data.ef.face = f;
-      intersection.data.ef.t = ray.t_max;
-      intersection.construct = ray.point(ray.t_max);
+      auto he = mesh.is_boundary(h) ? mesh.reverse(h) : h;
+      Intersection intersection(he, f, ray.t_max, ray.point(ray.t_max));
       intersections.push_back(intersection);
     }
   }
@@ -73,10 +77,10 @@ struct edge_face_intersection_helper {
 };
 
 std::vector<Intersection> compute_edge_face_intersections(TriangleTopology const &mesh,
-                                                          Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree,
-                                                          Tuple<Ref<SimplexTree<TV,2>>, Array<HalfedgeId>> edge_tree) {
+                                                          Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree,
+                                                          Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> edge_tree) {
   edge_face_intersection_helper helper(mesh, face_tree, edge_tree);
-  double_traverse(face_tree, edge_tree, helper);
+  double_traverse(*face_tree.x, *edge_tree.x, helper);
   return helper.intersections;
 }
 
@@ -88,7 +92,7 @@ std::vector<Intersection> compute_edge_face_intersections(TriangleTopology const
 
 struct face_face_intersection_helper {
   TriangleTopology const &mesh;
-  Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree;
+  Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree;
 
   // TODO EXACT: we store constructed edges, but they're only necessary for tree
   // creation/lookup, so giving the second traversal a thickness large enough to
@@ -98,10 +102,13 @@ struct face_face_intersection_helper {
   Array<Tuple<FaceId, FaceId>> faces;
 
   face_face_intersection_helper(TriangleTopology const &mesh,
-                                Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree)
+                                Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree)
   : mesh(mesh), face_tree(face_tree) {}
 
   inline bool cull(int nf, int ne) const {
+    return false;
+  }
+  inline bool cull(int n) const {
     return false;
   }
 
@@ -110,10 +117,16 @@ struct face_face_intersection_helper {
     FaceId f1 = face_tree.y[nf1];
     FaceId f2 = face_tree.y[nf2];
 
-    // don't check incident faces
-    if (mesh.common_halfedge(f1, f2).valid()) {
+    // don't let the same face intersect itself, and don't test pairs twice
+    if (f1 >= f2)
       return;
-    }
+
+    // don't check vertex-incident faces
+    // even if there is a triple intersection of three faces, a least one pair 
+    // of them must be non-loop. These two will then generate an edge that the 
+    // third is tested against to reveal the intersection
+    if (mesh.common_vertex(f1,f2).valid()) 
+      return;
 
     Triangle<TV> const &face1 = face_tree.x->simplices[nf1];
     Triangle<TV> const &face2 = face_tree.x->simplices[nf2];
@@ -124,7 +137,7 @@ struct face_face_intersection_helper {
       indices.append(vec(vertices.size(), vertices.size()+1));
       vertices.append(result.x0);
       vertices.append(result.x1);
-      faces.append(tuple(face1, face2));
+      faces.append(tuple(f1, f2));
     }
   }
 
@@ -138,32 +151,41 @@ struct face_face_intersection_helper {
       }
     }
   }
+
+  inline void leaf(int n) {
+    leaf(n,n);
+  }
 };
 
 struct face_face_face_intersection_helper {
   TriangleTopology const &mesh;
 
-  Ref<SimplexTree<TV,2>> edge_tree;
+  Ref<SimplexTree<TV,1>> edge_tree;
   Array<Tuple<FaceId,FaceId>> const &edge_faces;
 
-  Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree;
+  Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree;
 
   Hashtable<Vector<FaceId,3>> checked;
 
   std::vector<Intersection> intersections;
 
   face_face_face_intersection_helper(TriangleTopology const &mesh,
-                                     Ref<SimplexTree<TV,2>> edge_tree,
+                                     Ref<SimplexTree<TV,1>> edge_tree,
                                      Array<Tuple<FaceId,FaceId>> const &edge_faces,
-                                     Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree)
+                                     Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree)
   : mesh(mesh), edge_tree(edge_tree), edge_faces(edge_faces), face_tree(face_tree) {}
 
   inline bool cull(int nf, int ne) const {
     return false;
   }
 
-  void check_intersection(int ne, int nf) {
+  void check_intersection(int nf, int ne) {
     Vector<FaceId,3> f = vec(edge_faces[ne].x, edge_faces[ne].y, face_tree.y[nf]);
+
+    // no edge face may be the third face (not caught by the common edge check)
+    if (f.x == f.z || f.y == f.z)
+      return;
+
     small_sort(f.x, f.y, f.z);
 
     // check if already seen
@@ -181,27 +203,21 @@ struct face_face_face_intersection_helper {
 
     // not all of them may have a single vertex in common
     auto cv12 = mesh.common_vertex(f.x,f.y);
-    if (cv12.valid && mesh.common_vertex(f.y,f.z) == cv12)
+    if (cv12.valid() && mesh.common_vertex(f.y,f.z) == cv12)
       return;
 
     // TODO EXACT using the three input faces
-    Segment<TV> const &edge = edge_tree.simplices[ne];
-    Ray<TV> ray(segment);
+    Segment<TV> const &edge = edge_tree->simplices[ne];
+    Ray<TV> ray(edge);
     Triangle<TV> const &face = face_tree.x->simplices[nf];
 
     if (face.intersection(ray)) {
-      Intersection intersection;
-      intersection.type = itFFF;
-      intersection.data.fff.face1 = f.x;
-      intersection.data.fff.face2 = f.y;
-      intersection.data.fff.face3 = f.z;
-      intersection.construct = ray.point(ray.t_max);
-      intersections.push_back(intersection);
+      intersections.push_back(Intersection(f.x, f.y, f.z, ray.point(ray.t_max)));
     }
   }
 
   void leaf(int nf, int ne) {
-    auto es = edge_tree.x->prims(ne);
+    auto es = edge_tree->prims(ne);
     auto fs = face_tree.x->prims(nf);
 
     for (int ei : es) {
@@ -213,12 +229,12 @@ struct face_face_face_intersection_helper {
 };
 
 std::vector<Intersection> compute_face_face_face_intersections(TriangleTopology const &mesh,
-                                                               Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> face_tree) {
+                                                               Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> face_tree) {
   face_face_intersection_helper ff_helper(mesh, face_tree);
-  double_traverse(face_tree, ff_helper);
-  auto edge_tree = new_<SimplexTree<TV,2>>(SegmentSoup(ff_helper.indices, ff_helper.vertices));
+  double_traverse(*face_tree.x, ff_helper);
+  auto edge_tree = new_<SimplexTree<TV,1>>(new_<SegmentSoup>(ff_helper.indices), ff_helper.vertices, 1);
   face_face_face_intersection_helper fff_helper(mesh, edge_tree, ff_helper.faces, face_tree);
-  double_traverse(face_tree, edge_tree, fff_helper);
+  double_traverse(*face_tree.x, *edge_tree, fff_helper);
   return fff_helper.intersections;
 }
 
@@ -242,66 +258,103 @@ hold for all faces fi incident on e:
 
 */
 
-Tuple<Field<std::vector<int>, FaceId>,
-      Field<std::vector<int>, HalfedgeId>,
-      Field<int, VertexId>> assemble_paths(TriangleTopology const &mesh,
-                                           Field<TV, VertexId> const &pos,
-                                           std::vector<Intersection> &intersections) {
+// Use this to look up edge intersections (takes care of looking up by lower index halfedge)
+struct GetEdgeIntersections {
+  TriangleTopology const &mesh;
+  Field<int, HalfedgeId> const &edge_intersections;
+  std::vector<std::vector<int>> &intersection_indices;
 
-  const bool debug = false;
+  GetEdgeIntersections(TriangleTopology const &mesh,
+                       Field<int, HalfedgeId> const &ei,
+                       std::vector<std::vector<int>> &intersection_indices)
+  : mesh(mesh), edge_intersections(ei), intersection_indices(intersection_indices) {};
+
+  std::vector<int> &operator[](HalfedgeId id) {
+    HalfedgeId r = mesh.reverse(id);
+    if (!mesh.is_boundary(r) && r < id) {
+      GEODE_ASSERT(intersection_indices[edge_intersections[id]].empty());
+      id = r;
+    } else {
+      GEODE_ASSERT(intersection_indices[edge_intersections[r]].empty());
+    }
+    return intersection_indices[edge_intersections[id]];
+  }
+
+  std::vector<int> get_ordered(HalfedgeId id) {
+
+    HalfedgeId r = mesh.reverse(id);
+    bool flip = false;
+    if (!mesh.is_boundary(r) && r < id) {
+      GEODE_ASSERT(intersection_indices[edge_intersections[id]].empty());
+      flip = true;
+      id = r;
+    } else {
+      GEODE_ASSERT(intersection_indices[edge_intersections[r]].empty());
+    }
+
+    std::vector<int> ints = intersection_indices[edge_intersections[id]];
+
+    // sort them for our orientation
+    if (flip)
+      std::reverse(ints.begin(), ints.end());
+
+    return ints;
+  }
+};
+
+Tuple<Field<int, FaceId>,
+      Field<int, HalfedgeId>,
+      Field<int, VertexId>,
+      std::vector<std::vector<int>>> assemble_paths(TriangleTopology const &mesh,
+                                                    Field<TV, VertexId> const &pos,
+                                                    std::vector<Intersection> &intersections) {
 
   // make fields compatible with the mesh
-  Field<std::vector<int>, FaceId> face_intersections = mesh.create_compatible_field<std::vector<int>, FaceId>();
-  Field<std::vector<int>, HalfedgeId> edge_intersections = mesh.create_compatible_field<std::vector<int>, EdgeId>();
-  Field<int, VertexId> vertex_intersections = mesh.create_compatible_field(int, VertexId);
+  int id = 0;
+  Field<int, FaceId> face_intersections = mesh.create_compatible_face_field<int>();
+  for (auto &f : face_intersections.flat) {
+    f = id++;
+  }
+  Field<int, HalfedgeId> edge_intersections = mesh.create_compatible_halfedge_field<int>();
+  for (auto &f : edge_intersections.flat) {
+    f = id++;
+  }
+  Field<int, VertexId> vertex_intersections = mesh.create_compatible_vertex_field<int>();
   for (auto &f : vertex_intersections.flat) {
     f = -1;
   }
 
+  std::vector<std::vector<int>> intersection_indices(face_intersections.flat.size() + edge_intersections.flat.size());
+
   // register regular intersections in fields
-  for (int i = 0; i < intersections.size(); ++i) {
+  for (int i = 0; i < (int)intersections.size(); ++i) {
     Intersection const &I = intersections[i];
 
     switch (I.type) {
-      case itEF: {
-        face_intersections[I.data.ef.face].push_back(i);
-        edge_intersections[I.data.ef.edge].push_back(i); // this is always the internal halfedge with smallest index
+      case Intersection::itEF: {
+        intersection_indices[face_intersections[I.data.ef.face]].push_back(i);
+        intersection_indices[edge_intersections[I.data.ef.edge]].push_back(i); // this is always the internal halfedge with smallest index
         break;
       }
-      case itFFF:
+      case Intersection::itFFF:
         break;
-      case itLoop:
+      case Intersection::itLoop:
       default:
         GEODE_UNREACHABLE();
     }
   }
 
-  // Use this to look up edge intersections (takes care of looking up by lower index halfedge)
-  struct GetEdgeIntersections {
-    TriangleTopology const &mesh;
-    Field<std::vector<int>, HalfedgeId> &edge_intersections;
-
-    GetEdgeIntersections(TriangleTopology const &mesh, Field<std::vector<int>, HalfedgeId> const &ei)
-    : mesh(mesh), edge_intersections(ei) {};
-
-    std::vector<int> &operator[](HalfedgeId id) {
-      HalfedgeId r = mesh.reverse(id);
-      if (!mesh.is_boundary(r) && r < id)
-        id = r;
-      return edge_intersections[id];
-    }
-
-  } get_edge_intersections(mesh, edge_intersections);
+  GetEdgeIntersections get_edge_intersections(mesh, edge_intersections, intersection_indices);
 
   // walk paths and fill in connected_to, creating loop vertices as we go
-  for (int i = 0; i < intersections.size(); ++i) {
-    if (intersections[i].type == itEF) {
-        auto const &f = intersections[i].face;
-        auto const &e = intersections[i].edge;
+  for (int i = 0; i < (int)intersections.size(); ++i) {
+    if (intersections[i].type == Intersection::itEF) {
+        auto const &f = intersections[i].data.ef.face;
+        auto const &e = intersections[i].data.ef.edge;
         // for all incident faces to the edge, find the next intersection and connect them
         for (auto fi : mesh.faces(e)) {
           // the edge is a boundary edge, nothing to do here
-          if (!f1.valid())
+          if (!fi.valid())
             continue;
 
           bool found = false;
@@ -310,57 +363,56 @@ Tuple<Field<std::vector<int>, FaceId>,
           for (auto ei : mesh.halfedges(f)) {
             for (int i2 : get_edge_intersections[ei]) {
               Intersection const &I2 = intersections[i2];
+              GEODE_ASSERT(I2.type == Intersection::itEF);
 
-              if (I2.face == fi) {
-                OTHER_ASSERT(!found); // fi cannot intersect more than one edge of f since one of its edges intersects f
+              if (I2.data.ef.face == fi) {
+                GEODE_ASSERT(!found); // fi cannot intersect more than one edge of f since one of its edges intersects f
                 found = true;
                 intersections[i].connected_to.append(i2);
-                if (!debug)
+                if (!debug_intersections)
                   break;
               }
             }
 
-            if (!debug && found)
+            if (!debug_intersections && found)
               break;
           }
 
-          if (!debug && found)
+          if (!debug_intersections && found)
             continue;
 
           // another edge ei != e of fi intersects f (debug only: check that it's exactly one)
           for (auto ei : mesh.halfedges(fi)) {
-            if (ei == e || ei == reverse(e))
+            if (ei == e || ei == mesh.reverse(e))
               continue;
             for (int i2 : get_edge_intersections[ei]) {
               Intersection const &I2 = intersections[i2];
-
-              if (I2.face == f) {
-                OTHER_ASSERT(!found); // only a maximum of two edges of fi can intersect f
+              GEODE_ASSERT(I2.type == Intersection::itEF);
+              if (I2.data.ef.face == f) {
+                GEODE_ASSERT(!found); // only a maximum of two edges of fi can intersect f
                 found = true;
                 intersections[i].connected_to.append(i2);
-                if (!debug)
+                if (!debug_intersections)
                   break;
               }
             }
 
-            if (!debug && found)
+            if (!debug_intersections && found)
               break;
           }
 
-          if (!debug && found)
+          if (!debug_intersections && found)
             continue;
 
           // fi and f share a loop vertex
           auto lv = mesh.common_vertex(fi, f);
           if (lv.valid()) {
+            GEODE_ASSERT(!found);
+
             if (vertex_intersections[lv] == -1) {
               // add an intersection for the loop vertex
               vertex_intersections[lv] = intersections.size();
-              Intersection intersection;
-              intersection.type = itLoop;
-              intersection.construct = pos[lv];
-              intersection.data.loop.vertex = lv;
-              intersections.push_back(intersection);
+              intersections.push_back(Intersection(lv, pos[lv]));
             }
 
             intersections[i].connected_to.append(vertex_intersections[lv]);
@@ -369,28 +421,34 @@ Tuple<Field<std::vector<int>, FaceId>,
             continue;
           }
 
+          if (debug_intersections) {
+            GEODE_ASSERT(found);
+            continue;
+          }
+
           // otherwise, this must be an error.
-          OTHER_ASSERT(false);
+          GEODE_ASSERT(false);
         }
 
-    } else if (I.type == itLoop) {
+    } else if (intersections[i].type == Intersection::itLoop) {
       // all loop vertices are at the end, they should already be connected, quit the loop
       break;
     } else {
       // there should not be anything else
+      std::cout << "found illegal intersection: " << intersections[i] << std::endl;
       GEODE_UNREACHABLE();
     }
   }
 
   // make a map from face pairs to face-face-face intersections
   Hashtable<Tuple<FaceId, FaceId>, std::vector<Tuple<int, FaceId>>> fff_by_edge;
-  for (int i = 0; i < intersections.size(); ++i) {
+  for (int i = 0; i < (int)intersections.size(); ++i) {
     Intersection const &I = intersections[i];
 
     switch (I.type) {
-      case itEF:
+      case Intersection::itEF:
         break;
-      case itFFF: {
+      case Intersection::itFFF: {
         Tuple<FaceId, FaceId> p1(I.data.fff.face1, I.data.fff.face2);
         Tuple<FaceId, FaceId> p2(I.data.fff.face1, I.data.fff.face3);
         Tuple<FaceId, FaceId> p3(I.data.fff.face2, I.data.fff.face3);
@@ -400,7 +458,7 @@ Tuple<Field<std::vector<int>, FaceId>,
         fff_by_edge[p3].push_back(tuple(i, I.data.fff.face1));
         break;
       }
-      case itLoop:
+      case Intersection::itLoop:
         // we can quit, once we're in loop territory that's all we'll see
         i = intersections.size();
         break;
@@ -427,15 +485,16 @@ Tuple<Field<std::vector<int>, FaceId>,
     }
 
     // does any edge of fp.x have an intersection with fp.y?
-    for (HalfedgeId ei : halfedges(fp.x)) {
+    for (HalfedgeId ei : mesh.halfedges(fp.x)) {
       for (int eii : get_edge_intersections[ei]) {
+        GEODE_ASSERT(intersections[eii].type == Intersection::itEF);
         if (intersections[eii].data.ef.face == fp.y) {
           if (end1 == -1) {
             end1 = eii;
           } else {
-            OTHER_ASSERT(end2 == -1);
+            GEODE_ASSERT(end2 == -1);
             end2 = eii;
-            if (!debug)
+            if (!debug_intersections)
               goto found_all;
           }
         }
@@ -443,15 +502,16 @@ Tuple<Field<std::vector<int>, FaceId>,
     }
 
     // does any edge of fp.y have an intersection with fp.x?
-    for (HalfedgeId ei : halfedges(fp.y)) {
+    for (HalfedgeId ei : mesh.halfedges(fp.y)) {
       for (int eii : get_edge_intersections[ei]) {
+        GEODE_ASSERT(intersections[eii].type == Intersection::itEF);
         if (intersections[eii].data.ef.face == fp.x) {
           if (end1 == -1) {
             end1 = eii;
           } else {
-            OTHER_ASSERT(end2 == -1);
+            GEODE_ASSERT(end2 == -1);
             end2 = eii;
-            if (!debug)
+            if (!debug_intersections)
               goto found_all;
           }
         }
@@ -464,14 +524,14 @@ Tuple<Field<std::vector<int>, FaceId>,
     found_all:
 
     // remove the path edge between the end points
-    OTHER_ASSERT(intersections[end1].connected_to.contains(end2));
-    OTHER_ASSERT(intersections[end2].connected_to.contains(end1));
+    GEODE_ASSERT(intersections[end1].connected_to.contains(end2));
+    GEODE_ASSERT(intersections[end2].connected_to.contains(end1));
 
     intersections[end1].connected_to.remove_first_lazy(end2);
     intersections[end2].connected_to.remove_first_lazy(end1);
 
 
-    if (debug || ints.size() > 1) {
+    if (debug_intersections || ints.size() > 1) {
       // TODO EXACT
       // compute the edge implied by the face pair
       TV N = cross(mesh.triangle(fp.x, pos).normal(),
@@ -479,13 +539,13 @@ Tuple<Field<std::vector<int>, FaceId>,
 
       std::vector<Prioritize<int>> sorted_ints;
       for (auto I : ints) {
-        real d = dot(N, intersections[I.x].construct);
+        real d = dot(Vector<Interval,3>(N), intersections[I.x].construct).center();
         sorted_ints.push_back(prioritize(I.x, d));
       }
 
       // add the end points
-      real d1 = dot(N, intersections[end1].construct);
-      real d2 = dot(N, intersections[end2].construct);
+      real d1 = dot(Vector<Interval,3>(N), intersections[end1].construct).center();
+      real d2 = dot(Vector<Interval,3>(N), intersections[end2].construct).center();
       sorted_ints.push_back(prioritize(end1, d1));
       sorted_ints.push_back(prioritize(end2, d2));
 
@@ -493,17 +553,17 @@ Tuple<Field<std::vector<int>, FaceId>,
       fallback_sort(sorted_ints, std::less<Prioritize<int>>());
 
       // make sure the end points are in fact at the ends
-      OTHER_ASSERT(sorted_ints.front().a == end1 || sorted_ints.front().a == end2);
-      OTHER_ASSERT(sorted_ints.back().a == end1 || sorted_ints.back().a == end2);
+      GEODE_ASSERT(sorted_ints.front().a == end1 || sorted_ints.front().a == end2);
+      GEODE_ASSERT(sorted_ints.back().a == end1 || sorted_ints.back().a == end2);
 
       // insert the sorted string of face-face-face intersections into the path
       // between the end points
-      for (int ii = 0; ii < sorted_ints.size()-1; ++ii) {
+      for (int ii = 0; ii < (int)sorted_ints.size()-1; ++ii) {
         int i1 = sorted_ints[ii].a;
         int i2 = sorted_ints[ii+1].a;
 
-        OTHER_ASSERT(!intersections[i1].connected_to.contains(i2));
-        OTHER_ASSERT(!intersections[i2].connected_to.contains(i1));
+        GEODE_ASSERT(!intersections[i1].connected_to.contains(i2));
+        GEODE_ASSERT(!intersections[i2].connected_to.contains(i1));
         intersections[i1].connected_to.append(i2);
         intersections[i2].connected_to.append(i1);
       }
@@ -520,19 +580,19 @@ Tuple<Field<std::vector<int>, FaceId>,
   }
 
   // register face-face-face intersections on the faces they belong to
-  for (int i = 0; i < intersections.size(); ++i) {
+  for (int i = 0; i < (int)intersections.size(); ++i) {
     Intersection const &I = intersections[i];
 
     switch (I.type) {
-      case itEF:
+      case Intersection::itEF:
         break;
-      case itFFF: {
-        face_intersections[I.data.fff.face1].push_back(i);
-        face_intersections[I.data.fff.face2].push_back(i);
-        face_intersections[I.data.fff.face3].push_back(i);
+      case Intersection::itFFF: {
+        intersection_indices[face_intersections[I.data.fff.face1]].push_back(i);
+        intersection_indices[face_intersections[I.data.fff.face2]].push_back(i);
+        intersection_indices[face_intersections[I.data.fff.face3]].push_back(i);
         break;
       }
-      case itLoop:
+      case Intersection::itLoop:
         // we can quit, once we're in loop territory that's all we'll see
         i = intersections.size();
         break;
@@ -541,38 +601,38 @@ Tuple<Field<std::vector<int>, FaceId>,
     }
   }
 
-  // debug only: make sure all connections are symmetric and intersections have
-  // the correct number of connections
-  if (debug) {
-    for (int i = 0; i < intersections.size(); ++i) {
+  // debug only: make sure all connections are symmetric,  intersections have
+  // the correct number of connections, and everything is registered in the mesh 
+  if (debug_intersections) {
+    for (int i = 0; i < (int)intersections.size(); ++i) {
       Intersection const &I = intersections[i];
 
-      OTHER_ASSERT(I.connected_to.is_unique());
+      GEODE_ASSERT(I.connected_to.is_unique());
 
       switch (I.type) {
-        case itEF: {
-          OTHER_ASSERT(mesh.is_boundary(I.edge) && I.connected_to.size() == 1 ||
-                       !mesh.is_boundary(I.edge) && I.connected_to.size() == 2);
+        case Intersection::itEF: {
+          GEODE_ASSERT(mesh.is_boundary(I.data.ef.edge) && I.connected_to.size() == 1 ||
+                       !mesh.is_boundary(I.data.ef.edge) && I.connected_to.size() == 2);
           break;
         }
-        case itFFF: {
-          OTHER_ASSERT(I.connected_to.size() == 6);
+        case Intersection::itFFF: {
+          GEODE_ASSERT(I.connected_to.size() == 6);
           break;
         }
-        case itLoop: {
-          OTHER_ASSERT(I.connected_to.size() % 2 == 0);
+        case Intersection::itLoop: {
+          GEODE_ASSERT(I.connected_to.size() % 2 == 0 && !I.connected_to.empty());
           break;
         }
       }
 
       for (int i2 : I.connected_to) {
         Intersection const &I2 = intersections[i2];
-        OTHER_ASSERT(I2.connected_to.contains(i));
+        GEODE_ASSERT(I2.connected_to.contains(i));
       }
     }
   }
 
-  return tuple(face_intersections, edge_intersections, vertex_intersections);
+  return tuple(face_intersections, edge_intersections, vertex_intersections, intersection_indices);
 }
 
 /*
@@ -589,21 +649,23 @@ Tuple<Field<std::vector<int>, FaceId>,
 
 */
 
-void create_intersection_vertices(MutableTriangleTopology &mesh, FieldId<TV, VertexId> pos,
-                                  std::vector<Intersection> const &intersections,
+void create_intersection_vertices(MutableTriangleTopology &mesh, FieldId<TV, VertexId> pos_id,
+                                  std::vector<Intersection> &intersections,
                                   FieldId<int,VertexId> vertex_intersections_id) {
-  Field<int,VertexId> vertex_intersections = mesh.field(vertex_intersections_id);
-  for (int i = 0; i < intersections.size(); ++i) {
+  auto &pos = mesh.field(pos_id);
+  auto &vertex_intersections = mesh.field(vertex_intersections_id);
+
+  for (int i = 0; i < (int)intersections.size(); ++i) {
     Intersection &I = intersections[i];
-    OTHER_ASSERT(I.vertices.empty());
+    GEODE_ASSERT(I.vertices.empty());
     switch (I.type) {
-      case itEF:
+      case Intersection::itEF:
         I.vertices.extend(vec(mesh.add_vertex(), mesh.add_vertex()));
         break;
-      case itFFF:
-        I.vertices.extend(vec(mesh.add_vertex(), mesh.add_vertex(), mesh.add_vertex()));        mesh.field(pos)[I.vertices[0]]
+      case Intersection::itFFF:
+        I.vertices.extend(vec(mesh.add_vertex(), mesh.add_vertex(), mesh.add_vertex()));
         break;
-      case itLoop:
+      case Intersection::itLoop:
         // we may have to duplicate loop vertices, but not for triangulation,
         // this will only become necessary during stitching, so we'll do that later
         break;
@@ -613,7 +675,7 @@ void create_intersection_vertices(MutableTriangleTopology &mesh, FieldId<TV, Ver
 
     for (auto vi : I.vertices) {
       vertex_intersections[vi] = i;
-      mesh.field(pos)[vi] = I.construct;
+      pos[vi] = vec(I.construct.x.center(), I.construct.y.center(), I.construct.z.center());
     }
   }
 }
@@ -633,39 +695,57 @@ void create_intersection_vertices(MutableTriangleTopology &mesh, FieldId<TV, Ver
 
 */
 
+template<class TA, class Index=int>
+struct indirect_less {
+  TA const &ta;
+
+  indirect_less(TA const &ta): ta(ta) {
+  }
+
+  inline bool operator()(Index i1, Index i2) const {
+    return ta[i1] < ta[i2];
+  }
+};
+
 Tuple<FieldId<HalfedgeId, HalfedgeId>,
       FieldId<FaceId, FaceId>> retriangulate_faces(MutableTriangleTopology &mesh,
-                                                   FieldId<TV, VertexId> pos_id,
+                                                   FieldId<TV, VertexId> pos_id, 
                                                    std::vector<Intersection> const &intersections,
-                                                   FieldId<std::vector<int>, FaceId> face_intersections_id,
-                                                   FieldId<std::vector<int>, HalfedgeId> edge_intersections_id,
+                                                   std::vector<std::vector<int>> &intersection_indices,
+                                                   FieldId<int, FaceId> face_intersections_id,
+                                                   FieldId<int, HalfedgeId> edge_intersections_id,
                                                    FieldId<int, VertexId> vertex_intersections_id) {
 
-  auto pos = mesh.field(pos_id);
-  auto vertex_intersections = mesh.field(vertex_intersections_id);
-  auto edge_intersections = mesh.field(edge_intersections_id);
-  auto face_intersections = mesh.field(face_intersections_id);
+  // add result fields (before getting references to the existing fields)
+  auto edge_correspondences_id = mesh.add_halfedge_field<HalfedgeId>();
+  auto face_correspondences_id = mesh.add_face_field<FaceId>();
+  auto &edge_correspondences = mesh.field(edge_correspondences_id);
+  auto &face_correspondences = mesh.field(face_correspondences_id);
+
+  edge_correspondences.flat.fill(HalfedgeId());
+  face_correspondences.flat.fill(FaceId());
+
+  auto &pos = mesh.field(pos_id);
+  auto &vertex_intersections = mesh.field(vertex_intersections_id);
+  auto &edge_intersections = mesh.field(edge_intersections_id);
+  auto &face_intersections = mesh.field(face_intersections_id);
+
+  // convenient lookup on edges
+  GetEdgeIntersections get_edge_intersections(mesh, edge_intersections, intersection_indices);
 
   // sort all edge intersections for t value along their edges
   // TODO EXACT
   for (auto he : mesh.interior_halfedges()) {
-    fallback_sort(edge_intersections[he], std::less<Intersection>());
+    fallback_sort(intersection_indices[edge_intersections[he]], indirect_less<std::vector<Intersection>>(intersections));
   }
-
-  auto edge_correspondences_id = mesh.add_halfedge_field<HalfedgeId>();
-  auto face_correspondences_id = mesh.add_face_field<FaceId>();
-  auto edge_correspondences = mesh.field(edge_correspondences_id);
-  auto face_correspondences = mesh.field(face_correspondences_id);
-
-  edge_correspondences.flat.fill(HalfedgeId())
-  face_correspondences.flat.fill(Face())
 
   // Map from a sorted pair of intersections to pairs of vertices. Each pair of vertices
   // is sorted the same (vertex corresponding to lower index intersection first).
   // There should be zero or two vertex pairs for any given intersection pair.
   Hashtable<Vector<int,2>, Array<Vector<VertexId,2>>> intersection_edges;
 
-  for (auto const &f : mesh.faces()) {
+  auto faces = mesh.faces();
+  for (auto const f : faces) {
 
     // make a set of vertices and edge constraints to use in triangulation
     Array<Vector<int,2>> edges;
@@ -683,88 +763,124 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
     }
 
     // each constraint is an intersection edge, or part of the triangle boundary
+    std::cout << "intersections on face " << f << std::endl;
 
     // add boundary vertices and edges
     for (int i = 0; i < 3; ++i) {
       HalfedgeId he = mesh.halfedge(f, i);
-      VertexId startv = mesh.vertex(f, i);
+      GEODE_DEBUG_ONLY(VertexId startv = mesh.vertex(f, i));
       assert(mesh.src(he) == startv);
       assert(startv == vertices[i]);
-      VertexId endv = mesh.dst(he);
 
       // check where the intersections are stored
-      std::vector<int> ints;
-      if (mesh.is_boundary(mesh.reverse(he)) || he < mesh.reverse(he)) {
-        // they're with he
-        ints = edge_intersections[he];
-      } else {
-        // they're with reverse(he)
-        ints = edge_intersections[mesh.reverse(he)];
-        std::reverse(ints.begin(), ints.end());
-      }
+      std::vector<int> ints = get_edge_intersections.get_ordered(he);
+
+      std::cout << "  he " << he << ": " << ints << " (" << intersection_indices[edge_intersections[he]] << "/" << intersection_indices[edge_intersections[mesh.reverse(he)]] << ")" << std::endl;
 
       // add all vertices contained in these constraints
-      for (int ii = 0; ii < ints.size(); ++ii) {
+      for (auto ii : ints) {
         // all these intersections intersect our edge
-        OTHER_ASSERT(intersections[ints[ii]].type == itEF);
-        OTHER_ASSERT(intersections[ints[ii]].data.ef.edge == he || intersections[ints[ii]].data.ef.edge == reverse(he));
+        GEODE_ASSERT(intersections[ii].type == Intersection::itEF);
+        GEODE_ASSERT(intersections[ii].data.ef.edge == he || intersections[ii].data.ef.edge == mesh.reverse(he));
         intersection_to_local_idx[ii] = vertices.size();
         // first vertex is the one dedicated to the edge
-        vertices.push_back(intersections[ints[ii]].vertices[0]);
+        vertices.append(intersections[ii].vertices[0]);
       }
 
-      // add triangulation constraints along this edge
+      // add triangulation constraints along this edge (none of these are intersection edges)
       if (!ints.empty()) {
-        edges.push_back(vec(i, intersection_to_local_idx[ints.front()));
-        for (int j = 1; j < ints.size(); ++j) {
-          edges.push_back(vec(intersection_to_local_idx[ints[j-1]],
-                              intersection_to_local_idx[ints[j]]))
+        edges.append(vec(i, intersection_to_local_idx[ints.front()]));
+        for (int j = 1; j < (int)ints.size(); ++j) {
+          edges.append(vec(intersection_to_local_idx[ints[j-1]],
+                              intersection_to_local_idx[ints[j]]));
         }
-        edges.push_back(vec(intersection_to_local_idx[ints.back()], (i+1)%3));
+        edges.append(vec(intersection_to_local_idx[ints.back()], (i+1)%3));
       } else {
-        edges.push_back(vec(i, (i+1)%3));
+        edges.append(vec(i, (i+1)%3));
+      }
+
+      // make all edge to edge triangulation constraints (using connected_to) 
+      for (int ii : ints) {
+        Intersection const &I = intersections[ii];
+        for (int i2 : I.connected_to) {
+          if (!intersection_to_local_idx.contains(i2))
+            continue; // we will add this edge when we add i2's vertex 
+                      // (or i2 is not on the boundary of this face, and we'll never add it)
+
+          // at this point, only EF vertices on the boundaries of f are in intersection_to_local_idx
+          // we can only connect to other EF vertices on another edge of f
+          GEODE_ASSERT(intersections[i2].type == Intersection::itEF);
+          GEODE_ASSERT(intersections[i2].data.ef.face == I.data.ef.face);
+          GEODE_ASSERT(intersections[i2].data.ef.edge != he && intersections[i2].data.ef.edge != mesh.reverse(he));
+          GEODE_ASSERT(mesh.halfedges(f).contains(intersections[i2].data.ef.edge) || 
+                       mesh.halfedges(f).contains(mesh.reverse(intersections[i2].data.ef.edge)));
+
+          edges.append(vec(intersection_to_local_idx[ii], intersection_to_local_idx[i2]));
+
+          std::cout << "ee intersection edge " << ii << "-" << i2 << ", vertices " << vec(vertices[intersection_to_local_idx[ii]],
+                                                                                      vertices[intersection_to_local_idx[i2]]) << std::endl;
+          std::cout << "  i1: " << intersections[ii] << std::endl;
+          std::cout << "  i2: " << intersections[i2] << std::endl;
+
+          // Remember vertex pairs of intersection edges for later reconstruction of
+          // edge correspondence
+          if (ii < i2) {
+            intersection_edges[vec(ii,i2)].append(vec(vertices[intersection_to_local_idx[ii]],
+                                                     vertices[intersection_to_local_idx[i2]]));
+          } else {
+            intersection_edges[vec(i2,ii)].append(vec(vertices[intersection_to_local_idx[i2]],
+                                                     vertices[intersection_to_local_idx[ii]]));
+          }
+        }
       }
     }
 
     // make all interior vertices and interior edge constraints (using
     // connected_to).
 
-    for (int i : face_intersections[f]) {
+    for (int i : intersection_indices[face_intersections[f]]) {
       Intersection const &I = intersections[i];
       intersection_to_local_idx[i] = vertices.size();
 
       // get the vertex for this intersection and add it to the set of vertices
       // to triangulate
+      int vidx = -1;
       switch (I.type) {
-        case itEF:
+        case Intersection::itEF:
           // we must be the face in this intersection
-          OTHER_ASSERT(I.data.ef.face == f);
+          GEODE_ASSERT(I.data.ef.face == f);
           // first vertex is the one dedicated to the edge, second one to the face
-          vertices.push_back(I.vertices[1]);
+          vidx = 1;
           break;
-        case itFFF:
+        case Intersection::itFFF:
           if (I.data.fff.face1 == f) {
-            vertices.push_back(I.vertices[0]);
+            vidx = 0;
           } else if (I.data.fff.face2 == f) {
-            vertices.push_back(I.vertices[1]);
+            vidx = 1;
           } else if (I.data.fff.face3 == f) {
-            vertices.push_back(I.vertices[2]);
+            vidx = 2;
           } else {
-            OTHER_FATAL_ERROR();
+            GEODE_FATAL_ERROR();
           }
           break;
-        case itLoop:
+        case Intersection::itLoop:
         default:
-          OTHER_UNREACHABLE();
+          GEODE_UNREACHABLE();
       }
+      vertices.append(I.vertices[vidx]);
 
       // go through all connected intersections, and remember edges to vertices
-      // that are already there.
+      // that are already there (loop vertices are already there).
       for (int i2 : I.connected_to) {
         if (!intersection_to_local_idx.contains(i2))
           continue; // we will add this edge when we add i2's vertex
 
         edges.append(vec(intersection_to_local_idx[i], intersection_to_local_idx[i2]));
+
+        std::cout << "internal intersection edge " << i << "-" << i2 << ", vertices " << vec(vertices[intersection_to_local_idx[i]],
+                                                                                    vertices[intersection_to_local_idx[i2]]) << std::endl;
+        std::cout << "  i1: " << intersections[i] << std::endl;
+        std::cout << "  i2: " << intersections[i2] << std::endl;
 
         // Remember vertex pairs of intersection edges for later reconstruction of
         // edge correspondence
@@ -778,24 +894,29 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
       }
     }
 
+    // only replace faces that have intersections on them
+    if (vertices.size() == 3) {
+      continue;
+    }
+
     // TODO EXACT: this should be replaced by an exact non-delaunay version of
     // recursive triangulation
     // project points into the face plane so delaunay can deal with them
     Array<Vector<real,2>> projected;
     // make a Frame such that applying the frame rotates the face normal to z
-    auto rot = Rotation<TV>::from_rotated_vector(mesh.normal(f), vec(0, 0, 1));
+    auto rot = Rotation<TV>::from_rotated_vector(mesh.normal(f, pos), vec(0., 0., 1.));
     for (auto v : vertices) {
-      projected.push_back((rot*pos[v]).xy());
+      projected.append((rot*pos[v]).xy());
     }
     Ref<TriangleTopology> faces = delaunay_points(projected, edges);
 
     // replace original face with new faces
     mesh.erase(f, false);
-    for (auto newf : faces.faces()) {}
-      Vector<VertexId,3> verts = faces.vertices(newf);
-      auto added = mesh.add_face(vertices[verts[0].id],
-                                 vertices[verts[1].id],
-                                 vertices[verts[2].id]);
+    for (auto newf : faces->faces()) {
+      Vector<VertexId,3> verts = faces->vertices(newf);
+      auto added = mesh.add_face(vec(vertices[verts[0].id],
+                                     vertices[verts[1].id],
+                                     vertices[verts[2].id]));
 
       // fill face_correspondences
       face_correspondences[added] = f;
@@ -804,11 +925,16 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
 
   // make sure all intersection edges have a valid number of vertex representatives
   for (auto p : intersection_edges) {
-    OTHER_ASSERT(p.value().size() == 2);
+    GEODE_ASSERT(p.data().size() == 2);
+
+    GEODE_ASSERT(intersections[p.key().x].vertices.contains(p.data()[0][0]));
+    GEODE_ASSERT(intersections[p.key().y].vertices.contains(p.data()[0][1]));
+    GEODE_ASSERT(intersections[p.key().x].vertices.contains(p.data()[1][0]));
+    GEODE_ASSERT(intersections[p.key().y].vertices.contains(p.data()[1][1]));
 
     // get the edges corresponding to the two vertex pairs
-    HalfedgeId he1 = mesh.halfedge(p.value().front().x, p.value().front().y);
-    HalfedgeId he2 = mesh.halfedge(p.value().back().x, p.value().back().y);
+    HalfedgeId he1 = mesh.halfedge(p.data().front().x, p.data().front().y);
+    HalfedgeId he2 = mesh.halfedge(p.data().back().x, p.data().back().y);
 
     // the two halfedges are aligned, add four edge_correspondences entries
     edge_correspondences[he1] = mesh.reverse(he2);
@@ -841,30 +967,31 @@ Field<int, FaceId> compute_depths(TriangleTopology const &mesh,
                                   Field<TV, VertexId> const &pos,
                                   Field<int, VertexId> const &vertex_intersections,
                                   Field<HalfedgeId, HalfedgeId> const &edge_correspondences,
-                                  Tuple<Ref<SimplexTree<TV,3>>, Array<FaceId>> const &face_tree) {
+                                  Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> const &face_tree) {
 
-  Field<int, FaceId> depth_map = mesh.create_compatible_field<int,FaceId>();
-  Field<bool, VertexId> depth_assigned = mesh.create_compatible_field<bool,VertexId>();
+  Field<int, FaceId> depth_map = mesh.create_compatible_face_field<int>();
+  Field<bool, FaceId> depth_assigned = mesh.create_compatible_face_field<bool>();
+  Field<bool, VertexId> v_depth_assigned = mesh.create_compatible_vertex_field<bool>();
 
   for (auto vi : mesh.vertices()) {
-    // find an original vertex (vertex_intersections[vi] == -1)
-    if (depth_assigned[vi] || vertex_intersections[vi] != -1)
+    // find an original vertex (vertex_intersections[vi] == -1) which isn't assigned
+    if (v_depth_assigned[vi] || vertex_intersections[vi] != -1)
       continue;
 
     // compute the depth of this vertex
     // TODO EXACT
     // this simple normal is not safe -- the normal must point "outside"
     Ray<TV> ray(pos[vi], mesh.normal(vi, pos), true);
-    Array<Ray<TV> intersections = face_tree.x->intersections(ray, 0);
+    Array<Ray<TV>> intersections = face_tree.x->intersections(ray, 0);
 
     int depth = 0;
     for (auto r : intersections) {
       auto f = face_tree.y[r.aggregate_id];
 
-      if (mesh.vertices(f).contains(vi));
+      if (mesh.vertices(f).contains(vi))
         continue;
 
-      auto simplex = face_tree.simplices[r.aggregate_id];
+      auto simplex = face_tree.x->simplices[r.aggregate_id];
       if (dot(r.direction, simplex.normal()) > 0) {
         depth++;
       } else {
@@ -873,16 +1000,20 @@ Field<int, FaceId> compute_depths(TriangleTopology const &mesh,
     }
 
     // propagate the depth across this connected component
-    std::vector<FaceId> upnext();
+    std::vector<FaceId> upnext;
 
     // initialize any face incident to vi (be wary of boundaries)
     FaceId fi = mesh.face(mesh.halfedge(vi));
     if (!fi.valid())
       fi = mesh.face(mesh.reverse(mesh.halfedge(vi)));
-    OTHER_ASSERT(fi.valid());
-    OTHER_ASSERT(!depth_assigned[fi]);
+    GEODE_ASSERT(fi.valid());
+    GEODE_ASSERT(!depth_assigned[fi]);
     depth_assigned[fi] = true;
     depth_map[fi] = depth;
+    for (auto vi : mesh.vertices(fi)) {
+      v_depth_assigned[vi] = true;
+    }
+
     upnext.push_back(fi);
 
     while (!upnext.empty()) {
@@ -893,15 +1024,20 @@ Field<int, FaceId> compute_depths(TriangleTopology const &mesh,
       for (auto he : mesh.halfedges(id)) {
         HalfedgeId intersection_edge = edge_correspondences[he];
 
-        #define SET_DEPTH(halfedge, depth) \
+        #define SET_DEPTH(halfedge, depth) { \
+          GEODE_ASSERT(!mesh.erased(halfedge)); \
           FaceId f = mesh.face(halfedge); \
           if (depth_assigned[f]) \
-            OTHER_ASSERT((depth) == depth_map[f]); \
+            GEODE_ASSERT((depth) == depth_map[f]); \
           else { \
+            GEODE_ASSERT(v_depth_assigned[mesh.src(halfedge)]); \
+            GEODE_ASSERT(v_depth_assigned[mesh.dst(halfedge)]); \
+            v_depth_assigned[mesh.opposite(halfedge)] = true; \
             depth_assigned[f] = true; \
             depth_map[f] = (depth); \
             upnext.push_back(f); \
-          }
+          } \
+        }
 
         if (intersection_edge.valid()) {
           // propagate to next bit of the same surface
@@ -914,7 +1050,7 @@ Field<int, FaceId> compute_depths(TriangleTopology const &mesh,
           // propagate to other surface
           HalfedgeId r = mesh.reverse(he);
           HalfedgeId rie = edge_correspondences[r];
-          OTHER_ASSERT(rie.valid());
+          GEODE_ASSERT(rie.valid());
           SET_DEPTH(r, depth + diff);
           SET_DEPTH(rie, depth + diff);
 
@@ -943,7 +1079,7 @@ Field<int, FaceId> compute_depths(TriangleTopology const &mesh,
 
 void stitch_meshes(MutableTriangleTopology &mesh,
                    FieldId<TV, VertexId> pos_id,
-                   std::vector<Intersection> const &intersections,
+                   std::vector<Intersection> &intersections,
                    FieldId<int, VertexId> vertex_intersections_id,
                    FieldId<HalfedgeId, HalfedgeId> edge_correspondences_id) {
 
@@ -955,11 +1091,12 @@ void stitch_meshes(MutableTriangleTopology &mesh,
   // components in the new mesh. Count the number of components around the loop
   // vertex first, split the vertex and redistribute the incident faces before
   // merging intersection edges.
-  for (auto vi : mesh.vertices()) {
+  auto orig_vertices = mesh.vertices();
+  for (auto vi : orig_vertices) {
     int iid = vertex_intersections[vi];
     if (iid == -1)
       continue;
-    if (intersections[iid].type != itLoop)
+    if (intersections[iid].type != Intersection::itLoop)
       continue;
 
     intersections[iid].vertices.append(vi);
@@ -973,7 +1110,7 @@ void stitch_meshes(MutableTriangleTopology &mesh,
       // halfedge)
       HalfedgeId he = mesh.halfedge(vi);
       std::vector<HalfedgeId> component(1, he);
-      OTHER_ASSERT(mesh.is_boundary(component.front()));
+      GEODE_ASSERT(mesh.is_boundary(component.front()));
 
       // walk right (in the direction of where the faces connected to our halfedge
       // are), and add faces to our component until we have closed the loop
@@ -983,7 +1120,7 @@ void stitch_meshes(MutableTriangleTopology &mesh,
           // next one is connected via a face
           HalfedgeId next_he = mesh.next(ohe);
           // can't finish with a face, since the first he was a boundary
-          OTHER_ASSERT(next_he != component[0]);
+          GEODE_ASSERT(next_he != component[0]);
           component.push_back(next_he);
           he = next_he;
         } else {
@@ -994,8 +1131,8 @@ void stitch_meshes(MutableTriangleTopology &mesh,
             break;
           } else {
             next_he = mesh.reverse(next_he);
-            OTHER_ASSERT(mesh.is_boundary(next_he));
-            OTHER_ASSERT(vertex_intersections[mesh.dst(he)] == vertex_intersections[mesh.dst(next_he)]);
+            GEODE_ASSERT(mesh.is_boundary(next_he));
+            GEODE_ASSERT(vertex_intersections[mesh.dst(he)] == vertex_intersections[mesh.dst(next_he)]);
             if (next_he == component[0]) {
               // we're done!
               break;
@@ -1007,8 +1144,14 @@ void stitch_meshes(MutableTriangleTopology &mesh,
         }
       }
 
-      // check if this component is all the outgoing edge there are (then we're good here)
-      if (component.size() == stl::distance(mesh.outgoing(vi).begin(), mesh.outgoing(vi).end())) {
+      // check if this component is all the outgoing edges there are (then we're good here)
+      unsigned int n_outgoing = 0;
+      for (auto oh: mesh.outgoing(vi)) {
+        GEODE_ASSERT(mesh.src(oh) == vi); // stupid, but avoid unused variable warning
+        n_outgoing++;
+      }
+
+      if (component.size() == n_outgoing) {
         break;
       }
 
@@ -1022,7 +1165,7 @@ void stitch_meshes(MutableTriangleTopology &mesh,
       intersections[iid].vertices.append(newv);
 
       int i = 0;
-      HalfedgeId he = component.front();
+      he = component.front();
 
       // store the halfedge that is left dangling when we take this section out
       // of the loop
@@ -1031,25 +1174,25 @@ void stitch_meshes(MutableTriangleTopology &mesh,
       do {
 
         // he is always a boundary halfedge here
-        OTHER_ASSERT(mesh.is_boundary(he));
+        GEODE_ASSERT(mesh.is_boundary(he));
 
         // set the src vertex on the outgoing boundary edges
-        unsafe_set_src(he, newv);
+        mesh.unsafe_set_src(he, newv);
 
         // move on to the next (which cannot be past the end, and cannot be a boundary)
         ++i;
-        OTHER_ASSERT(i < component.size());
+        GEODE_ASSERT(i < (int)component.size());
         he = component[i];
-        OTHER_ASSERT(!mesh.is_boundary(he));
+        GEODE_ASSERT(!mesh.is_boundary(he));
 
         // replace vi with newv in all faces in this section
         do {
-          bool changed = unsafe_replace_vertex(mesh.face(he), vi, newv);
-          OTHER_ASSERT(changed);
+          bool changed = mesh.unsafe_replace_vertex(mesh.face(he), vi, newv);
+          GEODE_ASSERT(changed);
 
           ++i;
 
-          if (i == component.size()) {
+          if (i == (int)component.size()) {
             // do last link then quit
             he = component.front();
             break;
@@ -1061,7 +1204,7 @@ void stitch_meshes(MutableTriangleTopology &mesh,
         // next section: connect this section to the last if not already connected
         // and connect the previous links around vi instead
         HalfedgeId prev_he = mesh.reverse(component[i-1]);
-        OTHER_ASSERT(mesh.is_boundary(prev_he));
+        GEODE_ASSERT(mesh.is_boundary(prev_he));
 
         // if these were not next to each other in the loop around vi, make them
         if (mesh.prev(he) != prev_he) {
@@ -1093,19 +1236,19 @@ void stitch_meshes(MutableTriangleTopology &mesh,
 
   // replace all intersection vertices with the first vertex on the list (in faces and boundaries)
   for (auto const &I : intersections) {
-    if (I.type == itLoop)
+    if (I.type == Intersection::itLoop)
       continue;
 
-    for (auto vi : I.vertices()) {
+    for (auto vi : I.vertices) {
       if (vi == I.vertices.front())
         continue;
 
-      for (auto f : mesh.faces(vi)) {
-        unsafe_replace_vertex(f, vi, I.vertices.front());
+      for (auto f : mesh.incident_faces(vi)) {
+        mesh.unsafe_replace_vertex(f, vi, I.vertices.front());
       }
 
       for (auto he : mesh.outgoing(vi)) {
-        unsafe_set_src(he, I.vertices.front());
+        mesh.unsafe_set_src(he, I.vertices.front());
       }
     }
   }
@@ -1123,27 +1266,27 @@ void stitch_meshes(MutableTriangleTopology &mesh,
     if (re == mesh.reverse(he))
       continue;
 
-    OTHER_ASSERT(mesh.is_boundary(mesh.reverse(he)) && mesh.is_boundary(mesh.reverse(re)));
+    GEODE_ASSERT(mesh.is_boundary(mesh.reverse(he)) && mesh.is_boundary(mesh.reverse(re)));
 
     // fix prev/next on adjacent boundaries to route around us
     if (mesh.prev(he) != re) {
-      unsafe_boundary_link(mesh.prev(he), mesh.next(re));
+      mesh.unsafe_boundary_link(mesh.prev(he), mesh.next(re));
     }
     if (mesh.next(he) != re) {
-      unsafe_boundary_link(mesh.prev(re), mesh.next(he));
+      mesh.unsafe_boundary_link(mesh.prev(re), mesh.next(he));
     }
 
     // delete attached boundary edges
-    erase(mesh.reverse(he));
-    erase(mesh.reverse(re));
+    mesh.erase(mesh.reverse(he));
+    mesh.erase(mesh.reverse(re));
 
     // set reverse
-    unsafe_interior_link(he, re);
+    mesh.unsafe_interior_link(he, re);
   }
 
   // find new boundary halfedges for intersection vertices that are still on the boundary
   for (auto const &I : intersections) {
-    if (I.type == itLoop) {
+    if (I.type == Intersection::itLoop) {
       for (auto vi : I.vertices)
       mesh.ensure_boundary_halfedge(vi);
     } else
@@ -1157,30 +1300,34 @@ void stitch_meshes(MutableTriangleTopology &mesh,
 
 */
 
-void csg(MutableTriangleTopology &mesh, int target_depth, int pos_id_idx) {
+FieldId<FaceId, FaceId> csg(MutableTriangleTopology &mesh, int target_depth, int pos_id_idx) {
 
   FieldId<TV, VertexId> pos_id(pos_id_idx);
-  OTHER_ASSERT(mesh.has_field(pos_id));
+  GEODE_ASSERT(mesh.has_field(pos_id));
 
-  auto face_tree = mesh.face_tree(positions);
-  auto edge_tree = mesh.edge_tree(positions);
+  auto face_tree = mesh.face_tree(mesh.field(pos_id));
+  auto edge_tree = mesh.edge_tree(mesh.field(pos_id));
 
-  auto intersections = compute_edge_face_intersections(mesh, mesh.field(pos_id), face_tree, edge_tree);
-  extend(intersections, compute_face_face_face_intersections(mesh, mesh.field(pos_id), face_tree));
+  auto intersections = compute_edge_face_intersections(mesh, face_tree, edge_tree);
+  extend(intersections, compute_face_face_face_intersections(mesh, face_tree));
 
-  Tuple<Field<std::vector<int>, FaceId>,
-        Field<std::vector<int>, HalfedgeId>,
-        Field<int, VertexId>> path_info = assemble_paths(mesh, mesh.field(pos_id), intersections);
+  std::vector<std::vector<int>> intersection_indices;
+
+  Tuple<Field<int, FaceId>,
+        Field<int, HalfedgeId>,
+        Field<int, VertexId>,
+        std::vector<std::vector<int>>> path_info = assemble_paths(mesh, mesh.field(pos_id), intersections);
 
   // add the path fields to the mesh
-  FieldId<std::vector<int>, FaceId> face_intersections_id = mesh.add_field(path_info.x);
-  FieldId<std::vector<int>, HalfedgeId> edge_intersections_id = mesh.add_field(path_info.y);
-  FieldId<int, VertexId> vertex_intersections_id = mesh.add_field(path_info.z);
+  FieldId<int, FaceId> face_intersections_id = mesh.add_field(path_info.x); // index into intersection_indices
+  FieldId<int, HalfedgeId> edge_intersections_id = mesh.add_field(path_info.y); // index into intersection_indices
+  FieldId<int, VertexId> vertex_intersections_id = mesh.add_field(path_info.z); // index into intersections
 
   create_intersection_vertices(mesh, pos_id, intersections, vertex_intersections_id);
 
   Tuple<FieldId<HalfedgeId, HalfedgeId>,
         FieldId<FaceId, FaceId>> seam_info = retriangulate_faces(mesh, pos_id, intersections,
+                                                                 path_info.w,
                                                                  face_intersections_id,
                                                                  edge_intersections_id,
                                                                  vertex_intersections_id);
@@ -1209,4 +1356,12 @@ void csg(MutableTriangleTopology &mesh, int target_depth, int pos_id_idx) {
   return seam_info.y;
 }
 
+}
+
+#include <geode/python/wrap.h>
+
+using namespace geode;
+
+void wrap_intersections() {
+  GEODE_FUNCTION(csg);
 }

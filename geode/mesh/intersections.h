@@ -1,6 +1,7 @@
 #pragma once
 
 #include <geode/mesh/TriangleTopology.h>
+#include <geode/exact/Interval.h>
 
 namespace geode {
 
@@ -8,7 +9,7 @@ namespace geode {
 
 struct Intersection {
 
-  enum {itEF, itFFF, itLoop} type;
+  enum IntersectionType {itEF, itFFF, itLoop} type;
 
   // best guess as to where this intersection actually is
   Vector<Interval, 3> construct;
@@ -19,10 +20,10 @@ struct Intersection {
   // for type loop: empty
   Array<VertexId> vertices;
 
-  union {
+  union Data {
 
     struct {
-      HalfEdgeId edge; // we only use the smaller halfedge of any edge, so this would be the one stored here
+      HalfedgeId edge; // we only use the smaller halfedge of any edge, so this would be the one stored here
       FaceId face;
       real t; // parameter along the edge (for sorting prior to triangulation TODO EXACT)
     } ef;
@@ -35,6 +36,7 @@ struct Intersection {
       VertexId vertex;
     } loop;
 
+    Data() {};
   } data;
 
   // for loop vertices, this can be any (even) number, for triple-face intersections
@@ -43,6 +45,31 @@ struct Intersection {
   // We use an array, not a hashtable, because most intersections have only two elements.
   Array<int> connected_to;
 
+  template<class T>
+  Intersection(HalfedgeId edge, FaceId face, real t, Vector<T, 3> const &construct)
+  : type(itEF), construct(construct) {
+    data.ef.edge = edge;
+    data.ef.face = face;
+    data.ef.t = t;
+  }
+
+  template<class T>
+  Intersection(FaceId face1, FaceId face2, FaceId face3, Vector<T, 3> const &construct)
+  : type(itFFF), construct(construct) {
+    data.fff.face1 = face1;
+    data.fff.face2 = face2;
+    data.fff.face3 = face3;
+    GEODE_ASSERT(face1 != face2);
+    GEODE_ASSERT(face1 != face3);
+    GEODE_ASSERT(face2 != face3);
+  }
+
+  template<class T>
+  Intersection(VertexId vertex, Vector<T, 3> const &construct)
+  : type(itLoop), construct(construct) {
+    data.loop.vertex = vertex;
+  }
+
   // operator for sorting of EF type intersections along their edge
   inline bool operator<(Intersection const &I) const {
     assert(I.type == itEF);
@@ -50,22 +77,50 @@ struct Intersection {
   }
 };
 
-std::vector<Intersection> compute_edge_face_intersections(TriangleTopology const &mesh
+inline std::ostream &operator<<(std::ostream &os, Intersection const &I) {
+  os << "Intersection";
+  switch (I.type) {
+    case Intersection::itEF:
+      os << " type EF";
+      os << " edge " << I.data.ef.edge << " face " << I.data.ef.face << " t " << I.data.ef.t;
+      os << " vertices " << I.vertices;
+      os << " at " << I.construct;
+      break;
+    case Intersection::itFFF:
+      os << " type FFF";
+      os << " faces " << I.data.fff.face1 << " " << I.data.fff.face2 << " " << I.data.fff.face3;
+      os << " vertices " << I.vertices;
+      os << " at " << I.construct;
+      break;
+    case Intersection::itLoop:
+      os << " type loop";
+      os << " vertex " << I.data.loop.vertex;
+      os << " vertices " << I.vertices;
+      os << " at " << I.construct;
+      break;
+    default:
+      os << " illegal type";
+  }
+  return os;
+}
+
+std::vector<Intersection> compute_edge_face_intersections(TriangleTopology const &mesh,
                                                           Tuple<Ref<SimplexTree<Vector<real,3>,3>>, Array<FaceId>> face_tree,
                                                           Tuple<Ref<SimplexTree<Vector<real,3>,2>>, Array<HalfedgeId>> edge_tree);
 std::vector<Intersection> compute_face_face_face_intersections(TriangleTopology const &mesh,
                                                                Tuple<Ref<SimplexTree<Vector<real,3>,3>>, Array<FaceId>> face_tree);
 
 // return mappings from faces, edges, and vertices to all corresponding intersections
-Tuple<Field<std::vector<int>, FaceId>,
-      Field<std::vector<int>, HalfedgeId>,
-      Field<int, VertexId>> assemble_paths(TriangleTopology const &mesh,
-                                           Field<Vector<real,3>, VertexId> const &pos,
-                                           std::vector<Intersection> &intersections);
+Tuple<Field<int, FaceId>,
+      Field<int, HalfedgeId>,
+      Field<int, VertexId>,
+      std::vector<std::vector<int>>> assemble_paths(TriangleTopology const &mesh,
+                                                    Field<Vector<real,3>, VertexId> const &pos,
+                                                    std::vector<Intersection> &intersections);
 
 void create_intersection_vertices(MutableTriangleTopology &mesh,
                                   FieldId<Vector<real,3>, VertexId> pos,
-                                  std::vector<Intersection> const &intersections,
+                                  std::vector<Intersection> &intersections,
                                   FieldId<int,VertexId> vertex_intersections);
 
 // return mappings from edges to corresponding edges (along intersection lines),
@@ -74,6 +129,7 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
       FieldId<FaceId, FaceId>> retriangulate_faces(MutableTriangleTopology &mesh,
                                                    FieldId<Vector<real,3>, VertexId> pos,
                                                    std::vector<Intersection> const &intersections,
+                                                   std::vector<std::vector<int>> const &intersection_indices,
                                                    FieldId<std::vector<int>, FaceId> face_intersections,
                                                    FieldId<std::vector<int>, HalfedgeId> edge_intersections,
                                                    FieldId<int, VertexId> vertex_intersections);
@@ -86,7 +142,7 @@ Field<int, FaceId> compute_depths(TriangleTopology &mesh,
 
 void stitch_meshes(MutableTriangleTopology &mesh,
                    FieldId<Vector<real,3>, VertexId> pos,
-                   std::vector<Intersection> const &intersections,
+                   std::vector<Intersection> &intersections,
                    FieldId<int, VertexId> vertex_intersections,
                    FieldId<HalfedgeId, HalfedgeId> edge_correspondences);
 
