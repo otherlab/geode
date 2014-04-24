@@ -40,9 +40,9 @@ intersection(Triangle<Vector<T,3>> const &t, Segment<Vector<T,3>> &result) const
     return false;
 
   // compute phi values for t in our plane
-  double td0 = phi(t.x0);
-  double td1 = phi(t.x1);
-  double td2 = phi(t.x2);
+  double td0 = this->phi(t.x0);
+  double td1 = this->phi(t.x1);
+  double td2 = this->phi(t.x2);
   int tsd0 = (int)sign(td0);
   int tsd1 = (int)sign(td1);
   int tsd2 = (int)sign(td2);
@@ -53,7 +53,7 @@ intersection(Triangle<Vector<T,3>> const &t, Segment<Vector<T,3>> &result) const
 
   // define a ray through the plane/plane intersection
   Ray<Vector<T,3>> L;
-  if (!this.intersection(t, L)) {
+  if (!Plane<T>::intersection(t, L)) {
     return false;
   }
 
