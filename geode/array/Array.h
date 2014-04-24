@@ -387,14 +387,14 @@ public:
     m_ = m_new;
   }
 
-  bool is_unique() {
+  bool is_unique() const {
     Array a;
     a.append_unique_elements(*this);
     return a.size() == size();
   }
 
   void append_unique(const T& element) {
-    if (!contains(element))
+    if (!Base::contains(element))
       append(element);
   }
 
@@ -418,7 +418,7 @@ public:
   }
 
   void remove_first_lazy(T const &k) {
-    int idx = find(k);
+    int idx = Base::find(k);
     if (idx != -1)
       remove_index_lazy(idx);
   }
