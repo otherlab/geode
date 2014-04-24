@@ -8,7 +8,7 @@ namespace geode {
 // Sort an array with optimal sort for up to 4 elements, falling back to std::sort.
 // The cutoff is chosen because the advantage of optimal sort vs standard is
 // 48%, 16%, 18% for 2, 3, and 4 elements, then falls off to < 5% for 5-7 elements.
-template<class TA,class Less> static inline void fallback_sort(const TA& array, const Less& less) {
+template<class TA,class Less> static inline void fallback_sort(TA& array, const Less& less) {
   const int n = int(array.size());
   #define L()
   #define C(i,j) { \
