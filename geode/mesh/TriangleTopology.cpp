@@ -1250,7 +1250,7 @@ Array<VertexId> TriangleTopology::vertex_one_ring(VertexId v) const {
   return result;
 }
 
-inline Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
+Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
   GEODE_ASSERT(valid(v));
   Array<FaceId> faces;
   for (const auto h : outgoing(v)) {
@@ -1259,6 +1259,23 @@ inline Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
       faces.append(f);
   }
   return faces;
+}
+
+void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& fields, const int id) {
+  const int i = id_to_field.get_default(id,-1);
+  if (i >= 0) {
+    id_to_field.erase(id);
+    const int j = int(fields.size())-1;
+    if (i < j) {
+      fields[i] = fields.back();
+      for (auto& h : id_to_field)
+        if (h.data() == j) {
+          h.data() = i;
+          break;
+        }
+    }
+    fields.pop_back();
+  }
 }
 
 #ifdef GEODE_PYTHON
@@ -1325,23 +1342,6 @@ bool MutableTriangleTopology::has_field_py(const PyFieldId& id) const {
                                                     : halfedge_fields;
   const auto& field = fields[i];
   return field.type() == id.type;
-}
-
-void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& fields, const int id) {
-  const int i = id_to_field.get_default(id,-1);
-  if (i >= 0) {
-    id_to_field.erase(id);
-    const int j = int(fields.size())-1;
-    if (i < j) {
-      fields[i] = fields.back();
-      for (auto& h : id_to_field)
-        if (h.data() == j) {
-          h.data() = i;
-          break;
-        }
-    }
-    fields.pop_back();
-  }
 }
 
 void MutableTriangleTopology::remove_field_py(const PyFieldId& id) {
