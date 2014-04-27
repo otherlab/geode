@@ -28,6 +28,7 @@ def test_intersection(output=False):
   sm2.add_faces(smesh.elements)
   sp2 = sm2.add_vertex_field("3d", vertex_position_id)
 
+  # test some simple intersections
   for d in [.3, .4, .5]: 
     sm.field(sp)[:] = sX + d
 
@@ -49,6 +50,7 @@ def test_intersection(output=False):
     if output:
       write_mesh("intersection-%f.obj" % d, i, i.field(ip))
 
+  # test some FFF intersections (already tricky to find non-degenerate cases here)
   for d in [1.55]:
     sm.field(sp)[:] = sX + .86
     sm2.field(sp2)[:] = sX + tile(array([0,d,0.1]), (sm.field(sp2).shape[0], 1))
@@ -73,6 +75,17 @@ def test_intersection(output=False):
     if output:
       write_mesh("intersection2-%f.obj" % d, i, i.field(ip))
 
+  # test intersection with loop vertex
+  u = im.copy()
+  u.field(ip)[0] += array([-3.5, -.2, .2])
+
+  if output:
+    write_mesh("input3.obj", u, u.field(ip))
+
+  csg(u, 0, vertex_position_id);
+
+  if output:
+    write_mesh("union3.obj", u, u.field(ip))
 
 if __name__ == "__main__":
   test_intersection(output=True)

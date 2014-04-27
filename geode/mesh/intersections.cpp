@@ -420,13 +420,17 @@ Tuple<Field<int, FaceId>,
         // fi and f share a loop vertex
         auto lv = mesh.common_vertex(fi, f);
         if (lv.valid()) {
-          std::cout << "  connected to loop vertex" << std::endl;
+          std::cout << "  connected to loop vertex " << lv << std::endl;
+
           GEODE_ASSERT(!found);
 
           if (vertex_intersections[lv] == -1) {
             // add an intersection for the loop vertex
             vertex_intersections[lv] = intersections.size();
             intersections.push_back(Intersection(lv, pos[lv]));
+            std::cout << "    new intersection " << vertex_intersections[lv] << std::endl;
+          } else {
+            std::cout << "    existing intersection " << vertex_intersections[lv] << std::endl;            
           }
 
           intersections[i].connected_to.append(vertex_intersections[lv]);
@@ -620,7 +624,7 @@ Tuple<Field<int, FaceId>,
           break;
         }
         case Intersection::itLoop: {
-          GEODE_ASSERT(I.connected_to.size() % 2 == 0 && !I.connected_to.empty());
+          GEODE_ASSERT(!I.connected_to.empty());
           break;
         }
       }
@@ -836,17 +840,24 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
       for (int ii : ints) {
         Intersection const &I = intersections[ii];
         for (int i2 : I.connected_to) {
+
           if (!intersection_to_local_idx.contains(i2))
             continue; // we will add this edge when we add i2's vertex 
                       // (or i2 is not on the boundary of this face, and we'll never add it)
 
-          // at this point, only EF vertices on the boundaries of f are in intersection_to_local_idx
-          // we can only connect to other EF vertices on another edge of f
-          GEODE_ASSERT(intersections[i2].type == Intersection::itEF);
-          GEODE_ASSERT(intersections[i2].data.ef.face == I.data.ef.face);
-          GEODE_ASSERT(intersections[i2].data.ef.edge != he && intersections[i2].data.ef.edge != mesh.reverse(he));
-          GEODE_ASSERT(mesh.halfedges(f).contains(intersections[i2].data.ef.edge) || 
-                       mesh.halfedges(f).contains(former_reverse(mesh, intersections[i2].data.ef.edge)));
+          if (intersections[i2].type == Intersection::itLoop) {
+            // can't check anything useful here
+          } else {
+
+            // at this point, only loop or EF vertices on the boundaries of f are 
+            // in intersection_to_local_idx (and loop vertices are out)
+            // We can only connect to other EF vertices on another edge of f
+            GEODE_ASSERT(intersections[i2].type == Intersection::itEF);
+            GEODE_ASSERT(intersections[i2].data.ef.face == I.data.ef.face);
+            GEODE_ASSERT(intersections[i2].data.ef.edge != he && intersections[i2].data.ef.edge != mesh.reverse(he));
+            GEODE_ASSERT(mesh.halfedges(f).contains(intersections[i2].data.ef.edge) || 
+                         mesh.halfedges(f).contains(former_reverse(mesh, intersections[i2].data.ef.edge)));
+          }
 
           edges.append(vec(intersection_to_local_idx[ii], intersection_to_local_idx[i2]));
 
@@ -985,10 +996,22 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
   for (auto p : intersection_edges) {
     GEODE_ASSERT(p.data().size() == 2);
 
-    GEODE_ASSERT(intersections[p.key().x].vertices.contains(p.data()[0][0]));
-    GEODE_ASSERT(intersections[p.key().y].vertices.contains(p.data()[0][1]));
-    GEODE_ASSERT(intersections[p.key().x].vertices.contains(p.data()[1][0]));
-    GEODE_ASSERT(intersections[p.key().y].vertices.contains(p.data()[1][1]));
+    if (intersections[p.key().x].type == Intersection::itLoop) {
+      GEODE_ASSERT(p.data()[0][0] == p.data()[1][0]);
+      GEODE_ASSERT(vertex_intersections[p.data()[0][0]] == p.key().x);
+      GEODE_ASSERT(p.data()[0][0] == intersections[p.key().x].data.loop.vertex);
+    } else {
+      GEODE_ASSERT(intersections[p.key().x].vertices.contains(p.data()[0][0]));
+      GEODE_ASSERT(intersections[p.key().x].vertices.contains(p.data()[1][0]));
+    }
+    if (intersections[p.key().y].type == Intersection::itLoop) {
+      GEODE_ASSERT(p.data()[0][1] == p.data()[1][1]);
+      GEODE_ASSERT(vertex_intersections[p.data()[0][1]] == p.key().y);
+      GEODE_ASSERT(p.data()[0][1] == intersections[p.key().y].data.loop.vertex);
+    } else {
+      GEODE_ASSERT(intersections[p.key().y].vertices.contains(p.data()[0][1]));
+      GEODE_ASSERT(intersections[p.key().y].vertices.contains(p.data()[1][1]));
+    }
 
     // get the edges corresponding to the two vertex pairs
     HalfedgeId he1 = mesh.halfedge(p.data().front().x, p.data().front().y);
