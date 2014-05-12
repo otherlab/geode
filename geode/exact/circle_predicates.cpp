@@ -126,6 +126,7 @@ static int circle_circle_intersection_quadrant(Arcs arcs, const Vertex v) {
 // The results differ from the true intersections by at most 2.
 // Degrees 3/2 for the nonsqrt part and 6/4 for the part under the sqrt.
 Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const int arc1) {
+  assert(arcs[arc0].index != arcs[arc1].index); // Shouldn't be calling this on a circle with itself
   Vector<Vertex,2> v;
   v.x.i0 = v.y.i0 = arc0;
   v.x.i1 = v.y.i1 = arc1;

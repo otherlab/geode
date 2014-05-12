@@ -1,10 +1,32 @@
 //#####################################################################
 // Class Plane
-//##################################################################### 
+//#####################################################################
 #include <geode/geometry/Plane.h>
 #include <geode/geometry/Ray.h>
 #include <geode/geometry/Segment.h>
+#include <geode/vector/Matrix3x3.h>
 namespace geode {
+
+template<class T> bool Plane<T>::
+intersection(Plane<T> const &p, Ray<Vector<T,3> > &ray) const {
+  if (n == p.n) {
+    if (dot(n, x0) != dot(p.n,p.x0)) {
+      return false;
+    }
+    ray.initialize(x0, n.unit_orthogonal_vector(), true);
+    return true;
+  }
+
+  // solve for point on both planes
+  //n * x = n * x0
+  //p.n * x = p.n * x0
+  //cross(n, p.n) * x = 0 // arbitrary
+  auto N = cross(n, p.n);
+  auto x = Matrix<real,3>(n, p.n, N).transposed().robust_solve_linear_system(vec(dot(n, x0), dot(p.n, p.x0), 0));
+  ray.initialize(x, N, false);
+  return true;
+}
+
 //#####################################################################
 // Function Intersection
 //#####################################################################
@@ -36,7 +58,7 @@ intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
         ray.t_max=(distance+thickness_over_2)/rate_of_approach;ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
     return false;
 }
-  
+
 //#####################################################################
 // Function segment_intersection
 //#####################################################################
@@ -46,12 +68,12 @@ segment_intersection(Segment<TV> const &s) const {
   segment_intersection(s.x0, s.x1, interpolation_fraction);
   return s.interpolate(interpolation_fraction);
 }
-  
+
 //#####################################################################
 // Function Intersection
 //#####################################################################
 template<class T> template<class TThickness> bool Plane<T>::
-intersection(const Box<TV>& box,const TThickness thickness_over_2) const 
+intersection(const Box<TV>& box,const TThickness thickness_over_2) const
 {
     bool points_on_positive_side=false,points_on_negative_side=false;
     for(int i=0;i<=1;i++) for(int j=0;j<=1;j++) for(int k=0;k<=1;k++){

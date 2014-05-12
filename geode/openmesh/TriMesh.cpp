@@ -1,3 +1,4 @@
+#include <geode/config.h>
 #ifdef GEODE_OPENMESH
 #include <geode/openmesh/TriMesh.h>
 #include <geode/openmesh/color_cast.h>

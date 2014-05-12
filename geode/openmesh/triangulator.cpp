@@ -1,3 +1,4 @@
+#include <geode/config.h>
 #ifdef GEODE_OPENMESH
 
 #include "triangulator.h"

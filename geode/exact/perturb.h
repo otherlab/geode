@@ -144,6 +144,15 @@ template<class A,class B0,class B1,class C0,class C1,class... Args> GEODE_ALWAYS
 
 void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const bool take_sqrt);
 
+template<int a, int b> Quantized snap_div(const Exact<a> num, const Exact<b> denum, const bool take_sqrt) {
+  enum { max_size = (a<b ? b : a), n_terms = 2 };
+  auto packed_values = Vector<Exact<max_size>, n_terms>(Exact<max_size>(num), Exact<max_size>(denum)); // Pack both values into a contigous array
+  static_assert(sizeof(packed_values) == sizeof(mp_limb_t)*max_size*n_terms, "Memory layout doesn't appear to be correct");
+  Vector<Quantized,n_terms-1> result;
+  snap_divs(asarray(result),RawArray<mp_limb_t,2>(n_terms,max_size,(mp_limb_t*)packed_values.data()),take_sqrt);
+  return result.x;
+}
+
 // Compute exactly rounded rational function
 // denom must not be zero
 template<int a, int b> Vector<Quantized,2> snap_div(const Vector<Exact<a>,2> num, const Exact<b> denum, const bool take_sqrt) {

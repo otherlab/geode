@@ -101,7 +101,7 @@ public:
 template<class TV> GEODE_CORE_EXPORT PyObject* to_python(const Segment<TV>& seg);
 
 template<class TV> static inline Segment<TV> simplex(const TV& x0, const TV& x1) {
-  return Segment<TV>(x0,x1); 
+  return Segment<TV>(x0,x1);
 }
 
 template<class T,class TV> static inline TV interpolate(const T alpha, const TV& x0, const TV& x1) {

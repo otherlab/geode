@@ -231,6 +231,9 @@ public:
     int argmax() const
     {return geode::argmax(x,y,z);}
 
+    int dominant_axis() const
+    {return geode::argmax(abs(x), abs(y), abs(z));}
+
     bool elements_equal() const
     {return x==y && x==z;}
 
@@ -320,8 +323,8 @@ public:
     {x=element1;y=element2;z=element3;}
 
     template<class TFunction>
-    static Vector map(const TFunction& f,const Vector& v)
-    {return Vector(f(v.x),f(v.y),f(v.z));}
+    static auto map(const TFunction& f,const Vector& v) -> Vector<decltype(f(v.x)),3>
+    {return Vector<decltype(f(v.x)),3>(f(v.x),f(v.y),f(v.z));}
 
     int find(const T& element) const
     {return x==element?0:y==element?1:z==element?2:-1;}

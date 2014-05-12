@@ -12,12 +12,18 @@ struct Prioritize {
   Prioritize(A const &a, P const &p)
     : a(a), p(p) {}
 
-  bool operator<(const Prioritize<A,P>& b) const {
+  inline bool operator<(const Prioritize<A,P>& b) const {
     return p < b.p;
   }
 
-  bool operator>(const Prioritize<A,P>& b) const {
+  inline bool operator>(const Prioritize<A,P>& b) const {
     return p > b.p;
+  }
+
+  inline Prioritize<A,P> &operator=(Prioritize<A,P> const &b) {
+    a = b.a;
+    p = b.p;
+    return *this;
   }
 };
 

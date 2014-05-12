@@ -201,6 +201,7 @@ public:
 
     //#####################################################################
     GEODE_CORE_EXPORT void change_size(const T delta);
+    GEODE_CORE_EXPORT bool intersection(Triangle<Vector<T,3>> const &t, Segment<Vector<T,3>> &result) const;
     GEODE_CORE_EXPORT bool intersection(Plane<T> const &plane, Segment<Vector<T,3>> &result) const;
     GEODE_CORE_EXPORT bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const;
     GEODE_CORE_EXPORT bool lazy_intersection(Ray<Vector<T,3> >& ray) const;

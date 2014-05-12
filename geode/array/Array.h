@@ -387,8 +387,14 @@ public:
     m_ = m_new;
   }
 
+  bool is_unique() const {
+    Array a;
+    a.append_unique_elements(*this);
+    return a.size() == size();
+  }
+
   void append_unique(const T& element) {
-    if (!contains(element))
+    if (!Base::contains(element))
       append(element);
   }
 
@@ -409,6 +415,12 @@ public:
   void remove_index_lazy(const int index) { // Fill holes with back()
     assert(unsigned(index)<unsigned(m_));
     data_[index] = data_[--m_];
+  }
+
+  void remove_first_lazy(T const &k) {
+    int idx = Base::find(k);
+    if (idx != -1)
+      remove_index_lazy(idx);
   }
 
   void insert(const T& element, const int index) {

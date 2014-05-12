@@ -43,7 +43,7 @@ public:
     data_ = buffer->data;
     owner_ = (PyObject*)buffer;
     if (zero)
-      memset(data_,0,sizeof(T)*m_);
+      memset(data_,0,t_size_*m_);
   }
 
   // Share ownership with an untyped array
@@ -69,6 +69,20 @@ public:
     data_ = buffer->data;
     owner_ = (PyObject*)buffer;
     memcpy(data_,o.data_,m_*t_size_);
+  }
+
+  // Share ownership with an input field
+  template<class T, class Id>
+  UntypedArray(const Field<T,Id> &f)
+    : m_(f.size())
+    , max_size_(f.flat.max_size())
+    , data_((char*)f.flat.data())
+    , owner_(f.flat.owner())
+    , t_size_(sizeof(T))
+    , type_(&typeid(T))
+  {
+    static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
+    assert(owner_ || !data_);
   }
 
   UntypedArray& operator=(const UntypedArray& o) {
@@ -130,7 +144,7 @@ public:
   }
 
   void resize(const int m_new, const bool initialize_new=true, const bool copy_existing=true) {
-    preallocate(m_new,copy_existing);  
+    preallocate(m_new,copy_existing);
     if (initialize_new && m_new>m_)
       memset(data_+m_*t_size_,0,(m_new-m_)*t_size_);
     m_ = m_new;
@@ -144,7 +158,7 @@ public:
     GEODE_ASSERT(t_size_ == o.t_size_);
     const int om = o.m_, m = m_;
     preallocate(m+om);
-    memcpy(data_+m,o.data_,om*t_size_);
+    memcpy(data_+m*t_size_,o.data_,om*t_size_);
     m_ += om;
   }
 
@@ -182,6 +196,18 @@ public:
 
   template<class T,class Id> const Field<T,Id>& get() const {
     GEODE_ASSERT(*type_ == typeid(T));
+    return *(Field<T,Id>*)this;
+  }
+
+  // cast to another type of the same length
+  template<class T> const Array<T>& cast_get() const {
+    GEODE_ASSERT(sizeof(T) == t_size_);
+    return *(Array<T>*)this;
+  }
+
+  // cast to another type of the same length
+  template<class T,class Id> const Field<T,Id>& cast_get() const {
+    GEODE_ASSERT(sizeof(T) == t_size_);
     return *(Field<T,Id>*)this;
   }
 };
