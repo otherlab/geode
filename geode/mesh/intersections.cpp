@@ -426,7 +426,7 @@ Tuple<Field<int, FaceId>,
 
           if (vertex_intersections[lv] == -1) {
             // add an intersection for the loop vertex
-            vertex_intersections[lv] = intersections.size();
+            vertex_intersections[lv] = int(intersections.size());
             intersections.push_back(Intersection(lv, pos[lv]));
             std::cout << "    new intersection " << vertex_intersections[lv] << std::endl;
           } else {
@@ -598,7 +598,7 @@ Tuple<Field<int, FaceId>,
       }
       case Intersection::itLoop:
         // we can quit, once we're in loop territory that's all we'll see
-        i = intersections.size();
+        i = int(intersections.size());
         break;
       default:
         GEODE_UNREACHABLE();
