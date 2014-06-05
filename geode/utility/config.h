@@ -68,7 +68,7 @@ typedef double real;
 #  define GEODE_COLD
 #endif
 
-#if defined(NDEBUG) && !defined(__clang__)
+#if defined(NDEBUG) && (!defined(__clang__) || __has_attribute(flatten))
 #  define GEODE_FLATTEN __attribute__ ((flatten))
 #else
 #  define GEODE_FLATTEN
