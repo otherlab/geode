@@ -69,6 +69,11 @@ def test_nodes_touched():
   mesh = TriangleSoup([(4,7,5)])
   assert all(mesh.nodes_touched()==[4,5,7])
 
+def test_triangle_edges():
+  mesh = TriangleSoup([(0,1,2),(2,1,3)])
+  assert all(mesh.segment_soup().elements==[(0,1),(1,2),(0,2),(1,3),(2,3)])
+  assert all(mesh.triangle_edges()==[(0,1,2),(1,3,4)])
+
 def test_polygons():
   random.seed(9831)
   segments = array([(0,0), # degenerate
