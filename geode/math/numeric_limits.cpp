@@ -50,8 +50,13 @@ COUNT(max_exponent)
 COUNT(max_exponent10)
 #undef COUNT
 
-template<> GEODE_DEFINE_TYPE(Limits<float>)
-template<> GEODE_DEFINE_TYPE(Limits<double>)
+#define INSTANTIATE(T) template<> GEODE_DEFINE_TYPE(Limits<T>)
+INSTANTIATE(int32_t)
+INSTANTIATE(int64_t)
+INSTANTIATE(uint32_t)
+INSTANTIATE(uint64_t)
+INSTANTIATE(float)
+INSTANTIATE(double)
 }
 
 static PyObject* build_limits(PyObject* object) {
@@ -61,8 +66,13 @@ static PyObject* build_limits(PyObject* object) {
   const Ref<> save = steal_ref(*(PyObject*)dtype);
   const int type = dtype->type_num;
   switch (type) {
-    case NumpyScalar<float>::value:  return to_python(new_<Limits<float>>());
-    case NumpyScalar<double>::value: return to_python(new_<Limits<double>>());
+    #define CASE(T) case NumpyScalar<T>::value: return to_python(new_<Limits<T>>());
+    CASE(int32_t)
+    CASE(int64_t)
+    CASE(uint32_t)
+    CASE(uint64_t)
+    CASE(float)
+    CASE(double)
     default:
       Ref<PyObject> s = steal_ref_check(PyObject_Str((PyObject*)dtype));
       throw TypeError(format("numeric_limits unimplemented for type %s",from_python<const char*>(s)));
@@ -98,6 +108,10 @@ template<class T> static void wrap_helper() {
 
 void wrap_numeric_limits() {
 #ifdef GEODE_PYTHON
+  wrap_helper<int32_t>();
+  wrap_helper<int64_t>();
+  wrap_helper<uint32_t>();
+  wrap_helper<uint64_t>();
   wrap_helper<float>();
   wrap_helper<double>();
   GEODE_FUNCTION_2(numeric_limits,build_limits)
