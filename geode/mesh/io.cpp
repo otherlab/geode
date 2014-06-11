@@ -817,12 +817,12 @@ static void write_helper(const string& filename, RawArray<const Vector<int,3>> t
 }
 
 void write_mesh(const string& filename, const TriangleSoup& soup, RawArray<const TV> X) {
-  GEODE_ASSERT(X.size()<=soup.nodes());
+  GEODE_ASSERT(X.size()>=soup.nodes());
   write_helper(filename,soup.elements,X);
 }
 
 void write_mesh(const string& filename, const PolygonSoup& soup, RawArray<const TV> X) {
-  GEODE_ASSERT(X.size()<=soup.nodes());
+  GEODE_ASSERT(X.size()>=soup.nodes());
   const auto ext = path::extension(filename);
   if      (ext == ".obj") write_obj(filename,soup,X);
   else if (ext == ".ply") write_ply(filename,soup,X);
