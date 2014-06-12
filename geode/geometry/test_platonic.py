@@ -4,6 +4,12 @@ from __future__ import division
 from geode.geometry.platonic import *
 from geode.vector import *
 
+def test_octahedron():
+  mesh,X = octahedron_mesh()
+  assert mesh.nodes()==len(X)
+  assert relative_error(mesh.volume(X),4/3) < 1e-10
+  assert not len(mesh.nonmanifold_nodes(0))
+
 def test_icosahedron():
   mesh,X = icosahedron_mesh()
   a = 2 # see http://en.wikipedia.org/wiki/Icosahedron
