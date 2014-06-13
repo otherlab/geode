@@ -675,6 +675,9 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
       // If we only need to walk one step, the retriangulation is a single edge flip
       auto cut = mesh.reverse(mesh.next(e0));
       if (mesh.dst(mesh.next(cut))==v1) {
+        if (constrained.contains(vec(mesh.src(cut),mesh.dst(cut)).sorted()))
+          throw ValueError(format("delaunay: Constraints (%d,%d) and (%d,%d) intersect",
+                                  v0.id,v1.id,mesh.src(cut).id,mesh.dst(cut).id));
         cut = mesh.flip_edge(cut);
         goto success;
       }

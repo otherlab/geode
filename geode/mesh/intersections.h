@@ -39,9 +39,9 @@ struct Intersection {
     Data() {};
   } data;
 
-  // for loop vertices, this can be any (even) number, for triple-face intersections
-  // it's exactly four, for regular intersections, exactly two (or the edge is on
-  // the boundary, then exactly one).
+  // Which other intersections do we connect to along intersection edges.
+  // For loop vertices this can be any number, for triple-face intersections
+  // it's six, for regular intersections two (or one if the edge is on the boundary).
   // We use an array, not a hashtable, because most intersections have only two elements.
   Array<int> connected_to;
 
@@ -70,7 +70,8 @@ struct Intersection {
     data.loop.vertex = vertex;
   }
 
-  // operator for sorting of EF type intersections along their edge
+  // Operator for sorting of EF type intersections along their edge
+  // TODO: Needs to be exact
   inline bool operator<(Intersection const &I) const {
     assert(I.type == itEF);
     return data.ef.t < I.data.ef.t;

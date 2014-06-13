@@ -851,7 +851,8 @@ VertexId MutableTriangleTopology::split_edge(HalfedgeId e) {
 
 HalfedgeId MutableTriangleTopology::flip_edge(HalfedgeId e) {
   if (!is_flip_safe(e))
-    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d is invalid",e.id));
+    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d [%d,%d] is invalid",
+                              e.id,src(e).id,dst(e).id));
   return unsafe_flip_edge(e);
 }
 

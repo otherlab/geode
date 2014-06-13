@@ -13,7 +13,8 @@ namespace geode {
 using std::cout;
 using std::endl;
 using exact::Point;
-using exact::Point2;
+typedef exact::Point2 P2;
+typedef exact::Point3 P3;
 
 // First, a trivial predicate, handled specially so that it can be partially inlined.
 
@@ -36,7 +37,7 @@ namespace {
 struct TriangleOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV p0, const TV p1, const TV p2) {
   return edet(p1-p0,p2-p0);
 }};}
-bool triangle_oriented(const Point2 p0, const Point2 p1, const Point2 p2) {
+bool triangle_oriented(const P2 p0, const P2 p1, const P2 p2) {
   return perturbed_predicate<TriangleOriented>(p0,p1,p2);
 }
 
@@ -44,7 +45,7 @@ namespace {
 struct DirectionsOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV d0, const TV d1) {
   return edet(d0,d1);
 }};}
-bool directions_oriented(const Point2 d0, const Point2 d1) {
+bool directions_oriented(const P2 d0, const P2 d1) {
   return perturbed_predicate<DirectionsOriented>(d0,d1);
 }
 
@@ -52,7 +53,7 @@ namespace {
 struct SegmentDirectionsOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1) {
   return edet(a1-a0,b1-b0);
 }};}
-bool segment_directions_oriented(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
+bool segment_directions_oriented(const P2 a0, const P2 a1, const P2 b0, const P2 b1) {
   return perturbed_predicate<SegmentDirectionsOriented>(a0,a1,b0,b1);
 }
 
@@ -60,7 +61,7 @@ namespace {
 struct SegmentToDirectionOriented { template<class TV> static inline PredicateType<2,TV> eval(const TV a0, const TV a1, const TV d) {
   return edet(a1-a0,d);
 }};}
-bool segment_to_direction_oriented(const Point2 a0, const Point2 a1, const Point2 d) {
+bool segment_to_direction_oriented(const P2 a0, const P2 a1, const P2 d) {
   return perturbed_predicate<SegmentToDirectionOriented>(a0,a1,d);
 }
 
@@ -71,7 +72,7 @@ struct SegmentIntersectionsOrdered { template<class TV> static inline PredicateT
              dc = c1-c0;
   return edet(c0-a0,dc)*edet(da,db)-edet(b0-a0,db)*edet(da,dc);
 }};}
-bool segment_intersections_ordered(const Point2 a0, const Point2 a1, Point2 b0, Point2 b1, Point2 c0, Point2 c1) {
+bool segment_intersections_ordered(const P2 a0, const P2 a1, P2 b0, P2 b1, P2 c0, P2 c1) {
   return perturbed_predicate<SegmentIntersectionsOrdered>(a0,a1,b0,b1,c0,c1)
        ^ segment_directions_oriented(a0,a1,b0,b1)
        ^ segment_directions_oriented(a0,a1,c0,c1);
@@ -86,7 +87,7 @@ struct SegmentIntersectionAbove { template<class TV> static inline PredicateType
   //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y*delta;
   return (a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y;
 }};}
-bool segment_intersection_above(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1, const Point2 c) {
+bool segment_intersection_above(const P2 a0, const P2 a1, const P2 b0, const P2 b1, const P2 c) {
   return perturbed_predicate<SegmentIntersectionAbove>(a0,a1,b0,b1,c)
        ^ segment_directions_oriented(a0,a1,b0,b1)
        ^ rightwards(a0,a1);
@@ -101,13 +102,78 @@ struct Incircle { template<class TV> static inline PredicateType<4,TV> eval(cons
              d2 = p2-p3;
   return edet(ROW(d0),ROW(d1),ROW(d2));
 }};}
-bool incircle(const Point2 p0, const Point2 p1, const Point2 p2, const Point2 p3) {
+bool incircle(const P2 p0, const P2 p1, const P2 p2, const P2 p3) {
   return perturbed_predicate<Incircle>(p0,p1,p2,p3);
 }
 
-bool segments_intersect(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
+bool segments_intersect(const P2 a0, const P2 a1, const P2 b0, const P2 b1) {
   return triangle_oriented(a0,a1,b0)!=triangle_oriented(a0,a1,b1)
       && triangle_oriented(b0,b1,a0)!=triangle_oriented(b0,b1,a1);
+}
+
+namespace {
+struct TetrahedronOriented {
+  template<class TV> static inline PredicateType<3,TV> eval(const TV p0, const TV p1, const TV p2, const TV p3) {
+    return edet(p1-p0,p2-p0,p3-p0);
+  }
+};}
+bool tetrahedron_oriented(const P3 p0, const P3 p1, const P3 p2, const P3 p3) {
+  return perturbed_predicate<TetrahedronOriented>(p0,p1,p2,p3);
+}
+
+namespace {
+struct SegmentTriangleOriented {
+  template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1,
+                                                            const TV b0, const TV b1, const TV b2) {
+    return edet(b1-b0,b2-b0,a1-a0);
+  }
+};}
+bool segment_triangle_oriented(const P3 a0, const P3 a1, const P3 b0, const P3 b1, const P3 b2) {
+  return perturbed_predicate<SegmentTriangleOriented>(a0,a1,b0,b1,b2);
+}
+
+bool segment_triangle_intersect(const P3 a0, const P3 a1, const P3 b0, const P3 b1, const P3 b2) {
+  if (   tetrahedron_oriented(a0,b0,b1,b2)
+      == tetrahedron_oriented(a1,b0,b1,b2))
+    return false;
+  bool   c01 =  tetrahedron_oriented(a0,a1,b0,b1);
+  return c01 == tetrahedron_oriented(a0,a1,b1,b2)
+      && c01 == tetrahedron_oriented(a0,a1,b2,b0);
+}
+
+namespace {
+struct SegmentTriangleIntersectionsOrdered {
+  template<class TV> static inline PredicateType<6,TV> eval(const TV a0, const TV a1,
+                                                            const TV b0, const TV b1, const TV b2,
+                                                            const TV c0, const TV c1, const TV c2) {
+    const auto da = a1-a0;
+    const auto nb = ecross(b1-b0,b2-b0),
+               nc = ecross(c1-c0,c2-c0);
+    return edot(da,nb)*edot(c0-a0,nc)-edot(da,nc)*edot(b0-a0,nb);
+  }
+};}
+bool segment_triangle_intersections_ordered(const P3 a0, const P3 a1,
+                                            const P3 b0, const P3 b1, const P3 b2,
+                                            const P3 c0, const P3 c1, const P3 c2) {
+  return perturbed_predicate<SegmentTriangleIntersectionsOrdered>(a0,a1,b0,b1,b2,c0,c1,c2)
+       ^ segment_triangle_oriented(a0,a1,b0,b1,b2)
+       ^ segment_triangle_oriented(a0,a1,c0,c1,c2);
+}
+
+namespace {
+struct TrianglesOriented {
+  template<class TV> static inline PredicateType<6,TV> eval(const TV a0, const TV a1, const TV a2,
+                                                            const TV b0, const TV b1, const TV b2,
+                                                            const TV c0, const TV c1, const TV c2) {
+    return edet(ecross(a1-a0,a2-a0),
+                ecross(b1-b0,b2-b0),
+                ecross(c1-c0,c2-c0));
+  }
+};}
+bool triangles_oriented(const P3 a0, const P3 a1, const P3 a2,
+                        const P3 b0, const P3 b1, const P3 b2,
+                        const P3 c0, const P3 c1, const P3 c2) {
+  return perturbed_predicate<TrianglesOriented>(a0,a1,a2,b0,b1,b2,c0,c1,c2);
 }
 
 // Unit tests.  Warning: These do not check the geometric correctness of the predicates, only properties of exact computation and perturbation.

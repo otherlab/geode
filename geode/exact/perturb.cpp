@@ -508,7 +508,7 @@ void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const b
   throw OverflowError("perturbed_ratio: overflow in l'Hopital expansion");
 }
 
-template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt) {
+template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt) {
   typedef Vector<Exact<1>,m> EV;
   const int n = X.size();
   const int r = result.size();
@@ -524,8 +524,10 @@ template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const rat
       Z[i] = EV(to_exact(X[i].y));
     const auto R = GEODE_RAW_ALLOCA((r+1)*precision,mp_limb_t).reshape(r+1,precision);
     ratio(R,Z);
-    if (mpz_nonzero(R[r]))
-      return snap_divs(result,R,take_sqrt);
+    if (const int sign = mpz_sign(R[r])) {
+      snap_divs(result,R,take_sqrt);
+      return sign>0;
+    }
   }
 
   // Check the first perturbation level with specialized code
@@ -557,9 +559,10 @@ template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const rat
 
     // Find the largest (lowest degree) nonzero denominator coefficient.  If we detect an infinity during this process, explode.
     for (int j=0;j<degree;j++) {
-      if (mpz_nonzero(values(j,r))) // We found a nonzero, now compute the rounded ratio
-        return snap_divs(result,values[j],take_sqrt);
-      else
+      if (const int sign = mpz_sign(values(j,r))) { // We found a nonzero, now compute the rounded ratio
+        snap_divs(result,values[j],take_sqrt);
+        return sign>0;
+      } else
         for (int k=0;k<r;k++)
           if (mpz_nonzero(values(j,k)))
             throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",mpz_str(values(j,k))));
@@ -592,13 +595,16 @@ template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const rat
         in_place_interpolating_polynomial(degree,lambda,values.sub<1>(k));
 
       // Find the largest nonzero denominator coefficient
+      int sign = 0;
       int nonzero = -1;
       for (int j=0;j<lambda.m;j++)
-        if (mpz_nonzero(values(j,r))) {
+        if (const int s = mpz_sign(values(j,r))) {
           if (check) // Verify that a term which used to be zero doesn't become nonzero
             GEODE_ASSERT(lambda(j,d-1));
-          if (nonzero<0 || monomial_less(lambda[nonzero],lambda[j]))
+          if (nonzero<0 || monomial_less(lambda[nonzero],lambda[j])) {
+            sign = s;
             nonzero = j;
+          }
         }
 
       // Verify that numerator coefficients are zero for all large monomials
@@ -609,8 +615,10 @@ template<int m> void perturbed_ratio(RawArray<Quantized> result, void(*const rat
               throw OverflowError(format("perturbed_ratio: infinite result in l'Hopital expansion: %s/0",str(values(j,k))));
 
       // If we found a nonzero, compute the result
-      if (nonzero >= 0)
-        return snap_divs(result,values[nonzero],take_sqrt);
+      if (nonzero >= 0) {
+        snap_divs(result,values[nonzero],take_sqrt);
+        return sign>0;
+      }
 
       // If we get through two levels without fixing the degeneracy, run a fast, strict identity test to make sure we weren't handed an impossible problem.
       if (d==2)
@@ -776,6 +784,14 @@ static void nasty_ratio(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exac
     mpz_set(result[0],d*sqr(X[1].x));
   mpz_set(result[1],d);
 }
+static void nasty_denominator(RawArray<mp_limb_t> result, RawArray<const Vector<Exact<1>,2>> X) {
+  assert(X.size()==2);
+  typename remove_const_reference<decltype(X[0])>::type p1;
+  for (int i=0;i<2;i++)
+    mpz_set(asarray(p1[i].n),Exact<1>(perturbation<2>(1,nasty_index)[i]));
+  const auto d = edet(X[0],p1);
+  mpz_set(result,d);
+}
 
 static void perturbed_ratio_test() {
   typedef Vector<Quantized,2> EV;
@@ -785,15 +801,16 @@ static void perturbed_ratio_test() {
       nasty_index = index;
       Vector<const Tuple<int,EV>,2> X(tuple(index,EV()),tuple(index+1,EV(perturbation<2>(7,index+1))));
       Vector<Quantized,1> result;
-      perturbed_ratio(asarray(result),nasty_ratio,2+power,asarray(X),power==2);
+      const bool s = perturbed_ratio(asarray(result),nasty_ratio,2+power,asarray(X),power==2);
       GEODE_ASSERT(result.x==(power==1?X.y.y.x:abs(X.y.y.x)));
+      GEODE_ASSERT(s==perturbed_sign(nasty_denominator,1+power,asarray(X)));
     }
 }
 
 #define INSTANTIATE(m) \
   template Vector<ExactInt,m> perturbation(const int, const int); \
   template bool perturbed_sign(void(*const)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>); \
-  template void perturbed_ratio(RawArray<Quantized>,void(*const)(RawArray<mp_limb_t,2>, RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>, bool);
+  template bool perturbed_ratio(RawArray<Quantized>,void(*const)(RawArray<mp_limb_t,2>, RawArray<const Vector<Exact<1>,m>>), const int, RawArray<const Tuple<int,Vector<Quantized,m>>>, bool);
 INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)

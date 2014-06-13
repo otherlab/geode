@@ -468,8 +468,8 @@ public:
   // Returns the offsets of the other vertex, face, and boundary ids in the new arrays.
   GEODE_CORE_EXPORT Vector<int,3> add(MutableTriangleTopology const &other);
 
-  // split the halfedge h with a new vertex c, which splits the adjacent face
-  // into itself and a face nf. The halfedge h (for which now dst(.) == c), and
+  // Split the halfedge h with a new vertex c, which splits the adjacent face
+  // into itself and a face nf. The halfedge h (now with dst(h) == c) and
   // the halfedge in nf for which now src(.) == c are returned in a vector, and
   // still have to be connected to the outside world with unsafe_set_reverse.
   Vector<HalfedgeId,2> unsafe_split_halfedge(HalfedgeId h, FaceId nf, VertexId c);
@@ -496,6 +496,7 @@ public:
   GEODE_CORE_EXPORT VertexId split_edge(HalfedgeId e);
 
   // Split an edge by inserting an existing isolated vertex in the center.
+  // If h is not a boundary halfedge, dst(h) = c afterwards.
   GEODE_CORE_EXPORT void split_edge(HalfedgeId h, VertexId c);
 
   // Erase the given vertex. Erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.

@@ -282,30 +282,6 @@ struct GetEdgeIntersections {
     GEODE_ASSERT(edge_intersections[id] != -1);
     return intersection_indices[edge_intersections[id]];
   }
-
-  std::vector<int> get_ordered(HalfedgeId id) {
-
-    HalfedgeId r = mesh.reverse(id);
-    bool flip = false;
-    if (!mesh.is_boundary(r) && r < id) {
-      GEODE_ASSERT(edge_intersections[id] == -1 || intersection_indices[edge_intersections[id]].empty());
-      flip = true;
-      id = r;
-    } else {
-      GEODE_ASSERT(edge_intersections[r] == -1 || intersection_indices[edge_intersections[r]].empty());
-    }
-
-    if (edge_intersections[id] == -1)
-      return std::vector<int>();
-
-    std::vector<int> ints = intersection_indices[edge_intersections[id]];
-
-    // sort them for our orientation
-    if (flip)
-      std::reverse(ints.begin(), ints.end());
-
-    return ints;
-  }
 };
 
 Tuple<Field<int, FaceId>,
@@ -770,8 +746,7 @@ Tuple<FieldId<HalfedgeId, HalfedgeId>,
   // There should be zero or two vertex pairs for any given intersection pair.
   Hashtable<Vector<int,2>, Array<Vector<VertexId,2>>> intersection_edges;
 
-  auto faces = mesh.faces();
-  for (auto const f : faces) {
+  for (auto const f : mesh.faces()) {
 
     // make a set of vertices and edge constraints to use in triangulation
     Array<Vector<int,2>> edges;

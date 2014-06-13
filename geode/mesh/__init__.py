@@ -127,6 +127,9 @@ def write_obj(file,mesh,X):
     raise TypeError('unknown mesh type %s'%type(mesh))
 
 def merge_meshes(surfaces):
+  if len(surfaces)==1:
+    (m,x), = surfaces
+    return (m if isinstance(m,TriangleSoup) else TriangleSoup(m)),x
   tris = []
   X = []
   total = 0

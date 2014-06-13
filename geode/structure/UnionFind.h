@@ -28,10 +28,6 @@ public:
     return parents.size();
   }
 
-  void clear_connectivity() {
-    parents.fill(-1);
-  }
-
   bool is_root(const int i) const {
     return parents[i]<0;
   }
@@ -123,11 +119,15 @@ public:
   }
 
   void initialize(const int entries) {
-    parents.copy(ConstantMap<int>(entries,-1));
+    parents.copy(constant_map(entries,-1));
   }
 
   int add_entry() {
     return parents.append(-1);
+  }
+
+  void extend(const int n) {
+    parents.extend(constant_map(n,-1));
   }
 
   // Okay for map to yield invalid indices for isolated elements

@@ -89,6 +89,11 @@ template<int d> static inline bool operator==(const Exact<d>& lhs, const Exact<d
     return mpn_cmp(lhs.n, rhs.n, Exact<d>::limbs) == 0;
 }
 
+// For template compatibility with Interval
+template<int d> static inline bool overlap(const Exact<d>& x, const Exact<d>& y) {
+  return x==y;
+}
+
 template<int d> static inline int sign(const Exact<d>& x) {
   if (is_negative(x))
     return -1;
@@ -261,6 +266,21 @@ static inline void mpz_set_nonnegative(RawArray<mp_limb_t> x, RawArray<const mp_
 
 template<int d> static inline void mpz_set(RawArray<mp_limb_t> x, const Exact<d>& y) {
   mpz_set(x,asarray(y.n));
+}
+
+// For use in construction-related templates
+template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,2>,Exact<d>>& y) {
+  assert(x.m==3);
+  mpz_set(x[0],asarray(y.x.x.n));
+  mpz_set(x[1],asarray(y.x.y.n));
+  mpz_set(x[2],asarray(y.y.n));
+}
+template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,3>,Exact<d>>& y) {
+  assert(x.m==4);
+  mpz_set(x[0],asarray(y.x.x.n));
+  mpz_set(x[1],asarray(y.x.y.n));
+  mpz_set(x[2],asarray(y.x.z.n));
+  mpz_set(x[3],asarray(y.y.n));
 }
 
 // String conversion

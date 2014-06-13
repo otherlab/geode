@@ -94,6 +94,7 @@ template<class T, class Id> static inline PyObject* to_python(FieldId<T,Id> i) {
 
 template<class Id> struct IdIter {
   Id i;
+  IdIter() = default;
   IdIter(Id i) : i(i) {}
   IdIter &operator++() { i.id++; return *this; }
   IdIter operator++(int) { IdIter<Id> old(*this); i.id++; return old; } // postfix
@@ -102,6 +103,7 @@ template<class Id> struct IdIter {
   Id operator*() const { return i; }
   IdIter operator+(int d) const { return Id(i.id+d);}
   IdIter operator-(int d) const { return Id(i.id-d);}
+  int operator-(IdIter o) const { return i.id-o.i.id; }
 };
 
 #ifdef OTHER_PYTHON

@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 import platform
 from geode.array import *
+from geode.mesh import merge_meshes
 if platform.system()=='Windows':
   from other_all import *
   import other_all as geode_wrap
@@ -47,3 +48,18 @@ def circle_arc_intersection(*arcs):
   all_arcs = Nested.concatenate(*arcs)
   split = split_circle_arcs if all_arcs.flat.dtype==CircleArc else exact_split_circle_arcs
   return split(all_arcs,len(arcs)-1)
+
+def split_soup(mesh,X,depth=0):
+  '''If depth is None, extract nonmanifold mesh with triangles at all depths'''
+  if depth is None:
+    depth = -1<<31
+  return geode_wrap.split_soup(mesh,X,depth)
+
+def split_soups(meshes,depth=0):
+  return split_soup(*merge_meshes(meshes),depth=depth)
+
+def soup_union(*meshes):
+  return split_soups(meshes,depth=0)
+
+def soup_intersection(*meshes):
+  return split_soups(meshes,depth=1)
