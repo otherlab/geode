@@ -62,4 +62,4 @@ def soup_union(*meshes):
   return split_soups(meshes,depth=0)
 
 def soup_intersection(*meshes):
-  return split_soups(meshes,depth=1)
+  return split_soups(meshes,depth=len(meshes)-1)
