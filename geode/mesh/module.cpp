@@ -13,5 +13,4 @@ void wrap_mesh() {
   GEODE_WRAP(halfedge_mesh)
   GEODE_WRAP(corner_mesh)
   GEODE_WRAP(mesh_io)
-  GEODE_WRAP(intersections)
 }
