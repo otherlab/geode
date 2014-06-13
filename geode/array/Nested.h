@@ -218,6 +218,10 @@ public:
     flat.pop_elements(back().size());
     offsets.pop();
   }
+
+  const Nested<const Element>& const_() const {
+    return *(const Nested<const Element>*)this;
+  }
 };
 
 template<class T,bool f> inline ostream& operator<<(ostream& output, const Nested<T,f>& a) {
