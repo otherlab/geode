@@ -150,7 +150,8 @@ public:
     return !(*this==v);
   }
 
-  template<class TArray1> const TArray& operator+=(const ArrayBase<T,TArray1>& v) const {
+  template<class T1,class TArray1> const TArray& operator+=(const ArrayBase<T1,TArray1>& v) const {
+    STATIC_ASSERT_SAME(T,typename TArray1::Element);
     const TArray& self = derived();
     int m = self.size();
     const TArray1& v_ = v.derived();
@@ -173,7 +174,8 @@ public:
     return self;
   }
 
-  template<class TArray1> const TArray& operator-=(const ArrayBase<T,TArray1>& v) const {
+  template<class T1,class TArray1> const TArray& operator-=(const ArrayBase<T1,TArray1>& v) const {
+    STATIC_ASSERT_SAME(T,typename TArray1::Element);
     const TArray& self = derived();
     int m = self.size();
     const TArray1& v_ = v.derived();
@@ -641,7 +643,7 @@ template<class T0,class T1,class TA0,class TA1> Array<typename remove_const<T0>:
   const auto& a1 = a1_.derived();
   const int m0 = a0.size(),
             m1 = a1.size();
-  Array<typename remove_const<T0>::type> result(m0+m1,false);
+  Array<typename remove_const<T0>::type> result(m0+m1,uninit);
   result.slice(0,m0) = a0;
   result.slice(m0,m0+m1) = a1;
   return result;

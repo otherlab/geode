@@ -59,6 +59,7 @@ GEODE_CORE_EXPORT void GEODE_NORETURN(function_is_not_defined(const char* functi
 GEODE_CORE_EXPORT void GEODE_NORETURN(not_implemented(const char* function,const char* file,unsigned int line,const char* message)) GEODE_COLD;
 GEODE_CORE_EXPORT void GEODE_NORETURN(fatal_error(const char* function,const char* file,unsigned int line,const char* message)) GEODE_COLD;
 GEODE_CORE_EXPORT void GEODE_NORETURN(assertion_failed(const char* function,const char* file,unsigned int line,const char* condition,const char* message)) GEODE_COLD;
+GEODE_CORE_EXPORT void GEODE_NORETURN(did_not_raise(const type_info& error, const char* message)) GEODE_COLD;
 
 // Instead of throwing an exception, call the given function when an error occurs
 #ifdef _WIN32
@@ -67,5 +68,15 @@ typedef void (*ErrorCallback)(const string&);
 typedef void GEODE_NORETURN((*ErrorCallback)(const string&));
 #endif
 GEODE_CORE_EXPORT void set_error_callback(ErrorCallback callback);
+
+// Assert that a function raises an exception
+template<class Error,class F,class... M> static void assert_raises(const F& f, const M&... message) {
+  try {
+    f();
+  } catch (const Error&) {
+    return;
+  }
+  did_not_raise(typeid(Error),debug_message(message...));
+}
 
 }

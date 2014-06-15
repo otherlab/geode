@@ -251,6 +251,25 @@ template<int a> GEODE_PURE static inline Exact<a> operator>>(const Exact<a> x, c
   return r;
 }
 
+// Signs of integers in limb array form
+
+static inline bool mpz_negative(RawArray<const mp_limb_t> x) {
+  return mp_limb_signed_t(x.back())<0;
+}
+
+static inline int mpz_sign(RawArray<const mp_limb_t> x) {
+  if (mp_limb_signed_t(x.back())<0)
+    return -1;
+  for (int i=0;i<x.size();i++)
+    if (x[i])
+      return 1;
+  return 0;
+}
+
+static inline bool mpz_nonzero(RawArray<const mp_limb_t> x) {
+  return !x.contains_only(0);
+}
+
 // Copy from Exact<d> to an array with sign extension
 
 static inline void mpz_set(RawArray<mp_limb_t> x, RawArray<const mp_limb_t> y) {
@@ -269,6 +288,11 @@ template<int d> static inline void mpz_set(RawArray<mp_limb_t> x, const Exact<d>
 }
 
 // For use in construction-related templates
+template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,1>,Exact<d>>& y) {
+  assert(x.m==2);
+  mpz_set(x[0],asarray(y.x.x.n));
+  mpz_set(x[1],asarray(y.y.n));
+}
 template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,2>,Exact<d>>& y) {
   assert(x.m==3);
   mpz_set(x[0],asarray(y.x.x.n));

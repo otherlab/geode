@@ -5,6 +5,7 @@
 #include <geode/exact/debug.h>
 #include <geode/exact/Exact.h>
 #include <geode/exact/Interval.h>
+#include <geode/exact/irreducible.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/IRange.h>
 #include <geode/vector/Vector.h>
@@ -56,14 +57,18 @@ template<int d,class TV> using PredicateType = typename PredicateTypeHelper<d,TV
 template<int n,int d,class TV> using ConstructType = Tuple<Vector<PredicateType<d,TV>,n>,PredicateType<d-1,TV>>;
 
 // Wrap predicate for consumption by perturbed_sign (use only via perturbed_predicate)
-template<class R,class F,int d,class... entries> static void
-wrapped_predicate(R result, RawArray<const Vector<Exact<1>,d>> X) {
+template<class R> struct WrapResult { typedef RawArray<mp_limb_t> type; };
+template<class... Rs> struct WrapResult<Tuple<Rs...>> { typedef RawArray<mp_limb_t,2> type; };
+template<class F,int d,class... entries> static void
+wrapped_predicate(typename WrapResult<decltype(F::eval(
+                    declval<typename First<const Vector<Exact<1>,d>,entries>::type>()...))>::type result,
+                  RawArray<const Vector<Exact<1>,d>> X) {
   assert(X.size()==sizeof...(entries));
   mpz_set(result,F::eval(X[entries::value]...));
 }
-template<class R,class F,int d,class... entries> GEODE_ALWAYS_INLINE static inline auto
-wrap_predicate(Types<entries...>) -> decltype(&wrapped_predicate<R,F,d,entries...>) {
-  return &wrapped_predicate<R,F,d,entries...>;
+template<class F,int d,class... entries> GEODE_ALWAYS_INLINE static inline auto
+wrap_predicate(Types<entries...>) -> decltype(&wrapped_predicate<F,d,entries...>) {
+  return &wrapped_predicate<F,d,entries...>;
 }
 
 // Given F s.t. F::eval exactly computes a polynomial in its input arguments, compute the perturbed sign of F(args).
@@ -73,13 +78,18 @@ template<class F,class... Args> GEODE_ALWAYS_INLINE static inline bool perturbed
   typedef decltype(F::eval(Vector<Exact<1>,d>(args.y)...)) Result;
   const int degree = Result::degree;
 
+  // Check irreducibility if desired
+  const auto f = wrap_predicate<F,d>(IRange<sizeof...(Args)>());
+  if (IRREDUCIBLE)
+    inexact_assert_irreducible(f,degree,sizeof...(Args),typeid(F).name());
+
   // Evaluate with conservative interval arithmetic, hoping for a clear nonzero
   if (const int s = weak_sign(F::eval(Vector<Interval,d>(args.y)...)))
     return s>0;
 
   // Fall back to exact integer evaluation with symbolic perturbation
   const typename exact::Point<d>::type X[sizeof...(Args)] = {args...};
-  return perturbed_sign(wrap_predicate<RawArray<mp_limb_t>,F,d>(IRange<sizeof...(Args)>()),degree,asarray(X));
+  return perturbed_sign(f,degree,asarray(X));
 }
 
 template<class F,class... Args> struct PerturbedConstruct {
@@ -97,6 +107,11 @@ template<class F,class... Args> struct PerturbedConstruct {
 template<class F,class... Args> GEODE_ALWAYS_INLINE static inline typename PerturbedConstruct<F,Args...>::type
 perturbed_construct(const int tolerance, const Args... args) {
   typedef PerturbedConstruct<F,Args...> I;
+
+  // Check irreducibility if desired
+  const auto f = wrap_predicate<F,I::d>(IRange<sizeof...(Args)>());
+  if (IRREDUCIBLE)
+    inexact_assert_lowest_terms(f,I::degree,sizeof...(Args),I::d,typeid(F).name());
 
 #if CHECK
   Tuple<Vector<Interval,I::k>,int> check;
@@ -121,7 +136,6 @@ perturbed_construct(const int tolerance, const Args... args) {
   // If intervals fail, evaluate and round using symbolic perturbation
   const typename exact::Point<I::d>::type X[sizeof...(Args)] = {args...};
   Vector<Quantized,I::k> q;
-  const auto f = wrap_predicate<RawArray<mp_limb_t,2>,F,I::d>(IRange<sizeof...(Args)>());
   const bool s = perturbed_ratio(asarray(q),f,I::degree,asarray(X));
 #if CHECK
   GEODE_ASSERT(!check.y || (check.y>0)==s);

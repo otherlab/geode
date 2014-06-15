@@ -105,6 +105,15 @@ public:
     }
   }
 
+  // Compile time version of above
+  explicit Array(const int m_, Uninit)
+    : m_(m_), max_size_(m_) {
+    assert(m_>=0);
+    auto buffer = Buffer::new_<T>(m_);
+    data_ = (T*)buffer->data;
+    owner_ = (PyObject*)buffer;
+  }
+
   Array(const Array& source)
     : Base(), m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);

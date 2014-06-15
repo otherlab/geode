@@ -6,18 +6,19 @@ import random
 import numpy
 
 def test_monomials():
+  monomials = polynomial_monomials
   for n in xrange(4):
-    assert all(perturb_monomials(0,n)==zeros((1,n)))
-    assert all(perturb_monomials(1,n)==concatenate([zeros((1,n)),eye(n)[::-1]]))
-  assert all(perturb_monomials(2,2)==[(0,0),(0,1),(1,0),(0,2),(1,1),(2,0)])
-  assert all(perturb_monomials(2,3)==[(0,0,0),(0,0,1),(0,1,0),(1,0,0),(0,0,2),(0,1,1),(0,2,0),(1,0,1),(1,1,0),(2,0,0)])
+    assert all(monomials(0,n)==zeros((1,n)))
+    assert all(monomials(1,n)==concatenate([zeros((1,n)),eye(n)[::-1]]))
+  assert all(monomials(2,2)==[(0,0),(0,1),(1,0),(0,2),(1,1),(2,0)])
+  assert all(monomials(2,3)==[(0,0,0),(0,0,1),(0,1,0),(1,0,0),(0,0,2),(0,1,1),(0,2,0),(1,0,1),(1,1,0),(2,0,0)])
 
 def test_interpolation():
   numpy.random.seed(183181)
   bound = 10000
   for d in xrange(1,5):
     for n in xrange(1,6):
-      beta = perturb_monomials(d,n)
+      beta = polynomial_monomials(d,n)
       coefs = numpy.random.randint(2*bound,size=len(beta))-bound
       in_place_interpolating_polynomial_test(d,beta,coefs,False)
 
@@ -64,6 +65,9 @@ def test_perturbed_sign():
 
 def test_perturbed_ratio():
   perturbed_ratio_test()
+
+def test_irreducible():
+  irreducible_test()
 
 if __name__=='__main__':
   test_monomials()
