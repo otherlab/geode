@@ -64,7 +64,8 @@ def test_write(filename=None):
   if filename is None:
     file = named_tmpfile(suffix='.npy')
     filename = file.name
-  header = array_write_test(filename,data)
+  header,size = array_write_test(filename,data)
+  assert size==data.nbytes
   data2 = load(filename)
   assert all(data==data2)
   assert header.tostring()==open(filename).read(len(header))
