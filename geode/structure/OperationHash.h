@@ -4,6 +4,7 @@
 #pragma once
 
 #include <geode/array/Array.h>
+#include <geode/array/ConstantMap.h>
 namespace geode {
 
 class OperationHash {
@@ -17,8 +18,7 @@ public:
   void initialize(const int m) {
     if (m==operations.size())
       return next_operation();
-    operations.resize(m,false,false);
-    operations.fill(0);
+    operations.copy(constant_map(m,0u));
     current_operation = 1;
   }
 

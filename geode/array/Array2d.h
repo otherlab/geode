@@ -306,9 +306,9 @@ public:
   }
 
   template<class TArray> int append(const TArray& array) {
-    int i = m;
-    resize(m+1,n,false);
-    (*this)[i]=array;
+    const int i = m;
+    resize(m+1,n,uninit);
+    (*this)[i] = array;
     return i;
   }
 };
