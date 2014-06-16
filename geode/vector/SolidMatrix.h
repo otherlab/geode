@@ -141,7 +141,8 @@ public:
   const Array<SM> A;
 
 protected:
-  GEODE_CORE_EXPORT SolidDiagonalMatrix(int size,bool initialize=false);
+  GEODE_CORE_EXPORT SolidDiagonalMatrix(const int size);
+  GEODE_CORE_EXPORT SolidDiagonalMatrix(const int size, Uninit);
 public:
   GEODE_CORE_EXPORT ~SolidDiagonalMatrix();
 

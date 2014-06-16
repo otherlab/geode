@@ -41,12 +41,12 @@ static string executable_path() {
   uint32_t size = sizeof(small)-1;
   if (!_NSGetExecutablePath(small,&size))
     return small;
-  Array<char> large(size,false);
+  Array<char> large(size,uninit);
   GEODE_ASSERT(!_NSGetExecutablePath(large.data(),&size));
   return large.data();
 #elif defined(__linux__)
   for (ssize_t n=128;;n*=2) {
-    Array<char> path(int(n),false);
+    Array<char> path(int(n),uninit);
     ssize_t m = readlink("/proc/self/exe",path.data(),n-1);
     if (m<0)
       throw OSError(format("executable_path: readlink failed, %s",strerror(errno)));

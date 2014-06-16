@@ -204,7 +204,7 @@ to_numpy(const TV& x) {
   // Extract memory layout information
   const int rank = numpy_rank(x);
   void* data;
-  Array<npy_intp> dimensions(rank,false);
+  Array<npy_intp> dimensions(rank,uninit);
   numpy_info(x,data,dimensions.data());
 
   // Make a new numpy array and copy the vector into it
@@ -223,7 +223,7 @@ to_numpy(TArray& array) {
   // Extract memory layout information
   const int rank = numpy_rank(array);
   void* data;
-  Array<npy_intp> dimensions(rank,false);
+  Array<npy_intp> dimensions(rank,uninit);
   numpy_info(array,data,dimensions.data());
 
   // Verify ownership
@@ -276,7 +276,7 @@ from_numpy_helper(mpl::identity<Array<T,d>>, PyObject& array) {
 template<class T> inline NdArray<T>
 from_numpy_helper(mpl::identity<NdArray<T>>, PyObject& array) {
   PyObject* base = PyArray_BASE((PyArrayObject*)&array);
-  Array<int> shape(PyArray_NDIM((PyArrayObject*)&array)-NumpyRank<T>::value,false);
+  Array<int> shape(PyArray_NDIM((PyArrayObject*)&array)-NumpyRank<T>::value,uninit);
   for (int i=0;i<shape.size();i++){
     shape[i] = (int)PyArray_DIMS((PyArrayObject*)&array)[i];
     GEODE_ASSERT(shape[i]==PyArray_DIMS((PyArrayObject*)&array)[i]);}
@@ -320,7 +320,7 @@ write_numpy(const string& filename, const TArray& array) {
   // Extract memory layout information
   const int rank = numpy_rank(array);
   void* data;
-  Array<npy_intp> dimensions(rank,false);
+  Array<npy_intp> dimensions(rank,uninit);
   numpy_info(array,data,dimensions.data());
   // Write
   geode::write_numpy(filename,rank,dimensions.data(),NumpyScalar<TArray>::value,data);
@@ -333,7 +333,7 @@ fill_numpy_header(Array<uint8_t>& header,const TArray& array) {
   // Extract memory layout information
   const int rank = numpy_rank(array);
   void* data;
-  Array<npy_intp> dimensions(rank,false);
+  Array<npy_intp> dimensions(rank,uninit);
   numpy_info(array,data,dimensions.data());
   // Fill header
   return geode::fill_numpy_header(header,rank,dimensions.data(),NumpyScalar<TArray>::value);

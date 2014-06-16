@@ -12,7 +12,7 @@ namespace geode {
 
 Array<real,2> identity_matrix(int m,int n) {
   if (n<0) n = m;
-  Array<real,2> A(m,n,false);
+  Array<real,2> A(m,n,uninit);
 #if defined(GEODE_BLAS) && defined(GEODE_MKL)
   laset(' ',0,1,A);
 #else
@@ -25,7 +25,7 @@ Array<real,2> identity_matrix(int m,int n) {
 
 template<class T> static inline Array<T,2> dot_helper(Subarray<const T,2> A, Subarray<const T,2> B) {
   GEODE_ASSERT(A.n==B.m);
-  Array<T,2> C(A.m,B.n,false);
+  Array<T,2> C(A.m,B.n,uninit);
 #if defined(GEODE_BLAS) && defined(GEODE_MKL)
   gemm(1,A,B,0,C);
 #else
@@ -43,7 +43,7 @@ Array<double,2> dot(Subarray<const double,2> A,Subarray<const double,2> B){retur
 
 template<class T> static inline Array<T> dot_helper(Subarray<const T,2> A, RawArray<const T> x) {
   GEODE_ASSERT(A.n==x.size());
-  Array<T> y(A.m,false);
+  Array<T> y(A.m,uninit);
 #if defined(GEODE_BLAS) && defined(GEODE_MKL)
   gemv(1,A,x,0,y);
 #else

@@ -37,13 +37,23 @@ public:
   Array()
     : m(0), n(0) {}
 
-  Array(const Vector<int,d>& counts, const bool initialize=true)
-    : Base(counts.x*counts.y,initialize), m(counts.x), n(counts.y) {
+  Array(const Vector<int,d>& counts)
+    : Base(counts.x*counts.y), m(counts.x), n(counts.y) {
     assert(m>=0 && n>=0);
   }
 
-  Array(const int m, const int n, const bool initialize=true)
-    : Base(m*n,initialize),m(m),n(n) {
+  Array(const Vector<int,d>& counts, Uninit)
+    : Base(counts.x*counts.y,uninit), m(counts.x), n(counts.y) {
+    assert(m>=0 && n>=0);
+  }
+
+  Array(const int m, const int n)
+    : Base(m*n), m(m), n(n) {
+    assert(m>=0 && n>=0);
+  }
+
+  Array(const int m, const int n, Uninit)
+    : Base(m*n,uninit), m(m), n(n) {
     assert(m>=0 && n>=0);
   }
 
@@ -181,12 +191,14 @@ public:
     if (n_new==n || !flat.size() || !new_size || !copy_existing_elements)
       flat.resize(new_size,initialize_new_elements,copy_existing_elements);
     else {
-      Array<T> new_flat(new_size,initialize_new_elements);
-      int m2 = geode::min(m,m_new),
-          n2 = geode::min(n,n_new);
+      Array<T> new_flat(new_size,uninit);
+      if (initialize_new_elements)
+        new_flat.fill(T());
+      const int m2 = geode::min(m,m_new),
+                n2 = geode::min(n,n_new);
       for (int i=0;i<m2;i++) for (int j=0;j<n2;j++)
         new_flat(i*n_new+j) = flat(i*n+j);
-      flat=new_flat;
+      flat = new_flat;
     }
     m = m_new;
     n = n_new;

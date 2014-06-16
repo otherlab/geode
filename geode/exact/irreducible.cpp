@@ -296,7 +296,7 @@ inexact_assert_irreducible(void(*const polynomial)(RawArray<mp_limb_t>,RawArray<
   cout << format("irreducibility check: %s, degree %d, R^(%d*%d) -> R",name,degree,inputs,m) << endl;
 
   Helper<m> H(degree,inputs);
-  const Array<mp_limb_t,2> values(degree+1,H.precision,false);
+  const Array<mp_limb_t,2> values(degree+1,H.precision,uninit);
   for (const int k : range(100)) {
     // Evaluate polynomial at j = 0,...,degree
     for (const int j : range(degree+1))
@@ -330,7 +330,7 @@ inexact_assert_lowest_terms(void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<co
   cout << format("lowest terms check: %s, degree %d, R^(%d*%d) -> R^%d/R",name,degree,inputs,m,outputs) << endl;
 
   Helper<m> H(degree,inputs);
-  const Array<mp_limb_t,3> values(degree+1,outputs+1,H.precision,false);
+  const Array<mp_limb_t,3> values(degree+1,outputs+1,H.precision,uninit);
   for (const int k : range(100)) {
     // Evaluate ratio at j = 0,...,degree
     for (const int j : range(degree+1))

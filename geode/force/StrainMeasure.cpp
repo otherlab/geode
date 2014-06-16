@@ -20,7 +20,7 @@ template<> GEODE_DEFINE_TYPE(StrainMeasure<T,2>)
 template<> GEODE_DEFINE_TYPE(StrainMeasure<T,3>)
 
 template<int d,int m> static Array<UpperTriangularMatrix<T,d>> compute_Dm_inverse(RawArray<const Vector<int,d+1>> elements, RawArray<const Vector<T,m>> X) {
-  Array<UpperTriangularMatrix<T,d>> Dm_inverse(elements.size(),false);
+  Array<UpperTriangularMatrix<T,d>> Dm_inverse(elements.size(),uninit);
   for (int t=0;t<elements.size();t++) {
     const auto R = StrainMeasure<T,d>::Ds(X,elements[t]).R_from_QR_factorization();
     if (R.determinant()<=0)
@@ -72,7 +72,7 @@ template<class T,int d> void StrainMeasure<T,d>::initialize_rest_state_to_equila
 template<class T,int d> void StrainMeasure<T,d>::print_altitude_statistics() {   
   if (!Dm_inverse.size())
     return;
-  Array<T> altitude(Dm_inverse.size(),false);
+  Array<T> altitude(Dm_inverse.size(),uninit);
   for (int t=0;t<altitude.size();t++)
     altitude(t) = rest_altitude(t);
   sort(altitude);

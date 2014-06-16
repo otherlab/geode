@@ -39,8 +39,11 @@ public:
   Field(typename mpl::if_c<is_const,const Field<Element,Id>&,Unusable>::type source)
     : flat(source.flat) {}
 
-  explicit Field(int n, bool initialize=true)
-    : flat(n,initialize) {}
+  explicit Field(const int n)
+    : flat(n) {}
+
+  explicit Field(const int n, Uninit)
+    : flat(n,uninit) {}
 
   explicit Field(const Array<T>& source)
     : flat(source) {}

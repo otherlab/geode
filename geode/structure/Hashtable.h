@@ -91,7 +91,7 @@ private:
   int next_resize_;
 public:
 
-  Hashtable(const int estimated_max_size=5) {
+  explicit Hashtable(const int estimated_max_size=5) {
     initialize_new_table(estimated_max_size);
   }
 

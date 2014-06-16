@@ -277,7 +277,7 @@ Array<TV3> TriangleSoup::vertex_normals(RawArray<const TV3> X) const {
 
 Array<TV3> TriangleSoup::element_normals(RawArray<const TV3> X) const {
   GEODE_ASSERT(X.size()>=nodes());
-  Array<TV3> normals(elements.size(),false);
+  Array<TV3> normals(elements.size(),uninit);
   for (int t=0;t<elements.size();t++) {
     int i,j,k;elements[t].get(i,j,k);
     normals[t] = cross(X[j]-X[i],X[k]-X[i]).normalized();

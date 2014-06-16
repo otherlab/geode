@@ -75,41 +75,44 @@ public:
   Array()
     : m_(0), max_size_(0), data_(0), owner_(0) {}
 
-  explicit Array(const Vector<int,d> &sizes, const bool initialize=true)
+  explicit Array(const int m_)
+    : m_(m_), max_size_(m_) {
+    assert(m_>=0);
+    Buffer* buffer = Buffer::new_<T>(m_);
+    data_ = (T*)buffer->data;
+    owner_ = (PyObject*)buffer;
+    if (IsScalarVectorSpace<T>::value)
+      memset((void*)data_,0,m_*sizeof(T));
+    else
+      for (int i=0;i<m_;i++)
+        const_cast<Element*>(data_)[i] = T();
+  }
+
+  explicit Array(const int m_, Uninit)
+    : m_(m_), max_size_(m_) {
+    assert(m_>=0);
+    auto buffer = Buffer::new_<T>(m_);
+    data_ = (T*)buffer->data;
+    owner_ = (PyObject*)buffer;
+  }
+
+  explicit Array(const Vector<int,d>& sizes)
     : m_(sizes.x), max_size_(sizes.x) {
     assert(m_>=0);
     Buffer* buffer = Buffer::new_<T>(m_);
     data_ = (T*)buffer->data;
     owner_ = (PyObject*)buffer;
-    if (initialize) {
-      if (IsScalarVectorSpace<T>::value)
-        memset((void*)data_,0,m_*sizeof(T));
-      else
-        for (int i=0;i<m_;i++)
-          const_cast<Element*>(data_)[i] = T();
-    }
+    if (IsScalarVectorSpace<T>::value)
+      memset((void*)data_,0,m_*sizeof(T));
+    else
+      for (int i=0;i<m_;i++)
+        const_cast<Element*>(data_)[i] = T();
   }
 
-  explicit Array(const int m_, const bool initialize=true)
-    : m_(m_), max_size_(m_) {
+  explicit Array(const Vector<int,d>& sizes, Uninit)
+    : m_(sizes.x), max_size_(sizes.x) {
     assert(m_>=0);
     Buffer* buffer = Buffer::new_<T>(m_);
-    data_ = (T*)buffer->data;
-    owner_ = (PyObject*)buffer;
-    if (initialize) {
-      if (IsScalarVectorSpace<T>::value)
-        memset((void*)data_,0,m_*sizeof(T));
-      else
-        for (int i=0;i<m_;i++)
-          const_cast<Element*>(data_)[i] = T();
-    }
-  }
-
-  // Compile time version of above
-  explicit Array(const int m_, Uninit)
-    : m_(m_), max_size_(m_) {
-    assert(m_>=0);
-    auto buffer = Buffer::new_<T>(m_);
     data_ = (T*)buffer->data;
     owner_ = (PyObject*)buffer;
   }
@@ -492,7 +495,7 @@ public:
   }
 
   template<class T2> typename disable_if<is_same<T2,Element>,Array<T2>>::type as() const {
-    Array<typename remove_const<T2>::type> copy(m_,false);
+    Array<typename remove_const<T2>::type> copy(m_,uninit);
     for (int i=0;i<m_;i++) copy[i] = T2(data_[i]);
     return copy;
   }

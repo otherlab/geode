@@ -35,8 +35,13 @@ public:
 
   Array() {}
 
-  Array(const Vector<int,d>& shape, const bool initialize=true)
-    : Base(shape.x*shape.y*shape.z*shape.w,initialize), shape(shape) {
+  Array(const Vector<int,d>& shape)
+    : Base(shape.x*shape.y*shape.z*shape.w), shape(shape) {
+    assert(shape.min()>=0);
+  }
+
+  Array(const Vector<int,d>& shape, Uninit)
+    : Base(shape.x*shape.y*shape.z*shape.w,uninit), shape(shape) {
     assert(shape.min()>=0);
   }
 

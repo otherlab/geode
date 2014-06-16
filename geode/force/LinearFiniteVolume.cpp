@@ -31,7 +31,7 @@ template<class TV,int d> LinearFiniteVolume<TV,d>::LinearFiniteVolume(Array<cons
   , nodes_(elements.size()?1+scalar_view(elements).max():0)
   , density(density) {
   update_position(X_,false);
-  const_cast_(Dm_inverse) = Array<Matrix<T,d,m>>(elements.size(),false);
+  const_cast_(Dm_inverse) = Array<Matrix<T,d,m>>(elements.size(),uninit);
   Bm_scales.resize(elements.size(),false,false);
   if ((int)m>(int)d)
     normals.resize(elements.size(),false,false);

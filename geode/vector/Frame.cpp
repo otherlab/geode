@@ -75,7 +75,7 @@ template<class TV> static Array<Frame<TV>> frame_array_test(const Frame<TV>& f1,
 
 template<class TV> static Array<Frame<TV>> frame_interpolation(Array<const Frame<TV>> f1,Array<const Frame<TV>> f2,T s) {
   GEODE_ASSERT(f1.size()==f2.size());
-  Array<Frame<TV>> r(f1.size(),false);
+  Array<Frame<TV>> r(f1.size(),uninit);
   for (int i=0;i<r.size();i++)
     r[i] = Frame<TV>::interpolation(f1[i],f2[i],s);
   return r;

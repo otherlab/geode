@@ -19,7 +19,7 @@ template<class TV> Force<TV>::~Force() {}
 template<class TV> Array<TV> Force<TV>::elastic_gradient_block_diagonal_times(RawArray<TV> dX) const {
   Array<SymmetricMatrix<T,d>> dFdX(dX.size());
   add_elastic_gradient_block_diagonal(dFdX);
-  Array<TV> dF(dX.size(),false);
+  Array<TV> dF(dX.size(),uninit);
   for (int i=0;i<dX.size();i++)
     dF[i] = dFdX[i]*dX[i];
   return dF;

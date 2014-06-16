@@ -38,7 +38,7 @@ template<> void RawArray<double,2>::transpose() {
 #endif
 
 template<class T> Array<typename remove_const<T>::type,2> RawArray<T,2>::transposed() const {
-  Array<Element,2> A(n,m,false);
+  Array<Element,2> A(n,m,uninit);
   for (int i=0;i<m;i++) for (int j=0;j<n;j++)
     A(j,i) = flat[i*n+j];
   return A;
@@ -46,22 +46,22 @@ template<class T> Array<typename remove_const<T>::type,2> RawArray<T,2>::transpo
 
 #if defined(GEODE_BLAS) && defined(GEODE_MKL)
 template<> Array<float,2> RawArray<float,2>::transposed() const {
-  Array<Element,2> A(n,m,false);
+  Array<Element,2> A(n,m,uninit);
   omatcopy(CblasTrans,1,*this,A);
   return A;
 }
 template<> Array<float,2> RawArray<const float,2>::transposed() const {
-  Array<Element,2> A(n,m,false);
+  Array<Element,2> A(n,m,uninit);
   omatcopy(CblasTrans,1,*this,A);
   return A;
 }
 template<> Array<double,2> RawArray<double,2>::transposed() const {
-  Array<Element,2> A(n,m,false);
+  Array<Element,2> A(n,m,uninit);
   omatcopy(CblasTrans,1,*this,A);
   return A;
 }
 template<> Array<double,2> RawArray<const double,2>::transposed() const {
-  Array<Element,2> A(n,m,false);
+  Array<Element,2> A(n,m,uninit);
   omatcopy(CblasTrans,1,*this,A);
   return A;
 }
@@ -73,7 +73,7 @@ template<class T> void RawArray<T,2>::permute_rows(RawArray<const int> p, int di
   for (int i=0;i<m;i++) assert(unsigned(p[i])<unsigned(m));
 
   // Convert to forward case if necessary
-  Array<int> q(m,false);
+  Array<int> q(m,uninit);
   if (direction<0) // backwards
     for (int i=0;i<m;i++)
       q[p[i]] = i;
@@ -81,7 +81,7 @@ template<class T> void RawArray<T,2>::permute_rows(RawArray<const int> p, int di
     q.copy(p);
 
   // Now we can assume the forward case
-  Array<T> tmp(n,false);
+  Array<T> tmp(n,uninit);
   T* data_ = data();
   for (int i=0;i<m;i++)
     if (q[i]>=0 && q[i]!=i) {
@@ -103,7 +103,7 @@ template<class T> void RawArray<T,2>::permute_columns(RawArray<const int> p,int 
   assert(abs(direction)==1 && p.size()==n && p.sum()==n*(n-1)/2);
   for (int i=0;i<n;i++) assert(unsigned(p[i])<unsigned(n));
 
-  Array<T> tmp(n,false);
+  Array<T> tmp(n,uninit);
   for (int i=0;i<m;i++) {
     memcpy(tmp.data(),data()+i*n,n*sizeof(T));
     if (direction>0) // forwards

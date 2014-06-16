@@ -508,7 +508,7 @@ bool circle_intersection_right_of_center(Arcs arcs, const Vertex a, const int b)
 
 Array<Vertex> compute_vertices(Arcs arcs, RawArray<const int> next) {
   IntervalScope scope;
-  Array<Vertex> vertices(arcs.size(),false); // vertices[i] is the start of arcs[i]
+  Array<Vertex> vertices(arcs.size(),uninit); // vertices[i] is the start of arcs[i]
   for (int i0=0;i0<arcs.size();i0++) {
     const int i1 = next[i0];
     if(i0 == i1) {

@@ -157,7 +157,7 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
 
       // Evaluate polynomial at every point in an "easy corner"
       const auto lambda = monomials(degree,d);
-      const Array<mp_limb_t,2> values(lambda.m,precision,false);
+      const Array<mp_limb_t,2> values(lambda.m,precision,uninit);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
           Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
@@ -353,7 +353,7 @@ template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const rat
 
       // Evaluate polynomial at every point in an "easy corner"
       const auto lambda = monomials(degree,d);
-      const Array<mp_limb_t,3> values(lambda.m,r+1,precision,false);
+      const Array<mp_limb_t,3> values(lambda.m,r+1,precision,uninit);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
           Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
@@ -475,7 +475,7 @@ template<int m> static void perturbed_sign_test() {
           }
         }
         // We should be initially zero, and then match the correct sign once nonzero
-        Array<mp_limb_t> result(enough*m*power,false);
+        Array<mp_limb_t> result(enough*m*power,uninit);
         nasty_predicate(result,asconstarray(sX));
         const int slow = mpz_sign(result);
         if (0) {

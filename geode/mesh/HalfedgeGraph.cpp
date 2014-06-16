@@ -366,7 +366,7 @@ Nested<HalfedgeId> extract_region(const HalfedgeGraph& g, const RawField<const b
 
   Nested<HalfedgeId, false> contours;
 
-  auto seen = Field<bool, EdgeId>(g.n_edges(), false);
+  auto seen = Field<bool,EdgeId>(g.n_edges(),uninit);
   seen.flat.fill(true); // Assume any face without valid edges doesn't need to be processed
   for(const FaceId fid : g.faces()) { // Iterate over faces to ensure we only process edges with a valid face
     for(const BorderId bid : g.face_borders(fid)) {

@@ -96,12 +96,12 @@ static inline void mpz_div_exact_ui(RawArray<mp_limb_t> x, const mp_limb_t s) {
 void in_place_interpolating_polynomial(const int degree, RawArray<const uint8_t,2> lambda, Subarray<mp_limb_t,2> A) {
   // For now we are lazy, and index using a rectangular helper array mapping multi-indices to flat indices
   const int n = lambda.n;
-  Array<int> powers(n+1,false);
+  Array<int> powers(n+1,uninit);
   powers[0] = 1;
   for (int i=0;i<n;i++)
     powers[i+1] = powers[i]*(degree+1);
-  Array<uint16_t> to_flat(powers.back(),false);
-  Array<int> from_flat(lambda.m,false);
+  Array<uint16_t> to_flat(powers.back(),uninit);
+  Array<int> from_flat(lambda.m,uninit);
   to_flat.fill(-1);
   for (int k=0;k<lambda.m;k++) {
     int f = 0;
@@ -112,7 +112,7 @@ void in_place_interpolating_polynomial(const int degree, RawArray<const uint8_t,
   }
 
   // Bookkeeping information for the divided difference algorithm
-  Array<Vector<int,2>> info(lambda.m,false); // m,alpha[m] for each tick
+  Array<Vector<int,2>> info(lambda.m,uninit); // m,alpha[m] for each tick
   for (int k=0;k<lambda.m;k++)
     info[k].set(0,lambda(k,0));
 
