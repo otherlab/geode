@@ -92,6 +92,11 @@ public:
     return shape;
   }
 
+  void clear() {
+    flat.clear();
+    shape.fill(0);
+  }
+
   void clean_memory() {
     Array empty;
     swap(empty);
@@ -114,18 +119,26 @@ public:
     return valid(index.x,index.y,index.z,index.w);
   }
 
-  void resize(const Vector<int,d>& shape_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
+  void resize(const Vector<int,d>& shape_new) {
+    if (shape_new==shape) return;
+    assert(shape_new.min()>=0);
+    int new_size = shape_new.product();
+    Array<T> new_flat(new_size);
+    const Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
+    for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
+      new_flat[((i*shape_new[1]+j)*shape_new[2]+k)*shape_new[3]+l] = flat[((i*shape[1]+j)*shape[2]+k)*shape[3]+l];
+    shape = shape_new;
+    flat = new_flat;
+  }
+
+  void resize(const Vector<int,d>& shape_new, Uninit) {
     if (shape_new==shape) return;
     assert(shape_new.min()>=0);
     int new_size = shape_new.product();
     Array<T> new_flat(new_size,uninit);
-    if (initialize_new_elements)
-      new_flat.fill(T());
-    if (copy_existing_elements) {
-      Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
-      for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
-        new_flat[((i*shape_new[1]+j)*shape_new[2]+k)*shape_new[3]+l] = flat[((i*shape[1]+j)*shape[2]+k)*shape[3]+l];
-    }
+    const Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
+    for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
+      new_flat[((i*shape_new[1]+j)*shape_new[2]+k)*shape_new[3]+l] = flat[((i*shape[1]+j)*shape[2]+k)*shape[3]+l];
     shape = shape_new;
     flat = new_flat;
   }

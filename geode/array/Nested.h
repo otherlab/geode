@@ -72,7 +72,7 @@ public:
   template<class S,bool f> static Nested empty_like(const Nested<S,f>& other) {
     Nested array;
     array.offsets = other.offsets;
-    array.flat.resize(array.offsets.back(),false,false);
+    array.flat.resize(array.offsets.back(),uninit);
     return array;
   }
 

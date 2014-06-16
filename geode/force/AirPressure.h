@@ -45,7 +45,7 @@ public:
   bool skip_rotation_terms;
   const T initial_volume;
 private:
-  Array<Vector<int,3> > local_mesh;
+  Array<Vector<int,3>> local_mesh;
   Array<const TV> X;
   T volume;
   Array<TV> normals; // area weighted times two

@@ -30,9 +30,9 @@ template<class TV,int d> FiniteVolume<TV,d>::FiniteVolume(StrainMeasure<T,d>& st
   , density(density)
   , model(ref(model))
   , plasticity(plasticity)
+  , Be_scales(strain.elements.size(),uninit)
   , stress_derivatives_valid(false)
   , definite(false) {
-  Be_scales.resize(strain.elements.size(),false,false);
   for (int t=0;t<Be_scales.size();t++)
     Be_scales[t] = -(T)1/Factorial<d>::value/strain.Dm_inverse[t].determinant();
   isotropic = dynamic_cast<IsotropicConstitutiveModel<T,d>*>(&model);
@@ -65,11 +65,15 @@ template<int d> static inline typename enable_if_c<d==2,Matrix<T,3,2>>::type in_
 template<class TV,int d> void FiniteVolume<TV,d>::update_position(Array<const TV> X,bool definite_) {
   definite = definite_;
   stress_derivatives_valid = false;
-  U.resize(strain->elements.size(),false,false);
-  De_inverse_hat.resize(strain->elements.size(),false,false);
-  Fe_hat.resize(strain->elements.size(),false,false);
+  U.clear();
+  U.resize(strain->elements.size(),uninit);
+  De_inverse_hat.clear();
+  De_inverse_hat.resize(strain->elements.size(),uninit);
+  Fe_hat.clear();
+  Fe_hat.resize(strain->elements.size(),uninit);
+  V.clear();
   if (anisotropic)
-    V.resize(strain->elements.size(),false,false);
+    V.resize(strain->elements.size(),uninit);
   for (int t=0;t<strain->elements.size();t++) {
     Matrix<T,d> V_;
     if (plasticity) {
@@ -135,13 +139,15 @@ template<class TV,int d> void FiniteVolume<TV,d>::update_stress_derivatives() co
   if (stress_derivatives_valid) return;
   GEODE_ASSERT(isotropic || (int)TV::m==(int)d); // codimension zero only for anisotropic for now
   if (anisotropic && !anisotropic->use_isotropic_stress_derivative()) {
-    dP_dFe.resize(strain->elements.size(),false,false);
+    dP_dFe.clear();
+    dP_dFe.resize(strain->elements.size(),uninit);
     for (int t=0;t<strain->elements.size();t++) {
       dP_dFe[t] = anisotropic->stress_derivative(Fe_hat[t],V[t],t);
       if (definite) dP_dFe[t].enforce_definiteness();
     }
   } else {
-    dPi_dFe.resize(strain->elements.size(),false,false);
+    dPi_dFe.clear();
+    dPi_dFe.resize(strain->elements.size(),uninit);
     for (int t=0;t<strain->elements.size();t++) {
       dPi_dFe[t] = add_out_of_plane<m>(*isotropic,Fe_hat[t],model->isotropic_stress_derivative(Fe_hat[t],t),t);
       if(definite) dPi_dFe[t].enforce_definiteness();

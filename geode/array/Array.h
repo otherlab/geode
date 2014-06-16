@@ -256,9 +256,10 @@ public:
   template<class TArray> void copy(const TArray& source) {
     // Copy data from source array even if it is shareable
     STATIC_ASSERT_SAME(T,typename TArray::value_type);
-    int source_m = source.size();
+    const int source_m = source.size();
+    m_ = 0;
     if (max_size_<source_m)
-      grow_buffer(source_m,false);
+      grow_buffer(source_m);
     if (!same_array(*this,source))
       for (int i=0;i<source_m;i++)
         data_[i] = source[i];
@@ -276,13 +277,12 @@ public:
   }
 
 private:
-  void grow_buffer(const int max_size_new, const bool copy_existing_elements=true) {
+  void grow_buffer(const int max_size_new) {
     if (max_size_>=max_size_new) return;
     Buffer* new_owner = Buffer::new_<T>(max_size_new);
     const int m_ = this->m_; // teach compiler that m_ is constant
-    if (copy_existing_elements)
-      for (int i=0;i<m_;i++)
-        ((typename remove_const<T>::type*)new_owner->data)[i] = data_[i];
+    for (int i=0;i<m_;i++)
+      ((typename remove_const<T>::type*)new_owner->data)[i] = data_[i];
     GEODE_XDECREF(owner_);
     max_size_ = max_size_new;
     data_ = (T*)new_owner->data;
@@ -290,14 +290,14 @@ private:
   }
 public:
 
-  void preallocate(const int m_new, const bool copy_existing_elements=true) GEODE_ALWAYS_INLINE {
+  void preallocate(const int m_new) GEODE_ALWAYS_INLINE {
     if(max_size_<m_new)
-      grow_buffer(geode::max(4*max_size_/3+2,m_new),copy_existing_elements);
+      grow_buffer(geode::max(4*max_size_/3+2,m_new));
   }
 
-  void resize(const int m_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
-    preallocate(m_new,copy_existing_elements);
-    if (initialize_new_elements && m_new>m_) {
+  void resize(const int m_new) {
+    preallocate(m_new);
+    if (m_new>m_) {
       if (IsScalarVectorSpace<T>::value)
         memset((void*)(data_+m_),0,(m_new-m_)*sizeof(T));
       else
@@ -306,25 +306,44 @@ public:
     m_ = m_new;
   }
 
-  void exact_resize(const int m_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) { // Zero elbow room
+  void resize(const int m_new, Uninit) GEODE_ALWAYS_INLINE {
+    preallocate(m_new);
+    m_ = m_new;
+  }
+
+  void exact_resize(const int m_new) { // Zero elbow room
     if (m_==m_new) return;
     int m_end = geode::min(m_,m_new);
     if (max_size_!=m_new) {
       Buffer* new_owner = Buffer::new_<T>(m_new);
-      if (copy_existing_elements)
-        for (int i=0;i<m_end;i++)
-          new_owner->data[i] = data_[i];
+      for (int i=0;i<m_end;i++)
+        new_owner->data[i] = data_[i];
       GEODE_XDECREF(owner_);
       max_size_ = m_new;
       data_ = (T*)new_owner->data;
       owner_ = (PyObject*)new_owner;
     }
-    if (initialize_new_elements && m_new>m_end) {
+    if (m_new>m_end) {
       if (IsScalarVectorSpace<T>::value)
         memset((void*)(data_+m_end),0,(m_new-m_end)*sizeof(T));
       else
         for (int i=m_end;i<m_new;i++)
           data_[i] = T();
+    }
+    m_ = m_new;
+  }
+
+  void exact_resize(const int m_new, Uninit) { // Zero elbow room
+    if (m_==m_new) return;
+    int m_end = geode::min(m_,m_new);
+    if (max_size_!=m_new) {
+      Buffer* new_owner = Buffer::new_<T>(m_new);
+      for (int i=0;i<m_end;i++)
+        new_owner->data[i] = data_[i];
+      GEODE_XDECREF(owner_);
+      max_size_ = m_new;
+      data_ = (T*)new_owner->data;
+      owner_ = (PyObject*)new_owner;
     }
     m_ = m_new;
   }
@@ -383,6 +402,11 @@ public:
     return m_-1;
   }
 
+  int append(Uninit) GEODE_ALWAYS_INLINE {
+    preallocate(m_+1);
+    return m_++;
+  }
+
   int append_assuming_enough_space(const T& element) GEODE_ALWAYS_INLINE {
     assert(m_<max_size_);
     data_[m_++] = element;
@@ -397,6 +421,14 @@ public:
     for (int i=0;i<append_m;i++)
       geode::const_cast_(data_[m_+i]) = append_array[i];
     m_ = m_new;
+  }
+
+  int extend(const int n, Uninit) GEODE_ALWAYS_INLINE {
+    const int m_old = m_,
+              m_new = m_+n;
+    preallocate(m_new);
+    m_ = m_new;
+    return m_old;
   }
 
   bool is_unique() const {

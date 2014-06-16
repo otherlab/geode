@@ -121,6 +121,11 @@ public:
     return Vector<int,d>(m,n,mn);
   }
 
+  void clear() {
+    flat.clear();
+    m = n = mn = 0;
+  }
+
   void clean_memory() {
     Array empty;
     swap(empty);
@@ -158,17 +163,15 @@ public:
     return unsigned(i)<unsigned(m) && unsigned(j)<unsigned(n) && unsigned(ij)<unsigned(mn);
   }
 
-  void resize(int m_new,int n_new,int mn_new,const bool initialize_new_elements=true,const bool copy_existing_elements=true) {
+  void resize(int m_new, int n_new, int mn_new) {
     if (m_new==m && n_new==n && mn_new==mn) return;
     assert(m_new>=0 && n_new>=0 && mn_new>=0);
     int new_size = m_new*n_new*mn_new;
-    Array<T> new_flat(new_size,uninit);
-    if (initialize_new_elements)
-      new_flat.fill(T());
-    if (copy_existing_elements) {
-      int m2 = geode::min(m,m_new),
-          n2 = geode::min(n,n_new),
-          mn2 = geode::min(mn,mn_new);
+    Array<T> new_flat(new_size);
+    {
+      const int m2 = geode::min(m,m_new),
+                n2 = geode::min(n,n_new),
+                mn2 = geode::min(mn,mn_new);
       for (int i=0;i<m2;i++) for (int j=0;j<n2;j++) for (int ij=0;ij<mn2;ij++)
         new_flat((i*n_new+j)*mn_new+ij) = flat((i*n+j)*mn+ij);
     }
@@ -178,8 +181,30 @@ public:
     flat = new_flat;
   }
 
-  void resize(const Vector<int,d>& counts, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
-    resize(counts.x,counts.y,counts.z,initialize_new_elements,copy_existing_elements);
+  void resize(int m_new, int n_new, int mn_new, Uninit) {
+    if (m_new==m && n_new==n && mn_new==mn) return;
+    assert(m_new>=0 && n_new>=0 && mn_new>=0);
+    int new_size = m_new*n_new*mn_new;
+    Array<T> new_flat(new_size,uninit);
+    {
+      const int m2 = geode::min(m,m_new),
+                n2 = geode::min(n,n_new),
+                mn2 = geode::min(mn,mn_new);
+      for (int i=0;i<m2;i++) for (int j=0;j<n2;j++) for (int ij=0;ij<mn2;ij++)
+        new_flat((i*n_new+j)*mn_new+ij) = flat((i*n+j)*mn+ij);
+    }
+    m = m_new;
+    n = n_new;
+    mn = mn_new;
+    flat = new_flat;
+  }
+
+  void resize(const Vector<int,d>& counts) {
+    resize(counts.x,counts.y,counts.z);
+  }
+
+  void resize(const Vector<int,d>& counts, Uninit) {
+    resize(counts.x,counts.y,counts.z);
   }
 
   RawArray<T> reshape(int m_new) const {

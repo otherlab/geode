@@ -164,11 +164,8 @@ HalfedgeId TriangleTopology::unsafe_new_boundary(const VertexId src, const Halfe
   if (erased_boundaries_.valid()) {
     e = erased_boundaries_;
     const_cast_(erased_boundaries_) = boundaries_[-1-e.id].next;
-  } else {
-    const int b = boundaries_.size();
-    const_cast_(boundaries_).const_cast_().resize(b+1,false);
-    e = HalfedgeId(-1-b);
-  }
+  } else
+    e = HalfedgeId(-1-const_cast_(boundaries_).append(uninit));
   boundaries_.const_cast_()[-1-e.id].src = src;
   boundaries_.const_cast_()[-1-e.id].reverse = reverse;
   return e;
@@ -716,9 +713,8 @@ void MutableTriangleTopology::split_face(const FaceId f, const VertexId c) {
   GEODE_ASSERT(valid(f) && isolated(c));
   const auto v = faces_[f].vertices;
   const auto n = faces_[f].neighbors;
-  const int f_base = faces_.size();
   mutable_n_faces_ += 2;
-  mutable_faces_.flat.resize(f_base+2,false);
+  const int f_base = mutable_faces_.flat.extend(2,uninit);
   const auto fs = vec(f,FaceId(f_base),FaceId(f_base+1));
 
   #define UPDATE(i) { \
