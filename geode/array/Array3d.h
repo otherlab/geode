@@ -37,56 +37,40 @@ public:
   Array()
     : m(0), n(0), mn(0) {}
 
-  Array(const Vector<int,d>& counts)
-    : Base(counts.x*counts.y*counts.z), m(counts.x), n(counts.y), mn(counts.z) {
-    assert(m>=0 && n>=0 && mn>=0);
-  }
-
-  Array(const Vector<int,d>& counts, Uninit)
-    : Base(counts.x*counts.y*counts.z,uninit), m(counts.x), n(counts.y), mn(counts.z) {
-    assert(m>=0 && n>=0 && mn>=0);
-  }
-
   Array(const int m, const int n, const int mn)
-    : Base(m*n*mn),m(m),n(n),mn(mn) {
-    assert(m>=0 && n>=0 && mn>=0);
-  }
+    : Base((assert(m>=0 && n>=0 && mn>=0),
+            m*n*mn)),m(m),n(n),mn(mn) {}
 
   Array(const int m, const int n, const int mn, Uninit)
-    : Base(m*n*mn,uninit),m(m),n(n),mn(mn) {
-    assert(m>=0 && n>=0 && mn>=0);
-  }
+    : Base((assert(m>=0 && n>=0 && mn>=0),
+            m*n*mn),uninit),m(m),n(n),mn(mn) {}
 
   Array(const int m, const int n, const int mn, T* data, PyObject* owner)
-    : m(m), n(n), mn(mn) {
-    assert(m>=0 && n>=0 && mn>=0);
-    flat = Array<T>(m*n*mn,data,owner);
-  }
+    : Base((assert(m>=0 && n>=0 && mn>=0),
+            m*n*mn),data,owner), m(m), n(n), mn(mn) {}
 
-  Array(const Vector<int,d>& counts, T* data, PyObject* owner)
-    : m(counts.x), n(counts.y), mn(counts.z) {
-    assert(m>=0 && n>=0 && mn>=0);
-    flat = Array<T>(m*n*mn,data,owner);
-  }
+  Array(const Vector<int,d> sizes)
+    : Array(sizes.x,sizes.y,sizes.z) {}
+
+  Array(const Vector<int,d> sizes, Uninit)
+    : Array(sizes.x,sizes.y,sizes.z,uninit) {}
+
+  Array(const Vector<int,d> sizes, T* data, PyObject* owner)
+    : Array(sizes.x,sizes.y,sizes.z,data,owner) {}
 
   Array(const Array& source)
-    : m(source.m), n(source.n), mn(source.mn) {
-    flat = source.flat;
-  }
+    : Base(source.flat), m(source.m), n(source.n), mn(source.mn) {}
 
   // Conversion from mutable to const
   Array(const MutableSelf& source)
-    : m(source.m), n(source.n), mn(source.mn) {
-    flat = source.flat;
-  }
+    : Base(source.flat), m(source.m), n(source.n), mn(source.mn) {}
 
-  explicit Array(const NdArray<T>& array) {
-    GEODE_ASSERT(array.rank()==3);
-    m = array.shape[0];
-    n = array.shape[1];
-    mn = array.shape[2];
-    flat = array.flat;
-  }
+  explicit Array(const NdArray<T>& array)
+    : Base((GEODE_ASSERT(array.rank()==3),
+            array.flat))
+    , m(array.shape[0])
+    , n(array.shape[1])
+    , mn(array.shape[2]) {}
 
   Array& operator=(const Array& source) {
     flat = source.flat;

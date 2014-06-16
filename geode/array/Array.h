@@ -96,26 +96,11 @@ public:
     owner_ = (PyObject*)buffer;
   }
 
-  explicit Array(const Vector<int,d>& sizes)
-    : m_(sizes.x), max_size_(sizes.x) {
-    assert(m_>=0);
-    Buffer* buffer = Buffer::new_<T>(m_);
-    data_ = (T*)buffer->data;
-    owner_ = (PyObject*)buffer;
-    if (IsScalarVectorSpace<T>::value)
-      memset((void*)data_,0,m_*sizeof(T));
-    else
-      for (int i=0;i<m_;i++)
-        const_cast<Element*>(data_)[i] = T();
-  }
+  explicit Array(const Vector<int,d> sizes)
+    : Array(sizes.x) {}
 
-  explicit Array(const Vector<int,d>& sizes, Uninit)
-    : m_(sizes.x), max_size_(sizes.x) {
-    assert(m_>=0);
-    Buffer* buffer = Buffer::new_<T>(m_);
-    data_ = (T*)buffer->data;
-    owner_ = (PyObject*)buffer;
-  }
+  explicit Array(const Vector<int,d> sizes, Uninit)
+    : Array(sizes.x,uninit) {}
 
   Array(const Array& source)
     : Base(), m_(source.m_), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
@@ -131,12 +116,12 @@ public:
     GEODE_XINCREF(owner_);
   }
 
-  template<class TArray>
-  explicit Array(const TArray& source, typename enable_if<IsShareableArray<TArray>,Unusable>::type unused=Unusable())
+  template<class TA>
+  explicit Array(const TA& source, typename enable_if<IsShareableArray<TA>,Unusable>::type unused=Unusable())
     : m_(source.size()), max_size_(source.max_size_), data_(source.data_), owner_(source.owner_) {
     assert(owner_ || !data_);
     // Share a reference to the source buffer without copying it
-    STATIC_ASSERT_SAME(Element,typename TArray::Element);
+    STATIC_ASSERT_SAME(Element,typename TA::Element);
     GEODE_XINCREF(owner_);
   }
 
@@ -153,11 +138,8 @@ public:
     GEODE_XINCREF(owner_);
   }
 
-  Array(const Vector<int,1>& counts, T* data, PyObject* owner)
-    : m_(counts.x), max_size_(m_), data_(data), owner_(owner) {
-    assert(owner_ || !data_);
-    GEODE_XINCREF(owner_);
-  }
+  Array(const Vector<int,1> sizes, T* data, PyObject* owner)
+    : Array(sizes.x,data,owner) {}
 
   ~Array() {
     GEODE_XDECREF(owner_);

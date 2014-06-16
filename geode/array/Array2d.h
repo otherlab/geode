@@ -37,55 +37,39 @@ public:
   Array()
     : m(0), n(0) {}
 
-  Array(const Vector<int,d>& counts)
-    : Base(counts.x*counts.y), m(counts.x), n(counts.y) {
-    assert(m>=0 && n>=0);
-  }
-
-  Array(const Vector<int,d>& counts, Uninit)
-    : Base(counts.x*counts.y,uninit), m(counts.x), n(counts.y) {
-    assert(m>=0 && n>=0);
-  }
-
   Array(const int m, const int n)
-    : Base(m*n), m(m), n(n) {
-    assert(m>=0 && n>=0);
-  }
+    : Base((assert(m>=0 && n>=0),
+            m*n)), m(m), n(n) {}
 
   Array(const int m, const int n, Uninit)
-    : Base(m*n,uninit), m(m), n(n) {
-    assert(m>=0 && n>=0);
-  }
+    : Base((assert(m>=0 && n>=0),
+            m*n),uninit), m(m), n(n) {}
 
   Array(const int m, const int n, T* data, PyObject* owner)
-    : m(m), n(n) {
-    assert(m>=0 && n>=0);
-    flat = Array<T>(m*n,data,owner);
-  }
+    : Base((assert(m>=0 && n>=0),
+            Array<T>(m*n,data,owner)))
+    , m(m), n(n) {}
 
-  Array(const Vector<int,d>& counts, T* data, PyObject* owner)
-    : m(counts.x), n(counts.y) {
-    assert(m>=0 && n>=0);
-    flat = Array<T>(m*n,data,owner);
-  }
+  Array(const Vector<int,d> sizes)
+    : Array(sizes.x,sizes.y) {}
+
+  Array(const Vector<int,d> sizes, Uninit)
+    : Array(sizes.x,sizes.y,uninit) {}
+
+  Array(const Vector<int,d> sizes, T* data, PyObject* owner)
+    : Array(sizes.x,sizes.y,data,owner) {}
 
   Array(const Array& source)
-    : m(source.m), n(source.n) {
-    flat = source.flat;
-  }
+    : Base(source.flat), m(source.m), n(source.n) {}
 
-  // conversion from mutable to const
+  // Conversion from mutable to const
   Array(const MutableSelf& source)
-    : m(source.m), n(source.n) {
-    flat = source.flat;
-  }
+    : Base(source.flat), m(source.m), n(source.n) {}
 
-  explicit Array(const NdArray<T>& array) {
-    GEODE_ASSERT(array.rank()==2);
-    m = array.shape[0];
-    n = array.shape[1];
-    flat = array.flat;
-  }
+  explicit Array(const NdArray<T>& array)
+    : Base((GEODE_ASSERT(array.rank()==2),
+            array.flat))
+    , m(array.shape[0]), n(array.shape[1]) {}
 
   RawArray<T,2> raw() const {
     return RawArray<T,2>(m,n,data());

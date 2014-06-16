@@ -50,7 +50,7 @@ public:
     : data_(0), m(0) {}
 
   RawArray(const Tuple<>&) // Allow conversion from empty tuples
-    : data_(0), m(0) {}
+    : RawArray() {}
 
   RawArray(const Array<Element>& source)
     : data_(source.data()), m(source.size()) {}

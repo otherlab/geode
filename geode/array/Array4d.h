@@ -35,32 +35,27 @@ public:
 
   Array() {}
 
-  Array(const Vector<int,d>& shape)
-    : Base(shape.x*shape.y*shape.z*shape.w), shape(shape) {
-    assert(shape.min()>=0);
-  }
+  Array(const Vector<int,d> shape)
+    : Base((assert(shape.min()>=0),
+            shape.x*shape.y*shape.z*shape.w))
+    , shape(shape) {}
 
-  Array(const Vector<int,d>& shape, Uninit)
-    : Base(shape.x*shape.y*shape.z*shape.w,uninit), shape(shape) {
-    assert(shape.min()>=0);
-  }
+  Array(const Vector<int,d> shape, Uninit)
+    : Base((assert(shape.min()>=0),
+            shape.x*shape.y*shape.z*shape.w),uninit)
+    , shape(shape) {}
 
-  Array(const Vector<int,d>& shape, T* data, PyObject* owner)
-    : shape(shape) {
-    assert(shape.min()>=0);
-    flat = Array<T>(shape.product(),data,owner);
-  }
+  Array(const Vector<int,d> shape, T* data, PyObject* owner)
+    : Base((assert(shape.min()>=0),
+            shape.product()),data,owner)
+    , shape(shape) {}
 
   Array(const Array& source)
-    : shape(source.shape) {
-    flat = source.flat;
-  }
+    : Base(source.flat), shape(source.shape) {}
 
   // Conversion from mutable to const
   Array(const MutableSelf& source)
-    : shape(source.shape) {
-    flat = source.flat;
-  }
+    : Base(source.flat), shape(source.shape) {}
 
   Array& operator=(const Array& source) {
     flat = source.flat;

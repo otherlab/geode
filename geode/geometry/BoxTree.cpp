@@ -97,7 +97,7 @@ static inline Range<int> leaf_range(int prims, int leaf_size) {
   return range(leaves-1,2*leaves-1);
 }
 
-template<class TV> BoxTree<TV>::BoxTree(RawArray<const TV> geo,int leaf_size)
+template<class TV> BoxTree<TV>::BoxTree(RawArray<const TV> geo, const int leaf_size)
   : leaf_size(check_leaf_size(leaf_size))
   , leaves(leaf_range(geo.size(),leaf_size))
   , depth(geode::depth(leaves.size()))
@@ -109,7 +109,7 @@ template<class TV> BoxTree<TV>::BoxTree(RawArray<const TV> geo,int leaf_size)
     build(*this,ranges,geo,0);
 }
 
-template<class TV> BoxTree<TV>::BoxTree(RawArray<const Box<TV>> geo,int leaf_size)
+template<class TV> BoxTree<TV>::BoxTree(RawArray<const Box<TV>> geo, const int leaf_size)
   : leaf_size(check_leaf_size(leaf_size))
   , leaves(leaf_range(geo.size(),leaf_size))
   , depth(geode::depth(leaves.size()))

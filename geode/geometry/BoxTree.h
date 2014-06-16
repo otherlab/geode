@@ -35,8 +35,8 @@ public:
   const Array<Box<TV>> boxes;
 
 protected:
-  GEODE_CORE_EXPORT BoxTree(RawArray<const TV> geo,int leaf_size);
-  GEODE_CORE_EXPORT BoxTree(RawArray<const Box<TV>> geo,int leaf_size);
+  GEODE_CORE_EXPORT BoxTree(RawArray<const TV> geo, const int leaf_size);
+  GEODE_CORE_EXPORT BoxTree(RawArray<const Box<TV>> geo, const int leaf_size);
   GEODE_CORE_EXPORT BoxTree(const BoxTree<TV>& other); // Shares ownership with everything except boxes
 public:
   ~BoxTree();
