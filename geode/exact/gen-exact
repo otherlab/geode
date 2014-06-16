@@ -51,7 +51,7 @@ write('''
   const auto t = __uint128_t(x.n[i]) op y.n[i] op carry; \\
   carry = t>>64; \\
   r.n[i] = uint64_t(t); }''')
-for a in xrange(1,8+1):
+for a in range(1,9+1)+[12,15]:
   for op in '+','-':
     write('GEODE_PURE static inline Exact<a> operator{op}(const Exact<a> x, const Exact<a> y) {',a=a,op=op)
     with indent():
@@ -86,7 +86,8 @@ done.  If any are extended we further extend out to 128 bits and extend the resu
 '''
 
 # Multiply and square
-for a,b in (1,1),(2,1),(2,2),(3,1),(3,2),(3,3),(4,2),(4,4),(6,2),(6,3):
+for a,b in ((1,1),(2,1),(2,2),(3,1),(3,2),(3,3),(4,1),(4,2),(4,3),(4,4),
+            (5,4),(6,1),(6,2),(6,3),(6,6),(7,1),(7,2),(7,5),(7,6),(8,7),(9,3)):
   assert a >= b
   for f in ('operator*',)+('sqr',)*(a==b):
     write('GEODE_PURE static inline Exact<ab> f(const Exact<a> x{y}) {',

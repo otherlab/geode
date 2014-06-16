@@ -51,9 +51,9 @@ typedef double real;
 #define GEODE_EXPECT(value,expect) __builtin_expect((value),expect)
 
 #if defined(__GNUC__) && __GNUC__ > 3 && defined(__GNUC_MINOR__) && __GNUC_MINOR__ > 4
-#define GEODE_UNREACHABLE() ({ GEODE_DEBUG_ONLY(GEODE_FATAL_ERROR();) __builtin_unreachable(); })
+#define GEODE_UNREACHABLE(...) ({ GEODE_DEBUG_ONLY(GEODE_FATAL_ERROR(__VA_ARGS__);) __builtin_unreachable(); })
 #else
-#define GEODE_UNREACHABLE() GEODE_FATAL_ERROR()
+#define GEODE_UNREACHABLE(...) GEODE_FATAL_ERROR(__VA_ARGS__)
 #endif
 
 #ifdef NDEBUG
@@ -68,7 +68,7 @@ typedef double real;
 #  define GEODE_COLD
 #endif
 
-#if defined(NDEBUG) && !defined(__clang__)
+#if defined(NDEBUG) && (!defined(__clang__) || __has_attribute(flatten))
 #  define GEODE_FLATTEN __attribute__ ((flatten))
 #else
 #  define GEODE_FLATTEN
@@ -110,7 +110,7 @@ typedef double real;
 #define GEODE_NEVER_INLINE
 #define GEODE_PURE
 #define GEODE_CONST
-#define GEODE_UNREACHABLE() GEODE_FATAL_ERROR()
+#define GEODE_UNREACHABLE(...) GEODE_FATAL_ERROR(__VA_ARGS__)
 #define GEODE_NOEXCEPT
 #define GEODE_COLD
 #define GEODE_FORMAT

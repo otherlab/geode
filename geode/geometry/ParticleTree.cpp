@@ -60,7 +60,7 @@ template<class TV> Array<int> ParticleTree<TV>::
 remove_duplicates(T tolerance) const {
   DuplicatesVisitor<TV> visitor(*this,tolerance);
   double_traverse(*this,visitor,tolerance);
-  Array<int> map(X.size(),false);
+  Array<int> map(X.size(),uninit);
   int count=0;
   for(int i=0;i<X.size();i++)
     if(visitor.components.is_root(i))

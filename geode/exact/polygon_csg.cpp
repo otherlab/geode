@@ -22,7 +22,7 @@ using Log::cout;
 using std::endl;
 
 static Array<Box<EV>> segment_boxes(RawArray<const int> next, RawArray<const EV> X) {
-  Array<Box<EV>> boxes(X.size(),false);
+  Array<Box<EV>> boxes(X.size(),uninit);
   for (int i=0;i<X.size();i++)
     boxes[i] = bounding_box(X[i],X[next[i]]);
   return boxes;
@@ -85,7 +85,7 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
     counts[pair.x]++;
     counts[pair.y]++;
   }
-  Nested<int> others(counts,false);
+  Nested<int> others(counts,uninit);
   for (auto pair : pairs.pairs) {
     others(pair.x,--counts[pair.x]) = pair.y;
     others(pair.y,--counts[pair.y]) = pair.x;

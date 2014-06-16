@@ -261,7 +261,7 @@ void HalfedgeMesh::permute_vertices(RawArray<const int> permutation, bool check)
   GEODE_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no erased vertices
 
   // Permute vertex_to_edge_ out of place
-  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),false);
+  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),uninit);
   if (check) {
     new_vertex_to_edge.fill(HalfedgeId(erased_id));
     for (const auto v : vertices()) {
@@ -337,7 +337,7 @@ void HalfedgeMesh::assert_consistent() const {
 }
 
 Array<Vector<int,3>> HalfedgeMesh::elements() const {
-  Array<Vector<int,3>> tris(n_faces(),false);
+  Array<Vector<int,3>> tris(n_faces(),uninit);
   for (const auto f : faces())
     tris[f.idx()] = Vector<int,3>(vertices(f));
   return tris;

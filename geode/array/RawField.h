@@ -31,6 +31,8 @@ public:
 
   RawField() {}
 
+  RawField(const Tuple<>&) {} // Allow conversion from empty tuples
+
   RawField(const RawField<Element,Id>& source)
     : flat(source.flat) {}
 

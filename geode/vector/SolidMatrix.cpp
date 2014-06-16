@@ -67,7 +67,7 @@ template<class TV> SolidMatrix<TV>::
 SolidMatrix(const SolidMatrixStructure& structure)
   : Base(structure.n), next_outer(0) {
   // Allocate sparse component
-  Array<int> lengths(structure.n,false);
+  Array<int> lengths(structure.n,uninit);
   lengths.fill(1); // account for diagonal
   for (auto& s : structure.sparse)
     lengths[s.x]++;
@@ -320,7 +320,7 @@ dense() const {
     for (int a=0;a<nodes.size();a++) for(int b=0;b<nodes.size();b++)
       dense(nodes[a],nodes[b]) += outer_product(B*U[a],U[b]);
   }
-  Array<T,2> final(TV::m*n,TV::m*n,false);
+  Array<T,2> final(TV::m*n,TV::m*n,uninit);
   for (int i=0;i<n;i++)
     for (int j=0;j<n;j++)
       for (int k=0;k<TV::m;k++)
@@ -332,15 +332,19 @@ dense() const {
 template<class TV> Ref<SolidDiagonalMatrix<TV>> SolidMatrix<TV>::
 inverse_block_diagonal() const {
   GEODE_ASSERT(!outers.size());
-  Ref<SolidDiagonalMatrix<TV>> diagonal = new_<SolidDiagonalMatrix<TV>>(size(),false);
+  const auto diagonal = new_<SolidDiagonalMatrix<TV>>(size(),uninit);
   for(int i=0;i<size();i++)
     diagonal->A[i] = assume_symmetric(sparse_A(i,0)).inverse();
   return diagonal;
 }
 
 template<class TV> SolidDiagonalMatrix<TV>::
-SolidDiagonalMatrix(int size,bool initialize)
-  : Base(size), A(size,initialize) {}
+SolidDiagonalMatrix(const int size)
+  : Base(size), A(size) {}
+
+template<class TV> SolidDiagonalMatrix<TV>::
+SolidDiagonalMatrix(const int size, Uninit)
+  : Base(size), A(size,uninit) {}
 
 template<class TV> SolidDiagonalMatrix<TV>::
 ~SolidDiagonalMatrix() {}

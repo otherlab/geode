@@ -28,20 +28,21 @@ public:
   static const int d = 2;
 
   Array<const int> vertices; // flattened version of triangles
-  Array<const Vector<int,3> > elements;
+  Array<const Vector<int,3>> elements;
 private:
   int node_count;
   mutable Ptr<SegmentSoup> segment_soup_;
   mutable bool bending_tuples_valid;
-  mutable Array<Vector<int,4> > bending_tuples_; // i,j,k,l means triangles (i,j,k),(k,j,l)
+  mutable Array<Vector<int,4>> bending_tuples_; // i,j,k,l means triangles (i,j,k),(k,j,l)
   mutable Nested<int> incident_elements_;
-  mutable Array<Vector<int,3> > adjacent_elements_;
+  mutable Array<Vector<int,3>> triangle_edges_;
+  mutable Array<Vector<int,3>> adjacent_elements_;
   mutable Ptr<SegmentSoup> boundary_mesh_;
   mutable Array<int> nodes_touched_;
   mutable Nested<const int> sorted_neighbors_;
 
 protected:
-  GEODE_CORE_EXPORT explicit TriangleSoup(Array<const Vector<int,3> > elements);
+  GEODE_CORE_EXPORT explicit TriangleSoup(Array<const Vector<int,3>> elements);
 public:
   ~TriangleSoup();
 
@@ -55,10 +56,11 @@ public:
   }
 
   GEODE_CORE_EXPORT Ref<const SegmentSoup> segment_soup() const;
+  GEODE_CORE_EXPORT Array<const Vector<int,3>> triangle_edges() const; // triangles to edges
   GEODE_CORE_EXPORT Nested<const int> incident_elements() const; // vertices to triangles
-  GEODE_CORE_EXPORT Array<const Vector<int,3> > adjacent_elements() const; // triangles to triangles
+  GEODE_CORE_EXPORT Array<const Vector<int,3>> adjacent_elements() const; // triangles to triangles
   GEODE_CORE_EXPORT Ref<SegmentSoup> boundary_mesh() const;
-  GEODE_CORE_EXPORT Array<const Vector<int,4> > bending_tuples() const;
+  GEODE_CORE_EXPORT Array<const Vector<int,4>> bending_tuples() const;
   GEODE_CORE_EXPORT Array<const int> nodes_touched() const;
   GEODE_CORE_EXPORT Nested<const int> sorted_neighbors() const; // vertices to sorted one-ring
   GEODE_CORE_EXPORT T area(RawArray<const TV2> X) const;

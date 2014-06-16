@@ -27,8 +27,13 @@ public:
   NdArray()
     : flat(Array<Element>(1)) {}
 
-  NdArray(Array<const int> shape, const bool initialize=true)
-    : shape(shape), flat(shape.product(),initialize) {
+  NdArray(Array<const int> shape)
+    : shape(shape), flat(shape.product()) {
+    assert(!shape.size() || shape.min()>=0);
+  }
+
+  NdArray(Array<const int> shape, Uninit)
+    : shape(shape), flat(shape.product(),uninit) {
     assert(!shape.size() || shape.min()>=0);
   }
 

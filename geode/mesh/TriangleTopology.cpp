@@ -387,7 +387,7 @@ void TriangleTopology::assert_consistent() const {
 }
 
 Array<Vector<int,3>> TriangleTopology::elements() const {
-  Array<Vector<int,3>> tris(n_faces(),false);
+  Array<Vector<int,3>> tris(n_faces(),uninit);
   int i = 0;
   for (const auto f : faces())
     tris[i++] = Vector<int,3>(faces_[f].vertices);
@@ -851,7 +851,8 @@ VertexId MutableTriangleTopology::split_edge(HalfedgeId e) {
 
 HalfedgeId MutableTriangleTopology::flip_edge(HalfedgeId e) {
   if (!is_flip_safe(e))
-    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d is invalid",e.id));
+    throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d [%d,%d] is invalid",
+                              e.id,src(e).id,dst(e).id));
   return unsafe_flip_edge(e);
 }
 
@@ -1008,7 +1009,7 @@ void MutableTriangleTopology::permute_vertices(RawArray<const int> permutation, 
   GEODE_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no erased vertices
 
   // Permute vertex_to_edge_ out of place
-  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),false);
+  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),uninit);
   if (check) {
     new_vertex_to_edge.fill(HalfedgeId(erased_id));
     for (const auto v : all_vertices()) {

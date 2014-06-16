@@ -97,7 +97,7 @@ void evaluate_surface_levelset(const ParticleTree<TV>& particles, const SimplexT
     info[i].triangle = -1;
   }
   evaluation_count = 0;
-  Array<T> sqr_phi_node(particles.nodes(),false);
+  Array<T> sqr_phi_node(particles.nodes(),uninit);
   sqr_phi_node.fill(sqr_max_distance);
   if (particles.X.size() && surface.simplices.size())
     Helper(particles,surface,sqr_phi_node,info).evaluate(0,0);
@@ -144,7 +144,7 @@ void evaluate_surface_levelset(const ParticleTree<TV>& particles, const SimplexT
 }
 
 static Tuple<Array<T>,Array<TV>,Array<int>,Array<TV> > evaluate_surface_levelset_python(const ParticleTree<TV>& particles, const SimplexTree<TV,2>& surface, T max_distance, bool compute_signs) {
-  Array<CloseTriangleInfo> info(particles.X.size(),false);
+  Array<CloseTriangleInfo> info(particles.X.size(),uninit);
   evaluate_surface_levelset(particles,surface,info,max_distance,compute_signs);
   return tuple(info.project<T,&CloseTriangleInfo::phi>().copy(),
                info.project<TV,&CloseTriangleInfo::normal>().copy(),
@@ -154,10 +154,10 @@ static Tuple<Array<T>,Array<TV>,Array<int>,Array<TV> > evaluate_surface_levelset
 
 // For testing purposes
 static Tuple<Array<T>,Array<TV>,Array<int>,Array<TV> > slow_evaluate_surface_levelset(const ParticleTree<TV>& particles,const SimplexTree<TV,2>& surface) {
-  Array<T> distances(particles.X.size(),false);
-  Array<TV> directions(particles.X.size(),false);
-  Array<int> triangles(particles.X.size(),false);
-  Array<TV> weights(particles.X.size(),false);
+  Array<T> distances(particles.X.size(),uninit);
+  Array<TV> directions(particles.X.size(),uninit);
+  Array<int> triangles(particles.X.size(),uninit);
+  Array<TV> weights(particles.X.size(),uninit);
   distances.fill(FLT_MAX);
   for (int p=0;p<particles.X.size();p++)
     for (int t=0;t<surface.simplices.size();t++) {

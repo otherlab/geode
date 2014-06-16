@@ -196,7 +196,7 @@ void SparseMatrix::
 initialize_diagonal_index() const
 {
     if(diagonal_index.size()) return;
-    Array<int> diagonal(min(rows(),columns()),false);
+    Array<int> diagonal(min(rows(),columns()),uninit);
     for(int i=0;i<diagonal.size();i++){
         diagonal[i]=find_entry(i,i);
         GEODE_ASSERT(diagonal[i]>=0);

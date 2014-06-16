@@ -44,7 +44,7 @@ void ranges_helper(RawArray<Range<int>> ranges, int& count, int leaf_size, int p
 
 Array<const Range<int>> ranges(int prims, int leaf_size) {
   const int leaves = (prims+leaf_size-1)/leaf_size;
-  Array<Range<int>> ranges(leaves?2*leaves-1:0,false);
+  Array<Range<int>> ranges(leaves?2*leaves-1:0,uninit);
   if (ranges.size()) {
     int count = 0;
     ranges_helper(ranges,count,leaf_size,prims,0);
@@ -103,7 +103,7 @@ template<class TV> BoxTree<TV>::BoxTree(RawArray<const TV> geo,int leaf_size)
   , depth(geode::depth(leaves.size()))
   , p(arange(geo.size()).copy())
   , ranges(geode::ranges(geo.size(),leaf_size))
-  , boxes(max(0,leaves.hi),false)
+  , boxes(max(0,leaves.hi),uninit)
 {
   if (leaves.size())
     build(*this,ranges,geo,0);
@@ -115,7 +115,7 @@ template<class TV> BoxTree<TV>::BoxTree(RawArray<const Box<TV>> geo,int leaf_siz
   , depth(geode::depth(leaves.size()))
   , p(arange(geo.size()).copy())
   , ranges(geode::ranges(geo.size(),leaf_size))
-  , boxes(max(0,leaves.hi),false)
+  , boxes(max(0,leaves.hi),uninit)
 {
   if (leaves.size())
     build(*this,ranges,geo,0);

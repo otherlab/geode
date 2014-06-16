@@ -19,36 +19,18 @@ using std::endl;
 using exact::Point2;
 typedef Vector<Quantized,2> EV2;
 
+namespace {
+struct SegmentSegment { template<class TV> static ConstructType<2,3,TV> eval(const TV a0, const TV a1,
+                                                                             const TV b0, const TV b1) {
+  const auto da = a1-a0,
+             db = b1-b0;
+  const auto den = edet(da,db);
+  const auto num = emul(den,a0)+emul(edet(b0-a0,db),da);
+  return tuple(num,den);
+}};}
 exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
-  // Evaluate conservatively using intervals
-  {
-    const Vector<Interval,2> a0i(a0.y), a1i(a1.y), b0i(b0.y), b1i(b1.y);
-    const auto da = a1i-a0i,
-               db = b1i-b0i;
-    const auto den = edet(da,db);
-    if (!den.contains_zero()) {
-      const auto r = a0i+edet(b0i-a0i,db)*da*inverse(den);
-      if (small(r,segment_segment_intersection_threshold))
-        return snap(r);
-    }
-  }
-
-  // If intervals fail, evaluate and round exactly using symbolic perturbation
-  struct F { static void eval(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exact<1>,2>> X) {
-    const auto a0(X[0]), a1(X[1]), b0(X[2]), b1(X[3]);
-    const auto da = a1-a0,
-               db = b1-b0;
-    const auto den = edet(da,db);
-    const auto num = emul(den,a0)+emul(edet(b0-a0,db),da);
-    assert(result.m==3);
-    mpz_set(result[0],num.x);
-    mpz_set(result[1],num.y);
-    mpz_set(result[2],den);
-  }};
-  const Point2 X[4] = {a0,a1,b0,b1};
-  exact::Vec2 result;
-  perturbed_ratio(asarray(result),&F::eval,3,asarray(X));
-  return result;
+  // TODO: Use the sign returned by perturbed_construct?
+  return perturbed_construct<SegmentSegment>(segment_segment_intersection_threshold,a0,a1,b0,b1).x;
 }
 
 static bool check_intersection(const EV2 a0, const EV2 a1, const EV2 b0, const EV2 b1, Random& random) {

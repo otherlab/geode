@@ -94,7 +94,7 @@ static Tuple<Ref<TriangleSoup>,Array<TV>> read_stl(const string& filename) {
       throw IOError(format("binary stl has too many triangles: %u > 2^31/3-1",count));
 
     // Read triangles
-    Array<StlTri> data(count,false);
+    Array<StlTri> data(count,uninit);
     const auto nt = fread(data.data(),sizeof(StlTri),count,f);
     if (nt < count)
       throw IOError(format("invalid binary stl '%s': failed to read triangles",filename));
@@ -652,7 +652,7 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_ply(const string& filename) {
     if (!element_names.contains("vertex"))
       throw IOError("missing vertex element");
     const auto vertex = element_names.get("vertex");
-    Array<TV> X(vertex->count,false);
+    Array<TV> X(vertex->count,uninit);
     for (const int i : range(3)) {
       const string c(1,"xyz"[i]);
       if (!vertex->prop_names.contains(c))
@@ -817,12 +817,12 @@ static void write_helper(const string& filename, RawArray<const Vector<int,3>> t
 }
 
 void write_mesh(const string& filename, const TriangleSoup& soup, RawArray<const TV> X) {
-  GEODE_ASSERT(X.size()<=soup.nodes());
+  GEODE_ASSERT(X.size()>=soup.nodes());
   write_helper(filename,soup.elements,X);
 }
 
 void write_mesh(const string& filename, const PolygonSoup& soup, RawArray<const TV> X) {
-  GEODE_ASSERT(X.size()<=soup.nodes());
+  GEODE_ASSERT(X.size()>=soup.nodes());
   const auto ext = path::extension(filename);
   if      (ext == ".obj") write_obj(filename,soup,X);
   else if (ext == ".ply") write_ply(filename,soup,X);

@@ -335,13 +335,13 @@ public:
     template<class TArray>
     bool contains_all(const TArray& elements) const
     {STATIC_ASSERT_SAME(typename TArray::Element,T);
-    for(int i=0;i<elements.size();i++) if(!contains(elements(i))) return false;
+    for(int i=0;i<elements.size();i++) if(!contains(elements[i])) return false;
     return true;}
 
     template<class TArray>
     bool contains_any(const TArray& elements) const
     {STATIC_ASSERT_SAME(typename TArray::Element,T);
-    for(int i=0;i<elements.size();i++) if(contains(elements(i))) return true;
+    for(int i=0;i<elements.size();i++) if(contains(elements[i])) return true;
     return false;}
 
     Vector<T,2> remove_index(const int index) const

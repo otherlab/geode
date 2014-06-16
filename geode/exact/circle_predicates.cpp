@@ -1,4 +1,5 @@
 #include <geode/exact/circle_predicates.h>
+#include <geode/exact/debug.h>
 #include <geode/exact/Exact.h>
 #include <geode/exact/Interval.h>
 #include <geode/exact/math.h>
@@ -7,40 +8,11 @@
 #include <geode/exact/scope.h>
 #include <geode/utility/str.h>
 namespace geode {
+
 typedef exact::Vec2 EV2;
 typedef Vector<Exact<1>,3> LV3;
 using std::cout;
 using std::endl;
-
-
-// If true, always run both fast and slow tests and compare results
-// IMPORTANT: This is a much stronger test than the pure unit tests, and should be run whenver this file is changed.
-#define CHECK 0
-
-// Run a fast interval check, and fall back to a slower exact check if it fails.  If check is true, do both and validate.
-#if !CHECK
-#ifdef __GNUC__
-// In gcc, we can define a clean macro that evaluates its arguments at most once time.
-#define FILTER(fast,...) ({ \
-  const int _s = weak_sign(fast); \
-  _s ? _s>0 : __VA_ARGS__; })
-#else
-// Warning: we lack gcc, the argument must be evaluated multiple times.  Hopefully CSE will do its work.
-#define FILTER(fast,...) \
-  (  certainly_positive(fast) ? true \
-   : certainly_negative(fast) ? false \
-   : __VA_ARGS__)
-#endif
-#else
-// In check mode, always do both.
-static bool filter_helper(const Interval fast, const bool slow, const int line) {
-  const int sign = weak_sign(fast);
-  if (sign && (sign>0)!=slow)
-    throw AssertionError(format("circle_csg: Consistency check failed on line %d, interval %s, slow sign %d",line,str(fast),slow?1:-1));
-  return slow;
-}
-#define FILTER(fast,...) filter_helper(fast,__VA_ARGS__,__LINE__)
-#endif
 
 static Vertex make_placeholder_vertex(Arcs arcs, int i0) {
   Vertex result;
@@ -134,7 +106,6 @@ Vector<Vertex,2> circle_circle_intersections(Arcs arcs, const int arc0, const in
   v.y.left = true;
 
 #if CHECK
-  GEODE_WARNING("Expensive consistency checking enabled");
   Vector<Interval,2> check_linear, check_quadratic;
   check_linear.fill(Interval::full());
   check_quadratic.fill(Interval::full());
@@ -537,7 +508,7 @@ bool circle_intersection_right_of_center(Arcs arcs, const Vertex a, const int b)
 
 Array<Vertex> compute_vertices(Arcs arcs, RawArray<const int> next) {
   IntervalScope scope;
-  Array<Vertex> vertices(arcs.size(),false); // vertices[i] is the start of arcs[i]
+  Array<Vertex> vertices(arcs.size(),uninit); // vertices[i] is the start of arcs[i]
   for (int i0=0;i0<arcs.size();i0++) {
     const int i1 = next[i0];
     if(i0 == i1) {

@@ -21,7 +21,7 @@ void apply_stencil(F &f, int w, const Array<T,d> a) {
   // make working memory
   auto bdims = a.sizes();
   bdims[0] = w+1;
-  Array<T,d> b(bdims, false);
+  Array<T,d> b(bdims,uninit);
   // apply the stencil
   apply_stencil(f, w, a, b);
 }

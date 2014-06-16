@@ -22,8 +22,11 @@ public:
 
   ArrayNdBase() {}
 
-  ArrayNdBase(int size, bool initialize)
-    : flat(size,initialize) {}
+  ArrayNdBase(const int size)
+    : flat(size) {}
+
+  ArrayNdBase(const int size, Uninit)
+    : flat(size,uninit) {}
 
   TArray& derived() {
     return static_cast<TArray&>(*this);

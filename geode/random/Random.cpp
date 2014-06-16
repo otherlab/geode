@@ -125,21 +125,21 @@ static vector<Array<int>> random_bits_test(Random& random, int steps) {
 }
 
 Array<real> Random::normal_py(int size) {
-  Array<real> result(size,false);
+  Array<real> result(size,uninit);
   for (auto& x : result)
     x = normal();
   return result;
 }
 
 Array<real> Random::uniform_py(int size) {
-  Array<real> result(size,false);
+  Array<real> result(size,uninit);
   for (auto& x : result)
     x = uniform();
   return result;
 }
 
 Array<int> Random::uniform_int_py(int lo, int hi, int size) {
-  Array<int> result(size,false);
+  Array<int> result(size,uninit);
   for (auto& x : result)
     x = uniform<int>(lo,hi);
   return result;

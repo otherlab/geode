@@ -22,7 +22,7 @@ static Ref<TriangleSoup> make_fine_mesh(const TriangleSoup& coarse_mesh) {
   Ref<const SegmentSoup> segments=coarse_mesh.segment_soup();
   Nested<const int> incident_elements=segments->incident_elements();
   int offset = coarse_mesh.nodes();
-  Array<Vector<int,3> > triangles(4*coarse_mesh.elements.size(),false);
+  Array<Vector<int,3> > triangles(4*coarse_mesh.elements.size(),uninit);
   for (int t=0;t<coarse_mesh.elements.size();t++) {
     Vector<int,3> nodes = coarse_mesh.elements[t];
     Vector<int,3> edges;
@@ -54,7 +54,7 @@ template<class TV> Array<TV> TriangleSubdivision::linear_subdivide(RawArray<cons
   int offset = coarse_mesh->nodes();
   GEODE_ASSERT(X.size()==offset);
   Ref<const SegmentSoup> segments = coarse_mesh->segment_soup();
-  Array<TV> fine_X(offset+segments->elements.size(),false);
+  Array<TV> fine_X(offset+segments->elements.size(),uninit);
   fine_X.slice(0,offset) = X;
   for (int s=0;s<segments->elements.size();s++) {
     int i,j;segments->elements[s].get(i,j);
@@ -67,7 +67,7 @@ Array<T,2> TriangleSubdivision::linear_subdivide(RawArray<const T,2> X) const {
   int offset = coarse_mesh->nodes();
   GEODE_ASSERT(X.m==offset);
   Ref<const SegmentSoup> segments = coarse_mesh->segment_soup();
-  Array<T,2> fine_X(offset+segments->elements.size(),X.n,false);
+  Array<T,2> fine_X(offset+segments->elements.size(),X.n,uninit);
   fine_X.slice(0,offset) = X;
   for (int s=0;s<segments->elements.size();s++) {
     int i,j;segments->elements[s].get(i,j);
@@ -187,7 +187,7 @@ Ref<SparseMatrix> TriangleSubdivision::loop_matrix() const {
 
 template<class TV> Array<TV> TriangleSubdivision::loop_subdivide(RawArray<const TV> X) const {
   GEODE_ASSERT(X.size()==coarse_mesh->nodes());
-  Array<TV> fine_X(fine_mesh->nodes(),false);
+  Array<TV> fine_X(fine_mesh->nodes(),uninit);
   loop_matrix()->multiply(X,fine_X);
   return fine_X;
 }

@@ -37,13 +37,23 @@ public:
   Array()
     : m(0), n(0), mn(0) {}
 
-  Array(const Vector<int,d>& counts, const bool initialize=true)
-    : Base(counts.x*counts.y*counts.z,initialize), m(counts.x), n(counts.y), mn(counts.z) {
+  Array(const Vector<int,d>& counts)
+    : Base(counts.x*counts.y*counts.z), m(counts.x), n(counts.y), mn(counts.z) {
     assert(m>=0 && n>=0 && mn>=0);
   }
 
-  Array(const int m, const int n, const int mn, const bool initialize=true)
-    : Base(m*n*mn,initialize),m(m),n(n),mn(mn) {
+  Array(const Vector<int,d>& counts, Uninit)
+    : Base(counts.x*counts.y*counts.z,uninit), m(counts.x), n(counts.y), mn(counts.z) {
+    assert(m>=0 && n>=0 && mn>=0);
+  }
+
+  Array(const int m, const int n, const int mn)
+    : Base(m*n*mn),m(m),n(n),mn(mn) {
+    assert(m>=0 && n>=0 && mn>=0);
+  }
+
+  Array(const int m, const int n, const int mn, Uninit)
+    : Base(m*n*mn,uninit),m(m),n(n),mn(mn) {
     assert(m>=0 && n>=0 && mn>=0);
   }
 
@@ -152,7 +162,9 @@ public:
     if (m_new==m && n_new==n && mn_new==mn) return;
     assert(m_new>=0 && n_new>=0 && mn_new>=0);
     int new_size = m_new*n_new*mn_new;
-    Array<T> new_flat(new_size,initialize_new_elements);
+    Array<T> new_flat(new_size,uninit);
+    if (initialize_new_elements)
+      new_flat.fill(T());
     if (copy_existing_elements) {
       int m2 = geode::min(m,m_new),
           n2 = geode::min(n,n_new),

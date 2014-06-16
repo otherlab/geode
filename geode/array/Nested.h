@@ -32,8 +32,13 @@ public:
   Nested()
     : offsets(nested_array_offsets(RawArray<const int>())) {}
 
-  Nested(RawArray<const int> lengths, bool initialize=true)
-    : offsets(nested_array_offsets(lengths)), flat(offsets.back(),initialize) {}
+  Nested(RawArray<const int> lengths)
+    : offsets(nested_array_offsets(lengths))
+    , flat(offsets.back()) {}
+
+  Nested(RawArray<const int> lengths, Uninit)
+    : offsets(nested_array_offsets(lengths))
+    , flat(offsets.back(),uninit) {}
 
   Nested(const Nested& other)
     : offsets(other.offsets)
@@ -81,11 +86,11 @@ public:
 
   template<class TA> static Nested copy(const TA& other) {
     const int n = (int)other.size();
-    Array<int> offsets(n+1,false);
+    Array<int> offsets(n+1,uninit);
     offsets[0] = 0;
     for (int i=0;i<n;i++)
       offsets[i+1] = offsets[i]+(int)other[i].size();
-    Array<Element> flat(offsets[n],false);
+    Array<Element> flat(offsets[n],uninit);
     for (int i=0;i<n;i++)
       flat.slice(offsets[i],offsets[i+1]) = other[i];
     Nested self;
@@ -218,6 +223,10 @@ public:
     flat.pop_elements(back().size());
     offsets.pop();
   }
+
+  const Nested<const Element>& const_() const {
+    return *(const Nested<const Element>*)this;
+  }
 };
 
 template<class T,bool f> inline ostream& operator<<(ostream& output, const Nested<T,f>& a) {
@@ -231,14 +240,14 @@ template<class T,bool f> inline ostream& operator<<(ostream& output, const Neste
 }
 
 template<class TA> Nested<typename TA::value_type> make_nested(const TA& a0) {
-  Nested<typename TA::value_type> nested(asarray(vec((int)a0.size())),false);
+  Nested<typename TA::value_type> nested(asarray(vec((int)a0.size())),uninit);
   nested[0] = a0;
   return nested;
 }
 
 template<class TA0,class TA1> Nested<typename TA0::value_type> make_nested(const TA0& a0, const TA1& a1) {
   STATIC_ASSERT_SAME(typename TA0::value_type,typename TA1::value_type);
-  Nested<typename TA0::value_type> nested(asarray(vec((int)a0.size(),(int)a1.size())),false);
+  Nested<typename TA0::value_type> nested(asarray(vec((int)a0.size(),(int)a1.size())),uninit);
   nested[0] = a0;
   nested[1] = a1;
   return nested;

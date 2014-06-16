@@ -20,7 +20,7 @@ GEODE_DEFINE_TYPE(TriangleSoup)
 const int TriangleSoup::d;
 #endif
 
-TriangleSoup::TriangleSoup(Array<const Vector<int,3> > elements)
+TriangleSoup::TriangleSoup(Array<const Vector<int,3>> elements)
   : vertices(scalar_view_own(elements))
   , elements(elements)
   , bending_tuples_valid(false) {
@@ -37,17 +37,35 @@ TriangleSoup::~TriangleSoup() {}
 
 Ref<const SegmentSoup> TriangleSoup::segment_soup() const {
   if (!segment_soup_) {
-    Hashtable<Vector<int,2> > hash;
-    Array<Vector<int,2> > segments;
-    for (int t=0;t<elements.size();t++) {
-      for (int i=0;i<3;i++) {
-        Vector<int,2> segment = vec(elements[t][i],elements[t][(i+1)%3]).sorted();
-        if (hash.set(segment)) segments.append(segment);
-      }
+    Hashtable<Vector<int,2>> hash;
+    Array<Vector<int,2>> edges;
+    for (const auto t : elements) {
+      const auto e0 = vec(t.x,t.y).sorted(),
+                 e1 = vec(t.y,t.z).sorted(),
+                 e2 = vec(t.z,t.x).sorted();
+      if (hash.set(e0)) edges.append(e0);
+      if (hash.set(e1)) edges.append(e1);
+      if (hash.set(e2)) edges.append(e2);
     }
-    segment_soup_ = new_<SegmentSoup>(segments);
+    segment_soup_ = new_<SegmentSoup>(edges);
   }
   return ref(segment_soup_);
+}
+
+Array<const Vector<int,3>> TriangleSoup::triangle_edges() const {
+  if (!triangle_edges_.size() && nodes()) {
+    // Must match the algorithm of segment_soup() exactly
+    Hashtable<Vector<int,2>,int> hash;
+    triangle_edges_.resize(elements.size(),false);
+    for (int i=0;i<elements.size();i++) {
+      const auto t = elements[i];
+      const int e0 = hash.get_or_insert(vec(t.x,t.y).sorted(),hash.size()),
+                e1 = hash.get_or_insert(vec(t.y,t.z).sorted(),hash.size()),
+                e2 = hash.get_or_insert(vec(t.z,t.x).sorted(),hash.size());
+      triangle_edges_[i] = vec(e0,e1,e2);
+    }
+  }
+  return triangle_edges_;
 }
 
 Nested<const int> TriangleSoup::incident_elements() const {
@@ -64,7 +82,7 @@ Nested<const int> TriangleSoup::incident_elements() const {
   return incident_elements_;
 }
 
-Array<const Vector<int,3> > TriangleSoup::adjacent_elements() const {
+Array<const Vector<int,3>> TriangleSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),false,false);
     Nested<const int> incident = incident_elements();
@@ -97,7 +115,7 @@ Ref<SegmentSoup> TriangleSoup::boundary_mesh() const {
         hash.get_or_insert(vec(a,b))++;
         hash.get_or_insert(vec(b,a))+=2;
       }
-    Array<Vector<int,2> > segments;
+    Array<Vector<int,2>> segments;
     Ref<const SegmentSoup> segment_soup_ = segment_soup();
     for (int s=0;s<segment_soup_->elements.size();s++) {
       int i,j;segment_soup_->elements[s].get(i,j);
@@ -111,9 +129,9 @@ Ref<SegmentSoup> TriangleSoup::boundary_mesh() const {
   return ref(boundary_mesh_);
 }
 
-Array<const Vector<int,4> > TriangleSoup::bending_tuples() const {
+Array<const Vector<int,4>> TriangleSoup::bending_tuples() const {
   if (!bending_tuples_valid) {
-    Hashtable<Vector<int,2>,Array<int> > edge_to_face;
+    Hashtable<Vector<int,2>,Array<int>> edge_to_face;
     for (int t=0;t<elements.size();t++) {
       Vector<int,3> nodes = elements[t];
       for (int a=0;a<3;a++)
@@ -165,7 +183,7 @@ Nested<const int> TriangleSoup::sorted_neighbors() const {
     }
     Nested<const int> neighbors = segment_soup()->neighbors();
     Nested<int> sorted_neighbors = Nested<int>::empty_like(neighbors);
-    Hashtable<Vector<int,2> > done;
+    Hashtable<Vector<int,2>> done;
     for (int i=0;i<node_count;i++) {
       if (!neighbors.size(i))
         continue;
@@ -259,7 +277,7 @@ Array<TV3> TriangleSoup::vertex_normals(RawArray<const TV3> X) const {
 
 Array<TV3> TriangleSoup::element_normals(RawArray<const TV3> X) const {
   GEODE_ASSERT(X.size()>=nodes());
-  Array<TV3> normals(elements.size(),false);
+  Array<TV3> normals(elements.size(),uninit);
   for (int t=0;t<elements.size();t++) {
     int i,j,k;elements[t].get(i,j,k);
     normals[t] = cross(X[j]-X[i],X[k]-X[i]).normalized();
@@ -270,8 +288,8 @@ Array<TV3> TriangleSoup::element_normals(RawArray<const TV3> X) const {
 Array<int> TriangleSoup::nonmanifold_nodes(bool allow_boundary) const {
   Array<int> nonmanifold;
   Nested<const int> incident_elements = this->incident_elements();
-  Array<Vector<int,2> > ring;
-  Hashtable<int,Vector<int,2> > neighbors(32); // prev,next for each node in the ring
+  Array<Vector<int,2>> ring;
+  Hashtable<int,Vector<int,2>> neighbors(32); // prev,next for each node in the ring
   const Vector<int,2> none(-1,-1);
   for (int i=0;i<incident_elements.size();i++) {
     RawArray<const int> incident = incident_elements[i];
@@ -338,12 +356,13 @@ using namespace geode;
 void wrap_triangle_mesh() {
   typedef TriangleSoup Self;
   Class<Self>("TriangleSoup")
-    .GEODE_INIT(Array<const Vector<int,3> >)
+    .GEODE_INIT(Array<const Vector<int,3>>)
     .GEODE_FIELD(d)
     .GEODE_FIELD(elements)
     .GEODE_FIELD(vertices)
     .GEODE_METHOD(segment_soup)
     .GEODE_METHOD(triangle_mesh)
+    .GEODE_METHOD(triangle_edges)
     .GEODE_METHOD(incident_elements)
     .GEODE_METHOD(adjacent_elements)
     .GEODE_METHOD(boundary_mesh)

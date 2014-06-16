@@ -213,7 +213,7 @@ public:
   }
 
   Array<T,2> copy() const {
-    Array<T,2> copy(m,n,false);
+    Array<T,2> copy(m,n,uninit);
     for (int i=0;i<m;i++) for (int j=0;j<n;j++)
       copy(i,j) = (*this)(i,j);
     return copy;

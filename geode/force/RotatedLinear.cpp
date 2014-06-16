@@ -22,10 +22,10 @@ protected:
     : youngs_modulus(youngs_modulus), poissons_ratio(poissons_ratio) {
     Array<const int> shape = youngs_modulus.shape;
     GEODE_ASSERT(shape.size()<=1 && shape==poissons_ratio.shape && shape==rayleigh_coefficient.shape);
-    lambda = NdArray<T>(shape,false);
-    mu = NdArray<T>(shape,false);
-    alpha = NdArray<T>(shape,false);
-    beta = NdArray<T>(shape,false);
+    lambda = NdArray<T>(shape,uninit);
+    mu = NdArray<T>(shape,uninit);
+    alpha = NdArray<T>(shape,uninit);
+    beta = NdArray<T>(shape,uninit);
     for (int i=0;i<youngs_modulus.flat.size();i++) {
       GEODE_ASSERT(poissons_ratio.flat[i]>-1 && poissons_ratio.flat[i]<(T).5);
       lambda.flat[i] = youngs_modulus.flat[i]*poissons_ratio.flat[i]/((1+poissons_ratio.flat[i])*(1-2*poissons_ratio.flat[i]));

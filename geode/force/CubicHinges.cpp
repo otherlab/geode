@@ -60,7 +60,7 @@ template<> GEODE_DEFINE_TYPE(CubicHinges<TV3>)
 template<> Array<T> CubicHinges<TV2>::angles(RawArray<const Vector<int,3>> bends, RawArray<const TV2> X) {
   if (bends.size())
     GEODE_ASSERT(X.size()>scalar_view(bends).max());
-  Array<T> angles(bends.size(),false);
+  Array<T> angles(bends.size(),uninit);
   for (int b=0;b<bends.size();b++) {
     int i0,i1,i2;bends[b].get(i0,i1,i2);
     const TV x0 = X[i0], x1 = X[i1], x2 = X[i2];
@@ -72,7 +72,7 @@ template<> Array<T> CubicHinges<TV2>::angles(RawArray<const Vector<int,3>> bends
 template<> Array<T> CubicHinges<TV3>::angles(RawArray<const Vector<int,4>> bends, RawArray<const TV3> X) {
   if (bends.size())
     GEODE_ASSERT(X.size()>scalar_view(bends).max());
-  Array<T> angles(bends.size(),false);
+  Array<T> angles(bends.size(),uninit);
   for (int b=0;b<bends.size();b++) {
     int i0,i1,i2,i3;bends[b].get(i0,i1,i2,i3);
     const TV x0 = X[i0], x1 = X[i1], x2 = X[i2], x3 = X[i3],

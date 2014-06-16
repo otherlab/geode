@@ -498,7 +498,7 @@ Ref<SegmentSoup> nested_array_offsets_to_segment_soup(RawArray<const int> offset
   }
 
   const int count = offsets.size()-1;
-  Array<Vector<int,2>> segments(offsets.back()-count*open,false);
+  Array<Vector<int,2>> segments(offsets.back()-count*open,uninit);
   if (open) {
     int s = 0;
     for (int p=0;p<count;p++)
@@ -560,7 +560,7 @@ Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
   sort(order,Order(polys,mins));
 
   // Copy into new array
-  Nested<Vec2> new_polys(polys.sizes().subset(order).copy(),false);
+  Nested<Vec2> new_polys(polys.sizes().subset(order).copy(),uninit);
   for (int p=0;p<polys.size();p++) {
     const int base = mins[order[p]];
     const auto poly = polys[order[p]];
@@ -575,7 +575,7 @@ Array<int> closed_contours_next_from_offsets(RawArray<const int> offsets) {
   const int n = offsets.back();
   if(n == 0) // Catch empty arrays to avoid trying to iterate over an inverted range
     return Array<int>();
-  Array<int> next(n,false);
+  Array<int> next(n,uninit);
   for (const int i : range(1,n))
     next[i-1] = i;
   for (const int j : range(offsets.size()-1)) {
