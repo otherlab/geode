@@ -106,7 +106,10 @@ public:
   }
 
   template<class TArray> void copy(const TArray& source) {
-    resize(source.sizes(),false);
+    if ((void*)this == (void*)source)
+      return;
+    clear();
+    resize(source.sizes(),uninit);
     for (int i=0;i<m;i++) for (int j=0;j<n;j++) for (int ij=0;ij<mn;ij++)
       flat[(i*n+j)*mn+ij] = source(i,j,ij);
   }

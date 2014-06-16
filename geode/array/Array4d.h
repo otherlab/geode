@@ -76,10 +76,16 @@ public:
   }
 
   template<class TArray> void copy(const TArray& source) {
-    resize(source.sizes(),false);
-    int f=0;
-    for (int i=0;i<shape[0];i++) for (int j=0;j<shape[1];j++) for (int k=0;k<shape[2];k++) for (int l=0;l<shape[3];l++)
-      flat[f++] = source(i,j,k,l);
+    if ((void*)this == (void*)&source)
+      return;
+    clear();
+    resize(source.sizes(),uninit);
+    int f = 0;
+    for (int i=0;i<shape[0];i++)
+      for (int j=0;j<shape[1];j++)
+        for (int k=0;k<shape[2];k++)
+          for (int l=0;l<shape[3];l++)
+            flat[f++] = source(i,j,k,l);
   }
 
   Array<Element,d> copy() const {

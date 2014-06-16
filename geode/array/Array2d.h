@@ -107,6 +107,8 @@ public:
   }
 
   template<class TArray> void copy(const TArray& source) {
+    if ((void*)this == (void*)&source)
+      return;
     clear();
     resize(source.sizes(),uninit);
     const_cast<const Array*>(this)->copy(source);
