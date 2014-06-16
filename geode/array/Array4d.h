@@ -118,7 +118,9 @@ public:
     if (shape_new==shape) return;
     assert(shape_new.min()>=0);
     int new_size = shape_new.product();
-    Array<T> new_flat(new_size,initialize_new_elements);
+    Array<T> new_flat(new_size,uninit);
+    if (initialize_new_elements)
+      new_flat.fill(T());
     if (copy_existing_elements) {
       Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
       for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
