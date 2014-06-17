@@ -140,8 +140,8 @@ Array<const Vector<int,4>> TriangleSoup::bending_tuples() const {
     Array<int> other;
     Array<bool> flipped;
     for (const auto& it : edge_to_face) {
-      Vector<int,2> sn = it.key();
-      RawArray<const int> tris(it.data());
+      Vector<int,2> sn = it.x;
+      RawArray<const int> tris(it.y);
       other.clear();
       other.resize(tris.size(),uninit);
       flipped.clear();

@@ -693,8 +693,8 @@ Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other)
   // are considered, and extended if they also exist in other.
   #define FIELD(prim, size_expr) \
     for (auto& it : id_to_##prim##_field) { \
-      const int d = it.data(); \
-      const int s = other.id_to_##prim##_field.get_default(it.key(),-1); \
+      const int d = it.y; \
+      const int s = other.id_to_##prim##_field.get_default(it.x,-1); \
       if (s >= 0) \
         prim##_fields[d].extend(other.prim##_fields[s]); \
       else \
@@ -1266,8 +1266,8 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
     if (i < j) {
       fields[i] = fields.back();
       for (auto& h : id_to_field)
-        if (h.data() == j) {
-          h.data() = i;
+        if (h.y == j) {
+          h.y = i;
           break;
         }
     }

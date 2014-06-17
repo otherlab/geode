@@ -27,50 +27,39 @@ template<class TK,class T> class Hashtable;
 
 enum HashtableEntryState{EntryFree,EntryActive,EntryDeleted};
 
-template<class TK,class T> class HashtableEntry {
-public:
-  typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
-  typename boost::aligned_storage<sizeof(T), alignment_of<T>::value>::type Tbuf;
+template<class TK,class T> struct HashtableEntry {
+  typename boost::aligned_storage<sizeof(TK),alignment_of<TK>::value>::type TKbuf;
+  typename boost::aligned_storage<sizeof(T),alignment_of<T>::value>::type Tbuf;
+  HashtableEntryState state;
 
-  inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
-  inline T & data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
-
-  inline void init(TK const &v, T const &value) {
-    new(&TKbuf) TK(v);
-    new(&Tbuf) T(value);
+  void init(const TK& k, const T& v) {
+    new(&TKbuf) TK(k);
+    new(&Tbuf) T(v);
     state = EntryActive;
   }
 
-  friend struct HashtableIter<TK,T>;
-  friend struct HashtableIter<TK,const T>;
-  friend class Hashtable<TK,T>;
+  const TK& key() const { return reinterpret_cast<const TK&>(TKbuf); };
+  T& data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
+  bool active() const { return state==EntryActive; }
 
-private:
-  HashtableEntryState state;
-  inline bool active() const {return state==EntryActive;}
-  inline const HashtableEntry& value() const {return *this;}
+  Tuple<const TK,T>& value() { return reinterpret_cast<Tuple<const TK,T>&>(*this); }
+  const Tuple<const TK,T>& value() const { return reinterpret_cast<const Tuple<const TK,T>&>(*this); }
 };
 
-template<class TK> class HashtableEntry<TK,unit> : public unit {
-public:
+template<class TK> struct HashtableEntry<TK,unit> : public unit {
   typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
+  HashtableEntryState state;
 
-  inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
-  unit& data() {return *this;}
-
-  inline void init(TK const &v, unit const &) {
-    new(&TKbuf) TK(v);
+  void init(const TK& k, unit) {
+    new(&TKbuf) TK(k);
     state = EntryActive;
   }
 
-  friend struct HashtableIter<TK,unit>;
-  friend struct HashtableIter<TK,const unit>;
-  friend class Hashtable<TK,unit>;
+  const TK& key() const { return reinterpret_cast<const TK&>(TKbuf); }
+  unit& data() { return *this; }
+  bool active() const { return state==EntryActive; }
 
-private:
-  HashtableEntryState state;
-  inline bool active() const {return state==EntryActive;}
-  inline const TK& value() const {return key();}
+  const TK& value() const { return key(); }
 };
 
 // Tables
@@ -302,12 +291,12 @@ public:
 
 template<class TK,class T>
 struct HashtableIter {
-  typedef HashtableEntry<TK,typename remove_const<T>::type> Entry;
+  typedef typename CopyConst<HashtableEntry<TK,typename remove_const<T>::type>,T>::type Entry;
 
-  const RawArray<const Entry> table;
+  const RawArray<Entry> table;
   int index;
 
-  HashtableIter(RawArray<const Entry> table, int index_)
+  HashtableIter(RawArray<Entry> table, const int index_)
     : table(table), index(index_) {
     while (index<table.size() && !table[index].active())
       index++;
@@ -328,14 +317,14 @@ struct HashtableIter {
 
   auto operator*() const
     -> decltype(table[index].value()) {
-    assert(index<table.size() && table[index].active());
-    return table[index].value();
+    auto& entry = table[index];
+    assert(entry.active());
+    return entry.value();
   }
 
   auto operator->() const
-    -> decltype(&table[index].value()) {
-    assert(index<table.size() && table[index].active());
-    return &table[index].value();
+    -> decltype(&operator*()) {
+    return &operator*();
   }
 
   void operator++() {

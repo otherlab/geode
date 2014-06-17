@@ -842,8 +842,8 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
 
       // Every pair of intersections with two common faces generates an intersection edge
       for (const auto& it : faces_to_intersections) {
-        const auto ff = it.key();
-        const auto i = it.data();
+        const auto ff = it.x;
+        const auto i = it.y;
         if (i.y >= 0) { // Two shared intersections
           const auto& ef = ef_vertices.flat[i.x];
           const auto f0 = ef.face,
@@ -1322,9 +1322,9 @@ static void fix_loops(RawArray<Vector<int,3>> faces, Array<EV>& X, const int n,
   Hashtable<int> seen; // Have we used the old vertex yet?
   Hashtable<int,int> edge_to_copy; // Map from edges (which are roots) to the appropriate loop vertex copy
   for (const auto i : edges)
-    if (union_find.is_root(i.data())) {
-      const int v = i.key().x;
-      edge_to_copy.set(i.data(),seen.set(v) ? v : X.append(X[v]));
+    if (union_find.is_root(i.y)) {
+      const int v = i.x.x;
+      edge_to_copy.set(i.y,seen.set(v) ? v : X.append(X[v]));
     }
 
   // Rebuild mesh in place
