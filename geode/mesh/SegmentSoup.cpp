@@ -137,7 +137,7 @@ Nested<const int> SegmentSoup::incident_elements() const {
 
 Array<const Vector<int,2> > SegmentSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
-    adjacent_elements_.resize(elements.size(),false,false);
+    adjacent_elements_.resize(elements.size(),uninit);
     Nested<const int> incident = incident_elements();
     for (int s=0;s<elements.size();s++) {
       Vector<int,2> seg = elements[s];

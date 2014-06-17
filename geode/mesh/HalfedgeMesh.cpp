@@ -132,8 +132,7 @@ FaceId HalfedgeMesh::add_face(const Vector<VertexId,3> v) {
   // Create missing edges
   const int new_edges = 2*(3-e0.valid()-e1.valid()-e2.valid());
   if (new_edges) {
-    int e_next = halfedges_.size();
-    halfedges_.flat.resize(e_next+new_edges,false);
+    int e_next = halfedges_.flat.extend(new_edges,uninit);
     #define ENSURE_EDGE(e,ep,en,vs,vd,ep_always,en_always) \
       if (!e.valid()) { \
         e = HalfedgeId(e_next++); \
@@ -197,10 +196,8 @@ void HalfedgeMesh::split_face(const FaceId f, const VertexId c) {
   GEODE_ASSERT(isolated(c));
   const auto e = halfedges(f);
   const auto v = vertices(f);
-  const int f_base = face_to_edge_.size();
-  const int e_base = halfedges_.size();
-  face_to_edge_.flat.resize(f_base+2,false);
-  halfedges_.flat.resize(e_base+6,false);
+  const int f_base = face_to_edge_.flat.extend(2,uninit);
+  const int e_base = halfedges_.flat.extend(6,uninit);
   const FaceId f0 = f,
                f1(f_base),
                f2(f_base+1);

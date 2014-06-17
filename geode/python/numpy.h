@@ -20,6 +20,7 @@
 #include <geode/array/Array.h>
 #include <geode/array/IndirectArray.h>
 #include <geode/python/exceptions.h>
+#include <geode/structure/Tuple.h>
 #include <geode/utility/const_cast.h>
 namespace geode {
 
@@ -31,7 +32,7 @@ GEODE_CORE_EXPORT void GEODE_NORETURN(throw_not_owned());
 GEODE_CORE_EXPORT void GEODE_NORETURN(throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr));
 GEODE_CORE_EXPORT void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray_Descr* descr);
 #endif
-GEODE_CORE_EXPORT size_t fill_numpy_header(Array<uint8_t>& header, int rank, const npy_intp* dimensions, int type_num); // Returns total data size in bytes
+GEODE_CORE_EXPORT Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank, const npy_intp* dimensions, int type_num); // Returns total data size in bytes
 GEODE_CORE_EXPORT void write_numpy(const string& filename, int rank, const npy_intp* dimensions, int type_num, void* data);
 
 // Export wrappers around numpy api functions so that other libraries don't need the PY_ARRAY_UNIQUE_SYMBOL, which can't be portably exported.
@@ -314,7 +315,7 @@ from_numpy(PyObject* object) { // Borrows reference to object
 #endif
 
 // Write a numpy-convertible array to an .npy file
-// Note: Unlike other functions in this file, it is safe to call write_numpy without initializing either Python or Numpy.
+// Unlike other functions in this file, this is safe to call without initializing either Python or Numpy.
 template<class TArray> void
 write_numpy(const string& filename, const TArray& array) {
   // Extract memory layout information
@@ -326,17 +327,16 @@ write_numpy(const string& filename, const TArray& array) {
   geode::write_numpy(filename,rank,dimensions.data(),NumpyScalar<TArray>::value,data);
 }
 
-// Generate an .npy file header for a numpy-convertible array
-// Note: Unlike other functions in this file, it is safe to call fill_numpy_header without initializing either Python or Numpy.
-template<class TArray> size_t
-fill_numpy_header(Array<uint8_t>& header,const TArray& array) {
+// Generate an .npy file header for a numpy-convertible array.  Returns header,data_size.
+// Unlike other functions in this file, this is safe to call without initializing either Python or Numpy.
+template<class TArray> Tuple<Array<uint8_t>,size_t> fill_numpy_header(const TArray& array) {
   // Extract memory layout information
   const int rank = numpy_rank(array);
   void* data;
   Array<npy_intp> dimensions(rank,uninit);
   numpy_info(array,data,dimensions.data());
   // Fill header
-  return geode::fill_numpy_header(header,rank,dimensions.data(),NumpyScalar<TArray>::value);
+  return geode::fill_numpy_header(rank,dimensions.data(),NumpyScalar<TArray>::value);
 }
 
 }

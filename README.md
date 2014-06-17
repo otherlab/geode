@@ -31,12 +31,16 @@ Optional dependencies (see below for how to disable these):
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
 * [openmesh](http://www.openmesh.org): Halfedge triangle mesh data structure (LGPL)
 
-Geode makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.  So far the code has been tested on
+Geode makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.
+So far the code has been tested on
 
-* [gcc 4.6](http://gcc.gnu.org)
 * [gcc 4.7](http://gcc.gnu.org)
+* [gcc 4.8](http://gcc.gnu.org)
 * [clang 3.1](http://clang.llvm.org)
 * [clang 3.2](http://clang.llvm.org)
+* [clang 3.3](http://clang.llvm.org)
+* [clang 3.4](http://clang.llvm.org)
+* [clang 3.5](http://clang.llvm.org)
 
 ### Installation
 

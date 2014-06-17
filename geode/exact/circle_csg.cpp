@@ -937,8 +937,10 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
       result.append_to_back(CircleArc(quant.inverse(el), in[0].positive ? 1 : -1));
       continue;
     }
-    out.resize(in.size(),false,false);
-    cull.resize(in.size(),false,false);
+    out.clear();
+    out.resize(in.size(),uninit);
+    cull.clear();
+    cull.resize(in.size(),uninit);
     const int n = in.size();
     bool culled_prev = false;
     int num_culled = 0;

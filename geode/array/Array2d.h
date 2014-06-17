@@ -37,55 +37,39 @@ public:
   Array()
     : m(0), n(0) {}
 
-  Array(const Vector<int,d>& counts)
-    : Base(counts.x*counts.y), m(counts.x), n(counts.y) {
-    assert(m>=0 && n>=0);
-  }
-
-  Array(const Vector<int,d>& counts, Uninit)
-    : Base(counts.x*counts.y,uninit), m(counts.x), n(counts.y) {
-    assert(m>=0 && n>=0);
-  }
-
   Array(const int m, const int n)
-    : Base(m*n), m(m), n(n) {
-    assert(m>=0 && n>=0);
-  }
+    : Base((assert(m>=0 && n>=0),
+            m*n)), m(m), n(n) {}
 
   Array(const int m, const int n, Uninit)
-    : Base(m*n,uninit), m(m), n(n) {
-    assert(m>=0 && n>=0);
-  }
+    : Base((assert(m>=0 && n>=0),
+            m*n),uninit), m(m), n(n) {}
 
   Array(const int m, const int n, T* data, PyObject* owner)
-    : m(m), n(n) {
-    assert(m>=0 && n>=0);
-    flat = Array<T>(m*n,data,owner);
-  }
+    : Base((assert(m>=0 && n>=0),
+            Array<T>(m*n,data,owner)))
+    , m(m), n(n) {}
 
-  Array(const Vector<int,d>& counts, T* data, PyObject* owner)
-    : m(counts.x), n(counts.y) {
-    assert(m>=0 && n>=0);
-    flat = Array<T>(m*n,data,owner);
-  }
+  Array(const Vector<int,d> sizes)
+    : Array(sizes.x,sizes.y) {}
+
+  Array(const Vector<int,d> sizes, Uninit)
+    : Array(sizes.x,sizes.y,uninit) {}
+
+  Array(const Vector<int,d> sizes, T* data, PyObject* owner)
+    : Array(sizes.x,sizes.y,data,owner) {}
 
   Array(const Array& source)
-    : m(source.m), n(source.n) {
-    flat = source.flat;
-  }
+    : Base(source.flat), m(source.m), n(source.n) {}
 
-  // conversion from mutable to const
+  // Conversion from mutable to const
   Array(const MutableSelf& source)
-    : m(source.m), n(source.n) {
-    flat = source.flat;
-  }
+    : Base(source.flat), m(source.m), n(source.n) {}
 
-  explicit Array(const NdArray<T>& array) {
-    GEODE_ASSERT(array.rank()==2);
-    m = array.shape[0];
-    n = array.shape[1];
-    flat = array.flat;
-  }
+  explicit Array(const NdArray<T>& array)
+    : Base((GEODE_ASSERT(array.rank()==2),
+            array.flat))
+    , m(array.shape[0]), n(array.shape[1]) {}
 
   RawArray<T,2> raw() const {
     return RawArray<T,2>(m,n,data());
@@ -107,7 +91,10 @@ public:
   }
 
   template<class TArray> void copy(const TArray& source) {
-    resize(source.sizes(),false);
+    if ((void*)this == (void*)&source)
+      return;
+    clear();
+    resize(source.sizes(),uninit);
     const_cast<const Array*>(this)->copy(source);
   }
 
@@ -132,6 +119,11 @@ public:
 
   int total_size() const {
     return m*n;
+  }
+
+  void clear() {
+    flat.clear();
+    m = n = 0;
   }
 
   void clean_memory() {
@@ -184,16 +176,14 @@ public:
     return unsigned(i)<unsigned(m) && unsigned(j)<unsigned(n);
   }
 
-  void resize(int m_new, int n_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
+  void resize(const int m_new, const int n_new) {
     if (m_new==m && n_new==n) return;
     assert(m_new>=0 && n_new>=0);
     int new_size = m_new*n_new;
-    if (n_new==n || !flat.size() || !new_size || !copy_existing_elements)
-      flat.resize(new_size,initialize_new_elements,copy_existing_elements);
+    if (n_new==n || !flat.size() || !new_size)
+      flat.resize(new_size);
     else {
-      Array<T> new_flat(new_size,uninit);
-      if (initialize_new_elements)
-        new_flat.fill(T());
+      Array<T> new_flat(new_size);
       const int m2 = geode::min(m,m_new),
                 n2 = geode::min(n,n_new);
       for (int i=0;i<m2;i++) for (int j=0;j<n2;j++)
@@ -204,8 +194,30 @@ public:
     n = n_new;
   }
 
-  void resize(const Vector<int,d>& counts, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
-    resize(counts.x,counts.y,initialize_new_elements,copy_existing_elements);
+  void resize(const int m_new, const int n_new, Uninit) {
+    if (m_new==m && n_new==n) return;
+    assert(m_new>=0 && n_new>=0);
+    int new_size = m_new*n_new;
+    if (n_new==n || !flat.size() || !new_size)
+      flat.resize(new_size,uninit);
+    else {
+      Array<T> new_flat(new_size,uninit);
+      const int m2 = geode::min(m,m_new),
+                n2 = geode::min(n,n_new);
+      for (int i=0;i<m2;i++) for (int j=0;j<n2;j++)
+        new_flat(i*n_new+j) = flat(i*n+j);
+      flat = new_flat;
+    }
+    m = m_new;
+    n = n_new;
+  }
+
+  void resize(const Vector<int,d>& counts) {
+    resize(counts.x,counts.y);
+  }
+
+  void resize(const Vector<int,d>& counts, Uninit) {
+    resize(counts.x,counts.y,uninit);
   }
 
   RawArray<T,1> reshape(int m_new) const {
@@ -278,9 +290,9 @@ public:
   }
 
   template<class TArray> int append(const TArray& array) {
-    int i = m;
-    resize(m+1,n,false);
-    (*this)[i]=array;
+    const int i = m;
+    resize(m+1,n,uninit);
+    (*this)[i] = array;
     return i;
   }
 };

@@ -35,32 +35,27 @@ public:
 
   Array() {}
 
-  Array(const Vector<int,d>& shape)
-    : Base(shape.x*shape.y*shape.z*shape.w), shape(shape) {
-    assert(shape.min()>=0);
-  }
+  Array(const Vector<int,d> shape)
+    : Base((assert(shape.min()>=0),
+            shape.x*shape.y*shape.z*shape.w))
+    , shape(shape) {}
 
-  Array(const Vector<int,d>& shape, Uninit)
-    : Base(shape.x*shape.y*shape.z*shape.w,uninit), shape(shape) {
-    assert(shape.min()>=0);
-  }
+  Array(const Vector<int,d> shape, Uninit)
+    : Base((assert(shape.min()>=0),
+            shape.x*shape.y*shape.z*shape.w),uninit)
+    , shape(shape) {}
 
-  Array(const Vector<int,d>& shape, T* data, PyObject* owner)
-    : shape(shape) {
-    assert(shape.min()>=0);
-    flat = Array<T>(shape.product(),data,owner);
-  }
+  Array(const Vector<int,d> shape, T* data, PyObject* owner)
+    : Base((assert(shape.min()>=0),
+            shape.product()),data,owner)
+    , shape(shape) {}
 
   Array(const Array& source)
-    : shape(source.shape) {
-    flat = source.flat;
-  }
+    : Base(source.flat), shape(source.shape) {}
 
   // Conversion from mutable to const
   Array(const MutableSelf& source)
-    : shape(source.shape) {
-    flat = source.flat;
-  }
+    : Base(source.flat), shape(source.shape) {}
 
   Array& operator=(const Array& source) {
     flat = source.flat;
@@ -76,10 +71,16 @@ public:
   }
 
   template<class TArray> void copy(const TArray& source) {
-    resize(source.sizes(),false);
-    int f=0;
-    for (int i=0;i<shape[0];i++) for (int j=0;j<shape[1];j++) for (int k=0;k<shape[2];k++) for (int l=0;l<shape[3];l++)
-      flat[f++] = source(i,j,k,l);
+    if ((void*)this == (void*)&source)
+      return;
+    clear();
+    resize(source.sizes(),uninit);
+    int f = 0;
+    for (int i=0;i<shape[0];i++)
+      for (int j=0;j<shape[1];j++)
+        for (int k=0;k<shape[2];k++)
+          for (int l=0;l<shape[3];l++)
+            flat[f++] = source(i,j,k,l);
   }
 
   Array<Element,d> copy() const {
@@ -90,6 +91,11 @@ public:
 
   const Vector<int,d>& sizes() const {
     return shape;
+  }
+
+  void clear() {
+    flat.clear();
+    shape.fill(0);
   }
 
   void clean_memory() {
@@ -114,18 +120,26 @@ public:
     return valid(index.x,index.y,index.z,index.w);
   }
 
-  void resize(const Vector<int,d>& shape_new, const bool initialize_new_elements=true, const bool copy_existing_elements=true) {
+  void resize(const Vector<int,d>& shape_new) {
+    if (shape_new==shape) return;
+    assert(shape_new.min()>=0);
+    int new_size = shape_new.product();
+    Array<T> new_flat(new_size);
+    const Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
+    for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
+      new_flat[((i*shape_new[1]+j)*shape_new[2]+k)*shape_new[3]+l] = flat[((i*shape[1]+j)*shape[2]+k)*shape[3]+l];
+    shape = shape_new;
+    flat = new_flat;
+  }
+
+  void resize(const Vector<int,d>& shape_new, Uninit) {
     if (shape_new==shape) return;
     assert(shape_new.min()>=0);
     int new_size = shape_new.product();
     Array<T> new_flat(new_size,uninit);
-    if (initialize_new_elements)
-      new_flat.fill(T());
-    if (copy_existing_elements) {
-      Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
-      for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
-        new_flat[((i*shape_new[1]+j)*shape_new[2]+k)*shape_new[3]+l] = flat[((i*shape[1]+j)*shape[2]+k)*shape[3]+l];
-    }
+    const Vector<int,d> common = Vector<int,d>::componentwise_min(shape,shape_new);
+    for (int i=0;i<common[0];i++) for (int j=0;j<common[1];j++) for (int k=0;k<common[2];k++) for (int l=0;l<common[3];l++)
+      new_flat[((i*shape_new[1]+j)*shape_new[2]+k)*shape_new[3]+l] = flat[((i*shape[1]+j)*shape[2]+k)*shape[3]+l];
     shape = shape_new;
     flat = new_flat;
   }

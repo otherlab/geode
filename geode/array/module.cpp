@@ -76,11 +76,9 @@ ssize_t base_refcnt(PyObject* array) {
   return base?base->ob_refcnt:0;
 }
 
-Array<uint8_t> array_write_test(const string& filename, RawArray<const real,2> array) {
+Tuple<Array<uint8_t>,size_t> array_write_test(const string& filename, RawArray<const real,2> array) {
   write_numpy(filename,array);
-  Array<uint8_t> header;
-  fill_numpy_header(header,array);
-  return header;
+  return fill_numpy_header(array);
 }
 
 #endif

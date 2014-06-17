@@ -13,7 +13,7 @@ namespace geode {
 using std::ostream;
 // this cannot be GEODE_CORE_EXPORT, since it's defined as a template in headers
 template<class T> PyObject* to_python(const NdArray<T>& array);
-template<class T> struct FromPython<NdArray<T> >{ static NdArray<T> convert(PyObject* object);};
+template<class T> struct FromPython<NdArray<T>>{ static NdArray<T> convert(PyObject* object);};
 
 template<class T>
 class NdArray {
@@ -61,18 +61,12 @@ public:
   }
 
   template<int d> NdArray(const Array<T,d>& array)
-    : flat(array.flat) {
-    Array<int> shape_;
-    shape_.copy(array.sizes());
-    shape = shape_;
-  }
+    : shape(asarray(array.sizes()).copy())
+    , flat(array.flat) {}
 
-  template<int m> NdArray(const Array<Vector<T,m> >& array)
-    : flat(m*array.size(),reinterpret_cast<T*>(array.data()),array.borrow_owner()) {
-    Array<int> shape_;
-    shape_.copy(vec(array.size(),m));
-    shape = shape_;
-  }
+  template<int m> NdArray(const Array<Vector<T,m>>& array)
+    : shape(asarray(vec(array.size(),m)).copy())
+    , flat(m*array.size(),reinterpret_cast<T*>(array.data()),array.borrow_owner()) {}
 
   template<class TArray1> bool operator==(const TArray1& v) const {
     return shape == v.shape && flat == v.flat;

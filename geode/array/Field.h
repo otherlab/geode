@@ -48,10 +48,9 @@ public:
   explicit Field(const Array<T>& source)
     : flat(source) {}
 
-  Field(const Hashtable<Id,T>& source, const int size, const T def = T()) {
-    flat.resize(size);
-    for (auto& s : flat)
-      s = def;
+  Field(const Hashtable<Id,T>& source, const int size, const T def = T())
+    : flat(size,uninit) {
+    flat.fill(def);
     for (const auto& p : source)
       flat[p.key().idx()] = p.data();
   }
@@ -101,8 +100,8 @@ public:
     flat.extend(append_field.flat);
   }
 
-  void preallocate(const int m_new, const bool copy_existing_elements=true) {
-    flat.preallocate(m_new, copy_existing_elements);
+  void preallocate(const int m_new) {
+    flat.preallocate(m_new);
   }
 
   Field<Element,Id> copy() const {

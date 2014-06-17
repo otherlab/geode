@@ -2,6 +2,7 @@
 // Class AirPressure
 //#####################################################################
 #include <geode/force/AirPressure.h>
+#include <geode/array/ConstantMap.h>
 #include <geode/math/constants.h>
 #include <geode/mesh/TriangleSoup.h>
 #include <geode/python/Class.h>
@@ -24,6 +25,7 @@ AirPressure::AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,in
   , side(side)
   , skip_rotation_terms(false)
   , initial_volume(side*mesh->volume(X))
+  , local_mesh(mesh->elements.size(),uninit)
   , volume(initial_volume)
 {
   GEODE_ASSERT(abs(side)==1);
@@ -38,7 +40,6 @@ AirPressure::AirPressure(Ref<TriangleSoup> mesh,Array<const TV> X,bool closed,in
   Hashtable<int,int> hash;
   for (int i=0;i<nodes.size();i++)
     hash.set(nodes[i],i);
-  local_mesh.resize(mesh->elements.size(),false);
   for (int t=0;t<mesh->elements.size();t++)
     for(int i=0;i<3;i++)
       local_mesh[t][i] = hash.get(mesh->elements[t][i]);
@@ -73,8 +74,7 @@ void AirPressure::update_position(Array<const TV> X_, bool definite) {
   if (closed)
     pressure = amount*ideal_gas_constant*temperature/volume;
   Array<const int> nodes = mesh->nodes_touched();
-  normals.resize(nodes.size(),false,false);
-  normals.zero();
+  normals.copy(constant_map(nodes.size(),TV()));
   for (int t=0;t<local_mesh.size();t++) {
     int i,j,k;local_mesh[t].get(i,j,k);
     TV n = cross(X[nodes[j]]-X[nodes[i]],X[nodes[k]]-X[nodes[i]]);

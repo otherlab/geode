@@ -280,7 +280,7 @@ DECLARE(stedc,char*,int*,T*,T*,T*,int*,T*,int*,int*,int*,int*)
 WRAP(void stedc(RawArray<T> d, RawArray<T> e, Array<T,2>& z, Array<char>& work)) {
   int n=d.size();
   GEODE_ASSERT(n-1<=e.size() && e.size()<=n);
-  z.resize(n,n,false);
+  z.resize(n,n,uninit);
   if(!n) return;
   char *compz=const_cast<char*>("I");
   T lwork_T;int liwork,query=-1,ldz=z.n,info;
@@ -300,7 +300,7 @@ DECLARE(stegr,char*,char*,int*,T*,T*,T*,T*,int*,int*,T*,int*,T*,T*,int*,int*,T*,
 WRAP(void stegr(RawArray<T> d,RawArray<T> e,Box<T> range,Array<T>& w,Array<T,2>& z,Array<int>& isuppz,Array<char>& work)) {
   int n=d.size();
   GEODE_ASSERT(n==e.size());
-  w.resize(n,false);z.resize(n,n,false);isuppz.resize(2*n,false);
+  w.resize(n,uninit);z.resize(n,n,uninit);isuppz.resize(2*n,uninit);
   if(!n) return;
   char *jobz=const_cast<char*>("V"),*ran=const_cast<char*>(range.contains(Box<T>::full_box())?"A":"V");
   T lwork_T,unused_T;int liwork,m,query=-1,unused,ldz=z.n,info;

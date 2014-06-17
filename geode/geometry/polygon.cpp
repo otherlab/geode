@@ -505,7 +505,6 @@ Ref<SegmentSoup> nested_array_offsets_to_segment_soup(RawArray<const int> offset
       for (int i=offsets[p];i<offsets[p+1]-1;i++)
         segments[s++] = vec(i,i+1);
   } else {
-    segments.resize(offsets.back(),false);
     for (int i=0;i<offsets.back();i++)
       segments[i] = vec(i,i+1);
     // Fix wrap around segments

@@ -90,7 +90,8 @@ SolidMatrix(const SolidMatrixStructure& structure)
   for (int o=0;o<(int)outers.size();o++) {
     GEODE_ASSERT(structure.outers[o].x==1);
     const_cast_(outers[o].x) = structure.outers[o].y;
-    const_cast_(outers[o].z).resize(outers[o].x.size(),false);
+    const_cast_(outers[o].z).clear();
+    const_cast_(outers[o].z).resize(outers[o].x.size(),uninit);
   }
 }
 

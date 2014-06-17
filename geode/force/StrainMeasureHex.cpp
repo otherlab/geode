@@ -33,10 +33,10 @@ const Vector<Matrix<T,8,3>,8> StrainMeasureHex::Hg = initialize_Hg();
 StrainMeasureHex::StrainMeasureHex(Array<const Vector<int,8>> elements, Array<const TV> X)
   : nodes(elements.size()?scalar_view(elements).max()+1:0)
   , elements(elements)
-  , rest_X(X) {
+  , rest_X(X)
+  , H_DmH_inverse(elements.size(),uninit)
+  , DmH_det(elements.size(),uninit) {
   GEODE_ASSERT(nodes<=X.size());
-  H_DmH_inverse.resize(elements.size(),false,false);
-  DmH_det.resize(elements.size(),false,false);
   for (int h=0;h<elements.size();h++)
     for (int g=0;g<8;g++) {
       Matrix<T,3> DmH;

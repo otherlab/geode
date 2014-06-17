@@ -307,8 +307,7 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
     assert(mesh->dst(e0)==vs.x);
     const auto f1 = mesh->face(e1),
                f2 = mesh->face(e2);
-    int base = bsp.size();
-    bsp.resize(base+3,false);
+    const int base = bsp.extend(3,uninit);
     set_links(bsp,face_to_bsp[f0],base);
     bsp[base+0] = Node(vec(v,vs.x),base+2,base+1);
     bsp[base+1] = Node(vec(v,vs.y),~f0.id,~f1.id);
@@ -322,10 +321,9 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
     }
 
     // Fix all non-Delaunay edges
-    stack.resize(3,false,false);
-    stack[0] = tuple(mesh->next(e0),vec(vs.x,vs.y));
-    stack[1] = tuple(mesh->next(e1),vec(vs.y,vs.z));
-    stack[2] = tuple(mesh->next(e2),vec(vs.z,vs.x));
+    stack.copy(vec(tuple(mesh->next(e0),vec(vs.x,vs.y)),
+                   tuple(mesh->next(e1),vec(vs.y,vs.z)),
+                   tuple(mesh->next(e2),vec(vs.z,vs.x))));
     if (self_check)
       assert_delaunay("self check 1: ",mesh,X,Tuple<>(),true);
     while (stack.size()) {

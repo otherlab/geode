@@ -29,12 +29,11 @@ template<class TV,int d> LinearFiniteVolume<TV,d>::LinearFiniteVolume(Array<cons
   , poissons_ratio(poissons_ratio)
   , rayleigh_coefficient(rayleigh_coefficient)
   , nodes_(elements.size()?1+scalar_view(elements).max():0)
-  , density(density) {
+  , density(density)
+  , Dm_inverse(elements.size(),uninit)
+  , normals((int)m>(int)d?elements.size():0,uninit)
+  , Bm_scales(elements.size(),uninit) {
   update_position(X_,false);
-  const_cast_(Dm_inverse) = Array<Matrix<T,d,m>>(elements.size(),uninit);
-  Bm_scales.resize(elements.size(),false,false);
-  if ((int)m>(int)d)
-    normals.resize(elements.size(),false,false);
   for (int t=0;t<elements.size();t++) {
     Matrix<T,m,d> Dm = Ds(X,t);
     T scale = Dm.parallelepiped_measure();
