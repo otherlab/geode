@@ -52,7 +52,7 @@ public:
     : flat(size,uninit) {
     flat.fill(def);
     for (const auto& p : source)
-      flat[p.key().idx()] = p.data();
+      flat[p.x.idx()] = p.y;
   }
 
   Field& operator=(const Field<Element,Id>& source) {

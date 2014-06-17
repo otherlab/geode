@@ -351,7 +351,7 @@ template<class K,class V> ostream& operator<<(ostream& output, const Hashtable<K
   for (const auto& v : h) {
     if (first) first = false;
     else output << ',';
-    output << v.key() << ':' << v.data();
+    output << v.x << ':' << v.y;
   }
   return output << '}';
 }
@@ -373,9 +373,9 @@ template<class K,class V> PyObject* to_python(const Hashtable<K,V>& h) {
   PyObject* dict = PyDict_New();
   if (!dict) goto fail;
   for (auto& x : h) {
-    PyObject* k = to_python(x.key());
+    PyObject* k = to_python(x.x);
     if (!k) goto fail;
-    PyObject* v = to_python(x.data());
+    PyObject* v = to_python(x.y);
     if (!v) {
       Py_DECREF(k);
       goto fail;
