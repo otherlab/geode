@@ -4,6 +4,7 @@
 #include <geode/mesh/TriangleSubdivision.h>
 #include <geode/python/wrap.h>
 #include <geode/vector/normalize.h>
+
 namespace geode {
 
 typedef real T;
@@ -49,6 +50,39 @@ Ref<TriangleSoup> double_torus_mesh() {
   static const IV tris[] = {IV(3,5,4),IV(3,9,5),IV(7,9,8),IV(1,5,9),IV(1,9,7),IV(1,11,5),IV(2,8,10),IV(8,9,10),IV(0,10,11),IV(0,11,1),IV(0,1,2),IV(0,2,6),IV(2,10,6),IV(4,6,10),
                             IV(0,4,10),IV(0,8,4),IV(0,6,8),IV(6,7,8),IV(5,7,6),IV(4,5,6),IV(2,3,4),IV(2,4,8),IV(5,11,7),IV(1,7,3),IV(3,7,11),IV(1,3,2),IV(3,11,9),IV(9,11,10)};
   return new_<TriangleSoup>(frozen_copy(asarray(tris)));
+}
+
+Tuple<Ref<TriangleSoup>,Array<TV>> cube_mesh(TV const &min, TV const &max) {
+  Array<TV> vh;
+  vh.append(min);
+  vh.append(vec(min.x, min.y, max.z));
+  vh.append(vec(min.x, max.y, min.z));
+  vh.append(vec(min.x, max.y, max.z));
+  vh.append(vec(max.x, min.y, min.z));
+  vh.append(vec(max.x, min.y, max.z));
+  vh.append(vec(max.x, max.y, min.z));
+  vh.append(max);
+
+  Array<Vector<int,3>> faces;
+  faces.append(vec(0, 1, 2));
+  faces.append(vec(2, 1, 3));
+
+  faces.append(vec(1, 0, 5));
+  faces.append(vec(5, 0, 4));
+
+  faces.append(vec(3, 1, 7));
+  faces.append(vec(7, 1, 5));
+
+  faces.append(vec(0, 2, 4));
+  faces.append(vec(4, 2, 6));
+
+  faces.append(vec(2, 3, 6));
+  faces.append(vec(6, 3, 7));
+
+  faces.append(vec(5, 6, 7));
+  faces.append(vec(6, 5, 4));
+
+  return tuple(new_<TriangleSoup>(faces), vh);
 }
 
 }

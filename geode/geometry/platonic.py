@@ -12,8 +12,9 @@ def tetrahedron_mesh():
   mesh = TriangleSoup([[1,2,3],[3,2,0],[3,0,1],[0,2,1]])
   return mesh,X
 
-def cube_mesh():
-  X = array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]],dtype=real)
+def cube_mesh(pmin = [0,0,0], pmax=[1,1,1]):
+  X = array([pmin,[pmin[0],pmin[1],pmax[2]],[pmin[0],pmax[1],pmin[2]],[pmin[0],pmax[1],pmax[2]],
+            [pmax[0],pmin[1],pmin[2]],[pmax[0],pmin[1],pmax[2]],[pmax[0],pmax[1],pmin[2]],pmax],dtype=real)
   mesh = TriangleSoup([[0,1,2], [2,1,3],
                        [1,0,5], [5,0,4],
                        [3,1,7], [7,1,5],
