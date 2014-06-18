@@ -148,7 +148,7 @@ public:
   GEODE_CORE_EXPORT void permute_vertices(RawArray<const int> permutation, bool check=false);
 
   // Run an expensive internal consistency check.  Safe to call even if the structure arrays are random noise.
-  GEODE_CORE_EXPORT void assert_consistent() const;
+  GEODE_CORE_EXPORT void assert_consistent(bool check_double_halfedges = true) const;
 
   // Print internal structure to Log::cout.  Safe to call even if the structure arrays are random noise.
   GEODE_CORE_EXPORT void dump_internals() const;

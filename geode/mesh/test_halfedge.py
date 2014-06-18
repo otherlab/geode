@@ -28,7 +28,7 @@ def test_collect_boundary_garbage():
   mesh.add_faces(tris)
   assert not mesh.is_garbage_collected()
   mesh.collect_boundary_garbage()
-  mesh.assert_consistent()
+  mesh.assert_consistent(True)
   assert mesh.is_garbage_collected()
 
 def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
@@ -54,10 +54,10 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       assert mesh.chi==chi
 
     def check_add_faces(mesh,tris):
-      mesh.assert_consistent()
+      mesh.assert_consistent(True)
       try:
         mesh.add_faces(tris)
-        mesh.assert_consistent()
+        mesh.assert_consistent(True)
       except:
         mesh.dump_internals()
         raise
@@ -73,12 +73,12 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       assert all(sort_tris(tris)==sort_tris(mesh.elements()))
 
     def check_add_face(mesh,tris):
-      mesh.assert_consistent()
+      mesh.assert_consistent(True)
       for t in tris:
         try:
           assert mesh.has_boundary() or mesh.has_isolated_vertices()
           mesh.add_face(t)
-          mesh.assert_consistent()
+          mesh.assert_consistent(True)
         except:
           mesh.dump_internals()
           raise
@@ -108,7 +108,7 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       print 'flips = %d'%flips
       if soup is not nanosphere:
         assert flips>484
-      mesh.assert_consistent()
+      mesh.assert_consistent(True)
       tris = mesh.elements()
       random.shuffle(tris)
       # Reconstruct the mangled mesh one triangle at a time
@@ -117,7 +117,7 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       check_add_faces(partial,tris)
       # Check that face (and maybe edge) splits are safe
       random_face_splits(mesh,20,key+10)
-      mesh.assert_consistent()
+      mesh.assert_consistent(True)
       # Tear the mesh apart in random order
       mesh_destruction_test(mesh,key+20)
       assert mesh.n_vertices==mesh.n_edges==mesh.n_faces==0
@@ -127,6 +127,28 @@ def test_halfedge_construction():
 
 def test_corner_construction():
   construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
+
+def test_nonmanifold_vertices():
+  soup = icosahedron_mesh()[0]
+  mesh = MutableTriangleTopology()
+  mesh.add_vertices(soup.nodes())
+  mesh.add_faces(soup.elements)
+
+  mesh.assert_consistent(True)
+
+  # mess with the neighborhood of vertex 0, such much that it needs to be split
+  for i,he in enumerate(mesh.outgoing(0)):
+    if i == 1 or i == 3:
+      mesh.split_along_edge(he)
+      mesh.assert_consistent(False)
+
+  r = mesh.split_nonmanifold_vertices()
+  mesh.assert_consistent(True)
+
+  assert len(r.sizes()) == 1
+  assert len(r[0]) == 2
+  assert r[0][0] == 0
+
 
 def test_fields():
   random.seed(813177)

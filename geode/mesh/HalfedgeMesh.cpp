@@ -280,7 +280,7 @@ void HalfedgeMesh::permute_vertices(RawArray<const int> permutation, bool check)
     e.src = VertexId(permutation[e.src.id]);
 }
 
-void HalfedgeMesh::assert_consistent() const {
+void HalfedgeMesh::assert_consistent(bool check_double_halfedges) const {
   // Check that all indices are in their valid ranges, that bidirectional links match, and a few other properties.
   GEODE_ASSERT(!(n_halfedges()&1));
   for (const auto v : vertices()) {
@@ -314,7 +314,7 @@ void HalfedgeMesh::assert_consistent() const {
   }
 
   // Check that no two halfedges share the same vertices
-  {
+  if (check_double_halfedges) {
     Hashtable<Vector<VertexId,2>> pairs;
     for (const auto e : halfedges())
       GEODE_ASSERT(pairs.set(vertices(e)));
