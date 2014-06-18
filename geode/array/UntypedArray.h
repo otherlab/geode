@@ -71,6 +71,17 @@ public:
     memcpy(data_,o.data_,m_*t_size_);
   }
 
+  // Copy all aspects of an UntypedArray, except give it a new size (and don't copy any data)
+  UntypedArray(const UntypedArray &o, int new_size)
+    : m_(new_size)
+    , max_size_(new_size)
+    , t_size_(o.t_size_)
+    , type_(o.type_) {
+    const auto buffer = Buffer::new_<char>(m_*t_size_);
+    data_ = buffer->data;
+    owner_ = (PyObject*)buffer;
+  }
+
   // Share ownership with an input field
   template<class T, class Id>
   UntypedArray(const Field<T,Id> &f)
@@ -173,6 +184,17 @@ public:
          *q = data_+j*t_size_;
     for (int k=0;k<t_size_;k++)
       swap(p[k],q[k]);
+  }
+
+  void copy(int from, int to) {
+    memcpy(data_+to*t_size_,data_+from*t_size_,t_size_);
+  }
+
+  // copy o[j] to this[i]
+  void copy_from(int i, UntypedArray const &o, int j) {
+    // only allowed if types are the same
+    assert(type_ == o.type_);
+    memcpy(data_+i*t_size_,o.data_+j*t_size_,t_size_);
   }
 
   // Typed access to data
