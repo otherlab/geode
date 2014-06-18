@@ -18,7 +18,8 @@ class NestedField {
   Nested<T> raw;
 
   NestedField(Nested<T>&& _raw) : raw(_raw) {}
-  NestedField(RawField<const int,Id> lengths, bool initialize=true) : raw(lengths.flat, initialize) {}
+  NestedField(RawField<const int,Id> lengths) : raw(lengths.flat) {}
+  NestedField(RawField<const int,Id> lengths, Uninit) : raw(lengths.flat, uninit) {}
   NestedField(const Field<const int, Id> offsets, const Array<T>& flat) : raw(offsets.flat, flat) {}
 
   template<class S,class Id2> static NestedField empty_like(const NestedField<S,Id2>& other) {

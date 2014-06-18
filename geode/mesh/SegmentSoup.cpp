@@ -137,7 +137,7 @@ Nested<const int> SegmentSoup::incident_elements() const {
 
 Array<const Vector<int,2> > SegmentSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
-    adjacent_elements_.resize(elements.size(),false,false);
+    adjacent_elements_.resize(elements.size(),uninit);
     Nested<const int> incident = incident_elements();
     for (int s=0;s<elements.size();s++) {
       Vector<int,2> seg = elements[s];
@@ -157,7 +157,7 @@ Array<const Vector<int,2> > SegmentSoup::adjacent_elements() const {
 
 Array<TV2> SegmentSoup::element_normals(RawArray<const TV2> X) const {
   GEODE_ASSERT(X.size()>=nodes());
-  Array<TV2> normals(elements.size(),false);
+  Array<TV2> normals(elements.size(),uninit);
   for (int t=0;t<elements.size();t++) {
     int i,j;elements[t].get(i,j);
     normals[t] = rotate_right_90(normalized(X[j]-X[i]));

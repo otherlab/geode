@@ -92,4 +92,8 @@ void assertion_failed(const char* function,const char* file,unsigned int line,co
     throw AssertionError(error);
 }
 
+void did_not_raise(const type_info& error, const char* message) {
+  throw AssertionError(message?message:format("Expected %s, but function completed normally",error.name()));
+}
+
 }

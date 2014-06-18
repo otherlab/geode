@@ -113,7 +113,7 @@ const char* PythonError::what() const throw() {
 #endif
 
 #define INSTANTIATE(Error) \
-  Error::Error(const std::string& message):Base(message){} \
+  Error::Error(const string& message) : Base(message) {} \
   Error::~Error() throw () {}
 INSTANTIATE(IOError)
 INSTANTIATE(OSError)

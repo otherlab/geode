@@ -136,7 +136,7 @@ enum NPY_TYPECHAR { NPY_GENBOOLLTR ='b',
 
 #endif
 
-size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensions,int type_num) {
+Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensions,int type_num) {
   // Get dtype info
   int bits;
   char letter;
@@ -180,7 +180,7 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
 
   // Construct header
   const char magic_version[8] = {(char)0x93,'N','U','M','P','Y',1,0};
-  header.resize(256,false,false);
+  Array<uint8_t> header(256,uninit);
   char* const base = (char*)header.data();
   memcpy(base,magic_version,8);
   int len = 10;
@@ -205,19 +205,18 @@ size_t fill_numpy_header(Array<uint8_t>& header,int rank,const npy_intp* dimensi
 #endif
   memcpy(base+8,&header_len,2);
   header.resize(len);
-  return bytes*total_size;
+  return tuple(header,bytes*total_size);
 }
 
 void write_numpy(const string& filename,int rank,const npy_intp* dimensions,int type_num,void* data) {
-  // Fill header
-  Array<uint8_t> header;
-  size_t data_size = fill_numpy_header(header,rank,dimensions,type_num);
+  // Make header
+  const auto H = fill_numpy_header(rank,dimensions,type_num);
 
   // Write npy file
   FILE* file = fopen(filename.c_str(),"wb");
   if(!file) throw OSError("Can't open "+filename+" for writing");
-  fwrite(header.data(),1,header.size(),file);
-  fwrite(data,1,data_size,file);
+  fwrite(H.x.data(),1,H.x.size(),file);
+  fwrite(data,1,H.y,file);
   fclose(file);
 }
 

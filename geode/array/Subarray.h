@@ -32,27 +32,20 @@ public:
   const int m;
   const int stride; // stride of outer dimension (inner is assumed contiguous)
 
-  template<class T2>
-  Subarray(const Array<T2>& source, typename enable_if<mpl::or_<is_same<T2,T>,is_same<T2,Element> >,Unusable>::type unusable=Unusable())
+  template<class T2> Subarray(const RawArray<T2>& source, typename enable_if<mpl::or_<is_same<T2,T>,is_same<T2,Element> >,Unusable>::type unusable=Unusable())
     : data_(source.data()), m(source.size()), stride(1) {}
 
-  template<class T2>
-  Subarray(const RawArray<T2>& source, typename enable_if<mpl::or_<is_same<T2,T>,is_same<T2,Element> >,Unusable>::type unusable=Unusable())
-    : data_(source.data()), m(source.size()), stride(1) {}
+  template<class T2> Subarray(const Array<T2>& source, typename enable_if<mpl::or_<is_same<T2,T>,is_same<T2,Element> >,Unusable>::type unusable=Unusable())
+    : Subarray(source.raw()) {}
 
-  template<class T2>
-  Subarray(const Array<T2>& source, int lo, int hi, int stride)
+  template<class T2> Subarray(const RawArray<T2>& source,int lo,int hi,int stride)
     : data_(source.data()+lo), m((hi-lo-1+stride)/stride), stride(stride) {
     assert(unsigned(lo)<=unsigned(hi+stride-1) && unsigned(hi)<=unsigned(source.size()));
     assert(data_ || !m);
   }
 
-  template<class T2>
-  Subarray(const RawArray<T2>& source,int lo,int hi,int stride)
-    : data_(source.data()+lo), m((hi-lo-1+stride)/stride), stride(stride) {
-    assert(unsigned(lo)<=unsigned(hi+stride-1) && unsigned(hi)<=unsigned(source.size()));
-    assert(data_ || !m);
-  }
+  template<class T2> Subarray(const Array<T2>& source, int lo, int hi, int stride)
+    : Subarray(source.raw(),lo,hi,stride) {}
 
   Subarray(const Subarray& source)
     : data_(source.data()), m(source.m), stride(source.stride) {}
@@ -124,17 +117,14 @@ public:
   Subarray(RawArray<const Element,2> source)
     : data_(source.data()), m(source.m), n(source.n), stride(n) {}
 
-  Subarray(Array<T,2> source, int ilo, int ihi, int jlo, int jhi)
-    : data_(source.data()+ilo*source.n+jlo), m(ihi-ilo), n(jhi-jlo), stride(source.n) {
-    assert(unsigned(ilo)<=unsigned(ihi) && unsigned(ihi)<=unsigned(source.m) && unsigned(jlo)<=unsigned(jhi) && unsigned(jhi)<=unsigned(source.n));
-    assert(data_ || !m || !n);
-  }
-
   Subarray(RawArray<T,2> source, int ilo, int ihi, int jlo, int jhi)
     : data_(source.data()+ilo*source.n+jlo), m(ihi-ilo), n(jhi-jlo), stride(source.n) {
     assert(unsigned(ilo)<=unsigned(ihi) && unsigned(ihi)<=unsigned(source.m) && unsigned(jlo)<=unsigned(jhi) && unsigned(jhi)<=unsigned(source.n));
     assert(data_ || !m || !n);
   }
+
+  Subarray(Array<T,2> source, int ilo, int ihi, int jlo, int jhi)
+    : Subarray(source.raw(),ilo,ihi,jlo,jhi) {}
 
   Subarray(const Subarray& source)
     : data_(source.data()), m(source.m), n(source.n), stride(source.stride) {}
@@ -213,7 +203,7 @@ public:
   }
 
   Array<T,2> copy() const {
-    Array<T,2> copy(m,n,false);
+    Array<T,2> copy(m,n,uninit);
     for (int i=0;i<m;i++) for (int j=0;j<n;j++)
       copy(i,j) = (*this)(i,j);
     return copy;

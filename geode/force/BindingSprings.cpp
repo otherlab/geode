@@ -18,7 +18,7 @@ template<> GEODE_DEFINE_TYPE(BindingSprings<3>)
 
 template<int k> BindingSprings<k>::BindingSprings(Array<const int> nodes, Array<const Vector<int,k>> parents, Array<const Vector<T,k>> weights, Array<const T> mass, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : mass(mass)
-  , info(nodes.size(),false)
+  , info(nodes.size(),uninit)
 {
   GEODE_ASSERT(nodes.size()==parents.size());
   GEODE_ASSERT(nodes.size()==weights.size());

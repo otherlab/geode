@@ -17,7 +17,7 @@ GEODE_DEFINE_TYPE(ParticleBindingSprings)
 
 ParticleBindingSprings::ParticleBindingSprings(Array<const Vector<int,2>> nodes, Array<const T> mass, NdArray<const T> stiffness, NdArray<const T> damping_ratio)
   : mass(mass)
-  , info(nodes.size(),false) {
+  , info(nodes.size(),uninit) {
   const int max_node = nodes.size()?scalar_view(nodes).max()+1:0;
   GEODE_ASSERT(mass.size()>=max_node);
   GEODE_ASSERT(stiffness.rank()==0 || (stiffness.rank()==1 && stiffness.shape[0]==nodes.size()));

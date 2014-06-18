@@ -25,11 +25,11 @@ SurfacePins::SurfacePins(Array<const int> particles, Array<const T> mass, Triang
   , target_mesh(ref(target_mesh))
   , target_X(target_X)
   , mass(mass)
-  , k(particles.size(),false)
-  , kd(particles.size(),false)
-  , node_X(particles.size(),false)
+  , k(particles.size(),uninit)
+  , kd(particles.size(),uninit)
+  , node_X(particles.size(),uninit)
   , target_tree(new_<SimplexTree<TV,2>>(ref(target_mesh),target_X,10))
-  , info(particles.size(),false)
+  , info(particles.size(),uninit)
 {
   max_node = particles.size()?particles.max()+1:0;
   GEODE_ASSERT(mass.size()>=max_node);
@@ -70,7 +70,7 @@ void SurfacePins::update_position(Array<const TV> X_, bool definite) {
 
 Array<TV> SurfacePins::closest_points(Array<const TV> X) {
   update_position(X,false);
-  Array<TV> closest(particles.size(),false);
+  Array<TV> closest(particles.size(),uninit);
   for (int i=0;i<particles.size();i++)
     closest[i] = X[particles[i]]-info[i].phi*info[i].normal;
   return closest;

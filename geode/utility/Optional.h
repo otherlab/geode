@@ -21,7 +21,6 @@ template<class T> struct Optional: public boost::optional<T> {
 
 #else // Windows version
 
-#include <geode/utility/safe_bool.h>
 #include <boost/scoped_ptr.hpp>
 namespace geode {
 
@@ -70,8 +69,8 @@ public:
     return value.get();
   }
 
-  operator SafeBool() const {
-    return safe_bool(bool(value));
+  explicit operator bool() const {
+    return bool(value);
   }
 };
 

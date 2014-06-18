@@ -152,7 +152,7 @@ protected:
   GEODE_CORE_EXPORT Array<int> internal_collect_boundary_garbage();
 
   GEODE_CORE_EXPORT TriangleTopology();
-  GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, bool copy = false);
+  GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, const bool copy=false);
   GEODE_CORE_EXPORT explicit TriangleTopology(TriangleSoup const &soup);
   GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
 

@@ -47,7 +47,7 @@ read(const std::string& filename)
     JSAMPLE* row=new unsigned char[row_stride];JSAMPROW row_pointer[]={row};
     Log::cerr<<"reading "<<filename<<": "<<row_stride/3<<" x "<<cinfo.output_height<<std::endl;
 
-    Array<Vector<T,3>,2> image(cinfo.output_height,cinfo.output_width,false);
+    Array<Vector<T,3>,2> image(cinfo.output_height,cinfo.output_width,uninit);
     while(cinfo.output_scanline<cinfo.output_height){
         jpeg_read_scanlines(&cinfo,row_pointer,1);int index=0;
         for(int i=0;i<image.n;i++){

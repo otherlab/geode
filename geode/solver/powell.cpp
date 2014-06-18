@@ -41,7 +41,7 @@ static T linesearch_powell(const function<T(RawArray<const T>)>& f, RawArray<T> 
 Tuple<T,int> powell(const function<T(RawArray<const T>)>& f, RawArray<T> x, T scale, T xtol, T ftol, int maxiter) {
   GEODE_ASSERT(scale>0 && xtol>=0 && ftol>=0);
   const int n = x.size();
-  Array<T> direc1(n,false), tmp(n,false);
+  Array<T> direc1(n,uninit), tmp(n,uninit);
 
   // Initialize direction matrix to scale
   Array<T,2> direc(n,n);

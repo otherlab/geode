@@ -22,7 +22,7 @@ template<class TV> Springs<TV>::Springs(Array<const Vector<int,2>> springs, Arra
   , off_axis_damping(0)
   , nodes_(X.size())
   , mass(mass)
-  , info(springs.size(),false) {
+  , info(springs.size(),uninit) {
   GEODE_ASSERT(!springs.size() || scalar_view(springs).max()<nodes_);
   GEODE_ASSERT(mass.size()==nodes_);
   GEODE_ASSERT(stiffness.rank()==0 || (stiffness.rank()==1 && stiffness.shape[0]==springs.size()));

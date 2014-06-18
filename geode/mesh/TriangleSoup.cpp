@@ -56,7 +56,7 @@ Array<const Vector<int,3>> TriangleSoup::triangle_edges() const {
   if (!triangle_edges_.size() && nodes()) {
     // Must match the algorithm of segment_soup() exactly
     Hashtable<Vector<int,2>,int> hash;
-    triangle_edges_.resize(elements.size(),false);
+    triangle_edges_.resize(elements.size(),uninit);
     for (int i=0;i<elements.size();i++) {
       const auto t = elements[i];
       const int e0 = hash.get_or_insert(vec(t.x,t.y).sorted(),hash.size()),
@@ -84,7 +84,7 @@ Nested<const int> TriangleSoup::incident_elements() const {
 
 Array<const Vector<int,3>> TriangleSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
-    adjacent_elements_.resize(elements.size(),false,false);
+    adjacent_elements_.resize(elements.size(),uninit);
     Nested<const int> incident = incident_elements();
     for (int t=0;t<elements.size();t++) {
       Vector<int,3> tri = elements[t];
@@ -140,10 +140,12 @@ Array<const Vector<int,4>> TriangleSoup::bending_tuples() const {
     Array<int> other;
     Array<bool> flipped;
     for (const auto& it : edge_to_face) {
-      Vector<int,2> sn = it.key();
-      RawArray<const int> tris(it.data());
-      other.resize(tris.size(),false,false);
-      flipped.resize(tris.size(),false,false);
+      Vector<int,2> sn = it.x;
+      RawArray<const int> tris(it.y);
+      other.clear();
+      other.resize(tris.size(),uninit);
+      flipped.clear();
+      flipped.resize(tris.size(),uninit);
       for (int a=0;a<tris.size();a++) {
         Vector<int,3> tn = elements[tris[a]];
         int b = !sn.contains(tn[0])?0:!sn.contains(tn[1])?1:2;
@@ -277,7 +279,7 @@ Array<TV3> TriangleSoup::vertex_normals(RawArray<const TV3> X) const {
 
 Array<TV3> TriangleSoup::element_normals(RawArray<const TV3> X) const {
   GEODE_ASSERT(X.size()>=nodes());
-  Array<TV3> normals(elements.size(),false);
+  Array<TV3> normals(elements.size(),uninit);
   for (int t=0;t<elements.size();t++) {
     int i,j,k;elements[t].get(i,j,k);
     normals[t] = cross(X[j]-X[i],X[k]-X[i]).normalized();
@@ -296,7 +298,8 @@ Array<int> TriangleSoup::nonmanifold_nodes(bool allow_boundary) const {
     if (!incident.size())
       continue;
     // Collect oriented boundary segments of the one ring
-    ring.resize(incident.size(),false,false);
+    ring.clear();
+    ring.resize(incident.size(),uninit);
     for (int t=0;t<incident.size();t++) {
       Vector<int,3> tri = elements[incident[t]];
       if (tri.x==tri.y || tri.x==tri.z || tri.y==tri.z)

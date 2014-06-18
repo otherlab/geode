@@ -19,8 +19,8 @@ AxisPins(Array<const int> particles, Array<const T> mass, Array<const TV> target
   : particles(particles)
   , targets(targets)
   , mass(mass)
-  , k(particles.size(),false)
-  , kd(particles.size(),false)
+  , k(particles.size(),uninit)
+  , kd(particles.size(),uninit)
 {
   max_node = particles.size()?particles.max()+1:0;
   GEODE_ASSERT(mass.size()>=max_node);

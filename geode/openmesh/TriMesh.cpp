@@ -1264,7 +1264,7 @@ void TriMesh::set_vertex_colors(RawArray<const Vector<real,3>> colors) {
 
 Field<Vector<Vector<real,2>,3>,FaceHandle> TriMesh::face_texcoords() const {
   GEODE_ASSERT(has_halfedge_texcoords2D());
-  Field<Vector<Vector<real,2>,3>,FaceHandle> texcoords(n_faces(),false);
+  Field<Vector<Vector<real,2>,3>,FaceHandle> texcoords(n_faces(),uninit);
   for (const auto f : face_handles()) {
     const auto h = halfedge_handles(f);
     texcoords[f] = Vector<Vector<real,2>,3>(texcoord2D(h.x),
@@ -1590,7 +1590,7 @@ Tuple<int,Array<int> > TriMesh::component_vertex_map() const {
       labels.set(i,labels.size());
 
   //map vertex to mesh/label id
-  Array<int> map(n_vertices(),false);
+  Array<int> map(n_vertices(),uninit);
   for (int i=0;i<union_find.size();i++)
     map[i] = labels.get(union_find.find(i));
 
@@ -1599,7 +1599,7 @@ Tuple<int,Array<int> > TriMesh::component_vertex_map() const {
 
 Array<int> TriMesh::component_face_map() const {
   Tuple<int,Array<int> > vmap = component_vertex_map();
-  Array<int> map(n_faces(),false);
+  Array<int> map(n_faces(),uninit);
   int i =0;
   for (ConstFaceIter f=faces_begin();f!=faces_end();++f) {
     auto v = vertex_handles(f);
@@ -1616,7 +1616,7 @@ vector<Ref<TriMesh> > TriMesh::component_meshes() const {
     meshes.push_back(new_<TriMesh>());
 
   // Add vertices
-  Array<VertexHandle> map(n_vertices(),false);
+  Array<VertexHandle> map(n_vertices(),uninit);
   for (int i=0;i<vmap.y.size();i++)
     map[i] = meshes[vmap.y[i]]->add_vertex(point(VertexHandle(i)));
   // Add faces

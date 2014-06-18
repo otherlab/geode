@@ -764,7 +764,7 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
     Array<int> counts(edges.elements.size());
     for (const auto& ef : helper.ef_vertices)
       counts[ef.edge]++;
-    ef_vertices = Nested<EdgeFaceVertex>(counts,false);
+    ef_vertices = Nested<EdgeFaceVertex>(counts,uninit);
     for (const auto& ef : helper.ef_vertices)
       ef_vertices(ef.edge,--counts[ef.edge]) = ef;
   }
@@ -842,8 +842,8 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
 
       // Every pair of intersections with two common faces generates an intersection edge
       for (const auto& it : faces_to_intersections) {
-        const auto ff = it.key();
-        const auto i = it.data();
+        const auto ff = it.x;
+        const auto i = it.y;
         if (i.y >= 0) { // Two shared intersections
           const auto& ef = ef_vertices.flat[i.x];
           const auto f0 = ef.face,
@@ -1105,7 +1105,7 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
     Array<int> counts(faces.elements.size());
     for (const auto& ef : ef_vertices.flat)
       counts[ef.face]++;
-    face_to_ef = Nested<int>(counts,false);
+    face_to_ef = Nested<int>(counts,uninit);
     for (const int i : range(ef_vertices.flat.size())) {
       const int f = ef_vertices.flat[i].face;
       face_to_ef(f,--counts[f]) = i;
@@ -1120,7 +1120,7 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
       counts[ff.faces.x]++;
       counts[ff.faces.y]++;
     }
-    face_to_ff = Nested<int>(counts,false);
+    face_to_ff = Nested<int>(counts,uninit);
     for (const int i : range(ff_edges.size())) {
       const auto f = ff_edges[i].faces;
       face_to_ff(f.x,--counts[f.x]) = i;
@@ -1322,9 +1322,9 @@ static void fix_loops(RawArray<Vector<int,3>> faces, Array<EV>& X, const int n,
   Hashtable<int> seen; // Have we used the old vertex yet?
   Hashtable<int,int> edge_to_copy; // Map from edges (which are roots) to the appropriate loop vertex copy
   for (const auto i : edges)
-    if (union_find.is_root(i.data())) {
-      const int v = i.key().x;
-      edge_to_copy.set(i.data(),seen.set(v) ? v : X.append(X[v]));
+    if (union_find.is_root(i.y)) {
+      const int v = i.x.x;
+      edge_to_copy.set(i.y,seen.set(v) ? v : X.append(X[v]));
     }
 
   // Rebuild mesh in place

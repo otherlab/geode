@@ -20,10 +20,8 @@ public:
 
   Array<T> flat; // one-dimensional data storage
 
-  ArrayNdBase() {}
-
-  ArrayNdBase(int size, bool initialize)
-    : flat(size,initialize) {}
+  template<class... Args> ArrayNdBase(const Args&... args)
+    : flat(args...) {}
 
   TArray& derived() {
     return static_cast<TArray&>(*this);

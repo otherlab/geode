@@ -246,7 +246,7 @@ GEODE_COLD static void assert_delaunay(const char* prefix,
                                        const Hashtable<Vector<VertexId,2>>& constrained=Tuple<>(),
                                        const bool oriented_only=false,
                                        const bool check_boundary=true) {
-  Field<Point,VertexId> Xp(X.size(),false);
+  Field<Point,VertexId> Xp(X.size(),uninit);
   for (const int i : range(X.size()))
     Xp.flat[i] = tuple(i,X.flat[i]);
   assert_delaunay(prefix,mesh,Xp,constrained,oriented_only,check_boundary);
@@ -307,8 +307,7 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
     assert(mesh->dst(e0)==vs.x);
     const auto f1 = mesh->face(e1),
                f2 = mesh->face(e2);
-    int base = bsp.size();
-    bsp.resize(base+3,false);
+    const int base = bsp.extend(3,uninit);
     set_links(bsp,face_to_bsp[f0],base);
     bsp[base+0] = Node(vec(v,vs.x),base+2,base+1);
     bsp[base+1] = Node(vec(v,vs.y),~f0.id,~f1.id);
@@ -322,10 +321,9 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
     }
 
     // Fix all non-Delaunay edges
-    stack.resize(3,false,false);
-    stack[0] = tuple(mesh->next(e0),vec(vs.x,vs.y));
-    stack[1] = tuple(mesh->next(e1),vec(vs.y,vs.z));
-    stack[2] = tuple(mesh->next(e2),vec(vs.z,vs.x));
+    stack.copy(vec(tuple(mesh->next(e0),vec(vs.x,vs.y)),
+                   tuple(mesh->next(e1),vec(vs.y,vs.z)),
+                   tuple(mesh->next(e2),vec(vs.z,vs.x))));
     if (self_check)
       assert_delaunay("self check 1: ",mesh,X,Tuple<>(),true);
     while (stack.size()) {
@@ -443,7 +441,7 @@ static void chew_fan(MutableTriangleTopology& parent_mesh, RawField<const Point,
   chew_fan_count_ += 1024*n;
 
   // Collect vertices
-  const Field<VertexId,VertexId> vertices(n+2,false);
+  const Field<VertexId,VertexId> vertices(n+2,uninit);
   vertices.flat[0] = u;
   vertices.flat[1] = parent_mesh.src(fan[n-1]);
   for (int i=0;i<n;i++)
@@ -454,8 +452,8 @@ static void chew_fan(MutableTriangleTopology& parent_mesh, RawField<const Point,
     parent_mesh.erase(parent_mesh.face(e));
 
   // Make the vertices into a doubly linked list
-  const Field<VertexId,VertexId> prev(n+2,false),
-                                 next(n+2,false);
+  const Field<VertexId,VertexId> prev(n+2,uninit),
+                                 next(n+2,uninit);
   prev.flat[0].id = n+1;
   next.flat[n+1].id = 0;
   for (int i=0;i<n+1;i++) {
@@ -464,7 +462,7 @@ static void chew_fan(MutableTriangleTopology& parent_mesh, RawField<const Point,
   }
 
   // Randomly shuffle the vertices, then pulling elements off the linked list in reverse order of our final shuffle.
-  const Array<VertexId> pi(n+2,false);
+  const Array<VertexId> pi(n+2,uninit);
   for (int i=0;i<n+2;i++)
     pi[i].id = i;
   random.shuffle(pi);
@@ -517,7 +515,7 @@ static void cavity_delaunay(MutableTriangleTopology& parent_mesh, RawField<const
   const int m = cavity.size();
   assert(m >= 3);
   const auto mesh = new_<MutableTriangleTopology>();
-  Field<Point,VertexId> Xc(m,false);
+  Field<Point,VertexId> Xc(m,uninit);
   for (const int i : range(m))
     Xc.flat[i] = tuple(cavity[i].id,X[cavity[i]]);
   mesh->add_vertices(m);
@@ -525,13 +523,13 @@ static void cavity_delaunay(MutableTriangleTopology& parent_mesh, RawField<const
              xe = Xc.flat[m-1];
 
   // Set up data structures for prev, next, pi in the paper
-  const Field<VertexId,VertexId> prev(m,false),
-                                 next(m,false);
+  const Field<VertexId,VertexId> prev(m,uninit),
+                                 next(m,uninit);
   for (int i=0;i<m-1;i++) {
     next.flat[i] = VertexId(i+1);
     prev.flat[i+1] = VertexId(i);
   }
-  const Array<VertexId> pi_(m-2,false);
+  const Array<VertexId> pi_(m-2,uninit);
   for (int i=1;i<=m-2;i++)
     pi_[i-1] = VertexId(i);
   #define PI(i) pi_[(i)-1]
@@ -769,7 +767,7 @@ static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random)
 // For details, see Amenta et al., Incremental Constructions con BRIO.
 static Array<Point> partially_sorted_shuffle(RawArray<const EV> Xin) {
   const int n = Xin.size();
-  Array<Point> X(n+3,false);
+  Array<Point> X(n+3,uninit);
 
   // Randomly assign input points into bins.  Bin k has 2**k = 1,2,4,8,... and starts at index 2**k-1 = 0,1,3,7,...
   // We fill points into bins as sequentially as possible to maximize cache coherence.

@@ -71,7 +71,7 @@ Vector<real,3> rgb_to_hsv(Vector<real,3> const &cin) {
 }
 
 static inline NdArray<Vector<real,3>> wheel_color_py(NdArray<const real> hues) {
-  NdArray<Vector<real,3>> colors(hues.shape,false);
+  NdArray<Vector<real,3>> colors(hues.shape,uninit);
   for (int i=0;i<hues.flat.size();i++)
     colors.flat[i] = wheel_color(hues.flat[i]);
   return colors;

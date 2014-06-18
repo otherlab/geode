@@ -28,20 +28,20 @@ template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,3>,2>)
 
 template<class Mesh,class TV> static Array<Box<TV>> boxes(const Mesh& mesh, Array<const TV> X) {
   GEODE_ASSERT(mesh.nodes()<=X.size());
-  Array<Box<TV>> boxes(mesh.elements.size(),false);
+  Array<Box<TV>> boxes(mesh.elements.size(),uninit);
   for(int t=0;t<mesh.elements.size();t++)
     boxes[t] = bounding_box(X.subset(mesh.elements[t]));
   return boxes;
 }
 
 template<class TV,int d> SimplexTree<TV,d>::SimplexTree(const Mesh& mesh, Array<const TV> X, int leaf_size)
-  : Base(RawArray<const Box<TV>>(geode::boxes(mesh,X)),leaf_size), mesh(ref(mesh)), X(X), simplices(mesh.elements.size(),false) {
+  : Base(RawArray<const Box<TV>>(geode::boxes(mesh,X)),leaf_size), mesh(ref(mesh)), X(X), simplices(mesh.elements.size(),uninit) {
   for (int t=0;t<mesh.elements.size();t++)
     simplices[t] = Simplex(X.subset(mesh.elements[t]));
 }
 
 template<class TV,int d> SimplexTree<TV,d>::SimplexTree(const SimplexTree& other, Array<const TV> X)
-  : Base(other), mesh(other.mesh), X(X), simplices(mesh->elements.size(),false) {
+  : Base(other), mesh(other.mesh), X(X), simplices(mesh->elements.size(),uninit) {
   GEODE_ASSERT(mesh->nodes()<=X.size());
   update();
 }

@@ -39,7 +39,7 @@ static NdArray<real> fast_singular_values_py(const NdArray<const real>& A) {
   if (!(A.shape[r-2]==A.shape[r-1] && 2<=A.shape[r-1] && A.shape[r-1]<=3))
     throw NotImplementedError(format(
       "fast_singular_values: got shape %s, only arrays of 2x2 and 3x3 matrices implemented for now",str(A.shape)));
-  NdArray<real> D(concatenate(A.shape.slice(0,r-2),asarray(vec(min(A.shape[r-1],A.shape[r-2])))),false);
+  NdArray<real> D(concatenate(A.shape.slice(0,r-2),asarray(vec(min(A.shape[r-1],A.shape[r-2])))),uninit);
   const auto Ds = D.flat.reshape(D.flat.size()/D.shape.back(),D.shape.back());
   switch (A.shape[r-1]) {
     #define CASE(d) \

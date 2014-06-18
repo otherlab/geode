@@ -32,8 +32,14 @@ public:
     static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
   }
 
-  // Create an optionally initialized (zeroed) untyped array
-  template<class T> UntypedArray(Types<T>, const int size, const bool zero=true)
+  // Create an initialized (zeroed) untyped array
+  template<class T> UntypedArray(Types<T> t, const int size)
+    : UntypedArray(t,size,uninit) {
+    memset(data_,0,t_size_*m_);
+  }
+
+  // Create an uninitialized untyped array
+  template<class T> UntypedArray(Types<T>, const int size,  Uninit)
     : m_(size)
     , max_size_(size)
     , t_size_(sizeof(T))
@@ -42,8 +48,6 @@ public:
     const auto buffer = Buffer::new_<T>(m_);
     data_ = buffer->data;
     owner_ = (PyObject*)buffer;
-    if (zero)
-      memset(data_,0,t_size_*m_);
   }
 
   // Share ownership with an untyped array
@@ -83,8 +87,7 @@ public:
   }
 
   // Share ownership with an input field
-  template<class T, class Id>
-  UntypedArray(const Field<T,Id> &f)
+  template<class T,class Id> UntypedArray(const Field<T,Id>& f)
     : m_(f.size())
     , max_size_(f.flat.max_size())
     , data_((char*)f.flat.data())

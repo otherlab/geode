@@ -165,11 +165,8 @@ HalfedgeId TriangleTopology::unsafe_new_boundary(const VertexId src, const Halfe
   if (erased_boundaries_.valid()) {
     e = erased_boundaries_;
     const_cast_(erased_boundaries_) = boundaries_[-1-e.id].next;
-  } else {
-    const int b = boundaries_.size();
-    const_cast_(boundaries_).const_cast_().resize(b+1,false);
-    e = HalfedgeId(-1-b);
-  }
+  } else
+    e = HalfedgeId(-1-const_cast_(boundaries_).append(uninit));
   boundaries_.const_cast_()[-1-e.id].src = src;
   boundaries_.const_cast_()[-1-e.id].reverse = reverse;
   return e;
@@ -388,7 +385,7 @@ void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const 
 }
 
 Array<Vector<int,3>> TriangleTopology::elements() const {
-  Array<Vector<int,3>> tris(n_faces(),false);
+  Array<Vector<int,3>> tris(n_faces(),uninit);
   int i = 0;
   for (const auto f : faces())
     tris[i++] = Vector<int,3>(faces_[f].vertices);
@@ -737,8 +734,8 @@ Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other)
   // are considered, and extended if they also exist in other.
   #define FIELD(prim, size_expr) \
     for (auto& it : id_to_##prim##_field) { \
-      const int d = it.data(); \
-      const int s = other.id_to_##prim##_field.get_default(it.key(),-1); \
+      const int d = it.y; \
+      const int s = other.id_to_##prim##_field.get_default(it.x,-1); \
       if (s >= 0) \
         prim##_fields[d].extend(other.prim##_fields[s]); \
       else \
@@ -926,9 +923,8 @@ void MutableTriangleTopology::split_face(const FaceId f, const VertexId c) {
   GEODE_ASSERT(valid(f) && isolated(c));
   const auto v = faces_[f].vertices;
   const auto n = faces_[f].neighbors;
-  const int f_base = faces_.size();
   mutable_n_faces_ += 2;
-  mutable_faces_.flat.resize(f_base+2,false);
+  const int f_base = mutable_faces_.flat.extend(2,uninit);
   const auto fs = vec(f,FaceId(f_base),FaceId(f_base+1));
 
   #define UPDATE(i) { \
@@ -1219,7 +1215,7 @@ void MutableTriangleTopology::permute_vertices(RawArray<const int> permutation, 
   GEODE_ASSERT(n_vertices()==vertex_to_edge_.size()); // Require no erased vertices
 
   // Permute vertex_to_edge_ out of place
-  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),false);
+  Array<HalfedgeId> new_vertex_to_edge(vertex_to_edge_.size(),uninit);
   if (check) {
     new_vertex_to_edge.fill(HalfedgeId(erased_id));
     for (const auto v : all_vertices()) {
@@ -1480,8 +1476,8 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
     if (i < j) {
       fields[i] = fields.back();
       for (auto& h : id_to_field)
-        if (h.data() == j) {
-          h.data() = i;
+        if (h.y == j) {
+          h.y = i;
           break;
         }
     }

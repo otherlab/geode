@@ -23,7 +23,7 @@ class OperationHash;
 template<class T> class Queue;
 template<class T> class Stack;
 
-template<class TK,class T> class HashtableEntry;
+template<class TK,class T> struct HashtableEntry;
 template<class TK,class T=unit> class Hashtable;
 
 }

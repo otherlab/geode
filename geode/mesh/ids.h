@@ -42,14 +42,16 @@ const int halfedge_texcoord_id = 2;
     explicit operator int() const { return id; } \
   }; \
   template<GEODE_REMOVE_PARENS(template_args)> struct is_packed_pod<GEODE_REMOVE_PARENS(full_name)> : mpl::true_ {}; \
-  GEODE_REMOVE_PARENS(templates) static inline ostream& operator<<(ostream& output, GEODE_REMOVE_PARENS(full_name) i) { return output<<i.id; }
+  GEODE_REMOVE_PARENS(templates) GEODE_UNUSED static inline ostream& \
+  operator<<(ostream& output, GEODE_REMOVE_PARENS(full_name) i) { return output<<i.id; }
 
 #define GEODE_DEFINE_ID_CONVERSIONS(Name, full_name, templates, template_args) \
-  GEODE_REMOVE_PARENS(templates) static inline PyObject* to_python(GEODE_REMOVE_PARENS(full_name) i) { return to_python(i.id); } \
-  namespace {\
+  GEODE_REMOVE_PARENS(templates) GEODE_UNUSED static inline PyObject* \
+  to_python(GEODE_REMOVE_PARENS(full_name) i) { return to_python(i.id); } \
+  namespace { \
   template<GEODE_REMOVE_PARENS(template_args)> struct NumpyIsScalar<GEODE_REMOVE_PARENS(full_name)>:public mpl::true_{};\
   template<GEODE_REMOVE_PARENS(template_args)> struct NumpyScalar<GEODE_REMOVE_PARENS(full_name)>{enum{value=NPY_INT};};\
-  }\
+  } \
   template<GEODE_REMOVE_PARENS(template_args)> struct FromPython<GEODE_REMOVE_PARENS(full_name)>{static GEODE_REMOVE_PARENS(full_name) convert(PyObject* o) { return GEODE_REMOVE_PARENS(full_name)(FromPython<int>::convert(o)); }};
 
 #define GEODE_DEFINE_ID(Name)\

@@ -280,7 +280,7 @@ DECLARE(stedc,char*,int*,T*,T*,T*,int*,T*,int*,int*,int*,int*)
 WRAP(void stedc(RawArray<T> d, RawArray<T> e, Array<T,2>& z, Array<char>& work)) {
   int n=d.size();
   GEODE_ASSERT(n-1<=e.size() && e.size()<=n);
-  z.resize(n,n,false);
+  z.resize(n,n,uninit);
   if(!n) return;
   char *compz=const_cast<char*>("I");
   T lwork_T;int liwork,query=-1,ldz=z.n,info;
@@ -300,7 +300,7 @@ DECLARE(stegr,char*,char*,int*,T*,T*,T*,T*,int*,int*,T*,int*,T*,T*,int*,int*,T*,
 WRAP(void stegr(RawArray<T> d,RawArray<T> e,Box<T> range,Array<T>& w,Array<T,2>& z,Array<int>& isuppz,Array<char>& work)) {
   int n=d.size();
   GEODE_ASSERT(n==e.size());
-  w.resize(n,false);z.resize(n,n,false);isuppz.resize(2*n,false);
+  w.resize(n,uninit);z.resize(n,n,uninit);isuppz.resize(2*n,uninit);
   if(!n) return;
   char *jobz=const_cast<char*>("V"),*ran=const_cast<char*>(range.contains(Box<T>::full_box())?"A":"V");
   T lwork_T,unused_T;int liwork,m,query=-1,unused,ldz=z.n,info;
@@ -370,7 +370,7 @@ WRAP(void gelsd(Subarray<T,2> A,RawArray<T> b,Array<T>& work,Array<int>& iwork))
   int m=A.m,n=A.n;GEODE_ASSERT(max(m,n)==b.size());
   int one=1,ldb=max(1,b.size()),lwork=work.size(),info;
   if(!lwork){work.resize(1);iwork.resize(1);lwork=-1;}
-  Array<T> s(max(1,min(m,n)),false);T rcond;int rank;
+  Array<T> s(max(1,min(m,n)),uninit);T rcond;int rank;
   BC(gelsd)(&n,&m,&one,A.data(),const_cast<int*>(&A.stride),b.data(),&ldb,s.data(),&rcond,&rank,work.data(),&lwork,iwork.data(),&info);
   if(lwork<0){work.resize(max(1,(int)work[0]));iwork.resize(max(1,(int)iwork[0]));}
   if (info)
@@ -389,7 +389,7 @@ WRAP(void gelsd(Subarray<T,2> A,Array<T,2>b,Array<T>& work,Array<int>& iwork)) {
     iwork.resize(1);
     lwork=-1;
   }
-  Array<T> s(min(m,n),false);
+  Array<T> s(min(m,n),uninit);
   T rcond;
   int rank;
   BC(gelsd)(&n,&m,&nrhs,A.data(),const_cast<int*>(&A.stride),b.data(),&ldb,s.data(),&rcond,&rank,work.data(),&lwork,iwork.data(),&info);
@@ -475,7 +475,7 @@ DECLARE(gesv,int*,int*,T*,int*,int*,T*,int*,int*)
 WRAP(void gesv(RawArray<T,2> A,RawArray<T> b)) {
   GEODE_ASSERT(A.m==A.n && A.m==b.size());
   int one=1,lda=max(1,A.n),info;
-  Array<int> ipiv(A.m,false);
+  Array<int> ipiv(A.m,uninit);
   BC(gesv)(const_cast<int*>(&A.m),&one,A.data(),&lda,ipiv.data(),b.data(),const_cast<int*>(&A.n),&info);
 }
 
@@ -494,8 +494,8 @@ DECLARE(gecon,char*,int*,T*,int*,T*,T*,T*,int*,int*)
 WRAP(T gecon(char norm, RawArray<T,2> A, T anorm)) {
   GEODE_ASSERT(A.m==A.n && (norm=='1' || norm=='0' || norm=='I'));
   T rcond;int info;
-  Array<T> work(max(1,4*A.m),false);
-  Array<int> iwork(max(1,A.m),false);
+  Array<T> work(max(1,4*A.m),uninit);
+  Array<int> iwork(max(1,A.m),uninit);
   BC(gecon)(&norm,&A.m,A.data(),&A.n,&anorm,&rcond,work.data(),iwork.data(),&info);
   return rcond;
 }

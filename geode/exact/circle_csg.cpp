@@ -30,7 +30,7 @@ using std::endl;
 
 static Array<Box<EV2>> arc_boxes(Next next, Arcs arcs, RawArray<const Vertex> vertices) {
   // Build bounding boxes for each arc
-  Array<Box<EV2>> boxes(arcs.size(),false);
+  Array<Box<EV2>> boxes(arcs.size(),uninit);
   for (int i1=0;i1<arcs.size();i1++) {
     const int i2 = next[i1];
     const auto v01 = vertices[i1],
@@ -185,7 +185,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
     counts[v.i0]++;
     counts[v.i1]++;
   }
-  Nested<Vertex> others(counts,false); // Invariant: if v in others[i], v.i0 = i.  This implies some wasted space, unfortunately.
+  Nested<Vertex> others(counts,uninit); // Invariant: if v in others[i], v.i0 = i.  This implies some wasted space, unfortunately.
   for (auto v : pairs.found) {
     others(v.i0,--counts[v.i0]) = v;
     others(v.i1,--counts[v.i1]) = v.reverse();
@@ -321,7 +321,7 @@ Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> unpr
   Hashtable<Vertex> seen;
   Nested<ExactCircleArc,false> output;
   for (const auto& it : graph) {
-    const auto start = it.key();
+    const auto start = it.x;
     if (seen.set(start)) {
       auto v = start;
       for (;;) {
@@ -937,8 +937,10 @@ Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<c
       result.append_to_back(CircleArc(quant.inverse(el), in[0].positive ? 1 : -1));
       continue;
     }
-    out.resize(in.size(),false,false);
-    cull.resize(in.size(),false,false);
+    out.clear();
+    out.resize(in.size(),uninit);
+    cull.clear();
+    cull.resize(in.size(),uninit);
     const int n = in.size();
     bool culled_prev = false;
     int num_culled = 0;
@@ -1073,7 +1075,7 @@ Nested<CircleArc> canonicalize_circle_arcs(Nested<const CircleArc> polys) {
   sort(order,Order(polys,mins));
 
   // Copy into new array
-  Nested<CircleArc> new_polys(polys.sizes().subset(order).copy(),false);
+  Nested<CircleArc> new_polys(polys.sizes().subset(order).copy(),uninit);
   for (int p=0;p<polys.size();p++) {
     const int base = mins[order[p]];
     const auto poly = polys[order[p]];

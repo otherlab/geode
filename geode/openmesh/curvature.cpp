@@ -63,7 +63,7 @@ Field<T,VertexHandle> mean_curvatures(const TriMesh& mesh) {
     Hn[v.y] += cot0*x12-cot2*x01;
     Hn[v.z] += cot1*x20-cot0*x12;
   }
-  Field<T,VertexHandle> H(mesh.n_vertices(),false);
+  Field<T,VertexHandle> H(mesh.n_vertices(),uninit);
   for (const auto v : mesh.vertex_handles()) {
     const TV n = normal[v];
     H[v] = 2/area[v] * (mesh.is_boundary(v) ? dot(Hn[v],normalized(n))
@@ -102,7 +102,7 @@ Field<T,VertexHandle> gaussian_curvatures(const TriMesh& mesh) {
     }
   }
   // Compute curvatures
-  Field<T,VertexHandle> K(mesh.n_vertices(),false);
+  Field<T,VertexHandle> K(mesh.n_vertices(),uninit);
   for (const auto v : mesh.vertex_handles()) {
     const TV x = mesh.point(v);
     T sum = 0;

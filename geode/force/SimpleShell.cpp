@@ -24,9 +24,9 @@ SimpleShell::SimpleShell(const TriangleSoup& mesh, RawArray<const Matrix<T,2>> D
   , shear_stiffness(0)
   , F_threshold(.1)
   , nodes_(mesh.nodes())
-  , definite_(false) {
+  , definite_(false)
+  , info(mesh.elements.size(),uninit) {
   GEODE_ASSERT(mesh.elements.size()==Dm.size());
-  info.resize(mesh.elements.size(),false);
   for (int t=0;t<mesh.elements.size();t++) {
     auto& I = info[t];
     I.nodes = mesh.elements[t];
@@ -281,7 +281,7 @@ void SimpleShell::add_frequency_squared(RawArray<T> frequency_squared) const {
     }
   }
   for (auto& it : particle_frequency_squared)
-    frequency_squared[it.key()] += it.data();
+    frequency_squared[it.x] += it.y;
 }
 
 T SimpleShell::strain_rate(RawArray<const TV> V) const {

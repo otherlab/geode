@@ -79,12 +79,12 @@ static PyObject* rotation_from_matrix(NdArray<const real> A) {
   GEODE_ASSERT(A.rank()>=2);
   const int r = A.rank();
   if (A.shape[r-1]==2 && A.shape[r-2]==2) {
-    NdArray<Rotation<Vector<T,2>>> rs(A.shape.slice_own(0,r-2),false);
+    NdArray<Rotation<Vector<T,2>>> rs(A.shape.slice_own(0,r-2),uninit);
     for (const int i : range(rs.flat.size()))
       rs.flat[i] = Rotation<Vector<T,2>>(Matrix<real,2>(A.flat.slice(4*i,4*(i+1)).reshape(2,2)));
     return to_python(rs);
   } else if (A.shape[r-1]==3 && A.shape[r-2]==3) {
-    NdArray<Rotation<Vector<T,3>>> rs(A.shape.slice_own(0,r-2),false);
+    NdArray<Rotation<Vector<T,3>>> rs(A.shape.slice_own(0,r-2),uninit);
     for (const int i : range(rs.flat.size()))
       rs.flat[i] = Rotation<Vector<T,3>>(Matrix<real,3>(A.flat.slice(9*i,9*(i+1)).reshape(3,3)));
     return to_python(rs);
@@ -93,14 +93,14 @@ static PyObject* rotation_from_matrix(NdArray<const real> A) {
 }
 
 static NdArray<Rotation<Vector<T,3>>> rotation_from_euler_angles_3d(NdArray<const Vector<T,3>> theta) {
-  NdArray<Rotation<Vector<T,3>>> R(theta.shape,false);
+  NdArray<Rotation<Vector<T,3>>> R(theta.shape,uninit);
   for (const int i : range(R.flat.size()))
     R.flat[i] = Rotation<Vector<T,3>>::from_euler_angles(theta.flat[i]);
   return R;
 }
 
 static NdArray<Vector<T,3>> rotation_euler_angles_3d(NdArray<const Rotation<Vector<T,3>>> R) {
-  NdArray<Vector<T,3>> theta(R.shape,false);
+  NdArray<Vector<T,3>> theta(R.shape,uninit);
   for (const int i : range(R.flat.size()))
     theta.flat[i] = R.flat[i].euler_angles();
   return theta;
