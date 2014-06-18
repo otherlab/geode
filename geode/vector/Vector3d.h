@@ -310,6 +310,10 @@ public:
       return Vector<T,2>(z,x);
     }
 
+    Vector<T,3> xzy() const {
+        return Vector<T,3>(x,z,y);
+    }
+
     Vector<T,2> horizontal_vector() const
     {return Vector<T,2>(x,z);}
 
