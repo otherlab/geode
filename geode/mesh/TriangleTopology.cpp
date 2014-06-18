@@ -445,7 +445,7 @@ Nested<FaceId> TriangleTopology::surface_components(VertexId v) const {
   }
   Nested<FaceId, false> result;
   for (auto c : components) {
-    result.append(c.data());
+    result.append(c.y);
   }
   return result.freeze();
 }
@@ -792,8 +792,8 @@ Tuple<Ref<MutableTriangleTopology>,
 
     // copy necessary data
     for (auto v : old_to_new_vertices) {
-      VertexId vold = v.key();
-      VertexId vnew = v.data();
+      VertexId vold = v.x;
+      VertexId vnew = v.y;
       field.copy_from(vnew.idx(), a, vold.idx());
     }
   }
@@ -804,8 +804,8 @@ Tuple<Ref<MutableTriangleTopology>,
 
     // copy necessary data
     for (auto f : old_to_new_faces) {
-      FaceId fold = f.key();
-      FaceId fnew = f.data();
+      FaceId fold = f.x;
+      FaceId fnew = f.y;
       field.copy_from(fnew.idx(), a, fold.idx());
     }
   }
@@ -816,8 +816,8 @@ Tuple<Ref<MutableTriangleTopology>,
 
     // copy necessary data
     for (auto f : old_to_new_faces) {
-      HalfedgeId fold = HalfedgeId(3*f.key().id);
-      HalfedgeId fnew = HalfedgeId(3*f.data().id);
+      HalfedgeId fold = HalfedgeId(3*f.x.id);
+      HalfedgeId fnew = HalfedgeId(3*f.y.id);
       field.copy_from(fnew.idx(), a, fold.idx());
       field.copy_from(fnew.idx()+1, a, fold.idx()+1);
       field.copy_from(fnew.idx()+2, a, fold.idx()+2);
@@ -826,12 +826,12 @@ Tuple<Ref<MutableTriangleTopology>,
 
   auto new_to_old_vertices = result->create_compatible_vertex_field<VertexId>();
   for (auto v : old_to_new_vertices) {
-    new_to_old_vertices[v.data()] = v.key();
+    new_to_old_vertices[v.y] = v.x;
   }
 
   auto new_to_old_faces = result->create_compatible_face_field<FaceId>();
   for (auto v : old_to_new_faces) {
-    new_to_old_faces[v.data()] = v.key();
+    new_to_old_faces[v.y] = v.x;
   }
 
   return tuple(result, new_to_old_vertices, new_to_old_faces);

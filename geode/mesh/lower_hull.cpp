@@ -72,7 +72,7 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
   int component_idx = 0;
   for (auto p : component_faces) {
     component_idx++;
-    auto faces = p.data();
+    auto faces = p.y;
     auto extracted = mesh->extract(faces);
     auto &component_mesh = *extracted.x;
 
