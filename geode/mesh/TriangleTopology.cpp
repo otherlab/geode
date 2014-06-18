@@ -608,7 +608,7 @@ VertexId MutableTriangleTopology::copy_vertex(VertexId v) {
 
   // copy all vertex fields to the new vertex
   for (auto f : vertex_fields) {
-    f.copy(v.idx(), id.idx());
+    f.copy(id.idx(), v.idx());
   }
 
   return id;
@@ -787,7 +787,7 @@ Tuple<Ref<MutableTriangleTopology>,
 
   // add field data
   for (auto a : vertex_fields) {
-    result->vertex_fields.push_back(UntypedArray(a, result->n_vertices()));
+    result->vertex_fields.push_back(UntypedArray::empty_like(a, result->n_vertices()));
     auto field = result->vertex_fields.back();
 
     // copy necessary data
@@ -799,7 +799,7 @@ Tuple<Ref<MutableTriangleTopology>,
   }
 
   for (auto a : face_fields) {
-    result->face_fields.push_back(UntypedArray(a, result->n_faces()));
+    result->face_fields.push_back(UntypedArray::empty_like(a, result->n_faces()));
     auto field = result->face_fields.back();
 
     // copy necessary data
@@ -811,7 +811,7 @@ Tuple<Ref<MutableTriangleTopology>,
   }
 
   for (auto a : halfedge_fields) {
-    result->halfedge_fields.push_back(UntypedArray(a, 3*result->n_faces()));
+    result->halfedge_fields.push_back(UntypedArray::empty_like(a, 3*result->n_faces()));
     auto field = result->halfedge_fields.back();
 
     // copy necessary data

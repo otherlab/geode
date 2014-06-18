@@ -21,14 +21,19 @@ class UntypedArray {
   struct Copy {};
 public:
 
-  // Create an empty untyped array
-  template<class T> UntypedArray(Types<T>)
+  UntypedArray(const type_info* type, int t_size)
     : m_(0)
     , max_size_(0)
     , data_(0)
     , owner_(0)
-    , t_size_(sizeof(T))
-    , type_(&typeid(T)) {
+    , t_size_(t_size)
+    , type_(type)
+  {}
+
+  // Create an empty untyped array
+  template<class T> UntypedArray(Types<T>)
+    : UntypedArray(&typeid(T), sizeof(T))
+  {
     static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
   }
 
@@ -39,7 +44,7 @@ public:
   }
 
   // Create an uninitialized untyped array
-  template<class T> UntypedArray(Types<T>, const int size,  Uninit)
+  template<class T> UntypedArray(Types<T>, const int size, Uninit)
     : m_(size)
     , max_size_(size)
     , t_size_(sizeof(T))
@@ -75,17 +80,6 @@ public:
     memcpy(data_,o.data_,m_*t_size_);
   }
 
-  // Copy all aspects of an UntypedArray, except give it a new size (and don't copy any data)
-  UntypedArray(const UntypedArray &o, int new_size)
-    : m_(new_size)
-    , max_size_(new_size)
-    , t_size_(o.t_size_)
-    , type_(o.type_) {
-    const auto buffer = Buffer::new_<char>(m_*t_size_);
-    data_ = buffer->data;
-    owner_ = (PyObject*)buffer;
-  }
-
   // Share ownership with an input field
   template<class T,class Id> UntypedArray(const Field<T,Id>& f)
     : m_(f.size())
@@ -116,6 +110,13 @@ public:
 
   ~UntypedArray() {
     GEODE_XDECREF(owner_);
+  }
+
+  // Copy all aspects of an UntypedArray, except give it a new size (and don't copy any data)
+  static UntypedArray empty_like(const UntypedArray &o, int new_size) {
+    UntypedArray A(o.type_, o.t_size_);
+    A.grow_buffer(new_size, false);
+    return A;
   }
 
   int size() const {
@@ -189,7 +190,7 @@ public:
       swap(p[k],q[k]);
   }
 
-  void copy(int from, int to) {
+  void copy(int to, int from) {
     memcpy(data_+to*t_size_,data_+from*t_size_,t_size_);
   }
 
