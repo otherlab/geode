@@ -14,6 +14,10 @@
 #include <geode/math/clamp.h>
 #include <geode/math/Zero.h>
 #include <geode/vector/Vector.h>
+#include <geode/array/Array.h>
+#include <geode/array/Array2d.h>
+#include <geode/array/Array3d.h>
+#include <geode/array/Array4d.h>
 #include <limits>
 namespace geode {
 
@@ -141,6 +145,12 @@ public:
 
   TV center() const {
     return (T).5*(min+max);
+  }
+
+  Array<TV> corners() const {
+    Array<TV,d> nonflat;
+    corners(nonflat);
+    return nonflat.flat;
   }
 
   void corners(Array<TV>& corners) const {
