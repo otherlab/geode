@@ -154,6 +154,10 @@ public:
     return Ref<S>(const_cast<S&>(*self),owner_);
   }
 
+  Ref<const T> make_const() const {
+    return Ref<const T>(*self, owner_);
+  }
+
 /* Waiting for C++11 to work with PCL
   template<class... Args> GEODE_ALWAYS_INLINE auto operator()(Args&&... args) const
     -> decltype((*self)(geode::forward<Args>(args)...)) {
