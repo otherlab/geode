@@ -115,7 +115,7 @@ public:
   // Copy all aspects of an UntypedArray, except give it a new size (and don't copy any data)
   static UntypedArray empty_like(const UntypedArray &o, int new_size) {
     UntypedArray A(o.type_, o.t_size_);
-    A.grow_buffer(new_size, false);
+    A.resize(new_size, false, false);
     return A;
   }
 
