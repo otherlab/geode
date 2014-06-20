@@ -108,10 +108,10 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
 
     // add (inverted) faces
     auto oldfaces = component_mesh.faces();
-    int foffset = component_mesh.n_faces();
+    GEODE_DEBUG_ONLY(int foffset = component_mesh.n_faces();)
     for (auto f : oldfaces) {
       Vector<VertexId,3> verts = Vector<VertexId,3>::map([=](VertexId x){ return VertexId(x.id + voffset); }, component_mesh.vertices(f));
-      FaceId nf = component_mesh.add_face(verts.xzy());
+      GEODE_DEBUG_ONLY(FaceId nf = ) component_mesh.add_face(verts.xzy());
       assert(nf.idx() == f.idx() + foffset);
     }
 
