@@ -7,10 +7,8 @@
 #include <geode/python/cast.h>
 #include <geode/python/wrap.h>
 #include <geode/utility/endian.h>
+#include <geode/utility/function.h>
 #include <geode/utility/path.h>
-#include <boost/detail/endian.hpp>
-#include <boost/function.hpp>
-#include <boost/integer.hpp>
 #include <errno.h>
 namespace geode {
 
@@ -594,9 +592,9 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_ply(const string& filename) {
     if (!fmt)
       throw IOError("missing format declaration");
 
-    #if defined(BOOST_LITTLE_ENDIAN)
+    #if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
       const int native = 2;
-    #elif defined(BOOST_BIG_ENDIAN)
+    #elif GEODE_ENDIAN == GEODE_BIG_ENDIAN
       const int native = 3;
     #endif
 
@@ -725,7 +723,7 @@ static void write_ply(const string& filename, const PolygonSoup& soup, RawArray<
   }
 }
 
-static void write_x3d_helper(const string& filename, const boost::function<void(File&)>& write_topology, RawArray<const TV> X) {
+static void write_x3d_helper(const string& filename, const function<void(File&)>& write_topology, RawArray<const TV> X) {
   File f(filename,"wb");
   fputs("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
         "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.1//EN\" \"http://www.web3d.org/specifications/x3d-3.1.dtd\">\n"

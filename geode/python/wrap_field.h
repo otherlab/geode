@@ -18,7 +18,6 @@
 #include <geode/python/to_python.h>
 #include <geode/python/function.h>
 #include <geode/utility/type_traits.h>
-
 namespace geode {
 
 using std::exception;

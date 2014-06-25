@@ -13,7 +13,6 @@
 #include <geode/math/sse.h>
 #include <geode/python/repr.h>
 #include <geode/utility/rounding.h>
-#include <boost/detail/endian.hpp>
 namespace geode {
 
 struct Interval;
@@ -408,9 +407,9 @@ struct Interval {
   }
 
   Box<double> box() const {
-#if defined(BOOST_LITTLE_ENDIAN)
+#if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
     union { __m128d s; struct { double nlo,hi; } d; } u;
-#elif defined(BOOST_BIG_ENDIAN)
+#elif GEODE_ENDIAN == GEODE_BIG_ENDIAN
     union { __m128d s; struct { double hi,nlo; } d; } u;
 #endif
     u.s = s;

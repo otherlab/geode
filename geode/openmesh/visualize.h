@@ -3,12 +3,9 @@
 
 #include <geode/openmesh/TriMesh.h>
 #include <geode/utility/compose.h>
-#include <boost/function.hpp>
 
 #ifdef GEODE_OPENMESH
 namespace geode {
-
-using boost::function;
 
 // Turn a mesh property into a function object
 
@@ -108,7 +105,7 @@ template<class T> struct TransferMap {
   typedef TriMesh::Color result_type;
 
   int n_colors;
-  typedef std::tr1::unordered_map<T,TriMesh::Color> ColorMap;
+  typedef unordered_map<T,TriMesh::Color> ColorMap;
   ColorMap colors;
 
   TransferMap(const ColorMap& colors)

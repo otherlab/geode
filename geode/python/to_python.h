@@ -23,7 +23,6 @@
 namespace geode {
 
 using std::string;
-namespace mpl = boost::mpl;
 
 #ifdef GEODE_PYTHON
 

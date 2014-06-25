@@ -11,12 +11,12 @@ template<class T> struct Equals {
   }
 };
 
-template<class A, class B, class C> struct Equals<std::tr1::unordered_set<A,B,C>> {
-  inline static bool eval(std::tr1::unordered_set<A,B,C> const &s1, std::tr1::unordered_set<A,B,C> const &s2) {
+template<class A, class B, class C> struct Equals<unordered_set<A,B,C>> {
+  inline static bool eval(unordered_set<A,B,C> const &s1, unordered_set<A,B,C> const &s2) {
     if (s1.size() != s2.size())
       return false;
 
-    for (typename std::tr1::unordered_set<A,B,C>::const_iterator it = s1.begin(); it != s1.end(); ++it) {
+    for (typename unordered_set<A,B,C>::const_iterator it = s1.begin(); it != s1.end(); ++it) {
       if (!s2.count(*it)) {
         return false;
       }
@@ -25,12 +25,12 @@ template<class A, class B, class C> struct Equals<std::tr1::unordered_set<A,B,C>
   }
 };
 
-template<class A, class B, class C> struct Equals<std::tr1::unordered_map<A,B,C>> {
-  inline static bool eval(std::tr1::unordered_map<A,B,C> const &s1, std::tr1::unordered_map<A,B,C> const &s2) {
+template<class A, class B, class C> struct Equals<unordered_map<A,B,C>> {
+  inline static bool eval(unordered_map<A,B,C> const &s1, unordered_map<A,B,C> const &s2) {
     if (s1.size() != s2.size())
       return false;
 
-    for (typename std::tr1::unordered_map<A,B,C>::const_iterator it = s1.begin(); it != s1.end(); ++it) {
+    for (typename unordered_map<A,B,C>::const_iterator it = s1.begin(); it != s1.end(); ++it) {
       if (!s2.count(it->first)) {
         return false;
       }else{

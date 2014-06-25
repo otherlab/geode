@@ -13,7 +13,6 @@
 #include <geode/utility/Enumerate.h>
 namespace geode {
 
-namespace mpl = boost::mpl;
 using std::exception;
 
 GEODE_CORE_EXPORT void set_argument_count_error(int desired, PyObject* args, PyObject* kwds);

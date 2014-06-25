@@ -23,10 +23,7 @@
 #include <geode/python/outer_wrapper.h>
 #include <geode/utility/config.h>
 #include <geode/utility/Enumerate.h>
-#include <boost/mpl/bool.hpp>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 GEODE_CORE_EXPORT PyObject* wrap_method_helper(PyTypeObject* type,const char* name,wrapperfunc wrapper,void* method);
 

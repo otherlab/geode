@@ -80,7 +80,6 @@ void wrap_vector() {
   GEODE_WRAP(sparse_matrix)
   GEODE_WRAP(solid_matrix)
   GEODE_WRAP(register)
-  GEODE_WRAP(test)
 
 #ifdef GEODE_PYTHON
   GEODE_FUNCTION_2(min_magnitude,min_magnitude_python)

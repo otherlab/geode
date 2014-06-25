@@ -8,7 +8,6 @@
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/convert.h>
-#include <boost/dynamic_bitset.hpp>
 namespace geode {
 
 using Log::cout;
@@ -377,7 +376,7 @@ int HalfedgeMesh::degree(VertexId v) const {
 
 Nested<HalfedgeId> HalfedgeMesh::boundary_loops() const {
   Nested<HalfedgeId> loops;
-  boost::dynamic_bitset<> seen(n_halfedges());
+  vector<bool> seen(n_halfedges());
   for (const auto start : halfedges())
     if (is_boundary(start) && !seen[start.idx()]) {
       auto e = start;

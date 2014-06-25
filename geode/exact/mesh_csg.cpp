@@ -26,7 +26,6 @@
 #include <geode/structure/UnionFind.h>
 #include <geode/utility/Unique.h>
 #include <geode/vector/Matrix.h>
-#include <boost/function.hpp>
 namespace geode {
 
 // Algorithm explanation:
@@ -50,7 +49,6 @@ typedef exact::Vec3 EV;
 typedef Vector<double,3> TV;
 typedef Vector<Interval,3> IV;
 typedef exact::Point3 P;
-using boost::function;
 using std::cout;
 using std::endl;
 
@@ -262,7 +260,7 @@ struct Line {
 };
 
 // Geometry policy for triangulation within the given face
-struct Policy : public State, public boost::noncopyable {
+struct Policy : public State, public Noncopyable {
   const int face;
   const Vector<P,3> f;
   const Vector<int,3> face_edges; // e12,e20,e01

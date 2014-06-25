@@ -10,11 +10,9 @@
 //#####################################################################
 #pragma once
 
-#include <geode/utility/config.h>
-#include <boost/shared_ptr.hpp>
+#include <geode/utility/smart_ptr.h>
 namespace geode {
 
-using boost::shared_ptr;
 class SavedExceptionBase;
 
 class ExceptionValue {

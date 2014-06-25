@@ -28,10 +28,7 @@
 #include <geode/python/new.h>
 #include <geode/utility/config.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/void.hpp>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 class GEODE_CORE_CLASS_EXPORT Object {
 public:

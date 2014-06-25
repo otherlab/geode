@@ -8,7 +8,6 @@ namespace geode {
 using std::string;
 using std::exception;
 using std::type_info;
-using std::tr1::unordered_map;
 
 class SavedExceptionBase {
 public:

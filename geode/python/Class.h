@@ -42,12 +42,7 @@
 #include <geode/python/wrap_call.h>
 #include <geode/python/wrap_iter.h>
 #endif
-#include <boost/mpl/if.hpp>
-#include <boost/mpl/void.hpp>
-#include <boost/integer.hpp>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 #ifdef GEODE_PYTHON
 

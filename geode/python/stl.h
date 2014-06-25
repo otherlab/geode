@@ -13,7 +13,6 @@
 #include <geode/python/to_python.h>
 #include <geode/utility/config.h>
 #include <geode/utility/tr1.h>
-#include <boost/mpl/and.hpp>
 #include <vector>
 #include <set>
 #include <map>
@@ -28,9 +27,33 @@ template<class T,class O> struct has_to_python<std::set<T,O>> : public has_to_py
 template<class T,class O> struct has_from_python<std::set<T,O>> : public has_from_python<T> {};
 template<class K,class V,class O> struct has_to_python<std::map<K,V,O>> : public mpl::and_<has_to_python<K>,has_to_python<V>> {};
 template<class K,class V,class O> struct has_from_python<std::map<K,V,O>> : public mpl::and_<has_from_python<K>,has_from_python<V>> {};
-template<class T,class H> struct has_to_python<std::tr1::unordered_set<T,H>> : public has_to_python<T> {};
-template<class T,class H> struct has_from_python<std::tr1::unordered_set<T,H>> : public has_from_python<T> {};
-template<class K,class V,class H> struct has_to_python<std::tr1::unordered_map<K,V,H>> : public mpl::and_<has_from_python<K>,has_from_python<V>> {};
+template<class T,class H> struct has_to_python<unordered_set<T,H>> : public has_to_python<T> {};
+template<class T,class H> struct has_from_python<unordered_set<T,H>> : public has_from_python<T> {};
+template<class K,class V,class H> struct has_to_python<unordered_map<K,V,H>> : public mpl::and_<has_from_python<K>,has_from_python<V>> {};
+
+template<class TM> PyObject* to_python_map(const TM& m) {
+  using namespace geode;
+  using geode::to_python;
+  PyObject* dict = PyDict_New();
+  if (!dict) goto fail;
+  for (auto it=m.begin(),end=m.end();it!=end;++it) { // Avoid foreach since pcl needs gcc 4.4
+    PyObject* k = to_python(it->first);
+    if (!k) goto fail;
+    PyObject* v = to_python(it->second);
+    if (!v) {
+      Py_DECREF(k);
+      goto fail;
+    }
+    int r = PyDict_SetItem(dict,k,v);
+    Py_DECREF(k);
+    Py_DECREF(v);
+    if (r<0) goto fail;
+  }
+  return dict;
+  fail:
+  Py_XDECREF(dict);
+  return 0;
+}
 }
 
 // to_python needs to go in the std namespace to make Koenig lookup work
@@ -56,40 +79,8 @@ template<class T,class O> static inline PyObject* to_python(const set<T,O>& s) {
   return geode::to_python_set(s);
 }
 
-template<class T,class H> static inline PyObject* to_python(const tr1::unordered_set<T,H>& s) {
-  return geode::to_python_set(s);
-}
-
-template<class TM> PyObject* to_python_map(const TM& m) {
-  using namespace geode;
-  using geode::to_python;
-  PyObject* dict = PyDict_New();
-  if (!dict) goto fail;
-  for (auto it=m.begin(),end=m.end();it!=end;++it) { // Avoid foreach since pcl needs gcc 4.4
-    PyObject* k = to_python(it->first);
-    if (!k) goto fail;
-    PyObject* v = to_python(it->second);
-    if (!v) {
-      Py_DECREF(k);
-      goto fail;
-    }
-    int r = PyDict_SetItem(dict,k,v);
-    Py_DECREF(k);
-    Py_DECREF(v);
-    if (r<0) goto fail;
-  }
-  return dict;
-  fail:
-  Py_XDECREF(dict);
-  return 0;
-}
-
 template<class T,class V,class O> static inline PyObject* to_python(const map<T,V,O>& m) {
-  return to_python_map(m);
-}
-
-template<class T,class V,class H> static inline PyObject* to_python(const tr1::unordered_map<T,V,H>& m) {
-  return to_python_map(m);
+  return geode::to_python_map(m);
 }
 
 template<class T0,class T1> PyObject* to_python(const pair<T0,T1>& p) {
@@ -113,13 +104,22 @@ template<class T0,class T1> PyObject* to_python(const pair<T0,T1>& p) {
 }
 
 }
+namespace GEODE_UNORDERED_NAMESPACE {
+
+template<class T,class H> static inline PyObject* to_python(const unordered_set<T,H>& s) {
+  return geode::to_python_set(s);
+}
+
+template<class T,class V,class H> static inline PyObject* to_python(const unordered_map<T,V,H>& m) {
+  return geode::to_python_map(m);
+}
+
+}
 namespace geode {
 
 using std::vector;
 using std::set;
 using std::map;
-using std::tr1::unordered_set;
-using std::tr1::unordered_map;
 using std::pair;
 
 template<class T> struct FromPython<vector<T> >{static vector<T> convert(PyObject* object) {

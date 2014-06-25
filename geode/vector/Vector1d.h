@@ -16,7 +16,6 @@
 #include <geode/math/sqr.h>
 #include <geode/utility/debug.h>
 #include <geode/utility/STATIC_ASSERT_SAME.h>
-#include <boost/mpl/less_equal.hpp>
 #include <cmath>
 namespace geode {
 

@@ -14,7 +14,6 @@
 #include <geode/python/Ptr.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/type_traits.h>
-#include <boost/aligned_storage.hpp>
 #include <vector>
 namespace geode {
 
@@ -28,8 +27,8 @@ template<class TK,class T> class Hashtable;
 enum HashtableEntryState{EntryFree,EntryActive,EntryDeleted};
 
 template<class TK,class T> struct HashtableEntry {
-  typename boost::aligned_storage<sizeof(TK),alignment_of<TK>::value>::type TKbuf;
-  typename boost::aligned_storage<sizeof(T),alignment_of<T>::value>::type Tbuf;
+  typename aligned_storage<sizeof(TK),alignment_of<TK>::value>::type TKbuf;
+  typename aligned_storage<sizeof(T),alignment_of<T>::value>::type Tbuf;
   HashtableEntryState state;
 
   void init(const TK& k, const T& v) {
@@ -46,17 +45,17 @@ template<class TK,class T> struct HashtableEntry {
   const Tuple<const TK,T>& value() const { return reinterpret_cast<const Tuple<const TK,T>&>(*this); }
 };
 
-template<class TK> struct HashtableEntry<TK,unit> : public unit {
-  typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
+template<class TK> struct HashtableEntry<TK,Unit> : public Unit {
+  typename aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
   HashtableEntryState state;
 
-  void init(const TK& k, unit) {
+  void init(const TK& k, Unit) {
     new(&TKbuf) TK(k);
     state = EntryActive;
   }
 
   const TK& key() const { return reinterpret_cast<const TK&>(TKbuf); }
-  unit& data() { return *this; }
+  Unit& data() { return *this; }
   bool active() const { return state==EntryActive; }
 
   const TK& value() const { return key(); }
@@ -64,10 +63,10 @@ template<class TK> struct HashtableEntry<TK,unit> : public unit {
 
 // Tables
 
-template<class TK,class T> // T = unit
+template<class TK,class T> // T = Unit
 class Hashtable {
 private:
-  typedef HashtableEntry<TK,T> Entry; // doesn't store data if T is unit
+  typedef HashtableEntry<TK,T> Entry; // doesn't store data if T is Unit
 public:
   typedef TK Key;
   typedef T Element;
@@ -160,7 +159,7 @@ public:
   }
 
   void insert(const TK& v) { // Assumes no entry with v exists
-    insert(v,unit());
+    insert(v,unit);
   }
 
   T& get_or_insert(const TK& v, const T& default_=T()) { // inserts the default if key not found
@@ -234,7 +233,7 @@ public:
   }
 
   bool set(const TK& v) { // insert entry if doesn't already exists, returns whether it added a new entry
-    return set(v,unit());
+    return set(v,unit);
   }
 
   bool erase(const TK& v) { // Erase an element if it exists, returning true if so

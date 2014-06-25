@@ -26,7 +26,7 @@ GEODE_CORE_EXPORT int triangulate_cylinder(TriMesh &mesh, std::vector<VertexHand
 // a caching version of the edge priority
 class GEODE_CORE_CLASS_EXPORT CachedEdgePriority : public EdgePriority {
 protected:
-  std::tr1::unordered_map<Vector<VertexHandle, 2>, double, Hasher> cache;
+  unordered_map<Vector<VertexHandle, 2>, double, Hasher> cache;
   virtual double computePriority(VertexHandle v1, VertexHandle v2) = 0;
 public:
   GEODE_CORE_EXPORT CachedEdgePriority();

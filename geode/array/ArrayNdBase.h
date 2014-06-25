@@ -6,10 +6,7 @@
 #include <geode/array/Array.h>
 #include <geode/math/isnan.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/or.hpp>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 template<class T,class TArray>
 class ArrayNdBase {

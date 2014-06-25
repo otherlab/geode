@@ -6,8 +6,7 @@
 #include <geode/vector/forward.h>
 #include <geode/array/forward.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/if.hpp>
-#include <boost/mpl/not.hpp>
+#include <geode/utility/forward.h>
 namespace geode {
 
 template<class T> struct IsScalar:public mpl::false_{};

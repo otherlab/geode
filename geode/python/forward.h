@@ -5,7 +5,7 @@
 
 #include <geode/python/config.h>
 #include <geode/utility/config.h>
-
+#include <geode/utility/type_traits.h>
 namespace geode {
 
 class Object;
@@ -14,6 +14,9 @@ template<class T=PyObject> class Ref;
 template<class T=PyObject> class Ptr;
 template<class T> struct has_to_python;
 template<class T> struct has_from_python;
+
+template<class T> struct is_smart_pointer<Ref<T>> : public mpl::true_ {};
+template<class T> struct is_smart_pointer<Ptr<T>> : public mpl::true_ {};
 
 template<class T,class Enable=void> struct FromPython; // from_python<T> isn't defined for types by default
 

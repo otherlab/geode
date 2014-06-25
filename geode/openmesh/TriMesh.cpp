@@ -12,9 +12,9 @@
 #include <geode/geometry/SimplexTree.h>
 #include <geode/geometry/ParticleTree.h>
 #include <geode/geometry/Ray.h>
-#include <boost/algorithm/string.hpp>
 #include <geode/utility/path.h>
 #include <geode/vector/Rotation.h>
+#include <geode/utility/convert_case.h>
 #include <geode/utility/stl.h>
 #include <geode/openmesh/triangulator.h>
 #include <geode/vector/Frame.h>
@@ -136,7 +136,7 @@ static OpenMesh::IO::Options write_options(const TriMesh& mesh, const string& ex
 static void write_helper(const TriMesh& mesh, const string& filename, bool normals) {
   //OMSilencer silencer;
   //Disabler disabler;
-  string ext = boost::algorithm::to_lower_copy(path::extension(filename));
+  const auto ext = to_lower(path::extension(filename));
   if (!OpenMesh::IO::write_mesh(mesh, filename, write_options(mesh,ext,normals)))
     throw IOError(format("TriMesh::write: failed to write mesh to file '%s'", filename));
 }
@@ -152,7 +152,7 @@ void TriMesh::write_with_normals(string const &filename) const {
 void TriMesh::write(std::ostream &os, string const &extension) const {
   OMSilencer silencer;
   Disabler disabler;
-  string ext = boost::algorithm::to_lower_copy(extension);
+  const auto ext = to_lower(extension);
   if (!OpenMesh::IO::write_mesh(*this, os, ext, write_options(*this,ext)))
     throw IOError("TriMesh::write: failed to write mesh to stream");
 }
@@ -514,7 +514,7 @@ vector<FaceHandle> TriMesh::triangle_fan(vector<VertexHandle> const &ring, Verte
   return fh;
 }
 
-vector<FaceHandle> TriMesh::select_faces(boost::function<bool(FaceHandle)> pr) const {
+vector<FaceHandle> TriMesh::select_faces(function<bool(FaceHandle)> pr) const {
   vector<FaceHandle> result;
   for (FaceHandle fh : face_handles()) {
     if (pr(fh))
@@ -1441,8 +1441,8 @@ void TriMesh::invert_component(std::vector<FaceHandle> component) {
   // (ie if they have neighbors that are not in the vector)
 
   // get all half-edges and vertices in this component
-  std::vector<HalfedgeHandle> halfedges;
-  std::tr1::unordered_set<VertexHandle, Hasher> vertices;
+  vector<HalfedgeHandle> halfedges;
+  unordered_set<VertexHandle, Hasher> vertices;
 
   for (FaceHandle f : component) {
     for (ConstFaceHalfedgeIter fh = cfh_iter(f); fh; ++fh) {

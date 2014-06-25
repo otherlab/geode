@@ -11,9 +11,8 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
-#include <boost/mpl/bool.hpp>
 
 #define GEODE_VALIDITY_CHECKER(name,T,expression) \
   template<class T> static char name##_helper(typename geode::First<int*,decltype(expression)>::type) { return 0; } /* success */ \
   template<class T> static long name##_helper(...) { return 0; } /* failure */ \
-  template<class T> struct name : public boost::mpl::bool_<sizeof(name##_helper<T>(0))==1> {};
+  template<class T> struct name : public geode::mpl::bool_<sizeof(name##_helper<T>(0))==1> {};

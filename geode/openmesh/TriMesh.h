@@ -40,6 +40,7 @@
 
 #include <geode/array/Array.h>
 #include <geode/array/RawField.h>
+#include <geode/utility/function.h>
 #include <geode/vector/Vector.h>
 
 #include <geode/geometry/Box.h>
@@ -48,9 +49,6 @@
 #include <geode/geometry/Segment.h>
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
-
-#include <boost/function.hpp>
-#include <boost/mpl/if.hpp>
 
 #ifdef GEODE_OPENMESH
 
@@ -465,7 +463,7 @@ public:
   GEODE_CORE_EXPORT vector<FaceHandle> triangle_fan(vector<VertexHandle> const &boundary, VertexHandle center, bool closed);
 
   // select a set of faces based on a predicate
-  GEODE_CORE_EXPORT vector<FaceHandle> select_faces(boost::function<bool(FaceHandle)> pr) const;
+  GEODE_CORE_EXPORT vector<FaceHandle> select_faces(function<bool(FaceHandle)> pr) const;
 
   // extract a set of faces as a new mesh and store vertex correspondence: id2id[old] = new
   GEODE_CORE_EXPORT Ref<TriMesh> extract_faces(vector<FaceHandle> const &faces,
@@ -697,7 +695,7 @@ template<class T> struct valid_binary<std::vector<T>> {
   }
 };
 
-template<class T> struct binary<std::vector<T>>: public boost::mpl::if_c<binary<T>::is_streamable, valid_binary<std::vector<T>>, invalid_binary<std::vector<T>>>::type {};
+template<class T> struct binary<std::vector<T>> : public geode::mpl::if_c<binary<T>::is_streamable, valid_binary<std::vector<T>>, invalid_binary<std::vector<T>>>::type {};
 
 // dynamic size because size of content may not be constant
 template<class T, class U> struct binary<std::pair<T,U>> {

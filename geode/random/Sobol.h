@@ -5,8 +5,6 @@
 #include <geode/array/Array.h>
 #include <geode/python/Object.h>
 #include <geode/vector/Vector.h>
-#include <boost/noncopyable.hpp>
-#include <boost/mpl/if.hpp>
 #include <limits>
 namespace geode {
 

@@ -10,8 +10,8 @@
 #include <geode/array/RawArray.h>
 #include <geode/math/One.h>
 #include <geode/math/integer_log.h>
+#include <geode/utility/endian.h>
 #include <geode/utility/move.h>
-#include <boost/detail/endian.hpp>
 #include <gmp.h>
 namespace geode {
 
@@ -58,10 +58,8 @@ template<int d> struct Exact {
   explicit Exact(const ExactInt x) {
     static_assert(d==1 && sizeof(x)==sizeof(n) && limbs<=2,"");
     memcpy(n,&x,sizeof(x));
-#ifdef BOOST_BIG_ENDIAN
-    if (limbs==2) // Convert from big endian limb order to little endian
+    if (GEODE_ENDIAN==GEODE_BIG_ENDIAN && limbs==2) // Convert from big endian limb order to little endian
       swap(n[0],n[1]);
-#endif
   }
 
   template<int smaller_d> explicit Exact(const Exact<smaller_d>& rhs) {

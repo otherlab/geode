@@ -4,12 +4,11 @@
 #pragma once
 
 #include <geode/utility/config.h> // Must be included first
-#include <boost/mpl/and.hpp>
 namespace geode {
 
-namespace mpl = boost::mpl;
-
-struct unit{};
+// Convenience empty class
+struct Unit {};
+static const Unit unit = Unit();
 
 #ifdef GEODE_VARIADIC
 template<class... Ts> class Tuple;
@@ -24,6 +23,6 @@ template<class T> class Queue;
 template<class T> class Stack;
 
 template<class TK,class T> struct HashtableEntry;
-template<class TK,class T=unit> class Hashtable;
+template<class TK,class T=Unit> class Hashtable;
 
 }

@@ -11,10 +11,8 @@
 
 #include <geode/array/RawArray.h>
 #include <geode/structure/Tuple.h>
-#include <boost/function.hpp>
+#include <geode/utility/function.h>
 namespace geode {
-
-using boost::function;
 
 // Minimize a one-dimensional function using Brent's method.  Unlike scipy, all tolerances are absolute.
 // Arguments:

@@ -20,7 +20,7 @@ extern "C"{
 #include <geode/python/Class.h>
 #include <geode/image/Image.h>
 #include <geode/image/MovFile.h>
-#include <boost/detail/endian.hpp>
+#include <geode/utility/endian.h>
 #include <string>
 #include <iostream>
 #include <cassert>
@@ -34,24 +34,9 @@ GEODE_DEFINE_TYPE(MovWriter)
 typedef unsigned int uint;
 typedef unsigned short ushort;
 
-template<class T>
-static inline void convert_endian(T& x)
-{
-    static_assert(sizeof(T)<=8,"");
-#ifndef BOOST_BIG_ENDIAN
-    char* p = (char*)&x;
-    for(uint i=0;i<sizeof(T)/2;i++)
-        swap(p[i],p[sizeof(T)-1-i]);
-#endif
-}
-
-template<> inline void convert_endian(char& x){}
-
-template<class T>
-static void write(FILE* fp, T num)
-{
-    convert_endian(num);
-    fwrite(&num,sizeof(num),1,fp);
+template<class T> static void write(FILE* fp, const T num) {
+  const T flip = to_big_endian(num);
+  fwrite(&flip,sizeof(T),1,fp);
 }
 
 static void write_identity_matrix(FILE* fp)
@@ -78,8 +63,7 @@ public:
 
     ~QtAtom()
     {
-        uint atom_size=uint(ftell(fp)-start_offset);
-        convert_endian(atom_size);
+        const uint atom_size = to_big_endian(uint(ftell(fp)-start_offset));
         fseek(fp,start_offset,SEEK_SET);
         fwrite(&atom_size,4,1,fp);
         fseek(fp,0,SEEK_END);

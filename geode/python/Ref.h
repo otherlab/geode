@@ -23,11 +23,8 @@
 #include <geode/math/hash.h>
 #include <geode/utility/debug.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/or.hpp>
 #include <iostream>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 GEODE_CORE_EXPORT void set_self_owner_mismatch();
 GEODE_CORE_EXPORT void GEODE_NORETURN(throw_self_owner_mismatch());
@@ -223,7 +220,7 @@ to_python_ref(const T& x) {
 // conversion from python to Ref<T>
 template<class T> struct FromPython<Ref<T> >{static Ref<T>
 convert(PyObject* object) {
-  return ref(FromPython<T&>::convert(object));
+  return geode::ref(FromPython<T&>::convert(object));
 }};
 
 // conversion from python to Ref<PyObject>

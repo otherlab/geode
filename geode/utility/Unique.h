@@ -4,6 +4,9 @@
 #include <algorithm>
 namespace geode {
 
+template<class T> class Unique;
+template<class T> struct is_smart_pointer<Unique<T>> : public mpl::true_ {};
+
 // Doesn't support custom deleter
 
 template<typename T> class Unique {

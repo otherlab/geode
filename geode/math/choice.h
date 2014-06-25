@@ -3,12 +3,9 @@
 //#####################################################################
 #pragma once
 
-#include <geode/utility/forward.h>
-#include <boost/mpl/int.hpp>
+#include <geode/utility/type_traits.h>
 #include <cassert>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 template<class T> static inline T& choice(const int i, T& a, T& b) {
   assert(unsigned(i)<2);

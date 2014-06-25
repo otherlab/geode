@@ -5,14 +5,13 @@
 
 #include <geode/utility/debug.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/and.hpp>
 #include <typeinfo>
 namespace geode {
 
 class CloneableBase; // Cloneable abstract base classes inherit from this directly
 template<class T> class CloneArray;
 
-template<class T> struct IsCloneable : public boost::mpl::and_<
+template<class T> struct IsCloneable : public mpl::and_<
   is_base_of<CloneableBase,T>, // must eventually derive from CloneableBase
   is_convertible<T*,CloneableBase*> >{}; // ensure derivation isn't ambiguous
 

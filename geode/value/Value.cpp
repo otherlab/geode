@@ -201,7 +201,7 @@ bool ValueBase::get_required() const          { return prop().required; }
 char ValueBase::get_abbrev() const            { return prop().abbrev; }
 
 #ifdef GEODE_PYTHON
-ValueBase& ValueBase::set(PyObject* value_)         { prop().set(value_); return *this; }
+ValueBase& ValueBase::set_python(PyObject* value_)  { prop().set_python(value_); return *this; }
 ValueBase& ValueBase::set_allowed(PyObject* v)      { prop().set_allowed_python(v); return *this; }
 ValueBase& ValueBase::set_min_py(PyObject* m)       { prop().set_min_python(m); return *this; }
 ValueBase& ValueBase::set_max_py(PyObject* m)       { prop().set_max_python(m); return *this; }
@@ -228,7 +228,7 @@ void wrap_value_base() {
     .GEODE_METHOD(signal)
     .GEODE_METHOD(is_prop)
     // The following work only if the object is a Prop
-    .GEODE_METHOD(set)
+    .GEODE_METHOD_2("set",set_python)
     .property("help",&Self::get_help)
     .property("hidden",&Self::get_hidden)
     .property("required",&Self::get_required)

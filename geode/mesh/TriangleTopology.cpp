@@ -16,8 +16,6 @@
 #include <geode/utility/Log.h>
 #include <geode/vector/convert.h>
 #include <geode/structure/UnionFind.h>
-#include <boost/dynamic_bitset.hpp>
-
 namespace geode {
 
 using Log::cout;
@@ -360,18 +358,25 @@ void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const 
 
   // Check that all halfedges are reachable by swinging around their source vertices, and that
   // boundary vertices point to boundary halfedges.
-  boost::dynamic_bitset<> seen(boundaries_.size()+3*faces_.size());
-  for (const auto v : vertices())
-    if (!isolated(v)) {
-      bool boundary = false;
-      for (const auto e : outgoing(v)) {
-        GEODE_ASSERT(src(e)==v);
-        seen[boundaries_.size()+e.id] = true;
-        boundary |= is_boundary(e);
+  {
+    int count = 0;
+    vector<bool> seen(boundaries_.size()+3*faces_.size());
+    for (const auto v : vertices())
+      if (!isolated(v)) {
+        bool boundary = false;
+        for (const auto e : outgoing(v)) {
+          GEODE_ASSERT(src(e)==v);
+          const int i = boundaries_.size()+e.id;
+          if (!seen[i]) {
+            seen[i] = true;
+            count++;
+          }
+          boundary |= is_boundary(e);
+        }
+        GEODE_ASSERT(boundary==is_boundary(v));
       }
-      GEODE_ASSERT(boundary==is_boundary(v));
-    }
-  GEODE_ASSERT(seen.count()==size_t(2*n_edges()));
+    GEODE_ASSERT(count==2*n_edges());
+  }
 
   // Check that all erased boundary edges occur in our linked list
   int limit = boundaries_.size();
@@ -467,7 +472,7 @@ int TriangleTopology::degree(VertexId v) const {
 
 Nested<HalfedgeId> TriangleTopology::boundary_loops() const {
   Nested<HalfedgeId> loops;
-  boost::dynamic_bitset<> seen(boundaries_.size());
+  vector<bool> seen(boundaries_.size());
   for (const auto start : boundary_edges())
     if (!seen[-1-start.id]) {
       auto e = start;
