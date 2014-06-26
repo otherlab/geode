@@ -2,20 +2,37 @@
 #pragma once
 
 #include <geode/utility/config.h>
+#ifdef __APPLE__
+#include <sys/types.h>
+#else
 #include <endian.h>
+#endif
 namespace geode {
 
-// Usages:
-//   #if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
-//   if (GEODE_ENDIAN == GEODE_LITTLE_ENDIAN)
+// How to detect endianness:
+//
+// #if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
+// if (GEODE_ENDIAN == GEODE_LITTLE_ENDIAN)
+
 #define GEODE_LITTLE_ENDIAN 1
 #define GEODE_BIG_ENDIAN 2
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#  define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
-#elif __BYTE_ORDER == __BIG_ENDIAN
-#  define GEODE_ENDIAN GEODE_BIG_ENDIAN
+
+#ifdef __APPLE__
+#  if BYTE_ORDER == LITTLE_ENDIAN
+#    define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
+#  elif BYTE_ORDER == BIG_ENDIAN
+#    define GEODE_ENDIAN GEODE_BIG_ENDIAN
+#  else
+#    error Unknown machine endianness
+#  endif
 #else
-#  error Unknown machine endianness
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+#    define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
+#  elif __BYTE_ORDER == __BIG_ENDIAN
+#    define GEODE_ENDIAN GEODE_BIG_ENDIAN
+#  else
+#    error Unknown machine endianness
+#  endif
 #endif
 
 // Handle unsigned ints specially
