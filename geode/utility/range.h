@@ -57,6 +57,7 @@ template<class I> struct Range<I,typename enable_if<is_integral<I>>::type> {
     assert(lo<=hi);
   }
 
+  bool empty() const { return hi == lo; }
   I size() const { return hi-lo; }
 
   Iter begin() const { return Iter(lo); }

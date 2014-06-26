@@ -149,6 +149,8 @@ public:
     return (offsets == v.offsets) && (flat == v.flat);
   }
 
+  bool operator!=(const Nested& v) const { return !((*this) == v); }
+
   Nested<Element> copy() const {
     Nested<Element> copy;
     copy.offsets = offsets;

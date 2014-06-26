@@ -8,6 +8,8 @@
 #pragma once
 
 #include <geode/array/RawArray.h>
+#include <geode/mesh/ids.h>
+
 namespace geode {
 
 template<class T,class Id> struct HasCheapCopy<RawField<T,Id> >:public mpl::true_{};
@@ -70,6 +72,8 @@ public:
     assert(valid(result));
     return result;
   }
+
+  Range<IdIter<Id>> id_range() const { return range(IdIter<Id>(Id(0)),IdIter<Id>(Id(size()))); }
 
   RawField& operator=(const RawField<Element,Id>& source) {
     flat = source.flat;
