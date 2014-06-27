@@ -3,6 +3,7 @@
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
 #include <geode/utility/type_traits.h>
+#include <geode/utility/validity.h>
 #include <cassert>
 
 #ifdef GEODE_PYTHON
