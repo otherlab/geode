@@ -27,7 +27,6 @@ extern "C" {
 #include <geode/array/RawArray.h>
 #include <geode/array/Array2d.h>
 #include <geode/geometry/Box.h>
-#include <boost/preprocessor/cat.hpp>
 namespace geode {
 
 // Problem-dependent parameter inspection
@@ -36,41 +35,51 @@ template<class T> GEODE_CORE_EXPORT int ilaenv(int ispec,const char* name,const 
 template<> struct FromPython<CBLAS_TRANSPOSE>{GEODE_CORE_EXPORT static CBLAS_TRANSPOSE convert(PyObject* object);};
 
 #define WRAP(declaration) \
-    static declaration GEODE_UNUSED; \
-    static declaration
-#define CBC(name) BOOST_PP_CAT(cblas_,BOOST_PP_CAT(a,name))
-
-#ifdef GEODE_MKL
-#define DECLARE(name,...)
-#define BC(name) BOOST_PP_CAT(a,name)
-#else
-#define DECLARE(name,...) extern "C" { int BOOST_PP_CAT(a,BOOST_PP_CAT(name,_))(__VA_ARGS__); }
-#define BC(name) BOOST_PP_CAT(a,BOOST_PP_CAT(name,_))
-#endif
+  static declaration GEODE_UNUSED; \
+  static declaration
 
 #define __blas_wrap_iterating__
 
-#define a s
-#define sa "a"
+#ifdef GEODE_MKL
+#  define BC(name) s##name
+#  define MKL_BC(name) mkl_s##name
+#  define DECLARE(name,...)
+#else
+#  define BC(name) s##name##_
+#  define DECLARE(name,...) extern "C" { int s##name##_(__VA_ARGS__); }
+#endif
+#define CBC(name) cblas_s##name
+#define SA(name) ("a" #name)
 #define T float
 #include "blas.h"
-#undef a
-#undef sa
+#undef SA
+#undef BC
+#undef CBC
+#undef MKL_BC
+#undef DECLARE
 #undef T
 
-#define a d
-#define sa "d"
+#ifdef GEODE_MKL
+#  define BC(name) d##name
+#  define MKL_BC(name) mkl_d##name
+#  define DECLARE(name,...)
+#else
+#  define BC(name) d##name##_
+#  define DECLARE(name,...) extern "C" { int d##name##_(__VA_ARGS__); }
+#endif
+#define CBC(name) cblas_d##name
+#define SA(name) ("d" #name)
 #define T double
 #include "blas.h"
-#undef a
-#undef sa
+#undef SA
+#undef BC
+#undef CBC
+#undef MKL_BC
+#undef DECLARE
 #undef T
 
 #undef __blas_wrap_iterating__
-#undef CBC
-#undef BC
 #undef WRAP
-#undef DECLARE
 
 }
 #endif
@@ -513,7 +522,7 @@ WRAP(void sytrf(CBLAS_UPLO uplo, Subarray<T,2> A, RawArray<int> ipiv, Array<T>& 
 // Compute work.size() required by sytrf
 WRAP(int sytrf_work(CBLAS_UPLO uplo,Subarray<T,2> A)) {
   // Mkl appears to have a bug in the sytrf work query, so we do it ourselves
-  static const int nb=max(ilaenv<T>(1,sa"sytrf","L",1024,-1),ilaenv<T>(1,sa"sytrf","U",1024,-1));
+  static const int nb=max(ilaenv<T>(1,SA(sytrf),"L",1024,-1),ilaenv<T>(1,SA(sytrf),"U",1024,-1));
   return max(1,nb*A.m);
 }
 
@@ -536,14 +545,14 @@ WRAP(void sytrs(CBLAS_UPLO uplo,Subarray<const T,2> A,RawArray<const int> ipiv,R
 
 // Perform scaling and in-place transposition/copying of matrices.
 WRAP(void imatcopy(T alpha,Subarray<T,2> A)) {
-  BOOST_PP_CAT(mkl_,BC(imatcopy))('r','t',A.m,A.n,alpha,A.data(),A.n,A.m);
+  MKL_BC(imatcopy)('r','t',A.m,A.n,alpha,A.data(),A.n,A.m);
 }
 
 // Perform scaling and out-place transposition/copying of matrices.
 WRAP(void omatcopy(CBLAS_TRANSPOSE trans,T alpha,Subarray<const T,2> A,Subarray<T,2> B)) {
   int k=trans==CblasTrans?A.n:A.m,lda=max(1,A.stride),ldb=max(1,B.stride);
   GEODE_ASSERT(k==B.m && A.m+A.n-k==B.n);
-  BOOST_PP_CAT(mkl_,BC(omatcopy))('r',trans==CblasTrans?'t':'n',A.m,A.n,alpha,A.data(),lda,B.data(),ldb);
+  MKL_BC(omatcopy)('r',trans==CblasTrans?'t':'n',A.m,A.n,alpha,A.data(),lda,B.data(),ldb);
 }
 
 #endif

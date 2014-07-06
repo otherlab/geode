@@ -286,7 +286,7 @@ public:
     {return Vector(constant,constant,constant); }
 
     // shifts vector (wrapped) such that element a is first
-    Vector<T,3> roll(int a) {
+    Vector<T,3> roll(const int a) {
       Vector<T,3> v;
       v.x = (*this)[(0+a) % 3];
       v.y = (*this)[(1+a) % 3];
@@ -308,6 +308,10 @@ public:
 
     Vector<T,2> zx() const {
       return Vector<T,2>(z,x);
+    }
+
+    Vector<T,3> xzy() const {
+        return Vector<T,3>(x,z,y);
     }
 
     Vector<T,2> horizontal_vector() const

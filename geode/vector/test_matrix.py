@@ -76,8 +76,5 @@ def test_singular_values():
     for a,d in zip(A,D):
       assert allclose(svdvals(a),abs(d))
 
-def test_cpp():
-  run_tests()
-
 if __name__=='__main__':
   test_conversions()

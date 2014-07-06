@@ -3,7 +3,6 @@
 //#####################################################################
 #pragma once
 
-#include <boost/type_traits/is_same.hpp>
 namespace geode {
 
 template<class T0,class T1> struct AssertSame;

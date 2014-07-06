@@ -114,7 +114,7 @@ void LinearFiniteVolumeHex::add_frequency_squared(RawArray<T> frequency_squared)
     }
   }
   for (auto& it : particle_frequency_squared)
-    frequency_squared[it.key()] += it.data();
+    frequency_squared[it.x] += it.y;
 }
 
 T LinearFiniteVolumeHex::strain_rate(RawArray<const TV> V) const {

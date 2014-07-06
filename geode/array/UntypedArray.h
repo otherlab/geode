@@ -21,14 +21,19 @@ class UntypedArray {
   struct Copy {};
 public:
 
-  // Create an empty untyped array
-  template<class T> UntypedArray(Types<T>)
+  UntypedArray(const type_info* type, int t_size)
     : m_(0)
     , max_size_(0)
     , data_(0)
     , owner_(0)
-    , t_size_(sizeof(T))
-    , type_(&typeid(T)) {
+    , t_size_(t_size)
+    , type_(type)
+  {}
+
+  // Create an empty untyped array
+  template<class T> UntypedArray(Types<T>)
+    : UntypedArray(&typeid(T), sizeof(T))
+  {
     static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
   }
 
@@ -39,7 +44,7 @@ public:
   }
 
   // Create an uninitialized untyped array
-  template<class T> UntypedArray(Types<T>, const int size,  Uninit)
+  template<class T> UntypedArray(Types<T>, const int size, Uninit)
     : m_(size)
     , max_size_(size)
     , t_size_(sizeof(T))
@@ -105,6 +110,13 @@ public:
 
   ~UntypedArray() {
     GEODE_XDECREF(owner_);
+  }
+
+  // Copy all aspects of an UntypedArray, except give it a new size (and don't copy any data)
+  static UntypedArray empty_like(const UntypedArray &o, int new_size) {
+    UntypedArray A(o.type_, o.t_size_);
+    A.resize(new_size, false, false);
+    return A;
   }
 
   int size() const {
@@ -176,6 +188,17 @@ public:
          *q = data_+j*t_size_;
     for (int k=0;k<t_size_;k++)
       swap(p[k],q[k]);
+  }
+
+  void copy(int to, int from) {
+    memcpy(data_+to*t_size_,data_+from*t_size_,t_size_);
+  }
+
+  // copy o[j] to this[i]
+  void copy_from(int i, UntypedArray const &o, int j) {
+    // only allowed if types are the same
+    assert(type_ == o.type_);
+    memcpy(data_+i*t_size_,o.data_+j*t_size_,t_size_);
   }
 
   // Typed access to data

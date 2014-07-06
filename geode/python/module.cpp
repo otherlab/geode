@@ -13,7 +13,7 @@ namespace geode {
 #ifdef GEODE_PYTHON
 
 #define ASSERT_NUMPY_TYPE_CONSISTENT(type)\
-  BOOST_STATIC_ASSERT_MSG((int)::type == (int)type, "Numpy's and our definition of " #type " doesn't match. Look at numpy-types.h for the problem.")
+  static_assert((int)::type == (int)type, "Numpy's and our definition of " #type " doesn't match. Look at numpy-types.h for the problem.")
 
 ASSERT_NUMPY_TYPE_CONSISTENT(NPY_BOOL);
 ASSERT_NUMPY_TYPE_CONSISTENT(NPY_BYTE);

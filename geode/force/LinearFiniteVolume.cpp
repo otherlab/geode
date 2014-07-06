@@ -148,7 +148,7 @@ template<class TV,int d> void LinearFiniteVolume<TV,d>::add_frequency_squared(Ra
     }
   }
   for (auto& it : particle_frequency_squared)
-    frequency_squared[it.key()] += it.data();
+    frequency_squared[it.x] += it.y;
 }
 
 template<class TV,int d> typename TV::Scalar LinearFiniteVolume<TV,d>::strain_rate(RawArray<const TV> V) const {

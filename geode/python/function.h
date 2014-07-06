@@ -5,9 +5,7 @@
 
 #include <geode/python/from_python.h>
 #include <geode/python/to_python.h>
-#include <geode/utility/config.h>
-#include <boost/function.hpp>
-#include <boost/type_traits/function_traits.hpp>
+#include <geode/utility/function.h>
 #include <geode/python/utility.h>
 namespace geode {
 
@@ -69,15 +67,15 @@ template<> void PythonFunctionWrapper<void>::return_(PyObject* r) {
 
 GEODE_CORE_EXPORT void GEODE_NORETURN(throw_callable_error(PyObject* object));
 
-template<class F> struct FromPython<boost::function<F>> {static boost::function<F> convert(PyObject* object) {
+template<class F> struct FromPython<function<F>> {static function<F> convert(PyObject* object) {
   if (object==Py_None)
-    return boost::function<F>();
+    return function<F>();
   if (!PyCallable_Check(object))
     throw_callable_error(object);
-  return PythonFunctionWrapper<typename boost::function_traits<F>::result_type>(object);
+  return PythonFunctionWrapper<typename function<F>::result_type>(object);
 }};
 
-template<class F> PyObject* to_python(const boost::function<F>& f) {
+template<class F> PyObject* to_python(const function<F>& f) {
   GEODE_NOT_IMPLEMENTED();
 }
 

@@ -6,8 +6,8 @@
 #include <geode/utility/pass.h>
 #include <geode/utility/tr1.h>
 #include <geode/utility/equals.h>
+#include <geode/utility/smart_ptr.h>
 #include <geode/utility/type_traits.h>
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <deque>
 #include <queue>
@@ -16,14 +16,13 @@
 #include <map>
 #include <algorithm>
 #include <iostream>
-
 namespace geode {
 
 using std::vector;
 
 template<class T, class U> inline std::ostream &operator<<(std::ostream &os, std::pair<T,U> const &v);
-template<class T,class H> inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_set<T,H> const &v);
-template<class T, class U, class H> inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_map<T,U,H> const &v);
+template<class T,class H> inline std::ostream &operator<<(std::ostream &os, unordered_set<T,H> const &v);
+template<class T, class U, class H> inline std::ostream &operator<<(std::ostream &os, unordered_map<T,U,H> const &v);
 template<class T> inline std::ostream &operator<<(std::ostream &os, std::vector<T> const &v);
 template<class T> inline std::ostream &operator<<(std::ostream &os, std::set<T> const &v);
 template<class T> inline std::ostream &operator<<(std::ostream &os, std::list<T> const &v);
@@ -163,12 +162,12 @@ inline std::ostream &operator<<(std::ostream &os, std::deque<T> const &v) {
 }
 
 template<class T,class H>
-inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_set<T,H> const &v) {
+inline std::ostream &operator<<(std::ostream &os, unordered_set<T,H> const &v) {
   return print(os, v.begin(), v.end(), '{', '}');
 }
 
 template<class T, class U, class H>
-inline std::ostream &operator<<(std::ostream &os, std::tr1::unordered_map<T,U,H> const &v) {
+inline std::ostream &operator<<(std::ostream &os, unordered_map<T,U,H> const &v) {
   return print(os, v.begin(), v.end(), '{', '}');
 }
 
@@ -198,7 +197,7 @@ inline std::ostream &operator<<(std::ostream &os, std::map<T,U> const &v) {
 }
 
 }
-namespace boost {
+namespace GEODE_SMART_PTR_NAMESPACE {
 
 template<class T> static inline geode::Hash hash_reduce(const shared_ptr<T>& p) {
   using geode::hash_reduce;

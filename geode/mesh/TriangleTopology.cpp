@@ -15,8 +15,7 @@
 #include <geode/structure/Tuple.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/convert.h>
-#include <boost/dynamic_bitset.hpp>
-
+#include <geode/structure/UnionFind.h>
 namespace geode {
 
 using Log::cout;
@@ -292,7 +291,7 @@ bool TriangleTopology::is_flip_safe(HalfedgeId e0) const {
   return o0!=o1 && !halfedge(o0,o1).valid();
 }
 
-void TriangleTopology::assert_consistent() const {
+void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const {
   // Check simple vertex properties
   int actual_vertices = 0;
   for (const auto v : vertices()) {
@@ -351,7 +350,7 @@ void TriangleTopology::assert_consistent() const {
   }
 
   // Check that no two halfedges share the same vertices
-  {
+  if (check_for_double_halfedges) {
     Hashtable<Vector<VertexId,2>> pairs;
     for (const auto e : halfedges())
       GEODE_ASSERT(pairs.set(vertices(e)));
@@ -359,18 +358,25 @@ void TriangleTopology::assert_consistent() const {
 
   // Check that all halfedges are reachable by swinging around their source vertices, and that
   // boundary vertices point to boundary halfedges.
-  boost::dynamic_bitset<> seen(boundaries_.size()+3*faces_.size());
-  for (const auto v : vertices())
-    if (!isolated(v)) {
-      bool boundary = false;
-      for (const auto e : outgoing(v)) {
-        GEODE_ASSERT(src(e)==v);
-        seen[boundaries_.size()+e.id] = true;
-        boundary |= is_boundary(e);
+  {
+    int count = 0;
+    vector<bool> seen(boundaries_.size()+3*faces_.size());
+    for (const auto v : vertices())
+      if (!isolated(v)) {
+        bool boundary = false;
+        for (const auto e : outgoing(v)) {
+          GEODE_ASSERT(src(e)==v);
+          const int i = boundaries_.size()+e.id;
+          if (!seen[i]) {
+            seen[i] = true;
+            count++;
+          }
+          boundary |= is_boundary(e);
+        }
+        GEODE_ASSERT(boundary==is_boundary(v));
       }
-      GEODE_ASSERT(boundary==is_boundary(v));
-    }
-  GEODE_ASSERT(seen.count()==size_t(2*n_edges()));
+    GEODE_ASSERT(count==2*n_edges());
+  }
 
   // Check that all erased boundary edges occur in our linked list
   int limit = boundaries_.size();
@@ -418,6 +424,37 @@ bool TriangleTopology::is_manifold_with_boundary() const {
   return true;
 }
 
+Nested<FaceId> TriangleTopology::surface_components(VertexId v) const {
+  auto incident = incident_faces(v);
+
+  // map face handles to indices in incident
+  Hashtable<FaceId, int> fmap;
+  for (auto it = incident.begin(); it != incident.end(); ++it) {
+    fmap[*it] = (int)(it-incident.begin());
+  }
+
+  UnionFind union_find((int)incident.size());
+  for (auto ohe : outgoing(v)) {
+    if (is_boundary(ohe) || is_boundary(reverse(ohe)))
+      continue;
+    auto fs = faces(ohe);
+    assert(fmap.contains(fs.x));
+    assert(fmap.contains(fs.y));
+    union_find.merge(fmap[fs.x], fmap[fs.y]);
+  }
+
+  // spit out connected components
+  Hashtable<int, Array<FaceId>> components;
+  for (auto f : incident) {
+    components[union_find.find(fmap[f])].append(f);
+  }
+  Nested<FaceId, false> result;
+  for (auto c : components) {
+    result.append(c.y);
+  }
+  return result.freeze();
+}
+
 bool TriangleTopology::has_isolated_vertices() const {
   for (const auto v : vertices())
     if (isolated(v))
@@ -435,7 +472,7 @@ int TriangleTopology::degree(VertexId v) const {
 
 Nested<HalfedgeId> TriangleTopology::boundary_loops() const {
   Nested<HalfedgeId> loops;
-  boost::dynamic_bitset<> seen(boundaries_.size());
+  vector<bool> seen(boundaries_.size());
   for (const auto start : boundary_edges())
     if (!seen[-1-start.id]) {
       auto e = start;
@@ -535,7 +572,7 @@ MutableTriangleTopology::MutableTriangleTopology(const MutableTriangleTopology& 
 }
 
 MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces)
-  : TriangleTopology()
+  : TriangleTopology(faces)
   , mutable_n_vertices_(const_cast_(n_vertices_))
   , mutable_n_faces_(const_cast_(n_faces_))
   , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
@@ -544,9 +581,7 @@ MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> f
   , mutable_boundaries_(const_cast_(boundaries_).const_cast_())
   , mutable_erased_boundaries_(const_cast_(erased_boundaries_))
   , next_field_id(100)
-{
-  add_faces(faces);
-}
+{}
 
 MutableTriangleTopology::MutableTriangleTopology(TriangleSoup const &soup)
 : MutableTriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
@@ -571,6 +606,17 @@ Ref<MutableTriangleTopology> MutableTriangleTopology::copy() const {
 
 VertexId MutableTriangleTopology::add_vertex() {
   return add_vertices(1);
+}
+
+VertexId MutableTriangleTopology::copy_vertex(VertexId v) {
+  VertexId id = add_vertex();
+
+  // copy all vertex fields to the new vertex
+  for (auto f : vertex_fields) {
+    f.copy(id.idx(), v.idx());
+  }
+
+  return id;
 }
 
 VertexId MutableTriangleTopology::add_vertices(int n) {
@@ -693,8 +739,8 @@ Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other)
   // are considered, and extended if they also exist in other.
   #define FIELD(prim, size_expr) \
     for (auto& it : id_to_##prim##_field) { \
-      const int d = it.data(); \
-      const int s = other.id_to_##prim##_field.get_default(it.key(),-1); \
+      const int d = it.y; \
+      const int s = other.id_to_##prim##_field.get_default(it.x,-1); \
       if (s >= 0) \
         prim##_fields[d].extend(other.prim##_fields[s]); \
       else \
@@ -707,6 +753,175 @@ Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other)
 
   // Return index offsets
   return vec(base_vertex,base_face,base_boundary);
+}
+
+Tuple<Ref<MutableTriangleTopology>,
+      Field<VertexId, VertexId>,
+      Field<FaceId, FaceId>> MutableTriangleTopology::extract(RawArray<FaceId> const &faces) {
+
+  Ref<MutableTriangleTopology> result = new_<MutableTriangleTopology>();
+
+  Hashtable<VertexId, VertexId> old_to_new_vertices;
+  Hashtable<FaceId, FaceId> old_to_new_faces;
+
+  for (FaceId face : faces) {
+    GEODE_ASSERT(valid(face));
+    Vector<VertexId, 3> verts, oldverts = vertices(face);
+
+    // find or add vertices for this face
+    for (int i = 0; i < 3; ++i) {
+      VertexId oldv = oldverts[i];
+      VertexId &newv = verts[i];
+
+      if (old_to_new_vertices.contains(oldv)) {
+        newv = old_to_new_vertices[oldv];
+      } else {
+        newv = result->add_vertex();
+        old_to_new_vertices.insert(oldv, newv);
+      }
+    }
+
+    // add the face
+    old_to_new_faces.insert(face, result->add_face(verts));
+  }
+
+  // copy all fields
+  result->id_to_vertex_field = id_to_vertex_field;
+  result->id_to_face_field = id_to_face_field;
+  result->id_to_halfedge_field = id_to_halfedge_field;
+
+  // add field data
+  for (auto a : vertex_fields) {
+    result->vertex_fields.push_back(UntypedArray::empty_like(a, result->n_vertices()));
+    auto field = result->vertex_fields.back();
+
+    // copy necessary data
+    for (auto v : old_to_new_vertices) {
+      VertexId vold = v.x;
+      VertexId vnew = v.y;
+      field.copy_from(vnew.idx(), a, vold.idx());
+    }
+  }
+
+  for (auto a : face_fields) {
+    result->face_fields.push_back(UntypedArray::empty_like(a, result->n_faces()));
+    auto field = result->face_fields.back();
+
+    // copy necessary data
+    for (auto f : old_to_new_faces) {
+      FaceId fold = f.x;
+      FaceId fnew = f.y;
+      field.copy_from(fnew.idx(), a, fold.idx());
+    }
+  }
+
+  for (auto a : halfedge_fields) {
+    result->halfedge_fields.push_back(UntypedArray::empty_like(a, 3*result->n_faces()));
+    auto field = result->halfedge_fields.back();
+
+    // copy necessary data
+    for (auto f : old_to_new_faces) {
+      HalfedgeId fold = HalfedgeId(3*f.x.id);
+      HalfedgeId fnew = HalfedgeId(3*f.y.id);
+      field.copy_from(fnew.idx(), a, fold.idx());
+      field.copy_from(fnew.idx()+1, a, fold.idx()+1);
+      field.copy_from(fnew.idx()+2, a, fold.idx()+2);
+    }
+  }
+
+  auto new_to_old_vertices = result->create_compatible_vertex_field<VertexId>();
+  for (auto v : old_to_new_vertices) {
+    new_to_old_vertices[v.y] = v.x;
+  }
+
+  auto new_to_old_faces = result->create_compatible_face_field<FaceId>();
+  for (auto v : old_to_new_faces) {
+    new_to_old_faces[v.y] = v.x;
+  }
+
+  return tuple(result, new_to_old_vertices, new_to_old_faces);
+}
+
+Array<VertexId> MutableTriangleTopology::split_nonmanifold_vertex(VertexId vi) {
+  auto components = surface_components(vi);
+
+  Array<VertexId> verts;
+  if (components.size() < 2) {
+    verts.append(vi);
+    return verts;
+  }
+
+  for (int i = 0; i < (int) components.size(); ++i) {
+    VertexId v = (i > 0) ? copy_vertex(vi) : vi;
+
+    Vector<HalfedgeId, 2> boundaries;
+    for (auto f : components[i]) {
+
+      // replace vi with v in f
+      if (i > 0)
+        unsafe_replace_vertex(f, vi, v);
+
+      // remember boundary edges (we'll need to patch stuff up later)
+      // replace vi with v in src field of boundary edges
+      for (auto he : halfedges(f)) {
+        if (src(he) == v && is_boundary(reverse(he))) {
+          GEODE_ASSERT(!boundaries.x.valid());
+          boundaries.x = reverse(he);
+        } else if (dst(he) == v && is_boundary(reverse(he))) {
+          GEODE_ASSERT(!boundaries.y.valid());
+          boundaries.y = reverse(he);
+          if (i > 0)
+            unsafe_set_src(reverse(he), v);
+        }
+      }
+    }
+    verts.append(v);
+
+    GEODE_ASSERT(boundaries.x.valid() && boundaries.y.valid());
+
+    // make sure the new vertex has a boundary edge as its halfedge
+    unsafe_set_halfedge(v, boundaries.y);
+
+    // patch up boundaries (this component has only two boundary edges, connect
+    // them (src is already fixed)
+    unsafe_boundary_link(boundaries.x, boundaries.y);
+  }
+
+  return verts;
+}
+
+Nested<VertexId> MutableTriangleTopology::split_nonmanifold_vertices() {
+  Hashtable<VertexId> verts;
+  for (auto e : boundary_edges()) {
+    verts.set(src(e));
+  }
+  Nested<VertexId,false> result;
+  for (auto v : verts) {
+    auto newv = split_nonmanifold_vertex(v);
+    if (newv.size() > 1)
+      result.append(newv);
+  }
+  return result.freeze();
+}
+
+Vector<HalfedgeId, 2> MutableTriangleTopology::split_along_edge(HalfedgeId he) {
+  auto re = reverse(he);
+
+  auto b_he = unsafe_new_boundary(dst(he), he);
+  auto b_re = unsafe_new_boundary(dst(re), re);
+
+  unsafe_boundary_link(b_he, b_re);
+  unsafe_boundary_link(b_re, b_he);
+
+  unsafe_set_reverse(face(he), face_index(he), b_he);
+  unsafe_set_reverse(face(re), face_index(re), b_re);
+
+  if (!is_boundary(dst(he)))
+    unsafe_set_halfedge(dst(he), b_he);
+  if (!is_boundary(dst(re)))
+    unsafe_set_halfedge(dst(re), b_re);
+
+  return vec(b_he, b_re);
 }
 
 void MutableTriangleTopology::split_face(const FaceId f, const VertexId c) {
@@ -1266,8 +1481,8 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
     if (i < j) {
       fields[i] = fields.back();
       for (auto& h : id_to_field)
-        if (h.data() == j) {
-          h.data() = i;
+        if (h.y == j) {
+          h.y = i;
           break;
         }
     }
@@ -1634,7 +1849,7 @@ Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_triangle_soup() co
 }
 
 template<class TV>
-GEODE_CORE_EXPORT typename TV::value_type TriangleTopology::angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const {
+typename TV::value_type TriangleTopology::angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const {
   auto p = prev(id);
   auto v1 = (pos[dst(id)] - pos[src(id)]);
   auto mag = v1.sqr_magnitude();
@@ -1654,7 +1869,7 @@ GEODE_CORE_EXPORT typename TV::value_type TriangleTopology::angle_at(HalfedgeId 
 template GEODE_CORE_EXPORT real TriangleTopology::angle_at(HalfedgeId id, Field<Vector<real,3>, VertexId> const &pos) const;
 
 template<class TV>
-GEODE_CORE_EXPORT TV TriangleTopology::normal(FaceId id, Field<TV, VertexId> const &pos) const {
+TV TriangleTopology::normal(FaceId id, Field<TV, VertexId> const &pos) const {
   auto v = vertices(id);
   auto N = cross(pos[v.y] - pos[v.x], pos[v.z] - pos[v.x]);
   auto mag = N.sqr_magnitude();
@@ -1667,7 +1882,7 @@ GEODE_CORE_EXPORT TV TriangleTopology::normal(FaceId id, Field<TV, VertexId> con
 template GEODE_CORE_EXPORT Vector<real,3> TriangleTopology::normal(FaceId id, Field<Vector<real,3>, VertexId> const &pos) const;
 
 template<class TV>
-GEODE_CORE_EXPORT TV TriangleTopology::normal(VertexId id, Field<TV, VertexId> const &pos) const {
+TV TriangleTopology::normal(VertexId id, Field<TV, VertexId> const &pos) const {
   real total_angle = 0;
   TV N = TV();
 
@@ -1690,7 +1905,7 @@ template GEODE_CORE_EXPORT Vector<real,3> TriangleTopology::normal(VertexId id, 
 
 
 template<class TV>
-GEODE_CORE_EXPORT Triangle<TV> TriangleTopology::triangle(FaceId id, Field<TV, VertexId> const &pos) const {
+Triangle<TV> TriangleTopology::triangle(FaceId id, Field<TV, VertexId> const &pos) const {
   auto verts = vertices(id);
   return Triangle<TV>(pos[verts.x], pos[verts.y], pos[verts.z]);
 }
@@ -1699,7 +1914,7 @@ template GEODE_CORE_EXPORT Triangle<Vector<real,2>> TriangleTopology::triangle(F
 template GEODE_CORE_EXPORT Triangle<Vector<real,3>> TriangleTopology::triangle(FaceId id, Field<Vector<real,3>, VertexId> const &pos) const;
 
 template<class TV>
-GEODE_CORE_EXPORT Segment<TV> TriangleTopology::segment(HalfedgeId id, Field<TV, VertexId> const &pos) const {
+Segment<TV> TriangleTopology::segment(HalfedgeId id, Field<TV, VertexId> const &pos) const {
   auto verts = vertices(id);
   return Segment<TV>(pos[verts.x], pos[verts.y]);
 }
@@ -1708,7 +1923,7 @@ template GEODE_CORE_EXPORT Segment<Vector<real,2>> TriangleTopology::segment(Hal
 template GEODE_CORE_EXPORT Segment<Vector<real,3>> TriangleTopology::segment(HalfedgeId id, Field<Vector<real,3>, VertexId> const &pos) const;
 
 template<class TV>
-GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
+Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
   auto soup = edge_segment_soup();
   return tuple(new_<SimplexTree<TV,1>>(soup.x, pos.flat, leaf_size), soup.y);
 }
@@ -1717,7 +1932,7 @@ template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,2>,1>>, Array<Halfe
 template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,3>,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<Vector<real,3>, VertexId> const &pos, int) const;
 
 template<class TV>
-GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
+Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
   auto soup = face_triangle_soup();
   return tuple(new_<SimplexTree<TV,2>>(soup.x, pos.flat, leaf_size), soup.y);
 }
@@ -1774,6 +1989,7 @@ void wrap_corner_mesh() {
       .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, HalfedgeId)const, "common_vertex_between_face_and_halfedge", common_vertex)
       .GEODE_METHOD(elements)
       .GEODE_METHOD(degree)
+      .GEODE_METHOD(surface_components)
       .GEODE_METHOD(has_boundary)
       .GEODE_METHOD(is_manifold)
       .GEODE_METHOD(is_manifold_with_boundary)
@@ -1807,6 +2023,11 @@ void wrap_corner_mesh() {
       .SAFE_METHOD(erase_face)
       .SAFE_METHOD(erase_vertex)
       .SAFE_METHOD(erase_halfedge)
+      .GEODE_METHOD(split_nonmanifold_vertex)
+      .GEODE_METHOD(split_nonmanifold_vertices)
+      .GEODE_METHOD(split_along_edge)
+      .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(HalfedgeId),"split_edge",split_edge)
+      .GEODE_OVERLOADED_METHOD_2(void(Self::*)(HalfedgeId,VertexId),"split_edge_with_vertex",split_edge)
       .GEODE_METHOD(collect_garbage)
       .GEODE_METHOD(collect_boundary_garbage)
       #ifdef GEODE_PYTHON

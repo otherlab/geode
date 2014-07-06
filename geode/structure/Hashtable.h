@@ -14,7 +14,6 @@
 #include <geode/python/Ptr.h>
 #include <geode/structure/Tuple.h>
 #include <geode/utility/type_traits.h>
-#include <boost/aligned_storage.hpp>
 #include <vector>
 namespace geode {
 
@@ -27,58 +26,47 @@ template<class TK,class T> class Hashtable;
 
 enum HashtableEntryState{EntryFree,EntryActive,EntryDeleted};
 
-template<class TK,class T> class HashtableEntry {
-public:
-  typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
-  typename boost::aligned_storage<sizeof(T), alignment_of<T>::value>::type Tbuf;
+template<class TK,class T> struct HashtableEntry {
+  typename aligned_storage<sizeof(TK),alignment_of<TK>::value>::type TKbuf;
+  typename aligned_storage<sizeof(T),alignment_of<T>::value>::type Tbuf;
+  HashtableEntryState state;
 
-  inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
-  inline T & data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
-
-  inline void init(TK const &v, T const &value) {
-    new(&TKbuf) TK(v);
-    new(&Tbuf) T(value);
+  void init(const TK& k, const T& v) {
+    new(&TKbuf) TK(k);
+    new(&Tbuf) T(v);
     state = EntryActive;
   }
 
-  friend struct HashtableIter<TK,T>;
-  friend struct HashtableIter<TK,const T>;
-  friend class Hashtable<TK,T>;
+  const TK& key() const { return reinterpret_cast<const TK&>(TKbuf); };
+  T& data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
+  bool active() const { return state==EntryActive; }
 
-private:
-  HashtableEntryState state;
-  inline bool active() const {return state==EntryActive;}
-  inline const HashtableEntry& value() const {return *this;}
+  Tuple<const TK,T>& value() { return reinterpret_cast<Tuple<const TK,T>&>(*this); }
+  const Tuple<const TK,T>& value() const { return reinterpret_cast<const Tuple<const TK,T>&>(*this); }
 };
 
-template<class TK> class HashtableEntry<TK,unit> : public unit {
-public:
-  typename boost::aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
+template<class TK> struct HashtableEntry<TK,Unit> : public Unit {
+  typename aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
+  HashtableEntryState state;
 
-  inline TK const & key() const { return reinterpret_cast<TK const&>(TKbuf); };
-  unit& data() {return *this;}
-
-  inline void init(TK const &v, unit const &) {
-    new(&TKbuf) TK(v);
+  void init(const TK& k, Unit) {
+    new(&TKbuf) TK(k);
     state = EntryActive;
   }
 
-  friend struct HashtableIter<TK,unit>;
-  friend struct HashtableIter<TK,const unit>;
-  friend class Hashtable<TK,unit>;
+  const TK& key() const { return reinterpret_cast<const TK&>(TKbuf); }
+  Unit& data() { return *this; }
+  bool active() const { return state==EntryActive; }
 
-private:
-  HashtableEntryState state;
-  inline bool active() const {return state==EntryActive;}
-  inline const TK& value() const {return key();}
+  const TK& value() const { return key(); }
 };
 
 // Tables
 
-template<class TK,class T> // T = unit
+template<class TK,class T> // T = Unit
 class Hashtable {
 private:
-  typedef HashtableEntry<TK,T> Entry; // doesn't store data if T is unit
+  typedef HashtableEntry<TK,T> Entry; // doesn't store data if T is Unit
 public:
   typedef TK Key;
   typedef T Element;
@@ -171,7 +159,7 @@ public:
   }
 
   void insert(const TK& v) { // Assumes no entry with v exists
-    insert(v,unit());
+    insert(v,unit);
   }
 
   T& get_or_insert(const TK& v, const T& default_=T()) { // inserts the default if key not found
@@ -245,7 +233,7 @@ public:
   }
 
   bool set(const TK& v) { // insert entry if doesn't already exists, returns whether it added a new entry
-    return set(v,unit());
+    return set(v,unit);
   }
 
   bool erase(const TK& v) { // Erase an element if it exists, returning true if so
@@ -302,12 +290,12 @@ public:
 
 template<class TK,class T>
 struct HashtableIter {
-  typedef HashtableEntry<TK,typename remove_const<T>::type> Entry;
+  typedef typename CopyConst<HashtableEntry<TK,typename remove_const<T>::type>,T>::type Entry;
 
-  const RawArray<const Entry> table;
+  const RawArray<Entry> table;
   int index;
 
-  HashtableIter(RawArray<const Entry> table, int index_)
+  HashtableIter(RawArray<Entry> table, const int index_)
     : table(table), index(index_) {
     while (index<table.size() && !table[index].active())
       index++;
@@ -328,14 +316,14 @@ struct HashtableIter {
 
   auto operator*() const
     -> decltype(table[index].value()) {
-    assert(index<table.size() && table[index].active());
-    return table[index].value();
+    auto& entry = table[index];
+    assert(entry.active());
+    return entry.value();
   }
 
   auto operator->() const
-    -> decltype(&table[index].value()) {
-    assert(index<table.size() && table[index].active());
-    return &table[index].value();
+    -> decltype(&operator*()) {
+    return &operator*();
   }
 
   void operator++() {
@@ -362,7 +350,7 @@ template<class K,class V> ostream& operator<<(ostream& output, const Hashtable<K
   for (const auto& v : h) {
     if (first) first = false;
     else output << ',';
-    output << v.key() << ':' << v.data();
+    output << v.x << ':' << v.y;
   }
   return output << '}';
 }
@@ -384,9 +372,9 @@ template<class K,class V> PyObject* to_python(const Hashtable<K,V>& h) {
   PyObject* dict = PyDict_New();
   if (!dict) goto fail;
   for (auto& x : h) {
-    PyObject* k = to_python(x.key());
+    PyObject* k = to_python(x.x);
     if (!k) goto fail;
-    PyObject* v = to_python(x.data());
+    PyObject* v = to_python(x.y);
     if (!v) {
       Py_DECREF(k);
       goto fail;

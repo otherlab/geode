@@ -8,6 +8,7 @@
 #pragma once
 
 #include <geode/array/Array.h>
+#include <geode/mesh/ids.h>
 namespace geode {
 
 template<class T,class Id> struct HasCheapCopy<Field<T,Id> >:public mpl::true_{};
@@ -52,7 +53,7 @@ public:
     : flat(size,uninit) {
     flat.fill(def);
     for (const auto& p : source)
-      flat[p.key().idx()] = p.data();
+      flat[p.x.idx()] = p.y;
   }
 
   Field& operator=(const Field<Element,Id>& source) {
@@ -91,6 +92,8 @@ public:
     assert(valid(result));
     return result;
   }
+
+  Range<IdIter<Id>> id_range() const { return range(IdIter<Id>(Id(0)),IdIter<Id>(Id(size()))); }
 
   Id append(const T& x) GEODE_ALWAYS_INLINE {
     return Id(flat.append(x));

@@ -4,15 +4,13 @@
 #pragma once
 
 #include <geode/utility/config.h>
-namespace boost {
-template<class T> class shared_ptr;
-}
 namespace geode {
 
 struct Hasher;
 template<class T> class Ptr;
 template<class T> class Ref;
 template<class I,class Enable=void> struct Range;
+template<class T> struct is_smart_pointer;
 
 // Convenience struct for marking that function semantics have changed
 struct Mark {};
@@ -47,19 +45,20 @@ template<class A0=void,class A1=void,class A2=void,class A3=void,class A4=void,c
 #endif
 
 // Null pointer convenience class
-struct null {
-  template<class T> operator Ptr<T>() {
-    return Ptr<T>();
-  }
-
-  template<typename T> operator boost::shared_ptr<T>() {
-    return boost::shared_ptr<T>();
+struct Null {
+  template<class T> operator T() const {
+    static_assert(is_smart_pointer<T>::value,"");
+    return T();
   }
 };
+static const Null null = Null();
 
 // Marker for special uninitialized constructors
 struct Uninit {};
 static const Uninit uninit = Uninit();
+
+// Expand to nothing
+#define GEODE_EMPTY()
 
 // GEODE_REMOVE_PARENS((a,b,c)) = a,b,c
 #define GEODE_REMOVE_PARENS_HELPER(...) __VA_ARGS__
@@ -67,5 +66,12 @@ static const Uninit uninit = Uninit();
 
 // Print a type at compile time
 #define GEODE_PRINT_TYPE(...) typedef typename geode::Types<__VA_ARGS__>::_print _print;
+
+// Mark a class noncopyable
+struct Noncopyable {
+  Noncopyable() = default;
+  Noncopyable(const Noncopyable&) = delete;
+  void operator=(const Noncopyable&) = delete;
+};
 
 }

@@ -272,6 +272,14 @@ public:
     static Vector repeat(const T& constant)
     {return Vector(constant,constant,constant,constant); }
 
+    // shifts vector (wrapped) such that element a is first
+    Vector<T,4> roll(const int a) {
+      Vector<T,4> v;
+      for(int i = 0; i < 4; ++i)
+        v[i] = (*this)[(i+a) & 3];
+      return v;
+    }
+
     Vector<T,2> horizontal_vector() const
     {return Vector<T,2>(x,z);}
 

@@ -41,7 +41,7 @@ def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False,constrain=
         with Log.scope('delaunay %s %d, seed %d, validate %d'%(name,n,seed,not benchmark)):
           mesh = delaunay_points(X,validate=not benchmark,edges=edges)
           if not benchmark:
-            mesh.assert_consistent()
+            mesh.assert_consistent(True)
             assert mesh.n_vertices==abs(n)
             assert len(mesh.boundary_loops())==1
           if 0:

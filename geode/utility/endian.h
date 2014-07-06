@@ -1,10 +1,39 @@
-// Utilities for endian conversion
+// Endianness detections and conversion
 #pragma once
 
 #include <geode/utility/config.h>
-#include <boost/integer.hpp>
-#include <boost/detail/endian.hpp>
+#ifdef __APPLE__
+#include <sys/types.h>
+#else
+#include <endian.h>
+#endif
 namespace geode {
+
+// How to detect endianness:
+//
+// #if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
+// if (GEODE_ENDIAN == GEODE_LITTLE_ENDIAN)
+
+#define GEODE_LITTLE_ENDIAN 1
+#define GEODE_BIG_ENDIAN 2
+
+#ifdef __APPLE__
+#  if BYTE_ORDER == LITTLE_ENDIAN
+#    define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
+#  elif BYTE_ORDER == BIG_ENDIAN
+#    define GEODE_ENDIAN GEODE_BIG_ENDIAN
+#  else
+#    error Unknown machine endianness
+#  endif
+#else
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+#    define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
+#  elif __BYTE_ORDER == __BIG_ENDIAN
+#    define GEODE_ENDIAN GEODE_BIG_ENDIAN
+#  else
+#    error Unknown machine endianness
+#  endif
+#endif
 
 // Handle unsigned ints specially
 
@@ -45,7 +74,7 @@ template<class T,int d> static inline Vector<T,d> flip_endian(const Vector<T,d>&
 template<class T> static inline T flip_endian(const T x) {
   const int n = sizeof(T);
   static_assert((n&(n-1))==0,"Size not a power of two");
-  typedef typename boost::uint_t<8*n>::exact I;
+  typedef typename uint_t<8*n>::exact I;
   union {
     T x;
     I i;
@@ -55,11 +84,17 @@ template<class T> static inline T flip_endian(const T x) {
   return u.x;
 }
 
-// Convert to little endian
-#if defined(BOOST_LITTLE_ENDIAN)
+// Convert to big or little endian
+#if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
 template<class T> static inline const T& to_little_endian(const T& x) { return x; }
-#elif defined(BOOST_BIG_ENDIAN)
-template<class T> static inline T to_little_endian(const T& x) { return flip_endian(x); }
+template<class T> static inline       T  to_big_endian   (const T& x) { return flip_endian(x); }
+#elif GEODE_ENDIAN == GEODE_BIG_ENDIAN
+template<class T> static inline       T  to_little_endian(const T& x) { return flip_endian(x); }
+template<class T> static inline const T& to_big_endian   (const T& x) { return x; }
 #endif
+
+// Same as to_, but useful for documentation purposes
+template<class T> static inline T from_little_endian(const T& x) { return to_little_endian(x); }
+template<class T> static inline T from_big_endian   (const T& x) { return to_big_endian(x); }
 
 }

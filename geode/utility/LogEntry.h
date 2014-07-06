@@ -6,14 +6,13 @@
 #include <geode/utility/Log.h>
 #include <geode/utility/time.h>
 #include <geode/utility/config.h>
-#include <boost/noncopyable.hpp>
 #include <string>
 #include <cstdio>
 namespace geode {
 
 using std::string;
 
-class LogEntry : public boost::noncopyable {
+class LogEntry : public Noncopyable {
 public:
   LogEntry* parent;
   int depth;

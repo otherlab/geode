@@ -8,7 +8,6 @@
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/Log.h>
 #include <geode/vector/convert.h>
-#include <boost/dynamic_bitset.hpp>
 namespace geode {
 
 using Log::cout;
@@ -277,7 +276,7 @@ void HalfedgeMesh::permute_vertices(RawArray<const int> permutation, bool check)
     e.src = VertexId(permutation[e.src.id]);
 }
 
-void HalfedgeMesh::assert_consistent() const {
+void HalfedgeMesh::assert_consistent(bool check_double_halfedges) const {
   // Check that all indices are in their valid ranges, that bidirectional links match, and a few other properties.
   GEODE_ASSERT(!(n_halfedges()&1));
   for (const auto v : vertices()) {
@@ -311,7 +310,7 @@ void HalfedgeMesh::assert_consistent() const {
   }
 
   // Check that no two halfedges share the same vertices
-  {
+  if (check_double_halfedges) {
     Hashtable<Vector<VertexId,2>> pairs;
     for (const auto e : halfedges())
       GEODE_ASSERT(pairs.set(vertices(e)));
@@ -377,7 +376,7 @@ int HalfedgeMesh::degree(VertexId v) const {
 
 Nested<HalfedgeId> HalfedgeMesh::boundary_loops() const {
   Nested<HalfedgeId> loops;
-  boost::dynamic_bitset<> seen(n_halfedges());
+  vector<bool> seen(n_halfedges());
   for (const auto start : halfedges())
     if (is_boundary(start) && !seen[start.idx()]) {
       auto e = start;

@@ -7,8 +7,6 @@
 #include <geode/utility/type_traits.h>
 namespace geode {
 
-namespace mpl = boost::mpl;
-
 #ifdef GEODE_PYTHON
 
 GEODE_CORE_EXPORT void set_to_python_failed(const type_info& type);

@@ -13,10 +13,7 @@
 #include <geode/python/to_python.h>
 #include <geode/python/outer_wrapper.h>
 #include <geode/utility/config.h>
-#include <boost/mpl/bool.hpp>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 #ifdef GEODE_VARIADIC
 

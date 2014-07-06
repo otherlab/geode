@@ -3,8 +3,7 @@
 //#####################################################################
 #include <geode/python/numpy.h>
 #include <geode/python/wrap.h>
-#include <boost/detail/endian.hpp>
-#include <boost/cstdint.hpp>
+#include <geode/utility/endian.h>
 #include <stdio.h>
 #ifdef GEODE_PYTHON
 #include <numpy/npy_common.h>
@@ -170,13 +169,10 @@ Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensio
   const int bytes = bits/8;
 
   // Endianness
-#if defined(BOOST_LITTLE_ENDIAN)
-  const char endian = '<';
-#elif defined(BOOST_BIG_ENDIAN)
-  const char endian = '>';
-#else
-#error "Unknown endianness"
-#endif
+  const char endian = GEODE_ENDIAN==GEODE_LITTLE_ENDIAN ? '<'
+                    : GEODE_ENDIAN==GEODE_BIG_ENDIAN    ? '>'
+                                                        : 0;
+  static_assert(endian,"Unknown endianness");
 
   // Construct header
   const char magic_version[8] = {(char)0x93,'N','U','M','P','Y',1,0};
@@ -199,10 +195,10 @@ Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensio
   GEODE_ASSERT((len&15)==0);
   uint16_t header_len = uint16_t(len-10);
   GEODE_ASSERT(header_len==len-10);
-#ifdef BOOST_BIG_ENDIAN
-  // Switch header_len to little endian
-  swap(((char*)&header_len)[0],((char*)&header_len)[1]);
-#endif
+  if (GEODE_ENDIAN == GEODE_BIG_ENDIAN) {
+    // Switch header_len to little endian
+    swap(((char*)&header_len)[0],((char*)&header_len)[1]);
+  }
   memcpy(base+8,&header_len,2);
   header.resize(len);
   return tuple(header,bytes*total_size);

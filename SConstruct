@@ -701,8 +701,8 @@ def configure_python(env,python):
   assert include,nmpy
   python['cpppath'] = [include] if os.path.exists(os.path.join(include,'numpy')) else [include,nmpy]
   if darwin:
-    assert frameworkpath
-    python['frameworkpath'] = [frameworkpath]
+    python_config = 'python%s-config' % version
+    python['linkflags'] = subprocess.check_output([python_config,'--ldflags'])
   elif windows:
     python['libpath'] = [prefix,os.path.join(prefix,'libs')]
     python['libs'] = ['python%s'%version]
@@ -756,7 +756,7 @@ def configure_mpi(env,mpi):
   return 1
 
 # Predefined external libraries
-external(env,'python',default=1,frameworks=['Python'],flags=['GEODE_PYTHON'],configure=configure_python)
+external(env,'python',default=1,flags=['GEODE_PYTHON'],configure=configure_python)
 external(env,'boost',default=1,required=1,hide=1,headers=['boost/version.hpp'])
 external(env,'boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix',
   'boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1,headers=())

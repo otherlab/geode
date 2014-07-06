@@ -7,7 +7,6 @@
 #include <geode/python/Object.h>
 #include <geode/python/try_convert.h>
 #include <geode/python/ExceptionValue.h>
-#include <geode/utility/Optional.h>
 #include <geode/utility/type_traits.h>
 #include <geode/vector/Vector.h>
 extern void wrap_value_base();
@@ -109,7 +108,7 @@ private:
   char get_abbrev() const;
   friend void ::wrap_value_base();
 #ifdef GEODE_PYTHON
-  ValueBase& set(PyObject* value_);
+  ValueBase& set_python(PyObject* value_);
   ValueBase& set_allowed(PyObject* v);
   ValueBase& set_min_py(PyObject* m);
   ValueBase& set_max_py(PyObject* m);
@@ -119,9 +118,9 @@ private:
 #endif
 };
 
-//forward declare from Action.h for friending from Value, as this needs to call set_value
-template<class T> void set_value_and_dependencies(ValueRef<T> &value, T const &v, vector<ValueBase const*> const &dependencies);
-
+// Forward declare from Action.h for friending from Value, as this needs to call set_value
+template<class T> void set_value_and_dependencies(ValueRef<T>& value, const T& v,
+                                                  const vector<const ValueBase*>& dependencies);
 
 template<class T> class GEODE_CORE_CLASS_EXPORT Value : public ValueBase
 {
@@ -133,39 +132,48 @@ public:
     typedef T ValueType;
 
 protected:
-  mutable Optional<T> value; // the cached value
+  // The cached value if !dirty_
+  mutable typename aligned_storage<sizeof(T),alignment_of<T>::value>::type buffer;
 
-  Value(string const &name = string()): ValueBase(name) {}
-  ~Value() {}
+  Value(const string& name = string())
+    : ValueBase(name) {}
+
+  ~Value() {
+    if (!dirty_)
+      static_cast<const T*>(static_cast<const void*>(&buffer))->~T();
+  }
 
   void set_dirty() const {
     if (!dirty_) {
       dirty_ = true;
       error = ExceptionValue();
-      value.reset();
+      static_cast<const T*>(static_cast<const void*>(&buffer))->~T();
       signal();
     }
   }
 
-  template<class S> friend void geode::set_value_and_dependencies(ValueRef<S> &value, S const &v, vector<ValueBase const*> const &dependencies);
+  template<class S> friend void geode::set_value_and_dependencies(ValueRef<S>& value, const S& v,
+                                                                  const vector<const ValueBase*>& dependencies);
 
-  void set_value(const T& value_) const {
+  void set_value(const T& value) const {
+    if (!dirty_)
+      static_cast<const T*>(static_cast<const void*>(&buffer))->~T();
     dirty_ = false;
     error = ExceptionValue();
-    value = value_;
+    new (&buffer) T(value);
     signal();
   }
 
 public:
   const T& operator()() const {
     pull();
-    return *value;
+    return *static_cast<const T*>(static_cast<const void*>(&buffer));
   }
 
 #ifdef GEODE_PYTHON
   PyObject* get_python() const {
     pull();
-    return try_to_python(*value);
+    return try_to_python(*static_cast<const T*>(static_cast<const void*>(&buffer)));
   }
 #endif
 
@@ -176,7 +184,7 @@ public:
   // Look at a value without adding a dependency graph node
   const T& peek() const {
     GEODE_ASSERT(!dirty_);
-    return *value;
+    return *static_cast<const T*>(static_cast<const void*>(&buffer));
   }
 };
 

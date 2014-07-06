@@ -5,7 +5,6 @@
 
 #include <geode/python/forward.h>
 #include <geode/utility/type_traits.h>
-#include <boost/detail/endian.hpp>
 #include <stdint.h>
 #include <string>
 namespace geode {
@@ -25,9 +24,9 @@ template<class I> static inline I cast_uint128(const uint128_t& n) {
 #else
 
 class uint128_t {
-#if defined(BOOST_LITTLE_ENDIAN)
+#if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
   uint64_t lo,hi;
-#elif defined(BOOST_BIG_ENDIAN)
+#elif GEODE_ENDIAN == GEODE_BIG_ENDIAN
   uint64_t hi,lo;
 #endif
 public:
@@ -133,6 +132,8 @@ template<class I> inline I cast_uint128(const uint128_t& n) {
 }
 
 #endif
+
+template<> struct uint_t<128> { typedef uint128_t exact; };
 
 GEODE_CORE_EXPORT string str(uint128_t n);
 GEODE_CORE_EXPORT ostream& operator<<(ostream& output, uint128_t n);

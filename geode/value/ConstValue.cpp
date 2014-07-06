@@ -5,5 +5,5 @@
 using namespace geode;
 
 void wrap_const_value() {
-  python::function("const_value_py",const_value<Ptr<> >);
+  python::function("const_value_py",const_value<Ptr<>>);
 }

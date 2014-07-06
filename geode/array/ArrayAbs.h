@@ -6,7 +6,6 @@
 #include <geode/array/ArrayExpression.h>
 #include <geode/vector/ArithmeticPolicy.h>
 #include <geode/utility/HasCheapCopy.h>
-#include <boost/mpl/if.hpp>
 namespace geode {
 
 template<class TArray> class ArrayAbs;

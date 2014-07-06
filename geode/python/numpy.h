@@ -164,12 +164,12 @@ numpy_info(const NdArray<T>& array, void*& data, npy_intp* dimensions) {
 // Numpy_Shape_Match: Check whether dynamic type can be resized to fit a given numpy array
 
 template<class T> typename enable_if<NumpyIsScalar<T>,bool>::type
-numpy_shape_match(mpl::identity<T>,int rank,const npy_intp* dimensions) {
+numpy_shape_match(Types<T>,int rank,const npy_intp* dimensions) {
   return true;
 }
 
 template<class TV> typename enable_if<mpl::and_<NumpyIsStatic<TV>,mpl::not_<NumpyIsScalar<TV> > >,bool>::type
-numpy_shape_match(mpl::identity<TV>, int rank, const npy_intp* dimensions) {
+numpy_shape_match(Types<TV>, int rank, const npy_intp* dimensions) {
   if (rank!=NumpyRank<TV>::value) return false;
   npy_intp subdimensions[NumpyRank<TV>::value?NumpyRank<TV>::value:1];
   NumpyInfo<TV>::dimensions(subdimensions);
@@ -178,23 +178,23 @@ numpy_shape_match(mpl::identity<TV>, int rank, const npy_intp* dimensions) {
 }
 
 template<class T> bool
-numpy_shape_match(mpl::identity<const T>, int rank, const npy_intp* dimensions) {
-  return numpy_shape_match(mpl::identity<T>(),rank,dimensions);
+numpy_shape_match(Types<const T>, int rank, const npy_intp* dimensions) {
+  return numpy_shape_match(Types<T>(),rank,dimensions);
 }
 
 template<class T,int d> bool
-numpy_shape_match(mpl::identity<Array<T,d> >, int rank, const npy_intp* dimensions) {
-  return numpy_shape_match(mpl::identity<T>(),rank-d,dimensions+d);
+numpy_shape_match(Types<Array<T,d> >, int rank, const npy_intp* dimensions) {
+  return numpy_shape_match(Types<T>(),rank-d,dimensions+d);
 }
 
 template<class T,int d> bool
-numpy_shape_match(mpl::identity<RawArray<T,d> >, int rank, const npy_intp* dimensions) {
-  return numpy_shape_match(mpl::identity<T>(),rank-d,dimensions+d);
+numpy_shape_match(Types<RawArray<T,d> >, int rank, const npy_intp* dimensions) {
+  return numpy_shape_match(Types<T>(),rank-d,dimensions+d);
 }
 
 template<class T> bool
-numpy_shape_match(mpl::identity<NdArray<T> >, int rank, const npy_intp* dimensions) {
-  return numpy_shape_match(mpl::identity<T>(),NumpyRank<T>::value,dimensions+rank-NumpyRank<T>::value);
+numpy_shape_match(Types<NdArray<T> >, int rank, const npy_intp* dimensions) {
+  return numpy_shape_match(Types<T>(),NumpyRank<T>::value,dimensions+rank-NumpyRank<T>::value);
 }
 
 #ifdef GEODE_PYTHON
@@ -256,7 +256,7 @@ from_numpy(PyObject* object) { // Borrows reference to object
   const auto array = numpy_from_any(object,NumpyDescr<TV>::descr(),rank,rank,NPY_ARRAY_CARRAY_RO|NPY_ARRAY_FORCECAST);
 
   // Ensure appropriate dimensions
-  if (!numpy_shape_match(mpl::identity<TV>(),rank,PyArray_DIMS((PyArrayObject*)&*array)))
+  if (!numpy_shape_match(Types<TV>(),rank,PyArray_DIMS((PyArrayObject*)&*array)))
     throw_dimension_mismatch();
 
   return *(const TV*)(PyArray_DATA((PyArrayObject*)&*array));
@@ -264,7 +264,7 @@ from_numpy(PyObject* object) { // Borrows reference to object
 
 // Build an Array<T,d> from a compatible numpy array
 template<class T,int d> inline Array<T,d>
-from_numpy_helper(mpl::identity<Array<T,d>>, PyObject& array) {
+from_numpy_helper(Types<Array<T,d>>, PyObject& array) {
   PyObject* base = PyArray_BASE((PyArrayObject*)&array);
   Vector<int,d> counts;
   for (int i=0;i<d;i++){
@@ -275,7 +275,7 @@ from_numpy_helper(mpl::identity<Array<T,d>>, PyObject& array) {
 
 // Build an NdArray<T,d> from a compatible numpy array
 template<class T> inline NdArray<T>
-from_numpy_helper(mpl::identity<NdArray<T>>, PyObject& array) {
+from_numpy_helper(Types<NdArray<T>>, PyObject& array) {
   PyObject* base = PyArray_BASE((PyArrayObject*)&array);
   Array<int> shape(PyArray_NDIM((PyArrayObject*)&array)-NumpyRank<T>::value,uninit);
   for (int i=0;i<shape.size();i++){
@@ -295,9 +295,9 @@ from_numpy(PyObject* object) { // Borrows reference to object
   if (is_numpy_array(object)) {
     // Already a numpy array: require an exact match to avoid hidden performance issues
     check_numpy_conversion(object,flags,rank_range,descr);
-    if (!numpy_shape_match(mpl::identity<TArray>(),PyArray_NDIM((PyArrayObject*)object),PyArray_DIMS((PyArrayObject*)object)))
+    if (!numpy_shape_match(Types<TArray>(),PyArray_NDIM((PyArrayObject*)object),PyArray_DIMS((PyArrayObject*)object)))
       throw_dimension_mismatch();
-    return from_numpy_helper(mpl::identity<TArray>(),*object);
+    return from_numpy_helper(Types<TArray>(),*object);
   } else if (!TArray::is_const)
     throw_type_error(object,numpy_array_type());
 
@@ -306,10 +306,10 @@ from_numpy(PyObject* object) { // Borrows reference to object
 
   // Ensure appropriate dimension
   const int rank = PyArray_NDIM((PyArrayObject*)&*array);
-  if (!numpy_shape_match(mpl::identity<TArray>(),rank,PyArray_DIMS((PyArrayObject*)&*array)))
+  if (!numpy_shape_match(Types<TArray>(),rank,PyArray_DIMS((PyArrayObject*)&*array)))
     throw_dimension_mismatch();
 
-  return from_numpy_helper(mpl::identity<TArray>(),array);
+  return from_numpy_helper(Types<TArray>(),array);
 }
 
 #endif

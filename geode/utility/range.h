@@ -3,6 +3,7 @@
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
 #include <geode/utility/type_traits.h>
+#include <geode/utility/validity.h>
 #include <cassert>
 
 #ifdef GEODE_PYTHON
@@ -57,6 +58,7 @@ template<class I> struct Range<I,typename enable_if<is_integral<I>>::type> {
     assert(lo<=hi);
   }
 
+  bool empty() const { return hi == lo; }
   I size() const { return hi-lo; }
 
   Iter begin() const { return Iter(lo); }

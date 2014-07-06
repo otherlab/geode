@@ -25,7 +25,6 @@
 #include <geode/vector/ScalarPolicy.h>
 #include <geode/utility/STATIC_ASSERT_SAME.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/identity.hpp>
 #include <iostream>
 #include <limits>
 namespace geode {
@@ -129,7 +128,7 @@ public:
 
 private:
   template<class S> struct ElementOf{typedef typename S::Element type;};
-  typedef typename mpl::if_<IsVector<T>,ElementOf<T>,mpl::identity<Unusable> >::type::type ElementOfT;
+  typedef typename mpl::if_<IsVector<T>,ElementOf<T>,First<Unusable> >::type::type ElementOfT;
   typedef typename mpl::if_<is_const<T_>,const ElementOfT,ElementOfT>::type TOfT;
 public:
 

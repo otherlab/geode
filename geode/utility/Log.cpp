@@ -8,7 +8,6 @@
 #include <geode/utility/LogScope.h>
 #include <geode/utility/str.h>
 #include <geode/utility/time.h>
-#include <boost/scoped_ptr.hpp>
 #include <sstream>
 #include <iostream>
 namespace geode {
@@ -18,7 +17,6 @@ using std::string;
 using std::stringbuf;
 using std::streambuf;
 using std::ostream;
-using boost::scoped_ptr;
 
 namespace {
 FILE* log_file=0;

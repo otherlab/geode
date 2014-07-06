@@ -13,7 +13,8 @@ public:
   GEODE_NEW_FRIEND
   typedef Value<T> Base;
 private:
-  ConstValue(const T& value, const string &name = string()): Value<T>(name) {
+  ConstValue(const T& value, const string& name = string())
+    : Value<T>(name) {
     this->set_value(value);
   }
 
@@ -30,8 +31,8 @@ private:
   }
 };
 
-template<class T> ValueRef<T> const_value(const T& value, const string &name = string()) {
-  return ValueRef<T>(new_<ConstValue<T> >(value, name));
+template<class T> ValueRef<T> const_value(const T& value, const string& name = string()) {
+  return ValueRef<T>(new_<ConstValue<T>>(value,name));
 }
 
 }

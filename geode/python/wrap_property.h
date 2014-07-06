@@ -12,10 +12,8 @@
 #include <geode/python/from_python.h>
 #include <geode/python/to_python.h>
 #include <geode/utility/config.h>
-#include <boost/mpl/bool.hpp>
 namespace geode {
 
-namespace mpl = boost::mpl;
 using std::exception;
 
 GEODE_CORE_EXPORT PyObject* wrap_property_helper(PyTypeObject* type,const char* name,getter get_wrapper,setter set_wrapper,void* get);

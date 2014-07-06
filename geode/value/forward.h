@@ -1,9 +1,7 @@
 #pragma once
 
-#include <boost/mpl/bool.hpp>
+#include <geode/utility/type_traits.h>
 namespace geode {
-
-namespace mpl = boost::mpl;
 
 class ValueBase;
 class PropBase;

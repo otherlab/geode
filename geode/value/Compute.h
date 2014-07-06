@@ -8,12 +8,10 @@
 #include <geode/structure/Tuple.h>
 #include <geode/utility/curry.h>
 #include <geode/utility/format.h>
+#include <geode/utility/function.h>
 #include <geode/utility/type_traits.h>
-#include <boost/function.hpp>
 #include <stdio.h>
 namespace geode {
-
-using boost::function;
 
 template<class T> class GEODE_CORE_CLASS_EXPORT Compute : public Value<T>,public Action {
 public:

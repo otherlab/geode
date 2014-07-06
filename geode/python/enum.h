@@ -24,8 +24,6 @@
 #include <geode/utility/type_traits.h>
 #include <geode/utility/tr1.h>
 #include <geode/python/to_python.h>
-#include <boost/mpl/void.hpp>
-#include <boost/preprocessor/facilities/empty.hpp>
 namespace geode {
 
 using std::make_pair;
@@ -42,7 +40,7 @@ template<class E> class PyEnum : public Object {};
   template<> class PyEnum<E> : public Object { \
     typedef int Unused##E; /* E must be unqualified */ \
   public: \
-    GEODE_DECLARE_TYPE(EXPORT BOOST_PP_EMPTY()) /* Last bit dodges a Windows compiler bug */ \
+    GEODE_DECLARE_TYPE(EXPORT GEODE_EMPTY()) /* Last bit dodges a Windows compiler bug */ \
     typedef Object Base; \
     EXPORT static unordered_map<int,Ref<PyEnum>> values; \
     const char* name; \

@@ -7,8 +7,6 @@
 #include <geode/array/view.h>
 #include <geode/python/Object.h>
 #include <geode/vector/Vector.h>
-#include <boost/cstdint.hpp>
-#include <boost/noncopyable.hpp>
 #include <cmath>
 #include <ctime>
 namespace geode {

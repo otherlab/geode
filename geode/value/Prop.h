@@ -18,15 +18,12 @@
 #include <geode/utility/str.h>
 #include <geode/utility/type_traits.h>
 #include <geode/vector/Vector.h>
-#include <boost/scoped_ptr.hpp>
 namespace geode {
 
 using std::string;
 using std::type_info;
 using std::vector;
 using std::ostringstream;
-using boost::scoped_ptr;
-
 class PropManager;
 
 class GEODE_CORE_CLASS_EXPORT PropBase { // Need GEODE_CORE_EXPORT for typeid
@@ -43,7 +40,7 @@ public:
   virtual string value_str(bool use_default = false) const = 0;
 
 #ifdef GEODE_PYTHON
-  virtual void set(PyObject* value_) = 0;
+  virtual void set_python(PyObject* value_) = 0;
   virtual PyObject* default_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual PyObject* allowed_python() const = 0;
@@ -188,7 +185,7 @@ public:
   vector<T> allowed;
 
   void set(const T& value_) {
-    if (!Equals<T>::eval(*Base::value,value_)) {
+    if (!Equals<T>::eval(peek(),value_)) {
       if(allowed.size() && !geode::contains(allowed,value_))
         throw ValueError("value not in allowed values for " + name());
       this->set_value(Clamp::clamp(value_));
@@ -227,7 +224,7 @@ public:
 
 #ifdef GEODE_PYTHON
 
-  void set(PyObject* value_) {
+  void set_python(PyObject* value_) {
     set(try_from_python<T>(value_));
   }
 
@@ -263,7 +260,7 @@ public:
 
   // Look at a property without adding a dependency graph node
   const T& peek() const {
-    return *this->value;
+    return *static_cast<const T*>(static_cast<const void*>(&this->buffer));
   }
 
   // WARNING: This will give a mutable reference to the contained prop; to keep sanity in the
@@ -271,7 +268,7 @@ public:
   // and an exception prevents you from calling signal, an obscure bug will result.  Use at
   // your own risk.
   T& mutate() {
-    return *this->value;
+    return *static_cast<T*>(static_cast<void*>(&this->buffer));
   }
 
   bool same_default(PropBase& other_) const {
@@ -280,7 +277,7 @@ public:
   }
 
   string value_str(bool use_default) const {
-    return str(use_default?default_:*this->value);
+    return str(use_default ? default_ : this->peek());
   }
 
   void dump(int indent) const {

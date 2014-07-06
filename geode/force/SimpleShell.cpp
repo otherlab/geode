@@ -281,7 +281,7 @@ void SimpleShell::add_frequency_squared(RawArray<T> frequency_squared) const {
     }
   }
   for (auto& it : particle_frequency_squared)
-    frequency_squared[it.key()] += it.data();
+    frequency_squared[it.x] += it.y;
 }
 
 T SimpleShell::strain_rate(RawArray<const TV> V) const {

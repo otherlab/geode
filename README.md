@@ -11,10 +11,10 @@ For questions or discussion, email geode-dev@googlegroups.com.
 
 For C++:
 
-* [boost >= 1.46](http://www.boost.org): Various C++ utility libraries (Boost Software License)
 * [scons >= 2.0](http://www.scons.org): A build system (MIT license)
 * [gmp >= 4.0](http://gmplib.org): Arbitrary precision arithmetic (LGPL)
 * [cblas](http://www.netlib.org/blas/blast-forum/cblas.tgz): C wrappers for BLAS (BSD license)
+* [boost >= 1.46](http://www.boost.org): Not needed if a C++11 standard library exists (Boost Software License)
 
 For Python:
 
@@ -47,11 +47,12 @@ So far the code has been tested on
 If necessary, dependencies can be installed via one of
 
     # Debian/Ubuntu
-    sudo apt-get install python python-numpy scons libboost-dev libgmp-dev
+    sudo apt-get install python python-numpy scons libgmp-dev
     sudo apt-get install python-scipy python-pytest libpng-dev libjpeg-dev libopenexr-dev # optional
 
     # Homebrew (recommended)
-    brew install scons boost openexr gfortran python
+    brew install scons openexr gfortran python
+    brew install boost # Not needed for 10.9 or later
     sudo pip install --upgrade pip setuptools numpy scipy pytest
 
     # MacPorts (not recommended).  If you have python 2.7, replace py26 with py27.

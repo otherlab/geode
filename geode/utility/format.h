@@ -16,12 +16,9 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/if.hpp>
-#include <boost/mpl/or.hpp>
 #include <string>
 namespace geode {
 
-namespace mpl = boost::mpl;
 using std::string;
 
 // Unfortunately, since format_helper is called indirectly through format, we can't use gcc's format attribute.

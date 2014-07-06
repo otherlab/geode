@@ -5,7 +5,7 @@
 
 #include <geode/utility/config.h>
 #include <geode/utility/format.h>
-#include <boost/noncopyable.hpp>
+#include <geode/utility/forward.h>
 #include <ostream>
 #include <string>
 namespace geode {
@@ -35,7 +35,7 @@ GEODE_CORE_EXPORT void reset();
 GEODE_CORE_EXPORT void dump();
 
 namespace {
-struct Scope : private boost::noncopyable {
+struct Scope : private Noncopyable {
 public:
   Scope(const string& name) {
     push_scope(name);

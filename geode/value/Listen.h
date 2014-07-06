@@ -5,10 +5,8 @@
 
 #include <geode/value/Value.h>
 #include <geode/value/Action.h>
-#include <boost/function.hpp>
+#include <geode/utility/function.h>
 namespace geode {
-
-using boost::function;
 
 class Listen : public Object, public Action {
 public:
