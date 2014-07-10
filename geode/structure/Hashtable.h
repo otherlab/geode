@@ -37,6 +37,18 @@ template<class TK,class T> struct HashtableEntry {
     state = EntryActive;
   }
 
+  void destroy() {
+    if (state == EntryActive) {
+      static_cast<const TK*>(static_cast<const void*>(&TKbuf))->~TK();
+      static_cast<const T*>(static_cast<const void*>(&Tbuf))->~T();
+    }
+    state = EntryDeleted;
+  }
+
+  ~HashtableEntry() {
+    destroy();
+  }
+
   const TK& key() const { return reinterpret_cast<const TK&>(TKbuf); };
   T& data() const { return reinterpret_cast<T&>(const_cast_(Tbuf)); };
   bool active() const { return state==EntryActive; }
@@ -48,6 +60,17 @@ template<class TK,class T> struct HashtableEntry {
 template<class TK> struct HashtableEntry<TK,Unit> : public Unit {
   typename aligned_storage<sizeof(TK), alignment_of<TK>::value>::type TKbuf;
   HashtableEntryState state;
+
+  void destroy() {
+    if (state == EntryActive) {
+      static_cast<const TK*>(static_cast<const void*>(&TKbuf))->~TK();
+    }
+    state = EntryDeleted;
+  }
+
+  ~HashtableEntry() {
+    destroy();
+  }
 
   void init(const TK& k, Unit) {
     new(&TKbuf) TK(k);
@@ -239,7 +262,7 @@ public:
   bool erase(const TK& v) { // Erase an element if it exists, returning true if so
     for (int h=hash_index(v);table_[h].state!=EntryFree;h=next_index(h)) // reduce as still are using entries for deletions
       if (table_[h].active() && table_[h].key()==v) {
-        table_[h].state = EntryDeleted;
+        table_[h].destroy();
         size_--;
         next_resize_--;
         return true;
