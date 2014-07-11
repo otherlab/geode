@@ -48,13 +48,13 @@ def clamp(x,xmin,xmax):
 def sqr_magnitude(v):
   return vdot(v,v)
 
-def magnitudes(v):
+def magnitudes(v,axis=-1):
   "same as magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
-  return sqrt(sqr(v).sum(-1))
+  return sqrt(sqr(v).sum(axis))
 
-def sqr_magnitudes(v):
+def sqr_magnitudes(v,axis=-1):
   "same as sqr_magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
-  return sqr(v).sum(-1)
+  return sqr(v).sum(axis)
 
 def axis_vector(axis,d=3,dtype=real):
   v = zeros(d,dtype)
