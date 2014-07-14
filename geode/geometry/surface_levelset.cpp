@@ -40,10 +40,12 @@ struct Helper {
   Helper(const ParticleTree<TV>& particles, const SimplexTree<TV,2>& surface, RawArray<T> sqr_phi_node, RawArray<CloseTriangleInfo> info)
     : particles(particles), surface(surface), sqr_phi_node(sqr_phi_node), info(info) {}
 
-  void evaluate(int particle_n,int surface_n) const {
+  void evaluate(const int particle_n, const int surface_n) const {
     const Box<TV> &particle_box = particles.boxes[particle_n],
                   &surface_box = surface.boxes[surface_n];
-    if (particles.is_leaf(particle_n) && surface.is_leaf(surface_n)) { // Two leaves: compute all pairwise distances
+    const bool particle_leaf = particles.is_leaf(particle_n),
+               surface_leaf = surface.is_leaf(surface_n);
+    if (particle_leaf && surface_leaf) { // Two leaves: compute all pairwise distances
       sqr_phi_node[particle_n] = 0;
       RawArray<const int> particle_prims = particles.prims(particle_n);
       RawArray<const int> surface_prims = surface.prims(surface_n);
@@ -63,7 +65,8 @@ struct Helper {
             }
           }
         sqr_phi_node[particle_n] = max(sqr_phi_node[particle_n],info[p].phi);}
-    } else if (particles.is_leaf(particle_n) || particle_box.sizes().max()<=0*surface_box.sizes().max()) { // Recurse into surface_node
+    } else if (particle_leaf || (!surface_leaf && particle_box.sizes().max()<=surface_box.sizes().max())) {
+      // Recurse into surface_node
       int surface_ns[2];
       T bounds[2];
       for (int c=0;c<2;c++) {
