@@ -408,19 +408,14 @@ bool TriangleTopology::is_manifold() const {
 bool TriangleTopology::is_manifold_with_boundary() const {
   if (is_manifold()) // Finish in O(1) time if possible
     return true;
-  for (const auto v : vertices()) {
-    const auto start = halfedge(v);
-    if (is_boundary(start)) { // If the first halfedge is a boundary, we need to check for a second
-      auto e = start;
-      for (;;) {
-        e = left(e);
-        if (e==start)
-          break;
-        if (is_boundary(e)) // If there are two boundary halfedges, this vertex is bad
-          return false;
-      }
+  for (const auto start : boundary_edges())
+    for (auto e=start;;) {
+      e = left(e);
+      if (e==start)
+        break;
+      if (is_boundary(e)) // There are two boundary halfedges at the same vertex, which is bad.
+        return false;
     }
-  }
   return true;
 }
 

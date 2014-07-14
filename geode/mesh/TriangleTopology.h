@@ -203,7 +203,7 @@ public:
   inline bool isolated   (VertexId v)   const;
   GEODE_CORE_EXPORT bool has_boundary() const; // O(1) time
   GEODE_CORE_EXPORT bool is_manifold() const; // O(1) time
-  GEODE_CORE_EXPORT bool is_manifold_with_boundary() const; // O(n) time
+  GEODE_CORE_EXPORT bool is_manifold_with_boundary() const; // O(boundary) time
   GEODE_CORE_EXPORT bool has_isolated_vertices() const; // O(n) time
 
   // Tuples or iterable ranges of neighbors
@@ -474,7 +474,7 @@ public:
 
   // Add another TriangleTopology, assuming the vertex sets are disjoint.
   // Returns the offsets of the other vertex, face, and boundary ids in the new arrays.
-  GEODE_CORE_EXPORT Vector<int,3> add(MutableTriangleTopology const &other);
+  GEODE_CORE_EXPORT Vector<int,3> add(const MutableTriangleTopology& other);
 
   // Extract a set of faces into a new MutableTriangleTopology, which is returned,
   // along with two fields (on the returned mesh) giving vertex and face correspondences.
@@ -512,13 +512,13 @@ public:
   // vertex is the first vertex returned.
   GEODE_CORE_EXPORT Array<VertexId> split_nonmanifold_vertex(VertexId v);
 
-  // split all nonmanifold boundary vertices. The first element of result[i] is
+  // Split all nonmanifold boundary vertices. The first element of result[i] is
   // the original vertex that was split, the others are the added vertices.
   GEODE_CORE_EXPORT Nested<VertexId> split_nonmanifold_vertices();
 
   // Make a hole (two connected boundaries) at he. The new reverse(he) is returned
   // first. This may create non-manifold vertices, which must be treated separately.
-  GEODE_CORE_EXPORT Vector<HalfedgeId, 2> split_along_edge(HalfedgeId he);
+  GEODE_CORE_EXPORT Vector<HalfedgeId,2> split_along_edge(HalfedgeId he);
 
   // Split a face into three by inserting a new vertex.
   GEODE_CORE_EXPORT VertexId split_edge(HalfedgeId e);
