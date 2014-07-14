@@ -18,4 +18,5 @@ void wrap_geometry() {
   GEODE_WRAP(bezier)
   GEODE_WRAP(segment)
   GEODE_WRAP(surface_levelset)
+  GEODE_WRAP(offset_mesh)
 }

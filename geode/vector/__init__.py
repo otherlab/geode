@@ -112,7 +112,7 @@ def det(*args):
 def cross(u,v):
   # The numpy version doesn't always broadcast correctly, so we roll our own cross product routine.
   # Unfortunately, it's impossible to make 1D/2D cross products work correctly together with
-  # broadcasting, we required either both 2D or both 3D.
+  # broadcasting, so we require either both 2D or both 3D.
   u,v = asarray(u),asarray(v)
   d = u.shape[-1]
   assert d==v.shape[-1]

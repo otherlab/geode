@@ -9,7 +9,7 @@
 #include <geode/structure/Triple.h>
 #include <geode/structure/Quad.h>
 #include <geode/structure/Quintuple.h>
-#include <geode/utility/Enumerate.h>
+#include <geode/utility/enumerate.h>
 #include <geode/vector/forward.h>
 
 namespace geode {

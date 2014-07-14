@@ -20,6 +20,9 @@ namespace geode {
 
 using Log::cout;
 using std::endl;
+typedef real T;
+typedef Vector<T,2> TV2;
+typedef Vector<T,3> TV3;
 
 GEODE_DEFINE_TYPE(TriangleTopology)
 GEODE_DEFINE_TYPE(MutableTriangleTopology)
@@ -1843,97 +1846,66 @@ Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_triangle_soup() co
   return tuple(new_<TriangleSoup>(facets), indices);
 }
 
-template<class TV>
-typename TV::value_type TriangleTopology::angle_at(HalfedgeId id, Field<TV, VertexId> const &pos) const {
-  auto p = prev(id);
-  auto v1 = (pos[dst(id)] - pos[src(id)]);
-  auto mag = v1.sqr_magnitude();
-  if (mag)
-    v1 *= 1/sqrt(mag);
-  else
-    v1 = TV();
-  auto v2 = (pos[src(p)] - pos[src(id)]);
-  mag = v2.sqr_magnitude();
-  if (mag)
-    v2 *= 1/sqrt(mag);
-  else
-    v2 = TV();
-  return atan2(cross(v1, v2).magnitude(), dot(v1, v2));
+TV3 TriangleTopology::normal(RawField<const TV3,VertexId> X, const FaceId f) const {
+  const auto v = vertices(f);
+  return normalized(cross(X[v.y]-X[v.x],X[v.z]-X[v.x]));
 }
 
-template GEODE_CORE_EXPORT real TriangleTopology::angle_at(HalfedgeId id, Field<Vector<real,3>, VertexId> const &pos) const;
-
-template<class TV>
-TV TriangleTopology::normal(FaceId id, Field<TV, VertexId> const &pos) const {
-  auto v = vertices(id);
-  auto N = cross(pos[v.y] - pos[v.x], pos[v.z] - pos[v.x]);
-  auto mag = N.sqr_magnitude();
-  if (mag)
-    return N/sqrt(mag);
-  else
-    return TV();
-}
-
-template GEODE_CORE_EXPORT Vector<real,3> TriangleTopology::normal(FaceId id, Field<Vector<real,3>, VertexId> const &pos) const;
-
-template<class TV>
-TV TriangleTopology::normal(VertexId id, Field<TV, VertexId> const &pos) const {
-  real total_angle = 0;
-  TV N = TV();
-
-  for (auto he : outgoing(id)) {
-    auto f = face(he);
-    if (f.valid()) {
-      auto angle = angle_at(he, pos);
-      total_angle += angle;
-      N += normal(f, pos);
-    }
+TV3 TriangleTopology::normal(RawField<const TV3,VertexId> X, const VertexId v) const {
+  TV3 n;
+  for (const auto e : outgoing(v)) {
+    const auto f = face(e);
+    if (f.valid())
+      n += angle_at(X,e)*normal(X,f);
   }
-
-  if (total_angle)
-    N /= total_angle;
-
-  return N;
+  return normalized(n);
 }
 
-template GEODE_CORE_EXPORT Vector<real,3> TriangleTopology::normal(VertexId id, Field<Vector<real,3>, VertexId> const &pos) const;
-
-
-template<class TV>
-Triangle<TV> TriangleTopology::triangle(FaceId id, Field<TV, VertexId> const &pos) const {
-  auto verts = vertices(id);
-  return Triangle<TV>(pos[verts.x], pos[verts.y], pos[verts.z]);
+T TriangleTopology::dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const {
+  const auto t0 = triangle(X,face(e)),
+             t1 = triangle(X,face(reverse(e)));
+  const auto d = t1.center()-t0.center();
+  const T abs_theta = acos(min(1.,max(-1.,dot(t0.n,t1.n))));
+  return copysign(abs_theta,dot(t1.n-t0.n,d));
 }
 
-template GEODE_CORE_EXPORT Triangle<Vector<real,2>> TriangleTopology::triangle(FaceId id, Field<Vector<real,2>, VertexId> const &pos) const;
-template GEODE_CORE_EXPORT Triangle<Vector<real,3>> TriangleTopology::triangle(FaceId id, Field<Vector<real,3>, VertexId> const &pos) const;
-
-template<class TV>
-Segment<TV> TriangleTopology::segment(HalfedgeId id, Field<TV, VertexId> const &pos) const {
-  auto verts = vertices(id);
-  return Segment<TV>(pos[verts.x], pos[verts.y]);
+T TriangleTopology::cos_dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const {
+  const auto x1 = X[src(e)],
+             x2 = X[dst(e)],
+             x0 = X[dst(next(e))],
+             x3 = X[dst(next(reverse(e)))],
+             n0 = cross(x2-x1,x0-x1),
+             n1 = cross(x3-x1,x0-x1);
+  // Assume really bad dihedrals for degenerate elements
+  const T denom = sqrt(sqr_magnitude(n0)*sqr_magnitude(n1));
+  return denom ? dot(n0,n1)/denom : 1;
 }
 
-template GEODE_CORE_EXPORT Segment<Vector<real,2>> TriangleTopology::segment(HalfedgeId id, Field<Vector<real,2>, VertexId> const &pos) const;
-template GEODE_CORE_EXPORT Segment<Vector<real,3>> TriangleTopology::segment(HalfedgeId id, Field<Vector<real,3>, VertexId> const &pos) const;
-
-template<class TV>
-Tuple<Ref<SimplexTree<TV,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
-  auto soup = edge_segment_soup();
-  return tuple(new_<SimplexTree<TV,1>>(soup.x, pos.flat, leaf_size), soup.y);
-}
-
-template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,2>,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<Vector<real,2>, VertexId> const &pos, int) const;
-template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,3>,1>>, Array<HalfedgeId>> TriangleTopology::edge_tree(Field<Vector<real,3>, VertexId> const &pos, int) const;
-
-template<class TV>
-Tuple<Ref<SimplexTree<TV,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<TV, VertexId> const &pos, int leaf_size) const {
-  auto soup = face_triangle_soup();
-  return tuple(new_<SimplexTree<TV,2>>(soup.x, pos.flat, leaf_size), soup.y);
-}
-
-template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,2>,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<Vector<real,2>, VertexId> const &pos, int) const;
-template GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<Vector<real,3>,2>>, Array<FaceId>> TriangleTopology::face_tree(Field<Vector<real,3>, VertexId> const &pos, int) const;
+#define PER_DIMENSION(TV) \
+  T TriangleTopology::angle_at(RawField<const TV,VertexId> X, const HalfedgeId e) const { \
+    const auto x0 = X[src(e)], \
+               x1 = X[dst(e)], \
+               x2 = X[src(prev(e))]; \
+    return angle_between(x1-x0,x2-x0); \
+  } \
+  Triangle<TV> TriangleTopology::triangle(RawField<const TV,VertexId> X, const FaceId f) const { \
+    const auto v = vertices(f); \
+    return Triangle<TV>(X[v.x],X[v.y],X[v.z]); \
+  } \
+  Segment<TV> TriangleTopology::segment(RawField<const TV,VertexId> X, const HalfedgeId e) const { \
+    const auto v = vertices(e); \
+    return Segment<TV>(X[v.x],X[v.y]); \
+  } \
+  Tuple<Ref<SimplexTree<TV,1>>,Array<HalfedgeId>> TriangleTopology::edge_tree(Field<const TV,VertexId> X, const int leaf_size) const { \
+    const auto soup = edge_segment_soup(); \
+    return tuple(new_<SimplexTree<TV,1>>(soup.x,X.flat,leaf_size),soup.y); \
+  } \
+  Tuple<Ref<SimplexTree<TV,2>>,Array<FaceId>> TriangleTopology::face_tree(Field<const TV,VertexId> X, const int leaf_size) const { \
+    const auto soup = face_triangle_soup(); \
+    return tuple(new_<SimplexTree<TV,2>>(soup.x,X.flat,leaf_size),soup.y); \
+  }
+PER_DIMENSION(TV2)
+PER_DIMENSION(TV3)
 
 #define SAFE_ERASE(prim,Id) \
   void MutableTriangleTopology::safe_erase_##prim(Id x, bool erase_isolated) { \

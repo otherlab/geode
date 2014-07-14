@@ -3,7 +3,7 @@
 #pragma once
 
 #include <geode/utility/SanitizeFunction.h>
-#include <geode/utility/Enumerate.h>
+#include <geode/utility/enumerate.h>
 #include <geode/utility/move.h>
 #include <geode/utility/type_traits.h>
 #include <geode/structure/Tuple.h>

@@ -18,7 +18,7 @@
 #include <geode/python/outer_wrapper.h>
 #include <geode/python/utility.h>
 #include <geode/utility/config.h>
-#include <geode/utility/Enumerate.h>
+#include <geode/utility/enumerate.h>
 namespace geode {
 
 typedef PyObject* (*FunctionWrapper)(PyObject* args,void* wrapped);

@@ -41,27 +41,33 @@ protected:
 public:
   ~BoxTree();
 
-  int nodes() const
-  {return boxes.size();}
+  int nodes() const {
+    return boxes.size();
+  }
 
-  Box<TV> bounding_box() const
-  {return boxes.size()?boxes[0]:Box<TV>();}
+  Box<TV> bounding_box() const {
+    return boxes.size() ? boxes[0] : Box<TV>();
+  }
 
   bool is_leaf(int node) const {
     assert(ranges.valid(node));
     return node>=leaves.lo;
   }
 
-  RawArray<const int> prims(int leaf) const {
+  RawArray<const int> prims(const int leaf) const {
     assert(is_leaf(leaf));
     return p.slice(ranges[leaf].lo,ranges[leaf].hi);
   }
 
-  static int parent(int node)
-  {assert(node>0);return (node-1)/2;}
+  static int parent(const int node) {
+    assert(0<node);
+    return (node-1)/2;
+  }
 
-  static int child(int node,int i)
-  {assert(unsigned(i)<2);return 2*node+1+i;}
+  static int child(const int node, const int i) {
+    assert(unsigned(i)<2);
+    return 2*node+1+i;
+  }
 
   GEODE_CORE_EXPORT void update_nonleaf_boxes();
   void check(RawArray<const TV> x) const;
