@@ -424,8 +424,17 @@ public:
     PyObject* add_face_field_py(PyObject* dtype, const int id);
     PyObject* add_halfedge_field_py(PyObject* dtype, const int id);
     bool has_field_py(const PyFieldId& id) const;
+    bool has_vertex_field_py(int id) const;
+    bool has_face_field_py(int id) const;
+    bool has_halfedge_field_py(int id) const;
     void remove_field_py(const PyFieldId& id);
+    void remove_vertex_field_py(int id);
+    void remove_face_field_py(int id);
+    void remove_halfedge_field_py(int id);
     PyObject* field_py(const PyFieldId& id);
+    PyObject* vertex_field_py(int id);
+    PyObject* face_field_py(int id);
+    PyObject* halfedge_field_py(int id);
   #endif
 
   // set the src entry of an existing boundary halfedge

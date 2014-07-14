@@ -89,6 +89,14 @@ to_json_fn[TriMesh] = lambda v: {
   }
 }
 
+to_json_fn[MutableTriangleTopology] = lambda v: {
+  't': 'TriangleTopology',
+  'v': {
+    'vertices': from_ndarray(v.field(vertex_position_id)),
+    'elements': from_ndarray(v.elements(), int)
+  }
+}
+
 from_json_fn[TriMesh] = lambda d: d['v']
 
 def to_json(v):

@@ -1514,7 +1514,7 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
   ADD_FIELD(prim,d,float) \
   ADD_FIELD(prim,d,double)
 
-#define MAKE_PY_FIELD(prim) \
+#define MAKE_PY_FIELD(prim, Prim) \
   PyObject* MutableTriangleTopology::add_##prim##_field_py(PyObject* object, const int id) { \
     PyArray_Descr* dtype; \
     if (!PyArray_DescrConverter(object,&dtype)) \
@@ -1525,19 +1525,30 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
     else { \
       const int subtype = dtype->subarray->base->type_num; \
       const auto shape = from_python<Array<const int>>(dtype->subarray->shape); \
-      if (shape.size() == 1) \
+      if (shape.size() == 1) { \
         switch (shape[0]) { \
           case 2: switch (subtype) { ADD_FIELDS(prim,2) } break; \
           case 3: switch (subtype) { ADD_FIELDS(prim,3) } break; \
           case 4: switch (subtype) { ADD_FIELDS(prim,4) } break; \
         } \
+      } \
     } \
     const auto s = steal_ref_check(PyObject_Str((PyObject*)dtype)); \
     throw TypeError(format("Fields of type %s unavailable from Python",from_python<const char*>(s))); \
+  }\
+  bool MutableTriangleTopology::has_##prim##_field_py(int id) const {\
+    return has_field_py(new_<PyFieldId>(PyFieldId::Prim, id));\
+  }\
+  void MutableTriangleTopology::remove_##prim##_field_py(int id) {\
+    return remove_field_py(new_<PyFieldId>(PyFieldId::Prim, id));\
+  }\
+  PyObject *MutableTriangleTopology::prim##_field_py(int id) {\
+    return field_py(new_<PyFieldId>(PyFieldId::Prim, id));\
   }
-MAKE_PY_FIELD(vertex)
-MAKE_PY_FIELD(face)
-MAKE_PY_FIELD(halfedge)
+
+MAKE_PY_FIELD(vertex, Vertex)
+MAKE_PY_FIELD(face, Face)
+MAKE_PY_FIELD(halfedge, Halfedge)
 
 bool MutableTriangleTopology::has_field_py(const PyFieldId& id) const {
   // Check if the field id exists
@@ -1553,7 +1564,7 @@ bool MutableTriangleTopology::has_field_py(const PyFieldId& id) const {
                      : id.prim == PyFieldId::Face   ? face_fields
                                                     : halfedge_fields;
   const auto& field = fields[i];
-  return field.type() == id.type;
+  return &(field.type()) == id.type;
 }
 
 void MutableTriangleTopology::remove_field_py(const PyFieldId& id) {
@@ -1577,6 +1588,10 @@ PyObject* MutableTriangleTopology::field_py(const PyFieldId& id) {
   if (i < 0)
     throw KeyError("no such mesh field");
   const UntypedArray& field = fields[i];
+
+  if (id.type && &(field.type()) != id.type)
+    throw ValueError(format("Type mismatch: id: %s, field: %s", field.type().name(), id.type->name()));
+
   #define CASE(...) \
     if (field.type() == typeid(__VA_ARGS__)) \
       return to_python(field.get<__VA_ARGS__>());
@@ -1633,7 +1648,7 @@ PyObject* MutableTriangleTopology::field_py(const PyFieldId& id) {
   CASE(Vector<float,4>)
   CASE(Vector<double,4>)
   #undef CASE
-  throw TypeError(format("Can't handle python conversion of fields of type %s", id.type.name()));
+  throw TypeError(format("Can't handle python conversion of fields of type %s", id.type->name()));
 }
 
 #endif
@@ -2035,8 +2050,17 @@ void wrap_corner_mesh() {
       .GEODE_METHOD_2("add_face_field",add_face_field_py)
       .GEODE_METHOD_2("add_halfedge_field",add_halfedge_field_py)
       .GEODE_METHOD_2("has_field",has_field_py)
+      .GEODE_METHOD_2("has_vertex_field",has_vertex_field_py)
+      .GEODE_METHOD_2("has_face_field",has_face_field_py)
+      .GEODE_METHOD_2("has_halfedge_field",has_halfedge_field_py)
       .GEODE_METHOD_2("remove_field",remove_field_py)
+      .GEODE_METHOD_2("remove_vertex_field",remove_vertex_field_py)
+      .GEODE_METHOD_2("remove_face_field",remove_face_field_py)
+      .GEODE_METHOD_2("remove_halfedge_field",remove_halfedge_field_py)
       .GEODE_METHOD_2("field",field_py)
+      .GEODE_METHOD_2("vertex_field",vertex_field_py)
+      .GEODE_METHOD_2("face_field",face_field_py)
+      .GEODE_METHOD_2("halfedge_field",halfedge_field_py)
       #endif
       .GEODE_METHOD(permute_vertices)
       ;
