@@ -26,7 +26,7 @@ template<class Iter,class Enable> struct Range {
   Range() {}
 
   Range(const Iter& lo, const Iter& hi)
-    :lo(lo),hi(hi) {}
+    : lo(lo), hi(hi) {}
 
   const Iter& begin() const { return lo; }
   const Iter& end() const { return hi; }

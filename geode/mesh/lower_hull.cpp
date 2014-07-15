@@ -13,16 +13,16 @@ typedef Vector<real,3> TV;
 
 struct Toward {
   TriangleTopology const &mesh;
-  Field<TV,VertexId> const &pos;
+  RawField<const TV,VertexId> X;
 
   TV up;
   real min_dot;
 
-  Toward(TriangleTopology const &mesh, Field<TV,VertexId> const &pos, TV up, real min_dot):
-    mesh(mesh), pos(pos), up(up), min_dot(min_dot) {}
+  Toward(TriangleTopology const &mesh, RawField<const TV,VertexId> X, TV up, real min_dot):
+    mesh(mesh), X(X), up(up), min_dot(min_dot) {}
 
   inline bool operator()(FaceId id) const {
-    return min_dot <= dot(mesh.normal(id, pos), up);
+    return min_dot <= dot(mesh.normal(X,id), up);
   }
 
   inline Field<bool, FaceId> as_field() const {
@@ -34,14 +34,14 @@ struct Toward {
   }
 };
 
-Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, Array<TV> const &pos, TV up, const T ground_offset) {
+Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, Array<TV> const &X, TV up, const T ground_offset) {
 
   // TODO: this doesn't work properly.
   T overhang = 0.;
   up.normalize();
 
   Ref<MutableTriangleTopology> mesh = new_<MutableTriangleTopology>(imesh);
-  FieldId<TV,VertexId> pos_id = mesh->add_field(Field<TV,VertexId>(pos), vertex_position_id);
+  FieldId<TV,VertexId> pos_id = mesh->add_field(Field<TV,VertexId>(X), vertex_position_id);
 
   // classify faces
   Field<bool, FaceId> toward = Toward(mesh, mesh->field(pos_id), up, overhang?sin(M_PI/180.*overhang):0.).as_field();
@@ -108,10 +108,10 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
 
     // add (inverted) faces
     auto oldfaces = component_mesh.faces();
-    GEODE_DEBUG_ONLY(int foffset = component_mesh.n_faces();)
+    GEODE_DEBUG_ONLY(const int foffset = component_mesh.n_faces();)
     for (auto f : oldfaces) {
       Vector<VertexId,3> verts = Vector<VertexId,3>::map([=](VertexId x){ return VertexId(x.id + voffset); }, component_mesh.vertices(f));
-      GEODE_DEBUG_ONLY(FaceId nf = ) component_mesh.add_face(verts.xzy());
+      GEODE_DEBUG_ONLY(const auto nf =) component_mesh.add_face(verts.xzy());
       assert(nf.idx() == f.idx() + foffset);
     }
 

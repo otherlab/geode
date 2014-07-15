@@ -10,7 +10,7 @@
 #include <geode/python/config.h>
 #include <geode/python/from_python.h>
 #include <geode/python/utility.h>
-#include <geode/utility/Enumerate.h>
+#include <geode/utility/enumerate.h>
 namespace geode {
 
 GEODE_VALIDITY_CHECKER(has_iter,A,&A::iter);

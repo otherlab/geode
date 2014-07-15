@@ -20,8 +20,8 @@ template<class Parents> struct UnionFindBase {
   mutable Parents parents;
 
 protected:
-  // It's the derived class's responsibility to initialize parents
-  UnionFindBase() {}
+  template<class... Args> UnionFindBase(Args&&... args)
+    : parents(args...) {}
 public:
 
   int size() const {
@@ -122,6 +122,10 @@ public:
     parents.copy(constant_map(entries,-1));
   }
 
+  void clear() {
+    parents.clear();
+  }
+
   int add_entry() {
     return parents.append(-1);
   }
@@ -157,6 +161,13 @@ template<int n> struct SmallUnionFind : public UnionFindBase<Vector<signed char,
   static_assert(0<=n && n<=128,"Large union finds should use UnionFind, not SmallUnionFind");
   
   SmallUnionFind() {
+    this->parents.fill(-1);
+  }
+};
+
+struct RawUnionFind : public UnionFindBase<RawArray<int>> {
+  RawUnionFind(RawArray<int> parents)
+    : UnionFindBase<RawArray<int>>(parents) {
     this->parents.fill(-1);
   }
 };
