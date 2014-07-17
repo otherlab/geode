@@ -7,8 +7,8 @@
 namespace geode {
 
 struct Zero {
-  bool operator!() const {
-    return true;
+  explicit operator bool() const {
+    return false;
   }
 
   Zero operator-() const {

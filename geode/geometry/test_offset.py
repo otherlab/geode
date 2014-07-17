@@ -37,7 +37,7 @@ def test_offset():
         w = random.rand(ns,3)
         w /= w.sum(axis=-1)[:,None]
         sX = (w[:,:,None]*oX[om.elements()[random.randint(0,om.n_faces,size=ns)]]).sum(axis=1)
-        phi,_,_,_ = evaluate_surface_levelset(ParticleTree(sX),SimplexTree(m,AX),inf,not shell)
+        phi,_,_,_ = surface_levelset(ParticleTree(sX),SimplexTree(m,AX),inf,not shell)
         assert all(alpha*offset <= phi+small)
         assert all(phi <= offset+small)
 

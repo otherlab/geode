@@ -8,8 +8,8 @@
 namespace geode {
 
 struct One {
-  bool operator!() const {
-    return false;
+  explicit operator bool() const {
+    return true;
   }
 
   One operator*(const One) const {
