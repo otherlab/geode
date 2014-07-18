@@ -66,9 +66,9 @@ public:
     typedef const T* const_iterator; // for stl
     template<class> class result;
     template<class V> class result<V(int)>:public mpl::if_<is_const<V>,const T&,T&>{};
-    enum Workaround1 {dimension=d};
-    enum Workaround2 {m=d};
-    static const bool is_const=false;
+    static const int dimension = d;
+    static const int m = d;
+    static const bool is_const = false;
 
     T array[d];
 
@@ -565,6 +565,7 @@ template<class T> static inline Vector<T,6> vec(const T& a0,const T& a1,const T&
 #endif
 //#####################################################################
 
+template<class T,int d> const int Vector<T,d>::dimension;
+template<class T,int d> const int Vector<T,d>::m;
+
 }
-
-

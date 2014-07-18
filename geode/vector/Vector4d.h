@@ -38,9 +38,9 @@ public:
     typedef const T* const_iterator; // for stl
     template<class V> struct result;
     template<class V> struct result<V(int)>:mpl::if_<is_const<V>,const T&,T&>{};
-    enum Workaround1 {dimension=4};
-    enum Workaround2 {m=4};
-    static const bool is_const=false;
+    static const int dimension = 4;
+    static const int m = 4;
+    static const bool is_const = false;
 
   T x,y,z,w;
 
@@ -503,5 +503,8 @@ in_bounds(const Vector<T,4>& v,const Vector<T,4>& vmin,const Vector<T,4>& vmax)
 template<class T> inline Vector<T,4>
 wrap(const Vector<T,4>& v,const Vector<T,4>& vmin,const Vector<T,4>& vmax)
   {return Vector<T,4>(wrap(v.x,vmin.x,vmax.x),wrap(v.y,vmin.y,vmax.y),wrap(v.z,vmin.z,vmax.z),wrap(v.w,vmin.w,vmax.w));}
+
+template<class T> const int Vector<T,4>::dimension;
+template<class T> const int Vector<T,4>::m;
 
 }
