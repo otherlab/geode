@@ -19,19 +19,21 @@ from_json_fn['float']  = lambda v: float(v)
 from_json_fn['string'] = lambda v: str(v)
 from_json_fn['bool']   = lambda v: bool(v)
 
-#from_json_fn['vec2'] = from_json_fn['vec3'] = from_json_fn['vec4'] = lambda v: array(v)
 from_json_fn['ndarray'] = lambda v : array(v)
 
 from_json_fn['mat22'] = lambda v: Matrix(array(v).reshape(2, 2))
 from_json_fn['mat33'] = lambda v: Matrix(array(v).reshape(3, 3))
 from_json_fn['mat44'] = lambda v: Matrix(array(v).reshape(4, 4))
 
-from_json_fn['frame2'] = lambda v: Frames(v['t'], Rotation.from_matrix(array(v['r']).reshape(2, 2)))
-from_json_fn['frame3'] = lambda v: Frames(v['t'], Rotation.from_matrix(array(v['r']).reshape(3, 3)))
+from_json_fn['frame2'] = lambda v: Frames(v['t'], Rotation.from_sv(array(v['r'])))
+from_json_fn['frame3'] = lambda v: Frames(v['t'], Rotation.from_sv(array(v['r'])))
 
 from_json_fn['box2'] = from_json_fn['box3'] = lambda v: Box(v['min'], v['max'])
 from_json_fn['TriangleSoup'] = from_json_fn['SegmentSoup'] = lambda v: v
 
+from_json_fn['dict'] = lambda v: v
+
+to_json_fn[dict] = lambda v: { 't': 'dict', 'v': v }
 
 to_json_fn[int]   = lambda v: { 't': 'int',    'v': v }
 to_json_fn[real]  = lambda v: { 't': 'real',   'v': v }
@@ -63,12 +65,11 @@ to_json_fn[Matrix] = lambda v: {
   't': ('mat%s%s') % (len(v), len(v[0])),
   'v': from_ndarray(v)
 }
-to_json_fn[Frames] = lambda v: { # send matrix over the wire or make javascript compose t and r?
+to_json_fn[Frames] = lambda v: {
   't': ('frame%s') % (len(v.t)),
   'v': {
     't': map(float, v.t),
-    'r': from_ndarray(v.r.matrix()),
-    'm': from_ndarray(v.matrix())
+    'r': map(float, v.r.sv)
   }
 }
 
