@@ -4,6 +4,10 @@ from numpy import *
 from geode import *
 import struct
 
+# this is getting seriously ugly, but we do need to be able to test isinstance on
+# these somehow.
+from geode.geode_wrap import TriangleTopology as CTriangleTopology
+
 def TriangleTopology(soup=TriangleSoup(empty((0,3),int32))):
   if isinstance(soup,geode_wrap.TriangleTopology):
     return soup
@@ -139,3 +143,22 @@ def merge_meshes(surfaces):
     X.append(x)
     total += len(x)
   return TriangleSoup(concatenate(tris).astype(int32)),concatenate(X)
+
+# convenience functions operating directly on MutableTriangleTopology, assuming
+# vertex positions are stored in the default location.
+
+# make a MutableTriangleTopology from a soupy or meshy thing and a position array
+def meshify(mesh,X):
+  if isinstance(mesh, TriangleSoup):
+    mesh = TriangleTopology(mesh)
+  if isinstance(mesh, CTriangleTopology):
+    mesh = mesh.mutate()
+  mesh.add_vertex_field('3d', vertex_position_id)
+  copyto(mesh.vertex_field(vertex_position_id), X)
+  return mesh
+
+def mesh_lower_hull(mesh, up, offset):
+  return meshify(*lower_hull(mesh.face_triangle_soup()[0], mesh.vertex_field(vertex_position_id), up, offset))
+
+def mesh_offset(mesh, offset):
+  return meshify(*rough_offset_mesh(mesh, mesh.vertex_field(vertex_position_id), offset))

@@ -128,6 +128,22 @@ def test_halfedge_construction():
 def test_corner_construction():
   construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
 
+def test_flip():
+  soup = icosahedron_mesh()[0]
+  mesh = MutableTriangleTopology()
+  mesh.add_vertices(soup.nodes())
+  mesh.add_faces(soup.elements)
+  mesh.assert_consistent(True)
+
+  # make sure we can flip a closed mesh
+  mesh.flip()
+  mesh.assert_consistent(True)
+
+  # make sure we can flip a mesh with boundaries
+  mesh.erase_face(0, False)
+  mesh.flip()
+  mesh.assert_consistent(True)
+
 def test_nonmanifold_vertices():
   soup = icosahedron_mesh()[0]
   mesh = MutableTriangleTopology()

@@ -753,6 +753,66 @@ Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other)
   return vec(base_vertex,base_face,base_boundary);
 }
 
+
+void MutableTriangleTopology::flip() {
+
+  // boundary
+  for (auto he : boundary_edges()) {
+    // set src=dst (safely compute dst without using prev/next, which may be broken)
+    unsafe_set_src(he, src(reverse(he)));
+    // swap prev and next
+    std::swap(mutable_boundaries_[-1-he.id].next, mutable_boundaries_[-1-he.id].prev);
+  }
+
+  // interior
+  for (auto f : faces()) {
+    auto &fi = mutable_faces_[f];
+    // swap vertices 0 and 1 in each face, and swap neighors 1 and 2.
+    fi.vertices = fi.vertices.yxz();
+    fi.neighbors = fi.neighbors.xzy();
+    // adjust neighbors' neighbors to point back to the swapped neighbors
+    assert(reverse(fi.neighbors[1]) == halfedge(f,2));
+    assert(reverse(fi.neighbors[2]) == halfedge(f,1));
+    for (int i : vec(1,2)) {
+      auto he = fi.neighbors[i];
+      if (is_boundary(he)) {
+        mutable_boundaries_[-1-he.id].reverse = halfedge(f,i);
+      } else {
+        mutable_faces_[face(he)].neighbors[face_index(he)] = halfedge(f,i);
+      }
+    }
+    // swap halfedge fields
+    for (auto &field : halfedge_fields) {
+      field.swap(halfedge(f,1).id, halfedge(f,2).id);
+    }
+  }
+
+  // fix vertex outgoing halfedges
+  for (auto v : vertices()) {
+    if (halfedge(v).valid() && src(halfedge(v)) != v) {
+      if (is_boundary(halfedge(v))) {
+        // we should now be dst(halfedge(v))
+        assert(v == dst(halfedge(v)));
+        unsafe_set_halfedge(v, next(halfedge(v)));
+      } else {
+        // reconstruct which edge belongs to us from our position in the triangle
+        auto f = face(halfedge(v));
+        auto fi = faces_[f];
+        int i = fi.vertices.find(v);
+        assert(i != -1);
+        unsafe_set_halfedge(v, halfedge(f,i));
+      }
+      assert(src(halfedge(v))==v);
+    }
+  }
+}
+
+Ref<MutableTriangleTopology> MutableTriangleTopology::flipped() const {
+  auto mesh = copy();
+  mesh->flip();
+  return mesh;
+}
+
 Tuple<Ref<MutableTriangleTopology>,
       Field<VertexId, VertexId>,
       Field<FaceId, FaceId>> MutableTriangleTopology::extract(RawArray<FaceId> const &faces) {
@@ -839,6 +899,7 @@ Tuple<Ref<MutableTriangleTopology>,
 
   return tuple(result, new_to_old_vertices, new_to_old_faces);
 }
+
 
 Array<VertexId> MutableTriangleTopology::split_nonmanifold_vertex(VertexId vi) {
   auto components = surface_components(vi);
@@ -1965,6 +2026,7 @@ void wrap_corner_mesh() {
       .SAFE_METHOD(incoming)
       .GEODE_METHOD(vertex_one_ring)
       .GEODE_METHOD(incident_faces)
+      .GEODE_METHOD(face_triangle_soup)
       .GEODE_OVERLOADED_METHOD_2(HalfedgeId(Self::*)(VertexId, VertexId)const, "halfedge_between", halfedge)
       .GEODE_METHOD(common_halfedge)
       .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, FaceId)const, "common_vertex_between_faces", common_vertex)
@@ -1998,6 +2060,8 @@ void wrap_corner_mesh() {
       .GEODE_INIT()
       .GEODE_METHOD(copy)
       .GEODE_METHOD(add)
+      .GEODE_METHOD(flip)
+      .GEODE_METHOD(flipped)
       .GEODE_METHOD(add_vertex)
       .GEODE_METHOD(add_vertices)
       .GEODE_METHOD(add_face)

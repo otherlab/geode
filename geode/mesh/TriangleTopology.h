@@ -311,7 +311,7 @@ public:
   // Get a SegmentMesh containing the edges (and an array containing the halfedge ids corresponding to the edges stored in the mesh -- only one per edge, the one with the larger index. The tree will contain no boundary halfedges)
   GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_segment_soup() const;
 
-  // Get a TriangleMesh containing the edges (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
+  // Get a TriangleMesh containing the faces (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
   GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_triangle_soup() const;
 
   // The following functions require passing in a field containing positions for the vertices
@@ -492,6 +492,12 @@ public:
   // Add another TriangleTopology, assuming the vertex sets are disjoint.
   // Returns the offsets of the other vertex, face, and boundary ids in the new arrays.
   GEODE_CORE_EXPORT Vector<int,3> add(const MutableTriangleTopology& other);
+
+  // turn all normals inside out
+  GEODE_CORE_EXPORT void flip();
+
+  // turn all normals inside out
+  GEODE_CORE_EXPORT Ref<MutableTriangleTopology> flipped() const;
 
   // Extract a set of faces into a new MutableTriangleTopology, which is returned,
   // along with two fields (on the returned mesh) giving vertex and face correspondences.
