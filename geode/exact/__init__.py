@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 import platform
 from geode.array import *
-from geode.mesh import merge_meshes
+from geode.mesh import merge_meshes, meshify
 if platform.system()=='Windows':
   from other_all import *
   import other_all as geode_wrap
@@ -55,6 +55,11 @@ def split_soup(mesh,X,depth=0):
     depth = -1<<31
   return geode_wrap.split_soup(mesh,X,depth)
 
+def split_soup_with_weight(mesh,X,weight,depth=0):
+  if depth is None:
+    depth = -1<<31
+  return geode_wrap.split_soup_with_weight(mesh,X,weight,depth)
+
 def split_soups(meshes,depth=0):
   return split_soup(*merge_meshes(meshes),depth=depth)
 
@@ -63,3 +68,6 @@ def soup_union(*meshes):
 
 def soup_intersection(*meshes):
   return split_soups(meshes,depth=len(meshes)-1)
+
+def split_mesh(mesh, depth):
+  return meshify(*split_soup(mesh.face_triangle_soup()[0], mesh.vertex_field(vertex_position_id), depth))

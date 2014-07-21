@@ -185,15 +185,20 @@ struct State {
   const RawArray<const Vector<int,3>> faces;
   const RawArray<const Vector<int,2>> edges;
 
+  // depth weights for faces
+  const RawArray<const int> depth_weight;
+
   State(RawArray<const EV> X, Nested<const EdgeFaceVertex> ef_vertices,
         Array<FaceFaceFaceVertex>& fff_vertices, Hashtable<Vector<int,3>,int>& faces_to_fff,
-        RawArray<const Vector<int,3>> faces, RawArray<const Vector<int,2>> edges)
+        RawArray<const Vector<int,3>> faces, RawArray<const Vector<int,2>> edges, RawArray<const int> depth_weight)
     : X(X)
     , ef_vertices(ef_vertices)
     , fff_vertices(fff_vertices)
     , faces_to_fff(faces_to_fff)
     , faces(faces)
-    , edges(edges) {}
+    , edges(edges)
+    , depth_weight(depth_weight)
+    {}
 
   // Is vertex v above face f?
   bool face_vertex_oriented(const int f, const int v) const {
@@ -939,7 +944,7 @@ struct DepthUnionFind {
 }
 
 template<int up> static void
-retriangulate_face(State& S, Array<Vector<int,3>>& cut_faces, DepthUnionFind* const union_find,
+retriangulate_face(State& S, Array<Vector<int,3>>& cut_faces, Array<int> &original_face_index, DepthUnionFind* const union_find,
                    const int face, Vector<int,3> e, RawArray<int> interior,
                    RawArray<const FaceFaceEdge> ff_edges, RawArray<const int> ffs) {
   // Sort vertices in upwards order, keeping track of permutation parity.
@@ -1038,6 +1043,7 @@ retriangulate_face(State& S, Array<Vector<int,3>>& cut_faces, DepthUnionFind* co
   // Copy mesh into cut_faces
   for (const auto f : mesh->faces()) {
     const auto v = mesh->vertices(f);
+    original_face_index.append(face);
     cut_faces.append(vec(vertices[v.x],
                          vertices[v.y],
                          vertices[v.z]));
@@ -1065,13 +1071,18 @@ retriangulate_face(State& S, Array<Vector<int,3>>& cut_faces, DepthUnionFind* co
         if (f1.valid()) {
           const auto f0 = mesh->face(e);
           const Line* L = P.constrained.get_pointer(v);
-          union_find->merge(base+f0.id,base+f1.id,L?L->ff<0?-1:1:0);
           if (L) {
-            const int ff = L->ff<0 ? -L->ff-1 : L->ff,
-                      start = ff_edges[ff].nodes.x;
+            const bool flip = L->ff < 0;
+            const int ff = flip ? -L->ff-1 : L->ff,
+                      start = ff_edges[ff].nodes.x,
+                      face2 = ff_edges[ff].faces.x == face ? ff_edges[ff].faces.y : ff_edges[ff].faces.x;
+            const int ddepth = S.depth_weight[face2];
+            union_find->merge(base+f0.id,base+f1.id,flip?-ddepth:ddepth);
             if (   start==P.vertices[mesh->src(e)]
                 || start==P.vertices[mesh->dst(e)])
-              union_find->merge(ff_base+ff,base+f0.id,L->ff<0);
+              union_find->merge(ff_base+ff,base+f0.id,flip?ddepth:0);
+          } else {
+            union_find->merge(base+f0.id,base+f1.id,0);
           }
         }
       }
@@ -1090,8 +1101,8 @@ static inline bool oriented_with_x(const P p0, const P p1, const P p2) {
 }}
 
 // Retriangulate each face w.r.t. the other faces which cut it
-static Tuple<Array<const FaceFaceFaceVertex>,Array<Vector<int,3>>>
-retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const union_find,
+static Tuple<Array<const FaceFaceFaceVertex>,Array<Vector<int,3>>,Array<int>>
+retriangulate_soup(const SimplexTree<EV,2>& face_tree, Array<const int> depth_weight, DepthUnionFind* const union_find,
                    Nested<const EdgeFaceVertex> ef_vertices, RawArray<const FaceFaceEdge> ff_edges) {
   GEODE_ASSERT(face_tree.leaf_size==1);
   const auto X = face_tree.X;
@@ -1132,6 +1143,7 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
 
   // Newly created faces
   Array<Vector<int,3>> cut_faces;
+  Array<int> original_face_index;
 
   // Depth and connectivity information for (1) original edges, (2) ff edges, and (3) cut faces, indexed back to back.
   // The depth of an edge is defined as the depth of its infinitesimal starting section in the cut mesh.
@@ -1147,7 +1159,7 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
   // Retriangulate each face
   Array<FaceFaceFaceVertex> fff_vertices;
   Hashtable<Vector<int,3>,int> faces_to_fff;
-  State S(X,ef_vertices,fff_vertices,faces_to_fff,faces.elements,edges.elements);
+  State S(X,ef_vertices,fff_vertices,faces_to_fff,faces.elements,edges.elements,depth_weight);
   for (const int f : range(faces.elements.size())) {
     const auto v = faces.elements[f];
 
@@ -1160,6 +1172,7 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
     if (!interior.size() && !ef_vertices.size(e.x)
                          && !ef_vertices.size(e.y)
                          && !ef_vertices.size(e.z)) {
+      original_face_index.append(f);
       cut_faces.append(v);
       if (union_find) {
         const int i = union_find->append();
@@ -1174,9 +1187,9 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
     // since it does not affect correctness.
     const int up = bounding_box(X[v.x],X[v.y],X[v.z]).sizes().dominant_axis();
     const auto ffs = face_to_ff[f];
-    if (up==0)      retriangulate_face<0>(S,cut_faces,union_find,f,e,interior,ff_edges,ffs);
-    else if (up==1) retriangulate_face<1>(S,cut_faces,union_find,f,e,interior,ff_edges,ffs);
-    else            retriangulate_face<2>(S,cut_faces,union_find,f,e,interior,ff_edges,ffs);
+    if (up==0)      retriangulate_face<0>(S,cut_faces,original_face_index,union_find,f,e,interior,ff_edges,ffs);
+    else if (up==1) retriangulate_face<1>(S,cut_faces,original_face_index,union_find,f,e,interior,ff_edges,ffs);
+    else            retriangulate_face<2>(S,cut_faces,original_face_index,union_find,f,e,interior,ff_edges,ffs);
   }
 
   // Add one union-find node at infinity, and fire rays until everything is connected to it
@@ -1206,13 +1219,15 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
       struct Visitor {
         const SimplexTree<EV,2>& face_tree;
         RawArray<const EV> X;
+        const RawArray<const int> depth_weight;
         const P v0,v1,v2;
         const bool orient_v012; // orient_with_x(v0,v1,v2)
         int depth;
 
-        Visitor(const SimplexTree<EV,2>& face_tree, const int face, const Vector<int,3> v)
+        Visitor(const SimplexTree<EV,2>& face_tree, const int face, const Vector<int,3> v, const RawArray<const int> depth_weight)
           : face_tree(face_tree)
           , X(face_tree.X)
+          , depth_weight(depth_weight)
           , v0(Xi(v.x))
           , v1(Xi(v.y))
           , v2(Xi(v.z))
@@ -1227,7 +1242,8 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
         }
 
         void leaf(const int n) {
-          const auto f = face_tree.mesh->elements[face_tree.prims(n)[0]];
+          const int face_idx = face_tree.prims(n)[0];
+          const auto f = face_tree.mesh->elements[face_idx];
           const P p0 = Xi(f.x),
                   p1 = Xi(f.y),
                   p2 = Xi(f.z);
@@ -1263,16 +1279,16 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, DepthUnionFind* const uni
           }
           return;
           hit:
-          depth += with_x ? 1 : -1;
+          depth += depth_weight[face_idx] * (with_x ? 1 : -1);
         }
-      } visitor(face_tree,f,v);
+      } visitor(face_tree,f,v,depth_weight);
       single_traverse(face_tree,visitor);
       union_find->merge(infinity,e.x,visitor.depth);
     }
   }
 
   // Done!
-  return tuple(fff_vertices.const_(),cut_faces);
+  return tuple(fff_vertices.const_(),cut_faces,original_face_index);
 }
 
 // The result of split_soup is always "almost" nonmanifold given closed input, but may be slightly
@@ -1338,6 +1354,13 @@ static void fix_loops(RawArray<Vector<int,3>> faces, Array<EV>& X, const int n,
 
 Tuple<Ref<const TriangleSoup>,Array<EV>>
 exact_split_soup(const TriangleSoup& faces, Array<const EV> X, const int depth) {
+  Array<int> depth_weight(faces.elements.size(), uninit);
+  depth_weight.fill(1);
+  return exact_split_soup(faces, X, depth_weight, depth);
+}
+
+Tuple<Ref<const TriangleSoup>,Array<EV>>
+exact_split_soup(const TriangleSoup& faces, Array<const EV> X, Array<const int> depth_weight, const int depth) {
   IntervalScope scope;
 
   // Find ef_vertices and ff_halfedges
@@ -1352,18 +1375,23 @@ exact_split_soup(const TriangleSoup& faces, Array<const EV> X, const int depth) 
     union_find.reset(new DepthUnionFind);
 
   // Retriangulate mesh and compute depths
-  const auto B = retriangulate_soup(face_tree,union_find.get(),ef_vertices,ff_edges);
+  const auto B = retriangulate_soup(face_tree,depth_weight,union_find.get(),ef_vertices,ff_edges);
   const auto fff_vertices = B.x;
   const auto cut_faces = B.y;
+  const auto original_face_index = B.z;
 
   // If desired, extract cut faces at the right depth
   Array<Vector<int,3>> pruned_faces;
   if (union_find) {
     const int infinity = union_find->info.size()-1;
     const int base = faces.segment_soup()->elements.size()+ff_edges.size();
-    for (const int f : range(cut_faces.size()))
-      if (union_find->delta(infinity,base+f)==depth)
+    for (const int f : range(cut_faces.size())) {
+      int fdepth = union_find->delta(infinity,base+f);
+      int weight = depth_weight[original_face_index[f]];
+      if (depth-weight < fdepth && fdepth <= depth) {
         pruned_faces.append(cut_faces[f]);
+      }
+    }
   } else
     pruned_faces = cut_faces;
 
@@ -1384,10 +1412,16 @@ exact_split_soup(const TriangleSoup& faces, Array<const EV> X, const int depth) 
   return tuple(new_<const TriangleSoup>(pruned_faces),Xs);
 }
 
-Tuple<Ref<const TriangleSoup>,Array<TV>> split_soup(const TriangleSoup& faces, Array<const TV> X, const int depth) {
+Tuple<Ref<const TriangleSoup>,Array<TV>> split_soup(const TriangleSoup& faces, Array<const TV> X, Array<const int> depth_weight, const int depth) {
   const auto quant = quantizer(bounding_box(X));
-  const auto S = exact_split_soup(faces,amap(quant,X).copy(),depth);
+  const auto S = exact_split_soup(faces,amap(quant,X).copy(),depth_weight,depth);
   return tuple(S.x,amap(quant.inverse,S.y).copy());
+}
+
+Tuple<Ref<const TriangleSoup>,Array<TV>> split_soup(const TriangleSoup& faces, Array<const TV> X, const int depth) {
+  Array<int> depth_weight(faces.elements.size(), uninit);
+  depth_weight.fill(1);
+  return split_soup(faces, X, depth_weight, depth);
 }
 
 // A random looking polynomial vector field for testing purposes.  Doing this in numpy was terribly slow.
@@ -1433,7 +1467,15 @@ static double mesh_signature(const TriangleSoup& mesh, RawArray<const TV> X) {
 using namespace geode;
 
 void wrap_mesh_csg() {
-  GEODE_FUNCTION(split_soup)
-  GEODE_FUNCTION(exact_split_soup)
+  typedef Tuple<Ref<const TriangleSoup>,Array<Vec3>> (*split_fn)(const TriangleSoup&, Array<const Vector<double,3>>, const int);
+  GEODE_OVERLOADED_FUNCTION(split_fn,split_soup)
+  typedef Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>> (*exact_split_fn)(const TriangleSoup&, Array<const exact::Vec3>, const int);
+  GEODE_OVERLOADED_FUNCTION(exact_split_fn,exact_split_soup)
+
+  typedef Tuple<Ref<const TriangleSoup>,Array<Vec3>> (*split_depth_fn)(const TriangleSoup&, Array<const Vector<double,3>>, Array<const int>, const int);
+  GEODE_OVERLOADED_FUNCTION_2(split_depth_fn,"split_soup_with_weight",split_soup)
+  typedef Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>> (*exact_split_depth_fn)(const TriangleSoup&, Array<const exact::Vec3>, Array<const int>, const int);
+  GEODE_OVERLOADED_FUNCTION_2(exact_split_depth_fn,"exact_split_soup_with_weight",exact_split_soup)
+
   GEODE_FUNCTION(mesh_signature)
 }
