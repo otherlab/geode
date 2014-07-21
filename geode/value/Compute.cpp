@@ -15,10 +15,14 @@ public:
   typedef ValueBase Base;
 
   const Ref<> f;
+  PyObject *_name;
 
 protected:
   CachePython(PyObject* f)
-    : f(ref(*f)) {}
+    : f(ref(*f)), _name(NULL) {}
+
+  CachePython(PyObject* f, string const &name)
+    : f(ref(*f)), _name(to_python(name)) {}
 public:
 
   void input_changed() const {
@@ -40,7 +44,10 @@ public:
   }
 
   string name() const {
-    return from_python<string>(python_field(f,"__name__"));
+    if (_name)
+      return from_python<string>(_name);
+    else
+      return from_python<string>(python_field(f,"__name__"));
   }
 
   string repr() const {
@@ -56,6 +63,13 @@ static Ref<ValueBase> cache_py(PyObject* f) {
   if (!PyCallable_Check(f))
     throw TypeError("cache: argument is not callable");
   return new_<CachePython>(f);
+}
+
+// this decorator takes a name instead of extracting it from the callable
+static Ref<ValueBase> cache_named_inner(PyObject* f, string const &name) {
+  if (!PyCallable_Check(f))
+    throw TypeError("cache: argument is not callable");
+  return new_<CachePython>(f, name);
 }
 
 #endif
@@ -75,5 +89,6 @@ void wrap_compute() {
     ;
 
   GEODE_FUNCTION_2(cache,cache_py)
+  GEODE_FUNCTION_2(cache_named_inner,cache_named_inner)
 #endif
 }

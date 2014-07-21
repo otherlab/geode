@@ -32,3 +32,8 @@ class cache_method(object):
       value = cache(types.MethodType(self.f,instance,owner))
       object.__setattr__(instance,self._name,value)
       return value
+
+def cache_named(name):
+  def inner(f):
+    return cache_named_inner(f, name)
+  return inner
