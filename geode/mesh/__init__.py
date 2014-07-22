@@ -153,6 +153,13 @@ def meshify(mesh,X):
     mesh = TriangleTopology(mesh)
   if isinstance(mesh, CTriangleTopology):
     mesh = mesh.mutate()
+
+  # it is possible that a mesh does not reference the last few vertices. Add as
+  # many isolated vertices to the end as necessary (to store all of X)
+  n_isolated_vertices = len(X) - mesh.all_vertices().__len__()
+  if n_isolated_vertices > 0:
+    mesh.add_vertices(n_isolated_vertices);
+
   mesh.add_vertex_field('3d', vertex_position_id)
   copyto(mesh.vertex_field(vertex_position_id), X)
   return mesh
