@@ -100,7 +100,7 @@ Nested<ExactCircleArc> exact_offset_arcs(const Nested<const ExactCircleArc> nest
   }
 
   // for each arc in the original shape, thicken by offset and add to back
-  // capsule will have negitive winding if offset < 0
+  // capsule will have negative winding if offset < 0
   for(int arc_i : range(arcs.size())) {
     minkowski_terms.append(build_arc_capsule(arcs, vertices[arc_i], vertices[next[arc_i]], offset, next_free_index));
     GEODE_ASSERT(next_free_index > 0, "Index overflow using consecutive indicies. Free index data structure needed!");
