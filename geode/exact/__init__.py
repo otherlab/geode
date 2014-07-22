@@ -76,7 +76,7 @@ def split_mesh(mesh, depth=0):
   return meshify(*split_soup(mesh.face_triangle_soup()[0], mesh.vertex_field(vertex_position_id), depth))
 
 def split_meshes(meshes, depth=0):
-  soups = [(m.face_triangle_soup()[0], mesh.vertex_field(vertex_position_id)) for m in meshes]
+  soups = [(m.face_triangle_soup()[0], m.vertex_field(vertex_position_id)) for m in meshes]
   return meshify(*split_soups(soups,depth))
 
 # meshes is an array of tuples (mesh,weight) -- one uniform weight for each input mesh
