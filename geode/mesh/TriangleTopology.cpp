@@ -1828,14 +1828,6 @@ static void corner_mesh_destruction_test(MutableTriangleTopology& mesh, const ui
   }
 }
 
-#ifdef GEODE_PYTHON
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIncoming>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyOutgoing>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<VertexId>>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<FaceId>>);
-template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<HalfedgeId>>);
-#endif
-
 static string id_error(const TriangleTopology& mesh, const VertexId x) {
   return x.id==invalid_id              ? "invalid vertex id"
        : x.id==erased_id               ? "erased vertex id"
@@ -1995,6 +1987,18 @@ SAFE_ERASE(halfedge,HalfedgeId)
 
 }
 using namespace geode;
+
+#include <geode/python/pyrange.h>
+
+#ifdef GEODE_PYTHON
+namespace geode {
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIncoming>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyOutgoing>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<VertexId>>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<FaceId>>);
+template<> GEODE_DEFINE_TYPE(PyRange<TriangleTopologyIter<HalfedgeId>>);
+}
+#endif
 
 void wrap_corner_mesh() {
   #define SAFE_METHOD(name) GEODE_METHOD_2(#name,safe_##name)
