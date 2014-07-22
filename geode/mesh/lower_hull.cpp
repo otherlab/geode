@@ -5,6 +5,7 @@
 #include <geode/vector/Rotation.h>
 #include <geode/array/amap.h>
 #include <geode/geometry/platonic.h>
+#include <geode/random/Random.h>
 
 namespace geode {
 
@@ -36,7 +37,10 @@ struct Toward {
 
 Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, Array<TV> const &X, TV up, const T ground_offset) {
 
+  auto random = new_<Random>(5349);
+
   // TODO: this doesn't work properly.
+  //T draft_angle = 0.;
   T overhang = 0.;
   up.normalize();
 
@@ -82,6 +86,7 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
   }
 
   int component_idx = 0;
+  real min_z = min_ground;
   for (auto p : component_faces) {
     component_idx++;
     auto faces = p.y;
@@ -100,9 +105,10 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
     for (int i = 0; i < voffset; ++i) {
       VertexId nv = component_mesh.add_vertex();
       assert(nv.idx() == i + voffset);
-      // flatten to ground_offset+epsilon
+      // flatten to ground_offset+epsilon*component_idx with some randomness to minimize hard cases for subsequent CSG
       TV x = component_mesh.field(pos_id)[VertexId(i)];
-      TV ground_pos = x + (- dot(x, up) + min_ground - component_idx) * up;
+      TV ground_pos = x + (- dot(x, up) + min_ground - component_idx - .5 + random->uniform<real>(0., .5)) * up;
+      min_z = min(min_z, dot(ground_pos-up, up));
       component_mesh.field(pos_id)[nv] = ground_pos;
     }
 
@@ -135,12 +141,8 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
     new_mesh->add(component_mesh);
   }
 
-  auto soupmesh = new_mesh->face_triangle_soup();
-  auto lower_hull = split_soup(soupmesh.x, new_mesh->field(pos_id).flat, 0);
-
-  // chop the base off at ground_offset, add a box to subtract everything below
-  auto faces = lower_hull.x->elements;
-  auto vertices = lower_hull.y;
+  // all these faces have weight 1
+  int weight_one_faces = new_mesh->n_faces();
 
   // make an axis-aligned bbox whose top is at ground_offset, and whose
   // bottom is below ground_offset - component_faces.size(), and whose x/y
@@ -149,27 +151,37 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
   auto R = Rotation<TV>::from_rotated_vector(up, vec(0, 0, 1.));
 
   // reduce to 8 points to be considered, and rotate those
-  auto corners = amap([&](TV v){ return R*v; }, bounding_box(vertices).corners());
+  auto corners = amap([&](TV v){ return R*v; }, bounding_box(new_mesh->field(new_pos_id).flat).corners());
 
   // compute bbox again, slightly inflated
   auto aabb = bounding_box(corners).thickened(1.);
 
   // set z min/max
   aabb.max.z = ground_offset;
-  aabb.min.z = ground_offset - component_faces.size() - 1;
+  aabb.min.z = min_z; //ground_offset - component_faces.size() - 1;
 
   // make inverted bbox mesh
   auto box = cube_mesh(aabb.max, aabb.min);
 
-  // add
-  faces.extend(box.x->elements + vertices.size());
-
-  // rotate back and add vertices
+  // rotate back
   R = R.inverse();
-  vertices.extend(amap([&](TV v){ return R*v; }, box.y));
+
+  // add vertices and set coordinates
+  VertexId base = new_mesh->add_vertices(box.y.size());
+  for (int i = 0; i < box.y.size(); ++i)
+    new_mesh->field(new_pos_id)[VertexId(base.id+i)] = R*box.y[i];
+
+  // add faces
+  new_mesh->add_faces((box.x->elements + base.id).copy());
+
+  // make a weight vector
+  Array<int> weights(new_mesh->n_faces(), uninit);
+  weights.fill(1);
+  weights.slice(weight_one_faces, weight_one_faces+box.x->elements.size()).fill(1<<24);
 
   // compute the union
-  return split_soup(new_<TriangleSoup>(faces), vertices, 0);
+  auto result = split_soup(new_mesh->face_triangle_soup().x, new_mesh->field(new_pos_id).flat, weights, 0);
+  return result;
 }
 
 }
