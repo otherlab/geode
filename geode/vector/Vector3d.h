@@ -481,6 +481,14 @@ template<class T> inline Vector<T,3>
 cross(const Vector<T,3>& v1,const Vector<T,3>& v2) // 6 mults, 3 adds
 {return Vector<T,3>(v1.y*v2.z-v1.z*v2.y,v1.z*v2.x-v1.x*v2.z,v1.x*v2.y-v1.y*v2.x);}
 
+// Safer normalized cross product.  Guaranteed orthogonal to both inputs even in degenerate situations.
+template<class T> inline Vector<T,3> normal_cross(const Vector<T,3> u, const Vector<T,3> v) {
+  const auto n = cross(u,v);
+  const auto nn = sqr_magnitude(n);
+  return nn ? n/sqrt(nn)
+            : (sqr_magnitude(u) >= sqr_magnitude(v) ? u : v).unit_orthogonal_vector();
+}
+
 template<class T> inline T angle_between(const Vector<T,3>& u, const Vector<T,3>& v) { // 0 .. pi
   return atan2(magnitude(cross(u,v)),dot(u,v));
 }

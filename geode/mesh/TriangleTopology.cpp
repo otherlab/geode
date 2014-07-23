@@ -1848,17 +1848,36 @@ Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_triangle_soup() co
 
 TV3 TriangleTopology::normal(RawField<const TV3,VertexId> X, const FaceId f) const {
   const auto v = vertices(f);
-  return normalized(cross(X[v.y]-X[v.x],X[v.z]-X[v.x]));
+  return normal_cross(X[v.y]-X[v.x],X[v.z]-X[v.x]);
 }
 
 TV3 TriangleTopology::normal(RawField<const TV3,VertexId> X, const VertexId v) const {
+  // Area weight normals
   TV3 n;
   for (const auto e : outgoing(v)) {
     const auto f = face(e);
     if (f.valid())
       n += angle_at(X,e)*normal(X,f);
   }
-  return normalized(n);
+
+  // We're nondegenerate, return immediately
+  const T nn = sqr_magnitude(n);
+  if (nn)
+    return n/sqrt(nn);
+
+  // If we're degenerate, return the normal of the least degenerate face
+  T max_angle = -inf;
+  for (const auto e : outgoing(v)) {
+    const auto f = face(e);
+    if (f.valid()) {
+      const T angle = angle_at(X,e);
+      if (!(max_angle >= angle)) { // Invert comparison so that nans mean yes
+        max_angle = angle;
+        n = normal(X,f);
+      }
+    }
+  }
+  return n;
 }
 
 T TriangleTopology::dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const {
