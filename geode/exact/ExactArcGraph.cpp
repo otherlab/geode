@@ -13,7 +13,7 @@ namespace geode {
 
 namespace {
 // An arc with endpoints at intersections of a horizontal and a circle
-// Eventually this might be folded into a more general 
+// With some carefully designed templates and overloads this could share most of its implementation with ExactArc, but for now it doesn't seem worth the added complexity
 template<Pb PS> struct ExactHorizontalArc {
   ExactCircle<PS> circle;
   IncidentCircle<PS> i;
@@ -36,9 +36,6 @@ template<Pb PS> struct ExactHorizontalArc {
 
   SmallArray<IncidentCircle<PS>,2> intersections_if_any(const ExactCircle<PS>& incident) const;
   SmallArray<IncidentCircle<PS>,2> intersections_if_any(const ExactArc<PS>& a) const;
-
-  const uint8_t src_q() const { return h_is_src ? h.q : i.q; }
-  const uint8_t dst_q() const { return h_is_src ? h.q : i.q; }
 };
 
 template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& i) const {
@@ -96,10 +93,10 @@ template<Pb PS> Box<exact::Vec2> bounding_box(const ExactHorizontalArc<PS>& a) {
   }
 }
 
-} // anonymous namespace 
+} // anonymous namespace
 
 static Array<int> overlapping_leaves(const BoxTree<Vec2>& tree, const Box<Vec2>& b) {
-  assert(tree.leaf_size == 1); 
+  assert(tree.leaf_size == 1);
   struct Visitor {
     const BoxTree<Vec2>& tree;
     const Box<Vec2> b;
@@ -208,7 +205,7 @@ template<Pb PS> struct VerticalSort {
     return !reference.is_same_intersection(i0.x, i1.x) && reference.intersections_upwards(i0.x, i1.x);
   }
 };
-} // anonymous namespace 
+} // anonymous namespace
 
 namespace {
 template<Pb PS> struct RightwardRaycast {
@@ -251,7 +248,7 @@ template<Pb PS> struct RightwardRaycast {
     }
   }
 };
-} // anonymous namespace 
+} // anonymous namespace
 
 template<Pb PS> static Array<HalfedgeId> rightwards_raycast(const ExactArcGraph<PS>& g, const HorizontalIntersection<PS>& start, const CircleFace starting_face, const BoxTree<exact::Vec2>& edge_tree) {
   auto raycast = RightwardRaycast<PS>(g, start, starting_face, edge_tree);
@@ -269,7 +266,7 @@ template<Pb PS> Array<HalfedgeId> ExactArcGraph<PS>::path_to_infinity(const Half
   const auto seed_a = arc(graph->edge(seed_he));
   const auto& seed_c = seed_a.circle;
   const auto arc_bounds = bounding_box(seed_a);
-  const auto seed_face = circle_face(seed_he); // Use edge direction to see if we are inside or outside 
+  const auto seed_face = circle_face(seed_he); // Use edge direction to see if we are inside or outside
 
   // Any Horizontal with a y value in this range will be sure to intersect the seed circle
   const auto safe_y = Box<Quantized>(seed_c.center.y).thickened(seed_c.radius - 1);
@@ -366,10 +363,10 @@ template<Pb PS> struct NewArc {
   // first_intersection is where arc enters incident and last_intersection is where arc leaves incident
   // Assuming start of arc isn't inside incident, using first_intersection as end will have a shorter arc than last_intersection
   IncidentCircle<PS> first_intersection(const ExactCircle<PS>& incident) const {
-    return (direction == ArcDirection::CCW) ? circle.intersection_min(incident) : circle.intersection_max(incident); 
+    return (direction == ArcDirection::CCW) ? circle.intersection_min(incident) : circle.intersection_max(incident);
   }
   IncidentCircle<PS> last_intersection(const ExactCircle<PS>& incident) const {
-    return (direction != ArcDirection::CCW) ? circle.intersection_min(incident) : circle.intersection_max(incident); 
+    return (direction != ArcDirection::CCW) ? circle.intersection_min(incident) : circle.intersection_max(incident);
   }
 
   // Choose a vertex for the start of the arc
@@ -478,7 +475,7 @@ template<Pb PS> Array<HalfedgeId> ExactArcGraph<PS>::quantize_and_add_arcs(const
       assert(is_same_circle(hc, curr.x0_inc));
 
       // Inputs to quantization will usually need to undergo a union (to remove self intersections) before further operations are safe
-      // In this case quantization will usually be on positive area polyarcs. Under the assumption that eroding small features is better 
+      // In this case quantization will usually be on positive area polyarcs. Under the assumption that eroding small features is better
       // than adding them we want add helper arcs with a negative winding
 
       // Canonical arcs are ccw so we connect prev to dst and curr to src if we are going to use a negative winding
@@ -681,7 +678,7 @@ template<Pb PS> Nested<CircleArc> ExactArcGraph<PS>::unquantize_circle_arcs(cons
       const HalfedgeId he = contour.front();
       const auto& c = circle(graph->edge(he));
       const int s = graph->is_forward(he) ? 1 : -1;
-      const Vec2 rhs = quant.inverse(c.center + Vec2(c.radius, 0)); 
+      const Vec2 rhs = quant.inverse(c.center + Vec2(c.radius, 0));
       const Vec2 lhs = quant.inverse(c.center - Vec2(c.radius, 0));
       result.append_empty();
       result.append_to_back(CircleArc(rhs, real(s)));
@@ -736,9 +733,9 @@ template<Pb PS> struct IntersectionHelper {
   bool cull(const int n) const { return false; }
   bool cull(const int n0, const int n1) const { return false; }
   void leaf(const int n) const { assert(tree.prims(n).size()==1); }
-  
+
   void leaf(const int n0, const int n1) {
-    if(n0 == n1) // Only check 
+    if(n0 == n1) // Only check
       return;
     assert(tree.prims(n0).size()==1 && tree.prims(n1).size()==1);
     const EdgeId e0 = EdgeId(tree.prims(n0)[0]),
@@ -804,7 +801,7 @@ template<Pb PS> void ExactArcGraph<PS>::split_edges() {
         edge_intersections.append(e_dst); // Add end of edge so we can find actual order
         const int n = edge_intersections.size();
         assert(n >= 2); // Should have at least 1 new vertex and dst
-        
+
         const ExactCircle<PS> ec = circle(current_edge);
 
         sort(edge_intersections, CompareInc<PS>({*this, circle(current_edge)})); // Sort by angle
@@ -877,7 +874,7 @@ template<Pb PS> struct RayCast {
     }
   }
 };
-} // anonymous namespace 
+} // anonymous namespace
 
 // Find all edge crossings for a horizontal
 // Halfedges indicate sign of crossing
@@ -967,7 +964,7 @@ template<Pb PS> void ExactArcGraph<PS>::compute_embedding() {
 
     // Force seed_he to be updated by adding it as the end of the path
     path_from_infinity.append(seed_he);
-    
+
     FaceId current_face = infinity_face;
     for(const HalfedgeId hit : path_from_infinity) {
       const BorderId hit_border = g.border(hit);
