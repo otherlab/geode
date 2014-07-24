@@ -611,4 +611,9 @@ template<int m> static inline Vector<Quantized,m> snap(const Vector<Interval,m>&
   return r;
 }
 
+inline Box<Vec2> bounding_box(const Vector<Interval,2>& i) {
+  const auto bx = i.x.box(), by = i.y.box();
+  return Box<Vec2>(Vec2(bx.min,by.min),Vec2(bx.max,by.max));
+}
+
 } // namespace geode

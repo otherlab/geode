@@ -90,6 +90,12 @@ public:
     copy.flat.copy(flat);
     return copy;
   }
+
+  Element& front() { return flat.front(); }
+  const Element& front() const { return flat.front(); }
+  Element& back() { return flat.back(); }
+  const Element& back() const { return flat.back(); }
+
 };
 
 }

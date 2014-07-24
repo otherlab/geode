@@ -17,7 +17,7 @@
 namespace geode {
 
 typedef exact::Vec2 EV;
-using exact::Point2;
+using exact::Perturbed2;
 using Log::cout;
 using std::endl;
 
@@ -30,7 +30,7 @@ static Array<Box<EV>> segment_boxes(RawArray<const int> next, RawArray<const EV>
 
 // Does x1 + t*dir head outwards from the local polygon portion x0,x1,x2?
 // A version of local_outwards specialized to dir = (1,0): does x1 + t*(1,0) head outwards from x0,x1,x2?
-static inline bool local_outwards_x_axis(const Point2 x0, const Point2 x1, const Point2 x2) {
+static inline bool local_outwards_x_axis(const Perturbed2 x0, const Perturbed2 x1, const Perturbed2 x2) {
   // If x1 is convex,  we're outwards if dir is to the right of *either* segment.
   // If x1 is concave, we're outwards if dir is to the right of *both* segments.
   const bool out0 = upwards(x0,x1),
@@ -68,8 +68,8 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
       const int i0 = tree.prims(n0)[0], i1 = next[i0],
                 j0 = tree.prims(n1)[0], j1 = next[j0];
       if (!(i0==j0 || i0==j1 || i1==j0 || i1==j1)) {
-        const auto a0 = tuple(i0,X[i0]), a1 = tuple(i1,X[i1]),
-                   b0 = tuple(j0,X[j0]), b1 = tuple(j1,X[j1]);
+        const auto a0 = Perturbed2(i0,X[i0]), a1 = Perturbed2(i1,X[i1]),
+                   b0 = Perturbed2(j0,X[j0]), b1 = Perturbed2(j1,X[j1]);
         if (segments_intersect(a0,a1,b0,b1))
           pairs.append(vec(i0,j0));
       }
@@ -102,26 +102,26 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
       const BoxTree<EV>& tree;
       RawArray<const int> next;
       RawArray<const EV> X;
-      const Point2 start;
+      const Perturbed2 start;
       int depth;
 
       Depth(const BoxTree<EV>& tree, RawArray<const int> next, RawArray<const EV> X, const int prev, const int i)
         : tree(tree), next(next), X(X)
         , start(i,X[i])
         // If we intersect no other segments, the depth depends on the orientation of direction = (1,0) relative to segments prev and i
-        , depth(-!local_outwards_x_axis(tuple(prev,X[prev]),start,tuple(next[i],X[next[i]]))) {}
+        , depth(-!local_outwards_x_axis(Perturbed2(prev,X[prev]),start,Perturbed2(next[i],X[next[i]]))) {}
 
       bool cull(const int n) const {
         const auto box = tree.boxes(n);
-        return box.max.x<start.y.x || box.max.y<start.y.y || box.min.y>start.y.y;
+        return box.max.x<start.value().x || box.max.y<start.value().y || box.min.y>start.value().y;
       }
 
       void leaf(const int n) {
         assert(tree.prims(n).size()==1);
         const int i0 = tree.prims(n)[0], i1 = next[i0];
-        if (start.x!=i0 && start.x!=i1) {
-          const auto a0 = tuple(i0,X[i0]),
-                     a1 = tuple(i1,X[i1]);
+        if (start.seed()!=i0 && start.seed()!=i1) {
+          const auto a0 = Perturbed2(i0,X[i0]),
+                     a1 = Perturbed2(i1,X[i1]);
           const bool above0 = upwards(start,a0),
                      above1 = upwards(start,a1);
           if (above0!=above1 && above1==triangle_oriented(a0,a1,start))
@@ -137,16 +137,16 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
     int prev = poly.back();
     for (const int i : poly) {
       const int j = next[i];
-      const Vector<Point2,2> segment(tuple(i,X[i]),tuple(j,X[j]));
+      const Vector<Perturbed2,2> segment(Perturbed2(i,X[i]),Perturbed2(j,X[j]));
       const auto other = others[i];
       // Sort intersections along this segment
       if (other.size() > 1) {
         struct PairOrder {
           RawArray<const int> next;
           RawArray<const EV> X;
-          const Vector<Point2,2> segment;
+          const Vector<Perturbed2,2> segment;
 
-          PairOrder(RawArray<const int> next, RawArray<const EV> X, const Vector<Point2,2>& segment)
+          PairOrder(RawArray<const int> next, RawArray<const EV> X, const Vector<Perturbed2,2>& segment)
             : next(next), X(X), segment(segment) {}
 
           bool operator()(const int j, const int k) const {
@@ -155,8 +155,8 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
             const int jn = next[j],
                       kn = next[k];
             return segment_intersections_ordered(segment.x,segment.y,
-                                                 tuple(j,X[j]),tuple(jn,X[jn]),
-                                                 tuple(k,X[k]),tuple(kn,X[kn]));
+                                                 Perturbed2(j,X[j]),Perturbed2(jn,X[jn]),
+                                                 Perturbed2(k,X[k]),Perturbed2(kn,X[kn]));
           }
         };
         sort(other,PairOrder(next,X,segment));
@@ -166,7 +166,7 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
         if (!delta)
           graph.set(vec(prev,i),o);
         const int on = next[o];
-        delta += segment_directions_oriented(segment.x,segment.y,tuple(o,X[o]),tuple(on,X[on])) ? -1 : 1;
+        delta += segment_directions_oriented(segment.x,segment.y,Perturbed2(o,X[o]),Perturbed2(on,X[on])) ? -1 : 1;
         prev = o;
       }
       if (!delta)
@@ -184,7 +184,7 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
       auto ij = start.x;
       for (;;) {
         const int i = ij.x, j = ij.y, in = next[i], jn = next[j];
-        output.flat.append(j==next[i] ? X[j] : segment_segment_intersection(tuple(i,X[i]),tuple(in,X[in]),tuple(j,X[j]),tuple(jn,X[jn])));
+        output.flat.append(j==next[i] ? X[j] : segment_segment_intersection(Perturbed2(i,X[i]),Perturbed2(in,X[in]),Perturbed2(j,X[j]),Perturbed2(jn,X[jn])));
         ij = vec(j,graph.get(ij));
         if (ij == start.x)
           break;

@@ -16,7 +16,7 @@ namespace geode {
 
 using Log::cout;
 using std::endl;
-using exact::Point2;
+using exact::Perturbed2;
 typedef Vector<Quantized,2> EV2;
 
 namespace {
@@ -28,7 +28,8 @@ struct SegmentSegment { template<class TV> static ConstructType<2,3,TV> eval(con
   const auto num = emul(den,a0)+emul(edet(b0-a0,db),da);
   return tuple(num,den);
 }};}
-exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const Point2 b0, const Point2 b1) {
+
+exact::Vec2 segment_segment_intersection(const Perturbed2 a0, const Perturbed2 a1, const Perturbed2 b0, const Perturbed2 b1) {
   // TODO: Use the sign returned by perturbed_construct?
   return perturbed_construct<SegmentSegment>(segment_segment_intersection_threshold,a0,a1,b0,b1).x;
 }
@@ -36,7 +37,7 @@ exact::Vec2 segment_segment_intersection(const Point2 a0, const Point2 a1, const
 static bool check_intersection(const EV2 a0, const EV2 a1, const EV2 b0, const EV2 b1, Random& random) {
   typedef Vector<double,2> DV;
   const int i = random.bits<uint32_t>();
-  const Point2 a0p(i,a0), a1p(i+1,a1), b0p(i+2,b0), b1p(i+3,b1);
+  const Perturbed2 a0p(i,a0), a1p(i+1,a1), b0p(i+2,b0), b1p(i+3,b1);
   if (segments_intersect(a0p,a1p,b0p,b1p)) {
     const auto ab = segment_segment_intersection(a0p,a1p,b0p,b1p);
     GEODE_ASSERT(Segment<DV>(DV(a0),DV(a1)).distance(DV(ab)) < 1.01);
@@ -51,18 +52,18 @@ static void construction_tests() {
   IntervalScope scope;
 
   {
-    const Point2 a0(0,EV2(-100.1,   0)),
-                 a1(1,EV2( 100.1,   0)),
-                 b0(2,EV2(   0,-100.1)),
-                 b1(3,EV2(   0, 100.1)),
+    const Perturbed2 a0(0,EV2(-100.1,   0)),
+                     a1(1,EV2( 100.1,   0)),
+                     b0(2,EV2(   0,-100.1)),
+                     b1(3,EV2(   0, 100.1)),
 
-                 c0(4,EV2( 100.2, 200.1)),
-                 c1(5,EV2( 300.2, 200.1)),
-                 d0(6,EV2( 200.2, 100.1)),
-                 d1(7,EV2( 200.2, 300.1));
+                     c0(4,EV2( 100.2, 200.1)),
+                     c1(5,EV2( 300.2, 200.1)),
+                     d0(6,EV2( 200.2, 100.1)),
+                     d1(7,EV2( 200.2, 300.1));
 
-    const Point2 e0(8,EV2(-100,  50)),
-                 e1(9,EV2( 100,  50));
+    const Perturbed2 e0(8,EV2(-100,  50)),
+                     e1(9,EV2( 100,  50));
 
     // Check very simple cases where two segments intersect
     GEODE_ASSERT(segments_intersect(a0,a1,b1,b0));
@@ -106,7 +107,7 @@ static void construction_tests() {
     if (random->bit()) swap(a0,a1);
     if (random->bit()) swap(b0,b1);
     if (random->bit()) { swap(a0,b0); swap(a1,b1); }
-    const auto ab = segment_segment_intersection(tuple(0,a0),tuple(1,a1),tuple(2,b0),tuple(3,b1));
+    const auto ab = segment_segment_intersection(Perturbed2(0,a0),Perturbed2(1,a1),Perturbed2(2,b0),Perturbed2(3,b1));
     // We know the intersection exactly by construction; check that we get it almost exactly right.
     GEODE_ASSERT(sqr_magnitude(ab-vec(x1,y))<=2);
   }
@@ -135,7 +136,7 @@ static void construction_tests() {
     int count = 0;
     for (int k=0;k<total;k++) {
       const auto p = EV2(perturbation<2>(16,k));
-      const Point2 a0(k,p), a1(k+1,p), b0(k+2,p), b1(k+3,p);
+      const Perturbed2 a0(k,p), a1(k+1,p), b0(k+2,p), b1(k+3,p);
       if (segments_intersect(a0,a1,b0,b1)) {
         GEODE_ASSERT(segment_segment_intersection(a0,a1,b0,b1)==p);
         count++;

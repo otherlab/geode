@@ -63,6 +63,7 @@ GEODE_DEFINE_ID(HalfedgeId)
 GEODE_DEFINE_ID(EdgeId)
 GEODE_DEFINE_ID(FaceId)
 GEODE_DEFINE_ID(BorderId)
+GEODE_DEFINE_ID(ComponentId)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexId)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceId)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,HalfedgeId)
@@ -107,6 +108,8 @@ template<class Id> struct IdIter {
   IdIter operator-(int d) const { return Id(i.id-d);}
   int operator-(IdIter o) const { return i.id-o.i.id; }
 };
+
+template<class Id> Range<IdIter<Id>> id_range(const int n) { return range(IdIter<Id>(Id(0)),IdIter<Id>(Id(n))); }
 
 #ifdef OTHER_PYTHON
 template<class Id> static inline PyObject* to_python(IdIter<Id> i) { return to_python(i.i); }
