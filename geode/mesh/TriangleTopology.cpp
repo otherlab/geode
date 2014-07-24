@@ -1124,37 +1124,36 @@ VertexId MutableTriangleTopology::split_edge(HalfedgeId e) {
 
 bool MutableTriangleTopology::is_collapse_safe(HalfedgeId h) const {
   GEODE_ASSERT(valid(h));
+  const auto o = reverse(h);
+  const auto v0 = src(h),
+             v1 = dst(h);
 
-  HalfedgeId o = reverse(h);
-
-  VertexId v0 = src(h);
-  VertexId v1 = dst(h);
-
-  VertexId vl = dst(next(h));
-  VertexId vr = dst(next(o));
-
-  // if v0 and v1 are on different boundaries, we can't do this
+  // If v0 and v1 are on different boundaries, we can't do this
   if (is_boundary(v0) && is_boundary(v1) &&
       !is_boundary(h) && !is_boundary(o))
     return false;
 
-  // can't snip off an isolated vl or vr
+  // Can't snip off an isolated vl or vr
   if ((is_boundary(reverse(next(h))) && is_boundary(reverse(prev(h)))) ||
       (is_boundary(reverse(next(o))) && is_boundary(reverse(prev(o)))))
     return false;
 
-  // this is only considered consistent with special flags, but no good things
-  // can come from it
+  // Look up left and right vertices
+  const auto vl = is_boundary(h) ? VertexId() : dst(next(h)),
+             vr = is_boundary(o) ? VertexId() : dst(next(o));
+
+  // This only happens in temporarily invalid situations, such as if
+  // split_along_edge is called and not cleaned up.  No good can come of it.
   if (vl==vr)
     return false;
 
-  // one-rings of v0 and v1 cannot intersect, otherwise we'll collapse a
+  // One-rings of v0 and v1 cannot intersect, otherwise we'll collapse a
   // triangle-shaped tunnel
   Hashtable<VertexId> covered;
   for (auto oh: outgoing(v0)) {
     auto v = dst(oh);
     if (v != vl && v != vr)
-      covered.insert(v);
+      covered.set(v);
   }
   for (auto oh: outgoing(v1)) {
     auto v = dst(oh);
