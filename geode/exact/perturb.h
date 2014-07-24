@@ -21,9 +21,9 @@ namespace geode {
 //
 // Identically zero polynomials are zero regardless of perturbation; these are detected and an exception is thrown.
 // predicate should compute a quantity of type Exact<degree>, then copy it into result with mpz_set.
-template<int m> GEODE_CORE_EXPORT GEODE_COLD bool
-perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>),
-               const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X);
+template<class PerturbedT> GEODE_CORE_EXPORT GEODE_COLD bool
+perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,PerturbedT::m>>),
+               const int degree, RawArray<const PerturbedT> X);
 
 // Given polynomial numerator and denominator functions, evaluate numerator(X+epsilon)/denominator(X+epsilon) rounded
 // to int for the same infinitesimal perturbation epsilon as in perturbed_sign.  The numerator and denominator must be
@@ -40,10 +40,10 @@ perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<
 // If take_sqrt is true, an exactly rounded square root is computed.
 // The r+1 numbers (r numerators and one denominator) should be copied into the result array via r+1 calls to mpz_set.
 // The perturbed sign of the denominator (before any square root) is returned.
-template<int m> GEODE_CORE_EXPORT GEODE_COLD bool
+template<class PerturbedT> GEODE_CORE_EXPORT GEODE_COLD bool
 perturbed_ratio(RawArray<Quantized> result,
-                void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>),
-                const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt=false);
+                void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,PerturbedT::m>>),
+                const int degree, RawArray<const PerturbedT> X, const bool take_sqrt=false);
 
 // The levelth perturbation of point i in R^m.  This is exposed for occasional special purpose use only, or as a
 // convenient pseudorandom generator; normally this routine is called internally by perturbed_sign.  perturbation<m+1>
@@ -74,8 +74,9 @@ wrap_predicate(Types<entries...>) -> decltype(&wrapped_predicate<F,d,entries...>
 // Given F s.t. F::eval exactly computes a polynomial in its input arguments, compute the perturbed sign of F(args).
 // This is the standard way of turning an expression into a perturbed predicate.  For examples, see predicates.cpp.
 template<class F,class... Args> GEODE_ALWAYS_INLINE static inline bool perturbed_predicate(const Args... args) {
-  const int d = First<Args...>::type::second_type::m;
-  typedef decltype(F::eval(Vector<Exact<1>,d>(args.y)...)) Result;
+  typedef typename First<Args...>::type PerturbedT;
+  const int d = PerturbedT::m;
+  typedef decltype(F::eval(Vector<Exact<1>,d>(args.value())...)) Result;
   const int degree = Result::degree;
 
   // Check irreducibility if desired
@@ -84,17 +85,17 @@ template<class F,class... Args> GEODE_ALWAYS_INLINE static inline bool perturbed
     inexact_assert_irreducible(f,degree,sizeof...(Args),typeid(F).name());
 
   // Evaluate with conservative interval arithmetic, hoping for a clear nonzero
-  if (const int s = weak_sign(F::eval(Vector<Interval,d>(args.y)...)))
+  if (const int s = weak_sign(F::eval(Vector<Interval,d>(args.value())...)))
     return s>0;
 
   // Fall back to exact integer evaluation with symbolic perturbation
-  const typename exact::Point<d>::type X[sizeof...(Args)] = {args...};
+  const PerturbedT X[sizeof...(Args)] = {args...};
   return perturbed_sign(f,degree,asarray(X));
 }
 
 template<class F,class... Args> struct PerturbedConstruct {
-  static const int d = First<Args...>::type::second_type::m;
-  typedef decltype(F::eval(Vector<Exact<1>,d>(declval<Args>().y)...)) Result;
+  static const int d = First<Args...>::type::m;
+  typedef decltype(F::eval(Vector<Exact<1>,d>(declval<Args>().value())...)) Result;
   static const int degree = Result::second_type::degree+1;
   static_assert(Result::first_type::value_type::degree==degree,
                 "We require degree d/(d-1) so that the result has degree 1.");
@@ -120,7 +121,7 @@ perturbed_construct(const int tolerance, const Args... args) {
 
   // Evaluate with intervals first
   {
-    const auto i = F::eval(Vector<Interval,I::d>(args.y)...);
+    const auto i = F::eval(Vector<Interval,I::d>(args.value())...);
     if (!i.y.contains_zero()) {
       const auto r = inverse(i.y)*i.x;
       const int s = certainly_positive(i.y) ? 1 : -1;
@@ -134,7 +135,7 @@ perturbed_construct(const int tolerance, const Args... args) {
   }
 
   // If intervals fail, evaluate and round using symbolic perturbation
-  const typename exact::Point<I::d>::type X[sizeof...(Args)] = {args...};
+  const typename First<Args...>::type X[sizeof...(Args)] = {args...};
   Vector<Quantized,I::k> q;
   const bool s = perturbed_ratio(asarray(q),f,I::degree,asarray(X));
 #if CHECK

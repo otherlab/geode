@@ -37,9 +37,9 @@ public:
     typedef T value_type; // for stl
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
-    enum Workaround1 {dimension=2};
-    enum Workaround2 {m=2};
-    static const bool is_const=false;
+    static const int dimension = 2;
+    static const int m = 2;
+    static const bool is_const = false;
 
     T x,y;
 
@@ -545,5 +545,8 @@ in_bounds(const Vector<T,2>& v,const Vector<T,2>& vmin,const Vector<T,2>& vmax)
 template<class T> inline Vector<T,2>
 wrap(const Vector<T,2>& v,const Vector<T,2>& vmin,const Vector<T,2>& vmax)
 {return Vector<T,2>(wrap(v.x,vmin.x,vmax.x),wrap(v.y,vmin.y,vmax.y));}
+
+template<class T> const int Vector<T,2>::dimension;
+template<class T> const int Vector<T,2>::m;
 
 }

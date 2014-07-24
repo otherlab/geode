@@ -99,12 +99,25 @@ public:
     return Id(flat.append(x));
   }
 
+  Id append(Uninit) GEODE_ALWAYS_INLINE {
+    return Id(flat.append(uninit));
+  }
+
   template<class TField> void extend(const TField& append_field) {
     flat.extend(append_field.flat);
   }
 
   void preallocate(const int m_new) {
     flat.preallocate(m_new);
+  }
+
+  // Grow storage so that max_id will be be a valid index
+  void grow_until_valid(const Id max_id) {
+    assert(max_id.valid());
+    if(size() <= max_id.idx()) {
+      flat.resize(max_id.idx() + 1);
+    }
+    assert(valid(max_id));
   }
 
   Field<Element,Id> copy() const {
@@ -120,6 +133,11 @@ public:
   const Field<Element,Id>& const_cast_() const {
     return *(const Field<Element,Id>*)this;
   }
+
+  Element& front() { return flat.front(); }
+  const Element& front() const { return flat.front(); }
+  Element& back() { return flat.back(); }
+  const Element& back() const { return flat.back(); }
 };
 
 }

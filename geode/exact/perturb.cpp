@@ -40,6 +40,32 @@ using std::endl;
 static const bool check = false;
 static const bool verbose = false;
 
+// Combine bytes from two values into two 128 bit keys for a single call to threefry
+template<class T0, class T1> uint128_t packed_threefry(const T0 seed0, const T1 seed1) {
+  static_assert(is_packed_pod<T0>::value, "Seed types must be packed pod");
+  static_assert(is_packed_pod<T1>::value, "Seed types must be packed pod");
+  static_assert(sizeof(T0) + sizeof(T1) <= 2*sizeof(uint128_t), "Need to be able to pack seeds into two 128 bit values");
+  // We could try to use a union to convert values, but that isn't necessarily portable
+  // Instead we use memcpy which should get inlined by the compiler into something just as fast as a default assignment operator
+  uint128_t packed_seeds[2] = {0, 0};
+  unsigned char* packed_bytes = reinterpret_cast<unsigned char*>(packed_seeds); // Cast to a char type should be complient with strict aliasing rules
+  memcpy(packed_bytes + 0,          &seed0, sizeof(T0));
+  memcpy(packed_bytes + sizeof(T0), &seed1, sizeof(T1));
+  return threefry(packed_seeds[0], packed_seeds[1]);
+}
+
+// Our fixed deterministic pseudorandom perturbation sequence.  We limit ourselves to 32 bits so that we can pull four values out of a uint128_t.
+template<int m, class TL, class TS> inline Vector<ExactInt,m> packed_perturbation(const TL level, const TS seed) {
+  static_assert(m<=4,"");
+  const int bits = min(exact::log_bound+1,128/4);
+  const auto limit = ExactInt(1)<<(bits-1);
+  const uint128_t noise = packed_threefry(level, seed);
+  Vector<ExactInt,m> result;
+  for (int a=0;a<m;a++)
+    result[a] = (cast_uint128<ExactInt>(noise>>32*a)&(2*limit-1))-limit;
+  return result;
+}
+
 // Our fixed deterministic pseudorandom perturbation sequence.  We limit ourselves to 32 bits so that we can pull four values out of a uint128_t.
 template<int m> inline Vector<ExactInt,m> perturbation(const int level, const int i) {
   static_assert(m<=4,"");
@@ -51,6 +77,9 @@ template<int m> inline Vector<ExactInt,m> perturbation(const int level, const in
     result[a] = (cast_uint128<ExactInt>(noise>>32*a)&(2*limit-1))-limit;
   return result;
 }
+template<int m> inline Vector<ExactInt,m> perturbation(const int level, const exact::Perturbed<1>::ValueType seed) { return packed_perturbation<m>(level, seed); }
+template<int m> inline Vector<ExactInt,m> perturbation(const int level, const exact::Perturbed<2>::ValueType seed) { return packed_perturbation<m>(level, seed); }
+template<int m> inline Vector<ExactInt,m> perturbation(const int level, const exact::Perturbed<3>::ValueType seed) { return packed_perturbation<m>(level, seed); }
 
 /********** Symbolic perturbation **********/
 
@@ -72,15 +101,16 @@ static bool last_nonzero(RawArray<const mp_limb_t,2> x) {
 }
 
 // Check for identically zero polynomials using randomized polynomial identity testing
-template<class R,int m> static void
-assert_last_nonzero(void(*const polynomial)(R,RawArray<const Vector<Exact<1>,m>>),
-                    R result, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const char* message) {
-  typedef Vector<Exact<1>,m> EV;
+template<class R,class PerturbedT> static void
+assert_last_nonzero(void(*const polynomial)(R,RawArray<const Vector<Exact<1>,PerturbedT::m>>),
+                    R result, RawArray<const PerturbedT> X, const char* message) {
+
+  typedef Vector<Exact<1>,PerturbedT::m> EV;
   const int n = X.size();
   const auto Z = GEODE_RAW_ALLOCA(n,EV);
   for (const int k : range(20)) {
     for (int i=0;i<n;i++)
-      Z[i] = EV(perturbation<m>(k<<10,X[i].x));
+      Z[i] = EV(perturbation<PerturbedT::m>(k<<10,X[i].seed()));
     polynomial(result,Z);
     if (last_nonzero(result)) // Even a single nonzero means we're all good
       return;
@@ -90,8 +120,9 @@ assert_last_nonzero(void(*const polynomial)(R,RawArray<const Vector<Exact<1>,m>>
   throw AssertionError(format("%s (there is likely a bug in the calling code), X = %s",message,str(X)));
 }
 
-template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>),
-                                    const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X) {
+template<class PerturbedT> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,PerturbedT::m>>),
+                                                      const int degree, RawArray<const PerturbedT> X) {
+  const int m = PerturbedT::m;
   typedef Vector<Exact<1>,m> EV;
   if (check)
     GEODE_WARNING("Expensive consistency checking enabled");
@@ -105,7 +136,7 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
   const int precision = degree*Exact<1>::ratio;
   {
     for (int i=0;i<n;i++)
-      Z[i] = EV(to_exact(X[i].y));
+      Z[i] = EV(to_exact(X[i].value()));
     const auto R = GEODE_RAW_ALLOCA(precision,mp_limb_t);
     predicate(R,Z);
     if (const int sign = mpz_sign(R))
@@ -117,7 +148,7 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
   {
     // Compute the first level of perturbations
     for (int i=0;i<n;i++)
-      Y[i] = perturbation<m>(1,X[i].x);
+      Y[i] = perturbation<m>(1,X[i].seed());
     if (verbose)
       cout << "  Y = "<<Y<<endl;
 
@@ -127,7 +158,7 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
     memset(values.data(),0,sizeof(mp_limb_t)*values.flat.size());
     for (int j=0;j<degree;j++) {
       for (int i=0;i<n;i++)
-        Z[i] = EV(to_exact(X[i].y)+(j+1)*Y[i]);
+        Z[i] = EV(to_exact(X[i].value())+(j+1)*Y[i]);
       predicate(values[j],Z);
       if (verbose)
         cout << "  predicate("<<Z<<") = "<<mpz_str(values[j])<<endl;
@@ -153,14 +184,14 @@ template<int m> bool perturbed_sign(void(*const predicate)(RawArray<mp_limb_t>,R
       // Compute the next level of perturbations
       Y.resize(d*n);
       for (int i=0;i<n;i++)
-        Y[(d-1)*n+i] = perturbation<m>(d,X[i].x);
+        Y[(d-1)*n+i] = perturbation<m>(d,X[i].seed());
 
       // Evaluate polynomial at every point in an "easy corner"
       const auto lambda = monomials(degree,d);
       const Array<mp_limb_t,2> values(lambda.m,precision,uninit);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
-          Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
+          Z[i] = EV(to_exact(X[i].value())+lambda(j,0)*Y[i]);
         for (int v=1;v<d;v++)
           for (int i=0;i<n;i++)
             Z[i] += EV(lambda(j,v)*Y[v*n+i]);
@@ -281,7 +312,8 @@ void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const b
   throw OverflowError("perturbed_ratio: overflow in l'Hopital expansion");
 }
 
-template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,m>>), const int degree, RawArray<const Tuple<int,Vector<Quantized,m>>> X, const bool take_sqrt) {
+template<class PerturbedT> bool perturbed_ratio(RawArray<Quantized> result, void(*const ratio)(RawArray<mp_limb_t,2>,RawArray<const Vector<Exact<1>,PerturbedT::m>>), const int degree, RawArray<const PerturbedT> X, const bool take_sqrt) {
+  const int m = PerturbedT::m;
   typedef Vector<Exact<1>,m> EV;
   const int n = X.size();
   const int r = result.size();
@@ -294,7 +326,7 @@ template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const rat
   const int precision = degree*Exact<1>::ratio;
   {
     for (int i=0;i<n;i++)
-      Z[i] = EV(to_exact(X[i].y));
+      Z[i] = EV(to_exact(X[i].value()));
     const auto R = GEODE_RAW_ALLOCA((r+1)*precision,mp_limb_t).reshape(r+1,precision);
     ratio(R,Z);
     if (const int sign = mpz_sign(R[r])) {
@@ -308,7 +340,7 @@ template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const rat
   {
     // Compute the first level of perturbations
     for (int i=0;i<n;i++)
-      Y[i] = perturbation<m>(1,X[i].x);
+      Y[i] = perturbation<m>(1,X[i].seed());
     if (verbose)
       cout << "  Y = "<<Y<<endl;
 
@@ -317,7 +349,7 @@ template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const rat
     const auto values = GEODE_RAW_ALLOCA(degree*(r+1)*scaled_precision,mp_limb_t).reshape(degree,r+1,scaled_precision);
     for (int j=0;j<degree;j++) {
       for (int i=0;i<n;i++)
-        Z[i] = EV(to_exact(X[i].y)+(j+1)*Y[i]);
+        Z[i] = EV(to_exact(X[i].value())+(j+1)*Y[i]);
       ratio(values[j],Z);
       if (verbose)
         cout << "  ratio("<<Z<<") = "<<mpz_str(values[j])<<endl;
@@ -349,14 +381,14 @@ template<int m> bool perturbed_ratio(RawArray<Quantized> result, void(*const rat
       // Compute the next level of perturbations
       Y.resize(d*n);
       for (int i=0;i<n;i++)
-        Y[(d-1)*n+i] = perturbation<m>(d,X[i].x);
+        Y[(d-1)*n+i] = perturbation<m>(d,X[i].seed());
 
       // Evaluate polynomial at every point in an "easy corner"
       const auto lambda = monomials(degree,d);
       const Array<mp_limb_t,3> values(lambda.m,r+1,precision,uninit);
       for (int j=0;j<lambda.m;j++) {
         for (int i=0;i<n;i++)
-          Z[i] = EV(to_exact(X[i].y)+lambda(j,0)*Y[i]);
+          Z[i] = EV(to_exact(X[i].value())+lambda(j,0)*Y[i]);
         for (int v=1;v<d;v++)
           for (int i=0;i<n;i++)
             Z[i] += EV(lambda(j,v)*Y[v*n+i]);
@@ -451,9 +483,9 @@ template<int m> static void perturbed_sign_test() {
       // Evaluate perturbed sign using our fancy routine
       nasty_power = power;
       nasty_index = index;
-      Array<Tuple<int,Vector<Quantized,m>>> fX(1);
-      fX[0].x = index;
-      const bool fast = perturbed_sign<m>(nasty_predicate,m*power,fX);
+      Array<exact::Perturbed<m>> fX(1);
+      fX[0].seed_ = index;
+      const bool fast = perturbed_sign<exact::Perturbed<m>>(nasty_predicate,m*power,fX);
       GEODE_ASSERT((power&1) || fast);
       // Evaluate the series out to several terms using brute force
       Array<int> powers(m+1); // Choose powers of 2 to approximate nested infinitesimals
@@ -520,25 +552,33 @@ static void perturbed_ratio_test() {
     for (const int index : range(20)) {
       nasty_power = power;
       nasty_index = index;
-      Vector<const Tuple<int,EV>,2> X(tuple(index,EV()),tuple(index+1,EV(perturbation<2>(7,index+1))));
+      Vector<const exact::Perturbed2,2> X(exact::Perturbed2(index,EV()),exact::Perturbed2(index+1,EV(perturbation<2>(7,index+1))));
       Vector<Quantized,1> result;
       const bool s = perturbed_ratio(asarray(result),nasty_ratio,2+power,asarray(X),power==2);
-      GEODE_ASSERT(result.x==(power==1?X.y.y.x:abs(X.y.y.x)));
+      GEODE_ASSERT(result.x==(power==1?X.y.value().x:abs(X.y.value().x)));
       GEODE_ASSERT(s==perturbed_sign(nasty_denominator,1+power,asarray(X)));
     }
 }
 
 #define INSTANTIATE(m) \
   template Vector<ExactInt,m> perturbation(const int, const int); \
+  template Vector<ExactInt,m> packed_perturbation(const int, const Vector<Quantized,m>); \
   template bool perturbed_sign(void(*const)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>), \
-                                            const int, RawArray<const Tuple<int,Vector<Quantized,m>>>); \
+                                            const int, RawArray<const exact::Perturbed<m>>); \
+  template bool perturbed_sign(void(*const)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,m>>), \
+                                            const int, RawArray<const exact::ImplicitlyPerturbed<m>>); \
   template bool perturbed_ratio(RawArray<Quantized>,void(*const)(RawArray<mp_limb_t,2>, \
                                 RawArray<const Vector<Exact<1>,m>>), const int, \
-                                RawArray<const Tuple<int,Vector<Quantized,m>>>, bool);
+                                RawArray<const exact::Perturbed<m>>, bool); \
+  template bool perturbed_ratio(RawArray<Quantized>,void(*const)(RawArray<mp_limb_t,2>, \
+                                RawArray<const Vector<Exact<1>,m>>), const int, \
+                                RawArray<const exact::ImplicitlyPerturbed<m>>, bool);
 INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)
 
+template bool perturbed_sign(void(*const)(RawArray<mp_limb_t>,RawArray<const Vector<Exact<1>,2>>), const int,
+                             RawArray<const exact::ImplicitlyPerturbedCenter>);
 }
 using namespace geode;
 

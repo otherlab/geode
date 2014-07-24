@@ -34,9 +34,9 @@ public:
     typedef T value_type; // for stl
     typedef T* iterator; // for stl
     typedef const T* const_iterator; // for stl
-    enum Workaround1 {dimension=1};
-    enum Workaround2 {m=1};
-    static const bool is_const=false;
+    static const int dimension = 1;
+    static const int m = 1;
+    static const bool is_const = false;
 
     T x;
 
@@ -451,5 +451,8 @@ clamp_max(const Vector<T,1>& v,const T& max)
 template<class T> inline bool
 in_bounds(const Vector<T,1>& v,const Vector<T,1>& vmin,const Vector<T,1>& vmax)
 {return in_bounds(v.x,vmin.x,vmax.x);}
+
+template<class T> const int Vector<T,1>::dimension;
+template<class T> const int Vector<T,1>::m;
 
 }

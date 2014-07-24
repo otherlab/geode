@@ -1,12 +1,11 @@
 // Robust constructive solid geometry for circular arc polygons in the plane
 #pragma once
-
 // These routines use algorithms almost identical to the actual polygon case, except using implicit
 // representations for arcs and different (much higher order) predicates to check topology.
 
-#include <geode/exact/config.h>
-#include <geode/exact/quantize.h>
 #include <geode/array/Nested.h>
+#include <geode/exact/config.h>
+#include <geode/geometry/Box.h>
 #include <geode/vector/Frame.h>
 namespace geode {
 
@@ -33,34 +32,10 @@ struct CircleArc {
 
 std::ostream& operator<<(std::ostream& output, const CircleArc& a);
 
-// After quantization, we represent circles implicitly by center and radius, plus two boolean flags
-// describing how to connect adjacent arcs.
-struct ExactCircleArc {
-  Vector<Quantized,2> center;
-  Quantized radius;
-  int index; // Index into the symbolic perturbation
-  bool positive; // True if the arc is traversed counterclockwise
-  bool left; // True if we use the intersection between this arc and the next to the left of the segment joining their centers
-  ExactCircleArc() = default;
-  ExactCircleArc(const Vector<Quantized,2> center, const Quantized radius, const int index,
-                 const bool positive, const bool left)
-    : center(center)
-    , radius(radius)
-    , index(index)
-    , positive(positive)
-    , left(left) {}
-};
-
-// Tweak quantized circles so that they intersect.
-// WARNING: This is not safe to call if multiple arcs have the same perturbation index (might tweak one copy without tweaking the others)
-void tweak_arcs_to_intersect(RawArray<ExactCircleArc> arcs);
-void tweak_arcs_to_intersect(Nested<ExactCircleArc>& arcs);
-
 // Resolve all intersections between circular arc polygons, and extract the contour with given 
 // Depth starts at 0 at infinity, and increases by 1 when crossing a contour from outside to inside.
 // For example, depth = 0 corresponds to polygon_union.
 GEODE_CORE_EXPORT Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int depth);
-GEODE_CORE_EXPORT Nested<ExactCircleArc> exact_split_circle_arcs(Nested<const ExactCircleArc> arcs, const int depth);
 
 // The union of possibly intersecting circular arc polygons, assuming consistent ordering
 template<class... Arcs> static inline Nested<CircleArc> circle_arc_union(const Arcs&... arcs) {
@@ -80,27 +55,9 @@ GEODE_CORE_EXPORT real circle_arc_area(Nested<const CircleArc> arcs);
 GEODE_CORE_EXPORT void reverse_arcs(RawArray<CircleArc> arcs);
 GEODE_CORE_EXPORT void reverse_arcs(Nested<CircleArc> arcs);
 
-GEODE_CORE_EXPORT void exact_reverse_arcs(RawArray<ExactCircleArc> arcs);
-GEODE_CORE_EXPORT void exact_reverse_arcs(Nested<ExactCircleArc> arcs);
-
-// Quantize from approximate to exact representations, taking care to ensure validity of the quantized result.
-// If min_bounds isn't empty the Quantizer will use an appropriate scale to work with other features inside of min_bounds
-GEODE_CORE_EXPORT Tuple<Quantizer<real,2>,Nested<ExactCircleArc>> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Box<Vector<real,2>> min_bounds=Box<Vector<real,2>>::empty_box());
-GEODE_CORE_EXPORT Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2> quant, Nested<const ExactCircleArc> input);
-
-// Returns a center and radius for a circle that passes within constructed_arc_endpoint_error_bound() units of each quantized vertex and has approxamently the correct curvature
-GEODE_CORE_EXPORT Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const Vector<Quantized, 2> x0, const Vector<Quantized, 2> x1, const real q);
-GEODE_CORE_EXPORT Quantized constructed_arc_endpoint_error_bound();
-GEODE_CORE_EXPORT Quantizer<real,2> make_arc_quantizer(const Box<Vector<real,2>> arc_bounds);
-
-// exact_split_circle_arcs prunes away contours that are too small to intersect with a horizontal line.  Normally this can be
-// ignored, but we expose it here for use in benchmarking highly degenerate cases.
-GEODE_CORE_EXPORT Nested<const ExactCircleArc> preprune_small_circle_arcs(Nested<const ExactCircleArc> arcs);
-
 GEODE_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const RawArray<const CircleArc> input);
 GEODE_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
 GEODE_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
-GEODE_CORE_EXPORT ostream& operator<<(ostream& output, const ExactCircleArc& arc);
 
 // Transformation operators for circle arcs
 static inline CircleArc operator*(const real a,                      const CircleArc& c) { return CircleArc(a*c.x,c.q); }
@@ -111,8 +68,5 @@ static inline CircleArc operator+(const CircleArc& c, const Vector<real,2>& t) {
 
 // Hashing for circle arcs
 template<> struct is_packed_pod<CircleArc> : public mpl::true_{};
-static inline Hash hash_reduce(const ExactCircleArc& a) {
-  return Hash(a.center,a.radius,a.index,a.positive,a.left);
-}
 
-}
+} // namespace geode

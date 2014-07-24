@@ -11,7 +11,7 @@ def test_surface_levelset():
   surface = SimplexTree(mesh,X,10)
   particles = ParticleTree(random.randn(1000,3),10)
   print 'fast'
-  phi,normal,triangles,weights = evaluate_surface_levelset(particles,surface,10,True)
+  phi,normal,triangles,weights = surface_levelset(particles,surface,10,True)
   mags,Xn = magnitudes_and_normalized(particles.X)
   print 'phi range %g %g'%(phi.min(),phi.max())
   # Compare with sphere distances
@@ -33,7 +33,7 @@ def test_surface_levelset():
   assert relative_error(closest,closest2) < 1e-7
   # Compare with slow mesh distances
   print 'slow'
-  phi2,normal2,_,_ = slow_evaluate_surface_levelset(particles,surface)
+  phi2,normal2,_,_ = slow_surface_levelset(particles,surface)
   if 0:
     i = argmax(abs(abs(phi)-phi2))
     print 'i %d, phi %g, phi2 %g'%(i,phi[i],phi2[i])

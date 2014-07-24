@@ -12,41 +12,51 @@ HalfedgeGraph::HalfedgeGraph() {}
 
 HalfedgeGraph::HalfedgeGraph(const HalfedgeGraph& g)
   : halfedges_(g.halfedges_.copy())
-  , vertex_to_edge_(g.vertex_to_edge_.copy())
+  , vertices_(g.vertices_.copy())
+  , borders_(g.borders_.copy())
+  , faces_(g.faces_.copy())
 {}
 
 HalfedgeGraph::~HalfedgeGraph() {}
 
 GEODE_CORE_EXPORT Ref<HalfedgeGraph> HalfedgeGraph::copy() const { return new_<HalfedgeGraph>(*this); }
 
-bool HalfedgeGraph::valid(VertexId v)   const { 
-  return vertex_to_edge_.valid(v);
+bool HalfedgeGraph::valid(const VertexId v)   const {
+  return vertices_.valid(v);
 }
-bool HalfedgeGraph::valid(HalfedgeId e) const { 
+bool HalfedgeGraph::valid(const HalfedgeId e) const {
   return halfedges_.valid(e);
 }
-bool HalfedgeGraph::valid(EdgeId e)     const { 
+bool HalfedgeGraph::valid(const EdgeId e)     const {
   return e.valid() && halfedges_.valid(halfedge(e,false));
 }
-bool HalfedgeGraph::valid(BorderId b)   const {
+bool HalfedgeGraph::valid(const BorderId b)   const {
   assert(has_all_border_data());
   return borders_.valid(b);
 }
-bool HalfedgeGraph::valid(FaceId f)     const {
+bool HalfedgeGraph::valid(const FaceId f)     const {
   return faces_.valid(f);
 }
 
 VertexId HalfedgeGraph::add_vertex() {
-  return vertex_to_edge_.append(HalfedgeId());
+  return vertices_.append(VertexInfo({HalfedgeId()}));
 }
 
-void HalfedgeGraph::add_vertices(int n) {
+void HalfedgeGraph::add_vertices(const int n) {
   assert(n >= 0);
-  vertex_to_edge_.flat.resize(vertex_to_edge_.size() + n);
-  assert(n == 0 || vertex_to_edge_.flat.back().valid() == false); // Check that new elements were correctly initialized
+  vertices_.flat.resize(vertices_.size() + n);
 }
 
-Array<VertexId> HalfedgeGraph::one_ring(VertexId v) const {
+int HalfedgeGraph::degree(const VertexId v) const {
+  int result = 0;
+  for(GEODE_UNUSED const HalfedgeId e : outgoing(v)) {
+    assert(src(e) == v);
+    ++result;
+  }
+  return result;
+}
+
+Array<VertexId> HalfedgeGraph::one_ring(const VertexId v) const {
   Array<VertexId> result;
   for(const HalfedgeId e : outgoing(v)) {
     assert(src(e) == v);
@@ -69,26 +79,43 @@ GEODE_CORE_EXPORT EdgeId HalfedgeGraph::split_edge(const EdgeId e, const VertexI
 
   const VertexId orig_dst = dst(e);
 
-  assert(vertex_to_edge_.valid(use_vertex) && !vertex_to_edge_[use_vertex].valid()); // Must be valid vertex with no edges
-  vertex_to_edge_[use_vertex] = v_to_dst;
-  
-  GEODE_ASSERT(v_to_dst == halfedges_.append(HalfedgeInfo({src_to_v, next(src_to_dst), use_vertex})));
-  GEODE_ASSERT(dst_to_v == halfedges_.append(HalfedgeInfo({prev(dst_to_src), v_to_src, orig_dst})));
-  
-  halfedges_[next(v_to_dst)].prev = v_to_dst;
-  halfedges_[prev(dst_to_v)].next = dst_to_v;
+  assert(valid(use_vertex)); // Must be valid vertex
 
-  halfedges_[src_to_v].next = v_to_dst;
-  halfedges_[v_to_src].prev = dst_to_v;
+  const bool v_isolated = isolated(use_vertex);
+
+  HalfedgeInfo v_to_dst_info;
+  v_to_dst_info.prev = v_isolated ? src_to_v : prev(halfedge(use_vertex));
+  v_to_dst_info.next = next(src_to_dst);
+  v_to_dst_info.src = use_vertex;
+
+  HalfedgeInfo dst_to_v_info;
+  dst_to_v_info.prev = prev(dst_to_src);
+  dst_to_v_info.next = v_to_src;
+  dst_to_v_info.src = orig_dst;
+
+  if(v_isolated) {
+    *halfedge_ptr(use_vertex) = v_to_dst;
+  }
+
+  GEODE_ASSERT(v_to_dst == halfedges_.append(v_to_dst_info));
+  GEODE_ASSERT(dst_to_v == halfedges_.append(dst_to_v_info));
+
+  // Connect links back to added edge
+  halfedges_[v_to_dst_info.next].prev = v_to_dst;
+  halfedges_[v_to_dst_info.prev].next = v_to_dst;
+  halfedges_[dst_to_v_info.next].prev = dst_to_v;
+  halfedges_[dst_to_v_info.prev].next = dst_to_v;
   halfedges_[v_to_src].src = use_vertex;
 
+  const HalfedgeId v_out = halfedge(use_vertex);
+  unsafe_link(src_to_v, v_out);
+
   // Check and fix edge lookup for orig_dst
-  HalfedgeId& dst_first_edge = vertex_to_edge_[orig_dst];
+  HalfedgeId& dst_first_edge = *halfedge_ptr(orig_dst);
   assert(dst_first_edge.valid());
   if(dst_first_edge == dst_to_src)
     dst_first_edge = dst_to_v;
 
-  //assert(links_consistent());
   return edge(v_to_dst);
 }
 
@@ -118,7 +145,7 @@ GEODE_CORE_EXPORT EdgeId HalfedgeGraph::split_edge_across(const EdgeId e0, const
   const HalfedgeId dst0_to_srcs = HalfedgeId(base + 1);
 
   // Fix edge lookup for dst0
-  HalfedgeId& dst0_edge = vertex_to_edge_[dst0];
+  HalfedgeId& dst0_edge = vertices_[dst0].halfedge;
   if(dst0_edge == dst0_to_src0)
     dst0_edge = dst0_to_srcs;
 
@@ -141,15 +168,114 @@ GEODE_CORE_EXPORT EdgeId HalfedgeGraph::split_edge_across(const EdgeId e0, const
   return edge(srcs_to_dst0);
 }
 
+Vector<HalfedgeId*, 4> HalfedgeGraph::halfedge_refs(const HalfedgeId h) {
+  const VertexId src_h = src(h);
+  const BorderId border_h = border(h);
+  return vec(next_ptr(prev(h)),
+             prev_ptr(next(h)),
+             src_h.valid() && halfedge(src_h) == h ? halfedge_ptr(src_h) : nullptr,
+             border_h.valid() && halfedge(border_h) == h ? halfedge_ptr(border_h) : nullptr);
+}
 
+void HalfedgeGraph::swap_ids(const EdgeId e0, const EdgeId e1) {
+  // We need to update both halfedges for each edge
+  const auto h = vec(halfedge(e0,0),halfedge(e1,0),halfedge(e0,1),halfedge(e1,1));
 
-EdgeId HalfedgeGraph::unsafe_add_edge(VertexId src, VertexId dst) {
+  // First collect all of the references beforehand so that we can't break any along the way
+  const auto refs = vec(halfedge_refs(h[0]),halfedge_refs(h[1]),halfedge_refs(h[2]),halfedge_refs(h[3]));
+
+  for(const int i_old : range(4)) {
+    const auto i_new = i_old^1;
+    for(const auto& r : refs[i_old]) {
+      if(!r) continue; // Skip references that weren't filled
+      assert(*r == h[i_old]); // Check that we have a references that used to point to old id
+       *r = h[i_new]; // Make each old reference point to new id
+    }
+  }
+
+  const auto edge_view = this->edge_view(); // Cast halfedge data to Vector<HalfedgeData,2>
+  std::swap(edge_view[e0], edge_view[e1]);
+}
+
+void HalfedgeGraph::unsafe_flip_edge(const EdgeId e) {
+  const auto h = vec(halfedge(e,0),halfedge(e,1));
+  const auto refs = vec(halfedge_refs(h[0]),halfedge_refs(h[1]));
+  for(int i_old : range(2)) {
+    const auto i_new = i_old^1;
+    for(const auto& r : refs[i_old]) {
+      if(!r) continue;
+      assert(*r == h[i_old]);
+      *r = h[i_new];
+    }
+  }
+  std::swap(halfedges_[h[0]], halfedges_[h[1]]);
+}
+
+void HalfedgeGraph::erase_last_edge() {
+  assert(safe_to_modify_edges());
+
+  const auto e = edges().back();
+
+  // Collect info on edge
+  const auto h = halfedges(e);
+  const auto p = vec(prev(h[0]),prev(h[1]));
+  const auto n = vec(next(h[0]),next(h[1]));
+  const auto v_src = vec(src(h[0]),src(h[1]));
+  const auto v_src_ptr = vec(
+    (                        v_src[0].valid() && halfedge(v_src[0]) == h[0]) ? halfedge_ptr(v_src[0]) : nullptr,
+    (v_src[0] != v_src[1] && v_src[1].valid() && halfedge(v_src[1]) == h[1]) ? halfedge_ptr(v_src[1]) : nullptr);
+
+  for(const int i : range(2)) {
+    if(v_src_ptr[i]) {
+      const bool is_degree_one = (p[i] == h[i^1]); // Fast check to see if vertex will be isolated
+      assert((degree(v_src[i]) == 1) == is_degree_one); // Verify that fast check is correct
+      if(is_degree_one) {
+        *(v_src_ptr[i]) = HalfedgeId();
+      }
+      else {
+        const HalfedgeId next_outgoing = reverse(p[i]);
+        assert(src(next_outgoing) == v_src[i]);
+        *(v_src_ptr[i]) = next_outgoing;
+      }
+    }
+  }
+
+  // Update halfedge links
+  unsafe_link(p[0],n[0]);
+  unsafe_link(p[1],n[1]);
+
+  halfedges_.flat.pop();
+  halfedges_.flat.pop();
+}
+
+void HalfedgeGraph::swap_ids(const VertexId v0, const VertexId v1) {
+  const auto v0_out = outgoing(v0);
+  const auto v1_out = outgoing(v1);
+  for(const HalfedgeId h : v0_out) {
+    auto& src = *(src_ptr(h));
+    assert(src == v0);
+    src = v1;
+  }
+  for(const HalfedgeId h : v1_out) {
+    auto& src = *(src_ptr(h));
+    assert(src == v1);
+    src = v0;
+  }
+  std::swap(vertices_[v0], vertices_[v1]);
+}
+
+void HalfedgeGraph::erase_last_vertex() {
+  assert(isolated(vertices().back()));
+  vertices_.flat.pop();
+}
+
+EdgeId HalfedgeGraph::unsafe_add_edge(const VertexId src, const VertexId dst) {
   assert(safe_to_modify_edges());
 
   const HalfedgeId src_to_dst = halfedges_.append(HalfedgeInfo({HalfedgeId(), HalfedgeId(), src}));
   const HalfedgeId dst_to_src = halfedges_.append(HalfedgeInfo({HalfedgeId(), HalfedgeId(), dst}));
   assert(edge(src_to_dst) == edge(dst_to_src));
-  
+
   // For each vertex we look at a pair of linked halfedges through it:
   //   For src these are: ...sp_to_src <- src -> src_to_sn... (eventually back to sp_to_src)
   //   For dst these are: ...dp_to_dst <- dst -> dst_to_dn... (eventually back to dp_to_dst)
@@ -158,31 +284,91 @@ EdgeId HalfedgeGraph::unsafe_add_edge(VertexId src, VertexId dst) {
   //   ...sp_to_src <- src -> src_to_dst <- dst -> dst_to_dn... (eventually to dp_to_dst)
   //   ...dp_to_dst <- dst -> dst_to_src <- src -> src_to_sn... (eventually back to sp_to_src)
 
-  if(vertex_to_edge_[src].valid()) {
-    const HalfedgeId src_to_sn = vertex_to_edge_[src];
+  if(vertices_[src].halfedge.valid()) {
+    const HalfedgeId src_to_sn = vertices_[src].halfedge;
     const HalfedgeId sp_to_src = prev(src_to_sn);
     // ...sp_to_src <--> src_to_sn... becomes: ...sp_to_src <--> src_to_dst...dst_to_src <--> src_to_sn...
     unsafe_link(sp_to_src, src_to_dst);
     unsafe_link(dst_to_src, src_to_sn);
   }
   else { // If src_to_sn isn't valid, src is an isolated vertex
-    vertex_to_edge_[src] = src_to_dst; // Use added edge for vertex edge
-    unsafe_link(dst_to_src, src_to_dst); // Connect ...dst_to_src <--> src_to_dst... 
+    vertices_[src].halfedge = src_to_dst; // Use added edge for vertex edge
+    unsafe_link(dst_to_src, src_to_dst); // Connect ...dst_to_src <--> src_to_dst...
   }
 
-  if(vertex_to_edge_[dst].valid()) {
-    const HalfedgeId dst_to_dn = vertex_to_edge_[dst];
+  if(vertices_[dst].halfedge.valid()) {
+    const HalfedgeId dst_to_dn = vertices_[dst].halfedge;
     const HalfedgeId dp_to_dst = prev(dst_to_dn);
     // ...dp_to_dst <--> dst_to_dn... becomes: ...dp_to_dst <--> dst_to_src...src_to_dst <--> dst_to_dn...
     unsafe_link(dp_to_dst, dst_to_src);
     unsafe_link(src_to_dst, dst_to_dn);
   }
   else { // If dst_to_dn isn't valid, dst is an isolated vertex
-    vertex_to_edge_[dst] = dst_to_src; // Use added edge for dst_to_dn
+    vertices_[dst].halfedge = dst_to_src; // Use added edge for dst_to_dn
     unsafe_link(src_to_dst, dst_to_src); // Connect ...src_to_dst <--> dst_to_src...
   }
 
   return edge(src_to_dst);
+}
+
+void HalfedgeGraph::unsafe_disconnect_src(const HalfedgeId he) {
+  assert(safe_to_modify_edges());
+
+  const bool is_degree_one = (reverse(he) == prev(he));
+  assert(is_degree_one == (degree(src(he)) == 1));
+
+  // This is the vertex->halfedge link we need to update
+  auto& src_vertex_he = vertices_[src(he)].halfedge;
+
+  if(is_degree_one) {
+    assert(reverse(he) == prev(he)); // Shouldn't need to update halfedge linkage since this end of the edge is already isolated
+    assert(src_vertex_he == he); // Since this is the only edge it should be the marked one
+    src_vertex_he = HalfedgeId();
+    halfedges_[he].src = VertexId();
+  }
+  else {
+    // Check if vertex->halfedge points to this halfedge
+    if(src_vertex_he == he) {
+      // If so we need to point it to another
+      src_vertex_he = right(he);
+      assert(src(src_vertex_he) == src(he));
+      assert(src_vertex_he != he);
+    }
+
+    unsafe_link(prev(he), right(he)); // Connect halfedges to and from disconnected he to each other
+
+    // User will need to reconnect edge manually before things are back to happy so this shouldn't be neccessary
+    // We fix dangling links anyway just to be safe.
+    unsafe_link(reverse(he), he);
+    halfedges_[he].src = VertexId();
+  }
+}
+
+void HalfedgeGraph::unsafe_reconnect_src(const HalfedgeId he, const VertexId new_src) {
+  assert(safe_to_modify_edges());
+  // This should only be called on dangling edges generated by unsafe_disconnect_src
+  assert(!src(he).valid()); // For now those should have src to to an invalid id
+  assert(prev(he) == reverse(he)); // This should also connect back to themselves
+
+  const bool was_isolated = isolated(new_src); // Check this before we start to modify things
+
+  // Get vertex->halfedge link for new_src
+  auto& src_halfedge = vertices_[new_src].halfedge;
+
+  halfedges_[he].src = new_src; // Connect the halfedge to its new src
+
+  if(was_isolated) {
+    src_halfedge = he; // Previously isolated vertex must link to he
+    unsafe_link(reverse(he), he); // Vertex is now degree one so edge links back to itself at src
+  }
+  else {
+    // Get neighbors before we start mucking with them
+    const HalfedgeId old_src_out = src_halfedge;
+    const HalfedgeId old_src_in = prev(src_halfedge);
+    // Insert he into existing one-ring
+    unsafe_link(reverse(he), old_src_out);
+    unsafe_link(old_src_in, he);
+  }
 }
 
 void HalfedgeGraph::initialize_borders() {

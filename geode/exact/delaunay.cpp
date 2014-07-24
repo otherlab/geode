@@ -20,7 +20,7 @@ using Log::cout;
 using std::endl;
 typedef Vector<real,2> TV;
 typedef Vector<Quantized,2> EV;
-typedef exact::Point2 Point;
+using exact::Perturbed2;
 const auto bound = exact::bound;
 
 // Whether to run extremely expensive diagnostics
@@ -82,16 +82,16 @@ static inline void set_links(RawArray<Node> bsp, const Vector<int,2> links, cons
     bsp[links.y>>1].children[links.y&1] = node;
 }
 
-static inline bool is_sentinel(const Point& x) {
-  return abs(x.y.x)==bound;
+static inline bool is_sentinel(const Perturbed2& x) {
+  return abs(x.value().x)==bound;
 }
 
 // Different sentinels will be placed at different orders of infinity, with earlier indices further away.
 // These macros are used in the sorting networks below to move large sentinels last
-#define SENTINEL_KEY(i) (is_sentinel(x##i)?-x##i.x:numeric_limits<int>::min())
+#define SENTINEL_KEY(i) (is_sentinel(x##i)?-x##i.seed():numeric_limits<int>::min())
 #define COMPARATOR(i,j) if (SENTINEL_KEY(i)>SENTINEL_KEY(j)) { swap(x##i,x##j); parity ^= 1; }
 
-GEODE_COLD GEODE_PURE static inline bool triangle_oriented_sentinels(Point x0, Point x1, Point x2) {
+GEODE_COLD GEODE_PURE static inline bool triangle_oriented_sentinels(Perturbed2 x0, Perturbed2 x1, Perturbed2 x2) {
   // Move large sentinels last
   bool parity = 0;
   COMPARATOR(0,1)
@@ -102,19 +102,19 @@ GEODE_COLD GEODE_PURE static inline bool triangle_oriented_sentinels(Point x0, P
                                     :           directions_oriented(   x1,x2)); // two or three sentinels
 }
 
-GEODE_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const Point,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
+GEODE_ALWAYS_INLINE static inline bool triangle_oriented(const RawField<const Perturbed2,VertexId> X, VertexId v0, VertexId v1, VertexId v2) {
   const auto x0 = X[v0],
              x1 = X[v1],
              x2 = X[v2];
   // If we have a nonsentinel triangle, use a normal orientation test
-  if (maxabs(x0.y.x,x1.y.x,x2.y.x)!=bound)
+  if (maxabs(x0.value().x,x1.value().x,x2.value().x)!=bound)
     return triangle_oriented(x0,x1,x2);
   // Fall back to sentinel case analysis
   return triangle_oriented_sentinels(x0,x1,x2);
 }
 
 // Test whether an edge containing sentinels is Delaunay
-GEODE_COLD GEODE_PURE static inline bool is_delaunay_sentinels(Point x0, Point x1, Point x2, Point x3) {
+GEODE_COLD GEODE_PURE static inline bool is_delaunay_sentinels(Perturbed2 x0, Perturbed2 x1, Perturbed2 x2, Perturbed2 x3) {
   // Unfortunately, the sentinels need to be at infinity for purposes of Delaunay testing, and our SOS predicates
   // don't support infinities.  Therefore, we need some case analysis.  First, we move all the sentinels to the end,
   // sorted in decreasing order of index.  Different sentinels will be placed at different orders of infinity,
@@ -134,7 +134,7 @@ GEODE_COLD GEODE_PURE static inline bool is_delaunay_sentinels(Point x0, Point x
 }
 
 // Test whether an edge is Delaunay
-GEODE_ALWAYS_INLINE static inline bool is_delaunay(const TriangleTopology& mesh, RawField<const Point,VertexId> X, const HalfedgeId edge) {
+GEODE_ALWAYS_INLINE static inline bool is_delaunay(const TriangleTopology& mesh, RawField<const Perturbed2,VertexId> X, const HalfedgeId edge) {
   // Boundary edges belong to the sentinel quad and are always Delaunay.
   const auto rev = mesh.reverse(edge);
   if (mesh.is_boundary(rev))
@@ -149,13 +149,13 @@ GEODE_ALWAYS_INLINE static inline bool is_delaunay(const TriangleTopology& mesh,
              x2 = X[v2],
              x3 = X[v3];
   // If we have a nonsentinel interior edge, perform a normal incircle test
-  if (maxabs(x0.y.x,x1.y.x,x2.y.x,x3.y.x)!=bound)
+  if (maxabs(x0.value().x,x1.value().x,x2.value().x,x3.value().x)!=bound)
     return !incircle(x0,x1,x2,x3);
   // Fall back to sentinel case analysis
   return is_delaunay_sentinels(x0,x1,x2,x3);
 }
 
-static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Point,VertexId> X, const VertexId v) {
+static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Perturbed2,VertexId> X, const VertexId v) {
   if (!bsp.size())
     return FaceId(0);
   int iters = 0;
@@ -168,7 +168,7 @@ static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Point,V
   return FaceId(~node);
 }
 
-GEODE_UNUSED static void check_bsp(const TriangleTopology& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Point,VertexId> X_) {
+GEODE_UNUSED static void check_bsp(const TriangleTopology& mesh, RawArray<const Node> bsp, RawField<const Vector<int,2>,FaceId> face_to_bsp, RawField<const Perturbed2,VertexId> X_) {
   if (self_check) {
     cout << "bsp:\n";
     #define CHILD(c) format("%c%d",(c<0?'f':'n'),(c<0?~c:c))
@@ -191,7 +191,7 @@ GEODE_UNUSED static void check_bsp(const TriangleTopology& mesh, RawArray<const 
       GEODE_ASSERT(bsp[i1/2].children[i1&1]==~f.id);
     const auto v = mesh.vertices(f);
     if (!is_sentinel(X[v.x]) && !is_sentinel(X[v.y]) && !is_sentinel(X[v.z])) {
-      const auto center = X.append(tuple(X.size(),(X[v.x].y+X[v.y].y+X[v.z].y)/3));
+      const auto center = X.append(Perturbed2(X.size(),(X[v.x].value()+X[v.y].value()+X[v.z].value())/3));
       const auto found = bsp_search(bsp,X,center);
       if (found!=f) {
         cout << "bsp search failed: f "<<f<<", v "<<v<<", found "<<found<<endl;
@@ -203,7 +203,7 @@ GEODE_UNUSED static void check_bsp(const TriangleTopology& mesh, RawArray<const 
 }
 
 GEODE_COLD static void assert_delaunay(const char* prefix,
-                                       const TriangleTopology& mesh, RawField<const Point,VertexId> X,
+                                       const TriangleTopology& mesh, RawField<const Perturbed2,VertexId> X,
                                        const Hashtable<Vector<VertexId,2>>& constrained=Tuple<>(),
                                        const bool oriented_only=false,
                                        const bool check_boundary=true) {
@@ -246,14 +246,14 @@ GEODE_COLD static void assert_delaunay(const char* prefix,
                                        const Hashtable<Vector<VertexId,2>>& constrained=Tuple<>(),
                                        const bool oriented_only=false,
                                        const bool check_boundary=true) {
-  Field<Point,VertexId> Xp(X.size(),uninit);
+  Field<Perturbed2,VertexId> Xp(X.size(),uninit);
   for (const int i : range(X.size()))
-    Xp.flat[i] = tuple(i,X.flat[i]);
+    Xp.flat[i] = Perturbed2(i,X.flat[i]);
   assert_delaunay(prefix,mesh,Xp,constrained,oriented_only,check_boundary);
 }
 
 // This routine assumes the sentinel points have already been added, and processes points in order
-GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delaunay(RawField<const Point,VertexId> X, const bool validate) {
+GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delaunay(RawField<const Perturbed2,VertexId> X, const bool validate) {
 
   const int n = X.size()-3;
   const auto mesh = new_<MutableTriangleTopology>();
@@ -374,7 +374,7 @@ GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delau
 }
 
 // InsertVertex in the paper
-static void insert_cavity_vertex_helper(MutableTriangleTopology& mesh, RawField<const Point,VertexId> X,
+static void insert_cavity_vertex_helper(MutableTriangleTopology& mesh, RawField<const Perturbed2,VertexId> X,
                                         RawField<bool,VertexId> marked, const HalfedgeId vw) {
   // If wv is a boundary edge, or we're already Delaunay and properly oriented, we're done
   const auto wv = mesh.reverse(vw);
@@ -402,7 +402,7 @@ static void insert_cavity_vertex_helper(MutableTriangleTopology& mesh, RawField<
   if (!in)
     marked[u] = marked[v] = marked[w] = marked[x] = true;
 }
-static void insert_cavity_vertex(MutableTriangleTopology& mesh, RawField<const Point,VertexId> X,
+static void insert_cavity_vertex(MutableTriangleTopology& mesh, RawField<const Perturbed2,VertexId> X,
                                  RawField<bool,VertexId> marked,
                                  const VertexId u, const VertexId v, const VertexId w) {
 #ifndef NDEBUG
@@ -426,7 +426,7 @@ static int chew_fan_count() {
 }
 
 // Delaunay retriangulate a triangle fan
-static void chew_fan(MutableTriangleTopology& parent_mesh, RawField<const Point,VertexId> X,
+static void chew_fan(MutableTriangleTopology& parent_mesh, RawField<const Perturbed2,VertexId> X,
                      const VertexId u, RawArray<HalfedgeId> fan, Random& random) {
   chew_fan_count_ += 1;
 #ifndef NDEBUG
@@ -515,9 +515,9 @@ static void cavity_delaunay(MutableTriangleTopology& parent_mesh, RawField<const
   const int m = cavity.size();
   assert(m >= 3);
   const auto mesh = new_<MutableTriangleTopology>();
-  Field<Point,VertexId> Xc(m,uninit);
+  Field<Perturbed2,VertexId> Xc(m,uninit);
   for (const int i : range(m))
-    Xc.flat[i] = tuple(cavity[i].id,X[cavity[i]]);
+    Xc.flat[i] = Perturbed2(cavity[i].id,X[cavity[i]]);
   mesh->add_vertices(m);
   const auto xs = Xc.flat[0],
              xe = Xc.flat[m-1];
@@ -642,19 +642,19 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
         auto e1 = s1;
         if (mesh.is_boundary(e0)) e0 = mesh.left(e0);
         if (mesh.is_boundary(e1)) e1 = mesh.left(e1);
-        const auto x0 = tuple(v0.id,X[v0]),
-                   x1 = tuple(v1.id,X[v1]);
+        const auto x0 = Perturbed2(v0.id,X[v0]),
+                   x1 = Perturbed2(v1.id,X[v1]);
         const auto e0d = mesh.dst(e0),
                    e1d = mesh.dst(e1);
-        bool e0o = triangle_oriented(x0,tuple(e0d.id,X[e0d]),x1),
-             e1o = triangle_oriented(x1,tuple(e1d.id,X[e1d]),x0);
+        bool e0o = triangle_oriented(x0,Perturbed2(e0d.id,X[e0d]),x1),
+             e1o = triangle_oriented(x1,Perturbed2(e1d.id,X[e1d]),x0);
         for (;;) { // No need to check for an end condition, since we're guaranteed to terminate
           const auto n0 = mesh.left(e0),
                      n1 = mesh.left(e1);
           const auto n0d = mesh.dst(n0),
                      n1d = mesh.dst(n1);
-          const bool n0o = triangle_oriented(x0,tuple(n0d.id,X[n0d]),x1),
-                     n1o = triangle_oriented(x1,tuple(n1d.id,X[n1d]),x0);
+          const bool n0o = triangle_oriented(x0,Perturbed2(n0d.id,X[n0d]),x1),
+                     n1o = triangle_oriented(x1,Perturbed2(n1d.id,X[n1d]),x0);
           if (e0o && !n0o)
             break;
           if (e1o && !n1o) {
@@ -681,8 +681,8 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
       }
 
       // Walk from v0 to v1, collecting the two cavities.
-      const auto x0 = tuple(v0.id,X[v0]),
-                 x1 = tuple(v1.id,X[v1]);
+      const auto x0 = Perturbed2(v0.id,X[v0]),
+                 x1 = Perturbed2(v1.id,X[v1]);
       right_cavity.copy(vec(v0,mesh.dst(cut)));
       left_cavity .copy(vec(v0,mesh.src(cut)));
       mesh.erase(mesh.face(e0));
@@ -698,7 +698,7 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
           left_cavity.append(v);
           right_cavity.append(v);
           break;
-        } else if (triangle_oriented(x0,x1,tuple(v.id,X[v]))) {
+        } else if (triangle_oriented(x0,x1,Perturbed2(v.id,X[v]))) {
           left_cavity.append(v);
           cut = n;
         } else {
@@ -721,7 +721,7 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
     assert_delaunay("constrained delaunay validate: ",mesh,X,constrained);
 }
 
-template<int axis> static inline int spatial_partition(RawArray<Point> X, Random& random) {
+template<int axis> static inline int spatial_partition(RawArray<Perturbed2> X, Random& random) {
   // We use exact arithmetic to perform the partition, which is important in case many points are coincident
   #define LESS(i,j) (i!=j && axis_less<axis>(X[i],X[j]))
 
@@ -744,14 +744,14 @@ template<int axis> static inline int spatial_partition(RawArray<Point> X, Random
   return mid;
 }
 
-static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random) {
+static void spatial_sort(RawArray<Perturbed2> X, const int leaf_size, Random& random) {
   const int n = X.size();
   if (n<=leaf_size)
     return;
 
   // We determine the subdivision axis using inexact computation, which is okay since neither the result nor
   // the asymptotic worst case complexity depends upon any properties of the spatial_sort whatsoever.
-  const Box<EV> box = bounding_box(X.project<EV,&Point::y>());
+  const Box<EV> box = bounding_box(X.project<EV,&Perturbed2::value_>());
   const int axis = box.sizes().argmax();
 
   // We use exact arithmetic to perform the partition, which is important in case many points are coincident
@@ -765,9 +765,9 @@ static void spatial_sort(RawArray<Point> X, const int leaf_size, Random& random)
 
 // Prepare a list of points for Delaunay triangulation: randomly assign into logarithmic bins, sort within bins, and add sentinels.
 // For details, see Amenta et al., Incremental Constructions con BRIO.
-static Array<Point> partially_sorted_shuffle(RawArray<const EV> Xin) {
+static Array<Perturbed2> partially_sorted_shuffle(RawArray<const EV> Xin) {
   const int n = Xin.size();
-  Array<Point> X(n+3,uninit);
+  Array<Perturbed2> X(n+3,uninit);
 
   // Randomly assign input points into bins.  Bin k has 2**k = 1,2,4,8,... and starts at index 2**k-1 = 0,1,3,7,...
   // We fill points into bins as sequentially as possible to maximize cache coherence.
@@ -777,7 +777,7 @@ static Array<Point> partially_sorted_shuffle(RawArray<const EV> Xin) {
     int j = (int)random_permute(n,key,i);
     const int bin = min(integer_log(j+1),bins-1);
     j = (1<<bin)-1+bin_counts[bin]++;
-    X[j] = tuple(i,Xin[i]);
+    X[j] = Perturbed2(i,Xin[i]);
   }
 
   // Spatially sort each bin down to clusters of size 64.
@@ -790,9 +790,9 @@ static Array<Point> partially_sorted_shuffle(RawArray<const EV> Xin) {
   }
 
   // Add 3 sentinel points at infinity
-  X[n+0] = tuple(n+0,EV(-bound,-bound));
-  X[n+1] = tuple(n+1,EV( bound, 0)    );
-  X[n+2] = tuple(n+2,EV(-bound, bound));
+  X[n+0] = Perturbed2(n+0,EV(-bound,-bound));
+  X[n+1] = Perturbed2(n+1,EV( bound, 0)    );
+  X[n+2] = Perturbed2(n+2,EV(-bound, bound));
 
   return X;
 }
@@ -803,13 +803,13 @@ Ref<TriangleTopology> exact_delaunay_points(RawArray<const EV> X, RawArray<const
   GEODE_ASSERT(n>=3);
 
   // Quantize all input points, reorder, and add sentinels
-  Field<const Point,VertexId> Xp(partially_sorted_shuffle(X));
+  Field<const Perturbed2,VertexId> Xp(partially_sorted_shuffle(X));
 
   // Compute Delaunay triangulation
   const auto mesh = deterministic_exact_delaunay(Xp,validate);
 
   // Undo the vertex permutation
-  mesh->permute_vertices(Xp.flat.slice(0,n).project<int,&Point::x>().copy());
+  mesh->permute_vertices(Xp.flat.slice(0,n).project<int,&Perturbed2::seed_>().copy());
 
   // Insert constraint edges in random order
   add_constraint_edges(mesh,RawField<const EV,VertexId>(X),edges,validate);
@@ -835,10 +835,10 @@ static Array<Vector<int,2>> greedy_nonintersecting_edges(RawArray<const Vector<r
     const int a = pi/n,
               b = pi-n*a;
     if (a < b) {
-      const auto Ea = tuple(a,E[a]),
-                 Eb = tuple(b,E[b]);
+      const auto Ea = Perturbed2(a,E[a]),
+                 Eb = Perturbed2(b,E[b]);
       for (const auto e : edges)
-        if (!e.contains(a) && !e.contains(b) && segments_intersect(Ea,Eb,tuple(e.x,E[e.x]),tuple(e.y,E[e.y])))
+        if (!e.contains(a) && !e.contains(b) && segments_intersect(Ea,Eb,Perturbed2(e.x,E[e.x]),Perturbed2(e.y,E[e.y])))
           goto skip;
       edges.append(vec(a,b));
       if (edges.size()==limit || edges.size()==3*n-6)

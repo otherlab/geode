@@ -69,6 +69,10 @@ public:
     return 2*node+1+i;
   }
 
+  static Vector<int,2> children(const int node) {
+    return vec(2*node+1,2*node+2);
+  }
+
   GEODE_CORE_EXPORT void update_nonleaf_boxes();
   void check(RawArray<const TV> x) const;
 

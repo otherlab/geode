@@ -32,20 +32,62 @@ const int64_t bound = (int64_t(1)<<log_bound)-1;
 typedef int64_t ExactInt;
 typedef double Quantized;
 
+enum class Perturbation { Explicit, Implicit };
+
 namespace exact {
 
 // Like CGAL, GMP assumes that the C++11 standard library exists whenever C++11 does.  This is false for clang.
 #define __GMPXX_USE_CXX11 0
 
-// Typedefs for indexed points
-template<int d> struct Point {
-  typedef Tuple<int,Vector<Quantized,d>> type;
-  static_assert(sizeof(type)==sizeof(int)+4+d*sizeof(Quantized),"");
+template<int d> struct Perturbed {
+  static constexpr Perturbation ps = Perturbation::Explicit;
+  typedef Vector<Quantized, d> ValueType;
+  static constexpr auto m = ValueType::m;
+  int seed_;
+  ValueType value_;
+  int seed() const { return seed_; }
+  ValueType value() const { return value_; }
+
+  Perturbed() = default;
+  template<class... Args> explicit Perturbed(const int seed_, const Args... value_args)
+   : seed_(seed_)
+   , value_(value_args...) // Pass args along to choose a Vector constructor
+  {
+    static_assert(sizeof(*this)==sizeof(int)+4+d*sizeof(Quantized),"");
+  }
 };
+
+template<int d> struct ImplicitlyPerturbed {
+  static constexpr Perturbation ps = Perturbation::Implicit;
+  typedef Vector<Quantized, d> ValueType;
+  static constexpr auto m = ValueType::m;
+  ValueType value_;
+  ValueType seed() const { return value_; }
+  ValueType value() const { return value_; }
+
+  ImplicitlyPerturbed() {}
+  template<class... Args> explicit ImplicitlyPerturbed(const Args... value_args) : value_(value_args...) {}
+};
+
+struct ImplicitlyPerturbedCenter {
+  static constexpr Perturbation ps = Perturbation::Implicit;
+  typedef Vector<Quantized, 2> ValueType;
+  static constexpr auto m = ValueType::m;
+  Vector<Quantized, 3> data;
+  Vector<Quantized, 3> seed() const { return data; }
+  Vector<Quantized, 2> value() const { return data.xy(); }
+
+  ImplicitlyPerturbedCenter() {}
+  template<class... Args> explicit ImplicitlyPerturbedCenter(const Args... value_args) : data(value_args...) {}
+};
+
 typedef Vector<Quantized,2> Vec2;
 typedef Vector<Quantized,3> Vec3;
-typedef Point<2>::type Point2;
-typedef Point<3>::type Point3;
-
+typedef Perturbed<2> Perturbed2;
+typedef Perturbed<3> Perturbed3;
 }
+
+template<int d> std::ostream& operator<<(std::ostream& os, const exact::Perturbed<d> p) { return os << tuple(p.seed_, p.value_); }
+template<int d> std::ostream& operator<<(std::ostream& os, const exact::ImplicitlyPerturbed<d> p) { return os << p.value_; }
+inline std::ostream& operator<<(std::ostream& os, const exact::ImplicitlyPerturbedCenter p) { return os << p.data; }
 }

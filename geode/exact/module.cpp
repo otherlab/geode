@@ -13,7 +13,6 @@ void wrap_exact() {
   GEODE_WRAP(delaunay)
   GEODE_WRAP(polygon_csg)
   GEODE_WRAP(circle_csg)
-  GEODE_WRAP(circle_offsets)
   GEODE_WRAP(simple_triangulate)
   GEODE_WRAP(mesh_csg)
   GEODE_WRAP(polynomial)

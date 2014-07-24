@@ -39,9 +39,9 @@ public:
     typedef const T* const_iterator; // for stl
     template<class V> struct result;
     template<class V> struct result<V(int)>:mpl::if_<is_const<V>,const T&,T&>{};
-    enum Workaround1 {dimension=3};
-    enum Workaround2 {m=3};
-    static const bool is_const=false;
+    static const int dimension = 3;
+    static const int m = 3;
+    static const bool is_const = false;
 
     T x,y,z;
 
@@ -485,6 +485,14 @@ template<class T> inline Vector<T,3>
 cross(const Vector<T,3>& v1,const Vector<T,3>& v2) // 6 mults, 3 adds
 {return Vector<T,3>(v1.y*v2.z-v1.z*v2.y,v1.z*v2.x-v1.x*v2.z,v1.x*v2.y-v1.y*v2.x);}
 
+// Safer normalized cross product.  Guaranteed orthogonal to both inputs even in degenerate situations.
+template<class T> inline Vector<T,3> normal_cross(const Vector<T,3> u, const Vector<T,3> v) {
+  const auto n = cross(u,v);
+  const auto nn = sqr_magnitude(n);
+  return nn ? n/sqrt(nn)
+            : (sqr_magnitude(u) >= sqr_magnitude(v) ? u : v).unit_orthogonal_vector();
+}
+
 template<class T> inline T angle_between(const Vector<T,3>& u, const Vector<T,3>& v) { // 0 .. pi
   return atan2(magnitude(cross(u,v)),dot(u,v));
 }
@@ -551,5 +559,8 @@ in_bounds(const Vector<T,3>& v,const Vector<T,3>& vmin,const Vector<T,3>& vmax)
 template<class T> inline Vector<T,3>
 wrap(const Vector<T,3>& v,const Vector<T,3>& vmin,const Vector<T,3>& vmax)
 {return Vector<T,3>(wrap(v.x,vmin.x,vmax.x),wrap(v.y,vmin.y,vmax.y),wrap(v.z,vmin.z,vmax.z));}
+
+template<class T> const int Vector<T,3>::dimension;
+template<class T> const int Vector<T,3>::m;
 
 }

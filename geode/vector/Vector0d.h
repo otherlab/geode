@@ -17,8 +17,8 @@ class Vector<T,0>
 {
     struct Unusable{};
 public:
-    enum Workaround1 {dimension=0};
-    enum Workaround2 {m=0};
+    static const int dimension = 0;
+    static const int m = 0;
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
     typedef T Element;
 
@@ -157,5 +157,8 @@ dot(const Vector<T,0>&,const Vector<T,0>&)
 template<class T> inline Hash
 hash_reduce(const Vector<T,0>& key)
 {return Hash();}
+
+template<class T> const int Vector<T,0>::dimension;
+template<class T> const int Vector<T,0>::m;
 
 }

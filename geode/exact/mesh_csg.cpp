@@ -48,7 +48,7 @@ namespace geode {
 typedef exact::Vec3 EV;
 typedef Vector<double,3> TV;
 typedef Vector<Interval,3> IV;
-typedef exact::Point3 P;
+typedef exact::Perturbed3 P;
 using std::cout;
 using std::endl;
 
@@ -61,7 +61,7 @@ static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u
 // edge-face intersection vertices, or face-face-face intersection vertices.  For this purpose,
 // we concatenate the ranges for the three types of vertices in order.  The same numbering is
 // used for vertices in the split output mesh before pruning.
-#define Xi(i) tuple(i,X[i])
+#define Xi(i) P(i,X[i])
 #define Xi2(i) (i < X.size() ? IV(X[i]) \
                              : ef_vertices.flat[i-X.size()].p())
 #define Xi3(i) (  i < X.size()                    ? IV(X[i]) \
@@ -76,6 +76,7 @@ static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u
 #define FX(f) Xi(f.x),Xi(f.y),Xi(f.z)
 #define FX0(f) f.x,f.y,f.z
 
+static inline IV iv(const P& p) { return IV(p.value()); }
 // Constructed points are guaranteed to be within this tolerance
 const Quantized tolerance = 1;
 
@@ -207,9 +208,9 @@ struct State {
             f1 = Xi(fv.y),
             f2 = Xi(fv.z);
     const auto q = Xi3(v),
-               i0 = IV(f0.y),
-               i1 = IV(f1.y),
-               i2 = IV(f2.y);
+               i0 = iv(f0),
+               i1 = iv(f1),
+               i2 = iv(f2);
     return FILTER(edet(i1-i0,i2-i0,q-i0),
                   face_vertex_oriented_helper(f0,f1,f2,v));
   }
@@ -282,8 +283,8 @@ struct Policy : public State, public Noncopyable {
         Xi(faces[face].y),
         Xi(faces[face].z))
     , face_edges(face_edges)
-    , normal(cross(IV(f.y.y)-IV(f.x.y),IV(f.z.y)-IV(f.x.y))) {
-    assert(edges[face_edges.z].contains_all(vec(f.x.x,f.y.x)));
+    , normal(cross(iv(f.y)-iv(f.x),iv(f.z)-iv(f.x))) {
+    assert(edges[face_edges.z].contains_all(vec(f.x.seed(),f.y.seed())));
   }
 
   Line reverse_line(const Line L) const {
@@ -406,7 +407,7 @@ struct Policy : public State, public Noncopyable {
     // This routine is a huge case analysis on the different kinds of vertex patterns.
     // The types are V (input), B (boundary edge-face), EF (interior edge-face), and FFF (face-face-face).
     static const int V = 0, B = 1, EF = 2, FFF = 3;
-    const auto fv = vec(f.x.x,f.y.x,f.z.x);
+    const auto fv = vec(f.x.seed(),f.y.seed(),f.z.seed());
 
     // Classify vertices
     const int n = X.size(),
@@ -790,7 +791,7 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
         return FILTER(dot(de,i1.p()-i0.p()),
                       segment_triangle_intersections_ordered(e0,e1,FX(f0),FX(f1)));
       }
-    } less({faces.elements,X,e0,e1,IV(e1.y)-IV(e0.y)});
+    } less({faces.elements,X,e0,e1,iv(e1)-iv(e0)});
     sort(ef_vertices[e],less);
   }
 
@@ -1236,9 +1237,9 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, Array<const int> depth_we
 
         bool cull(const int n) const {
           const auto box = face_tree.boxes[n];
-          return                        box.max.x<v0.y.x
-                 || v0.y.y<box.min.y || box.max.y<v0.y.y
-                 || v0.y.z<box.min.z || box.max.z<v0.y.z;
+          return                        box.max.x<v0.value().x
+                 || v0.value().y<box.min.y || box.max.y<v0.value().y
+                 || v0.value().z<box.min.z || box.max.z<v0.value().z;
         }
 
         void leaf(const int n) {
@@ -1248,28 +1249,28 @@ retriangulate_soup(const SimplexTree<EV,2>& face_tree, Array<const int> depth_we
                   p1 = Xi(f.y),
                   p2 = Xi(f.z);
           const bool with_x = oriented_with_x(p0,p1,p2);
-          if (!f.contains(v0.x)) {
+          if (!f.contains(v0.seed())) {
             // Triangle doesn't touch v0, so computation is infinitesimal free
             if (   with_x != tetrahedron_oriented(p0,p1,p2,v0)
                 && with_x == oriented_with_x(v0,p0,p1)
                 && with_x == oriented_with_x(v0,p1,p2)
                 && with_x == oriented_with_x(v0,p2,p0))
               goto hit;
-          } else if (!f.contains(v1.x)) {
+          } else if (!f.contains(v1.seed())) {
             // Triangle shares v0 but not v1.  It suffices to consider q = v0+e1*(v1-v0).  The
             // computation is equivalent to firing a ray from v1 -> v1+inf*x against the partially
             // infinite triangle p0+a(p1-p0)+b(p2-p0), {a,b}>=0, as can be seen by scaling around
             // v0 by 1/e1.  This is the same as the no v0 case above except that we do not check
             // against the edge p12, which is now infinitely far away.
             if (   with_x != tetrahedron_oriented(p0,p1,p2,v1)
-                && (f.z==v0.x || with_x==oriented_with_x(v1,p0,p1))
-                && (f.x==v0.x || with_x==oriented_with_x(v1,p1,p2))
-                && (f.y==v0.x || with_x==oriented_with_x(v1,p2,p0)))
+                && (f.z==v0.seed() || with_x==oriented_with_x(v1,p0,p1))
+                && (f.x==v0.seed() || with_x==oriented_with_x(v1,p1,p2))
+                && (f.y==v0.seed() || with_x==oriented_with_x(v1,p2,p0)))
               goto hit;
-          } else if (!f.contains(v2.x)) {
+          } else if (!f.contains(v2.seed())) {
             // Triangle shares v0,v1 but not v2.  We must consider the full q = v0+e1*(v1-v0)+e2*(v2-v0).
             // Shift v0 to 0, so that q = e1*v1+e2*v2.
-            if (   with_x == (orient_v012 ^ flipped_in(vec(v0.x,v1.x),f))
+            if (   with_x == (orient_v012 ^ flipped_in(vec(v0.seed(),v1.seed()),f))
                 && with_x != tetrahedron_oriented(p0,p1,p2,v2))
               goto hit;
           } else {

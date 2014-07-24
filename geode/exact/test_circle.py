@@ -74,14 +74,25 @@ def test_circle_quantize():
   i = argmax(abs(arcs0.flat['q']-arcs1.flat['q']))
   q0,q1 = arcs0.flat['q'][i],arcs1.flat['q'][i]
   eq = abs(q0-q1)
-  print 'ex = %g, eq = %g (%d: %g to %g)'%(ex,eq,i,q0,q1)
+  comparison_str = 'ex = %g, eq = %g (%d: %g to %g)'%(ex,eq,i,q0,q1)
+  print comparison_str
+  show_results = False # Enable this if you want comparisons between expected and actual results
+  if show_results and not (ex<1e-6 and eq<3e-5):
+    plot_args = dict(full=False, label=True, dots=True)
+    import pylab
+    pylab.suptitle(comparison_str)
+    subplot_arcs(arcs0, 121, "Before Quantization", **plot_args)
+    subplot_arcs(arcs1, 122, "After Quantization", **plot_args)
+    pylab.show()
+
+
   assert ex<1e-6 and eq<3e-5 #This threshold is pretty agressive and might not work for many seeds
 
 def to_arcs(py_arcs):
   arrays = []
   for contour in py_arcs:
     arrays.append(asarray([((a[0][0],a[0][1]),a[1]) for a in contour], dtype=CircleArc))
-  return Nested(arrays)
+  return Nested(arrays, dtype=CircleArc)
 
 def test_circles():
   # Test quantization routine
@@ -131,6 +142,7 @@ def test_circles():
       print '(k,n,i) (%d,%d,%d)'%(k,n,i)
       random.seed(18183181+1000*k+10*n+i)
       arcs0 = canonicalize_circle_arcs(random_circle_arcs(n,k))
+      circle_arc_quantize_test(arcs0);
       if (k,n,i)==None: # Enable to visualize before union
         print
         print 'arcs0 = %s'%compact_str(arcs0)
@@ -200,4 +212,9 @@ def debug_offsets():
 
 if __name__=='__main__':
   #debug_offsets()
+  print "test_circle_quantize:"
+  test_circle_quantize()
+  print "test_single_circle:"
+  test_single_circle()
+  print "test_circles:"
   test_circles()
