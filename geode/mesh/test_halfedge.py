@@ -39,7 +39,6 @@ def test_collapse():
   mesh = MutableTriangleTopology()
   mesh.add_vertices(soup.nodes())
   mesh.add_faces(tris)
-
   # first round, just collapse stuff. Try 10k times.
   m = mesh.copy()
   for i in range(10000):
@@ -266,7 +265,7 @@ def test_fields():
     # (we're already checking consistency)
 
 if __name__=='__main__':
-  #test_fields()
-  #test_corner_construction()
-  #test_halfedge_construction()
+  test_fields()
+  test_corner_construction()
+  test_halfedge_construction()
   test_collapse()

@@ -1180,8 +1180,6 @@ void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
   if (!is_boundary(o))
     vr = dst(next(o));
 
-  std::cout << format("collapsing %d -> %d, vl %d, vr %d", v0.id, v1.id, vl.id, vr.id) << std::endl;
-
   // if v1 used o or v1vl as outgoing halfedge, change it to something else
   if (halfedge(v1) == o) {
     unsafe_set_halfedge(v1, left(o));
@@ -1261,7 +1259,12 @@ void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
   unsafe_set_erased(v0);
 
   // make sure that if v1 is now a boundary, it has a boundary halfedge
-  ensure_boundary_halfedge(v1);
+  for (auto he : outgoing(v1)) {
+    if (is_boundary(he)) {
+      unsafe_set_src(he, v1);
+      unsafe_set_halfedge(v1, he);
+    }
+  }
 
   assert_consistent(true);
 }
