@@ -3,6 +3,7 @@
 #include <geode/utility/config.h>
 #include <geode/utility/forward.h>
 #include <geode/utility/type_traits.h>
+#include <geode/utility/validity.h>
 #include <cassert>
 
 #ifdef GEODE_PYTHON
@@ -25,7 +26,7 @@ template<class Iter,class Enable> struct Range {
   Range() {}
 
   Range(const Iter& lo, const Iter& hi)
-    :lo(lo),hi(hi) {}
+    : lo(lo), hi(hi) {}
 
   const Iter& begin() const { return lo; }
   const Iter& end() const { return hi; }

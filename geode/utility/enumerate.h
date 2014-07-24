@@ -1,10 +1,35 @@
-// Version of Python's enumerate for variadic templates
-// Enumerate<T0,T1,...> inherits from Types<ITP<0,T0>,ITP<1,T1>,...>
+// Version of Python's enumerate for iterators and variadic templates
+// enumerate(collection) products (index,element&) tuples.
+// Enumerate<T0,T1,...> inherits from Types<ITP<0,T0>,ITP<1,T1>,...>.
 #pragma once
 
 #include <geode/utility/forward.h>
+#include <geode/utility/range.h>
 #include <geode/structure/forward.h>
 namespace geode {
+
+namespace {
+template<class Iter> struct EnumerateIter {
+  typedef decltype(*declval<const Iter&>()) R;
+
+  int i;
+  Iter it;
+
+  EnumerateIter(const int i, const Iter& it)
+    : i(i), it(it) {}
+
+  bool operator!=(const EnumerateIter& o) const { return it != o.it; }
+  void operator++() const { ++i; ++it; }
+  void operator--() const { --i; --it; }
+  Tuple<int,R> operator*() { return Tuple<int,R>(i,*it); }
+};
+}
+
+template<class Seq> static inline auto enumerate(const Seq& seq)
+  -> Range<EnumerateIter<decltype(seq.begin())>> {
+  typedef EnumerateIter<decltype(seq.begin())> EI;
+  return Range<EI>(EI(0,seq.begin()),EI(int(seq.size()),seq.end()));
+}
 
 // An (index,type) pair
 template<int i,class T> struct ITP {

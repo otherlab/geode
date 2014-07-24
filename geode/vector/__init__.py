@@ -48,13 +48,13 @@ def clamp(x,xmin,xmax):
 def sqr_magnitude(v):
   return vdot(v,v)
 
-def magnitudes(v):
+def magnitudes(v,axis=-1):
   "same as magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
-  return sqrt(sqr(v).sum(-1))
+  return sqrt(sqr(v).sum(axis))
 
-def sqr_magnitudes(v):
+def sqr_magnitudes(v,axis=-1):
   "same as sqr_magnitude for 1D vectors, but returns array of magnitudes for arrays of vectors"
-  return sqr(v).sum(-1)
+  return sqr(v).sum(axis)
 
 def axis_vector(axis,d=3,dtype=real):
   v = zeros(d,dtype)
@@ -112,7 +112,7 @@ def det(*args):
 def cross(u,v):
   # The numpy version doesn't always broadcast correctly, so we roll our own cross product routine.
   # Unfortunately, it's impossible to make 1D/2D cross products work correctly together with
-  # broadcasting, we required either both 2D or both 3D.
+  # broadcasting, so we require either both 2D or both 3D.
   u,v = asarray(u),asarray(v)
   d = u.shape[-1]
   assert d==v.shape[-1]

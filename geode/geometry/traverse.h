@@ -1,11 +1,6 @@
-//#####################################################################
-// Templatized visitor-based box tree traversal
-//#####################################################################
+// Visitor-based box tree traversal
 //
-// All functions are static since specific visitor instantiations should
-// appear only in .cpp files.
-//
-//#####################################################################
+// All functions are static since specific visitor instantiations should appear only in .cpp files.
 #pragma once
 
 #include <geode/array/alloca.h>
@@ -34,39 +29,42 @@ template<class Visitor,class TV> static void single_traverse(const BoxTree<TV>& 
 }
 
 // Helper function for doubly recursive traversal of two box trees starting at given nodes
-template<class Visitor,class Thickness,class TV> static void double_traverse_helper(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, RawStack<Vector<int,2>> stack, int n0, int n1, Thickness thickness) {
-  assert((is_same<Thickness,Zero>::value || !!thickness));
+template<class Visitor,class Thickness,class TV> static void
+double_traverse_helper(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor,
+                       RawStack<Vector<int,2>> stack, const int n0, const int n1, Thickness thickness) {
+  assert((is_same<Thickness,Zero>::value || thickness));
   const int internal0 = tree0.leaves.lo,
             internal1 = tree1.leaves.lo;
   RawArray<const Box<TV>> boxes0 = tree0.boxes,
                           boxes1 = tree1.boxes;
   stack.push(vec(n0,n1));
   while (stack.size()) {
-    int n0,n1;stack.pop().get(n0,n1);
-    if (visitor.cull(n0,n1) || !boxes0[n0].intersects(boxes1[n1],thickness))
+    const auto n = stack.pop();
+    if (visitor.cull(n.x,n.y) || !boxes0[n.x].intersects(boxes1[n.y],thickness))
       continue;
-    if (n0 < internal0) {
-      if (n1 < internal1) {
-        stack.push(vec(2*n0+1,2*n1+1));
-        stack.push(vec(2*n0+1,2*n1+2));
-        stack.push(vec(2*n0+2,2*n1+1));
-        stack.push(vec(2*n0+2,2*n1+2));
+    if (n.x < internal0) {
+      if (n.y < internal1) {
+        stack.push(vec(2*n.x+1,2*n.y+1));
+        stack.push(vec(2*n.x+1,2*n.y+2));
+        stack.push(vec(2*n.x+2,2*n.y+1));
+        stack.push(vec(2*n.x+2,2*n.y+2));
       } else {
-        stack.push(vec(2*n0+1,n1));
-        stack.push(vec(2*n0+2,n1));
+        stack.push(vec(2*n.x+1,n.y));
+        stack.push(vec(2*n.x+2,n.y));
       }
     } else {
-      if (n1 < internal1) {
-        stack.push(vec(n0,2*n1+1));
-        stack.push(vec(n0,2*n1+2));
+      if (n.y < internal1) {
+        stack.push(vec(n.x,2*n.y+1));
+        stack.push(vec(n.x,2*n.y+2));
       } else
-        visitor.leaf(n0,n1);
+        visitor.leaf(n.x,n.y);
     }
   }
 }
 
 // Helper function traversing two hierarchies starting at the roots.  Identical trees are not treated specially.
-template<class Visitor,class Thickness,class TV> static void double_traverse_helper(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, Thickness thickness) {
+template<class Visitor,class Thickness,class TV> static void
+double_traverse_helper(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, Thickness thickness) {
   if (!tree0.nodes() || !tree1.nodes())
     return;
   const int buffer_size = 3*max(tree0.depth,tree1.depth);
@@ -75,7 +73,8 @@ template<class Visitor,class Thickness,class TV> static void double_traverse_hel
 }
 
 // Helper function traversing a hierarchy against itself starting at the roots.
-template<class Visitor,class Thickness,class TV> static void double_traverse_helper(const BoxTree<TV>& tree, Visitor&& visitor, Thickness thickness) {
+template<class Visitor,class Thickness,class TV> static void
+double_traverse_helper(const BoxTree<TV>& tree, Visitor&& visitor, Thickness thickness) {
   if (!tree.nodes())
     return;
   const int internal = tree.leaves.lo;
@@ -96,22 +95,25 @@ template<class Visitor,class Thickness,class TV> static void double_traverse_hel
   }
 }
 
-// Traverse all intersecting pairs of leaf boxes between two hierarchies.  Identical trees are not treated specially.
-// Box/box intersection culling is automatic, but the visitor can add additional culling if desired by returning true from visitor.cull(...).
-template<class Visitor,class TV> static void double_traverse(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, typename TV::Scalar thickness) {
-  GEODE_ASSERT(&tree0 != &tree1); // Identical trees should almost certainly use the dedicated routine below.  We can remove this assertion if an application is found.
+// Traverse all intersecting pairs of leaf boxes between two distinct hierarchies.  Box/box intersection culling
+// is automatic, but the visitor can provide additional culling by returning true from visitor.cull(...).
+template<class Visitor,class TV> static void
+double_traverse(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor, typename TV::Scalar thickness) {
+  GEODE_ASSERT(&tree0 != &tree1,"Identical trees should use the dedicated routine below");
   if (thickness)
     double_traverse_helper(tree0,tree1,visitor,thickness);
   else
     double_traverse_helper(tree0,tree1,visitor,Zero());
 }
-template<class Visitor,class TV> static void double_traverse(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor) {
-  GEODE_ASSERT(&tree0 != &tree1); // Identical trees should almost certainly use the dedicated routine below.  We can remove this assertion if an application is found.
+template<class Visitor,class TV> static void
+double_traverse(const BoxTree<TV>& tree0, const BoxTree<TV>& tree1, Visitor&& visitor) {
+  GEODE_ASSERT(&tree0 != &tree1,"Identical trees should use the dedicated routine below");
   double_traverse_helper(tree0,tree1,visitor,Zero());
 }
 
 // Traverse all intersecting pairs of leaf boxes between a hierarchy and itself.
-template<class Visitor,class TV> static void double_traverse(const BoxTree<TV>& tree, Visitor&& visitor, typename TV::Scalar thickness) {
+template<class Visitor,class TV> static void
+double_traverse(const BoxTree<TV>& tree, Visitor&& visitor, typename TV::Scalar thickness) {
   if (thickness)
     double_traverse_helper(tree,visitor,thickness);
   else

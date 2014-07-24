@@ -262,9 +262,9 @@ private:
   void grow_buffer(const int max_size_new) {
     if (max_size_>=max_size_new) return;
     Buffer* new_owner = Buffer::new_<T>(max_size_new);
-    const int m_ = this->m_; // teach compiler that m_ is constant
+    const int m_ = this->m_; // Teach compiler that m_ is constant
     for (int i=0;i<m_;i++)
-      ((typename remove_const<T>::type*)new_owner->data)[i] = data_[i];
+      ((Element*)new_owner->data)[i] = data_[i];
     GEODE_XDECREF(owner_);
     max_size_ = max_size_new;
     data_ = (T*)new_owner->data;
@@ -395,13 +395,23 @@ public:
     return m_-1;
   }
 
-  template<class TArray> void extend(const TArray& append_array) {
-    STATIC_ASSERT_SAME(typename remove_const<T>::type,typename remove_const<typename TArray::value_type>::type);
-    int append_m = append_array.size(),
-        m_new = m_+append_m;
+  template<class TA> void extend(const TA& extra) {
+    STATIC_ASSERT_SAME(Element,typename remove_const<typename TA::value_type>::type);
+    const int append_m = extra.size(),
+              m_new = m_+append_m;
     preallocate(m_new);
     for (int i=0;i<append_m;i++)
-      geode::const_cast_(data_[m_+i]) = append_array[i];
+      geode::const_cast_(data_[m_+i]) = extra[i];
+    m_ = m_new;
+  }
+
+  template<class TA> void extend_assuming_enough_space(const TA& extra) {
+    STATIC_ASSERT_SAME(Element,typename remove_const<typename TA::value_type>::type);
+    const int append_m = extra.size(),
+              m_new = m_+append_m;
+    assert(m_new <= max_size_);
+    for (int i=0;i<append_m;i++)
+      geode::const_cast_(data_[m_+i]) = extra[i];
     m_ = m_new;
   }
 

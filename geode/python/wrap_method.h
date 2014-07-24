@@ -22,7 +22,7 @@
 #include <geode/python/to_python.h>
 #include <geode/python/outer_wrapper.h>
 #include <geode/utility/config.h>
-#include <geode/utility/Enumerate.h>
+#include <geode/utility/enumerate.h>
 namespace geode {
 
 GEODE_CORE_EXPORT PyObject* wrap_method_helper(PyTypeObject* type,const char* name,wrapperfunc wrapper,void* method);

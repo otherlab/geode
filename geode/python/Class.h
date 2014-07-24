@@ -31,7 +31,7 @@
 #include <geode/python/config.h>
 #include <geode/python/wrap.h>
 #include <geode/python/Object.h>
-#include <geode/utility/Enumerate.h>
+#include <geode/utility/enumerate.h>
 #include <geode/utility/format.h>
 #include <geode/utility/type_traits.h>
 #ifdef GEODE_PYTHON

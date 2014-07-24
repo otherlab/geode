@@ -9,7 +9,7 @@ namespace geode {
 const int all_depths = std::numeric_limits<int>::min();
 
 // Resolve all intersections between triangle soups.
-GEODE_CORE_EXPORT Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>>
+GEODE_CORE_EXPORT Tuple<Ref<const TriangleSoup>,Array<Vec3>>
 split_soup(const TriangleSoup& faces, Array<const Vector<double,3>> X, const int depth);
 
 GEODE_CORE_EXPORT Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>>

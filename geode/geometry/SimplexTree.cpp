@@ -360,7 +360,6 @@ template<class TV,int d> Tuple<TV,int,typename SimplexTree<TV,d>::Weights> Simpl
 template<class TV,int d> typename SimplexTree<TV,d>::T SimplexTree<TV,d>::distance(const TV point, const T max_distance) const {
   return magnitude(point-closest_point(point,max_distance).x);
 }
-
 template class SimplexTree<Vector<real,2>,1>;
 template class SimplexTree<Vector<real,2>,2>;
 template class SimplexTree<Vector<real,3>,1>;
@@ -401,6 +400,7 @@ template<class TV,int d> static void wrap_helper() {
     .GEODE_FIELD(X)
     .GEODE_METHOD(update)
     .GEODE_METHOD(closest_point)
+    .GEODE_METHOD(distance)
     ;
 }
 

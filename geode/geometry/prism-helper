@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+"Exploring the 6 different ways of tetrahedralizing a prism"
+
+from __future__ import division,print_function
+from geode import *
+
+# Triangle 0,1,2 below triangle 3,4,5, both pointing up along z.
+X = asarray([(0,0,0),(1,0,0),(0,1,0),(0,0,1),(1,0,1),(0,1,1)])
+
+def vol(i,j,k,l):
+  o = X[i]
+  return dot(X[j]-o,cross(X[k]-o,X[l]-o))
+
+def boundary(*t):
+  if len(t)==3:
+    B = zeros((6,6,6),dtype=int)
+    a,b,c = t
+    B[a,b,c] += 1
+    B[a,c,b] -= 1
+    B[c,a,b] += 1
+    B[c,b,a] -= 1
+    B[b,c,a] += 1
+    B[b,a,c] -= 1
+    return B
+  elif len(t)==4:
+    a,b,c,d = t
+    return ( boundary(a,c,b)
+            +boundary(a,b,d)
+            +boundary(c,a,d)
+            +boundary(b,c,d))
+  else:
+    raise ValueError(t)
+
+def show_boundary(b):
+  d = {}
+  for i in xrange(6):
+    for j in xrange(i,6):
+      for k in xrange(j,6):
+        v = b[i,j,k]
+        if v > 0:
+          d[(i,j,k)] = v
+        elif v < 0:
+          d[(i,k,j)] = -v
+  return '{%s}'%(','.join('(%d,%d,%d)%s'%(k[0],k[1],k[2],('' if d[k]==1 else ':%d'%d[k])) for k in sorted(d.keys()) if d[k]))
+
+def quad_boundaries(a,b,c,d):
+  return list(enumerate((boundary(a,c,d)+boundary(a,b,c),
+                         boundary(a,b,d)+boundary(d,b,c))))
+
+be = boundary(0,2,1)+boundary(3,4,5)
+qb0 = quad_boundaries(0,3,5,2)
+qb1 = quad_boundaries(2,5,4,1)
+qb2 = quad_boundaries(1,4,3,0)
+def is_prism(t0,t1,t2):
+  if vol(*t0)+vol(*t1)+vol(*t2)==3:
+    bt = boundary(*t0)+boundary(*t1)+boundary(*t2)
+    for q0,b0 in qb0:
+      for q1,b1 in qb1:
+        for q2,b2 in qb2:
+          if all(be+b0+b1+b2==bt):
+            return q0,q1,q2
+
+s = xrange(6)
+tets = [(i,j,k,l) for i in s for j in s for k in s for l in s if i<j<k and j<l and vol(i,j,k,l)>0]
+print('tets = %d'%len(tets))
+etets = list(enumerate(tets))
+ptets = set()
+for i0,t0 in etets:
+  for i1,t1 in etets:
+    if i0<i1:
+      for i2,t2 in etets:
+        if i1<i2 and is_prism(t0,t1,t2):
+          q0,q1,q2 = is_prism(t0,t1,t2)
+          ptets.add(tuple(t0))
+          ptets.add(tuple(t1))
+          ptets.add(tuple(t2))
+          print('good: q%d%d%d: %s %s %s'%(q0,q1,q2,t0,t1,t2))
+ptets = sorted(ptets)
+print()
+print('ptets %d = %s'%(len(ptets),str(ptets).replace(' ','')))
+print('code = %s'%(' && '.join('S(%d,%d,%d,%d)'%t for t in ptets)))
