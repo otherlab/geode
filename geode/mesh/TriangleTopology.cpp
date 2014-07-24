@@ -298,6 +298,7 @@ void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const 
   // Check simple vertex properties
   int actual_vertices = 0;
   for (const auto v : vertices()) {
+    GEODE_ASSERT(valid(v));
     actual_vertices++;
     const auto e = halfedge(v);
     if (e.valid())
@@ -308,6 +309,7 @@ void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const 
   // Check simple face properties
   int actual_faces = 0;
   for (const auto f : faces()) {
+    GEODE_ASSERT(valid(f));
     actual_faces++;
     const auto es = halfedges(f);
     GEODE_ASSERT(es.x==halfedge(f));
@@ -323,6 +325,7 @@ void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const 
   // Check simple edge properties
   GEODE_ASSERT(!((3*n_faces()+n_boundary_edges())&1));
   for (const auto e : halfedges()) {
+    GEODE_ASSERT(valid(e));
     const auto f = face(e);
     const auto p = prev(e), n = next(e), r = reverse(e);
     GEODE_ASSERT(valid(p));
@@ -1117,6 +1120,160 @@ VertexId MutableTriangleTopology::split_edge(HalfedgeId e) {
   const auto c = add_vertex();
   split_edge(e,c);
   return c;
+}
+
+bool MutableTriangleTopology::is_collapse_safe(HalfedgeId h) const {
+  GEODE_ASSERT(valid(h));
+  const auto o = reverse(h);
+  const auto v0 = src(h),
+             v1 = dst(h);
+
+  // If v0 and v1 are on different boundaries, we can't do this
+  if (is_boundary(v0) && is_boundary(v1) &&
+      !is_boundary(h) && !is_boundary(o))
+    return false;
+
+  // Can't snip off an isolated vl or vr
+  if ((is_boundary(reverse(next(h))) && is_boundary(reverse(prev(h)))) ||
+      (is_boundary(reverse(next(o))) && is_boundary(reverse(prev(o)))))
+    return false;
+
+  // Look up left and right vertices
+  const auto vl = is_boundary(h) ? VertexId() : dst(next(h)),
+             vr = is_boundary(o) ? VertexId() : dst(next(o));
+
+  // This only happens in temporarily invalid situations, such as if
+  // split_along_edge is called and not cleaned up.  No good can come of it.
+  if (vl==vr)
+    return false;
+
+  // One-rings of v0 and v1 cannot intersect, otherwise we'll collapse a
+  // triangle-shaped tunnel
+  Hashtable<VertexId> covered;
+  for (auto oh: outgoing(v0)) {
+    auto v = dst(oh);
+    if (v != vl && v != vr)
+      covered.set(v);
+  }
+  for (auto oh: outgoing(v1)) {
+    auto v = dst(oh);
+    if (covered.contains(v))
+      return false;
+  }
+
+  return true;
+}
+
+void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
+  GEODE_ASSERT(valid(h));
+
+  HalfedgeId o = reverse(h);
+
+  VertexId v0 = src(h);
+  VertexId v1 = dst(h);
+
+  VertexId vl;
+  if (!is_boundary(h))
+    vl = dst(next(h));
+
+  VertexId vr;
+  if (!is_boundary(o))
+    vr = dst(next(o));
+
+  // if v1 used o or v1vl as outgoing halfedge, change it to something else
+  if (halfedge(v1) == o) {
+    unsafe_set_halfedge(v1, left(o));
+  } else if (dst(halfedge(v1)) == vl) {
+    unsafe_set_halfedge(v1, right(halfedge(v1)));
+  }
+
+  // if vl used vlv0 as outgoing halfedge, change it to something else
+  if (vl.valid() && dst(halfedge(vl)) == v0) {
+    unsafe_set_halfedge(vl, left(halfedge(vl)));
+  }
+
+  // if vr used vrv1 as outgoing halfedge, change it to something else
+  if (vr.valid() && dst(halfedge(vr)) == v1) {
+    unsafe_set_halfedge(vr, left(halfedge(vr)));
+  }
+
+  // replace v0 with v1 in all faces
+  for (auto f : incident_faces(v0))
+    unsafe_replace_vertex(f, v0, v1);
+
+  // replace v0 with v1 in all boundary edge src entries
+  if (is_boundary(v0))
+    unsafe_set_src(halfedge(v0), v1);
+
+  // connect reverses: v0vl -- vlv1, vrv0 -- v1vr
+  // (if v0vl and vlv1 or vrv0 and v1vr are boundaries, don't connect them,
+  // delete them. Patch up boundary, make vl or vr isolated vertices)
+  if (vl.valid()) {
+    auto v0vl = reverse(prev(h));
+    auto vlv1 = reverse(next(h));
+
+    if (is_boundary(v0vl) && is_boundary(vlv1)) {
+      unsafe_boundary_link(prev(v0vl), next(vlv1));
+      unsafe_set_erased(v0vl);
+      unsafe_set_erased(vlv1);
+      if (halfedge(vl) == vlv1)
+        unsafe_set_halfedge(vl,HalfedgeId());
+    } else {
+      unsafe_set_reverse(v0vl, vlv1);
+    }
+  }
+
+  if (vr.valid()) {
+    auto vrv0 = reverse(next(o));
+    auto v1vr = reverse(prev(o));
+
+    if (is_boundary(vrv0) && is_boundary(v1vr)) {
+      unsafe_boundary_link(prev(v1vr), next(vrv0));
+      unsafe_set_erased(v1vr);
+      unsafe_set_erased(vrv0);
+      if (halfedge(vr) == vrv0)
+        unsafe_set_halfedge(vr,HalfedgeId());
+    } else {
+      unsafe_set_reverse(vrv0, v1vr);
+    }
+  }
+
+  if (vl.valid())
+    // delete face incident to h
+    unsafe_set_erased(face(h));
+  else {
+    unsafe_boundary_link(prev(h), next(h));
+    unsafe_set_erased(h);
+  }
+
+  if (vr.valid())
+    // delete face incident to o
+    unsafe_set_erased(face(o));
+  else {
+    unsafe_set_src(next(o), v1);
+    unsafe_boundary_link(prev(o), next(o));
+    unsafe_set_erased(o);
+  }
+
+  // delete v0
+  unsafe_set_erased(v0);
+
+  // make sure that if v1 is now a boundary, it has a boundary halfedge
+  for (auto he : outgoing(v1)) {
+    if (is_boundary(he)) {
+      unsafe_set_src(he, v1);
+      unsafe_set_halfedge(v1, he);
+    }
+  }
+
+  assert_consistent(true);
+}
+
+void MutableTriangleTopology::collapse(HalfedgeId h) {
+  if (!is_collapse_safe(h))
+    throw RuntimeError(format("TriangleTopology::collapse: halfedge collapse %d [%d,%d] is invalid",
+                              h.id,src(h).id,dst(h).id));
+  unsafe_collapse(h);
 }
 
 HalfedgeId MutableTriangleTopology::flip_edge(HalfedgeId e) {
@@ -2031,6 +2188,9 @@ void wrap_corner_mesh() {
       .GEODE_GET(n_boundary_edges)
       .GEODE_GET(n_edges)
       .GEODE_GET(n_faces)
+      .GEODE_GET(allocated_vertices)
+      .GEODE_GET(allocated_faces)
+      .GEODE_GET(allocated_halfedges)
       .GEODE_GET(chi)
       .SAFE_METHOD(halfedge)
       .SAFE_METHOD(prev)
@@ -2072,6 +2232,9 @@ void wrap_corner_mesh() {
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<VertexId>>(Self::*)() const, vertices)
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<FaceId>>(Self::*)() const, faces)
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<HalfedgeId>>(Self::*)() const, halfedges)
+      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(VertexId) const, "vertex_valid", valid)
+      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(FaceId) const, "face_valid", valid)
+      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(HalfedgeId) const, "halfedge_valid", valid)
       .GEODE_METHOD(boundary_edges)
       .GEODE_METHOD(interior_halfedges)
       .GEODE_METHOD(is_garbage_collected)
@@ -2095,6 +2258,8 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(split_nonmanifold_vertex)
       .GEODE_METHOD(split_nonmanifold_vertices)
       .GEODE_METHOD(split_along_edge)
+      .GEODE_METHOD(is_collapse_safe)
+      .GEODE_METHOD(collapse)
       .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(HalfedgeId),"split_edge",split_edge)
       .GEODE_OVERLOADED_METHOD_2(void(Self::*)(HalfedgeId,VertexId),"split_edge_with_vertex",split_edge)
       .GEODE_METHOD(collect_garbage)

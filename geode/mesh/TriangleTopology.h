@@ -129,6 +129,16 @@ protected:
       boundaries_.const_cast_()[-1-r.id].reverse = HalfedgeId(3*f.id+i);
   }
 
+  // Convenience function. One of the halfedges must be interior.
+  inline void unsafe_set_reverse(HalfedgeId h0, HalfedgeId h1) {
+    if (is_boundary(h0)) {
+      GEODE_ASSERT(!is_boundary(h1));
+      unsafe_set_reverse(face(h1), face_index(h1), h0);
+    } else {
+      unsafe_set_reverse(face(h0), face_index(h0), h1);
+    }
+  }
+
   // make a new boundary at src, opposite of reverse. Does not ensure consistency
   HalfedgeId unsafe_new_boundary(const VertexId src, const HalfedgeId reverse);
 
@@ -167,11 +177,16 @@ public:
   GEODE_CORE_EXPORT Ref<TriangleTopology> copy() const;
   GEODE_CORE_EXPORT Ref<MutableTriangleTopology> mutate() const;
 
-  // Count various features, excluding erased ids.  If you want to include deletions, use faces_.size() and such.
+  // Count various features, excluding erased ids.
   int n_vertices()       const { return n_vertices_; }
   int n_faces()          const { return n_faces_; }
   int n_edges()          const { return (3*n_faces_+n_boundary_edges_)>>1; }
   int n_boundary_edges() const { return n_boundary_edges_; }
+
+  // Count various features, including all deleted items
+  int allocated_vertices() const { return vertex_to_edge_.size(); }
+  int allocated_faces() const { return faces_.size(); }
+  int allocated_halfedges() const { return 3 * faces_.size(); }
 
   // Check if vertices, faces, and boundary edges are garbage collected, ensuring contiguous indices.
   GEODE_CORE_EXPORT bool is_garbage_collected() const;
@@ -549,6 +564,18 @@ public:
   // Split an edge by inserting an existing isolated vertex in the center.
   // If h is not a boundary halfedge, dst(h) = c afterwards.
   GEODE_CORE_EXPORT void split_edge(HalfedgeId h, VertexId c);
+
+  // Check whether an edge collapse is safe
+  GEODE_CORE_EXPORT bool is_collapse_safe(HalfedgeId h) const;
+
+  // Collapse an edge assuming that is_collapse_safe(h) is true. This function may
+  // leave the mesh in a broken or nonmanifold state if is_collapse_safe(h) is not
+  // true.
+  GEODE_CORE_EXPORT void unsafe_collapse(HalfedgeId h);
+
+  // Collapse an edge: move src(h) to dst(h) and delete the faces incident to h.
+  // Throws an exception if is_collapse_safe(h) is not true.
+  GEODE_CORE_EXPORT void collapse(HalfedgeId h);
 
   // Erase the given vertex. Erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
   GEODE_CORE_EXPORT void erase(VertexId id, bool erase_isolated = false);

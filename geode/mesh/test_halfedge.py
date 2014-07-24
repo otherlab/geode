@@ -31,6 +31,36 @@ def test_collect_boundary_garbage():
   mesh.assert_consistent(True)
   assert mesh.is_garbage_collected()
 
+def test_collapse():
+  random.seed(131313)
+  soup = torus_topology(8,10)
+  tris = torus_topology(8,10).elements.copy()
+  random.shuffle(tris)
+  mesh = MutableTriangleTopology()
+  mesh.add_vertices(soup.nodes())
+  mesh.add_faces(tris)
+  # first round, just collapse stuff. Try 10k times.
+  m = mesh.copy()
+  for i in range(10000):
+    he = int(random.uniform(0, m.allocated_halfedges))
+    if m.halfedge_valid(he) and m.is_collapse_safe(he):
+      print "collapsing he %s" % he
+      m.collapse(he)
+      m.assert_consistent(True)
+
+  # second round, delete 10% of triangles, then collapse stuff.
+  m = mesh
+  for i in range(m.n_faces//10):
+    print "deleting face %s" % i
+    m.erase_face(i, True)
+  m.assert_consistent(True)
+  for i in range(10000):
+    he = int(random.uniform(0, m.allocated_halfedges))
+    if m.halfedge_valid(he) and m.is_collapse_safe(he):
+      print "collapsing he %s" % he
+      m.collapse(he)
+      m.assert_consistent(True)
+
 def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
   random.seed(813177)
   nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
@@ -238,3 +268,4 @@ if __name__=='__main__':
   test_fields()
   test_corner_construction()
   test_halfedge_construction()
+  test_collapse()
