@@ -165,15 +165,16 @@ static Tuple<Array<Vector<int,3>>,Array<TV>> rough_offset_shell_helper(const Tri
   const auto& X = mesh->field(X_id);
   const auto& vertex_normals = mesh->field(vn_id);
 
-  // Remove completely degenerate faces.
-  for (const auto f : mesh->faces()) {
-    const auto v = mesh->vertices(f);
-    if (   X[v.x]==X[v.y]
-        || X[v.x]==X[v.z]
-        || X[v.y]==X[v.z])
-      mesh->erase(f);
+  // Remove nearly degenerate faces.
+  {
+    const T threshold = 1e-2*offset;
+    for (const auto f : mesh->faces()) {
+      const auto v = mesh->vertices(f);
+      if (Triangle<TV>::minimum_altitude(X[v.x],X[v.y],X[v.z]) <= threshold)
+        mesh->erase(f);
+    }
+    mesh->split_nonmanifold_vertices();
   }
-  mesh->split_nonmanifold_vertices();
 
   // We'll be using the fact that new boundary edges appear with more negative indices,
   // and later that vertex ids are contiguous.
