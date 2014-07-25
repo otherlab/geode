@@ -33,7 +33,7 @@ private:
   const Array<TV> node_X;
   Ptr<ParticleTree<TV>> node_tree;
   const Ref<SimplexTree<TV,2>> target_tree;
-  const Array<CloseTriangleInfo> info;
+  const Array<CloseInfo<2>> info;
 protected:
   SurfacePins(Array<const int> particles, Array<const T> mass, TriangleSoup& target_mesh, Array<const TV> target_X, NdArray<const T> stiffness, NdArray<const T> damping_ratio);
 public:

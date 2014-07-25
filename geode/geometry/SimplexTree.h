@@ -11,11 +11,12 @@
 #include <vector>
 namespace geode {
 
-template<class TV,int d> class SimplexTree : public BoxTree<TV> {
+template<class TV,int d_> class SimplexTree : public BoxTree<TV> {
   typedef typename TV::Scalar T;
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef BoxTree<TV> Base;
+  static const int d = d_;
   typedef typename mpl::if_c<d==1,SegmentSoup,TriangleSoup>::type Mesh;
   typedef typename mpl::if_c<d==1,Segment<TV>,Triangle<TV>>::type Simplex;
   typedef typename mpl::if_c<d==1,T,Vector<T,3>>::type Weights;
