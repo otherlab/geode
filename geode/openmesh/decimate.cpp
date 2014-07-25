@@ -70,7 +70,7 @@ int decimate(TriMesh &mesh, int max_collapses, double maxangleerror, double maxq
 }
 using namespace geode;
 
-void wrap_decimate() {
-  GEODE_FUNCTION_2(decimate_py,decimate)
+void wrap_openmesh_decimate() {
+  GEODE_FUNCTION_2(decimate_openmesh,decimate)
 }
 #endif // GEODE_OPENMESH

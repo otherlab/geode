@@ -21,10 +21,7 @@ namespace geode {
 using std::cout;
 using std::endl;
 
-template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,2>,1>)
-template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,2>,2>)
-template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,3>,1>)
-template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,3>,2>)
+template<class TV,int d_> const int SimplexTree<TV,d_>::d;
 
 template<class Mesh,class TV> static Array<Box<TV>> boxes(const Mesh& mesh, Array<const TV> X) {
   GEODE_ASSERT(mesh.nodes()<=X.size());
@@ -360,10 +357,14 @@ template<class TV,int d> Tuple<TV,int,typename SimplexTree<TV,d>::Weights> Simpl
 template<class TV,int d> typename SimplexTree<TV,d>::T SimplexTree<TV,d>::distance(const TV point, const T max_distance) const {
   return magnitude(point-closest_point(point,max_distance).x);
 }
-template class SimplexTree<Vector<real,2>,1>;
-template class SimplexTree<Vector<real,2>,2>;
-template class SimplexTree<Vector<real,3>,1>;
-template class SimplexTree<Vector<real,3>,2>;
+
+#define INSTANTIATE(m,d) \
+  template<> GEODE_DEFINE_TYPE(SimplexTree<Vector<real,m>,d>) \
+  template class SimplexTree<Vector<real,m>,d>;
+INSTANTIATE(2,1)
+INSTANTIATE(2,2)
+INSTANTIATE(3,1)
+INSTANTIATE(3,2)
 
 template<class T, int d> static int ray_traversal_test(const SimplexTree<Vector<T,d>,d-1>& tree, const int rays, const T half_thickness) {
   typedef Vector<T,d> TV;
@@ -398,6 +399,7 @@ template<class TV,int d> static void wrap_helper() {
     .GEODE_INIT(const typename Self::Mesh&,Array<const TV>,int)
     .GEODE_FIELD(mesh)
     .GEODE_FIELD(X)
+    .GEODE_FIELD(d)
     .GEODE_METHOD(update)
     .GEODE_METHOD(closest_point)
     .GEODE_METHOD(distance)
