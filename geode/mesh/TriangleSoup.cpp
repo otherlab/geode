@@ -20,12 +20,12 @@ GEODE_DEFINE_TYPE(TriangleSoup)
 const int TriangleSoup::d;
 #endif
 
-TriangleSoup::TriangleSoup(Array<const Vector<int,3>> elements)
+TriangleSoup::TriangleSoup(Array<const Vector<int,3>> elements, const int min_nodes)
   : vertices(scalar_view_own(elements))
   , elements(elements)
   , bending_tuples_valid(false) {
   // Assert validity and compute counts
-  node_count = 0;
+  node_count = max(0,min_nodes);
   for (int i=0;i<vertices.size();i++) {
     if (vertices[i] < 0)
       throw ValueError(format("TriangleSoup: invalid negative vertex %d",vertices[i]));
@@ -47,7 +47,7 @@ Ref<const SegmentSoup> TriangleSoup::segment_soup() const {
       if (hash.set(e1)) edges.append(e1);
       if (hash.set(e2)) edges.append(e2);
     }
-    segment_soup_ = new_<SegmentSoup>(edges);
+    segment_soup_ = new_<SegmentSoup>(edges,nodes());
   }
   return ref(segment_soup_);
 }

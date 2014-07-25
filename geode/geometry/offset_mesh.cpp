@@ -161,7 +161,7 @@ static Tuple<Array<Vector<int,3>>,Array<TV>> rough_offset_shell_helper(const Tri
   const auto mesh = mesh_in.mutate();
   const auto X_id = mesh->add_field(X_in.copy());
   // Each vertex has one offset vertex above and below, with normals n and -n.  TV() means unprocessed.
-  const auto vn_id = mesh->add_field(Field<TV,VertexId>(mesh->n_vertices()));
+  const auto vn_id = mesh->add_field(Field<TV,VertexId>(mesh->allocated_vertices()));
   const auto& X = mesh->field(X_id);
   const auto& vertex_normals = mesh->field(vn_id);
 

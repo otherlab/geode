@@ -22,10 +22,10 @@ GEODE_DEFINE_TYPE(SegmentSoup)
 const int SegmentSoup::d;
 #endif
 
-SegmentSoup::SegmentSoup(Array<const Vector<int,2> > elements)
+SegmentSoup::SegmentSoup(Array<const Vector<int,2>> elements, const int min_nodes)
   : vertices(scalar_view_own(elements))
   , elements(elements)
-  , node_count(compute_node_count())
+  , node_count(max(min_nodes,compute_node_count()))
   , bending_tuples_valid(false) {}
 
 int SegmentSoup::compute_node_count() const {
@@ -135,7 +135,7 @@ Nested<const int> SegmentSoup::incident_elements() const {
   return incident_elements_;
 }
 
-Array<const Vector<int,2> > SegmentSoup::adjacent_elements() const {
+Array<const Vector<int,2>> SegmentSoup::adjacent_elements() const {
   if (!adjacent_elements_.size() && nodes()) {
     adjacent_elements_.resize(elements.size(),uninit);
     Nested<const int> incident = incident_elements();
@@ -198,7 +198,7 @@ using namespace geode;
 void wrap_segment_soup() {
   typedef SegmentSoup Self;
   Class<Self>("SegmentSoup")
-    .GEODE_INIT(Array<const Vector<int,2> >)
+    .GEODE_INIT(Array<const Vector<int,2>>)
     .GEODE_FIELD(d)
     .GEODE_FIELD(vertices)
     .GEODE_FIELD(elements)
