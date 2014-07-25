@@ -9,7 +9,7 @@ from geode.vector import relative_error
 
 def test_lower_hull(filename = None):
   mesh,X = icosahedron_mesh()
-  mlh,Xlh = lower_hull(mesh, X, [0.3, 0.3, 1.0], -4.)
+  mlh,Xlh = lower_hull(mesh, X, [0.3, 0.3, 1.0], -4., 5./180.*pi, 30./180.*pi)
 
   if filename is not None:
     write_mesh(filename+'-input.obj', mesh, X);

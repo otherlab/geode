@@ -35,20 +35,76 @@ struct Toward {
   }
 };
 
-Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, Array<TV> const &X, TV up, const T ground_offset) {
+void add_vertex_fan(real division_angle, MutableTriangleTopology &mesh,
+                    FieldId<Vector<real,3>, VertexId> pos_id,
+                    VertexId vi, VertexId vim, VertexId vj, VertexId vjm,
+                    real move_by, Vector<real,3> last_normal, Vector<real,3> normal) {
+
+  // last___vi____vj
+
+  auto &pos = mesh.field(pos_id);
+  auto center = pos[vim];
+  // this corner is convex
+  real angle = acos(dot(last_normal, normal));
+  int nnew = ceil(angle/division_angle);
+  VertexId base = mesh.add_vertices(nnew);
+
+  // move original point
+  pos[vim] = center + move_by * last_normal;
+
+  // use proper interpolation for the normals
+  auto rot = Rotation<Vector<real,3>>::from_rotated_vector(last_normal, normal);
+
+  // set positions on new points
+  for (int i = 1; i <= nnew; ++i) {
+    real f = real(i)/nnew;
+    Vector<real,3> N = Rotation<Vector<real,3>>::spherical_linear_interpolation(Rotation<Vector<real,3>>(), rot, f) * last_normal;
+    pos[VertexId(base.id+i-1)] = center + move_by * N;
+  }
+
+  // add the actual mesh by doing a series of edge_split operations
+
+  // for this purpose, we want there to be a face vi-vim-vjm. If that face
+  // doesn't exist, the edge vi-vjm should exist, which we flip
+  HalfedgeId h = mesh.halfedge(vim, vj);
+  if (h.valid()) {
+    GEODE_ASSERT(mesh.opposite(h) == vjm);
+    GEODE_ASSERT(mesh.is_flip_safe(h));
+    h = mesh.reverse(mesh.flip_edge(h));
+    GEODE_ASSERT(mesh.src(h) == vi && mesh.dst(h) == vjm);
+  } else {
+    h = mesh.halfedge(vi, vjm);
+    GEODE_ASSERT(h.valid());
+  }
+  GEODE_ASSERT(mesh.opposite(h) == vim);
+
+  // this is the edge we'll split, it connects vjm and vim
+  h = mesh.reverse(mesh.next(h));
+  GEODE_ASSERT(mesh.src(h) == vim && mesh.dst(h) == vjm);
+
+  // split with all our new vertices. This splits the edge h, and the new h is
+  // in between vjm and the just inserted point.
+  for (int i = nnew-1; i >= 0; --i) {
+    VertexId v(base.id+i);
+    mesh.split_edge(h,v);
+    GEODE_ASSERT(mesh.src(h) == vim);
+    GEODE_ASSERT(mesh.dst(h) == v);
+  }
+}
+
+Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, Array<TV> const &X, TV up, const T ground_offset, const T draft_angle, const T division_angle) {
 
   auto random = new_<Random>(5349);
 
-  // TODO: this doesn't work properly.
-  //T draft_angle = 0.;
-  T overhang = 0.;
   up.normalize();
 
   Ref<MutableTriangleTopology> mesh = new_<MutableTriangleTopology>(imesh);
   FieldId<TV,VertexId> pos_id = mesh->add_field(Field<TV,VertexId>(X), vertex_position_id);
 
+  T cos_division_angle = cos(division_angle);
+
   // classify faces
-  Field<bool, FaceId> toward = Toward(mesh, mesh->field(pos_id), up, overhang?sin(M_PI/180.*overhang):0.).as_field();
+  Field<bool, FaceId> toward = Toward(mesh, mesh->field(pos_id), up, sin(draft_angle)).as_field();
 
   // make sure we include space for deleted faces
   UnionFind union_find(mesh->faces_.size());
@@ -133,9 +189,97 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
       }
     }
 
-    // TODO: move side faces outward (ever so slightly) to avoid slivers
+    // tilt side faces by ofsetting
+    for (auto loop : boundary_loops) {
 
-    // TODO: tilt side faces to achieve angle
+      // compute all normals and store them. normals[i] is the normal of the
+      // edge x[i-1]-x[i]
+      // find an edge for which we can compute a normal. start is set to the
+      // vertex after that edge (i).
+      Array<Vector<real,3>> normals(loop.size(), uninit);
+      Array<bool> normal_valid(loop.size(), uninit);
+      normal_valid.fill(true);
+      int start = -1;
+      for (int i = 0, j = loop.size()-1; i < loop.size(); j=i++) {
+        // j___n[i]___i
+        auto vj = loop[j];
+        auto vi = loop[i];
+        auto eji = component_mesh.field(pos_id)[vi] - component_mesh.field(pos_id)[vj];
+        auto ep = eji.projected_orthogonal_to_unit_direction(up).normalized();
+        if (ep.sqr_magnitude() == 0) {
+          normals[i] = vec(0.,0.,0.);
+          normal_valid[i] = false;
+        } else {
+          normals[i] = cross(up,ep);
+          if (start == -1) {
+            start = i;
+          }
+        }
+      }
+
+      // if there is none, this loop is a point, and we can simply add a cone
+      // with no ill effects. We will therefore just set two adjacent normals to
+      // opposite values and let the regular algorithm handle the details.
+      if (start == -1) {
+        normals[0] = up.unit_orthogonal_vector();
+        normals[1] = -normals[0];
+        normal_valid[0] = normal_valid[1] = true;
+        start = 0;
+      }
+
+      // go through the loop, starting with start. last_normal always contains
+      // the normal of the last valid edge before our current vertex (i). We try to
+      // compute the edge normal for the edge after, and decide whether to split.
+      // If the next edge normal cannot be computed, we do not split, but simply
+      // continue offsetting in last_normal direction. Once the next edge normal
+      // can be computed, we (possibly) add the required split, and reset last_normal.
+      int i = start, j = start==loop.size()-1 ? 0 : start+1;
+      bool first = true;
+      TV last_normal = normals[start];
+      while (first || i != start) {
+
+        // last___x_i___n___x_j
+        auto vj = loop[j];
+        auto vjm = VertexId(vj.idx() + voffset);
+        auto vi = loop[i];
+        auto vim = VertexId(vi.idx() + voffset);
+
+        auto xi = component_mesh.field(pos_id)[vi];
+        auto xim = component_mesh.field(pos_id)[vim];
+        auto xj = component_mesh.field(pos_id)[vj];
+
+        // see how far we have to move this point to achieve the draft angle
+        auto move_by = tan(draft_angle) * dot(xi-xim, up);
+
+        TV normal = normals[j];
+
+        if (normal_valid[j]) {
+          bool convex = Plane<real>(last_normal, xi).phi(xj) < 0;
+          bool very_convex = convex && dot(last_normal, normal) < cos_division_angle;
+
+          if (very_convex) {
+            // if normal can be computed, and it's too spiky with last_normal, add a fan
+            add_vertex_fan(division_angle, component_mesh, pos_id, vi, vim, vj, vjm, move_by, last_normal, normal);
+          } else {
+            // not spiky, just move point
+            component_mesh.field(pos_id)[vim] += move_by * (last_normal+normal).normalized();
+          }
+          last_normal = normal;
+        } else {
+          // can't be computed, just move point along last normal
+          component_mesh.field(pos_id)[vim] += move_by * last_normal.normalized();
+        }
+
+        first = false;
+        i = j;
+        j++;
+        if (j == loop.size())
+          j = 0;
+      }
+    }
+
+    // TODO: move side faces outward (ever so slightly) to avoid slivers
+    // They are more likely to be aligned than not.
 
     // add to the result mesh
     new_mesh->add(component_mesh);
