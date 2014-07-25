@@ -180,7 +180,7 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
   weights.slice(weight_one_faces, weight_one_faces+box.x->elements.size()).fill(1<<24);
 
   // compute the union
-  auto result = split_soup(new_mesh->face_triangle_soup().x, new_mesh->field(new_pos_id).flat, weights, 0);
+  auto result = split_soup(new_mesh->face_soup().x, new_mesh->field(new_pos_id).flat, weights, 0);
   return result;
 }
 

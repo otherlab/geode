@@ -2041,7 +2041,7 @@ HalfedgeId TriangleTopology::safe_halfedge_between(VertexId v0, VertexId v1) con
   return halfedge(v0,v1);
 }
 
-Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> TriangleTopology::edge_segment_soup() const {
+Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> TriangleTopology::edge_soup() const {
   Array<Vector<int,2>> edges;
   Array<HalfedgeId> indices;
 
@@ -2058,7 +2058,7 @@ Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> TriangleTopology::edge_segment_soup() 
   return tuple(new_<SegmentSoup>(edges), indices);
 }
 
-Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_triangle_soup() const {
+Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_soup() const {
   Array<Vector<int,3>> facets;
   Array<FaceId> indices;
 
@@ -2141,15 +2141,27 @@ T TriangleTopology::cos_dihedral(RawField<const TV3,VertexId> X, const HalfedgeI
     return Segment<TV>(X[v.x],X[v.y]); \
   } \
   Tuple<Ref<SimplexTree<TV,1>>,Array<HalfedgeId>> TriangleTopology::edge_tree(Field<const TV,VertexId> X, const int leaf_size) const { \
-    const auto soup = edge_segment_soup(); \
+    const auto soup = edge_soup(); \
     return tuple(new_<SimplexTree<TV,1>>(soup.x,X.flat,leaf_size),soup.y); \
   } \
   Tuple<Ref<SimplexTree<TV,2>>,Array<FaceId>> TriangleTopology::face_tree(Field<const TV,VertexId> X, const int leaf_size) const { \
-    const auto soup = face_triangle_soup(); \
+    const auto soup = face_soup(); \
     return tuple(new_<SimplexTree<TV,2>>(soup.x,X.flat,leaf_size),soup.y); \
   }
 PER_DIMENSION(TV2)
 PER_DIMENSION(TV3)
+
+Ref<> TriangleTopology::edge_tree_py(Array<const T,2> X) const {
+  if (X.n==2)      return to_python_ref(edge_tree(Field<const TV2,VertexId>(vector_view_own<2>(X.flat))));
+  else if (X.n==3) return to_python_ref(edge_tree(Field<const TV3,VertexId>(vector_view_own<3>(X.flat))));
+  throw ValueError(format("TriangleTopology::edge_tree: Expected 2D or 3D vectors, got shape %s",str(X.sizes())));
+}
+
+Ref<> TriangleTopology::face_tree_py(Array<const T,2> X) const {
+  if (X.n==2)      return to_python_ref(face_tree(Field<const TV2,VertexId>(vector_view_own<2>(X.flat))));
+  else if (X.n==3) return to_python_ref(face_tree(Field<const TV3,VertexId>(vector_view_own<3>(X.flat))));
+  throw ValueError(format("TriangleTopology::face_tree: Expected 2D or 3D vectors, got shape %s",str(X.sizes())));
+}
 
 #define SAFE_ERASE(prim,Id) \
   void MutableTriangleTopology::safe_erase_##prim(Id x, bool erase_isolated) { \
@@ -2209,7 +2221,7 @@ void wrap_corner_mesh() {
       .SAFE_METHOD(incoming)
       .GEODE_METHOD(vertex_one_ring)
       .GEODE_METHOD(incident_faces)
-      .GEODE_METHOD(face_triangle_soup)
+      .GEODE_METHOD(face_soup)
       .GEODE_OVERLOADED_METHOD_2(HalfedgeId(Self::*)(VertexId, VertexId)const, "halfedge_between", halfedge)
       .GEODE_METHOD(common_halfedge)
       .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, FaceId)const, "common_vertex_between_faces", common_vertex)
@@ -2238,6 +2250,8 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(boundary_edges)
       .GEODE_METHOD(interior_halfedges)
       .GEODE_METHOD(is_garbage_collected)
+      .GEODE_METHOD_2("edge_tree",edge_tree_py)
+      .GEODE_METHOD_2("face_tree",face_tree_py)
       ;
   }
   {

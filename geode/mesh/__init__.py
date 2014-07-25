@@ -169,3 +169,6 @@ def mesh_lower_hull(mesh, up, offset):
 
 def mesh_offset(mesh, offset):
   return meshify(*rough_offset_mesh(mesh, mesh.vertex_field(vertex_position_id), offset))
+
+def decimate(mesh,X,distance,max_angle=pi/2,min_vertices=-1,boundary_distance=0):
+  return geode_wrap.decimate(mesh,X,distance,max_angle,min_vertices,boundary_distance)

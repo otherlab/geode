@@ -324,10 +324,10 @@ public:
   CREATE_FIELD(halfedge, HalfedgeId, faces_.size()*3)
 
   // Get a SegmentMesh containing the edges (and an array containing the halfedge ids corresponding to the edges stored in the mesh -- only one per edge, the one with the larger index. The tree will contain no boundary halfedges)
-  GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_segment_soup() const;
+  GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_soup() const;
 
   // Get a TriangleMesh containing the faces (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
-  GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_triangle_soup() const;
+  GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_soup() const;
 
   // The following functions require passing in a field containing positions for the vertices
 
@@ -355,6 +355,8 @@ public:
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,1>>,Array<HalfedgeId>> edge_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV2,2>>,Array<FaceId>> face_tree(Field<const TV2,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,2>>,Array<FaceId>> face_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
+  GEODE_CORE_EXPORT Ref<> edge_tree_py(Array<const real,2> X) const;
+  GEODE_CORE_EXPORT Ref<> face_tree_py(Array<const real,2> X) const;
 
   // Dihedral angles across edges.  Positive for convex, negative for concave.
   GEODE_CORE_EXPORT real dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
