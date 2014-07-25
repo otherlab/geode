@@ -299,7 +299,7 @@ public:
     Vector reversed() const
     {return *this;}
 
-    template<int d1,int d2> Vector<int,d2-d1> slice() const
+    template<int d1,int d2> Vector<T,d2-d1> slice() const
     {static_assert(0<=d1 && d1<=d2 && d2<=1,"");
     Vector<T,d2-d1> r;for(int i=d1;i<d2;i++) r[i-d1]=(*this)[i];return r;}
 
