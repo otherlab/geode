@@ -95,7 +95,14 @@ def read_obj(file):
   # done
   return mesh,props
 
-def write_obj(file,mesh,X):
+def write_obj(file,mesh,X=None):
+
+  assert X is not None or isinstance(mesh, MutableTriangleTopology)
+
+  if X is None:
+    X = mesh.vertex_field(vertex_position_id)
+    mesh = mesh.face_soup()[0]
+
   """Write a simple obj file.
   For now, only mesh and positions are supported
   """
@@ -165,7 +172,7 @@ def meshify(mesh,X):
   return mesh
 
 def mesh_lower_hull(mesh, up, offset, draft_angle = 0., division_angle = 30./180.*pi):
-  return meshify(*lower_hull(mesh.face_triangle_soup()[0], mesh.vertex_field(vertex_position_id), up, offset, draft_angle, division_angle))
+  return meshify(*lower_hull(mesh.face_soup()[0], mesh.vertex_field(vertex_position_id), up, offset, draft_angle, division_angle))
 
 def mesh_offset(mesh, offset):
   return meshify(*rough_offset_mesh(mesh, mesh.vertex_field(vertex_position_id), offset))
