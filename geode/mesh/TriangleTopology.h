@@ -166,7 +166,7 @@ protected:
 
   GEODE_CORE_EXPORT TriangleTopology();
   GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, const bool copy=false);
-  GEODE_CORE_EXPORT explicit TriangleTopology(TriangleSoup const &soup);
+  GEODE_CORE_EXPORT explicit TriangleTopology(const TriangleSoup& soup);
   GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
 
 public:
@@ -412,7 +412,9 @@ public:
     else \
       next_field_id = max(next_field_id,id+1); \
     GEODE_ASSERT(!id_to_##prim##_field.contains(id)); \
-    GEODE_ASSERT(f.size() == (size_expr)); \
+    const int size = (size_expr); \
+    GEODE_ASSERT(f.size() == size, \
+      format("MutableTriangleTopology::add_" #prim "_field: expected size %d, got %d",size,f.size())); \
     prim##_fields.push_back(UntypedArray(f)); \
     id_to_##prim##_field.set(id,int(prim##_fields.size()-1)); \
     return FieldId<T,Id>(id); \

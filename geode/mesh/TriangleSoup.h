@@ -42,7 +42,7 @@ private:
   mutable Nested<const int> sorted_neighbors_;
 
 protected:
-  GEODE_CORE_EXPORT explicit TriangleSoup(Array<const Vector<int,3>> elements);
+  GEODE_CORE_EXPORT explicit TriangleSoup(Array<const Vector<int,3>> elements, const int min_nodes=0);
 public:
   ~TriangleSoup();
 

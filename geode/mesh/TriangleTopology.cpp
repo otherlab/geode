@@ -55,7 +55,7 @@ TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
   internal_collect_boundary_garbage();
 }
 
-TriangleTopology::TriangleTopology(TriangleSoup const &soup)
+TriangleTopology::TriangleTopology(const TriangleSoup& soup)
   : TriangleTopology() {
   internal_add_vertices(soup.nodes());
   internal_add_faces(soup.elements);
@@ -2055,7 +2055,7 @@ Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> TriangleTopology::edge_soup() const {
     indices.append(i);
   }
 
-  return tuple(new_<SegmentSoup>(edges), indices);
+  return tuple(new_<SegmentSoup>(edges,allocated_vertices()), indices);
 }
 
 Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_soup() const {
@@ -2068,7 +2068,7 @@ Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_soup() const {
     indices.append(i);
   }
 
-  return tuple(new_<TriangleSoup>(facets), indices);
+  return tuple(new_<TriangleSoup>(facets, allocated_vertices()), indices);
 }
 
 TV3 TriangleTopology::normal(RawField<const TV3,VertexId> X, const FaceId f) const {
