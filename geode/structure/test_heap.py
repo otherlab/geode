@@ -2,6 +2,7 @@
 
 from __future__ import division,print_function
 from geode import *
+from numpy import random
 
 def test_heap():
   random.seed(83131)
