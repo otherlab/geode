@@ -74,7 +74,7 @@ template<Pb PS> class ExactArcGraph {
   // Doesn't compute planar embedding of any added geometry (split_edges must be called manually and will destroy coorespondence of returned contours)
   Nested<HalfedgeId> quantize_and_add_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc>& src_arcs);
 
-  // For each contours, travels the graph and produces cooresponding inexact polyarcs
+  // For each contours, travels the graph and produces coresponding inexact polyarcs
   Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const HalfedgeId> contours) const;
 
   // Combines all coincident edges, adds verticies at intersections, and computes a planar embedding

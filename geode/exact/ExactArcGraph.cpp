@@ -145,6 +145,7 @@ inline ArcDirection arc_direction(const HalfedgeId hid) { assert(hid.valid()); r
 // inline HalfedgeId ccw_edge(const EdgeId eid) { return directed_edge(eid, ArcDirection::CCW); }
 inline HalfedgeId cw_edge (const EdgeId eid) { return directed_edge(eid, ArcDirection::CW ); }
 inline bool is_ccw(const HalfedgeId hid) { return arc_direction(hid) == ArcDirection::CCW; }
+inline int sign(const ArcDirection d) { return (d == ArcDirection::CCW) ? 1 : -1; }
 
 // The interior face of a circle is adjacent to the ccw/forward halfedges
 constexpr ArcDirection interior_edge_dir = ArcDirection::CCW;
@@ -673,6 +674,36 @@ template<Pb PS> EdgeId ExactArcGraph<PS>::add_full_circle(const ExactCircle<PS>&
   return add_arc(ExactArc<PS>({c, helper_i, helper_i}), value);
 }
 
+template<Pb PS> static bool can_merge_arcs(const ExactArc<PS>& a0, const ExactArc<PS>& a1) {
+  // Can we merge two consecutive arcs?
+  if(!is_same_circle(a0.circle,a1.circle))
+    return false; // Need arcs to be on the same circle
+  if(a0.is_full_circle() || a1.is_full_circle())
+    return false; // Can't handle full circles
+  const auto& c = a0.circle;
+  assert(c.is_same_intersection(a0.dst, a1.src)); // Should meet at endpoint
+  if(c.is_same_intersection(a0.src, a1.dst) || !c.intersections_ccw(a0.src, a1.dst))
+    return false; // If combined arc is a full circle or greater than a half circle, merging would increase error
+  if(a0.unsafe_contains(a1.dst)) // We have already checked endpoints so can use unsafe_contains
+    return false; // If combined arc loops back on itself it is greater than a full circle and can't be merged
+  return true;
+}
+
+template<Pb PS> static bool try_extend_arc(ExactArc<PS>& existing_arc, const ArcDirection added_side, const ExactArc<PS>& added_arc) {
+  switch(added_side) {
+    case ArcDirection::CCW:
+      if(!can_merge_arcs(existing_arc, added_arc))
+        return false;
+      existing_arc.dst = added_arc.dst;
+      return true;
+    case ArcDirection::CW:
+      if(!can_merge_arcs(added_arc, existing_arc))
+        return false;
+      existing_arc.src = added_arc.src;
+      return true;
+  }
+}
+
 template<Pb PS> Nested<CircleArc> ExactArcGraph<PS>::unquantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const HalfedgeId> contours) const {
   Nested<CircleArc, false> result;
   for(const auto contour : contours) {
@@ -694,22 +725,40 @@ template<Pb PS> Nested<CircleArc> ExactArcGraph<PS>::unquantize_circle_arcs(cons
     else {
       result.append_empty();
       bool culled_prev = false;
+      ArcDirection prev_dir;
+      ExactArc<PS> back_arc;
+      bool back_arc_valid = false;
       for(const int i : range(contour.size())) {
         const HalfedgeId he = contour[i];
         assert(graph->dst(he) == graph->src(contour[(i + 1) % contour.size()])); // Should have continuous contours
         const auto a = arc(graph->edge(he));
+
         // TODO: We could track total deviation from last used endpoint so that we could cull multiple arcs in a row
         if(!culled_prev && a.circle.radius == constructed_arc_endpoint_error_bound()) {
           culled_prev = true;
+          back_arc_valid = false;
           continue;
         }
         else {
           culled_prev = false;
         }
+
+        const auto he_dir = arc_direction(he);
         const auto x = quant.inverse(vertices[graph->src(he)].approx.guess());
-        const real q = graph->is_forward(he) ? a.q() : -a.q();
-        result.append_to_back(CircleArc(x, q));
+        // If consecutive arcs continue along the same circle, we attempt to merge them
+        if(back_arc_valid
+         && prev_dir == he_dir
+         && try_extend_arc(back_arc, he_dir, a)) {
+          result.flat.back().q = sign(he_dir) * back_arc.q();
+        }
+        else {
+          result.append_to_back(CircleArc(x, sign(he_dir) * a.q()));
+          prev_dir = he_dir;
+          back_arc = a;
+          back_arc_valid = true;
+        }
       }
+      // We are lazy and don't merge last and first arcs when looping around contour, but this is at most one extra arc
 
       // Quantization can introduce tiny self intersecting loops that remain after splitting so we attempt to cull any miniscule slivers.
       // This doesn't feel like a robust solution, but I don't know a better alternative. Future versions of this function might leave slivers for caller to handle.
