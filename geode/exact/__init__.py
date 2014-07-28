@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 import platform
 from geode.array import *
-from geode.mesh import merge_meshes
+from geode.mesh import merge_meshes, meshify
 if platform.system()=='Windows':
   from other_all import *
   import other_all as geode_wrap
@@ -55,6 +55,11 @@ def split_soup(mesh,X,depth=0):
     depth = -1<<31
   return geode_wrap.split_soup(mesh,X,depth)
 
+def split_soup_with_weight(mesh,X,weight,depth=0):
+  if depth is None:
+    depth = -1<<31
+  return geode_wrap.split_soup_with_weight(mesh,X,weight,depth)
+
 def split_soups(meshes,depth=0):
   return split_soup(*merge_meshes(meshes),depth=depth)
 
@@ -63,3 +68,22 @@ def soup_union(*meshes):
 
 def soup_intersection(*meshes):
   return split_soups(meshes,depth=len(meshes)-1)
+
+def split_mesh_with_weight(mesh, weights, depth=0):
+  return meshify(*split_soup_with_weight(mesh.face_soup()[0], mesh.vertex_field(vertex_position_id), weights, depth))
+
+def split_mesh(mesh, depth=0):
+  return meshify(*split_soup(mesh.face_soup()[0], mesh.vertex_field(vertex_position_id), depth))
+
+def split_meshes(meshes, depth=0):
+  soups = [(m.face_soup()[0], m.vertex_field(vertex_position_id)) for m in meshes]
+  return meshify(*split_soups(soups,depth))
+
+# meshes is an array of tuples (mesh,weight) -- one uniform weight for each input mesh
+def split_meshes_with_weight(meshes_and_weights, depth=0):
+  soups = [(m.face_soup()[0], m.vertex_field(vertex_position_id)) for m,weight in meshes_and_weights]
+  soup,X = merge_meshes(soups)
+  weights = []
+  for m,weight in meshes_and_weights:
+    weights += [weight] * m.n_faces
+  return meshify(*split_soup_with_weight(soup, X, weights, depth))

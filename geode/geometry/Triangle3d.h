@@ -95,8 +95,10 @@ public:
     T minimum_altitude() const
     {return minimum_altitude(x0,x1,x2);}
 
-    static T minimum_altitude(const TV& x0,const TV& x1,const TV& x2)
-    {return 2*area(x0,x1,x2)/maximum_edge_length(x0,x1,x2);}
+    static T minimum_altitude(const TV& x0,const TV& x1,const TV& x2) {
+      const T length = maximum_edge_length(x0,x1,x2);
+      return length ? 2*area(x0,x1,x2)/length : 0;
+    }
 
     static TV barycentric_coordinates(const TV& location,const TV& x0,const TV& x1,const TV& x2) // clockwise vertices
     {TV u=x1-x0,v=x2-x0,w=location-x0;

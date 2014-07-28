@@ -11,10 +11,10 @@ namespace geode {
 
 GEODE_DEFINE_TYPE(PolygonSoup)
 
-PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices)
+PolygonSoup::PolygonSoup(Array<const int> counts, Array<const int> vertices, const int min_nodes)
   : counts(counts)
   , vertices(vertices)
-  , node_count(0)
+  , node_count(max(0,min_nodes))
   , half_edge_count(counts.sum()) {
   // Assert validity and compute counts
   GEODE_ASSERT(half_edge_count==vertices.size());
@@ -30,8 +30,8 @@ PolygonSoup::~PolygonSoup() {}
 
 Ref<SegmentSoup> PolygonSoup::segment_soup() const {
   if (!segment_soup_) {
-    Hashtable<Vector<int,2> > hash;
-    Array<Vector<int,2> > segments;
+    Hashtable<Vector<int,2>> hash;
+    Array<Vector<int,2>> segments;
     int offset = 0;
     for (int p=0;p<counts.size();p++) {
       for (int i=0,j=counts[p]-1;i<counts[p];j=i,i++) {
@@ -40,7 +40,7 @@ Ref<SegmentSoup> PolygonSoup::segment_soup() const {
       }
       offset += counts[p];
     }
-    segment_soup_=new_<SegmentSoup>(segments);
+    segment_soup_ = new_<SegmentSoup>(segments,nodes());
   }
   return ref(segment_soup_);
 }
@@ -54,7 +54,7 @@ Ref<TriangleSoup> PolygonSoup::triangle_mesh() const {
         triangles[t++].set(vertices[offset],vertices[offset+i+1],vertices[offset+i+2]);
       offset+=counts[p];
     }
-    triangle_mesh_=new_<TriangleSoup>(triangles);
+    triangle_mesh_ = new_<TriangleSoup>(triangles,nodes());
   }
   return ref(triangle_mesh_);
 }

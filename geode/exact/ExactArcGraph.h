@@ -46,9 +46,9 @@ template<Pb PS> class ExactArcGraph {
   ExactArcGraph();
   ~ExactArcGraph();
 
-  const int n_vertices()  const { assert(vertices.size() == graph->n_vertices()); return vertices.size(); }
-  const int n_incidents() const { return 2*n_vertices(); }
-  const int n_edges()     const { assert(edges.size() == graph->n_edges()); return edges.size(); }
+  int n_vertices()  const { assert(vertices.size() == graph->n_vertices()); return vertices.size(); }
+  int n_incidents() const { return 2*n_vertices(); }
+  int n_edges()     const { assert(edges.size() == graph->n_edges()); return edges.size(); }
 
   Range<IdIter<VertexId>>   vertex_ids()   const { return id_range<VertexId>  (n_vertices()); }
   Range<IdIter<EdgeId>>     edge_ids()     const { return id_range<EdgeId>    (n_edges()); }

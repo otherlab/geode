@@ -53,6 +53,30 @@ def test_csg():
           assert allclose(Is[name],Is[name[4:]])
   print('Success!')
 
+def test_depth_weight():
+  tet,X0 = tetrahedron_mesh()
+  X0 *= tet.volume(X0)**(-1/3)
+  itet,_ = tetrahedron_mesh()
+  itet.elements = map(lambda x: (x[1], x[0], x[2]), itet.elements)
+
+  for n in [2, 3, 4]:
+    # make a merged mesh of n copies of X0 and one copy with depth n.
+    input_meshes = [(tet,X0),]*n + [(itet,X0),]
+    meshes,Xs = merge_meshes(input_meshes)
+    weight = [1]*n*len(tet.elements) + [n]*len(tet.elements)
+    result,Xr = split_soup_with_weight(meshes,Xs,weight,0)
+
+    # the resulting mesh must have volume 0
+    assert abs(result.volume(Xr)) < 1e-8
+
+    # make a merged mesh of n copies of X0 and one copy with depth -n-1
+    weight = [1]*n*len(tet.elements) + [n-1]*len(tet.elements)
+    result,Xr = split_soup_with_weight(meshes,Xs,weight,0)
+
+    # the resulting mesh must have volume 1
+    assert abs(result.volume(Xr)-1) < 1e-8
+
 if __name__=='__main__':
   test_simple_triangulate()
   test_csg()
+  test_depth_weight()

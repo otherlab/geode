@@ -48,3 +48,7 @@ def empty_box(d):
 FrameImplicits = {2:FrameImplicit2d,3:FrameImplicit3d}
 def FrameImplicit(frame,object):
   return FrameImplicits[object.d](frame,object)
+
+surface_levelsets = {1:surface_levelset_c3d,2:surface_levelset_s3d}
+def surface_levelset(particles,surface,max_distance=inf,compute_signs=True):
+  return surface_levelsets[surface.d](particles,surface,max_distance,compute_signs)

@@ -11,7 +11,7 @@ def test_prop():
   s = Prop('s','blah')
   assert s()=='blah'
   for p in i,f,s:
-    v = p()*2 
+    v = p()*2
     p.set(v)
     assert p()==v
     assert not p.dirty()
@@ -37,7 +37,7 @@ def test_array_prop():
   assert d().dtype==dtype('int32')
   d = Prop('d',((2,2),),shape=(-1,2))
   assert d().dtype==dtype('int32')
-  
+
 def test_unusable():
   unusable = unusable_prop_test()
   try:
@@ -69,6 +69,12 @@ def test_compute():
   assert z()==6
   assert not z.dirty()
   assert count[0]==2
+  def Test():
+    pass
+  a = cache(Test)
+  b = cache_named("test2")(Test)
+  assert Test.__name__ == a.name
+  assert b.name == "test2"
 
 def test_cycle():
   def f():
@@ -86,7 +92,7 @@ def test_convert():
   assert xt()==3
   def f():
     return 4
-  y = cache(f) 
+  y = cache(f)
   yt = value_test(y)
   assert yt()==4
   value_ptr_test(x)
@@ -106,7 +112,7 @@ def test_diamond():
   y = cache(g)
   def fg():
     counts[2] += 1
-    return x()*y() 
+    return x()*y()
   xy = cache(fg)
   assert counts==[0,0,0]
   assert xy()==6**n()
@@ -154,16 +160,16 @@ def test_prop_manager():
   assert pm.get("test1")() == 10
   assert pm.get("test2")() == "string"
   assert pm.get('test1') is pm.test1
-  
+
   test1.set(15)
   test2.set("blah")
-  
+
   assert test1() == pm.get("test1")()
   assert test2() == pm.get("test2")()
-  
+
   pm.get("test1").set(20)
   assert pm.get("test1")() == 20
-  
+
   try:
     pm.get("test2").set(20)
     assert False

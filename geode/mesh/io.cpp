@@ -113,7 +113,7 @@ static Tuple<Ref<TriangleSoup>,Array<TV>> read_stl(const string& filename) {
       }
       tris.append(tri);
     }
-    return tuple(new_<TriangleSoup>(tris),X);
+    return tuple(new_<TriangleSoup>(tris,X.size()),X);
   } else { // ASCII
     File f(filename,"r");
 
@@ -181,7 +181,7 @@ static Tuple<Ref<TriangleSoup>,Array<TV>> read_stl(const string& filename) {
       }
       ns++;
     }
-    return tuple(new_<TriangleSoup>(tris),X);
+    return tuple(new_<TriangleSoup>(tris,X.size()),X);
   }
 }
 
@@ -280,7 +280,7 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_obj(const string& filename) {
     throw IOError(format("invalid obj file %s: %d vertices != %d texcoords",filename,X.size(),texcoords.size()));
 
   // TODO: Don't discard normal and texcoord information
-  return tuple(new_<PolygonSoup>(counts,vertices),X);
+  return tuple(new_<PolygonSoup>(counts,vertices,X.size()),X);
 }
 
 static void write_obj_helper(File& f, RawArray<const TV> X) {
@@ -672,7 +672,7 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_ply(const string& filename) {
       throw IOError("face element missing vertex_indices");
     const auto vertices = face->prop_names.get("vertex_indices");
     if (const auto* v = dynamic_cast<PlyPropList<uint8_t,int>*>(&*vertices))
-      return tuple(new_<PolygonSoup>(v->counts,v->flat),X);
+      return tuple(new_<PolygonSoup>(v->counts,v->flat,X.size()),X);
     else
       throw IOError(format("face.vertex_indices has unsupported type %s",vertices->type()));
   } catch (const IOError& e) {
@@ -778,7 +778,7 @@ static Tuple<Ref<TriangleSoup>,Array<TV>> convert(const Tuple<Ref<PolygonSoup>,A
 }
 
 static Tuple<Ref<PolygonSoup>,Array<TV>> convert(const Tuple<Ref<TriangleSoup>,Array<TV>>& d) {
-  return tuple(new_<PolygonSoup>(arange(d.x->elements.size()).copy(),scalar_view_own(d.x->elements)),d.y);
+  return tuple(new_<PolygonSoup>(arange(d.x->elements.size()).copy(),scalar_view_own(d.x->elements),d.y.size()),d.y);
 }
 
 Tuple<Ref<TriangleSoup>,Array<TV>> read_soup(const string& filename) {

@@ -3,6 +3,8 @@
 #include <geode/python/Class.h>
 #include <geode/python/numpy.h>
 #include <geode/vector/convert.h>
+#include <geode/python/pyrange.h>
+
 namespace geode {
 
 // Add numpy conversion support

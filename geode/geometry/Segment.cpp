@@ -437,7 +437,8 @@ template<int d> static void segment_tests(const int steps) {
   template GEODE_CORE_EXPORT T segment_point_sqr_distance(Segment<Vector<T,d>>,Vector<T,d>); \
   template GEODE_CORE_EXPORT T segment_segment_distance(Segment<Vector<T,d>>,Segment<Vector<T,d>>); \
   template GEODE_CORE_EXPORT Tuple<T,Vector<T,d>,T> segment_point_distance_and_normal(Segment<Vector<T,d>> s, Vector<T,d> p); \
-  template GEODE_CORE_EXPORT Tuple<T,TV3,TV2> segment_segment_distance_and_normal(const Segment<Vector<T,d>>,const Segment<Vector<T,d>>);
+  template GEODE_CORE_EXPORT Tuple<T,TV3,TV2> segment_segment_distance_and_normal(const Segment<Vector<T,d>>,const Segment<Vector<T,d>>); \
+  template GEODE_CORE_EXPORT T line_point_distance(Segment<Vector<T,d>>,Vector<T,d>);
 INSTANTIATE(2)
 INSTANTIATE(3)
 

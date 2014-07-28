@@ -80,13 +80,16 @@ public:
   typedef Object Base;
 
   const int id;
-  const type_info& type;
-  const enum {Vertex, Face, Halfedge} prim;
+  const type_info* type;
+  const enum Primitive {Vertex, Face, Halfedge} prim;
 
 protected:
-  template<class T> PyFieldId(FieldId<T,VertexId> id)   : id(id.id), type(typeid(T)), prim(Vertex) {}
-  template<class T> PyFieldId(FieldId<T,FaceId> id)     : id(id.id), type(typeid(T)), prim(Face) {}
-  template<class T> PyFieldId(FieldId<T,HalfedgeId> id) : id(id.id), type(typeid(T)), prim(Halfedge) {}
+  template<class T> PyFieldId(FieldId<T,VertexId> id)   : id(id.id), type(&typeid(T)), prim(Vertex) {}
+  template<class T> PyFieldId(FieldId<T,FaceId> id)     : id(id.id), type(&typeid(T)), prim(Face) {}
+  template<class T> PyFieldId(FieldId<T,HalfedgeId> id) : id(id.id), type(&typeid(T)), prim(Halfedge) {}
+
+  // making stuff from python without access to a type
+  PyFieldId(Primitive prim, int id): id(id), type(NULL), prim(prim) {}
 };
 
 template<class T, class Id> static inline PyObject* to_python(FieldId<T,Id> i) {

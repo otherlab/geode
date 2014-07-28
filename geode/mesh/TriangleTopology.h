@@ -129,6 +129,16 @@ protected:
       boundaries_.const_cast_()[-1-r.id].reverse = HalfedgeId(3*f.id+i);
   }
 
+  // Convenience function. One of the halfedges must be interior.
+  inline void unsafe_set_reverse(HalfedgeId h0, HalfedgeId h1) {
+    if (is_boundary(h0)) {
+      GEODE_ASSERT(!is_boundary(h1));
+      unsafe_set_reverse(face(h1), face_index(h1), h0);
+    } else {
+      unsafe_set_reverse(face(h0), face_index(h0), h1);
+    }
+  }
+
   // make a new boundary at src, opposite of reverse. Does not ensure consistency
   HalfedgeId unsafe_new_boundary(const VertexId src, const HalfedgeId reverse);
 
@@ -156,7 +166,7 @@ protected:
 
   GEODE_CORE_EXPORT TriangleTopology();
   GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, const bool copy=false);
-  GEODE_CORE_EXPORT explicit TriangleTopology(TriangleSoup const &soup);
+  GEODE_CORE_EXPORT explicit TriangleTopology(const TriangleSoup& soup);
   GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
 
 public:
@@ -167,11 +177,16 @@ public:
   GEODE_CORE_EXPORT Ref<TriangleTopology> copy() const;
   GEODE_CORE_EXPORT Ref<MutableTriangleTopology> mutate() const;
 
-  // Count various features, excluding erased ids.  If you want to include deletions, use faces_.size() and such.
+  // Count various features, excluding erased ids.
   int n_vertices()       const { return n_vertices_; }
   int n_faces()          const { return n_faces_; }
   int n_edges()          const { return (3*n_faces_+n_boundary_edges_)>>1; }
   int n_boundary_edges() const { return n_boundary_edges_; }
+
+  // Count various features, including all deleted items
+  int allocated_vertices() const { return vertex_to_edge_.size(); }
+  int allocated_faces() const { return faces_.size(); }
+  int allocated_halfedges() const { return 3 * faces_.size(); }
 
   // Check if vertices, faces, and boundary edges are garbage collected, ensuring contiguous indices.
   GEODE_CORE_EXPORT bool is_garbage_collected() const;
@@ -309,10 +324,10 @@ public:
   CREATE_FIELD(halfedge, HalfedgeId, faces_.size()*3)
 
   // Get a SegmentMesh containing the edges (and an array containing the halfedge ids corresponding to the edges stored in the mesh -- only one per edge, the one with the larger index. The tree will contain no boundary halfedges)
-  GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_segment_soup() const;
+  GEODE_CORE_EXPORT Tuple<Ref<SegmentSoup>,Array<HalfedgeId>> edge_soup() const;
 
-  // Get a TriangleMesh containing the edges (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
-  GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_triangle_soup() const;
+  // Get a TriangleMesh containing the faces (and an array containing the triangle ids corresponding to the faces stored in the mesh -- only non-deleted faces)
+  GEODE_CORE_EXPORT Tuple<Ref<TriangleSoup>,Array<FaceId>> face_soup() const;
 
   // The following functions require passing in a field containing positions for the vertices
 
@@ -340,6 +355,8 @@ public:
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,1>>,Array<HalfedgeId>> edge_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV2,2>>,Array<FaceId>> face_tree(Field<const TV2,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,2>>,Array<FaceId>> face_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
+  GEODE_CORE_EXPORT Ref<> edge_tree_py(Array<const real,2> X) const;
+  GEODE_CORE_EXPORT Ref<> face_tree_py(Array<const real,2> X) const;
 
   // Dihedral angles across edges.  Positive for convex, negative for concave.
   GEODE_CORE_EXPORT real dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
@@ -395,7 +412,9 @@ public:
     else \
       next_field_id = max(next_field_id,id+1); \
     GEODE_ASSERT(!id_to_##prim##_field.contains(id)); \
-    GEODE_ASSERT(f.size() == (size_expr)); \
+    const int size = (size_expr); \
+    GEODE_ASSERT(f.size() == size, \
+      format("MutableTriangleTopology::add_" #prim "_field: expected size %d, got %d",size,f.size())); \
     prim##_fields.push_back(UntypedArray(f)); \
     id_to_##prim##_field.set(id,int(prim##_fields.size()-1)); \
     return FieldId<T,Id>(id); \
@@ -432,8 +451,17 @@ public:
     PyObject* add_face_field_py(PyObject* dtype, const int id);
     PyObject* add_halfedge_field_py(PyObject* dtype, const int id);
     bool has_field_py(const PyFieldId& id) const;
+    bool has_vertex_field_py(int id) const;
+    bool has_face_field_py(int id) const;
+    bool has_halfedge_field_py(int id) const;
     void remove_field_py(const PyFieldId& id);
+    void remove_vertex_field_py(int id);
+    void remove_face_field_py(int id);
+    void remove_halfedge_field_py(int id);
     PyObject* field_py(const PyFieldId& id);
+    PyObject* vertex_field_py(int id);
+    PyObject* face_field_py(int id);
+    PyObject* halfedge_field_py(int id);
   #endif
 
   // set the src entry of an existing boundary halfedge
@@ -483,6 +511,12 @@ public:
   // Add another TriangleTopology, assuming the vertex sets are disjoint.
   // Returns the offsets of the other vertex, face, and boundary ids in the new arrays.
   GEODE_CORE_EXPORT Vector<int,3> add(const MutableTriangleTopology& other);
+
+  // turn all normals inside out
+  GEODE_CORE_EXPORT void flip();
+
+  // turn all normals inside out
+  GEODE_CORE_EXPORT Ref<MutableTriangleTopology> flipped() const;
 
   // Extract a set of faces into a new MutableTriangleTopology, which is returned,
   // along with two fields (on the returned mesh) giving vertex and face correspondences.
@@ -534,6 +568,18 @@ public:
   // Split an edge by inserting an existing isolated vertex in the center.
   // If h is not a boundary halfedge, dst(h) = c afterwards.
   GEODE_CORE_EXPORT void split_edge(HalfedgeId h, VertexId c);
+
+  // Check whether an edge collapse is safe
+  GEODE_CORE_EXPORT bool is_collapse_safe(HalfedgeId h) const;
+
+  // Collapse an edge assuming that is_collapse_safe(h) is true. This function may
+  // leave the mesh in a broken or nonmanifold state if is_collapse_safe(h) is not
+  // true.
+  GEODE_CORE_EXPORT void unsafe_collapse(HalfedgeId h);
+
+  // Collapse an edge: move src(h) to dst(h) and delete the faces incident to h.
+  // Throws an exception if is_collapse_safe(h) is not true.
+  GEODE_CORE_EXPORT void collapse(HalfedgeId h);
 
   // Erase the given vertex. Erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
   GEODE_CORE_EXPORT void erase(VertexId id, bool erase_isolated = false);
