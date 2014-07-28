@@ -654,8 +654,8 @@ template<Pb PS> VertexId ExactArcGraph<PS>::get_or_insert_intersection(const Cir
 }
 
 template<Pb PS> EdgeId ExactArcGraph<PS>::add_arc(const ExactArc<PS>& arc, const EdgeValue value) {
-  const VertexId e_src = get_or_insert(CircleIntersectionKey<PS>(arc.circle, arc.src));
-  const VertexId e_dst = get_or_insert(CircleIntersectionKey<PS>(arc.circle, arc.dst));
+  const VertexId e_src = get_or_insert_intersection(CircleIntersection<PS>(arc.circle, arc.src));
+  const VertexId e_dst = get_or_insert_intersection(CircleIntersection<PS>(arc.circle, arc.dst));
   EdgeId new_e = graph->unsafe_add_edge(e_src, e_dst);
   edges.append(EdgeInfo({value, arc.src.side, arc.dst.side}));
   assert(new_e == edges.id_range().back());
@@ -791,14 +791,13 @@ template<Pb PS> struct IntersectionHelper {
   void leaf(const int n) const { assert(tree.prims(n).size()==1); }
 
   void leaf(const int n0, const int n1) {
-    if(n0 == n1) // Only check
+    if(n0 == n1) // Only check unique arcs
       return;
     assert(tree.prims(n0).size()==1 && tree.prims(n1).size()==1);
     const EdgeId e0 = EdgeId(tree.prims(n0)[0]),
                  e1 = EdgeId(tree.prims(n1)[0]);
     const auto a0 = g.arc(e0),
                a1 = g.arc(e1);
-
     for(const auto& hit : intersections_if_any(a0, a1)) {
       new_intersections.append({hit, e0, e1});
     }
