@@ -32,7 +32,7 @@ struct CircleArc {
 
 std::ostream& operator<<(std::ostream& output, const CircleArc& a);
 
-// Resolve all intersections between circular arc polygons, and extract the contour with given 
+// Resolve all intersections between circular arc polygons, and extract the contour with given depth
 // Depth starts at 0 at infinity, and increases by 1 when crossing a contour from outside to inside.
 // For example, depth = 0 corresponds to polygon_union.
 GEODE_CORE_EXPORT Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int depth);

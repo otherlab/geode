@@ -49,7 +49,7 @@ template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& 
     else if (dst.q == i.q)
       return flipped ^ circle.intersections_ccw_same_q(i, dst);
     else
-      return (((i.q-src.q)&3)<((dst.q-src.q)&3));
+      return flipped ^ (((i.q-src.q)&3)<((dst.q-src.q)&3));
   } else { // arc starts and ends in the same quadrant
     const bool small = circle.intersections_ccw_same_q(src, dst);
     return flipped ^ small ^ (   src.q != i.q
@@ -666,6 +666,13 @@ template<Pb PS> EdgeId ExactArcGraph<PS>::add_arc(const ExactArc<PS>& arc, const
   return new_e;
 }
 
+template<Pb PS> EdgeId ExactArcGraph<PS>::add_full_circle(const ExactCircle<PS>& c, const EdgeValue value) {
+  // A previous implementation used special logic to track a dummy intersection, but this seems simpler
+  const auto helper_c = ExactCircle<PS>(c.center + exact::Vec2(c.radius, 0), 1); // Construct a circle that we know will have intersections
+  const auto helper_i = c.intersection_min(helper_c); // Build arc to go from that intersection
+  return add_arc(ExactArc<PS>({c, helper_i, helper_i}), value);
+}
+
 template<Pb PS> Nested<CircleArc> ExactArcGraph<PS>::unquantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const HalfedgeId> contours) const {
   Nested<CircleArc, false> result;
   for(const auto contour : contours) {
@@ -955,7 +962,7 @@ template<Pb PS> void ExactArcGraph<PS>::compute_embedding() {
 
     // For each component we perform a raycast to check if it is inside some other component
     if(cd[seed_c].exterior_face.valid())
-      continue; // If we found the component exterior in a previous test or we don't need to keep looking
+      continue; // If we found the component exterior in a previous test we don't need to keep looking
 
     const auto seed_he = g.halfedge(cd.border(seed_c));
     Array<HalfedgeId> path_from_infinity = path_to_infinity(seed_he, edge_tree);
@@ -1013,7 +1020,31 @@ template<Pb PS> void ExactArcGraph<PS>::compute_embedding() {
   // After this function all borders should have a valid face id
 }
 
-template<Pb PS> GEODE_CORE_EXPORT Tuple<Quantizer<real,2>,ExactArcGraph<PS>> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Box<Vec2> min_bounds) {
+template<Pb PS> Field<int, FaceId> ExactArcGraph<PS>::face_winding_depths() const {
+  auto edge_windings = Field<int, EdgeId>(n_edges(), uninit);
+  for(const EdgeId eid : edge_ids()) {
+    edge_windings[eid] = edges[eid].value.winding;
+  }
+  return compute_winding_numbers(graph, boundary_face(), edge_windings);
+}
+
+template<Pb PS> Field<bool, FaceId> faces_greater_than(const ExactArcGraph<PS>& g, const int depth) {
+  const auto depths = g.face_winding_depths();
+  auto result = Field<bool, FaceId>(g.graph->n_faces(), uninit);
+  for(const FaceId fid : g.graph->faces())
+    result[fid] = (depths[fid] > depth);
+  return result;
+}
+
+template<Pb PS> Field<bool, FaceId> odd_faces(const ExactArcGraph<PS>& g) {
+  const auto depths = g.face_winding_depths();
+  auto result = Field<bool, FaceId>(g.graph->n_faces(), uninit);
+  for(const FaceId fid : g.graph->faces())
+    result[fid] = ((depths[fid] & 1) != 0);
+  return result;
+}
+
+template<Pb PS> Tuple<Quantizer<real,2>,ExactArcGraph<PS>> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Box<Vec2> min_bounds) {
   auto bounds = approximate_bounding_box(arcs);
   bounds.enlarge(min_bounds);
   if(bounds.empty())
@@ -1022,14 +1053,17 @@ template<Pb PS> GEODE_CORE_EXPORT Tuple<Quantizer<real,2>,ExactArcGraph<PS>> qua
   return tuple(quant, quantize_circle_arcs<PS>(arcs, quant));
 }
 
-template<Pb PS> GEODE_CORE_EXPORT ExactArcGraph<PS> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Quantizer<real,2> quant) {
+template<Pb PS> ExactArcGraph<PS> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Quantizer<real,2> quant) {
   ExactArcGraph<PS> result;
   result.quantize_and_add_arcs(quant, arcs);
   return result;
 }
 
+
 #define INSTANTIATE(PS) \
   template class ExactArcGraph<PS>; \
+  template Field<bool, FaceId> faces_greater_than(const ExactArcGraph<PS>& g, const int depth); \
+  template Field<bool, FaceId> odd_faces(const ExactArcGraph<PS>& g); \
   template Box<Vec2> bounding_box(const ExactArcGraph<PS>& g); \
   template Tuple<Quantizer<real,2>,ExactArcGraph<PS>> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Box<Vec2> min_bounds); \
   template ExactArcGraph<PS> quantize_circle_arcs(const Nested<const CircleArc> arcs, const Quantizer<real,2> quant);

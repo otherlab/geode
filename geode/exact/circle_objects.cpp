@@ -33,10 +33,10 @@ static inline exact::Perturbed<2> perturbed_center(const ExactHorizontal<Pb::Exp
   return exact::Perturbed<2>(numeric_limits<int>::max(),0,h.y);
 }
 static inline exact::ImplicitlyPerturbed<3> perturbed(const ExactHorizontal<Pb::Implicit>& h) {
-    return exact::ImplicitlyPerturbed<3>(0,h.y,-1); 
+    return exact::ImplicitlyPerturbed<3>(0,h.y,-1);
 }
 static inline exact::ImplicitlyPerturbedCenter perturbed_center(const ExactHorizontal<Pb::Implicit>& h) {
-    return exact::ImplicitlyPerturbedCenter(0,h.y,-1); 
+    return exact::ImplicitlyPerturbedCenter(0,h.y,-1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -337,7 +337,7 @@ static Vector<Interval,2> approx_interval(const exact::Vec2 snapped) {
 // Degrees 3/2 for the nonsqrt part and 6/4 for the part under the sqrt.
 template<Pb PS> static Vector<ApproxIntersection,2> circle_circle_approx_intersections(const ExactCircle<PS>& circle0, const ExactCircle<PS>& circle1) {
   assert(!is_same_circle(circle0, circle1)); // Shouldn't be calling this on a circle with itself
-
+  assert(has_intersections(circle0, circle1));
   Vector<ApproxIntersection,2> v;
 #if CHECK
   GEODE_WARNING("Expensive consistency checking enabled");
@@ -708,7 +708,7 @@ template<Pb PS> CircleIntersectionKey<PS>::CircleIntersectionKey(const ExactCirc
  , cr(cr_is_reference(incident.side) ? reference : incident)
 { }
 
-template<Pb PS> CircleIntersection<PS>::CircleIntersection(const CircleIntersectionKey<PS>& k, const ApproxIntersection _approx, const uint8_t _ql, const uint8_t _qr) 
+template<Pb PS> CircleIntersection<PS>::CircleIntersection(const CircleIntersectionKey<PS>& k, const ApproxIntersection _approx, const uint8_t _ql, const uint8_t _qr)
  : CircleIntersectionKey<PS>(k)
  , approx(_approx)
  , ql(_ql)
@@ -732,7 +732,7 @@ template<Pb PS> CircleIntersection<PS>::CircleIntersection(const ExactCircle<PS>
  , approx(incident.approx)
  , ql(cl_is_reference(incident.side) ? incident.q : circle_circle_intersection_quadrant(ReferenceSide::cl, this->cl, this->cr, approx))
  , qr(cr_is_reference(incident.side) ? incident.q : circle_circle_intersection_quadrant(ReferenceSide::cr, this->cl, this->cr, approx))
-{ 
+{
   // Check that copied value from incident.q was correct
   assert(ql == circle_circle_intersection_quadrant(ReferenceSide::cl, this->cl, this->cr, approx));
   assert(qr == circle_circle_intersection_quadrant(ReferenceSide::cr, this->cl, this->cr, approx));
@@ -771,13 +771,6 @@ struct CircleIntersectionInsideCircle_B { template<class TV> static PredicateTyp
 template<Pb PS> bool CircleIntersection<PS>::is_inside(const ExactCircle<PS>& c) const {
   return FILTER(sqr(Interval(c.radius))-sqr_magnitude(this->approx.p()-Vector<Interval,2>(c.center)),
                 perturbed_predicate_sqrt<CircleIntersectionInsideCircle_A,CircleIntersectionInsideCircle_B,Beta<0,1>>(-1,perturbed(this->cl),perturbed(this->cr),perturbed(c)));
-}
-
-
-template<Pb PS> Vector<CircleIntersection<PS>,2> circle_intersections(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr) {
-  const auto approx = circle_circle_approx_intersections<PS>(cl,cr);
-  return vec(CircleIntersection<PS>(cl,cr,approx[0]),
-             CircleIntersection<PS>(cr,cl,approx[1]));
 }
 
 template<Pb PS> bool ExactArc<PS>::is_full_circle() const {
@@ -904,8 +897,7 @@ template<Pb PS> bool ExactArc<PS>::contains_horizontal(const IncidentHorizontal<
   template bool intersections_rightwards(const HorizontalIntersection<PS>& i0, const HorizontalIntersection<PS>& i1); \
   template bool arcs_overlap(const ExactArc<PS>& a0, const ExactArc<PS>& a1); \
   template Box<exact::Vec2> bounding_box(const ExactCircle<PS>& c); \
-  template Box<exact::Vec2> bounding_box(const ExactArc<PS>& a); \
-  template Vector<CircleIntersection<PS>,2> circle_intersections(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr);
+  template Box<exact::Vec2> bounding_box(const ExactArc<PS>& a);
 
 INSTANTIATE(Pb::Explicit)
 INSTANTIATE(Pb::Implicit)

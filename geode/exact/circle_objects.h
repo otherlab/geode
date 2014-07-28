@@ -29,7 +29,7 @@ template<Pb PS> bool circles_overlap(const ExactCircle<PS>& c0, const ExactCircl
 
 // Check if two arcs on the same circle have non-infinitesimal overlap (i.g. not just sharing an endpoint)
 // For use when arcs are on the same circle (i.g. is_same_circle(a0.circle, a1.circle) is true)
-template<Pb PS> bool arcs_overlap(const ExactArc<PS>& a0, const ExactArc<PS>& a1); 
+template<Pb PS> bool arcs_overlap(const ExactArc<PS>& a0, const ExactArc<PS>& a1);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Intersections
@@ -130,7 +130,7 @@ template<Pb PS> struct ExactCircle : public ExactCirclePerturbationHelper<PS> {
   IncidentCircle<PS> inline intersection_max(const ExactCircle<PS>& incident) const;
 
   // IncidentCircles allow us to comparing multiple intersections that we know are on this circle
-  // Caller is responsible for using is_same_intersection to catch ties 
+  // Caller is responsible for using is_same_intersection to catch ties
   bool is_same_intersection           (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;
   bool intersections_upwards          (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;
   bool intersections_upwards          (const IncidentCircle<PS>& i,  const IncidentHorizontal<PS>& h) const;
@@ -159,7 +159,7 @@ template<Pb PS> struct IncidentCircle : public ExactCircle<PS> {
   IncidentCircle() = default;
   IncidentCircle(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr, const ReferenceSide _side);
   IncidentCircle(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr, const ReferenceSide _side, const ApproxIntersection _approx);
-  IncidentCircle(const ExactCircle<PS>& incident, const ReferenceSide _side, const ApproxIntersection _approx, const uint8_t _q); 
+  IncidentCircle(const ExactCircle<PS>& incident, const ReferenceSide _side, const ApproxIntersection _approx, const uint8_t _q);
   Box<exact::Vec2> box() const { return approx.box(); }
   Vector<Interval,2> p() const { return approx.p(); }
 
@@ -202,6 +202,8 @@ template<Pb PS> struct CircleIntersection : public CircleIntersectionKey<PS> {
   CircleIntersection(const ExactCircle<PS>& reference, const IncidentCircle<PS>& incident);
   CircleIntersection(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr, const ApproxIntersection approx);
 
+  static inline CircleIntersection first(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr);
+
   const CircleIntersectionKey<PS>& as_key() const { return *this; } // Explicit downcast to make usage clearer
 
   // Get the IncidentCircle to go with CircleIntersectionKey::reference(side)
@@ -210,13 +212,12 @@ template<Pb PS> struct CircleIntersection : public CircleIntersectionKey<PS> {
 
   // Test if an intersection point is inside some unrelated circle
   // Requires c != cl or cr
-  bool is_inside(const ExactCircle<PS>& c) const; 
+  bool is_inside(const ExactCircle<PS>& c) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // Horizontal line along some y value.
-// Compatable 
 template<Pb PS> struct ExactHorizontal {
   Quantized y; // y-coordinate of horizontal line
   ExactHorizontal() = default;
@@ -271,7 +272,7 @@ template<Pb PS> struct ExactArc {
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions for inline functions
 
-template<Pb PS> inline bool operator<(const HorizontalIntersection<PS>& lhs, const HorizontalIntersection<PS>& rhs) { 
+template<Pb PS> inline bool operator<(const HorizontalIntersection<PS>& lhs, const HorizontalIntersection<PS>& rhs) {
   return !(lhs == rhs) && intersections_rightwards(lhs, rhs); // We have to check for equality since std::sort will sometimes compare elements with themselves
 }
 template<> inline Hash hash_reduce(const ExactCircle<Pb::Implicit>& c) { return Hash(c.center,c.radius); }
@@ -285,8 +286,12 @@ template<Pb PS> inline Box<exact::Vec2> bounding_box(const ExactCircle<PS>& c) {
 template<Pb PS> inline bool is_same_intersection(const CircleIntersection<PS>& i0, const CircleIntersection<PS>& i1) {
   const bool result = is_same_intersection(i0.as_key(), i1.as_key());
   assert(!result || (i0.ql == i1.ql && i0.qr == i1.qr));
-  assert(!result || i0.is_placeholder() || i0.approx.box().intersects(i1.approx.box()));
+  assert(!result || i0.approx.box().intersects(i1.approx.box()));
   return result;
+}
+
+template<Pb PS> inline CircleIntersection<PS> CircleIntersection<PS>::first(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr) {
+  return CircleIntersection<PS>(CircleIntersectionKey<PS>(cl,cr));
 }
 
 template<Pb PS> inline IncidentCircle<PS> ExactCircle<PS>::intersection_min(const ExactCircle<PS>& incident) const {
@@ -309,7 +314,7 @@ inline Box<exact::Vec2> ApproxIntersection::box() const { return bounding_box(_a
 #else
 inline exact::Vec2 ApproxIntersection::guess() const { return _rounded;}
 inline exact::Vec2 ApproxIntersection::snapped() const { return _rounded;}
-inline Vector<Interval,2> ApproxIntersection::p() const { 
+inline Vector<Interval,2> ApproxIntersection::p() const {
   // We can compute differences here since we know that values are exactly representable
   return Vector<Interval,2>(Interval(_rounded.x-tolerance(),_rounded.x+tolerance()),
                             Interval(_rounded.y-tolerance(),_rounded.y+tolerance()));

@@ -67,6 +67,7 @@ template<Pb PS> class ExactArcGraph {
   const ExactArc<PS> arc(const EdgeId eid) const { return ExactArc<PS>({circle(eid), incident(src(eid)), incident(dst(eid)) } ); }
 
   EdgeId add_arc(const ExactArc<PS>& arc, const EdgeValue value);
+  EdgeId add_full_circle(const ExactCircle<PS>& c, const EdgeValue value);
 
   // Converts inexact polyarc contours into exact contours and adds them to the graph
   // Result will have one contour per input arc, but these can be empty; For example, when an input contour was simplified to a single vertex
@@ -81,6 +82,7 @@ template<Pb PS> class ExactArcGraph {
   void split_edges();
   FaceId boundary_face() const;
 
+  Field<int, FaceId> face_winding_depths() const;
  protected:
   VertexId get_or_insert(const CircleIntersectionKey<PS>& i);
   VertexId get_or_insert_intersection(const CircleIntersection<PS>& i);
@@ -97,6 +99,10 @@ template<Pb PS> class ExactArcGraph {
   Array<HalfedgeId> path_to_infinity(const HalfedgeId seed_he, const BoxTree<exact::Vec2>& edge_tree) const;
   void compute_embedding();
 };
+
+// Use fill rules to select faces of an ExactArcGraph based on winding depth
+template<Pb PS> Field<bool, FaceId> faces_greater_than(const ExactArcGraph<PS>& g, const int depth);
+template<Pb PS> Field<bool, FaceId> odd_faces(const ExactArcGraph<PS>& g);
 
 template<Pb PS> GEODE_CORE_EXPORT Box<Vec2> bounding_box(const ExactArcGraph<PS>& g);
 

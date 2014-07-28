@@ -37,34 +37,6 @@ Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& inpu
   return result;
 }
 
-
-template<Pb PS> static Field<int, FaceId> face_winding_depths(const ExactArcGraph<PS>& g) {
-  auto edge_windings = Field<int, EdgeId>(g.n_edges(), uninit);
-  for(const EdgeId eid : g.edge_ids()) {
-    edge_windings[eid] = g.edges[eid].value.winding;
-  }
-  return compute_winding_numbers(g.graph, g.boundary_face(), edge_windings);
-}
-
-template<Pb PS> static Field<bool, FaceId> faces_greater_than(const ExactArcGraph<PS>& g, const int depth) {
-  const auto depths = face_winding_depths(g);
-  auto result = Field<bool, FaceId>(g.graph->n_faces(), uninit);
-  for(const FaceId fid : g.graph->faces())
-    result[fid] = (depths[fid] > depth);
-  return result;
-}
-
-#if 0
-// split_circle_arcs will eventually need to support other winding rules like this one
-template<Pb PS> static Field<bool, FaceId> nonzero_faces(const ExactArcGraph<PS>& g) {
-  const auto depths = face_winding_depths(g);
-  auto result = Field<bool, FaceId>(g.graph->n_faces(), uninit);
-  for(const FaceId fid : g.graph->faces())
-    result[fid] = (depths[fid] != 0);
-  return result;
-}
-#endif
-
 Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int depth) {
   IntervalScope scope;
   const auto PS = Pb::Implicit;
@@ -187,13 +159,6 @@ static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) 
   return g.unquantize_circle_arcs(quant, edges);
 }
 
-static ExactArc<Pb::Implicit> make_full_circle_arc(const exact::Vec2 center, const Quantized r) {
-  static constexpr auto PS = Pb::Implicit;
-  const auto c = ExactCircle<PS>(center, r);
-  const auto helper_c = ExactCircle<PS>(vec(center.x + r, center.y), 1);
-  const auto helper_i = c.intersection_min(helper_c);
-  return ExactArc<PS>({c, helper_i, helper_i});
-}
 
 static Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circle_handling_test(int seed, int count) {
   const auto test_center_range = Box<Vec2>(Vec2(0,0)).thickened(100);
@@ -209,7 +174,7 @@ static Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circl
   for(int i = 0; i < count; ++i) {
     const auto center = quant(rnd->uniform(test_center_range));
     const Quantized r = max(1, quant.quantize_length(rnd->uniform<real>(0, max_test_r)));
-    const EdgeId added_edge = graph.add_arc(make_full_circle_arc(center, r), ExactArcGraph<Pb::Implicit>::EdgeValue(1,1));
+    const EdgeId added_edge = graph.add_full_circle(ExactCircle<Pb::Implicit>(center, r), ExactArcGraph<Pb::Implicit>::EdgeValue(1,1));
     // Each circle becomes a single ccw halfedge
     input_contours.append_empty();
     input_contours.append_to_back(graph.graph->halfedge(added_edge, false));

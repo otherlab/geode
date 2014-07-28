@@ -84,7 +84,7 @@ bool segment_intersections_ordered(const P2 a0, const P2 a1, const P2 b0, const 
 }
 
 namespace {
-struct SegmentIntersectionAbove { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0) {
+struct SegmentIntersectionUpwards { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0) {
   const auto da = a1-a0,
              db = b1-b0;
              // c1 == c1 + x*delta
@@ -92,8 +92,8 @@ struct SegmentIntersectionAbove { template<class TV> static inline PredicateType
   //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y*delta;
   return (a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y;
 }};}
-bool segment_intersection_above(const P2 a0, const P2 a1, const P2 b0, const P2 b1, const P2 c) {
-  return perturbed_predicate<SegmentIntersectionAbove>(a0,a1,b0,b1,c)
+bool segment_intersection_upwards(const P2 a0, const P2 a1, const P2 b0, const P2 b1, const P2 c) {
+  return perturbed_predicate<SegmentIntersectionUpwards>(a0,a1,b0,b1,c)
        ^ segment_directions_oriented(a0,a1,b0,b1)
        ^ rightwards(a0,a1);
 }
