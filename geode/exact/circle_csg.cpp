@@ -54,6 +54,22 @@ Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int dept
   return result;
 }
 
+Nested<CircleArc> split_arcs_by_parity(Nested<const CircleArc> arcs) {
+  IntervalScope scope;
+  const auto PS = Pb::Implicit;
+  auto q_and_graph = quantize_circle_arcs<PS>(arcs);
+  auto& g = q_and_graph.y;
+  g.split_edges();
+
+  Field<bool, FaceId> interior_faces;
+  // This would be a good place to switch on a splitting rule
+  interior_faces = odd_faces(g);
+
+  const auto contour_edges = extract_region(g.graph, interior_faces);
+  auto result = g.unquantize_circle_arcs(q_and_graph.x, contour_edges);
+  return result;
+}
+
 ostream& operator<<(ostream& output, const CircleArc& arc) {
   return output << format("CircleArc([%g,%g],%g)",arc.x.x,arc.x.y,arc.q);
 }

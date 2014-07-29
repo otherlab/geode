@@ -36,6 +36,7 @@ std::ostream& operator<<(std::ostream& output, const CircleArc& a);
 // Depth starts at 0 at infinity, and increases by 1 when crossing a contour from outside to inside.
 // For example, depth = 0 corresponds to polygon_union.
 GEODE_CORE_EXPORT Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int depth);
+GEODE_CORE_EXPORT Nested<CircleArc> split_arcs_by_parity(Nested<const CircleArc> arcs);
 
 // The union of possibly intersecting circular arc polygons, assuming consistent ordering
 template<class... Arcs> static inline Nested<CircleArc> circle_arc_union(const Arcs&... arcs) {
