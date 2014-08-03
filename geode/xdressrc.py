@@ -1,6 +1,6 @@
 # Xdress definitions for geode
 
-from xdress.typesystem import TypeSystem
+from xdress.types.system import TypeSystem
 from xdress.utils import apiname
 
 # Geode!
@@ -18,6 +18,14 @@ ts.register_class("Array", ('T',), cython_py2c=(
   '{proxy_name}'
   ))
 '''
+ts.register_class('Vector',('T','d'),
+  cpp_type='Vector',
+  cython_cy_type='aaaaaa',cython_py_type='bbbbbbbbb',cython_c_type='ccccccc',
+  cython_cimport=(None,),
+  cython_pyimport=(None,),
+  cython_cyimport=(None,),
+  cython_py2c=('FromPython[{t.type}].convert({var})',False),
+  cython_c2py=('to_python({var})',))
 
 def concat(*args):
   return [b for a in args for b in a]

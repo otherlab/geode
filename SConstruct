@@ -595,8 +595,9 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False):
                    xdress_extra_types.pxd xdress_extra_types.pyx'''
       targets = [os.path.join('xdress',t) for t in targets.split()]
       env.Command(targets,['xdressrc.py']+headers,
-          '$xdress --rc $SOURCE --packagedir ${TARGET.dir} '
-        + '--builddir ${TARGET.dir}/tmp -p clang --extra-parser-args=-std=c++11')
+          '$xdress --rc $SOURCE --packagedir ${TARGET.dir} --testdir ${TARGET.dir} '
+        + '--builddir ${TARGET.dir}/tmp -p clang --extra-parser-args=-std=c++11 '
+        + '$_CPPINCFLAGS -I$variant_build')
       if 0:
         pyname = name+'_xdress'
         module = os.path.join('#'+Dir('.').srcnode().path,pyname)
