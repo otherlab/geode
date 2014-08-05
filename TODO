@@ -1,0 +1,468 @@
+1. Make "class Python : public Object" which defines repr().
+2. Make sure None converts to an empty Ptr<T>.
+3. Make sure Python -> C++ -> Python -> C++ doesn't add unnecessary layers, for both Object and Buffer.
+4. Add conversion between Python exceptions and C++ exceptions.
+   Add PythonError, and make it save in a special way that preserves tracebacks.
+   Make sure PythonError prints with a nice traceback through its saved version.
+5. Make sure AssertionError works correctly in the presence of py.test.  Unit tests should be sufficient for this.
+6. Figure out what to do about try_to_python.  Hopefully we can eliminate all uses.
+
+7. Handle conversion of Range to Python.
+
+     // This makes an iterable/iterator python class out of a range
+     template<class Iter> class PyRange: public Object {
+     public:
+       GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
+       GEODE_NEW_FRIEND
+     
+       Iter cur, end;
+     
+       PyObject *iternext() {
+         PyObject *ret = NULL;
+         if (cur != end) {
+           ret = to_python(*cur);
+           ++cur;
+         }
+         return ret;
+       }
+     
+     protected:
+       PyRange(Range<Iter> const &range): cur(range.lo), end(range.hi) {}
+     };
+     
+     template<class Iter>
+     static inline PyObject* to_python(Range<Iter> const &r) {
+       return to_python(new_<PyRange<Iter>>(r));
+     }
+     
+     // put this in a wrap_... function to define the python iterator class
+     #define GEODE_PYTHON_RANGE(Iter,Name)\
+       { typedef PyRange<Iter> Self; Class<Self>(Name).iter(); }
+
+8. Handle conversion of uint128 to Python.  Also Segment<TV>, Box<TV>, Nested<T>, Matrix<T,m,n>, Vector<T,d>,
+   Rotation<TV>, Frame<TV>, Hashtable<T>, Hashtable<T,K>, Cylinder<TV>, InvertibleBox
+
+        #ifdef GEODE_PYTHON
+        template<class TV> PyObject* to_python(const Segment<TV>& seg) {
+          return to_python(tuple(seg.x0,seg.x1));
+        }
+        template PyObject* to_python(const Segment<Vector<real,2>>&);
+        template PyObject* to_python(const Segment<Vector<real,3>>&);
+        #endif
+
+        PyObject* to_python(const Cylinder& cylinder) {
+          return to_python(new_<AnalyticImplicit<Cylinder>>(cylinder));
+        }
+
+        Cylinder FromPython<Cylinder>::convert(PyObject* object) {
+          return from_python<AnalyticImplicit<Cylinder>&>(object);
+        }
+
+        PyObject* to_python(const InvertibleBox& self) {
+          return to_python(tuple(self.begin,self.end));
+        }
+          
+        InvertibleBox FromPython<InvertibleBox>::convert(PyObject* object) {
+          const auto extents = from_python<Tuple<real,real>>(object);
+          return InvertibleBox(extents.x,extents.y);
+        }
+
+        template<class T> PyObject* to_python(const Box<T>& self) {
+          return to_python(tuple(self.min,self.max));
+        }
+
+        template<class T> Box<T> FromPython<Box<T> >::convert(PyObject* object) {
+          const auto extents = from_python<Tuple<T,T>>(object);
+          return Box<T>(extents.x,extents.y);
+        }
+
+        template<class T,int d> PyObject* to_python(const Box<Vector<T,d>>& box) {
+          return to_python(new_<AnalyticImplicit<Box<Vector<T,d>>>>(box));
+        }
+
+        template<> PyObject* to_python(const Box<Vector<int,2>>& box) {
+          return to_python(tuple(box.min,box.max));
+        }
+
+        template<> PyObject* to_python(const Box<Vector<int,3>>& box) {
+          return to_python(tuple(box.min,box.max));
+        }
+
+        template<class T,int d> Box<Vector<T,d>> FromPython<Box<Vector<T,d>>>::convert(PyObject* object) {
+          return from_python<AnalyticImplicit<Box<Vector<T,d>>>&>(object);
+        }
+
+        template<> Box<Vector<int,2>> FromPython<Box<Vector<int,2>>>::convert(PyObject* object) {
+          Tuple<Vector<int,2>,Vector<int,2>> t = from_python<Tuple<Vector<int,2>,Vector<int,2>>>(object);
+          return Box<Vector<int,2>>(t.x,t.y);
+        }
+
+        template<> Box<Vector<int,3>> FromPython<Box<Vector<int,3>>>::convert(PyObject* object) {
+          Tuple<Vector<int,3>,Vector<int,3>> t = from_python<Tuple<Vector<int,3>,Vector<int,3>>>(object);
+          return Box<Vector<int,3>>(t.x,t.y);
+        }
+
+        static void bounding_box_py_helper(const int depth, Array<Box<real>>& box, PyObject* object) {
+          Ptr<> array;
+          try {
+            array = numpy_from_any(object,NumpyDescr<real>::descr(),0,100,NPY_ARRAY_CARRAY_RO);
+          } catch (const exception&) {
+            PyErr_Clear();
+          }
+          if (array) {
+            // object is a rectangular numpy array
+            const int rank = PyArray_NDIM((PyArrayObject*)array.get());
+            if (!rank)
+              throw TypeError("bounding_box: possibly nested array of vectors expected, found a bare scalar");
+            const ssize_t d = PyArray_DIMS((PyArrayObject*)array.get())[rank-1];
+            GEODE_ASSERT(0<=d && d<=numeric_limits<int>::max());
+            if (!box.size())
+              box.resize(int(d));
+            if (box.size() != d)
+              throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),d));
+            const ssize_t count = PyArray_SIZE((PyArrayObject*)array.get())/d;
+            GEODE_ASSERT(0<=count && count<=numeric_limits<int>::max());
+            const real* data = (const real*)PyArray_DATA((PyArrayObject*)array.get());
+            for (int i=0;i<int(count);i++)
+              for (int j=0;j<d;j++)
+                box[j].enlarge(data[i*d+j]);
+          } else {
+            if (depth > 20)
+              throw RuntimeError("bounding_box: maximum recursion depth exceeded, maybe you passed in a str?");
+            // object is either badly formed or has irregular dimensions.  Loop over the structure manually.
+            const auto iterator = steal_ref_check(PyObject_GetIter(object));
+            while (const auto item = steal_ptr(PyIter_Next(&*iterator)))
+              bounding_box_py_helper(depth+1,box,item.get());
+            if (PyErr_Occurred()) // PyIter_Next returns 0 for both done and error, so check what happened
+              throw_python_error();
+          }
+        }
+
+        static PyObject* bounding_box_py(PyObject* object) {
+          if (is_numpy_array(object)) {
+            const auto array = from_python<NdArray<const real>>(object);
+            GEODE_ASSERT(array.rank()>=2);
+            if (array.shape.back()==2)
+              return to_python(bounding_box(vector_view<2>(array.flat)));
+            else if (array.shape.back()==3)
+              return to_python(bounding_box(vector_view<3>(array.flat)));
+            else
+              throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",array.shape.back()));
+          } else if (is_nested_array(object))
+            return bounding_box_py(&*nested_array_from_python_helper(object).y);
+
+          // object is neither a numpy array nor a Nested, so loop over it manually
+          Array<Box<real>> box;
+          bounding_box_py_helper(0,box,object);
+          if (box.size()==2)
+            return to_python(Box<Vector<real,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
+          else if (box.size()==3)
+            return to_python(Box<Vector<real,3>>(vec(box[0].min,box[1].min,box[2].min),vec(box[0].max,box[1].max,box[2].max)));
+          else
+            throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",box.size()));
+        }
+
+9. Remove module.cpp files.
+
+10. Remove geode's boost dependency
+11. Assert that utility/numpy.h gets the type numbers right.  Ideally at runtime without including numpy.h.
+
+12. Expose has_exact() function:
+
+    static bool has_exact() {
+    #ifdef GEODE_GMP
+      return true;
+    #else
+      return false;
+    #endif
+    }
+
+13. Expose python interrupt checker:
+
+    #ifdef GEODE_PYTHON
+      // Check for python exceptions in check_interrupts()
+      add_interrupt_checker(check_python_interrupts);
+    #endif
+
+    #ifdef GEODE_PYTHON
+    void check_python_interrupts() {
+      bool error = false;
+      #pragma omp critical
+      {
+        if (PyErr_Occurred() || PyErr_CheckSignals())
+          error = true;
+      }
+      if (error)
+        throw_python_error();
+    }
+    #endif
+
+14. Make sure the exact directory is wrapped only if GEODE_GMP is on.
+
+15. Expose has_openmesh (NOTE NAME):
+
+    static bool openmesh_enabled() {
+    #ifdef GEODE_OPENMESH
+      return true;
+    #else
+      return false;
+    #endif
+    }
+
+16. Expose mesh id conversion to Python.  Can we make it a special dtype?
+
+        // Add numpy conversion support
+        #ifdef GEODE_PYTHON
+
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexId)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,HalfedgeId)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceId)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexId)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,HalfedgeId)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceId)
+        NESTED_CONVERSIONS(HalfedgeId)
+
+        GEODE_DEFINE_TYPE(PyFieldId);
+
+        template<> GEODE_DEFINE_TYPE(PyRange<IdIter<VertexId>>);
+        template<> GEODE_DEFINE_TYPE(PyRange<IdIter<FaceId>>);
+        template<> GEODE_DEFINE_TYPE(PyRange<IdIter<HalfedgeId>>);
+        #endif
+
+17. Expose Field<T,Id> conversions, and RawField<T,Id>.
+18. Expose field _py stuff in TriangleTopology.h
+
+19. Handle MaybeNested:
+
+        Nested<const Vec2> polygons_from_python(PyObject* object) {
+        #ifdef GEODE_PYTHON
+          try {
+            const auto polys = from_python<NdArray<const Vec2>>(object);
+            if (!polys.rank() || polys.rank()>2)
+              throw TypeError(format("polygons_from_python: expected rank 1 or 2 array, got rank %d",polys.rank()));
+            const int count = polys.rank()==1?1:polys.shape[0];
+            Nested<const Vec2> nested;
+            nested.offsets = (polys.shape.back()*arange(count+1)).copy();
+            nested.flat = polys.flat;
+            return nested;
+          } catch (const exception&) {
+            PyErr_Clear();
+            // numpy conversion failed, try a nested array
+            return from_python<Nested<const Vec2>>(object);
+          }
+        #else
+          GEODE_NOT_IMPLEMENTED("No python support");
+        #endif
+        }
+
+
+20. Handle CBLAS_TRANSPOSE conversion.
+
+        template<> struct FromPython<CBLAS_TRANSPOSE>{GEODE_CORE_EXPORT static CBLAS_TRANSPOSE convert(PyObject* object);};
+
+        #ifdef GEODE_PYTHON
+        CBLAS_TRANSPOSE FromPython<CBLAS_TRANSPOSE>::convert(PyObject* object) {
+          const char* s = from_python<const char*>(object);
+          switch (s[0]?s[1]?0:s[0]:0){
+            case 'n': case 'N': return CblasNoTrans;
+            case 't': case 'T': return CblasTrans;
+            default: throw ValueError("expected n or t (or N or T)");}
+        }
+        #endif
+
+21. Figure out what to do about rotation_from_matrix, rigid_register_python, affine_register_python
+
+22. Search for "Value python support" to fix Value python handling.  Snippets of interesting code:
+
+        template<class T> static inline PyObject* to_python(const ValueRef<T>& value) {
+          return to_python(*value.self);
+        } 
+            
+        // from_python<ValueRef<T>> is declared in convert.h to avoid circularity
+
+        // In Compute.cpp
+        void wrap_compute() {
+        #ifdef GEODE_PYTHON
+          empty_tuple = PyTuple_New(0);
+          GEODE_ASSERT(empty_tuple);
+
+          typedef CachePython Self;
+          Class<Self>("Cache")
+            .GEODE_FIELD(f)
+            .GEODE_GET(name)
+            .repr()
+            ;
+
+          GEODE_FUNCTION_2(cache,cache_py)
+        #endif
+        }
+
+        void wrap_const_value() {
+          python::function("const_value_py",const_value<Ptr<> >);
+        }
+
+        void wrap_listen() {
+          typedef Listen Self;
+          Class<Self>("Listen");
+          GEODE_FUNCTION_2(listen, static_cast<Ref<Listen>(*)(const ValueBase&,const function<void()>&)>(listen))
+        }
+
+23. Handle OVec conversions:
+
+        template<class T,int d>
+        struct FromPython<OVec<T,d> > {
+          static OVec<T,d> convert(PyObject* object) {
+            return OVec<T,d>(FromPython<Vector<T,d> >::convert(object));
+          }
+        };
+
+24. Handle OpenMesh handle conversions:
+
+        GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexHandle)
+        GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexHandle)
+        GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceHandle)
+        GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceHandle)
+
+        namespace OpenMesh {
+
+        // overloaded functions need to be in the same namespace as their arguments to be found by
+        // the compiler (or declared before the declaration of whatever uses them)
+
+        // python interface for handles
+        #ifdef GEODE_PYTHON
+        static inline PyObject* to_python(BaseHandle h) {
+          return ::geode::to_python(h.idx());
+        }
+        #endif
+        }
+
+        template<> struct FromPython<VertexHandle> {
+          static VertexHandle convert(PyObject* object) {
+            return VertexHandle((unsigned int)from_python<int>(object));
+          }
+        };
+
+        template<> struct FromPython<FaceHandle> {
+          static FaceHandle convert(PyObject* object) {
+            return FaceHandle((unsigned int)from_python<int>(object));
+          }
+        };
+
+        template<> struct FromPython<EdgeHandle> {
+          static EdgeHandle convert(PyObject* object) {
+            return EdgeHandle((unsigned int)from_python<int>(object)); 
+          }
+        }; 
+
+        template<> struct FromPython<HalfedgeHandle> {
+          static HalfedgeHandle convert(PyObject* object) {
+            return HalfedgeHandle((unsigned int)from_python<int>(object));
+          }  
+        };
+
+        template<class T> struct FromPython<OpenMesh::VPropHandleT<T>> {
+          static OpenMesh::VPropHandleT<T> convert(PyObject* object) {
+            return OpenMesh::VPropHandleT<T>((unsigned int)from_python<int>(object));
+          }
+        };
+
+        template<class T> struct FromPython<OpenMesh::HPropHandleT<T>> {
+          static OpenMesh::HPropHandleT<T> convert(PyObject* object) {
+            return OpenMesh::HPropHandleT<T>((unsigned int)from_python<int>(object));
+          }
+        };
+
+        template<class T> struct FromPython<OpenMesh::FPropHandleT<T>> {
+          static OpenMesh::FPropHandleT<T> convert(PyObject* object) {
+            return OpenMesh::FPropHandleT<T>((unsigned int)from_python<int>(object));
+          }
+        };
+
+        template<class T> struct FromPython<OpenMesh::EPropHandleT<T>> {
+          static OpenMesh::EPropHandleT<T> convert(PyObject* object) {
+            return OpenMesh::EPropHandleT<T>((unsigned int)from_python<int>(object));
+          }
+        };
+
+        #ifdef GEODE_PYTHON
+        namespace {
+        // for vector conversions
+        template<> struct NumpyIsScalar<OpenMesh::BaseHandle>:public mpl::true_{};
+        template<> struct NumpyIsScalar<OpenMesh::VertexHandle>:public mpl::true_{};
+        template<> struct NumpyIsScalar<OpenMesh::EdgeHandle>:public mpl::true_{};
+        template<> struct NumpyIsScalar<OpenMesh::HalfedgeHandle>:public mpl::true_{};
+        template<> struct NumpyIsScalar<OpenMesh::FaceHandle>:public mpl::true_{};
+
+        template<> struct NumpyScalar<OpenMesh::BaseHandle>{enum{value=NPY_INT};};
+        template<> struct NumpyScalar<OpenMesh::VertexHandle>{enum{value=NPY_INT};};
+        template<> struct NumpyScalar<OpenMesh::EdgeHandle>{enum{value=NPY_INT};};
+        template<> struct NumpyScalar<OpenMesh::HalfedgeHandle>{enum{value=NPY_INT};};
+        template<> struct NumpyScalar<OpenMesh::FaceHandle>{enum{value=NPY_INT};};
+        }
+        #endif
+
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexHandle)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexHandle)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceHandle)
+        GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceHandle)
+
+37. Remove all occurrences of GEODE_PYTHON
+
+38. Fix LoadableModule stuff in scons to use xdress
+39. Remove conversions directory
+
+40. Make setup.py not hard code release.  EXTREMELY IMPORTANT.
+
+41. wrap_stencil
+
+  void wrap_stencil() {
+    typedef uint8_t T;
+    typedef const function<T (const Array<T,2>, Vector<int,2> const &)> ftype;
+    typedef void(*stencil_ftype)(ftype &, int, const Array<T,2>);
+    GEODE_FUNCTION_2(apply_stencil_uint8, static_cast<stencil_ftype>(apply_stencil<ftype, T, 2>));
+    typedef MaxStencil<T> Self;
+    Class<Self>("MaxStencil_uint8")
+      .GEODE_INIT(int)
+      .GEODE_FIELD(r)
+      .GEODE_CALL(const Array<const typename Self::value_type,2>, Vector<int,2> const &)
+      ;
+  }
+
+42. mesh_csg
+
+  void wrap_mesh_csg() {
+    typedef Tuple<Ref<const TriangleSoup>,Array<Vec3>> (*split_fn)(const TriangleSoup&, Array<const Vector<double,3>>, co
+    GEODE_OVERLOADED_FUNCTION(split_fn,split_soup)
+    typedef Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>> (*exact_split_fn)(const TriangleSoup&, Array<const exact::V
+    GEODE_OVERLOADED_FUNCTION(exact_split_fn,exact_split_soup)
+
+    typedef Tuple<Ref<const TriangleSoup>,Array<Vec3>> (*split_depth_fn)(const TriangleSoup&, Array<const Vector<double,3
+    GEODE_OVERLOADED_FUNCTION_2(split_depth_fn,"split_soup_with_weight",split_soup)
+    typedef Tuple<Ref<const TriangleSoup>,Array<exact::Vec3>> (*exact_split_depth_fn)(const TriangleSoup&, Array<const ex
+    GEODE_OVERLOADED_FUNCTION_2(exact_split_depth_fn,"exact_split_soup_with_weight",exact_split_soup)
+
+    GEODE_FUNCTION(mesh_signature)
+  }
+
+43. heapsort_test
+
+  void wrap_heap() {
+    GEODE_FUNCTION(heapsort_test)
+  }
+
+44. Remove GEODE_THREAD_SAFE as an option.  It should always be as thread safe as possible.
+
+45. lower_hull
+
+  void wrap_lower_hull() {
+    GEODE_FUNCTION(lower_hull)
+  }
+
+46. decimate
+
+  void wrap_decimate() {
+    GEODE_FUNCTION(decimate)
+    GEODE_FUNCTION(decimate_inplace)
+  }
+
+47. In SConstruct, can we give xdress relative -Is instead of absolute -Is?
