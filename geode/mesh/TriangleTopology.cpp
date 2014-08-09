@@ -2151,6 +2151,7 @@ T TriangleTopology::cos_dihedral(RawField<const TV3,VertexId> X, const HalfedgeI
 PER_DIMENSION(TV2)
 PER_DIMENSION(TV3)
 
+#ifdef GEODE_PYTHON
 Ref<> TriangleTopology::edge_tree_py(Array<const T,2> X) const {
   if (X.n==2)      return to_python_ref(edge_tree(Field<const TV2,VertexId>(vector_view_own<2>(X.flat))));
   else if (X.n==3) return to_python_ref(edge_tree(Field<const TV3,VertexId>(vector_view_own<3>(X.flat))));
@@ -2162,6 +2163,7 @@ Ref<> TriangleTopology::face_tree_py(Array<const T,2> X) const {
   else if (X.n==3) return to_python_ref(face_tree(Field<const TV3,VertexId>(vector_view_own<3>(X.flat))));
   throw ValueError(format("TriangleTopology::face_tree: Expected 2D or 3D vectors, got shape %s",str(X.sizes())));
 }
+#endif
 
 #define SAFE_ERASE(prim,Id) \
   void MutableTriangleTopology::safe_erase_##prim(Id x, bool erase_isolated) { \

@@ -355,8 +355,11 @@ public:
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,1>>,Array<HalfedgeId>> edge_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV2,2>>,Array<FaceId>> face_tree(Field<const TV2,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,2>>,Array<FaceId>> face_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
+
+#ifdef GEODE_PYTHON
   GEODE_CORE_EXPORT Ref<> edge_tree_py(Array<const real,2> X) const;
   GEODE_CORE_EXPORT Ref<> face_tree_py(Array<const real,2> X) const;
+#endif
 
   // Dihedral angles across edges.  Positive for convex, negative for concave.
   GEODE_CORE_EXPORT real dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
