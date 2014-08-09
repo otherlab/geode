@@ -56,6 +56,22 @@ def test_delaunay(benchmark=False,cgal=False,origin=True,circle=False,constrain=
             if n>0 and mesh.n_faces!=nf:
               Log.write('expected %d faces, got %d'%(mesh.n_faces,nf))
 
+def draw_polygons(polys):
+  import pylab
+  for p,points in enumerate(polys):
+    print points
+    print points.shape
+    print points[0,:]
+    print points[0,:].shape
+    points = concatenate([points,[points[0,:]]])
+    pylab.plot(points[:,0],points[:,1])
+  pylab.show()
+
+def polygon_union_cmp(*polys):
+  return compare_splitting_algorithms(Nested.concatenate(*polys),0)
+def polygon_intersection_cmp(*polys):
+  return compare_splitting_algorithms(Nested.concatenate(*polys),len(polys)-1)
+
 def test_polygon():
   k = 4 # Use random quads to get occasional concave vertices
   verbose = False
@@ -68,13 +84,13 @@ def test_polygon():
     polys = random.randn(n,1,2)+polar(sort(random.uniform(2*pi,size=n*k).reshape(n,k),axis=1))*abs(random.randn(n,k,1))/2
     if verbose:
       print '\nn = %d\npolys = %s'%(n,compact_str(polys))
-    new = canonicalize_polygons(polygon_union(polys))
+    new = canonicalize_polygons(polygon_union_cmp(polys))
     if verbose:
       print 'union = %s'%compact_str(new)
     # Check that degeneracies are fine
     area = polygon_area(new)
-    assert allclose(area,polygon_area(polygon_union(new,new)))
-    assert allclose(area,polygon_area(polygon_intersection(new,new)))
+    assert allclose(area,polygon_area(polygon_union_cmp(new,new)))
+    assert allclose(area,polygon_area(polygon_intersection_cmp(new,new)))
     # Compare against known data
     old = Nested(known[k,n])
     assert all(new.offsets==old.offsets)
@@ -92,6 +108,8 @@ if __name__=='__main__':
     circle = '-d' in sys.argv
     Mesh = HalfedgeMesh if '-h' in sys.argv else TriangleTopology
     test_delaunay(Mesh=Mesh,benchmark=True,origin=False,cgal=cgal,circle=circle,constrain=False)
+  elif '-p' in sys.argv:
+    test_polygon()
   else:
     test_fast_exact()
     test_predicates()

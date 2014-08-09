@@ -29,4 +29,14 @@ template<class... Polys> static inline Nested<Vec2> polygon_intersection(const P
   return split_polygons(concatenate(polys...),sizeof...(Polys)-1);
 }
 
-}
+enum class FillRule { Greater, Parity, NotEqual };
+GEODE_CORE_EXPORT std::string str(const FillRule rule);
+GEODE_CORE_EXPORT Nested<Vec2> split_polygons_with_rule(Nested<const Vec2> polys, const int depth, const FillRule rule);
+GEODE_CORE_EXPORT Nested<Vec2> exact_split_polygons_with_rule(Nested<const Vec2> polys, const int depth, const FillRule rule);
+
+// These are primarily to allow python bindings without needing to create class for FillRule
+GEODE_CORE_EXPORT Nested<Vec2> split_polygons_greater(Nested<const Vec2> polys, const int depth);
+GEODE_CORE_EXPORT Nested<Vec2> split_polygons_parity(Nested<const Vec2> polys, const int depth);
+GEODE_CORE_EXPORT Nested<Vec2> split_polygons_neq(Nested<const Vec2> polys, const int depth);
+
+} // namespace geode

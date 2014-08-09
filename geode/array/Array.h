@@ -423,6 +423,12 @@ public:
     return m_old;
   }
 
+  void extend_assuming_enough_space(const int n, Uninit) GEODE_ALWAYS_INLINE {
+    assert(n >= 0);
+    m_ += n;
+    assert(m_ <= max_size_);
+  }
+
   bool is_unique() const {
     Array a;
     a.append_unique_elements(*this);

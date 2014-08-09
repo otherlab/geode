@@ -29,10 +29,29 @@ struct SegmentSegment { template<class TV> static ConstructType<2,3,TV> eval(con
   return tuple(num,den);
 }};}
 
-exact::Vec2 segment_segment_intersection(const Perturbed2 a0, const Perturbed2 a1, const Perturbed2 b0, const Perturbed2 b1) {
+#if FORCE_CANONICAL_CONSTRUCTION_ARGUMENTS
+static exact::Vec2 raw_segment_segment_intersection
+#else
+exact::Vec2 segment_segment_intersection
+#endif
+ (const Perturbed2 a0, const Perturbed2 a1, const Perturbed2 b0, const Perturbed2 b1) {
   // TODO: Use the sign returned by perturbed_construct?
   return perturbed_construct<SegmentSegment>(segment_segment_intersection_threshold,a0,a1,b0,b1).x;
 }
+
+#if FORCE_CANONICAL_CONSTRUCTION_ARGUMENTS
+exact::Vec2 segment_segment_intersection(const Perturbed2 a0, const Perturbed2 a1, const Perturbed2 b0, const Perturbed2 b1) {
+  GEODE_WARNING("Argument reordering for pedantic constructions enabled");
+  auto a = rightwards(a0,a1) ? vec(a0,a1) : vec(a1,a0);
+  auto b = rightwards(b0,b1) ? vec(b0,b1) : vec(b1,b0);
+  if(!rightwards(a[0],b[0]))
+    swap(a,b);
+  const auto r0 = raw_segment_segment_intersection(a0,a1,b0,b1);
+  const auto r1 = raw_segment_segment_intersection(a[0],a[1],b[0],b[1]);
+  assert((r0 - r1).maxabs() <= segment_segment_intersection_threshold);
+  return r1;
+}
+#endif
 
 static bool check_intersection(const EV2 a0, const EV2 a1, const EV2 b0, const EV2 b1, Random& random) {
   typedef Vector<double,2> DV;
