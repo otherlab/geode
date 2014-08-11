@@ -190,91 +190,93 @@ Tuple<Ref<const TriangleSoup>, Array<TV>> lower_hull(TriangleSoup const &imesh, 
     }
 
     // tilt side faces by ofsetting
-    for (auto loop : boundary_loops) {
+    if (draft_angle > 0.) {
+      for (auto loop : boundary_loops) {
 
-      // compute all normals and store them. normals[i] is the normal of the
-      // edge x[i-1]-x[i]
-      // find an edge for which we can compute a normal. start is set to the
-      // vertex after that edge (i).
-      Array<Vector<real,3>> normals(loop.size(), uninit);
-      Array<bool> normal_valid(loop.size(), uninit);
-      normal_valid.fill(true);
-      int start = -1;
-      for (int i = 0, j = loop.size()-1; i < loop.size(); j=i++) {
-        // j___n[i]___i
-        auto vj = loop[j];
-        auto vi = loop[i];
-        auto eji = component_mesh.field(pos_id)[vi] - component_mesh.field(pos_id)[vj];
-        auto ep = eji.projected_orthogonal_to_unit_direction(up).normalized();
-        if (ep.sqr_magnitude() == 0) {
-          normals[i] = vec(0.,0.,0.);
-          normal_valid[i] = false;
-        } else {
-          normals[i] = cross(up,ep);
-          if (start == -1) {
-            start = i;
-          }
-        }
-      }
-
-      // if there is none, this loop is a point, and we can simply add a cone
-      // with no ill effects. We will therefore just set two adjacent normals to
-      // opposite values and let the regular algorithm handle the details.
-      if (start == -1) {
-        normals[0] = up.unit_orthogonal_vector();
-        normals[1] = -normals[0];
-        normal_valid[0] = normal_valid[1] = true;
-        start = 0;
-      }
-
-      // go through the loop, starting with start. last_normal always contains
-      // the normal of the last valid edge before our current vertex (i). We try to
-      // compute the edge normal for the edge after, and decide whether to split.
-      // If the next edge normal cannot be computed, we do not split, but simply
-      // continue offsetting in last_normal direction. Once the next edge normal
-      // can be computed, we (possibly) add the required split, and reset last_normal.
-      int i = start, j = start==loop.size()-1 ? 0 : start+1;
-      bool first = true;
-      TV last_normal = normals[start];
-      while (first || i != start) {
-
-        // last___x_i___n___x_j
-        auto vj = loop[j];
-        auto vjm = VertexId(vj.idx() + voffset);
-        auto vi = loop[i];
-        auto vim = VertexId(vi.idx() + voffset);
-
-        auto xi = component_mesh.field(pos_id)[vi];
-        auto xim = component_mesh.field(pos_id)[vim];
-        auto xj = component_mesh.field(pos_id)[vj];
-
-        // see how far we have to move this point to achieve the draft angle
-        auto move_by = tan(draft_angle) * dot(xi-xim, up);
-
-        TV normal = normals[j];
-
-        if (normal_valid[j]) {
-          bool convex = Plane<real>(last_normal, xi).phi(xj) < 0;
-          bool very_convex = convex && dot(last_normal, normal) < cos_division_angle;
-
-          if (very_convex) {
-            // if normal can be computed, and it's too spiky with last_normal, add a fan
-            add_vertex_fan(division_angle, component_mesh, pos_id, vi, vim, vj, vjm, move_by, last_normal, normal);
+        // compute all normals and store them. normals[i] is the normal of the
+        // edge x[i-1]-x[i]
+        // find an edge for which we can compute a normal. start is set to the
+        // vertex after that edge (i).
+        Array<Vector<real,3>> normals(loop.size(), uninit);
+        Array<bool> normal_valid(loop.size(), uninit);
+        normal_valid.fill(true);
+        int start = -1;
+        for (int i = 0, j = loop.size()-1; i < loop.size(); j=i++) {
+          // j___n[i]___i
+          auto vj = loop[j];
+          auto vi = loop[i];
+          auto eji = component_mesh.field(pos_id)[vi] - component_mesh.field(pos_id)[vj];
+          auto ep = eji.projected_orthogonal_to_unit_direction(up).normalized();
+          if (ep.sqr_magnitude() == 0) {
+            normals[i] = vec(0.,0.,0.);
+            normal_valid[i] = false;
           } else {
-            // not spiky, just move point
-            component_mesh.field(pos_id)[vim] += move_by * (last_normal+normal).normalized();
+            normals[i] = cross(up,ep);
+            if (start == -1) {
+              start = i;
+            }
           }
-          last_normal = normal;
-        } else {
-          // can't be computed, just move point along last normal
-          component_mesh.field(pos_id)[vim] += move_by * last_normal.normalized();
         }
 
-        first = false;
-        i = j;
-        j++;
-        if (j == loop.size())
-          j = 0;
+        // if there is none, this loop is a point, and we can simply add a cone
+        // with no ill effects. We will therefore just set two adjacent normals to
+        // opposite values and let the regular algorithm handle the details.
+        if (start == -1) {
+          normals[0] = up.unit_orthogonal_vector();
+          normals[1] = -normals[0];
+          normal_valid[0] = normal_valid[1] = true;
+          start = 0;
+        }
+
+        // go through the loop, starting with start. last_normal always contains
+        // the normal of the last valid edge before our current vertex (i). We try to
+        // compute the edge normal for the edge after, and decide whether to split.
+        // If the next edge normal cannot be computed, we do not split, but simply
+        // continue offsetting in last_normal direction. Once the next edge normal
+        // can be computed, we (possibly) add the required split, and reset last_normal.
+        int i = start, j = start==loop.size()-1 ? 0 : start+1;
+        bool first = true;
+        TV last_normal = normals[start];
+        while (first || i != start) {
+
+          // last___x_i___n___x_j
+          auto vj = loop[j];
+          auto vjm = VertexId(vj.idx() + voffset);
+          auto vi = loop[i];
+          auto vim = VertexId(vi.idx() + voffset);
+
+          auto xi = component_mesh.field(pos_id)[vi];
+          auto xim = component_mesh.field(pos_id)[vim];
+          auto xj = component_mesh.field(pos_id)[vj];
+
+          // see how far we have to move this point to achieve the draft angle
+          auto move_by = tan(draft_angle) * dot(xi-xim, up);
+
+          TV normal = normals[j];
+
+          if (normal_valid[j]) {
+            bool convex = Plane<real>(last_normal, xi).phi(xj) < 0;
+            bool very_convex = convex && dot(last_normal, normal) < cos_division_angle;
+
+            if (very_convex) {
+              // if normal can be computed, and it's too spiky with last_normal, add a fan
+              add_vertex_fan(division_angle, component_mesh, pos_id, vi, vim, vj, vjm, move_by, last_normal, normal);
+            } else {
+              // not spiky, just move point
+              component_mesh.field(pos_id)[vim] += move_by * (last_normal+normal).normalized();
+            }
+            last_normal = normal;
+          } else {
+            // can't be computed, just move point along last normal
+            component_mesh.field(pos_id)[vim] += move_by * last_normal.normalized();
+          }
+
+          first = false;
+          i = j;
+          j++;
+          if (j == loop.size())
+            j = 0;
+        }
       }
     }
 
