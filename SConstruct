@@ -442,7 +442,7 @@ def link_flags(env):
       if darwin:
         env_link.Append(LINKFLAGS=' '.join('-Xlinker -reexport-l%s'%n for n in lib['publiclibs']))
       else:
-	env_link.Append(LIBS=lib['publiclibs'])
+        env_link.Append(LIBS=lib['publiclibs'])
       env_link.AppendUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
@@ -757,7 +757,7 @@ def configure_mpi(env,mpi):
 
 # Predefined external libraries
 external(env,'python',default=1,flags=['GEODE_PYTHON'],configure=configure_python)
-external(env,'boost',default=1,required=1,hide=1,headers=['boost/version.hpp'])
+external(env,'boost',default=1,hide=1,headers=['boost/version.hpp'])
 external(env,'boost_link',requires=['boost'],libs=['boost_iostreams$boost_lib_suffix',
   'boost_filesystem$boost_lib_suffix','boost_system$boost_lib_suffix','z','bz2'],hide=1,headers=())
 external(env,'mpi',flags=['GEODE_MPI'],configure=configure_mpi)

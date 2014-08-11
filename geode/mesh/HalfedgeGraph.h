@@ -228,6 +228,7 @@ public:
   // Face operations. These may only be called after initialize_borders
   FaceId new_face_for_border(const BorderId b); // 'b' must not already belong to a face
   void add_to_face(const FaceId f, const BorderId child); // 'f' must be a valid face. 'child' must not already belong to a face
+  void initialize_remaining_faces(); // Creates new faces for any borders that don't already have one
 };
 
 std::ostream& operator<<(std::ostream& os, const HalfedgeGraph& g);

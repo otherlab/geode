@@ -258,11 +258,18 @@ template<Pb PS> static Array<HalfedgeId> rightwards_raycast(const ExactArcGraph<
   return raycast.found.template project<HalfedgeId, &Tuple<HorizontalIntersection<PS>,HalfedgeId>::y>().copy();
 }
 
-// Construct a path from a point immediately adjacent to seed_he to infinity tracking all edge crossings
-// In most cases a horizontal raycast that intersects the seeding edge's arc will be sufficient
+// Construct a path from a point at infinity that crosses seed_he, tracking all edge crossings inbetween
+// In most cases a horizontal raycast that intersects seed_he's arc will be sufficient
 // For nearly degenerate cases other constructs will be used to track crossings
-template<Pb PS> Array<HalfedgeId> ExactArcGraph<PS>::path_to_infinity(const HalfedgeId seed_he, const BoxTree<exact::Vec2>& edge_tree) const {
+template<Pb PS> Array<HalfedgeId> ExactArcGraph<PS>::path_from_infinity(const HalfedgeId seed_he, const BoxTree<exact::Vec2>& edge_tree) const {
+  auto result = path_to_infinity(seed_he, edge_tree);
+  result.reverse(); // Reverse order of crossings to get path that will end at seed_he
+  for(auto& hid : result) hid = HalfedgeGraph::reverse(hid); // Reverse each crossing
+  result.append(seed_he); // Add our final edge at the end
+  return result;
+}
 
+template<Pb PS> Array<HalfedgeId> ExactArcGraph<PS>::path_to_infinity(const HalfedgeId seed_he, const BoxTree<exact::Vec2>& edge_tree) const {
   // First we attempt a simple horizontal raycast
   const auto seed_a = arc(graph->edge(seed_he));
   const auto& seed_c = seed_a.circle;
@@ -1004,6 +1011,7 @@ template<Pb PS> void ExactArcGraph<PS>::compute_embedding() {
 
   g.initialize_borders();
   auto cd = ComponentData(g);
+  assert(cd.n_components() != 0 || g.n_edges() == 0);
   FaceId infinity_face;
 
   for(const ComponentId seed_c : cd.components()) {
@@ -1013,65 +1021,24 @@ template<Pb PS> void ExactArcGraph<PS>::compute_embedding() {
       continue; // If we found the component exterior in a previous test we don't need to keep looking
 
     const auto seed_he = g.halfedge(cd.border(seed_c));
-    Array<HalfedgeId> path_from_infinity = path_to_infinity(seed_he, edge_tree);
-    path_from_infinity.reverse(); // Make path walk backwards from infinity
-    for(auto& hid : path_from_infinity) hid = g.reverse(hid); // Get opposite edges for each crossing
-
-    // Force seed_he to be updated by adding it as the end of the path
-    path_from_infinity.append(seed_he);
-
-    FaceId current_face = infinity_face;
-    for(const HalfedgeId hit : path_from_infinity) {
-      const BorderId hit_border = g.border(hit);
-
-      // If we haven't created the first face, do so now
-      if(!current_face.valid()) {
-        infinity_face = g.new_face_for_border(hit_border);
-        current_face = infinity_face;
-      }
-
-      auto& hit_component = cd[hit_border];
-      if(!hit_component.exterior_face.valid())
-        hit_component.exterior_face = current_face; // First hit on a component is always its exterior face
-
-      if(!g.face(hit_border).valid())
-        g.add_to_face(current_face, hit_border); // Add the border that we hit to the current face if it isn't already part
-
-      assert(g.face(hit_border) == current_face); // Border should already be part of face or have just been added
-
-      // Stepping across edge will switch to a new border...
-      const BorderId opp_border = g.border(g.reverse(hit));
-      current_face = g.face(opp_border); // ...and also a new face
-
-      assert(cd.component(opp_border) == cd.component(hit_border)); // We should have stayed on the same component when crossing the edge
-
-      if(!current_face.valid()) // If the new border didn't already have a face, we need to add one
-        current_face = g.new_face_for_border(opp_border);
-    }
+    initialize_path_faces(path_from_infinity(seed_he,edge_tree), infinity_face, g, cd);
 
     assert(cd[seed_c].exterior_face.valid()); // path should have initialized at least seed
-
   }
 
-  // Now that we have all possible relative info about each component, we need to generate interior faces that weren't hit by any rays
-  // We need to be careful since components that are too small will not have been hit by any rays
-  for(const BorderId bid : g.borders()) {
-    assert(cd[bid].exterior_face.valid());
-    if(!g.face(bid).valid() // Find borders that didn't get assigned a face yet
-     && cd[bid].exterior_face.valid()) { // Make sure this wasn't because of a degenerate component
-      g.new_face_for_border(bid); // Add a new face
-    }
-  }
+  // Now that we have safely set exterior faces for each component, we need to generate any interior faces that weren't traversed
+  g.initialize_remaining_faces();
 
   assert(!infinity_face.valid() || infinity_face == boundary_face());
-
-  // After this function all borders should have a valid face id
+  // At this point all borders should have a valid face id
 }
 
 template<Pb PS> Field<int, FaceId> ExactArcGraph<PS>::face_winding_depths() const {
   auto edge_windings = Field<int, EdgeId>(n_edges(), uninit);
   for(const EdgeId eid : edge_ids()) {
     edge_windings[eid] = edges[eid].value.winding;
+    assert(graph->face(HalfedgeGraph::halfedge(eid,0)).valid());
+    assert(graph->face(HalfedgeGraph::halfedge(eid,1)).valid());
   }
   return compute_winding_numbers(graph, boundary_face(), edge_windings);
 }

@@ -1,7 +1,8 @@
 // Robust constructive solid geometry for polygons in the plane
-
+#include <geode/array/ConstantMap.h>
 #include <geode/exact/polygon_csg.h>
 #include <geode/exact/constructions.h>
+#include <geode/exact/ExactSegmentGraph.h>
 #include <geode/exact/predicates.h>
 #include <geode/exact/perturb.h>
 #include <geode/exact/quantize.h>
@@ -9,12 +10,23 @@
 #include <geode/array/amap.h>
 #include <geode/array/sort.h>
 #include <geode/geometry/BoxTree.h>
+#include <geode/geometry/polygon.h>
 #include <geode/geometry/traverse.h>
 #include <geode/python/wrap.h>
 #include <geode/structure/Hashtable.h>
 #include <geode/utility/Log.h>
 #include <geode/utility/str.h>
+#include <geode/utility/time.h>
+
 namespace geode {
+
+std::string str(const FillRule rule) {
+  switch (rule) {
+    case FillRule::Greater: return "Greater";
+    case FillRule::Parity: return "Parity";
+    case FillRule::NotEqual: return "NotEqual";
+  }
+}
 
 typedef exact::Vec2 EV;
 using exact::Perturbed2;
@@ -195,14 +207,92 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
   return output;
 }
 
+static inline bool include_face(int delta, const FillRule rule) {
+  switch(rule) {
+    case FillRule::Greater: return delta > 0;
+    case FillRule::Parity: return (delta & 1);
+    case FillRule::NotEqual: return !delta;
+  }
+}
+
 Nested<Vec2> split_polygons(Nested<const Vec2> polys, const int depth) {
   const auto quant = quantizer(bounding_box(polys));
   return amap(quant.inverse,exact_split_polygons(amap(quant,polys),depth));
 }
 
+Nested<Vec2> exact_split_polygons_with_rule(Nested<const Vec2> polys, const int depth, const FillRule rule) {
+  const auto g = ExactSegmentGraph(polys);
+  const auto edge_windings = Field<int, EdgeId>(constant_map(g.topology->n_edges(), 1).copy());
+  const auto face_winding_depths = compute_winding_numbers(g.topology, g.boundary_face(), edge_windings);
+  auto included_faces = Field<bool, FaceId>(g.topology->n_faces(), uninit);
+  for(const FaceId fid : included_faces.id_range())
+    included_faces[fid] = include_face(face_winding_depths[fid] - depth, rule);
+  const auto contours = extract_region(g.topology, included_faces);
+  auto result = Nested<Vec2>::empty_like(contours);
+  for(int i : range(contours.flat.size())) {
+    const auto he = contours.flat[i];
+    result.flat[i] = g.vertices[g.topology->src(he)].approx;
+  }
+  return result;
 }
+
+Nested<Vec2> split_polygons_with_rule(Nested<const Vec2> polys, const int depth, const FillRule rule) {
+  const auto quant = quantizer(bounding_box(polys));
+  return amap(quant.inverse,exact_split_polygons_with_rule(amap(quant,polys),depth,rule));
+}
+
+Nested<Vec2> split_polygons_greater(Nested<const Vec2> polys, const int depth) {
+ return split_polygons_with_rule(polys,depth,FillRule::Greater); }
+Nested<Vec2> split_polygons_parity(Nested<const Vec2> polys, const int depth) {
+ return split_polygons_with_rule(polys,depth,FillRule::Parity); }
+Nested<Vec2> split_polygons_neq(Nested<const Vec2> polys, const int depth) {
+ return split_polygons_with_rule(polys,depth,FillRule::NotEqual); }
+
+static bool segment_intersections_possibly_same(const Vec2 v0, const Vec2 v1) {
+  return (v0 - v1).maxabs() <= segment_segment_intersection_threshold;
+}
+static bool all_close(const Nested<const Vec2> p0, const Nested<const Vec2> p1) {
+  if(p0.offsets != p1.offsets)
+    return false;
+  assert(p0.flat.size() == p1.flat.size());
+  for(const int i : range(p0.flat.size())) {
+    if(!segment_intersections_possibly_same(p0.flat[i],p1.flat[i]))
+      return false;
+  }
+  return true;
+}
+
+Nested<Vec2> compare_splitting_algorithms(Nested<const Vec2> polys, const int depth) {
+  // Call into non-graph based implementation
+  const auto t0 = get_time();
+  const auto simple_result = canonicalize_polygons(split_polygons(polys, depth));
+  const auto simple_time = get_time() - t0;
+  // Call into graph based implementation
+  const auto t1 = get_time();
+  const auto graph_result = canonicalize_polygons(split_polygons_greater(polys,depth));
+  const auto graph_time = get_time() - t1;
+  std::cout << "Time using graph  : " << graph_time << ", Time without graph: " << simple_time << '\n'
+            << format("input N: %d, output N: %d, graph/without: %f\n", polys.total_size(), graph_result.total_size(), graph_time/simple_time);
+
+  // Orders of arguments to segment_segment_intersection can slightly alter constructed points
+  // If minimal points found in canonicalize_polygons are different this check could fail (current test cases don't trigger this)
+  // If this assert is only triggered when FORCE_CANONICAL_CONSTRUCTION_ARGUMENTS is false, it might be necessary to implement more robust matching
+  GEODE_ASSERT(all_close(graph_result,simple_result));
+  #if FORCE_CANONICAL_CONSTRUCTION_ARGUMENTS
+  // With FORCE_CANONICAL_CONSTRUCTION_ARGUMENTS, results should be bit-for-bit identical
+  GEODE_ASSERT(graph_result == simple_result);
+  #endif
+
+  return graph_result;
+}
+
+} // namespace geode
 using namespace geode;
 
 void wrap_polygon_csg() {
   GEODE_FUNCTION(split_polygons)
+  GEODE_FUNCTION(split_polygons_greater)
+  GEODE_FUNCTION(split_polygons_parity)
+  GEODE_FUNCTION(split_polygons_neq)
+  GEODE_FUNCTION(compare_splitting_algorithms)
 }

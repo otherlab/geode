@@ -14,6 +14,13 @@ namespace geode {
 // for any nontrivial changes to exact algorithms.
 #define CHECK 0
 
+// Exact predicates are referentially transparent when permuted arguments refer to the same geometry
+// i.g. segment_intersection_above_point(a0,a1,b0,b1,c) will always be the same as segment_intersection_above_point(b0,b1,a0,a1,c)
+// However, approximate constructions can be sensitive to order of arguments.
+// This means segment_segment_intersection of (a0,a1,b0,b1) and (b0,b1,a0,a1) can return different approximations for the same intersection
+// Enabling this flag will force some constructions to use a canonical ordering so that results of exact csg operations can be directly compared
+#define FORCE_CANONICAL_CONSTRUCTION_ARGUMENTS 0
+
 // Run a fast interval check, and fall back to a slower exact check if it fails.
 // If CHECK is true, do both and validate.
 #if !CHECK

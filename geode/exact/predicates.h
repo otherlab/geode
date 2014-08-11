@@ -56,8 +56,12 @@ GEODE_CORE_EXPORT GEODE_PURE bool segment_intersections_ordered(const P2 a0, con
                                                                 const P2 b0, const P2 b1,
                                                                 const P2 c0, const P2 c1);
 
-// Given segments a,b and vertex c, is intersect(a,b) upwards from c
-GEODE_CORE_EXPORT GEODE_PURE bool segment_intersection_upwards(const P2 a0, const P2 a1,
+// Given segments a,b and vertex c, is intersect(a,b) above c
+GEODE_CORE_EXPORT GEODE_PURE bool segment_intersection_above_point(const P2 a0, const P2 a1,
+                                                                   const P2 b0, const P2 b1, const P2 c);
+
+// Given segments a,b and a ray origin c, does a rightwards ray from c intersect [a0,a1] before [b0,b1]
+GEODE_CORE_EXPORT GEODE_PURE bool ray_intersections_rightwards(const P2 a0, const P2 a1,
                                                                const P2 b0, const P2 b1, const P2 c);
 
 // Does p3 lie inside the circle defined by p0,p1,p2?  This predicate is antisymmetric.
