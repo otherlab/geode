@@ -546,7 +546,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
       headers.append(f)
   if not sources and not headers:
     print 'Warning: library %s has no input source files'%name
-  if env.get('need_qt',0): # Qt gets confused if we only set options on the builder
+  if env.get('need_qt',0) and env['use_qt']: # Qt gets confused if we only set options on the builder
     env = env.Clone()
     force_external('qt')
     env.Append(CXXFLAGS=externals['qt']['cxxflags'])
