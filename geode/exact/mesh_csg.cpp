@@ -789,7 +789,15 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
         const auto &f0 = faces[i0.face],
                    &f1 = faces[i1.face];
         return FILTER(dot(de,i1.p()-i0.p()),
-                      segment_triangle_intersections_ordered(e0,e1,FX(f0),FX(f1)));
+                      helper(i0.face,f0,i1.face,f1));
+      }
+
+      bool helper(const int i0, const Vector<int,3> f0,
+                  const int i1, const Vector<int,3> f1) const {
+        if (f0.sorted() == f1.sorted())
+          throw ValueError(format("mesh_csg: Duplicate faces found: face %d (%d,%d,%d) = %d (%d,%d,%d)",
+                                  i0,f0.x,f0.y,f0.z,i1,f1.x,f1.y,f1.z));
+        return segment_triangle_intersections_ordered(e0,e1,FX(f0),FX(f1));
       }
     } less({faces.elements,X,e0,e1,iv(e1)-iv(e0)});
     sort(ef_vertices[e],less);
