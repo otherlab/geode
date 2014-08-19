@@ -1353,6 +1353,21 @@ void MutableTriangleTopology::erase_last_vertex_with_reordering() {
     s.extend(-1);
 }
 
+void MutableTriangleTopology::erase_isolated_vertices() {
+  auto marked = create_compatible_vertex_field<bool>();
+  for (auto f : faces()) {
+    for (auto v : vertices(f)) {
+      marked[v] = true;
+    }
+  }
+
+  for (auto v : vertices()) {
+    if (!marked[v]) {
+      erase(v);
+    }
+  }
+}
+
 void MutableTriangleTopology::erase_face_with_reordering(const FaceId f) {
   GEODE_ASSERT(f.valid());
   GEODE_ASSERT(f.id != erased_id);
@@ -1679,6 +1694,17 @@ Array<FaceId> TriangleTopology::incident_faces(VertexId v) const {
       faces.append(f);
   }
   return faces;
+}
+
+int TriangleTopology::valence(VertexId v) const {
+  GEODE_ASSERT(valid(v));
+  int count=0;
+  for (const auto h : outgoing(v)) {
+    const auto f = face(h);
+    if (f.valid())
+      count++;
+  }
+  return count;
 }
 
 void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& fields, const int id) {
@@ -2069,6 +2095,10 @@ Tuple<Ref<TriangleSoup>,Array<FaceId>> TriangleTopology::face_soup() const {
   }
 
   return tuple(new_<TriangleSoup>(facets, allocated_vertices()), indices);
+}
+
+real TriangleTopology::area(RawField<const TV3,VertexId> X, const FaceId f) const {
+  return triangle(X,f).area();
 }
 
 TV3 TriangleTopology::normal(RawField<const TV3,VertexId> X, const FaceId f) const {

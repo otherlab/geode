@@ -120,6 +120,10 @@ public:
     return size_;
   }
 
+  bool empty() const {
+    return size_ == 0;
+  }
+
   int max_size() const {
     return int(table_.size());
   }

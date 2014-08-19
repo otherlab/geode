@@ -428,6 +428,13 @@ void HalfedgeGraph::add_to_face(const FaceId f, const BorderId child) {
   assert(face(child) == f);
 }
 
+void HalfedgeGraph::initialize_remaining_faces() {
+  for(const BorderId bid : borders()) {
+    if(!face(bid).valid()) // Find borders that didn't get assigned a face yet
+      new_face_for_border(bid); // Add a new face
+  }
+}
+
 std::ostream& operator<<(std::ostream& os, const HalfedgeGraph& g) {
   os << "{ HalfedgeGraph with " << g.n_vertices() << " vertices and " << g.n_edges() << " edges:\n"
      << "\tEdges:";

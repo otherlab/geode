@@ -83,18 +83,36 @@ bool segment_intersections_ordered(const P2 a0, const P2 a1, const P2 b0, const 
 }
 
 namespace {
-struct SegmentIntersectionUpwards { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0) {
+struct SegmentIntersectionAbovePoint { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c0) {
   const auto da = a1-a0,
              db = b1-b0;
              // c1 == c1 + x*delta
              //dc = [dx, 0];
-  //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y*delta;
-  return (a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*da.y;
+  //return delta*(a0.y-c0.y)*edet(da,db)-edet(b0-a0,db)*-da.y*delta;
+  return (a0.y-c0.y)*edet(da,db)+edet(b0-a0,db)*da.y;
 }};}
-bool segment_intersection_upwards(const P2 a0, const P2 a1, const P2 b0, const P2 b1, const P2 c) {
-  return perturbed_predicate<SegmentIntersectionUpwards>(a0,a1,b0,b1,c)
-       ^ segment_directions_oriented(a0,a1,b0,b1)
-       ^ rightwards(a0,a1);
+bool segment_intersection_above_point(const P2 a0, const P2 a1, const P2 b0, const P2 b1, const P2 c) {
+  // If we could turn c into a segment by constructing c1 at (c.x + delta, c.y) and we use
+  // iab and iac as the intersections between a/b and a/c, we want to compute upwards(iac,iab)
+  // Order along 'a' is same as upwards(iac, iab) when upwards(a1,a0) is true
+  // Substituting into segment_intersections_ordered and simplifying we get:
+  return perturbed_predicate<SegmentIntersectionAbovePoint>(a0,a1,b0,b1,c)
+       ^ segment_directions_oriented(b0,b1,a0,a1);
+}
+
+namespace {
+struct RayIntersectionsRightwards { template<class TV> static inline PredicateType<3,TV> eval(const TV a0, const TV a1, const TV b0, const TV b1, const TV c) {
+  const auto da = a1 - a0;
+  const auto db = b1 - b0;
+  // a_intercept = a0.x + da.x*(c.y - a0.y)/da.y == a0.x + a_num / da.y
+  // b_intercept = b0.x + db.x*(c.y - b0.y)/db.y == b0.x + b_num / db.y
+  // (b_intercept - a_intercept) * da.y * db.y =
+  // (b0.x*db.y + b_num)*da.y - (a0.x*da.y + a_num)*db.y
+  // (b0.x - a0.x)*da.y*db.y + (c.y - b0.y)*db.x*da.y + (a0.y - c.y)*da.x*db.y
+  return (b0.x - a0.x)*da.y*db.y + (c.y - b0.y)*db.x*da.y + (a0.y - c.y)*da.x*db.y;
+}};}
+bool ray_intersections_rightwards(const P2 a0, const P2 a1, const P2 b0, const P2 b1, const P2 c) {
+  return perturbed_predicate<RayIntersectionsRightwards>(a0, a1, b0, b1, c) ^ upwards(a1,a0) ^ upwards(b1,b0);
 }
 
 #define ROW(d) tuple(esqr_magnitude(d),d.x,d.y) // Put the quadratic entry first so that subexpressions are lower order

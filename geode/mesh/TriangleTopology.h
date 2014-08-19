@@ -237,6 +237,8 @@ public:
   Array<VertexId> vertex_one_ring(VertexId v) const;
   Array<FaceId> incident_faces(VertexId v) const;
 
+  int valence(VertexId v) const;
+
   // Iterate over vertices, edges, or faces, skipping erased entries.
   inline Range<TriangleTopologyIter<VertexId>>   vertices()           const;
   inline Range<TriangleTopologyIter<FaceId>>     faces()              const;
@@ -336,6 +338,9 @@ public:
   GEODE_CORE_EXPORT real angle_at(RawField<const TV2,VertexId> X, const HalfedgeId e) const;
   GEODE_CORE_EXPORT real angle_at(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
 
+  // Compute the area of a face
+  GEODE_CORE_EXPORT real area(RawField<const TV3,VertexId> X, const FaceId f) const;
+
   // Compute a face normal
   GEODE_CORE_EXPORT TV3 normal(RawField<const TV3,VertexId> X, const FaceId f) const;
 
@@ -356,8 +361,11 @@ public:
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,1>>,Array<HalfedgeId>> edge_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV2,2>>,Array<FaceId>> face_tree(Field<const TV2,VertexId> X, const int leaf_size=1) const;
   GEODE_CORE_EXPORT Tuple<Ref<SimplexTree<TV3,2>>,Array<FaceId>> face_tree(Field<const TV3,VertexId> X, const int leaf_size=1) const;
+
+#ifdef GEODE_PYTHON
   GEODE_CORE_EXPORT Ref<> edge_tree_py(Array<const real,2> X) const;
   GEODE_CORE_EXPORT Ref<> face_tree_py(Array<const real,2> X) const;
+#endif
 
   // Dihedral angles across edges.  Positive for convex, negative for concave.
   GEODE_CORE_EXPORT real dihedral(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
@@ -595,7 +603,7 @@ public:
 
   // Compact the data structure, removing all erased primitives. Returns a tuple of permutations for
   // vertices, faces, and boundary halfedges, such that the old primitive i now has index permutation[i].
-  // For any field f, use f.permute() to create a field that works with the new ids
+  // For any field f (not managed by this object), use f.permute() to create a field that works with the new ids.
   GEODE_CORE_EXPORT Vector<Array<int>,3> collect_garbage();
 
   // Collect unused boundary halfedges.  Returns old_to_new map.  This can be called after construction
@@ -636,6 +644,9 @@ public:
   void safe_erase_face    (FaceId f,     bool erase_isolated=false);
   void safe_erase_vertex  (VertexId v,   bool erase_isolated=false);
   void safe_erase_halfedge(HalfedgeId e, bool erase_isolated=false);
+
+  // erase all isolated vertices
+  GEODE_CORE_EXPORT void erase_isolated_vertices();
 };
 
 

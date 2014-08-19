@@ -26,4 +26,10 @@ struct ComponentData
   ComponentInfo& operator[](const ComponentId cid) { return components_[cid]; }
 };
 
+// Given a path (defined by edge crossings) that starts at infinity, propogate and initialize faces and component exteriors
+// If infinity_face isn't a valid id, it will be set to the first created face
+// ComponentInfo::exterior_face is set assuming path starts outside of any component
+// Path must be consistent with existing info in graph and component data
+void initialize_path_faces(const RawArray<const HalfedgeId> path_from_infinity, FaceId& infinity_face, HalfedgeGraph& g, ComponentData& cd);
+
 } // namespace geode

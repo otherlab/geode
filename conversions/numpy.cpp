@@ -21,6 +21,11 @@ namespace geode {
 #define NPY_ARRAY_ALIGNED NPY_ALIGNED
 #endif
 
+// Set in module.cpp
+bool numpy_imported = false;
+#define ASSERT_IMPORTED() \
+  GEODE_ASSERT(numpy_imported,"Numpy not yet imported, probably caused by two different versions of libgeode")
+
 void throw_dimension_mismatch() {
   PyErr_SetString(PyExc_ValueError,"dimension mismatch");
   throw PythonError();
@@ -32,10 +37,12 @@ void throw_not_owned() {
 }
 
 bool is_numpy_array(PyObject* o) {
+  ASSERT_IMPORTED();
   return PyArray_Check(o);
 }
 
 PyArray_Descr* numpy_descr_from_type(int type_num) {
+  ASSERT_IMPORTED();
   return PyArray_DescrFromType(type_num);
 }
 
@@ -44,6 +51,7 @@ Ref<> numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_rank, int max_r
     throw TypeError("Expected array, got None");
 
   // Perform the conversion
+  ASSERT_IMPORTED();
   PyObject* const array = PyArray_FromAny(op,dtype,0,0,requirements,0);
   if (!array)
     throw_python_error();
@@ -62,10 +70,12 @@ Ref<> numpy_from_any(PyObject* op, PyArray_Descr* dtype, int min_rank, int max_r
 }
 
 PyObject* numpy_new_from_descr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj) {
+  ASSERT_IMPORTED();
   return PyArray_NewFromDescr(subtype,descr,nd,dims,strides,data,flags,obj);
 }
 
 PyTypeObject* numpy_array_type() {
+  ASSERT_IMPORTED();
   return &PyArray_Type;
 }
 
@@ -81,6 +91,7 @@ static void _set_recarray_type(PyObject* type) {
 }
 
 void throw_array_conversion_error(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
+  ASSERT_IMPORTED();
   if (!PyArray_Check(object))
     PyErr_Format(PyExc_TypeError, "expected numpy array, got %s", object->ob_type->tp_name);
   else if (!PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object), descr))
@@ -102,6 +113,7 @@ void throw_array_conversion_error(PyObject* object, int flags, int rank_range, P
 }
 
 void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
+  ASSERT_IMPORTED();
   const int rank = PyArray_NDIM((PyArrayObject*)object);
   const int min_rank = rank_range<0?-rank_range-1:rank_range,max_rank=rank_range<0?100:rank_range;
   if (!PyArray_CHKFLAGS((PyArrayObject*)object,flags) || min_rank>rank || rank>max_rank || !PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object),descr))

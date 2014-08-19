@@ -510,13 +510,28 @@ Ref<SegmentSoup> nested_array_offsets_to_segment_soup(RawArray<const int> offset
   return new_<SegmentSoup>(segments);
 }
 
+// Compare two rotated views of a polygon checking for repeated points
+static bool rotation_less(const int start0, const int start1, const RawArray<const Vec2>& poly) {
+  assert(start0 != start1);
+  const int n = poly.size();
+  for(const int d : range(n)) {
+    const auto p0 = poly[wrap(start0 + d, n)];
+    const auto p1 = poly[wrap(start1 + d, n)];
+    if(lex_less(p0, p1))
+      return true;
+    if(lex_less(p1, p0))
+      return false;
+  }
+  return false;
+}
+
 Nested<Vec2> canonicalize_polygons(Nested<const Vec2> polys) {
   // Find the minimal point in each polygon under lexicographic order
   Array<int> mins(polys.size());
   for (int p=0;p<polys.size();p++) {
     const auto poly = polys[p];
     for (int i=1;i<poly.size();i++)
-      if (lex_less(poly[i],poly[mins[p]]))
+      if (rotation_less(i,mins[p],poly))
         mins[p] = i;
   }
 

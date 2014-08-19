@@ -90,6 +90,10 @@ public:
     return Id(flat.append(x));
   }
 
+  Id append_assuming_enough_space(const T& x) GEODE_ALWAYS_INLINE {
+    return Id(flat.append_assuming_enough_space(x));
+  }
+
   Id append(Uninit) GEODE_ALWAYS_INLINE {
     return Id(flat.append(uninit));
   }

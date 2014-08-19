@@ -96,6 +96,7 @@ template<Pb PS> class ExactArcGraph {
   void embed_vertex(const VertexId vid); // Requires no coincident edges at vertex
   void compute_borders_and_faces();
   Array<HalfedgeId> horizontal_raycast(const ExactHorizontal<PS>& y_ray, const BoxTree<exact::Vec2>& edge_tree) const;
+  Array<HalfedgeId> path_from_infinity(const HalfedgeId seed_he, const BoxTree<exact::Vec2>& edge_tree) const;
   Array<HalfedgeId> path_to_infinity(const HalfedgeId seed_he, const BoxTree<exact::Vec2>& edge_tree) const;
   void compute_embedding();
 };
