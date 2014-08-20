@@ -21,11 +21,3 @@ Ref<MutableTriangleTopology> improve_mesh(MutableTriangleTopology const &mesh, r
 }
 
 }
-
-#include <geode/python/wrap.h>
-
-using namespace geode;
-
-void wrap_improve_mesh() {
-  GEODE_FUNCTION(improve_mesh);
-}

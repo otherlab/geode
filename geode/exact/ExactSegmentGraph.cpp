@@ -31,7 +31,7 @@ template<class T> RRange<T> reversed_range(T& t) { return RRange<T>(t); }
 
 template<class T, class U> static Array<T> asarray_of(const Array<U>& a) {
   static_assert(sizeof(U) == sizeof(T), "At least sizes must match");
-  return Array<T>(a.size(),reinterpret_cast<T*>(a.data()),a.borrow_owner());
+  return Array<T>(a.size(),reinterpret_cast<T*>(a.data()),a.owner());
 }
 
 static Array<Box<exact::Vec2>> segment_boxes(RawArray<const int> next, RawArray<const exact::Vec2> X) {

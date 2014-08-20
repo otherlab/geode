@@ -7,8 +7,6 @@
 #include <geode/array/forward.h>
 #include <geode/utility/HasCheapCopy.h>
 #include <geode/utility/type_traits.h>
-#include <boost/mpl/if.hpp>
-#include <boost/mpl/not.hpp>
 namespace geode {
 
 template<class TArray,class TIndices> struct IsArray<IndirectArray<TArray,TIndices> >:public mpl::true_{};

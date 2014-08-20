@@ -1,8 +1,7 @@
 // Numpy definitions without Numpy dependencies
 
 #include <geode/utility/numpy.h>
-#include <boost/detail/endian.hpp>
-#include <boost/cstdint.hpp>
+#include <geode/utility/endian.h>
 #include <stdio.h>
 namespace geode {
 
@@ -63,9 +62,9 @@ size_t fill_numpy_header_helper(Array<uint8_t>& header, RawArray<const long> sha
   const int bytes = bits/8;
 
   // Endianness
-#if defined(BOOST_LITTLE_ENDIAN)
+#if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
   const char endian = '<';
-#elif defined(BOOST_BIG_ENDIAN)
+#elif GEODE_ENDIAN == GEODE_BIG_ENDIAN
   const char endian = '>';
 #else
 #error "Unknown endianness"
@@ -94,7 +93,7 @@ size_t fill_numpy_header_helper(Array<uint8_t>& header, RawArray<const long> sha
   GEODE_ASSERT((len&15)==0);
   uint16_t header_len = uint16_t(len-10);
   GEODE_ASSERT(header_len==len-10);
-#ifdef BOOST_BIG_ENDIAN
+#if GEODE_ENDIAN == GEODE_BIG_ENDIAN
   // Switch header_len to little endian
   swap(((char*)&header_len)[0],((char*)&header_len)[1]);
 #endif

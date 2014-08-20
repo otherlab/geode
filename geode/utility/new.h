@@ -11,7 +11,8 @@ namespace geode {
 #ifdef GEODE_VARIADIC
 
 template<class T,class... Args> static inline Ref<T> new_(Args&&... args) {
-  return Ref<T>(shared_ptr<T>(new T(args...)),typename Ref<T>::Safe());
+  typedef typename remove_const<T>::type MT;
+  return Ref<T>(shared_ptr<MT>(new MT(args...)),typename Ref<T>::Safe());
 }
 
 #else // Unpleasant nonvariadic versions

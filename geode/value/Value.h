@@ -6,7 +6,6 @@
 #include <geode/value/forward.h>
 #include <geode/utility/exceptions.h>
 #include <geode/utility/Object.h>
-#include <geode/utility/Optional.h>
 #include <geode/utility/type_traits.h>
 #include <geode/utility/Ptr.h>
 #include <geode/vector/Vector.h>
