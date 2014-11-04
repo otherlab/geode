@@ -123,6 +123,10 @@ or
 
 which will allow you to develop with geode in C++ as if it was installed.
 
+### Common Issues
+On recent Linux machines, the boost libraries are already multithread-capable, and will not include the 'mt' suffix. As this is the default in the geode SConstruct, the following should be added in config.py:
+    boost_lib_suffix = ''
+
 
 
 ### Acknowledgements
