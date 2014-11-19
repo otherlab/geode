@@ -29,6 +29,12 @@ public:
     Vector(const Vector<T2,0>& vector_input)
     {}
 
+    constexpr int size() const
+    {return 0;}
+
+    constexpr bool empty() const
+    {return true;}
+
     const T& operator[](const int) const
     {GEODE_FATAL_ERROR();}
 

@@ -210,7 +210,7 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
 static inline bool include_face(int delta, const FillRule rule) {
   switch(rule) {
     case FillRule::Greater: return delta > 0;
-    case FillRule::Parity: return (delta & 1);
+    case FillRule::Parity: return !(delta & 1);
     case FillRule::NotEqual: return !delta;
   }
 }

@@ -52,6 +52,9 @@ template<class... Arcs> static inline Nested<CircleArc> circle_arc_intersection(
 GEODE_CORE_EXPORT real circle_arc_area(RawArray<const CircleArc> arcs);
 GEODE_CORE_EXPORT real circle_arc_area(Nested<const CircleArc> arcs);
 
+// Total length of closed CircleArcs
+GEODE_CORE_EXPORT real circle_arc_length(Nested<const CircleArc> arcs);
+
 // Reverse winding of circular arc polygons
 GEODE_CORE_EXPORT void reverse_arcs(RawArray<CircleArc> arcs);
 GEODE_CORE_EXPORT void reverse_arcs(Nested<CircleArc> arcs);

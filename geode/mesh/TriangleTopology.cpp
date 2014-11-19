@@ -680,8 +680,8 @@ Vector<int,3> MutableTriangleTopology::add(const MutableTriangleTopology& other)
   const int base_boundary = boundaries_.size();
 
   // Add things from other to the end
-  mutable_vertex_to_edge_.extend(other.vertex_to_edge_);
-  mutable_faces_.extend(other.faces_);
+  mutable_vertex_to_edge_.extend(other.vertex_to_edge_.flat);
+  mutable_faces_.extend(other.faces_.flat);
   mutable_boundaries_.extend(other.boundaries_);
 
   // Renumber all new primitives

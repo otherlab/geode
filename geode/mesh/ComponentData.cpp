@@ -1,7 +1,10 @@
 #include <geode/mesh/ComponentData.h>
+#include <geode/structure/UnionFind.h>
 
 namespace geode {
 
+// The first implementation should be asymptotically faster since it is linear time (instead of n*log n for the second), but the second implementation is substantially faster in practice.
+#if 0
 ComponentData::ComponentData(const HalfedgeGraph& g)
  : border_to_component(g.n_borders())
 {
@@ -29,6 +32,37 @@ ComponentData::ComponentData(const HalfedgeGraph& g)
     }
   }
 }
+#else
+ComponentData::ComponentData(const HalfedgeGraph& g)
+ : border_to_component(g.n_borders(), uninit)
+{
+  UnionFind border_sets(g.n_borders());
+
+  for(const EdgeId eid : g.edges()) {
+    const Vector<HalfedgeId,2> he = HalfedgeGraph::halfedges(eid);
+    const Vector<BorderId,2> borders = vec(g.border(he[0]), g.border(he[1]));
+    if(borders[0] != borders[1]) {
+      border_sets.merge(borders[0].idx(), borders[1].idx());
+    }
+  }
+
+  // First process all roots to set their border_to_component values and construct components_
+  for(const BorderId bid : g.borders()) {
+    if(border_sets.is_root(bid.idx())) {
+      border_to_component[bid] = components_.append(ComponentInfo(bid));
+    }
+  }
+
+  // Now go back and set border_to_component for the remaining borders
+  for(const BorderId bid : g.borders()) {
+    if(!border_sets.is_root(bid.idx())) {
+      const auto parent = BorderId(border_sets.find(bid.idx()));
+      assert(parent != bid);
+      border_to_component[bid] = border_to_component[parent];
+    }
+  }
+}
+#endif
 
 void initialize_path_faces(const RawArray<const HalfedgeId> path_from_infinity, FaceId& infinity_face, HalfedgeGraph& g, ComponentData& cd) {
   // If we haven't created the infinity_face, attempt to do so now

@@ -451,7 +451,7 @@ template<Pb PS> Vector<CircleIntersection<PS>,2> get_intersections(const ExactCi
 
 template<Pb PS> Vector<HorizontalIntersection<PS>,2> get_intersections(const ExactCircle<PS>& c0, const ExactHorizontal<PS>& h1) {
   assert(has_intersections(c0,h1));
-  const auto as_incident = c0.circle_horizontal_intersections(h1);
+  const auto as_incident = c0.get_intersections(h1);
   return vec(HorizontalIntersection<PS>(as_incident.x, c0), HorizontalIntersection<PS>(as_incident.y, c0));
 }
 
@@ -461,6 +461,11 @@ template<Pb PS> SmallArray<CircleIntersection<PS>,2> intersections_if_any(const 
   return !is_same_circle(c0, c1) && has_intersections(c0,c1)
     ? SmallArray<CircleIntersection<PS>,2>(get_intersections(c0, c1))
     : SmallArray<CircleIntersection<PS>,2>();
+}
+
+template<Pb PS> SmallArray<HorizontalIntersection<PS>,2> intersections_if_any(const ExactCircle<PS>& c0, const ExactHorizontal<PS>& h1) {
+  return has_intersections(c0,h1) ? SmallArray<HorizontalIntersection<PS>,2>(get_intersections(c0,h1))
+                                  : SmallArray<HorizontalIntersection<PS>,2>();
 }
 
 template<Pb PS> SmallArray<HorizontalIntersection<PS>,2> intersections_if_any(const ExactArc<PS>& a0, const ExactHorizontal<PS>& h1) {
@@ -534,7 +539,27 @@ template<Pb PS> Vector<IncidentHorizontal<PS>,2> ExactCircle<PS>::get_intersecti
   return i;
 }
 
+
+#ifndef NDEBUG
+// Any time we use an IncidentCircle we must only use the correct matching reference circle
+// This won't notice intersections at almost the same place/q but with a different reference circle so it can't reliably match up incidents with reference circles
+template<Pb PS, class... Args> static void assert_incident_args(const ExactCircle<PS>& c, const Args&... incidents) {
+  for(const IncidentCircle<PS>& i : vec(incidents...)) {
+#if 0
+    // This is very slow even for a debug build, but will catch pretty much all cases
+    const auto dup = (i.side == ReferenceSide::cl) ? c.intersection_min(i.as_circle()) : c.intersection_max(i.as_circle()); // This will throw if i doesn't actually intersect c
+    assert(i.q == dup.q && i.box().intersects(dup.box()));
+#else
+    assert(!is_same_circle(c,i.as_circle())); // Lazy check for the most likely error
+#endif
+  }
+}
+#else
+#define assert_incident_args(...)
+#endif
+
 template<Pb PS> IncidentCircle<PS> ExactCircle<PS>::other_intersection(const IncidentCircle<PS>& i) const {
+  assert_incident_args(*this, i);
   const auto result = (i.side != ReferenceSide::cl)
                     ? intersection_min(i)
                     : intersection_max(i);
@@ -556,6 +581,7 @@ template<Pb PS> SmallArray<IncidentHorizontal<PS>,2> ExactCircle<PS>::intersecti
 }
 
 template<Pb PS> bool ExactCircle<PS>::is_same_intersection(const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const {
+  assert_incident_args(*this, i0, i1);
   // Check if two IncidentCircle refer to the same symbolic object
   // Even though '*this' isn't read, this is a method of ExactCircle for consistency with ther IncidentCircle predicates
   const bool result = (i0.side == i1.side) && is_same_circle(i0, i1);
@@ -564,6 +590,7 @@ template<Pb PS> bool ExactCircle<PS>::is_same_intersection(const IncidentCircle<
 }
 
 template<Pb PS> bool ExactCircle<PS>::intersections_upwards_same_q(const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const {
+  assert_incident_args(*this, i0, i1);
   assert(i0.q == i1.q);
   assert(!is_same_intersection(i0, i1));
   assert(!is_same_circle(*this, i0) && !is_same_circle(*this, i1));
@@ -585,9 +612,9 @@ template<Pb PS> bool ExactCircle<PS>::intersections_upwards_same_q(const Inciden
 template<Pb PS> static inline bool above_center(const IncidentCircle<PS>& i) { return i.q <= 1; }
 
 template<Pb PS> bool ExactCircle<PS>::intersections_upwards(const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const {
+  assert_incident_args(*this, i0, i1);
   if(i0.q == i1.q) // Fall back to same_q version when possible
     return intersections_upwards_same_q(i0, i1);
-
   #if 0
   if(above_center(i0) != above_center(i1)) { // If center is between intersections, use that to seperate them
     const bool result = above_center(i1);
@@ -626,26 +653,23 @@ template<Pb PS> static inline bool circle_intersections_ccw_degenerate(const Exa
   }
 }
 
-template<Pb PS> bool ExactCircle<PS>::intersections_sorted(const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const {
-  if(i0.q != i1.q)
-    return i0.q < i1.q;
-  return intersections_ccw_same_q(i0, i1);
-}
-
 // Are the intersections of a common circle with two others counterclockwise? In other words, is the triangle c0,i0,i1 positively oriented?
 template<Pb PS> bool ExactCircle<PS>::intersections_ccw(const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const {
+  assert_incident_args(*this, i0, i1);
   const auto center = Vector<Interval,2>(this->center);
   return FILTER(cross(i0.p()-center,i1.p()-center),
                 circle_intersections_ccw_degenerate(*this,i0,i1));
 }
 
 template<Pb PS> bool ExactCircle<PS>::intersections_ccw_same_q(const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const {
+  assert_incident_args(*this, i0, i1);
   assert(i0.q == i1.q);
   const auto q = i0.q;
   return intersections_upwards_same_q(i0, i1) ^ ( (q == 1) || (q == 2) );
 }
 
 template<Pb PS> bool ExactCircle<PS>::intersections_ccw_same_q(const IncidentCircle<PS>& i0, const IncidentHorizontal<PS>& i1) const {
+  assert_incident_args(*this, i0);
   assert(i0.q == i1.q);
   const auto q = i0.q;
   return intersections_upwards(i0, i1) ^ ( (q == 1) || (q == 2) );
@@ -664,9 +688,35 @@ struct HorizontalB { template<class TV> static PredicateType<1,TV> eval(const TV
   return S0.x-S1.x;
 }};}
 template<Pb PS> bool ExactCircle<PS>::intersections_upwards(const IncidentCircle<PS>& i, const IncidentHorizontal<PS>& h) const {
+  assert_incident_args(*this, i);
   return FILTER(h.line.y-i.p().y,
                 perturbed_predicate_sqrt<HorizontalA,HorizontalB,Beta<0,1>>(cl_is_incident(i.side)?1:-1,perturbed(*this),perturbed(i),perturbed(h.line)));
 }
+
+static Interval approx_angle_helper(const Vector<Quantized,2> center, const Vector<Interval,2> approx, const uint8_t q) {
+  assert(0 <= q && q < 4);
+  auto delta = rotate_left_90_times(approx - Vector<Interval,2>(center), -q); // Rotate vector into first quadrant
+  delta = Vector<Interval,2>::componentwise_max(delta, vec(Interval(0),Interval(0))); // Clamp value to first quadrant
+
+  if(!delta.x.contains_zero()) {
+    const Interval pos_theta = atan(delta.y * inverse(delta.x));
+    return (Interval(M_PI_2)*(q+0)) + pos_theta;
+  }
+  if(!delta.y.contains_zero()) {
+    const Interval neg_theta = atan(delta.x * inverse(delta.y));
+    return (Interval(M_PI_2)*(q+1)) - neg_theta;
+  }
+  return Interval(M_PI_2)*q + Interval(0, M_PI_2);
+}
+
+template<Pb PS> Interval ExactCircle<PS>::approx_angle(const IncidentCircle<PS>& i) const {
+  assert_incident_args(*this, i);
+  return approx_angle_helper(center, i.approx.p(), i.q);
+}
+template<Pb PS> Interval ExactCircle<PS>::approx_angle(const IncidentHorizontal<PS>& i) const {
+  return approx_angle_helper(center, i.p(), i.q);
+}
+
 
 template<Pb PS> IncidentCircle<PS>::IncidentCircle(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr, const ReferenceSide _side)
  : ExactCircle<PS>(cl_is_incident(_side) ? cl : cr)
@@ -682,17 +732,11 @@ template<Pb PS> IncidentCircle<PS>::IncidentCircle(const ExactCircle<PS>& cl, co
  , side(_side)
 { }
 
-template<Pb PS> IncidentCircle<PS>::IncidentCircle(const ExactCircle<PS>& _incident, const ReferenceSide _side, const ApproxIntersection _approx, const uint8_t _q)
- : ExactCircle<PS>(_incident)
- , approx(_approx)
- , q(_q)
- , side(_side)
-{ }
-
 template<Pb PS> IncidentCircle<PS> IncidentCircle<PS>::reference_as_incident(const ExactCircle<PS>& reference) const {
   const ExactCircle<PS>& incident = *this;
   assert(!is_same_circle(reference, incident));
   assert(has_intersections(reference, incident));
+  assert_incident_args(reference, *this);
   const ExactCircle<PS>& cl = cl_is_incident(side) ? incident : reference;
   const ExactCircle<PS>& cr = cl_is_incident(side) ? reference : incident;
   return IncidentCircle(cl, cr, opposite(side), approx);
@@ -778,6 +822,8 @@ template<Pb PS> bool ExactArc<PS>::is_full_circle() const {
 }
 
 template<Pb PS> Vec2 ExactArc<PS>::q_and_opp_q() const {
+  assert(!is_full_circle()); // q isn't defined for a full circle
+
   const auto r = circle.radius;
   const auto l = min(r, 0.5 * (src.approx.guess() - dst.approx.guess()).magnitude());
   const auto root = sqrt(max(0.,sqr(r) - sqr(l)));
@@ -816,7 +862,16 @@ template<Pb PS> bool ExactArc<PS>::unsafe_contains(const IncidentCircle<PS>& i) 
 }
 
 template<Pb PS> bool ExactArc<PS>::interior_contains(const IncidentCircle<PS>& i) const {
-  return is_endpoint(i) ? is_full_circle() : unsafe_contains(i);
+  return has_endpoint(i) ? is_full_circle() : unsafe_contains(i);
+}
+template<Pb PS> bool ExactArc<PS>::half_open_contains(const IncidentCircle<PS>& i) const {
+  if(circle.is_same_intersection(src,i))
+    return true; // Include start
+  if(circle.is_same_intersection(dst,i)) {
+    assert(!is_full_circle()); // Should only be a full circle if src == dst in which case we shouldn't have dst == i since we just checked src == i
+    return false;
+  }
+  return unsafe_contains(i); // Fall back to general case
 }
 
 template<Pb PS> Box<exact::Vec2> bounding_box(const ExactArc<PS>& a) {
@@ -879,6 +934,61 @@ template<Pb PS> bool ExactArc<PS>::contains_horizontal(const IncidentHorizontal<
   }
 }
 
+template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& i) const {
+  const IncidentCircle<PS>& src = this->i;
+  const IncidentHorizontal<PS>& dst = h;
+  const bool flipped = h_is_src;
+
+  if (src.q != dst.q) { // arc starts and ends in different quadrants
+    if (src.q == i.q)
+      return flipped ^ circle.intersections_ccw_same_q(src, i);
+    else if (dst.q == i.q)
+      return flipped ^ circle.intersections_ccw_same_q(i, dst);
+    else
+      return flipped ^ (((i.q-src.q)&3)<((dst.q-src.q)&3));
+  } else { // arc starts and ends in the same quadrant
+    const bool small = circle.intersections_ccw_same_q(src, dst);
+    return flipped ^ small ^ (   src.q != i.q
+                               || (small ^ circle.intersections_ccw_same_q(src,i))
+                               || (small ^ circle.intersections_ccw_same_q(i,dst)));
+  }
+}
+
+template<Pb PS> Box<exact::Vec2> bounding_box(const ExactHorizontalArc<PS>& a) {
+  const IncidentCircle<PS>& src = a.i;
+  const IncidentHorizontal<PS>& dst = a.h;
+  const bool flipped = a.h_is_src;
+
+  // We start with the bounding box of the endpoints
+  auto box = Box<exact::Vec2>::combine(src.box(),dst.box());
+
+  if(src.q == dst.q) {
+    // If src and dst are in same quadrant, arc will either hit all 4 axis or none
+    if(flipped ^ !a.circle.intersections_ccw_same_q(src, dst))
+      return bounding_box(a.circle);
+    else
+      return box;
+  }
+  else {
+    // If src and dst are in different quadrants we update each crossed axis
+          auto q     = a.h_is_src ? a.h.q : a.i.q;
+    const auto dst_q = a.h_is_src ? a.i.q : a.h.q;
+    do {
+      q = (q+1)&3; // Step to next quadrant
+      switch(q) {
+        // Add start of new quadrant
+        // Arc bounding box must be a subset of the circle bounding box so we can directly update each axis as we cross into the quadrant
+        case 0: box.max.x = a.circle.center.x + a.circle.radius; break;
+        case 1: box.max.y = a.circle.center.y + a.circle.radius; break;
+        case 2: box.min.x = a.circle.center.x - a.circle.radius; break;
+        case 3: box.min.y = a.circle.center.y - a.circle.radius; break;
+        GEODE_UNREACHABLE();
+      }
+    } while(q != dst_q); // Go until we end up at dst
+    return box;
+  }
+}
+
 #define INSTANTIATE(PS) \
   template struct ExactCircle<PS>; \
   template struct IncidentCircle<PS>; \
@@ -886,18 +996,22 @@ template<Pb PS> bool ExactArc<PS>::contains_horizontal(const IncidentHorizontal<
   template struct CircleIntersection<PS>; \
   template struct HorizontalIntersection<PS>; \
   template struct ExactArc<PS>; \
+  template struct ExactHorizontalArc<PS>; \
   template bool is_same_circle      (const            ExactCircle<PS>& c0, const            ExactCircle<PS>& c1); \
   template bool is_same_horizontal  (const        ExactHorizontal<PS>& h0, const        ExactHorizontal<PS>& h1); \
   template bool is_same_intersection(const  CircleIntersectionKey<PS>& i0, const  CircleIntersectionKey<PS>& i1); \
   template bool is_same_intersection(const HorizontalIntersection<PS>& i0, const HorizontalIntersection<PS>& i1); \
   template bool has_intersections(const ExactCircle<PS>& c0, const ExactCircle<PS>& c1); \
+  template bool circles_overlap(const ExactCircle<PS>& c0, const ExactCircle<PS>& c1); \
   template SmallArray<CircleIntersection<PS>,2> intersections_if_any(const ExactCircle<PS>& c0, const ExactCircle<PS>& c1); \
+  template SmallArray<HorizontalIntersection<PS>,2> intersections_if_any(const ExactCircle<PS>& a0, const ExactHorizontal<PS>& h1); \
   template SmallArray<CircleIntersection<PS>,2> intersections_if_any(const ExactArc<PS>& a0, const ExactArc<PS>& a1); \
   template SmallArray<HorizontalIntersection<PS>,2> intersections_if_any(const ExactArc<PS>& a0, const ExactHorizontal<PS>& h1); \
   template bool intersections_rightwards(const HorizontalIntersection<PS>& i0, const HorizontalIntersection<PS>& i1); \
   template bool arcs_overlap(const ExactArc<PS>& a0, const ExactArc<PS>& a1); \
   template Box<exact::Vec2> bounding_box(const ExactCircle<PS>& c); \
-  template Box<exact::Vec2> bounding_box(const ExactArc<PS>& a);
+  template Box<exact::Vec2> bounding_box(const ExactArc<PS>& a); \
+  template Box<exact::Vec2> bounding_box(const ExactHorizontalArc<PS>& a);
 
 INSTANTIATE(Pb::Explicit)
 INSTANTIATE(Pb::Implicit)

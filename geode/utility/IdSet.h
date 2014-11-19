@@ -1,12 +1,11 @@
 #pragma once
-#include <geode/exact/circle_objects.h>
+#include <geode/array/Field.h>
 #include <geode/structure/Hashtable.h>
 
 namespace geode {
 
 // Provides a bidirectional mapping between a set of elements and a range of Ids.
 // A seperate key type is allowed to support searching by a lightweight K (i.g. CircleIntersectionKey) without computing a larger T (i.g. CircleIntersection)
-// This should probably be seperated from VertexSet if it starts being used externally
 template<class T, class Id, class K=T> struct IdSet {
  protected:
   Hashtable<K, Id> k_to_id;
@@ -68,18 +67,11 @@ template<class T, class Id, class K=T> struct IdSet {
     erase_last(last_id);
   }
 
-};
-
-// Maintain a mapping of unique CircleIntersections to VertexIds
-template<Pb PS> struct VertexSet
- : public IdSet<CircleIntersection<PS>,VertexId,CircleIntersectionKey<PS>> {
-
-  VertexId get_or_insert_intersection(const CircleIntersection<PS>& new_i) {
-    VertexId& new_id = this->k_to_id.get_or_insert(new_i.as_key());
-    if(!new_id.valid()) {
-      new_id = this->id_to_t.append(new_i);
+  void preallocate(const int max_size) {
+    if(max_size > k_to_id.max_size()) {
+      k_to_id.resize_table(max_size);
+      id_to_t.preallocate(max_size);
     }
-    return new_id;
   }
 };
 

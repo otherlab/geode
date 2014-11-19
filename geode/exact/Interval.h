@@ -584,6 +584,20 @@ static inline Interval abs(const Interval x) {
 
 #endif // GEODE_INTERVAL_SSE
 
+using ::std::atan; // We explicitly pull atan into the geode namespace
+// Without this calling atan on a double would implicitly convert argument and call atan(Interval) resulting in an Interval instead of a double
+
+static inline Interval atan(const Interval x) {
+  assert(fegetround() == FE_UPWARD);
+  // atan is monotonic so new bounds are just rounded atan of old bounds
+  // We can use atan on nlo directly since atan(-x) == -atan(x)
+#if !GEODE_INTERVAL_SSE
+  return Interval(std::atan(x.nlo),std::atan(x.hi));
+#else
+  return Interval(pack<double>(std::atan(x.s[0]),std::atan(x.s[1])));
+#endif
+}
+
 // +-1 if the interval is definitely nonzero, otherwise zero
 static inline int weak_sign(const Interval x) {
   return certainly_positive(x) ?  1

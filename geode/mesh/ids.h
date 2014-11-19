@@ -40,10 +40,13 @@ const int halfedge_texcoord_id = 2;
     bool operator> (Name i) const { return id> i.id; } \
     bool operator>=(Name i) const { return id>=i.id; } \
     explicit operator int() const { return id; } \
+    static constexpr char prefix_char = (#Name)[0]; \
   }; \
   template<GEODE_REMOVE_PARENS(template_args)> struct is_packed_pod<GEODE_REMOVE_PARENS(full_name)> : mpl::true_ {}; \
   GEODE_REMOVE_PARENS(templates) GEODE_UNUSED static inline ostream& \
-  operator<<(ostream& output, GEODE_REMOVE_PARENS(full_name) i) { return output<<i.id; }
+  operator<<(ostream& output, GEODE_REMOVE_PARENS(full_name) i) { return output<<(i.prefix_char)<<i.id; }
+// When we print ids, we use first character of Name as a prefix to make it easier to differentiate ids
+// (i.g. V0 for VertexId(0), E0 for EdgeId(0), vs 0 for int(0))
 
 #define GEODE_DEFINE_ID_CONVERSIONS(Name, full_name, templates, template_args) \
   GEODE_REMOVE_PARENS(templates) GEODE_UNUSED static inline PyObject* \
@@ -112,7 +115,12 @@ template<class Id> struct IdIter {
   int operator-(IdIter o) const { return i.id-o.i.id; }
 };
 
-template<class Id> Range<IdIter<Id>> id_range(const int n) { return range(IdIter<Id>(Id(0)),IdIter<Id>(Id(n))); }
+template<class Id> Range<IdIter<Id>> id_range(const Id min, const Id end) {
+  assert(min == end || min.idx() <= end.idx()); // Catch unbounded ranges
+  return range(IdIter<Id>(min),IdIter<Id>(end));
+}
+template<class Id> Range<IdIter<Id>> id_range(const int n) { return id_range(Id(0),Id(n)); }
+template<class Id> Range<IdIter<Id>> id_range(const int lo, const int hi) { return id_range(Id(lo),Id(hi)); }
 
 #ifdef OTHER_PYTHON
 template<class Id> static inline PyObject* to_python(IdIter<Id> i) { return to_python(i.i); }

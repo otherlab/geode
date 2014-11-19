@@ -1,102 +1,142 @@
-#include <geode/exact/scope.h>
+#include <geode/exact/circle_csg.h>
 #include <geode/exact/circle_offsets.h>
 #include <geode/exact/circle_quantization.h>
-#include <geode/exact/ExactArcGraph.h>
-
+#include <geode/exact/PlanarArcGraph.h>
+#include <geode/exact/scope.h>
 namespace geode {
 
 static constexpr Pb PS = Pb::Implicit;
-typedef ExactArcGraph<PS>::EdgeValue EdgeValue;
 
 #ifdef NDEBUG
 #else
+// For asserts to check that a value is actually quantized rather than some non-integer value
 static bool is_quantized(const Quantized x) { return ExactInt(x) == x; }
 static bool is_quantized(const exact::Vec2 v) { return is_quantized(v.x) && is_quantized(v.y); }
 #endif
 
-static void add_capsule_helper(ExactArcGraph<PS>& g, const ExactCircle<PS> c, const exact::Vec2 x0, const exact::Vec2 x1, const bool left_flags_safe, const bool prefer_full_circle, const Quantized signed_offset) {
+static Vec2 round(const Vec2 x) { return vec(std::round(x.x),std::round(x.y)); }
+
+static void add_capsule_helper(ArcAccumulator<Pb::Implicit>& result, const ExactCircle<PS> c, const exact::Vec2 x0, const exact::Vec2 x1, const bool left_flags_safe, const bool prefer_full_circle, const Quantized signed_offset) {
   const Quantized abs_offset = abs(signed_offset);
-  const int capsule_sign = (signed_offset >= 0) ? 1 : -1; // Final area of capsule should have same sign
+  const ArcDirection capsule_sign = (signed_offset > 0) ? ArcDirection::CCW : ArcDirection::CW; // Final area of capsule should have same sign
   assert(is_quantized(c.center));
   assert(is_quantized(c.radius));
   assert(is_quantized(x0));
   assert(is_quantized(x1));
   assert(abs_offset != 0);
 
+  const Quantized inner_r = c.radius - abs_offset;
+  const Quantized outer_r = c.radius + abs_offset;
+
   // Tolerance is for each dimension, so we need to multiply by sqrt(2) to get distance error
   const Interval intersection_error_bound = assume_safe_sqrt(Interval(2))*ApproxIntersection::tolerance();
   // If we grow endcap for an arc by this amount, we ensure intersection or coverage of inner and outer offset arcs
   const Quantized endcap_safety_margin = ceil(intersection_error_bound.box().max); // Since offset circles don't need to construct new centers and have exactly correct radius, we only need to account for error of intersections
 
-  const Quantized inner_r = c.radius - abs_offset;
-  const Quantized outer_r = c.radius + abs_offset;
-  const Quantized endcap_r = abs_offset + endcap_safety_margin;
-
   if(!left_flags_safe) {
     if(prefer_full_circle) {
-      g.add_full_circle(ExactCircle<PS>(c.center, outer_r), EdgeValue(1, capsule_sign));
+      result.add_full_circle(ExactCircle<PS>(c.center, outer_r), capsule_sign);
       if(inner_r > 0) {
-        g.add_full_circle(ExactCircle<PS>(c.center, inner_r), EdgeValue(1, -capsule_sign)); // Subtract inside to get an annulus if needed
+        result.add_full_circle(ExactCircle<PS>(c.center, inner_r), -capsule_sign); // Subtract inside to get an annulus if needed
       }
     }
     else {
-      // Use midpoint of verticies to minimize largest error
-      const auto new_center = floor(0.5*(x0 + x1));
-      g.add_full_circle(ExactCircle<PS>(new_center, endcap_r), EdgeValue(1, capsule_sign)); // Approximate as a single circle
+      // Use midpoint of vertices to minimize largest error
+      const auto new_center = round(0.5*(x0 + x1));
+      const Quantized endcap_r = abs_offset + 2*endcap_safety_margin;
+      result.add_full_circle(ExactCircle<PS>(new_center, endcap_r), capsule_sign); // Approximate as a single circle
     }
   }
   else {
+    // Tolerance is for each dimension, so we need to multiply by sqrt(2) to get distance error
+    const Interval intersection_error_bound = assume_safe_sqrt(Interval(2))*ApproxIntersection::tolerance();
+    // If we grow endcap for an arc by this amount, we ensure intersection or coverage of inner and outer offset arcs
+    const Quantized endcap_safety_margin = ceil(intersection_error_bound.box().max); // Since offset circles don't need to construct new centers and have exactly correct radius, we only need to account for error of intersections
+
+    const Quantized endcap_r = abs_offset + endcap_safety_margin;
+
     // Find or build circles for endcaps
     const auto src_cap = ExactCircle<PS>(x0, endcap_r);
     const auto dst_cap = ExactCircle<PS>(x1, endcap_r);
+    const CircleId src_cap_cid = result.vertices.get_or_insert(src_cap);
+    const CircleId dst_cap_cid = result.vertices.get_or_insert(dst_cap);
 
-    IncidentCircle<PS> src_cap_inner;
-    IncidentCircle<PS> src_cap_outer;
-
-    IncidentCircle<PS> dst_cap_outer;
-    IncidentCircle<PS> dst_cap_inner;
+    IncidentId outer_src_cap; // endpoint of arc (if any) along outer circle at intersection with src_cap
+    IncidentId dst_cap_outer; // endpoint of arc along dst_cap at outer circle (if any) or src_cap
 
     // Check if outer intersect endcaps to see if we need it
     // Endcap safety margin could (just barely and in very rare cases) make them fully enclose the outer offset arc
     // If this happens we can just use the endcaps
+
     const auto outer_c = ExactCircle<PS>(c.center, outer_r);
+
     if(has_intersections(outer_c, src_cap) && has_intersections(outer_c, dst_cap)) {
       const auto outer_src = outer_c.intersection_min(src_cap);
-      const auto outer_dst = outer_c.intersection_max(dst_cap);
-      const auto outer_arc = ExactArc<PS>({outer_c, outer_src, outer_dst});
-      g.add_arc(outer_arc, EdgeValue(1,capsule_sign));
-      src_cap_outer = outer_src.reference_as_incident(outer_c);
-      dst_cap_outer = outer_dst.reference_as_incident(outer_c);
+      const auto dst_outer = dst_cap.intersection_min(outer_c);
+      const CircleId outer_cid = result.vertices.get_or_insert(outer_c);
+      outer_src_cap = result.vertices.get_or_insert(outer_src, outer_cid, src_cap_cid);
+      dst_cap_outer = result.vertices.get_or_insert(dst_outer, dst_cap_cid, outer_cid);
     }
     else {
       assert(has_intersections(src_cap, dst_cap)); // Outer should only be enclosed in cases where endcaps are intersecting
-      const auto i = CircleIntersection<PS>::first(src_cap, dst_cap);
-      src_cap_outer = i.incident(ReferenceSide::cl);
-      dst_cap_outer = i.incident(ReferenceSide::cr);
+      const auto i = dst_cap.intersection_max(src_cap); // Use src_cap as a proxy for outer
+      dst_cap_outer = result.vertices.get_or_insert(i, dst_cap_cid, src_cap_cid);
+      // outer_src_cap will be invalid
     }
+
+    IncidentId inner_dst_cap; // endpoint of arc (if any) along inner circle at intersection with dst_cap
+    IncidentId src_cap_inner; // endpoint of arc along src_cap at inner circle (if any) or dst_cap
 
     const auto inner_c = ExactCircle<PS>(c.center, inner_r); // Warning: inner_r could be negative
     if((inner_r > 0) && has_intersections(inner_c, src_cap) && has_intersections(inner_c, dst_cap)) {
-      const auto inner_src = inner_c.intersection_min(src_cap);
+      const auto src_inner = src_cap.intersection_max(inner_c);
       const auto inner_dst = inner_c.intersection_max(dst_cap);
-      const auto inner_arc = ExactArc<PS>({inner_c, inner_src, inner_dst});
-      g.add_arc(inner_arc, EdgeValue(1,-capsule_sign)); // This edge travels clockwise so has a negative weight
-      src_cap_inner = inner_src.reference_as_incident(inner_c);
-      dst_cap_inner = inner_dst.reference_as_incident(inner_c);
+      const CircleId inner_cid = result.vertices.get_or_insert(inner_c);
+      src_cap_inner = result.vertices.get_or_insert(src_inner, src_cap_cid, inner_cid);
+      inner_dst_cap = result.vertices.get_or_insert(inner_dst, inner_cid, dst_cap_cid);
     }
     else {
       assert(has_intersections(src_cap, dst_cap)); // Should either have an inner circle or endcaps should intersect
-      const auto i = CircleIntersection<PS>::first(dst_cap, src_cap);
-      src_cap_inner = i.incident(ReferenceSide::cr);
-      dst_cap_inner = i.incident(ReferenceSide::cl);
+      const auto i = src_cap.intersection_max(dst_cap); // Use dst_cap instead of inner
+      src_cap_inner = result.vertices.get_or_insert(i, src_cap_cid, dst_cap_cid);
+      // inner_dst_cap will be invalid
     }
 
-    g.add_arc(ExactArc<PS>({src_cap, src_cap_inner, src_cap_outer}), EdgeValue(1, capsule_sign));
-    g.add_arc(ExactArc<PS>({dst_cap, dst_cap_outer, dst_cap_inner}), EdgeValue(1, capsule_sign));
+    result.contours.start_contour();
+    if(capsule_sign == ArcDirection::CCW) {
+      if(outer_src_cap.valid()) result.append_to_back({outer_src_cap, ArcDirection::CCW});
+                                result.append_to_back({dst_cap_outer, ArcDirection::CCW});
+      if(inner_dst_cap.valid()) result.append_to_back({inner_dst_cap, ArcDirection::CW});
+                                result.append_to_back({src_cap_inner, ArcDirection::CCW});
+    }
+    else {
+      // To get the reversed capsule we have to reverse order of endpoints, switch reference circles, reverse direction flags, and move direction flags to neighbors
+      // This is rather messy...
+
+      if(inner_dst_cap.valid()) {
+        result.append_to_back({opposite(src_cap_inner), ArcDirection::CCW}); // becomes inner_src_cap, CCW since this is the arc along inner circle
+        result.append_to_back({opposite(inner_dst_cap), ArcDirection::CW}); // becomes dst_cap_inner
+      }
+      else {
+        // 'inner' is actually src_cap so this becomes dst_cap_src_cap
+        result.append_to_back({opposite(src_cap_inner), ArcDirection::CW});
+      }
+      // Either branch will end with dst_cap as the reference circle
+
+      if(outer_src_cap.valid()) {
+        result.append_to_back({opposite(dst_cap_outer), ArcDirection::CW}); // becomes outer_dst_cap
+        result.append_to_back({opposite(outer_src_cap), ArcDirection::CW}); // becomes src_cap_outer
+      }
+      else {
+        // 'outer' is actually dst_cap so this becomes src_cap_dst_cap
+        result.append_to_back({opposite(dst_cap_outer), ArcDirection::CW});
+      }
+    }
+    result.contours.end_closed_contour();
   }
 }
 
-static void add_capsule(ExactArcGraph<PS>& g, const exact::Vec2 x0, const real q, const exact::Vec2 x1, const Quantized signed_offset) {
+static void add_capsule(ArcAccumulator<Pb::Implicit>& g, const exact::Vec2 x0, const real q, const exact::Vec2 x1, const Quantized signed_offset) {
   const Tuple<exact::Vec2, Quantized> orig_center_and_radius = construct_circle_center_and_radius(x0, x1, q);
   const auto c = ExactCircle<PS>(orig_center_and_radius.x, orig_center_and_radius.y);
 
@@ -115,7 +155,7 @@ static void add_capsule(ExactArcGraph<PS>& g, const exact::Vec2 x0, const real q
   add_capsule_helper(g, c, (q >= 0) ? x0 : x1, (q >= 0) ? x1 : x0, left_flags_safe, prefer_full_circle, signed_offset);
 }
 
-static void add_capsule(ExactArcGraph<PS>& g, const ExactArc<PS>& arc, const Quantized signed_offset) {
+static void add_capsule(ArcAccumulator<Pb::Implicit>& g, const ExactArc<PS>& arc, const Quantized signed_offset) {
   const Interval intersection_error_bound = assume_safe_sqrt(Interval(2))*ApproxIntersection::tolerance();
   const Interval approx_dist = assume_safe_sqrt(sqr_magnitude(arc.src.p() - arc.dst.p()));
   // Since the endpoints are approximate, their intersections could be in the wrong order. If we don't catch this, a small section of arc can get turned into a complete circle
@@ -131,58 +171,100 @@ static void add_capsule(ExactArcGraph<PS>& g, const ExactArc<PS>& arc, const Qua
   add_capsule_helper(g, arc.circle, arc.src.approx.snapped(), arc.dst.approx.snapped(), left_flags_safe, prefer_full_circle, signed_offset);
 }
 
-template<Pb PS> static Tuple<ExactArcGraph<PS>, Nested<HalfedgeId>> exact_offset_arcs(const ExactArcGraph<PS>& src_g, const Nested<HalfedgeId>& contours, const Quantized signed_offset) {
+template<Pb PS> Tuple<Ref<PlanarArcGraph<PS>>, Nested<HalfedgeId>> exact_offset_closed_arcs(const PlanarArcGraph<PS>& src_g, const Nested<HalfedgeId>& contours, const Quantized signed_offset) {
   IntervalScope scope;
-  auto minkowski_terms = ExactArcGraph<PS>();
 
-  for(const auto& c : contours) {
-    for(const HalfedgeId he : c) {
-      const auto a = src_g.arc(HalfedgeGraph::edge(he));
+  const auto arc_contours = src_g.combine_concentric_arcs(src_g.edges_to_closed_contours(contours));
+  ArcAccumulator<PS> minkowski_terms;
 
-      // Add the origional segment
-      minkowski_terms.add_arc(a, EdgeValue(1, HalfedgeGraph::is_forward(he) ? 1 : -1));
+  // Add the origional contours
+  minkowski_terms.copy_contours(arc_contours, src_g.vertices);
 
+  for(const auto c : arc_contours) {
+    for(const auto sa : c) {
+      const auto ccw_a = src_g.vertices.arc(src_g.vertices.ccw_arc(sa));
       // Add a capsule around the arc
-      add_capsule(minkowski_terms, a, signed_offset);
+      add_capsule(minkowski_terms, ccw_a, signed_offset);
     }
   }
+  return minkowski_terms.split_and_union();
+}
 
-  minkowski_terms.split_edges();
+static Quantized quantize_offset(const Quantizer<Quantized,2>& quant, const real d) {
+  auto result = quant.quantize_length(d);
+  if(result == 0 && d != 0) {
+    // Offsets close to the quantization resolution are dangerous since errors in quantization, constructions, and unquantization can outweigh offset
+    // This can cause bad things like offsetting by a negative amount causing geometry to grow
+    // Any usage that triggers this warning should be sanity checked since errors from quantization and constructions will be larger than offsets
+    GEODE_DEBUG_ONLY(GEODE_WARNING(format("Arc offset amount was below numerical representation threshold! Rounded to +/-%e", quant.inverse.unquantize_length(1.))));
+    // This rounds small values away from zero to preserve sign of offset to provide a chance of better behavior
+    result = (d > 0) ? 1 : -1;
+  }
+  return result;
+}
 
-  const auto contour_edges = extract_region(minkowski_terms.graph, faces_greater_than(minkowski_terms, 0));
-  return tuple(minkowski_terms, contour_edges);
+vector<Nested<CircleArc>> offset_shells(const Nested<const CircleArc> arcs, const real d, const int max_shells) {
+  vector<Nested<CircleArc>> result;
+  const auto approx_bounds = approximate_bounding_box(arcs).thickened(max(d*max_shells,0));
+  const auto quant = make_arc_quantizer(approx_bounds);
+  const auto exact_d = quantize_offset(quant,d);
+  if(exact_d == 0) {
+    const auto u = circle_arc_union(arcs);
+    if(max_shells >= 0) for(int i = 0; i < max_shells; ++i) {
+      result.push_back(u.copy());
+    }
+    return result;
+  }
+  IntervalScope scope;
+  assert(exact_d < 0 || max_shells >= 0);
+
+  VertexSet<PS> input_verts;
+  auto input_arcs = input_verts.quantize_circle_arcs(quant, arcs);
+  const auto input_g = new_<PlanarArcGraph<PS>>(input_verts, input_arcs);
+
+  auto shell = tuple(input_g, extract_region(input_g->topology, faces_greater_than(*input_g, 0)));
+  for(int i = 0; i < max_shells; ++i) {
+    shell = exact_offset_closed_arcs(*shell.x, shell.y, exact_d);
+    if(shell.y.empty())
+      break;
+    result.push_back(shell.x->unquantize_circle_arcs(quant, shell.y));
+  }
+  return result;
 }
 
 Nested<CircleArc> offset_arcs(const Nested<const CircleArc> arcs, const real d) {
-  const auto bounds = approximate_bounding_box(arcs).thickened(max(d,0));
+  auto bounds = approximate_bounding_box(arcs);
+  if(bounds.empty()) bounds = Box<Vec2>::unit_box(); // We generate a non-degenerate box in case input was empty
+  bounds = bounds.thickened(max(d,0.));
+  const Quantizer<real,2> quant = make_arc_quantizer(bounds);
   IntervalScope scope;
-  const auto quant = make_arc_quantizer(bounds);
-  const Quantized signed_offset = quant.quantize_length(d);
+  const Quantized signed_offset = quantize_offset(quant, d);
   if(signed_offset == 0) {
-    GEODE_DEBUG_ONLY(GEODE_WARNING("Arc offset amount was below numerical representation threshold! (this should be a few um for geometry that fits in meter bounds)"));
-    return arcs.copy();
+    return circle_arc_union(arcs); // Since we normally have to union inputs before we can take the offset, we do that here in case caller was relying on that union
   }
-  // We perform a CSG union of inputs to ensure input to exact_offset_arcs has well behaved inputs
-  auto g = ExactArcGraph<PS>();
-  g.quantize_and_add_arcs(quant, arcs);
-  g.split_edges();
-  const auto contours = extract_region(g.graph, faces_greater_than(g, 0));
 
-  const auto new_g_and_contours = exact_offset_arcs(g, contours, signed_offset);
-  return new_g_and_contours.x.unquantize_circle_arcs(quant, new_g_and_contours.y);
+  VertexSet<PS> input_verts;
+  auto input_arcs = input_verts.quantize_circle_arcs(quant, arcs);
+  const auto input_g = new_<PlanarArcGraph<PS>>(input_verts, input_arcs);
+
+  Field<bool, FaceId> interior_faces = faces_greater_than(*input_g, 0);
+  const auto input_contours = extract_region(input_g->topology, interior_faces);
+
+  auto offset_g_and_edges = exact_offset_closed_arcs(*input_g, input_contours, signed_offset);
+  auto result = offset_g_and_edges.x->unquantize_circle_arcs(quant, offset_g_and_edges.y);
+  return result;
 }
 
 Nested<CircleArc> offset_open_arcs(const Nested<const CircleArc> arcs, const real d) {
   const auto bounds = approximate_bounding_box(arcs).thickened(max(d,0));
   const auto quant = make_arc_quantizer(bounds);
-  const Quantized signed_offset = quant.quantize_length(d);
+  const Quantized signed_offset = quantize_offset(quant, d);
   if(signed_offset == 0) {
-    GEODE_DEBUG_ONLY(GEODE_WARNING("Arc offset amount was below numerical representation threshold! (this should be a few um for geometry that fits in meter bounds)"));
     return Nested<CircleArc>(); // Union of 0 width shapes is empty
   }
 
   IntervalScope scope;
-  auto minkowski_terms = ExactArcGraph<PS>();
+  ArcAccumulator<PS> minkowski_terms;
 
   for(const auto& c : arcs) {
     assert(c.size() > 0);
@@ -191,9 +273,13 @@ Nested<CircleArc> offset_open_arcs(const Nested<const CircleArc> arcs, const rea
     }
   }
 
-  minkowski_terms.split_edges();
-  const auto contour_edges = extract_region(minkowski_terms.graph, faces_greater_than(minkowski_terms, 0));
-  return minkowski_terms.unquantize_circle_arcs(quant, contour_edges);
+  const Tuple<Ref<PlanarArcGraph<PS>>,Nested<HalfedgeId>> exact_result = minkowski_terms.split_and_union();
+  return exact_result.x->unquantize_circle_arcs(quant, exact_result.y);
 }
+
+#define INSTANTIATE(PS) \
+  template Tuple<Ref<PlanarArcGraph<PS>>, Nested<HalfedgeId>> exact_offset_closed_arcs(const PlanarArcGraph<PS>& src_g, const Nested<HalfedgeId>& contours, const Quantized signed_offset);
+
+INSTANTIATE(Pb::Implicit)
 
 } // namespace geode
