@@ -1817,6 +1817,7 @@ void wrap_trimesh() {
     .GEODE_METHOD(mean_edge_length)
     .GEODE_OVERLOADED_METHOD_2(Vvh3_Method_fh, "face_vertex_handles", vertex_handles)
     .GEODE_OVERLOADED_METHOD_2(Vvh2_Method_eh, "edge_vertex_handles", vertex_handles)
+    .GEODE_METHOD(incident_faces)
     .GEODE_METHOD(vertex_one_ring)
     .GEODE_METHOD(smooth_normal)
     .GEODE_METHOD(add_cylinder)

@@ -112,6 +112,8 @@ private:
   ValueBase& set_allowed(PyObject* v);
   ValueBase& set_min_py(PyObject* m);
   ValueBase& set_max_py(PyObject* m);
+  PyObject* get_min_py() const;
+  PyObject* get_max_py() const;
   ValueBase& set_step_py(PyObject* s);
   PyObject* get_default() const;
   PyObject* get_allowed() const;

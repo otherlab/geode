@@ -82,14 +82,6 @@ to_json_fn[SegmentSoup] = lambda v: {
   'v': from_ndarray(v.elements, int)
 }
 
-to_json_fn[TriMesh] = lambda v: {
-  't': 'TriMesh',
-  'v': {
-    'vertices': from_ndarray(v.X()),
-    'elements': from_ndarray(v.elements(), int)
-  }
-}
-
 to_json_fn[MutableTriangleTopology] = lambda v: {
   't': 'TriangleTopology',
   'v': {
@@ -98,7 +90,15 @@ to_json_fn[MutableTriangleTopology] = lambda v: {
   }
 }
 
-from_json_fn[TriMesh] = lambda d: d['v']
+if openmesh_enabled():
+  to_json_fn[TriMesh] = lambda v: {
+    't': 'TriMesh',
+    'v': {
+      'vertices': from_ndarray(v.X()),
+      'elements': from_ndarray(v.elements(), int)
+    }
+  }
+  from_json_fn[TriMesh] = lambda d: d['v']
 
 def to_json(v):
   fn = to_json_fn.get(type(v), None)
