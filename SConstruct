@@ -709,7 +709,7 @@ def configure_python(env,python):
     p(get('PYTHONFRAMEWORKPREFIX'))
     p(get('VERSION'))
     p(get('prefix'))
-    ''')],stdout=subprocess.PIPE).communicate()[0]
+    ''')],cwd=os.path.abspath(os.sep),stdout=subprocess.PIPE).communicate()[0]
   include,nmpy,libpath,lib,frameworkpath,version,prefix = [s.strip()[1:-1] for s in data.strip().split('\n')]
   assert include,nmpy
   python['cpppath'] = [include] if os.path.exists(os.path.join(include,'numpy')) else [include,nmpy]
