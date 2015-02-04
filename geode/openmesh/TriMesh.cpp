@@ -1865,6 +1865,8 @@ void wrap_trimesh() {
     .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(VertexHandle,VertexHandle)const, halfedge_handle)
     .GEODE_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
     .GEODE_OVERLOADED_METHOD(Segment3 (Self::*)(HalfedgeHandle)const, segment)
+    .GEODE_OVERLOADED_METHOD(bool (Self::*)(HalfedgeHandle)const, is_boundary)
+    .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(HalfedgeHandle)const, opposite_halfedge_handle)
     .GEODE_OVERLOADED_METHOD_2(OTriMesh::Point (Self::*)(FaceHandle,Vector<real,3>const&)const, "interpolated_point", point)
     .GEODE_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
     .GEODE_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
