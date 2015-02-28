@@ -3,10 +3,14 @@ from __future__ import absolute_import
 from numpy import *
 from geode import *
 import struct
+import platform
 
 # this is getting seriously ugly, but we do need to be able to test isinstance on
 # these somehow.
-from geode.geode_wrap import TriangleTopology as CTriangleTopology
+if platform.system()=='Windows':
+  from geode.geode_all import TriangleTopology as CTriangleTopology
+else:
+  from geode.geode_wrap import TriangleTopology as CTriangleTopology
 
 def TriangleTopology(soup=TriangleSoup(empty((0,3),int32))):
   if isinstance(soup,geode_wrap.TriangleTopology):

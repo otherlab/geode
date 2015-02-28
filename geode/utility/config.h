@@ -58,40 +58,44 @@ typedef double real;
 #endif
 
 #ifdef NDEBUG
-#  define GEODE_ALWAYS_INLINE __attribute__ ((always_inline))
+  #define GEODE_ALWAYS_INLINE __attribute__ ((always_inline))
 #else
-#  define GEODE_ALWAYS_INLINE
+  #define GEODE_ALWAYS_INLINE
 #endif
 
 #if !defined(__clang__)
-#  define GEODE_COLD __attribute__ ((cold))
+  #define GEODE_COLD __attribute__ ((cold))
 #else
-#  define GEODE_COLD
+  #define GEODE_COLD
 #endif
 
 #if defined(NDEBUG) && (!defined(__clang__) || __has_attribute(flatten))
-#  define GEODE_FLATTEN __attribute__ ((flatten))
+  #define GEODE_FLATTEN __attribute__ ((flatten))
 #else
-#  define GEODE_FLATTEN
+  #define GEODE_FLATTEN
 #endif
 
 #ifdef __clang__
-#  define GEODE_HAS_FEATURE(feature) __has_feature(feature)
-#  define GEODE_HAS_INCLUDE __has_include
+  #define GEODE_HAS_FEATURE(feature) __has_feature(feature)
 #else
-#  define GEODE_HAS_FEATURE(feature) false
-#  define GEODE_HAS_INCLUDE(header) false
+  #define GEODE_HAS_FEATURE(feature) 0
 #endif
 
-#if !defined(__clang__) || GEODE_HAS_FEATURE(cxx_noexcept)
-#  define GEODE_NOEXCEPT noexcept
+#if !defined(__clang__) || GEODE_HAS_FEATURE(cxx_noexcept) || (defined(_MSC_VER) && _MSC_VER >= 1900)
+  #define GEODE_NOEXCEPT noexcept
 #else
-#  define GEODE_NOEXCEPT
+  #define GEODE_NOEXCEPT
 #endif
 
+#error This should probably switch to using the c++11 alignas keyword instead... #define GEODE_ALIGNED(n) alignas(n)
 #define GEODE_ALIGNED(n) __attribute__((aligned(n)))
 
 #else // _WIN32
+
+#if _MSC_VER >= 1700
+#define GEODE_VARIADIC
+#define _SCL_SECURE_NO_WARNINGS
+#endif
 
 #ifndef GEODE_SINGLE_LIB
 #define GEODE_EXPORT __declspec(dllexport)
@@ -116,8 +120,42 @@ typedef double real;
 #define GEODE_COLD
 #define GEODE_FORMAT
 #define GEODE_EXPECT(value,expect) (value)
-#define GEODE_ALIGNED(n) __declspec(align(n))
+#define GEODE_ALIGNED(n) alignas(n)
 
+#endif
+
+#if defined(__has_include)
+// If we have access to the __has_include macro, use that to check for availability
+#define GEODE_HAS_CPP11_STD_HEADER(header) __has_include(header)
+#elif defined(__GNU__) || (defined(_MSC_VER) && (_MSC_VER >= 1700))
+// Assume recent versions of MSVC or gcc will be used with C++11 stdlib
+#define GEODE_HAS_CPP11_STD_HEADER(header) 1
+#else
+// In other cases, assume not available
+#define GEODE_HAS_CPP11_STD_HEADER(header) 0
+#endif
+
+#if defined(GEODE_SSE)
+  #ifdef _MSC_VER
+    #ifdef _M_X64
+    // 64 bit targets should always have SSE support
+    #else
+      #if !(_M_IX86_FP >= 2)
+      #error  GEODE_SSE enabled, but compiler doesn't indicate SSE support on targeted architecture. Either disable GEODE_SSE or change target architecture
+      #endif
+    #endif
+    // MSVC doesn't have a different target to enable the SSE4.1 extensions so we assume they are available
+    #define GEODE_SSE4_1
+  #else // not _WIN32
+    #ifndef __SSE__
+      #error GEODE_SSE enabled, but compiler doesn't define __SSE__ for targeted architecture. Either disable GEODE_SSE or change target architecture
+    #endif
+    #ifdef __SSE4_1__
+      #define GEODE_SSE4_1
+    #else
+      #error GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture
+    #endif
+  #endif
 #endif
 
 // Mark symbols when building geode
@@ -141,4 +179,20 @@ typedef double real;
 // On non-windows, typeid needs to be exported for each class
 #define GEODE_CORE_CLASS_EXPORT GEODE_EXPORT
 
+#endif
+
+#if defined(_MSC_VER) && ((_MSC_VER < 1900) || (_MSC_VER == 1900 && _MSC_BUILD <= 1))
+// The current beta of VS2015 still only partial supports constexpr so we use these macros to dodge trouble cases
+// Use GEODE_CONSTEXPR_INCOMPLETE to control workarounds that should be removed in the future
+#define GEODE_CONSTEXPR_INCOMPLETE 1
+// Use GEODE_CONSTEXPR_UNLESS_MSVC for cases where substituting const is sufficient
+#define GEODE_CONSTEXPR_UNLESS_MSVC const
+#else
+#define GEODE_CONSTEXPR_INCOMPLETE 0
+#define GEODE_CONSTEXPR_UNLESS_MSVC constexpr
+#endif
+
+#ifndef GEODE_VARIADIC
+#error Support for compilers without C++11 features has not been actively maintained and likely requires significant updating
+#error If you would like geode to continue supporting older compilers please let us know as we are considering removing this support completely
 #endif

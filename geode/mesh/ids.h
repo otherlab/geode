@@ -40,11 +40,10 @@ const int halfedge_texcoord_id = 2;
     bool operator> (Name i) const { return id> i.id; } \
     bool operator>=(Name i) const { return id>=i.id; } \
     explicit operator int() const { return id; } \
-    static constexpr char prefix_char = (#Name)[0]; \
   }; \
   template<GEODE_REMOVE_PARENS(template_args)> struct is_packed_pod<GEODE_REMOVE_PARENS(full_name)> : mpl::true_ {}; \
   GEODE_REMOVE_PARENS(templates) GEODE_UNUSED static inline ostream& \
-  operator<<(ostream& output, GEODE_REMOVE_PARENS(full_name) i) { return output<<(i.prefix_char)<<i.id; }
+  operator<<(ostream& output, GEODE_REMOVE_PARENS(full_name) i) { return output<<((#Name)[0])<<i.id; }
 // When we print ids, we use first character of Name as a prefix to make it easier to differentiate ids
 // (i.g. V0 for VertexId(0), E0 for EdgeId(0), vs 0 for int(0))
 

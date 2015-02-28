@@ -55,7 +55,27 @@ static void large_partition_loop_test(const uint64_t loop_steps, const int threa
   }
 }
 
+static bool geode_endian_matches_native() {
+  uint8_t a0 = 0xa0, a1 = 0xa1, a2 = 0xa2, a3 = 0xa3;
+  uint32_t test_int = 0;
+  char* dst = static_cast<char*>(static_cast<void*>(&test_int));
+  memcpy(dst+0, &a0, 1);
+  memcpy(dst+1, &a1, 1);
+  memcpy(dst+2, &a2, 1);
+  memcpy(dst+3, &a3, 1);
+  static constexpr uint32_t little_endian_order = 0xa3a2a1a0;
+  static constexpr uint32_t big_endian_order = 0xa0a1a2a3;
+  GEODE_ASSERT(test_int == little_endian_order || test_int == big_endian_order);
+#if GEODE_ENDIAN == GEODE_LITTLE_ENDIAN
+  return test_int == little_endian_order;
+#elif GEODE_ENDIAN == GEODE_BIG_ENDIAN
+  return test_int == big_endian_order;
+#else
+  #error Unknown machine endianness
+#endif
 }
+
+} //namespace geode
 using namespace geode;
 
 void wrap_utility() {
@@ -75,6 +95,8 @@ void wrap_utility() {
 
   GEODE_FUNCTION(partition_loop_test)
   GEODE_FUNCTION(large_partition_loop_test)
+
+  GEODE_FUNCTION(geode_endian_matches_native)
 
   GEODE_WRAP(base64)
   GEODE_WRAP(resource)

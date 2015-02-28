@@ -4,7 +4,7 @@
 //
 // This is a minimal python object containing a buffer of memory.
 // Since it's a python object, it has a reference count, and can be shared.
-// No destructors are called, so has_trivial_destructor<T> must be true.
+// No destructors are called, so is_trivially_destructible<T> must be true.
 //
 //#####################################################################
 #pragma once
@@ -28,8 +28,8 @@ private:
 public:
 
   template<class T> static Buffer* new_(const int m) {
+    static_assert(is_trivially_destructible<T>::value,"Array<T> never calls destructors, so T cannot have any");
 #ifndef _WIN32
-    static_assert(has_trivial_destructor<T>::value,"Array<T> never calls destructors, so T cannot have any");
     Buffer* self = (Buffer*)malloc(16+m*sizeof(T));
 #else
     // Windows doesn't guarantee 16 byte alignment, so use _aligned_malloc

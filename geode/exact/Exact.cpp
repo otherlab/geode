@@ -79,7 +79,7 @@ template<int a> static inline Exact<a> random_exact(Random& random) {
 
 static void fast_exact_tests() {
 #if !GEODE_FAST_EXACT
-  cout << "No fast exact arithmetic" << endl;
+  std::cout << "No fast exact arithmetic" << std::endl;
 #else
   const auto random = new_<Random>(1823131);
   for (int i=0;i<32;i++) {

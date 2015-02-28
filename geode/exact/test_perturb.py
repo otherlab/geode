@@ -20,13 +20,15 @@ def test_interpolation():
     for n in xrange(1,6):
       beta = polynomial_monomials(d,n)
       coefs = numpy.random.randint(2*bound,size=len(beta))-bound
+      coefs = asarray(coefs,dtype=ExactInt) # in_place_interpolating_polynomial_test expects coefs to be same type as geode::ExactInt
       in_place_interpolating_polynomial_test(d,beta,coefs,False)
 
 def test_snap_divs():
   random.seed(83198131)
-  bits = 8*dtype(int).itemsize
+  limb_type = dtype('uint64') # this needs to match mp_limb_t for gmp as linked to geode
+  bits = 8*limb_type.itemsize
   bound = 2**53-1
-  ratio = dtype('double').itemsize//dtype('uint').itemsize
+  ratio = dtype('double').itemsize//limb_type.itemsize
   def limbs(n,count):
     assert abs(n)<2**(bits*count)
     mask = 2**bits-1
@@ -45,7 +47,7 @@ def test_snap_divs():
           n = -n
         try:
           count = c+ratio*p+random.randrange(3)
-          values = asarray([limbs(n,count),limbs(d,count)],dtype='uint')
+          values = asarray([limbs(n,count),limbs(d,count)],dtype=limb_type)
           y = snap_divs_test(values,p==2)
           assert abs(x)<bound
           assert x==y

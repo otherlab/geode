@@ -42,6 +42,42 @@ So far the code has been tested on
 * [clang 3.4](http://clang.llvm.org)
 * [clang 3.5](http://clang.llvm.org)
 
+### Windows
+  This has been built and run successfully with the Visual Studio 2015 preview. We are working to make this more streamlined and robust (as well as fixing the hundreds of compiler warnings), but the following worked for me:
+
+  Install the following dependencies:
+   * WinPython 64bit version 2.7.9.2 (This includes numpy and scipy)
+   * SCons using scons-local-2.3.4
+   * MPIR (commit 3a9dd527a2f87e6eff8cab8b54b0b1f31e0826fa but tweaked for VS2015)
+   ** This will require installing vsyasm
+   ** Remove definition of snprintf from /build.vc12/cfg.h
+   ** You may need to set Tools->Options->Projects and Solutions->Build and Run->"Maximum number of parallel project builds" to 1 to avoid parallel builds clobbering config headers
+
+   Create a config.py and point gmp to installation of mpir:
+     gmp_libpath = '#/../mpir/build.vc12/x64/Debug'
+     gmp_include='#/../mpir'
+     gmp_publiclibs='mpir.lib'
+
+   Create a 'scons.bat' script and place in PATH (or otherwise make scons available):
+     python %~dp0..\scons-local-2.3.4\scons.py %*
+
+   Setup Command Prompt environment:
+     Python from:
+       ...\WinPython-64bit-2.7.9.2\scripts\env.bat
+     VS dev tools using:
+       "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\VsDevCmd.bat"
+     Select x64 tools using:
+       "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+
+   Build with:
+     scons -j7 type=debug shared=0 Werror=0
+
+   SCons install targets weren't tested but copying geode_all.pyd into geode will make it usable:
+     cp build/native/optdebug/lib/build/native/optdebug/geode_all.pyd geode/geode_all.pyd
+
+   To use geode outside of project directory or for test_worker to pass you must add geode to your PYTHONPATH:
+     set PYTHONPATH=<path_to_dir_outside_repo>\geode;%PYTHONPATH%
+
 ### Installation
 
 If necessary, dependencies can be installed via one of

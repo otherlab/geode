@@ -341,16 +341,20 @@ struct HashtableIter {
     return index!=other.index; // Assume same table
   }
 
-  auto operator*() const
+  // MSVC has trouble with "decltype(&operator*())" so we use a helper function with a regular name
+  auto deref() const
     -> decltype(table[index].value()) {
     auto& entry = table[index];
     assert(entry.active());
     return entry.value();
   }
 
-  auto operator->() const
-    -> decltype(&operator*()) {
-    return &operator*();
+  auto operator*() const -> decltype(deref()) {
+    return deref();
+  }
+
+  auto operator->() const -> decltype(&(deref())) {
+    return &deref();
   }
 
   void operator++() {

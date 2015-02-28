@@ -4,53 +4,70 @@
 #include <geode/config.h>
 
 #ifdef GEODE_PYTHON
-#ifdef __APPLE__
-#include <Python.h>
-// Clean up macros in anticipation of C++ headers
-#undef isspace
-#undef isupper
-#undef islower
-#undef isalpha
-#undef isalnum
-#undef toupper
-#undef tolower
-#else
-#undef _POSIX_C_SOURCE
-#undef _XOPEN_SOURCE
-#include <Python.h>
-#endif
-#else
-#include <stdint.h>
-#include <sys/types.h>
+  #ifdef __APPLE__
+    #include <Python.h>
+    // Clean up macros in anticipation of C++ headers
+    #undef isspace
+    #undef isupper
+    #undef islower
+    #undef isalpha
+    #undef isalnum
+    #undef toupper
+    #undef tolower
+  #else // Not __APPLE__
+    #undef _POSIX_C_SOURCE
+    #undef _XOPEN_SOURCE
 
-#ifdef _WIN32 
-#define WINDOWS_LEAN_AND_MEAN
-#include <windows.h>
-typedef SSIZE_T ssize_t;
+    #if defined(_WIN32) && defined(_DEBUG)
+      // Extensions targeting debug flavor of python interpreter aren't usable with release versions
+      // Instead of requiring installation of separate interpreter for debugging we attempt to build and link against the release interpreter
+      // http://www.boost.org/doc/libs/1_57_0/libs/python/doc/building.html#python-debugging-builds
+      // This behavior could be made configurable if needed
+      #pragma push_macro("_DEBUG")
+      #undef _DEBUG
+      #include <Python.h>
+      #pragma pop_macro("_DEBUG")
+    #else
+      #include <Python.h>
+    #endif
+  #endif
+#else // Not GEODE_PYTHON
+  #include <stdint.h>
+  #include <sys/types.h>
 
-#ifndef LEAVE_WINDOWS_DEFINES_ALONE
-// clean up after windows.h
-#undef min
-#undef max
-#undef far
-#undef near
-#undef interface
-#undef small
-#endif
+  #ifdef _WIN32
+    #include <windows.h>
+    #include <stdint.h>
+    typedef SSIZE_T ssize_t;
+    #ifndef LEAVE_WINDOWS_DEFINES_ALONE
+      // clean up after windows.h
+      #undef min
+      #undef max
+      #undef far
+      #undef near
+      #undef interface
+      #undef small
+    #endif
+  #endif
 #endif
 
+#if defined(_WIN32) && GEODE_THREAD_SAFE
+// Needed for _InterlockedExchangeAdd
+#include <intrin.h>
 #endif
 
 namespace geode {
 
 #if GEODE_THREAD_SAFE
-#ifdef __GNUC__
-
+#if defined(__GNUC__)
 // See http://en.wikipedia.org/wiki/Fetch-and-add
 template<class T> static inline T fetch_and_add(T* n, T dn) {
   return __sync_fetch_and_add(n,dn);
 }
-
+#elif defined(_WIN32)
+template<class T> static inline T fetch_and_add(volatile T* n, T dn);
+template<> static inline long fetch_and_add<long>(volatile long* n, long dn) { return _InterlockedExchangeAdd(n,dn); }
+template<> static inline __int64 fetch_and_add<__int64>(volatile __int64* n, __int64 dn) { return _InterlockedExchangeAdd64(n,dn); }
 #else
 #error "Don't know atomic fetch and add for this compiler"
 #endif

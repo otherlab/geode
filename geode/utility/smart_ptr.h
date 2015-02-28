@@ -3,9 +3,8 @@
 
 #include <geode/utility/config.h>
 
-// If we're on clang, check for the right header directly.  If we're not,
-// any sufficient recently version of gcc should always have the right header.
-#if defined(__clang__) ? GEODE_HAS_INCLUDE(<memory>) : defined(__GNU__)
+// TODO: I think this header exists pre-C++11 just without shared_ptr, so this will fail on builds using clang without the C++11 stdlib
+#if GEODE_HAS_CPP11_STD_HEADER(<memory>)
 #include <memory>
 namespace geode {
 template<class T> using scoped_ptr = std::unique_ptr<T>;
@@ -13,7 +12,7 @@ using std::shared_ptr;
 using std::weak_ptr;
 }
 #define GEODE_SMART_PTR_NAMESPACE std
-#else
+#else // No C++11 <memory>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -24,7 +23,6 @@ using boost::shared_ptr;
 using boost::weak_ptr;
 }
 #endif
-
 #include <vector>
 #include <geode/utility/stl.h>
 namespace geode {

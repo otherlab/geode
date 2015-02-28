@@ -374,7 +374,7 @@ template<Pb PS> struct ArcAccumulator {
   void append_to_back(const SignedArcHead h); 
 
   // Copy intersections out of a VertexSet and add contours with the new ids
-  void copy_contours(const ArcContours& contour, const VertexSet<PS>& vertices);
+  void copy_contours(const ArcContours& src_contours, const VertexSet<PS>& src_vertices);
 
   // Use vertices and contours to create a PlanarArcGraph
   Ref<PlanarArcGraph<PS>> compute_embedding() const;

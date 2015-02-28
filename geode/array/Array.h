@@ -477,7 +477,7 @@ public:
   }
 
   Array<const T> pop_elements(const int count) { // Return value shares ownership with original
-    static_assert(has_trivial_destructor<T>::value,"");
+    static_assert(is_trivially_destructible<T>::value,"");
     assert(m_-count>=0);
     m_ -= count;
     return Array<const T>(count,data_+m_,owner_);

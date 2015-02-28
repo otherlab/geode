@@ -516,7 +516,6 @@ template<> ExactCircle<Pb::Explicit>::ExactCircle(const Vector<Quantized,2> cent
  , radius(radius)
 { }
 
-
 template<Pb PS> Vector<IncidentCircle<PS>,2>     ExactCircle<PS>::get_intersections(const ExactCircle<PS>& incident) const {
   const auto approx = circle_circle_approx_intersections<PS>(*this, incident);
   return vec(IncidentCircle<PS>(*this, incident, ReferenceSide::cl, approx.x),
@@ -934,23 +933,23 @@ template<Pb PS> bool ExactArc<PS>::contains_horizontal(const IncidentHorizontal<
   }
 }
 
-template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& i) const {
-  const IncidentCircle<PS>& src = this->i;
+template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& o) const {
+  const IncidentCircle<PS>& src = i;
   const IncidentHorizontal<PS>& dst = h;
   const bool flipped = h_is_src;
 
   if (src.q != dst.q) { // arc starts and ends in different quadrants
-    if (src.q == i.q)
-      return flipped ^ circle.intersections_ccw_same_q(src, i);
-    else if (dst.q == i.q)
-      return flipped ^ circle.intersections_ccw_same_q(i, dst);
+    if (src.q == o.q)
+      return flipped ^ circle.intersections_ccw_same_q(src, o);
+    else if (dst.q == o.q)
+      return flipped ^ circle.intersections_ccw_same_q(o, dst);
     else
-      return flipped ^ (((i.q-src.q)&3)<((dst.q-src.q)&3));
+      return flipped ^ (((o.q-src.q)&3)<((dst.q-src.q)&3));
   } else { // arc starts and ends in the same quadrant
     const bool small = circle.intersections_ccw_same_q(src, dst);
-    return flipped ^ small ^ (   src.q != i.q
-                               || (small ^ circle.intersections_ccw_same_q(src,i))
-                               || (small ^ circle.intersections_ccw_same_q(i,dst)));
+    return flipped ^ small ^ (   src.q != o.q
+                               || (small ^ circle.intersections_ccw_same_q(src,o))
+                               || (small ^ circle.intersections_ccw_same_q(o,dst)));
   }
 }
 

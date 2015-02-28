@@ -205,6 +205,12 @@ static void write_stl(const string& filename, RawArray<const Vector<int,3>> tris
 
 static const char* white = " \t\v\f\r\n";
 
+#ifdef _WIN32
+static char* strtok_r(char* str, const char* delim, char** saveptr) {
+  return strtok_s(str, delim, saveptr);
+}
+#endif
+
 static Tuple<Ref<PolygonSoup>,Array<TV>> read_obj(const string& filename) {
   File f(filename,"r");
 
