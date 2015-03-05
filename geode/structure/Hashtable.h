@@ -349,7 +349,7 @@ struct HashtableIter {
   }
 
   auto operator->() const
-    -> decltype(&operator*()) {
+    -> decltype(&table[index].value()) { // Can't be decltype(&operator*()) due to gcc 4.9 bug
     return &operator*();
   }
 

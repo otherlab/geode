@@ -456,7 +456,7 @@ struct Policy : public State, public Noncopyable {
           auto e2 = edges[ef2.edge];
           if (flipped_in(e1,fv)) swap(e1.x,e1.y);
           if (flipped_in(e2,fv)) swap(e2.x,e2.y);
-          return flip ^ (e1.contains(v0) && e2.contains(v0)) ^ e1.y==e2.x;
+          return flip ^ (e1.contains(v0) && e2.contains(v0)) ^ (e1.y==e2.x);
         }}
       case C(B,B,B): {
         const auto &ef0 = ef_vertices.flat[v0-n],

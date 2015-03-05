@@ -125,7 +125,7 @@ template<int d> void surface_levelset(const ParticleTree<TV>& particles, const S
   if (d<TV::m-1 || !compute_signs)
     for (auto& I : info) {
       I.phi = sqrt(I.phi);
-      I.normal = I.simplex < 0   ? TV()
+      I.normal = (I.simplex) < 0 ? TV() // Parentheses needed for gcc 4.9 bug
                : I.phi > epsilon ? I.normal / I.phi
                                  : normal_flip(surface.simplices[I.simplex],I.normal);
     }
@@ -133,7 +133,7 @@ template<int d> void surface_levelset(const ParticleTree<TV>& particles, const S
     for (const int i : range(info.size())) {
       auto& I = info[i];
       I.phi = sqrt(I.phi);
-      if (I.simplex < 0)
+      if ((I.simplex) < 0) // Parentheses needed for gcc 4.9 bug
         I.normal = TV();
       else {
         try {

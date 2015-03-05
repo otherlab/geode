@@ -1,5 +1,4 @@
 // Irreducibility testing for integer polynomials
-#pragma
 
 #include <geode/exact/irreducible.h>
 #include <geode/exact/math.h>

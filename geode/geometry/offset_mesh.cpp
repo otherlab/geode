@@ -264,8 +264,7 @@ static Tuple<Array<Vector<int,3>>,Array<TV>> rough_offset_shell_helper(const Tri
       // We're good above the vertex, so check safety above both boundary edges if they're complete.
       const auto vr = mesh->dst(er),
                  vl = mesh->dst(el);
-      const auto xv = X[v],
-                 nr = vertex_normals[vr],
+      const auto nr = vertex_normals[vr],
                  nl = vertex_normals[vl];
       #define CHECK_BOUNDARY(ne,v0,n0,B0,v1,n1,B1) { \
         const auto x0 = X[v0], \

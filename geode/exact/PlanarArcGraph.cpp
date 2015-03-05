@@ -371,7 +371,7 @@ template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>
 
       // Canonical arcs are ccw so we connect prev to dst and next to src if we are going to use a negative winding
       // We compute all options and choose the best one
-      const auto prev_circle = this->circle(prev.cid);
+      GEODE_UNUSED const auto prev_circle = this->circle(prev.cid);
       const auto next_circle = this->circle(next.cid);
       const auto src_options = hc.get_intersections(next_circle);
       const auto dst_option_0 = this->incident(opposite(prev.x1_inc));
