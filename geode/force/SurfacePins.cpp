@@ -65,7 +65,7 @@ void SurfacePins::update_position(Array<const TV> X_, bool definite) {
   else
     node_tree->update(); // update for changes to node_X
   // Compute distances and directions
-  surface_levelset(*node_tree,*target_tree,info,1e10,false);
+  surface_levelset<2>(*node_tree,*target_tree,info,1e10,false);
 }
 
 Array<TV> SurfacePins::closest_points(Array<const TV> X) {
