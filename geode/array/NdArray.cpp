@@ -4,6 +4,7 @@
 #include <geode/array/convert.h>
 namespace geode {
 
+NDARRAY_CONVERSIONS(uint8_t)
 NDARRAY_CONVERSIONS(int)
 NDARRAY_CONVERSIONS(long)
 NDARRAY_CONVERSIONS(long long)
