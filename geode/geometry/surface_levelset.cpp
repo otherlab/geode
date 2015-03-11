@@ -125,7 +125,7 @@ template<int d> void surface_levelset(const ParticleTree<TV>& particles, const S
   if (d<TV::m-1 || !compute_signs)
     for (auto& I : info) {
       I.phi = sqrt(I.phi);
-      I.normal = I.simplex < 0   ? TV()
+      I.normal = (I.simplex) < 0 ? TV() // Parentheses needed for gcc 4.9 bug
                : I.phi > epsilon ? I.normal / I.phi
                                  : normal_flip(surface.simplices[I.simplex],I.normal);
     }
@@ -133,7 +133,7 @@ template<int d> void surface_levelset(const ParticleTree<TV>& particles, const S
     for (const int i : range(info.size())) {
       auto& I = info[i];
       I.phi = sqrt(I.phi);
-      if (I.simplex < 0)
+      if ((I.simplex) < 0) // Parentheses needed for gcc 4.9 bug
         I.normal = TV();
       else {
         try {
@@ -156,7 +156,7 @@ template<int d> Tuple<Array<T>,Array<TV>,Array<int>,Array<typename SimplexTree<T
 surface_levelset(const ParticleTree<TV>& particles, const SimplexTree<TV,d>& surface,
                  const T max_distance, const bool compute_signs) {
   Array<CloseInfo<d>> info(particles.X.size(),uninit);
-  surface_levelset(particles,surface,info,max_distance,compute_signs);
+  surface_levelset<d>(particles,surface,info,max_distance,compute_signs);
   return tuple(info.template project<T,&CloseInfo<d>::phi>().copy(),
                info.template project<TV,&CloseInfo<d>::normal>().copy(),
                info.template project<int,&CloseInfo<d>::simplex>().copy(),

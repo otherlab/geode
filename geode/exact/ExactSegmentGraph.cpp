@@ -294,7 +294,7 @@ Array<HalfedgeId> ExactSegmentGraph::path_from_infinity(const SegmentId seed_seg
   // We will search for first edge ccw from +x axis at seed_vert
   HalfedgeId min_he;
   SegmentId min_s;
-  bool min_fwd;
+  bool min_fwd = false; // Initialized only to prevent warning
   uint8_t min_q = -1;
   for(const HalfedgeId he : topology->outgoing(seed_vert)) {
     const SegmentId s = edges[HalfedgeGraph::edge(he)].segment;

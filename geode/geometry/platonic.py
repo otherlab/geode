@@ -49,8 +49,11 @@ def grid_topology(nx,ny):
   return TriangleSoup(tris.reshape(-1,3))
 
 def torus_topology(nx,ny):
-  '''Construct a torus TriangleSoup with nx by ny vertices.
-  A matching position array would have shape (nx,ny,3).
+  '''Construct a torus TriangleSoup with nx (along the major dimension, i.e. around the hole)
+  by ny (along the minor dimension, i.e. through the hole) vertices.
+  A matching position array would have shape (nx,ny,3), and list vertices
+  sorted primarily by major dimension and secondarily by minor dimension.
+  For example, array([ vertex(i, j) for i in range(0, nx) for j in range(0, ny) ]).
   If you want geometry too, consider using surface_of_revolution with periodic=True.'''
   i = ny*arange(nx).reshape(-1,1)
   j = arange(ny)
