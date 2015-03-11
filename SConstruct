@@ -320,7 +320,7 @@ def external_helper(env,name,default=0,dir=0,flags=(),cxxflags='',linkflags='',c
     force_external(r)
     if not env['use_'+r]:
       if verbose:
-        print 'disabling %s: no %s'%(name,r)
+        print('disabling %s: no %s'%(name,r))
       fail()
       return
 
@@ -553,7 +553,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
     elif f.endswith('.h'):
       headers.append(f)
   if not sources and not headers:
-    print 'Warning: library %s has no input source files'%name
+    print('Warning: library %s has no input source files'%name)
   if env.get('need_qt',0) and env['use_qt']: # Qt gets confused if we only set options on the builder
     env = env.Clone()
     force_external('qt')
@@ -701,7 +701,7 @@ def configure_python(env,python):
     import numpy
     import distutils.sysconfig as sc
     get = sc.get_config_var
-    def p(s): print "'%s'"%s
+    def p(s): print("'%s'"%s)
     p(sc.get_python_inc())
     p(numpy.get_include())
     p(get('LIBDIR'))
@@ -739,7 +739,7 @@ def configure_mpi(env,mpi):
           break
       else:
         if verbose:
-          print 'disabling mpi: mpicc not found'
+          print('disabling mpi: mpicc not found')
         return 0
 
   # Configure MPI if it exists
@@ -764,7 +764,7 @@ def configure_mpi(env,mpi):
       mpi['linkflags'] = ' '+' '.join(flags)
   except OSError,e:
     if verbose:
-      print 'disabling mpi: %s'%e
+      print('disabling mpi: %s'%e)
     return 0
   return 1
 
@@ -790,7 +790,7 @@ def configure_blas(env,blas):
   for kind in kinds:
     force_external(kind)
     if env['use_'+kind]:
-      print 'configuring blas: using %s'%kind
+      print('configuring blas: using %s'%kind)
       blas['requires'] = [kind]
       return 1
   print>>sys.stderr, "disabling blas: can't find any variant, tried %s, and %s"%(', '.join(kinds[:-1]),kinds[-1])
