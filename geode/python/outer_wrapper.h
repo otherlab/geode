@@ -23,9 +23,7 @@ using std::exception;
 template<class R,class... Args> struct OuterWrapper {
   template<R inner(Args...)> static PyObject* wrap(Args... args) {
     try {
-      PyObject* pp = to_python(inner(args...));
-      if (pp->ob_refcnt>1) Py_DECREF(pp);
-      return pp;
+      return to_python(inner(args...));
     } catch (const exception& error) {
       set_python_exception(error);
       return 0;
