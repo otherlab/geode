@@ -46,6 +46,10 @@ namespace geode {
 
 #ifdef GEODE_PYTHON
 
+#if PY_MAJOR_VERSION >=3
+#  define Py_TPFLAGS_HAVE_ITER 0
+#endif
+
 GEODE_CORE_EXPORT int trivial_init(PyObject* self,PyObject* args,PyObject* kwds);
 GEODE_CORE_EXPORT PyObject* simple_alloc(PyTypeObject* type,Py_ssize_t nitems);
 GEODE_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObject* descr);
@@ -79,7 +83,7 @@ GEODE_CORE_EXPORT void add_descriptor(PyTypeObject* type,const char* name,PyObje
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,    /* tp_flags */\
     "Wrapped C++ class",                         /* tp_doc */\
     0,                                           /* tp_traverse */\
-    0,                                           /* tp_clear */\
+    0,                                           /* tp_clear */ \
     0,                                           /* tp_richcompare */\
     0,                                           /* tp_weaklistoffset */\
     0,                                           /* tp_iter */\

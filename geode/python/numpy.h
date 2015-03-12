@@ -248,7 +248,7 @@ to_numpy(TArray& array) {
 template<class TV> typename enable_if<NumpyIsStatic<TV>,TV>::type
 from_numpy(PyObject* object) { // Borrows reference to object
   // Allow conversion from 0 to static vector/matrix types
-  if(PyInt_Check(object) && !PyInt_AS_LONG(object))
+  if(PyLong_Check(object) && !PyInt_AS_LONG(object))
     return TV();
 
   // Convert object to an array with the correct type and rank

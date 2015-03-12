@@ -80,9 +80,9 @@ void wrap_nested_array() {
 #ifdef GEODE_PYTHON
   GEODE_FUNCTION(_set_nested_array)
 
-  offsets_string = PyString_FromString("offsets");
+  offsets_string = PyBytes_FromString("offsets");
   if (!offsets_string) throw_python_error();
-  flat_string = PyString_FromString("flat");
+  flat_string = PyBytes_FromString("flat");
   if (!flat_string) throw_python_error();
   empty_tuple = PyTuple_New(0);
   if (!empty_tuple) throw_python_error();
