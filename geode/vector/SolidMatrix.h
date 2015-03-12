@@ -79,7 +79,7 @@ template<class TV> class SolidMatrix : public SolidMatrixBase<TV> {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef SolidMatrixBase<TV> Base;
-
+  GEODE_IF_NOT_MSVC(using Base::size;)
   const Nested<const int> sparse_j;
   const Nested<TMatrix> sparse_A;
   const std::vector<Tuple<Array<const int>,T,Array<TV> > > outers; // restricted to m==1 for now

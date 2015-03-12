@@ -581,7 +581,7 @@ GEODE_UNUSED static Field<int, FaceId> compute_winding_numbers_oracle(const Half
   assert(g.has_all_border_data());
   assert(g.check_invariants());
   assert(has_manifold_edge_weights(g, edge_weights));
-  GEODE_CONSTEXPR_UNLESS_MSVC int unset_winding_number = std::numeric_limits<int>::max();
+  GEODE_CONSTEXPR_IF_NOT_MSVC int unset_winding_number = std::numeric_limits<int>::max();
   auto winding_numbers = Field<int, FaceId>(g.n_faces());
   winding_numbers.flat.fill(unset_winding_number);
 
@@ -622,8 +622,9 @@ GEODE_UNUSED static Field<int, FaceId> compute_winding_numbers_oracle(const Half
 }
 
 namespace {
+constexpr int invalid_depth = INT_MAX;
+
 class WindingDepthHelper {
-  static GEODE_CONSTEXPR_UNLESS_MSVC int invalid_depth = INT_MAX;
   struct DepthNode {
     int parent_ = -1;
     int depth_to_parent_;

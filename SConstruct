@@ -205,10 +205,12 @@ else: # assume g++...
   gcc = True
   # Machine flags
   def ifsse(s):
-    return s if env['sse'] else ' -mno-sse'
+    # return s if env['sse'] else ' -mno-sse'
+    return s if env['sse'] else ''
   if env['arch']=='athlon':    machine_flags = ' -march=athlon-xp '+ifsse('-msse')
   elif env['arch']=='nocona':  machine_flags = ' -march=nocona '+ifsse('-msse2')
   elif env['arch']=='opteron': machine_flags = ' -march=opteron '+ifsse('-msse3')
+  elif env['arch']=='corei7':  machine_flags = ' -march=corei7 '
   elif env['arch']=='powerpc': machine_flags = ''
   elif env['arch']=='native':  machine_flags = ' -march=native -mtune=native '+ifsse('')
   else: machine_flags = ''
@@ -221,7 +223,7 @@ else: # assume g++...
       if   env['arch']=='pentium4': optimizations = '-O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
       elif env['arch']=='pentium3': optimizations = '-O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
       elif env['arch']=='opteron':  optimizations = '-O2'
-      elif env['arch'] in ('nocona','native','powerpc'): optimizations = '-O3 -funroll-loops'
+      elif env['arch'] in ('nocona','native','powerpc', 'corei7'): optimizations = '-O3 -funroll-loops'
     env.Append(CXXFLAGS=optimizations)
     if not clang:
       env.Append(LINKFLAGS=' -dead_strip')

@@ -87,8 +87,9 @@ typedef double real;
   #define GEODE_NOEXCEPT
 #endif
 
-#error This should probably switch to using the c++11 alignas keyword instead... #define GEODE_ALIGNED(n) alignas(n)
-#define GEODE_ALIGNED(n) __attribute__((aligned(n)))
+//#error This should probably switch to using the c++11 alignas keyword instead...
+#define GEODE_ALIGNED(n) alignas(n)
+//#define GEODE_ALIGNED(n) __attribute__((aligned(n)))
 
 #else // _WIN32
 
@@ -124,7 +125,7 @@ typedef double real;
 
 #endif
 
-#if defined(__has_include)
+#if defined(__clang__)
 // If we have access to the __has_include macro, use that to check for availability
 #define GEODE_HAS_CPP11_STD_HEADER(header) __has_include(header)
 #elif defined(__GNU__) || (defined(_MSC_VER) && (_MSC_VER >= 1700))
@@ -185,11 +186,19 @@ typedef double real;
 // The current beta of VS2015 still only partial supports constexpr so we use these macros to dodge trouble cases
 // Use GEODE_CONSTEXPR_INCOMPLETE to control workarounds that should be removed in the future
 #define GEODE_CONSTEXPR_INCOMPLETE 1
-// Use GEODE_CONSTEXPR_UNLESS_MSVC for cases where substituting const is sufficient
-#define GEODE_CONSTEXPR_UNLESS_MSVC const
+// Use GEODE_CONSTEXPR_IF_NOT_MSVC for cases where substituting const is sufficient
+#define GEODE_CONSTEXPR_IF_NOT_MSVC const
 #else
 #define GEODE_CONSTEXPR_INCOMPLETE 0
-#define GEODE_CONSTEXPR_UNLESS_MSVC constexpr
+#define GEODE_CONSTEXPR_IF_NOT_MSVC constexpr
+#endif
+
+#ifdef _MSC_VER
+#define GEODE_IF_MSVC(...) __VA_ARGS__
+#define GEODE_IF_NOT_MSVC(...)
+#else
+#define GEODE_IF_MSVC(...)
+#define GEODE_IF_NOT_MSVC(...) __VA_ARGS__
 #endif
 
 #ifndef GEODE_VARIADIC

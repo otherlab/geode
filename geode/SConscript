@@ -17,7 +17,8 @@ external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],
 external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],requires=['imath'],
   headers=['OpenEXR/ImfRgbaFile.h'])
 external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],
-  publiclibs=['OpenMeshCore','OpenMeshTools'],requires=['boost_link'],headers=['OpenMesh/Core/Utils/Endian.hh'])
+  # requires=['boost_link']
+  publiclibs=['OpenMeshCore','OpenMeshTools'],headers=['OpenMesh/Core/Utils/Endian.hh'])
 if windows:
   external(env,'shellapi',default=windows,headers=['Shellapi.h'],libs=['Shell32.lib'])
 
