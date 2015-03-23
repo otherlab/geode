@@ -27,10 +27,12 @@ using std::string;
 #ifdef GEODE_PYTHON
 
 // Conversion for PyObject*
+/*
 static inline PyObject* to_python(PyObject* value) {
   GEODE_XINCREF(value); // Allow zero so that wrapped functions can return (PyObject*)0 on error
   return value;
 }
+*/
 
 // Conversion from bool, taking care not to accept pointer arguments and other weird types
 template<class T> static inline typename enable_if<is_same<T,bool>,PyObject*>::type to_python(T value) {
