@@ -41,11 +41,11 @@ public:
 
 #ifdef GEODE_PYTHON
   virtual void set_python(PyObject* value_) = 0;
-  virtual PyObject* default_python() const = 0;
-  virtual PyObject* get_min_python() const = 0;
-  virtual PyObject* get_max_python() const = 0;
+  virtual Ref<> default_python() const = 0;
+  virtual Ref<> get_min_python() const = 0;
+  virtual Ref<> get_max_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
-  virtual PyObject* allowed_python() const = 0;
+  virtual Ref<> allowed_python() const = 0;
   virtual void set_min_python(PyObject* v) = 0;
   virtual void set_max_python(PyObject* v) = 0;
   virtual void set_step_python(PyObject* v) = 0;
@@ -234,7 +234,7 @@ public:
     set_allowed(try_from_python<vector<T>>(values));
   }
 
-  PyObject* allowed_python() const {
+  Ref<> allowed_python() const {
     return try_to_python(allowed);
   }
 
@@ -250,18 +250,18 @@ public:
     Clamp::set_step_python(s);
   }
 
-  PyObject* default_python() const {
+  Ref<> default_python() const {
     return try_to_python(default_);
   }
 
-  PyObject* get_min_python() const {
+  Ref<> get_min_python() const {
     if (has_clamp<T>::value)
       return try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->min);
     else
       throw ValueError(format("non-clampable prop does not have a min"));
   }
 
-  PyObject* get_max_python() const {
+  Ref<> get_max_python() const {
     if (has_clamp<T>::value)
       return try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->max);
     else
