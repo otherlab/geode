@@ -1736,7 +1736,7 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
 
 #define ADD_FIELD_HELPER(prim, ...) \
   case NumpyScalar<__VA_ARGS__>::value: \
-    return to_python(add_##prim##_field<__VA_ARGS__>(id));
+    return to_python_ref(add_##prim##_field<__VA_ARGS__>(id));
 
 #define ADD_FIELD(prim, d, ...) \
   ADD_FIELD_HELPER(prim,mpl::if_c<d==0,__VA_ARGS__,Vector<__VA_ARGS__,d>>::type)
@@ -1757,10 +1757,10 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
   ADD_FIELD(prim,d,double)
 
 #define MAKE_PY_FIELD(prim, Prim) \
-  PyObject* MutableTriangleTopology::add_##prim##_field_py(PyObject* object, const int id) { \
+  Ref<> MutableTriangleTopology::add_##prim##_field_py(PyObject* object, const int id) { \
     PyArray_Descr* dtype; \
     if (!PyArray_DescrConverter(object,&dtype)) \
-      return NULL; \
+      throw_python_error();                          \
     const Ref<> save = steal_ref(*(PyObject*)dtype); \
     if (!dtype->subarray) \
       switch (dtype->type_num) { ADD_FIELDS(prim,0) } \
@@ -1784,7 +1784,7 @@ void remove_field_helper(Hashtable<int,int>& id_to_field, vector<UntypedArray>& 
   void MutableTriangleTopology::remove_##prim##_field_py(int id) {\
     return remove_field_py(new_<PyFieldId>(PyFieldId::Prim, id));\
   }\
-  PyObject *MutableTriangleTopology::prim##_field_py(int id) {\
+  Ref<> MutableTriangleTopology::prim##_field_py(int id) {   \
     return field_py(new_<PyFieldId>(PyFieldId::Prim, id));\
   }
 
@@ -1819,7 +1819,7 @@ void MutableTriangleTopology::remove_field_py(const PyFieldId& id) {
   remove_field_helper(id_to_field,fields,id.id);
 }
 
-PyObject* MutableTriangleTopology::field_py(const PyFieldId& id) {
+Ref<> MutableTriangleTopology::field_py(const PyFieldId& id) {
   const auto& id_to_field = id.prim == PyFieldId::Vertex ? id_to_vertex_field
                           : id.prim == PyFieldId::Face   ? id_to_face_field
                                                          : id_to_halfedge_field;
@@ -1836,7 +1836,7 @@ PyObject* MutableTriangleTopology::field_py(const PyFieldId& id) {
 
   #define CASE(...) \
     if (field.type() == typeid(__VA_ARGS__)) \
-      return to_python(field.get<__VA_ARGS__>());
+      return to_python_ref(field.get<__VA_ARGS__>());
   CASE(bool)
   CASE(char)
   CASE(unsigned char)
