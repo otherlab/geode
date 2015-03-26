@@ -16,6 +16,17 @@ template<class T> static inline typename enable_if<has_to_python<T>,PyObject*>::
   return to_python(x);
 }
 
+template<class T> static inline typename enable_if<has_to_python<T>,Ref<>>::type try_to_python_ref(const T& x) {
+  return to_python_ref(x);
+}
+
+template<class T> static inline typename disable_if<has_to_python<T>,Ref<>>::type try_to_python_ref(const T& x) {
+  set_to_python_failed(typeid(T));
+  throw_python_error();
+}
+
+
+
 template<class T> static inline typename disable_if<has_to_python<T>,PyObject*>::type try_to_python(const T& x) {
   set_to_python_failed(typeid(T));
   return 0;

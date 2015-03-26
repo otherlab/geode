@@ -15,9 +15,7 @@ def const_value(value, name=""):
 
 def Prop(name,default,shape=None):
   if shape is None:
-    o = make_prop(name,None)
-    o.set(default)
-    return o
+    return make_prop(name,default)
   return make_prop_shape(name,default,shape)
 
 class cache_method(object):

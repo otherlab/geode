@@ -175,7 +175,7 @@ public:
 #ifdef GEODE_PYTHON
   Ref<> get_python() const {
     pull();
-    return ref(*try_to_python(*static_cast<const T*>(static_cast<const void*>(&buffer))));
+    return try_to_python_ref(*static_cast<const T*>(static_cast<const void*>(&buffer)));
   }
 #endif
 
