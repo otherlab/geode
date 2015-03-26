@@ -235,7 +235,7 @@ public:
   }
 
   Ref<> allowed_python() const {
-    return try_to_python(allowed);
+    return ref(*try_to_python(allowed));
   }
 
   void set_min_python(PyObject* m){
@@ -251,19 +251,19 @@ public:
   }
 
   Ref<> default_python() const {
-    return try_to_python(default_);
+    return ref(*try_to_python(default_));
   }
 
   Ref<> get_min_python() const {
     if (has_clamp<T>::value)
-      return try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->min);
+      return ref(*try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->min));
     else
       throw ValueError(format("non-clampable prop does not have a min"));
   }
 
   Ref<> get_max_python() const {
     if (has_clamp<T>::value)
-      return try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->max);
+      return ref(*try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->max));
     else
       throw ValueError(format("non-clampable prop does not have a max"));
   }
