@@ -455,9 +455,9 @@ public:
   #undef FIELD_ACCESS_FUNCTIONS
 
   #ifdef GEODE_PYTHON
-  Ref<> add_vertex_field_py(PyObject* dtype, const int id);
-  Ref<> add_face_field_py(PyObject* dtype, const int id);
-  Ref<> add_halfedge_field_py(PyObject* dtype, const int id);
+    Ref<> add_vertex_field_py(PyObject* dtype, const int id);
+    Ref<> add_face_field_py(PyObject* dtype, const int id);
+    Ref<> add_halfedge_field_py(PyObject* dtype, const int id);
     bool has_field_py(const PyFieldId& id) const;
     bool has_vertex_field_py(int id) const;
     bool has_face_field_py(int id) const;
@@ -466,10 +466,10 @@ public:
     void remove_vertex_field_py(int id);
     void remove_face_field_py(int id);
     void remove_halfedge_field_py(int id);
-  Ref<> field_py(const PyFieldId& id);
-  Ref<> vertex_field_py(int id);
-  Ref<> face_field_py(int id);
-  Ref<> halfedge_field_py(int id);
+    Ref<> field_py(const PyFieldId& id);
+    Ref<> vertex_field_py(int id);
+    Ref<> face_field_py(int id);
+    Ref<> halfedge_field_py(int id);
   #endif
 
   // set the src entry of an existing boundary halfedge
