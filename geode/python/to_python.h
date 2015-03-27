@@ -26,13 +26,9 @@ using std::string;
 
 #ifdef GEODE_PYTHON
 
-// Conversion for PyObject*
-/*
-static inline PyObject* to_python(PyObject* value) {
-  GEODE_XINCREF(value); // Allow zero so that wrapped functions can return (PyObject*)0 on error
-  return value;
-}
-*/
+// WARNING: There is no to_python overload for PyObject*.  If you want something automatically
+// convertible to python, use Ref<> or Ptr<>.  There used to be a PyObject* overload, but it
+// caused an obscure memory leak.  Ref<> and Ptr<> have much clearer reference count semantics.
 
 // Conversion from bool, taking care not to accept pointer arguments and other weird types
 template<class T> static inline typename enable_if<is_same<T,bool>,PyObject*>::type to_python(T value) {
