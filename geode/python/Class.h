@@ -42,6 +42,7 @@
 #include <geode/python/wrap_call.h>
 #include <geode/python/wrap_iter.h>
 #endif
+#include <stddef.h>
 namespace geode {
 
 #ifdef GEODE_PYTHON
