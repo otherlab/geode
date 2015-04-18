@@ -73,7 +73,7 @@ So far the code has been tested on
      scons -j7 type=debug shared=0 Werror=0
 
    SCons install targets weren't tested but copying geode_all.pyd into geode will make it usable:
-     cp build/native/optdebug/lib/build/native/optdebug/geode_all.pyd geode/geode_all.pyd
+     cp build/native/release/lib/geode_all.pyd geode/geode_all.pyd
 
    To use geode outside of project directory or for test_worker to pass you must add geode to your PYTHONPATH:
      set PYTHONPATH=<path_to_dir_outside_repo>\geode;%PYTHONPATH%

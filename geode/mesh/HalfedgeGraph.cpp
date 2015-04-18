@@ -622,8 +622,9 @@ GEODE_UNUSED static Field<int, FaceId> compute_winding_numbers_oracle(const Half
 }
 
 namespace {
+static constexpr int invalid_depth = INT_MAX;
+
 class WindingDepthHelper {
-  static GEODE_CONSTEXPR_UNLESS_MSVC int invalid_depth = INT_MAX;
   struct DepthNode {
     int parent_ = -1;
     int depth_to_parent_;

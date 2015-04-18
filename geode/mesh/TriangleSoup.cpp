@@ -16,7 +16,7 @@ typedef Vector<T,3> TV3;
 
 GEODE_DEFINE_TYPE(TriangleSoup)
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__MINGW32__)
 const int TriangleSoup::d;
 #endif
 

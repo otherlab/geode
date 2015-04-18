@@ -239,7 +239,7 @@ static Tuple<Ref<PolygonSoup>,Array<TV>> read_obj(const string& filename) {
         }
       const int ne = !cmd[1] ? 3 : cmd[1]=='n' ? 3 : /*cmd[1]=='t'*/ 2;
       if (n != ne)
-        throw IOError(format("invalid obj file %s:%d: %s expected 3 floats, got %s",filename,nl,cmd,ne,repr(orig)));
+        throw IOError(format("invalid obj file %s:%d: %s expected %d floats, got %d. Line: %s",filename,nl,cmd,ne,n,repr(orig)));
       if (!cmd[1]) { // v
         if (X.size()==numeric_limits<int>::max())
           throw IOError(format("unsupported obj file %s: too many vertices (our limit is 2^31-1)",filename));

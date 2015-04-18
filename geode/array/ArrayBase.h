@@ -27,6 +27,7 @@
 #include <geode/utility/type_traits.h>
 #include <iostream>
 #include <limits>
+#include <typeinfo>
 namespace geode {
 
 using std::type_info;

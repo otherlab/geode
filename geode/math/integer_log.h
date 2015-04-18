@@ -6,7 +6,7 @@
 //
 //#####################################################################
 #pragma once
-
+#include <geode/config.h>
 #include <cassert>
 #include <stdint.h>
 namespace geode {

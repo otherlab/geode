@@ -17,12 +17,24 @@
 #include <geode/utility/config.h>
 #include <geode/utility/type_traits.h>
 #include <string>
+#include <cinttypes>
 namespace geode {
+
+// format("Print things of type size_t as x = %" GEODE_PRIUSIZE " or similar", x)
+// This macro selects printf formatting characters for size_t since they will depend on OS and architecture
+// Warning: Not for use in PyString_FromFormat or similar which may expect different characters on Windows
+#if GEODE_SIZEOF_SIZE_T == 4
+  #define GEODE_PRIUSIZE PRIu32
+#elif GEODE_SIZEOF_SIZE_T == 8
+  #define GEODE_PRIUSIZE PRIu64
+#else
+  #error "Unable to set GEODE_PRIUSIZE"
+#endif
 
 using std::string;
 
-// Unfortunately, since format_helper is called indirectly through format, we can't use gcc's format attribute.
-GEODE_CORE_EXPORT string format_helper(const char* format,...);
+// Unfortunately, since format_helper is called indirectly through format, we won't get much benefit from gcc's format attribute
+GEODE_CORE_EXPORT string format_helper(const char* format,...) GEODE_FORMAT_PRINTF(1,2);
 
 template<class T> static inline typename mpl::if_<is_enum<T>,int,T>::type format_sanitize(const T d) {
   static_assert(mpl::or_<is_fundamental<T>,is_enum<T>,is_pointer<T>>::value,"Passing as a vararg is not safe");
@@ -43,8 +55,14 @@ static inline const char* format_sanitize(const string& s) {
 
 #ifdef GEODE_VARIADIC
 
-template<class... Args> static inline string format(const char* format, const Args&... args) {
+// Using this would allow gcc to check format string against other arguments...until you use an expression with a comma:
+// #define format(fmt,...) format_helper(fmt, GEODE_MAP(format_sanitize, __VA_ARGS__))
+
+// The format attribute sanity checks the format string, but can't verify it was used with a matching types in Args (only supports varargs)
+template<class... Args> GEODE_FORMAT_PRINTF(1,0) static inline string format(const char* format, const Args&... args) {
+  GEODE_GNUC_ONLY(_Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\""))
   return format_helper(format,format_sanitize(args)...);
+  GEODE_GNUC_ONLY(_Pragma("GCC diagnostic pop"))
 }
 
 #else // Unpleasant nonvariadic versions

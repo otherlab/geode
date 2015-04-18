@@ -47,7 +47,7 @@ template<class T> struct wrapped_iternext_helper<T, true> {
   }
 };
 
-template<class T> struct wrapped_iternext_helper<T, false> : public wrapped_iternext_helper_helper {
+template<class T> struct wrapped_iternext_helper<T, false> {
 #if GEODE_CONSTEXPR_INCOMPLETE
   static const iternextfunc iter;
 #else

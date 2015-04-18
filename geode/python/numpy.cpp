@@ -218,7 +218,8 @@ Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensio
   size_t total_size = 1;
   for (int i=0;i<rank;i++) {
     total_size *= dimensions[i];
-    len += sprintf(base+len,"%ld%s",dimensions[i],rank==1||i<rank-1?",":"");
+    // TODO: This could walk off the end of our buffer if our array had about 90 dimensions (unlikely, but possible if most of the dimensions were 1)
+    len += sprintf(base+len,"%" GEODE_PRIUSIZE "%s",dimensions[i],rank==1||i<rank-1?",":"");
   }
   strcpy(base+len,"), }");
   len+=4;

@@ -93,9 +93,9 @@ template<class T> struct PropClamp<T,false> {
     return self();
   }
 
-  void set_min_python(PyObject* v){throw ValueError(format("non-clampable prop cannot set min"));}
-  void set_max_python(PyObject* v){ throw ValueError(format("non-clampable prop cannot set max"));}
-  void set_step_python(PyObject* v){ throw ValueError(format("non-clampable prop cannot set step"));}
+  void set_min_python(PyObject* v){throw ValueError("non-clampable prop cannot set min");}
+  void set_max_python(PyObject* v){ throw ValueError("non-clampable prop cannot set max");}
+  void set_step_python(PyObject* v){ throw ValueError("non-clampable prop cannot set step");}
 };
 
 template<class T> struct PropClamp<T,true> {
@@ -258,14 +258,14 @@ public:
     if (has_clamp<T>::value)
       return try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->min);
     else
-      throw ValueError(format("non-clampable prop does not have a min"));
+      throw ValueError("non-clampable prop does not have a min");
   }
 
   PyObject* get_max_python() const {
     if (has_clamp<T>::value)
       return try_to_python(dynamic_cast<const PropClamp<T,true>*>(this)->max);
     else
-      throw ValueError(format("non-clampable prop does not have a max"));
+      throw ValueError("non-clampable prop does not have a max");
   }
 
 #endif

@@ -18,6 +18,18 @@ typedef double real;
 #endif
 }
 
+// Mostly sizeof(size_t) will work, but not for preprocessor stuff
+// Warning: SIZEOF_SIZE_T may exists, but only when Python support is enabled
+#if defined(__GNUC__)
+  #define GEODE_SIZEOF_SIZE_T __SIZEOF_SIZE_T__
+#elif defined(_WIN64)
+  #define GEODE_SIZEOF_SIZE_T 8
+#elif defined(_WIN32)
+  #define GEODE_SIZEOF_SIZE_T 4
+#else
+  #error "Failed to configure GEODE_SIZEOF_SIZE_T for this platform"
+#endif
+
 #ifdef __clang__
 #define GEODE_CLANG_ONLY(...) __VA_ARGS__
 #define GEODE_CLANG_VERSION_GE(major,minor) \
@@ -29,10 +41,16 @@ typedef double real;
 #define GEODE_CLANG_VERSION_GE(major,minor) false
 #endif
 
+#ifdef __MINGW32__
+#define GEODE_MINGW_ONLY(...) __VA_ARGS__
+#else
+#define GEODE_MINGW_ONLY(...)
+#endif
+
 #define GEODE_NO_EXPORT // For documentation purposes
 
-#ifndef _WIN32
-
+#ifdef __GNUC__
+#define GEODE_GNUC_ONLY(...) __VA_ARGS__
 #define GEODE_VARIADIC
 
 // Mark the current symbol for export
@@ -48,7 +66,7 @@ typedef double real;
 #define GEODE_NEVER_INLINE __attribute__ ((noinline))
 #define GEODE_PURE __attribute__ ((pure))
 #define GEODE_CONST __attribute__ ((const))
-#define GEODE_FORMAT(type,fmt,list) __attribute__ ((format(type,fmt,list)))
+#define GEODE_FORMAT(type,fmt,list) __attribute__ ((__format__(type,fmt,list)))
 #define GEODE_EXPECT(value,expect) __builtin_expect((value),expect)
 
 #if defined(__GNUC__) && __GNUC__ > 3 && defined(__GNUC_MINOR__) && __GNUC_MINOR__ > 4
@@ -69,7 +87,15 @@ typedef double real;
   #define GEODE_COLD
 #endif
 
-#if defined(NDEBUG) && (!defined(__clang__) || __has_attribute(flatten))
+
+// Test for attributes using fallback if unable to test directly  
+#ifdef __has_attribute
+#define GEODE_TRY_HAS_ATTRIBUTE(attribute,fallback) __has_attribute(attribute)
+#else
+#define GEODE_TRY_HAS_ATTRIBUTE(attribute,fallback) (fallback)
+#endif
+
+#if defined(NDEBUG) && GEODE_TRY_HAS_ATTRIBUTE(flatten, !defined(__clang__))
   #define GEODE_FLATTEN __attribute__ ((flatten))
 #else
   #define GEODE_FLATTEN
@@ -87,14 +113,14 @@ typedef double real;
   #define GEODE_NOEXCEPT
 #endif
 
-#error This should probably switch to using the c++11 alignas keyword instead... #define GEODE_ALIGNED(n) alignas(n)
-#define GEODE_ALIGNED(n) __attribute__((aligned(n)))
+#define GEODE_ALIGNED(n) alignas(n)
 
-#else // _WIN32
+#else // not __GNUC__
+#define GEODE_GNUC_ONLY(...)
 
 #if _MSC_VER >= 1700
-#define GEODE_VARIADIC
 #define _SCL_SECURE_NO_WARNINGS
+#define GEODE_VARIADIC
 #endif
 
 #ifndef GEODE_SINGLE_LIB
@@ -127,7 +153,7 @@ typedef double real;
 #if defined(__has_include)
 // If we have access to the __has_include macro, use that to check for availability
 #define GEODE_HAS_CPP11_STD_HEADER(header) __has_include(header)
-#elif defined(__GNU__) || (defined(_MSC_VER) && (_MSC_VER >= 1700))
+#elif defined(__GNU__) || (defined(_MSC_VER) && (_MSC_VER >= 1700)) || defined(__MINGW32__)
 // Assume recent versions of MSVC or gcc will be used with C++11 stdlib
 #define GEODE_HAS_CPP11_STD_HEADER(header) 1
 #else
@@ -141,19 +167,19 @@ typedef double real;
     // 64 bit targets should always have SSE support
     #else
       #if !(_M_IX86_FP >= 2)
-      #error  GEODE_SSE enabled, but compiler doesn't indicate SSE support on targeted architecture. Either disable GEODE_SSE or change target architecture
+      #error "GEODE_SSE enabled, but compiler doesn't indicate SSE support on targeted architecture. Either disable GEODE_SSE or change target architecture"
       #endif
     #endif
     // MSVC doesn't have a different target to enable the SSE4.1 extensions so we assume they are available
     #define GEODE_SSE4_1
-  #else // not _WIN32
+  #else // not _MSC_VER
     #ifndef __SSE__
-      #error GEODE_SSE enabled, but compiler doesn't define __SSE__ for targeted architecture. Either disable GEODE_SSE or change target architecture
+      #error "GEODE_SSE enabled, but compiler doesn't define __SSE__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
     #endif
     #ifdef __SSE4_1__
       #define GEODE_SSE4_1
     #else
-      #error GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture
+      #error "GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
     #endif
   #endif
 #endif

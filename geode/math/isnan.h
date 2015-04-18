@@ -6,7 +6,7 @@
 #include <cmath>
 namespace geode {
 
-#ifdef _WIN32
+#ifndef __GNUC__
 
 template<class T> static inline bool isnan(T x) {
   return _isnan(x)!=0;

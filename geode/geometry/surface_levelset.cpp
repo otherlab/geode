@@ -125,15 +125,15 @@ template<int d> void surface_levelset(const ParticleTree<TV>& particles, const S
   if (d<TV::m-1 || !compute_signs)
     for (auto& I : info) {
       I.phi = sqrt(I.phi);
-      I.normal = I.simplex < 0   ? TV()
-               : I.phi > epsilon ? I.normal / I.phi
-                                 : normal_flip(surface.simplices[I.simplex],I.normal);
+      I.normal = ((I.simplex) < 0)   ? TV()  // Parenthesis around I.simplex avoid parse error in MinGW-W64 version 4.9.2 of g++
+               : (I.phi > epsilon) ? I.normal / I.phi
+                                   : normal_flip(surface.simplices[I.simplex],I.normal);
     }
   else // compute_signs
     for (const int i : range(info.size())) {
       auto& I = info[i];
       I.phi = sqrt(I.phi);
-      if (I.simplex < 0)
+      if ((I.simplex) < 0)
         I.normal = TV();
       else {
         try {

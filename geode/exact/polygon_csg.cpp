@@ -26,6 +26,7 @@ std::string str(const FillRule rule) {
     case FillRule::Parity: return "Parity";
     case FillRule::NotEqual: return "NotEqual";
   }
+  GEODE_UNREACHABLE("Bad enum value");
 }
 
 typedef exact::Vec2 EV;
@@ -213,6 +214,7 @@ static inline bool include_face(int delta, const FillRule rule) {
     case FillRule::Parity: return !(delta & 1);
     case FillRule::NotEqual: return !delta;
   }
+  GEODE_UNREACHABLE("Bad enum value");
 }
 
 Nested<Vec2> split_polygons(Nested<const Vec2> polys, const int depth) {

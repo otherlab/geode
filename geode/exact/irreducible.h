@@ -1,5 +1,5 @@
 // Irreducibility testing for integer polynomials
-#pragma
+#pragma once
 
 // The efficiency of the symbolic perturbation core depends cubically on the degrees
 // of polynomial predicates, so it is useful to know whether said degrees can be reduced.

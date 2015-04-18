@@ -17,7 +17,7 @@
 namespace geode {
 
 // Declaring these is legal on Windows, and they already exist for clang/gcc.
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 static inline __m128 operator+(__m128  a, __m128 b) { return _mm_add_ps(a,b); }
 static inline __m128 operator-(__m128  a, __m128 b) { return _mm_sub_ps(a,b); }
 static inline __m128 operator*(__m128  a, __m128 b) { return _mm_mul_ps(a,b); }

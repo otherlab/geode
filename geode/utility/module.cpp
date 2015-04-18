@@ -8,6 +8,8 @@
 #include <vector>
 namespace geode {
 
+static_assert(GEODE_SIZEOF_SIZE_T == sizeof(size_t), "GEODE_SIZEOF_SIZE_T incorrect on this platform");
+
 using std::pair;
 using std::make_pair;
 using std::vector;

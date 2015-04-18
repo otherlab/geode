@@ -14,7 +14,7 @@ template<class T1,class TArray2> struct IsArray<ArrayPlusScalar<T1,TArray2> >:pu
 template<class T1,class TArray2> struct HasCheapCopy<ArrayPlusScalar<T1,TArray2> >:public mpl::true_{};
 
 template<class T1,class TArray2>
-class ArrayPlusScalar : public ArrayExpression<typename Sum<T1,typename TArray2::Element>::type,typename ArrayPlusScalar<T1,TArray2>,TArray2> {
+class ArrayPlusScalar : public ArrayExpression<typename Sum<T1,typename TArray2::Element>::type,ArrayPlusScalar<T1,TArray2>,TArray2> {
   typedef typename TArray2::Element T2;
   typedef typename mpl::if_<HasCheapCopy<T1>,const T1,const T1&>::type T1View;
   typedef typename mpl::if_<HasCheapCopy<TArray2>,const TArray2,const TArray2&>::type TArray2View;

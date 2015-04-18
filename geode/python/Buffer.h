@@ -29,11 +29,17 @@ public:
 
   template<class T> static Buffer* new_(const int m) {
     static_assert(is_trivially_destructible<T>::value,"Array<T> never calls destructors, so T cannot have any");
-#ifndef _WIN32
-    Buffer* self = (Buffer*)malloc(16+m*sizeof(T));
-#else
+
+#if defined(__MINGW32__)
+    // MinGW headers break declaration of _aligned_malloc unless you are very careful about include order
+    // We use __mingw_aligned_malloc which seems more robust
+    Buffer* self = (Buffer*)__mingw_aligned_malloc(16+m*sizeof(T),16);
+#elif defined(_WIN32)
     // Windows doesn't guarantee 16 byte alignment, so use _aligned_malloc
     Buffer* self = (Buffer*)_aligned_malloc(16+m*sizeof(T),16);
+#else
+    // On other platforms, malloc should be 16 byte aligned
+    Buffer* self = (Buffer*)malloc(16+m*sizeof(T));
 #endif
     return GEODE_PY_OBJECT_INIT(self,&pytype);
   }

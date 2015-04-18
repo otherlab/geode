@@ -2,6 +2,7 @@
 // Function from_python
 //#####################################################################
 #include <geode/python/from_python.h>
+#include <geode/utility/signed_compare.h>
 #include <geode/utility/format.h>
 namespace geode {
 
@@ -28,9 +29,13 @@ long FromPython<long>::convert(PyObject* object) {
   return i;
 }
 
+template<class ToT, class FromT> static bool representable_as(const FromT x) {
+  return signed_leq(std::numeric_limits<ToT>::lowest(), x) && signed_leq(x, std::numeric_limits<ToT>::max());
+}
+
 int FromPython<int>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (i!=(int)i) {
+  if (!representable_as<int>(i)) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C int");
     throw_python_error();
   }
@@ -39,7 +44,7 @@ int FromPython<int>::convert(PyObject* object) {
 
 int FromPython<unsigned int>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (i!=(unsigned int)i) {
+  if (!representable_as<unsigned int>(i)) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C int");
     throw_python_error();
   }
@@ -84,7 +89,7 @@ unsigned long long FromPython<unsigned long long>::convert(PyObject* object) {
 
 unsigned long FromPython<unsigned long>::convert(PyObject* object) {
   unsigned long long i = FromPython<unsigned long long>::convert(object);
-  if (i!=(unsigned long)i) {
+  if (!representable_as<unsigned long>(i)) {
     PyErr_SetString(PyExc_OverflowError,"int too long to convert to C unsigned long");
     throw_python_error();
   }
@@ -121,7 +126,7 @@ string FromPython<string>::convert(PyObject* object) {
 
 uint8_t FromPython<uint8_t>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (i!=(uint8_t)i) {
+  if (!representable_as<uint8_t>(i)) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C uint8_t");
     throw_python_error();
   }
