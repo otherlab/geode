@@ -144,7 +144,7 @@ typedef double real;
 #define GEODE_UNREACHABLE(...) GEODE_FATAL_ERROR(__VA_ARGS__)
 #define GEODE_NOEXCEPT
 #define GEODE_COLD
-#define GEODE_FORMAT
+#define GEODE_FORMAT(type,fmt,list)
 #define GEODE_EXPECT(value,expect) (value)
 #define GEODE_ALIGNED(n) alignas(n)
 
@@ -212,10 +212,18 @@ typedef double real;
 // Use GEODE_CONSTEXPR_INCOMPLETE to control workarounds that should be removed in the future
 #define GEODE_CONSTEXPR_INCOMPLETE 1
 // Use GEODE_CONSTEXPR_UNLESS_MSVC for cases where substituting const is sufficient
-#define GEODE_CONSTEXPR_UNLESS_MSVC const
+#define GEODE_CONSTEXPR_IF_NOT_MSVC const
 #else
 #define GEODE_CONSTEXPR_INCOMPLETE 0
-#define GEODE_CONSTEXPR_UNLESS_MSVC constexpr
+#define GEODE_CONSTEXPR_IF_NOT_MSVC constexpr
+#endif
+
+#ifdef _MSC_VER
+#define GEODE_IF_MSVC(...) __VA_ARGS__
+#define GEODE_IF_NOT_MSVC(...)
+#else
+#define GEODE_IF_MSVC(...)
+#define GEODE_IF_NOT_MSVC(...) __VA_ARGS__
 #endif
 
 #ifndef GEODE_VARIADIC

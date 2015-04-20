@@ -140,8 +140,8 @@ template<Pb PS> struct ExactCircle : public ExactCirclePerturbationHelper<PS> {
   bool intersections_ccw              (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const; // Is the triangle {center,i0,i1} positively oriented?
 
   // These help make IncidentCircle and IncidentHorizontal interchangable in some templates:
-  static GEODE_CONSTEXPR_UNLESS_MSVC bool is_same_intersection(const IncidentCircle<PS>& i, const IncidentHorizontal<PS>& h) { return false; }
-  static GEODE_CONSTEXPR_UNLESS_MSVC bool is_same_intersection(const IncidentHorizontal<PS>& h, const IncidentCircle<PS>& i) { return false; }
+  static GEODE_CONSTEXPR_IF_NOT_MSVC bool is_same_intersection(const IncidentCircle<PS>& i, const IncidentHorizontal<PS>& h) { return false; }
+  static GEODE_CONSTEXPR_IF_NOT_MSVC bool is_same_intersection(const IncidentHorizontal<PS>& h, const IncidentCircle<PS>& i) { return false; }
 
   // If quadrants of incident circles have already been compared, these can be used
   bool intersections_upwards_same_q   (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;

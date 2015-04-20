@@ -211,11 +211,3 @@ typedef intptr_t Py_intptr_t;
 
 }
 #endif
-
-// This should get moved to geode/utility/config.h once we ensure __USE_MINGW_ANSI_STDIO gets defined first
-#if defined(__USE_MINGW_ANSI_STDIO) && ((__USE_MINGW_ANSI_STDIO + 0) != 0)
-// It appears that we need to use gnu_printf even if we have __USE_MINGW_ANSI_STDIO 
-#define GEODE_FORMAT_PRINTF(fmt,list) GEODE_FORMAT(gnu_printf,fmt,list)
-#else
-#define GEODE_FORMAT_PRINTF(fmt,list) GEODE_FORMAT(printf,fmt,list)
-#endif

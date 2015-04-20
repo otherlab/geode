@@ -18,6 +18,18 @@
 #include <geode/utility/type_traits.h>
 #include <string>
 #include <cinttypes>
+
+// The printf attribute in MinGW uses the platform specific formatting characters even when using a custom printf function
+// This macro defines a printf attribute to match the printf function
+#if defined(__USE_MINGW_ANSI_STDIO) && ((__USE_MINGW_ANSI_STDIO + 0) != 0)
+  #define GEODE_FORMAT_LIKE_PRINTF(fmt,list) GEODE_FORMAT(gnu_printf,fmt,list)
+  // Note: If you are seeing unexpected formatting issues with MinGW make sure that __USE_MINGW_ANSI_STDIO is getting set
+  //   to 1 before any system headers. The MinGW stdlibs (at least with 4.9.2) attempt to unconditionally set it, but some
+  //   include orders can result in mismatched printf, PRI* macros, and friends.
+#else
+  #define GEODE_FORMAT_LIKE_PRINTF(fmt,list) GEODE_FORMAT(printf,fmt,list)
+#endif
+
 namespace geode {
 
 // format("Print things of type size_t as x = %" GEODE_PRIUSIZE " or similar", x)
@@ -34,7 +46,7 @@ namespace geode {
 using std::string;
 
 // Unfortunately, since format_helper is called indirectly through format, we won't get much benefit from gcc's format attribute
-GEODE_CORE_EXPORT string format_helper(const char* format,...) GEODE_FORMAT_PRINTF(1,2);
+GEODE_CORE_EXPORT string format_helper(const char* format,...) GEODE_FORMAT_LIKE_PRINTF(1,2);
 
 template<class T> static inline typename mpl::if_<is_enum<T>,int,T>::type format_sanitize(const T d) {
   static_assert(mpl::or_<is_fundamental<T>,is_enum<T>,is_pointer<T>>::value,"Passing as a vararg is not safe");
@@ -59,7 +71,7 @@ static inline const char* format_sanitize(const string& s) {
 // #define format(fmt,...) format_helper(fmt, GEODE_MAP(format_sanitize, __VA_ARGS__))
 
 // The format attribute sanity checks the format string, but can't verify it was used with a matching types in Args (only supports varargs)
-template<class... Args> GEODE_FORMAT_PRINTF(1,0) static inline string format(const char* format, const Args&... args) {
+template<class... Args> GEODE_FORMAT_LIKE_PRINTF(1,0) static inline string format(const char* format, const Args&... args) {
   GEODE_GNUC_ONLY(_Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\""))
   return format_helper(format,format_sanitize(args)...);
   GEODE_GNUC_ONLY(_Pragma("GCC diagnostic pop"))
