@@ -123,12 +123,14 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
     // Alignment flag should trigger an exception from throw_array_conversion_error, but we emit a warning here to help track down the cause
     GEODE_WARNING("NumPy array alignment bug workaround failed!");
   }
+#elif (NPY_FEATURE_VERSION == 0x00000006) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
+  // This config seems to works
 #else
   // Maintainers of NumPy are aware of alignment issues and I think have a fix for the next release
   // The above workaround shouldn't be necessary if using an older or newer version of NumPy
   // However, instead of mysterious runtime errors we spit out a compile time error here
   // If you test this on a particular configuration you should add ifdefs to whitelist it here or use the workaround above
-#  error Alignment for this version of NumPy has not been tested.
+  #error Alignment for this version of NumPy has not been tested.
 #endif
 
   const int rank = PyArray_NDIM((PyArrayObject*)object);
@@ -219,7 +221,7 @@ Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensio
   for (int i=0;i<rank;i++) {
     total_size *= dimensions[i];
     // TODO: This could walk off the end of our buffer if our array had about 90 dimensions (unlikely, but possible if most of the dimensions were 1)
-    len += sprintf(base+len,"%" GEODE_PRIUSIZE "%s",dimensions[i],rank==1||i<rank-1?",":"");
+    len += sprintf(base+len,"%" PRIdPTR "%s",dimensions[i],rank==1||i<rank-1?",":"");
   }
   strcpy(base+len,"), }");
   len+=4;

@@ -36,7 +36,8 @@ def test_array_prop():
   d = Prop('d',zeros((2,2),dtype=int32),shape=(-1,2))
   assert d().dtype==dtype('int32')
   d = Prop('d',((2,2),),shape=(-1,2))
-  assert d().dtype==dtype('int32')
+  assert dtype('int32') or d().dtype==dtype('int64') # Type should be some kind of int (not float)
+  assert d().dtype==array((2,2)).dtype # Should get same behaviour as numpy.array function
 
 def test_unusable():
   unusable = unusable_prop_test()
