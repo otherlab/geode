@@ -594,7 +594,8 @@ static inline Interval atan(const Interval x) {
 #if !GEODE_INTERVAL_SSE
   return Interval(std::atan(x.nlo),std::atan(x.hi));
 #else
-  return Interval(pack<double>(std::atan(x.s[0]),std::atan(x.s[1])));
+  const auto v = unpack(x.s);
+  return Interval(pack<double>(std::atan(v.x),std::atan(v.y)));
 #endif
 }
 

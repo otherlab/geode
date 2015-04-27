@@ -114,6 +114,10 @@ template<> inline __m128i pack<uint64_t>(uint64_t x0, uint64_t x1) {
 }
 #endif
 
+static inline Vector<double,2> unpack(const __m128d x) {
+  return Vector<double,2>(_mm_cvtsd_f64(x),_mm_cvtsd_f64(_mm_unpackhi_pd(x,x)));
+}
+
 template<class D,class S> static inline D expand(S x);
 
 template<> inline float expand(float x) {

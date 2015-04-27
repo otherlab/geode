@@ -55,7 +55,7 @@ using std::endl;
 // For interface simplicity, we use a single fixed random number as the seed.
 // This is safe unless the points are chosen maliciously.  We've reused the key
 // from delaunay.cpp.
-static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u)<<64);
+static const uint128_t key = (uint128_t(920519151720167868u)<<64)+9975794406056834021u;
 
 // Some variables in the code can refer to either original vertices (possibly loop vertices),
 // edge-face intersection vertices, or face-face-face intersection vertices.  For this purpose,

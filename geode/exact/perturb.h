@@ -233,7 +233,7 @@ template<int a, int b> Quantized snap_div(const Exact<a> num, const Exact<b> den
   enum { max_size = (a<b ? b : a), n_terms = 2 };
   // Pack both values into a contigous array
   auto packed_values = Vector<Exact<max_size>, n_terms>(Exact<max_size>(num), Exact<max_size>(denum));
-  static_assert(sizeof(packed_values) == sizeof(mp_limb_t)*max_size*n_terms,
+  static_assert(sizeof(packed_values) == sizeof(mp_limb_t)*Exact<1>::ratio*max_size*n_terms,
                 "Memory layout doesn't appear to be correct");
   Vector<Quantized,n_terms-1> result;
   snap_divs(asarray(result),RawArray<mp_limb_t,2>(n_terms,max_size,(mp_limb_t*)packed_values.data()),take_sqrt);
@@ -247,7 +247,7 @@ template<int a, int b> Vector<Quantized,2> snap_div(const Vector<Exact<a>,2> num
   enum { max_size = (a<b ? b : a), n_terms = 3 };
   // Pack both values into a contigous array
   Vector<Exact<max_size>,n_terms> packed_values(Exact<max_size>(num.x),Exact<max_size>(num.y),Exact<max_size>(denum));
-  static_assert(sizeof(packed_values) == sizeof(mp_limb_t)*max_size*n_terms,
+  static_assert(sizeof(packed_values) == sizeof(mp_limb_t)*Exact<1>::ratio*max_size*n_terms,
                 "Memory layout doesn't appear to be correct");
   Vector<Quantized,n_terms-1> result;
   snap_divs(asarray(result),RawArray<mp_limb_t,2>(n_terms,max_size,(mp_limb_t*)packed_values.data()),take_sqrt);

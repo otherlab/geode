@@ -30,7 +30,7 @@ static const bool self_check = false;
 // This is safe unless the points are chosen maliciously (and then it's still
 // quite hard since threefry is fairly strong for a noncryptographic PRNG).
 // The key itself came from /dev/random. :)
-static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u)<<64);
+static const uint128_t key = (uint128_t(920519151720167868u)<<64)+9975794406056834021u;
 
 // For details and analysis of the algorithm, see
 //
