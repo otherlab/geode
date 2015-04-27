@@ -114,10 +114,6 @@ template<> inline __m128i pack<uint64_t>(uint64_t x0, uint64_t x1) {
 }
 #endif
 
-static inline Vector<double,2> unpack(const __m128d x) {
-  return Vector<double,2>(_mm_cvtsd_f64(x),_mm_cvtsd_f64(_mm_unpackhi_pd(x,x)));
-}
-
 template<class D,class S> static inline D expand(S x);
 
 template<> inline float expand(float x) {
@@ -193,6 +189,14 @@ static inline void transpose(__m128i& i0, __m128i& i1, __m128i& i2, __m128i& i3)
   i1 = _mm_castps_si128(f1);
   i2 = _mm_castps_si128(f2);
   i3 = _mm_castps_si128(f3);
+}
+
+}
+#include <geode/vector/Vector.h>
+namespace geode {
+
+static inline Vector<double,2> unpack(const __m128d x) {
+  return Vector<double,2>(_mm_cvtsd_f64(x),_mm_cvtsd_f64(_mm_unpackhi_pd(x,x)));
 }
 
 }
