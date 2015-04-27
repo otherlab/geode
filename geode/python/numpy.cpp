@@ -196,7 +196,7 @@ Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensio
   size_t total_size = 1;
   for (int i=0;i<rank;i++) {
     total_size *= dimensions[i];
-    len += sprintf(base+len,"%ld%s",dimensions[i],rank==1||i<rank-1?",":"");
+    len += sprintf(base+len,"%ld%s",long(dimensions[i]),rank==1||i<rank-1?",":"");
   }
   strcpy(base+len,"), }");
   len+=4;

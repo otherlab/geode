@@ -151,7 +151,7 @@ template<class T0,class T1> struct FromPython<pair<T0,T1> >{static pair<T0,T1> c
   Ref<PyObject> seq = steal_ref_check(PySequence_Fast(object,"expected pair"));
   size_t len = PySequence_Length(&*seq);
   if (len!=2) {
-    PyErr_Format(PyExc_TypeError,"expected pair, got length %ld",len);
+    PyErr_Format(PyExc_TypeError,"expected pair, got length %ld",long(len));
     throw_python_error();
   }
   return pair<T0,T1>(from_python<T0>(ref_check(PySequence_Fast_GET_ITEM(&*seq,0))),
