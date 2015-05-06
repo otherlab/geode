@@ -3,6 +3,7 @@
 #include <geode/exact/math.h>
 #include <geode/exact/perturb.h>
 #include <geode/exact/predicates.h>
+#include <cmath>
 namespace geode {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -699,13 +700,13 @@ static Interval approx_angle_helper(const Vector<Quantized,2> center, const Vect
 
   if(!delta.x.contains_zero()) {
     const Interval pos_theta = atan(delta.y * inverse(delta.x));
-    return (Interval(M_PI_2)*(q+0)) + pos_theta;
+    return (Interval(half_pi)*(q+0)) + pos_theta;
   }
   if(!delta.y.contains_zero()) {
     const Interval neg_theta = atan(delta.x * inverse(delta.y));
-    return (Interval(M_PI_2)*(q+1)) - neg_theta;
+    return (Interval(half_pi)*(q+1)) - neg_theta;
   }
-  return Interval(M_PI_2)*q + Interval(0, M_PI_2);
+  return Interval(half_pi)*q + Interval(0, half_pi);
 }
 
 template<Pb PS> Interval ExactCircle<PS>::approx_angle(const IncidentCircle<PS>& i) const {

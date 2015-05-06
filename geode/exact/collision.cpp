@@ -2072,7 +2072,7 @@ bool RootParityCollisionTest::ray_prism_parity_test()
         // check if any hit was not good
         if ( !good_hit )
         {
-            double r = rand() / (double)RAND_MAX * 2.0 * M_PI;
+            double r = rand() / (double)RAND_MAX * 2.0 * pi;
             test_ray[0] = cos(r) * ray_len;
             test_ray[1] = -sin(r) * ray_len;
         }
@@ -2171,7 +2171,7 @@ bool RootParityCollisionTest::ray_hex_parity_test( )
         // check if any hit was not okay
         if ( !good_hit )
         {
-            double r = rand() / (double)RAND_MAX * 2.0 * M_PI;
+            double r = rand() / (double)RAND_MAX * 2.0 * pi;
             test_ray[0] =  cos(r) * ray_len;
             test_ray[1] = -sin(r) * ray_len;
         }

@@ -14,6 +14,7 @@ const double pi = 3.14159265358979323846;
 #else
 const double pi = M_PI;
 #endif
+const double half_pi = 0.5*pi;
 const double tau = 2*pi;
 const double speed_of_light = 2.99792458e8; // m/s
 const double plancks_constant = 6.6260755e-34; // J*s

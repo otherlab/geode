@@ -4,10 +4,12 @@
 #include <geode/math/integer_log.h>
 #include <geode/math/popcount.h>
 #include <geode/python/wrap.h>
+#include <cmath>
 namespace geode {
 // In some configurations, Python.h will attempt to redefine hypot as _hypot
 // This helps test that we got a hypot function that works
 static real geode_test_hypot(const real a, const real b) {
+  using namespace std;
   return hypot(a,b);
 }
 } // namespace geode
