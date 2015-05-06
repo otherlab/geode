@@ -13,10 +13,16 @@ elif [ "$1" = "build" ]; then
     # These were previously needed, but maybe aren't any more?:
     # args+=(cxxflags_extra='-std=c++11 -stdlib=libc++' linkflags_extra='-stdlib=libc++')
     # args+=(sse=0)
+    args+=(cxxflags_extra='-msse4.1')
+    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
     echo "" # Can't have an empty if block
-  elif [ "$SYSTEM_NAME" = "MINGW64_NT-6.1" ]; then
+  elif echo "$SYSTEM_NAME" | grep -q "MINGW64_NT"; then
     # Windows specific config:
     args+=(libs_extra=psapi)
+    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+  elif echo "$SYSTEM_NAME" | grep -q "MSYS"; then
+    echo "ERROR: the MSYS shell is not supported. Please use the MinGW-w64 Win64 Shell instead."
+    exit 1
   else
     echo "ERROR: Unrecognized or unsupported platform: $SYSTEM_NAME!"
     exit 1
@@ -24,7 +30,6 @@ elif [ "$1" = "build" ]; then
 
   args+=(use_python=0 use_libjpeg=0 use_libpng=0 use_openexr=0 use_boost=0)
   args+=(shared=0 install=0)
-  args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
   args+=(use_gmp=1 gmp_libpath=#/../mpir/.libs/ gmp_include=#/../mpir/)
 
   for type in debug release; do
