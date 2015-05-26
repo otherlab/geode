@@ -40,26 +40,26 @@ public:
 
     T x;
 
-    Vector()
+    constexpr Vector()
         :x()
     {
         static_assert(sizeof(Vector)==sizeof(T),"");
     }
 
-    explicit Vector(const T& x)
+    explicit constexpr Vector(const T& x)
         :x(x)
     {}
 
-    template<class T2> explicit Vector(const Vector<T2,1>& vector)
+    template<class T2> explicit constexpr Vector(const Vector<T2,1>& vector)
         :x(T(vector.x))
     {}
 
-    Vector(const Vector& vector)
+    constexpr Vector(const Vector& vector)
         :x(vector.x)
     {}
 
     template<class TVector>
-    explicit Vector(const TVector& v,typename EnableForVectorLike<T,1,TVector,Unusable>::type unusable=Unusable())
+    explicit constexpr Vector(const TVector& v,typename EnableForVectorLike<T,1,TVector,Unusable>::type unusable=Unusable())
         :x(v[0])
     {}
 
@@ -75,10 +75,7 @@ public:
         x=v[0];return *this;
     }
 
-    Vector& operator=(const Vector& v)
-    {
-        x=v[0];return *this;
-    }
+    Vector& operator=(const Vector& v) = default;
 
     constexpr int size() const
     {return 1;}

@@ -42,40 +42,38 @@ public:
     static const int m = 4;
     static const bool is_const = false;
 
-  T x,y,z,w;
+    T x,y,z,w;
 
-    Vector()
+    constexpr Vector()
       :x(),y(),z(),w()
     {
         static_assert(sizeof(Vector)==4*sizeof(T),"");
     }
 
-  Vector(const T& x,const T& y,const T& z,const T& w)
+    constexpr Vector(const T& x,const T& y,const T& z,const T& w)
     :x(x),y(y),z(z),w(w)
     {}
 
-    Vector(const Vector& vector)
-      :x(vector.x),y(vector.y),z(vector.z),w(vector.w)
-    {}
+    constexpr Vector(const Vector& vector) = default;
 
-    template<class T2> explicit Vector(const Vector<T2,4>& vector)
+    template<class T2> explicit constexpr Vector(const Vector<T2,4>& vector)
       :x(T(vector.x)),y(T(vector.y)),z(T(vector.z)),w(T(vector.w))
     {}
 
-    explicit Vector(const Vector<T,2>& vector)
+    explicit constexpr Vector(const Vector<T,2>& vector)
       :x(vector.x),y(vector.y),z(),w()
     {}
 
-    explicit Vector(const Vector<T,3>& vector)
+    explicit constexpr Vector(const Vector<T,3>& vector)
       :x(vector.x),y(vector.y),z(vector.z),w()
     {}
 
-    explicit Vector(const Vector<T,3>& vector, const T& w)
+    explicit constexpr Vector(const Vector<T,3>& vector, const T& w)
       :x(vector.x),y(vector.y),z(vector.z),w(w)
     {}
 
     template<class TVector>
-    explicit Vector(const TVector& v, typename EnableForVectorLike<T,4,TVector,Unusable>::type=Unusable())
+    explicit constexpr Vector(const TVector& v, typename EnableForVectorLike<T,4,TVector,Unusable>::type=Unusable())
       :x(v[0]),y(v[1]),z(v[2]),w(v[3])
     {}
 
@@ -91,10 +89,7 @@ public:
       x=v[0];y=v[1];z=v[2];w=v[3];return *this;
     }
 
-    Vector& operator=(const Vector& v)
-    {
-      x=v[0];y=v[1];z=v[2];w=v[3];return *this;
-    }
+    Vector& operator=(const Vector& v) = default;
 
     constexpr int size() const
     {return 4;}

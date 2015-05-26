@@ -45,36 +45,34 @@ public:
 
     T x,y,z;
 
-    Vector()
+    constexpr Vector()
         :x(),y(),z()
     {
         static_assert(sizeof(Vector)==3*sizeof(T),"");
     }
 
-    Vector(const T& x,const T& y,const T& z)
+    constexpr Vector(const T& x,const T& y,const T& z)
         :x(x),y(y),z(z)
     {}
 
-    Vector(const Vector& vector)
-        :x(vector.x),y(vector.y),z(vector.z)
-    {}
+    constexpr Vector(const Vector& vector) = default;
 
     template<class T2> explicit Vector(const Vector<T2,3>& vector)
         :x(T(vector.x)),y(T(vector.y)),z(T(vector.z))
     {}
 
-    explicit Vector(const Vector<T,2>& vector)
+    explicit constexpr Vector(const Vector<T,2>& vector)
         :x(vector.x),y(vector.y),z()
     {}
 
     template<class TVector,class TIndices>
-    explicit Vector(const IndirectArray<TVector,TIndices>& v)
+    explicit constexpr Vector(const IndirectArray<TVector,TIndices>& v)
         :x(v[0]),y(v[1]),z(v[2])
     {
         static_assert(is_same<T,typename IndirectArray<TVector,TIndices>::Element>::value && IndirectArray<TVector,TIndices>::m==3,"");
     }
 
-    explicit Vector(const Vector<T,2>& vector, const T& z)
+    explicit constexpr Vector(const Vector<T,2>& vector, const T& z)
       :x(vector.x),y(vector.y),z(z)
     {}
 
@@ -90,10 +88,7 @@ public:
         x=v[0];y=v[1];z=v[2];return *this;
     }
 
-    Vector& operator=(const Vector& v)
-    {
-        x=v[0];y=v[1];z=v[2];return *this;
-    }
+    Vector& operator=(const Vector& v) = default;
 
     constexpr int size() const
     {return 3;}

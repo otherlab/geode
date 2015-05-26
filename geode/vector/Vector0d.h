@@ -22,10 +22,9 @@ public:
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
     typedef T Element;
 
-    Vector()
-    {}
+    constexpr Vector() = default;
 
-    template<class T2> explicit
+    template<class T2> explicit constexpr
     Vector(const Vector<T2,0>& vector_input)
     {}
 

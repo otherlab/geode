@@ -43,36 +43,36 @@ public:
 
     T x,y;
 
-    Vector()
+    constexpr Vector()
         :x(),y()
     {
         static_assert(sizeof(Vector)==2*sizeof(T),"");
     }
 
-    Vector(const T& x,const T& y)
+    constexpr Vector(const T& x,const T& y)
         :x(x),y(y)
     {}
 
-    Vector(const Vector& vector)
+    constexpr Vector(const Vector& vector)
         :x(vector.x),y(vector.y)
     {}
 
-    template<class T2> explicit Vector(const Vector<T2,2>& vector)
+    template<class T2> explicit constexpr Vector(const Vector<T2,2>& vector)
         :x(T(vector.x)),y(T(vector.y))
     {}
 
-    template<class T2> explicit Vector(const Vector<T2,1>& vector)
+    template<class T2> explicit constexpr Vector(const Vector<T2,1>& vector)
         :x(T(vector.x)),y()
     {}
 
     template<class TVector>
-    explicit Vector(const TVector& v)
+    explicit constexpr Vector(const TVector& v)
         :x(v[0]),y(v[1])
     {
         static_assert(is_same<T,typename TVector::Element>::value && TVector::m==2,"");
     }
 
-    explicit Vector(const complex<T>& c)
+    explicit constexpr Vector(const complex<T>& c)
       : x(c.real()), y(c.imag()) {}
 
     template<class TVector> typename EnableForVectorLike<T,2,TVector,Vector&>::type
@@ -81,10 +81,7 @@ public:
         x=v[0];y=v[1];return *this;
     }
 
-    Vector& operator=(const Vector& v)
-    {
-        x=v[0];y=v[1];return *this;
-    }
+    Vector& operator=(const Vector& v) = default;
 
     constexpr int size() const
     {return 2;}
