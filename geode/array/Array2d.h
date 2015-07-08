@@ -176,6 +176,14 @@ public:
     return unsigned(i)<unsigned(m) && unsigned(j)<unsigned(n);
   }
 
+  // Convert a 2d index into a 1d index into this->flat
+  int flat_index(const Vector<int,d>& index) const {
+    assert(valid(index));
+    const int result = index.x*n+index.y;
+    assert(&(this->flat[result]) == &((*this)[index]));
+    return result;
+  }
+
   void resize(const int m_new, const int n_new) {
     if (m_new==m && n_new==n) return;
     assert(m_new>=0 && n_new>=0);
