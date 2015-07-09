@@ -249,6 +249,9 @@ public:
 
     static Vector repeat(const T& constant)
     {return Vector(constant); }
+    
+    static Vector nans()
+    {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     void fill(const T& constant)
     {x=constant;}

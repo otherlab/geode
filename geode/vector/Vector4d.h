@@ -269,6 +269,9 @@ public:
 
     static Vector repeat(const T& constant)
     {return Vector(constant,constant,constant,constant); }
+    
+    static Vector nans()
+    {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     // shifts vector (wrapped) such that element a is first
     Vector<T,4> roll(const int a) {
