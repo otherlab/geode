@@ -1,4 +1,8 @@
 #include <geode/solver/pattern_max.h>
+#include <geode/python/function.h>
+#include <geode/python/wrap.h>
+
+
 namespace geode {
 
 real spherical_pattern_maximize(const function<real(Vector<real,3>)>& score, Vector<real,3>& n, real tol) {
@@ -30,4 +34,10 @@ real spherical_pattern_maximize(const function<real(Vector<real,3>)>& score, Vec
   return dot;
 }
 
+}
+
+using namespace geode;
+
+void wrap_pattern_max() {
+  GEODE_FUNCTION(spherical_pattern_maximize)
 }
