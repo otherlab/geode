@@ -30,6 +30,8 @@
 #include <geode/vector/Vector.h>
 #include <geode/utility/const_cast.h>
 #include <vector>
+#include <initializer_list>
+
 namespace geode {
 
 using std::swap;
@@ -528,6 +530,14 @@ public:
     return copy;
   }
 };
+
+template<class T> static inline Array<T> make_array( std::initializer_list<T> list ) {
+  Array<T> result;
+  result.preallocate(list.size());
+  for( const auto ref : list)
+     result.append_assuming_enough_space(ref);
+  return result;
+}
 
 template<class T,int d>   static inline const RawArray<T>       asarray(T (&v)[d])                 { return RawArray<T>(d,v); }
 template<class T,int d>   static inline const RawArray<T>       asarray(Vector<T,d>& v)            { return RawArray<T>(d,v.begin()); }
