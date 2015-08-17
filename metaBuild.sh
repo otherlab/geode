@@ -19,7 +19,7 @@ elif [ "$1" = "build" ]; then
   elif echo "$SYSTEM_NAME" | grep -q "MINGW64_NT"; then
     # Windows specific config:
     args+=(libs_extra=psapi)
-    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=1 Werror=0 arch=corei7 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
   elif echo "$SYSTEM_NAME" | grep -q "MSYS"; then
     echo "ERROR: the MSYS shell is not supported. Please use the MinGW-w64 Win64 Shell instead."
     exit 1
