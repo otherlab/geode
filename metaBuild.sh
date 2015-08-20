@@ -3,9 +3,7 @@
 # TODO: Determine appropriate architecture (i.g. "args+=(arch=nocona)")
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-if [ "$1" = "clean" ]; then
-  (cd $DIR && scons -c --config=force $lib_setup_args)
-elif [ "$1" = "build" ]; then
+if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   declare -a args=()
   SYSTEM_NAME=`uname -s`
   if [ "$SYSTEM_NAME" = "Darwin" ]; then
@@ -32,12 +30,29 @@ elif [ "$1" = "build" ]; then
   args+=(shared=0 install=0)
   args+=(use_gmp=1 gmp_libpath=#/../mpir/.libs/ gmp_include=#/../mpir/)
 
-  for type in debug release; do
-    scons_args="--config=force -j7 prefix=#build/\$arch/\$type type=$type ${args[@]}"
-    echo scons $scons_args
-    (cd $DIR && scons $scons_args) || exit 1
+  if [ "$2" = "debug" ]; then
+    echo "Building geode for debug only"
+    types=debug
+  elif [ "$2" = "release" ]; then
+    echo "Building geode for release only"
+    types=release
+  else 
+    echo "Build type was not specified, building geode for both debug and release"
+    types="debug release"
+  fi
+
+  for t in $types; do
+    scons_args="--config=force -j7 prefix=#build/\$arch/\$t type=$t ${args[@]}"
+    if [ "$1" = "clean" ]; then
+      echo "Cleaning $t with: $scons_args"
+      (cd $DIR && scons -c $scons_args) || exit 1
+    else
+      echo "Building $t with: $scons_args"
+      (cd $DIR && scons $scons_args) || exit 1
+    fi
+    echo ""
   done
 else
-  echo 'Missing or unrecognized metabuild argument: '\'$1\'
+  echo 'Missing or unrecognized metaBuild argument: '\'$1\'
   exit 1
 fi
