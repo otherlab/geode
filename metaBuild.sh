@@ -27,7 +27,7 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   fi
 
   args+=(use_python=0 use_libjpeg=0 use_libpng=0 use_openexr=0 use_boost=0)
-  args+=(shared=0 install=0)
+  args+=(shared=1 install=0)
   args+=(use_gmp=1 gmp_libpath=#/../mpir/.libs/ gmp_include=#/../mpir/)
 
   if [ "$2" = "debug" ]; then
@@ -42,7 +42,7 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   fi
 
   for t in $types; do
-    scons_args="--config=force -j7 prefix=#build/\$arch/\$t type=$t ${args[@]}"
+    scons_args="--config=force -j7 prefix=#build/\$arch/\$type type=$t ${args[@]}"
     if [ "$1" = "clean" ]; then
       echo "Cleaning $t with: $scons_args"
       (cd $DIR && scons -c $scons_args) || exit 1
