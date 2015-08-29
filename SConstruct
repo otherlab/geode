@@ -532,7 +532,8 @@ def link_flags(env):
         env_link.Append(LINKFLAGS=' '.join('-Xlinker -reexport-l%s'%n for n in lib['publiclibs']))
       else:
         env_link.Append(LIBS=lib['publiclibs'])
-      env_link.AppendUnique(LIBPATH=lib['libpath'])
+      # prepend specific lib paths so libs there will be found before any installed libs
+      env_link.PrependUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
       if lib.has_key('rpath'):
