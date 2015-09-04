@@ -3,6 +3,13 @@
 # TODO: Determine appropriate architecture (i.g. "args+=(arch=nocona)")
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+if [ "$3x" = "x" ]; then
+  ARCH=x86-64
+else
+  ARCH=$3
+fi
+echo Architecture is set to $ARCH
+
 if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   declare -a args=()
   SYSTEM_NAME=`uname -s`
@@ -10,9 +17,10 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
     # OSX specific config:
     # These were previously needed, but maybe aren't any more?:
     # args+=(cxxflags_extra='-std=c++11 -stdlib=libc++' linkflags_extra='-stdlib=libc++')
-    # args+=(sse=0)
-    args+=(cxxflags_extra='-msse4.1')
+    args+=(sse=0)
+    #args+=(cxxflags_extra='-msse4.1')
     args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(arch=$ARCH)
     echo "" # Can't have an empty if block
   elif echo "$SYSTEM_NAME" | grep -q "MINGW64_NT"; then
     # Windows specific config:
@@ -31,13 +39,13 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   args+=(use_gmp=1 gmp_libpath=#/../mpir/.libs/ gmp_include=#/../mpir/)
 
   if [ "$2" = "debug" ]; then
-    echo "Building geode for debug only"
+    echo "Building geode for debug only, using $ARCH architecture"
     types=debug
   elif [ "$2" = "release" ]; then
-    echo "Building geode for release only"
+    echo "Building geode for release only, using $ARCH architecture"
     types=release
   else 
-    echo "Build type was not specified, building geode for both debug and release"
+    echo "Build type was not specified, building geode for both debug and release, using $ARCH architecture"
     types="debug release"
   fi
 
