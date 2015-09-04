@@ -3,7 +3,7 @@
 # TODO: Determine appropriate architecture (i.g. "args+=(arch=nocona)")
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-if [ "$3x" = "x" ]; then
+if [ -z "$3" ]; then
   ARCH=x86-64
 else
   ARCH=$3
