@@ -2,6 +2,7 @@
 // Header constants
 //#####################################################################
 #pragma once
+#include <geode/config.h>
 
 #include <cmath>
 #include <limits>
