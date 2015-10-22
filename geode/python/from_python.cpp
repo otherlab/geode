@@ -2,7 +2,7 @@
 // Function from_python
 //#####################################################################
 #include <geode/python/from_python.h>
-#include <geode/utility/signed_compare.h>
+#include <geode/math/signed_compare.h>
 #include <geode/utility/format.h>
 namespace geode {
 
@@ -29,7 +29,12 @@ long FromPython<long>::convert(PyObject* object) {
   return i;
 }
 
+// TODO: This would probably be useful elsewhere and worth moving to math/signed_compare.h
+// Test if argument is in range of values that can be represented by ToT
+// Note: This doesn't have specializations for range of ToT being strictly greater than range of FromT
 template<class ToT, class FromT> static bool representable_as(const FromT x) {
+  // Make sure user isn't expecting us to check if floating point conversions require truncation or rounding
+  static_assert(std::is_integral<FromT>::value && std::is_integral<ToT>::value, "This function only supports integral types");
   return signed_leq(std::numeric_limits<ToT>::lowest(), x) && signed_leq(x, std::numeric_limits<ToT>::max());
 }
 

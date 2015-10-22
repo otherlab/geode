@@ -27,5 +27,4 @@ template<class SignedT, class UnsignedT> auto signed_eq(const SignedT x0, const 
 template<class UnsignedT, class SignedT> auto signed_eq(const UnsignedT x0, const SignedT x1) -> typename enable_if_c<is_unsigned<UnsignedT>::value && is_signed<SignedT>::value, bool>::type
 { return (0 <= x1) && (x0 == static_cast<typename make_unsigned<SignedT>::type>(x1)); }
 
-
 } // namespace geode
