@@ -30,6 +30,7 @@
 #include <geode/vector/Vector.h>
 #include <geode/utility/const_cast.h>
 #include <vector>
+#include <array>
 #include <initializer_list>
 
 namespace geode {
