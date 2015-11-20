@@ -825,16 +825,25 @@ template<Pb PS> Vec2 ExactArc<PS>::q_and_opp_q() const {
   assert(!is_full_circle()); // q isn't defined for a full circle
 
   const auto r = circle.radius;
-  const auto l = min(r, 0.5 * (src.approx.guess() - dst.approx.guess()).magnitude());
-  const auto root = sqrt(max(0.,sqr(r) - sqr(l)));
+  const auto x0 = src.approx.guess();
+  const auto x1 = dst.approx.guess();
+  const auto l = min(r, 0.5 * (x0 - x1).magnitude());
+
+  const auto xm = 0.5*(x0+x1); // Compute the midpoint of the chord from x0 to x1
+  const auto h = min(r,(circle.center - xm).magnitude()); // Height from chord to center of circle (clamped in case error in xm moved it outside of circle)
+  // There are many different ways we could compute q, of which I considered several in depth:
+  //   q = l / (r + sqrt(sqr(r) - sqr(l)))  // (argument to sqrt needs to be clamped to zero to handle rounding errors)
+  //   q = sqrt((r-h) / (r+h))
+  //   q = l / (r + h)
+  // We have to be careful about noise in x0 and x1 as well as floating point stability
+  // Since endpoints are fixed regardless of q, we want to compute a value that will match the intended arc in the middle
+  // The first approach fits a fixed radius to inaccurate endpoints making it unstable when q is close to +/-1 resulting in large worst case errors
+  // By including information from center of circle (which is exact) we should get more stable position of arc midpoint
+  // I choose the third approach over the second since it ensures q is 0 when l is 0
+  const real abs_q_short = l / (r+h);
+  const real abs_q_long = (r+h) / l;
 
   const bool is_small_arc = circle.intersections_ccw(src, dst);
-  // If l is 0 or very small both q and opposite_q will be 0. We would like to get 0 and +/-inf.
-  // q = (d0*l / (r + d0*d1*root)) or q = ((r - d0*d1*root) / ( d0*l)) are algebraically equivalent, but the latter is numerically unstable as l approaches 0
-  // We factor out signs and get expression for the smaller and larger q values
-  const real abs_q_short = l / (r + root); // ...use this to ensure q will go to zero as l goes to zero
-  const real abs_q_long = (r + root) / l; // i.e. 1./abs_q_short
-
   const real q =      (is_small_arc ? abs_q_short : abs_q_long);
   const real opp_q = -(is_small_arc ? abs_q_long : abs_q_short);
 
