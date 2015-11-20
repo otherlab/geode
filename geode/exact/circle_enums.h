@@ -14,7 +14,7 @@ enum class ArcDirection : bool { CCW = false, CW = true }; // directed_edge assu
 
 // These make it easier to use ArcDirection as a winding
 inline int sign(const ArcDirection d) { return (d == ArcDirection::CCW) ? 1 : -1; }
-inline ArcDirection operator-(const ArcDirection dir) { return static_cast<ArcDirection>(dir==ArcDirection::CW); }
+inline ArcDirection operator-(const ArcDirection dir) { return static_cast<ArcDirection>(!static_cast<bool>(dir)); }
 constexpr int direction_index(const ArcDirection dir) { return static_cast<int>(dir != ArcDirection::CCW); }
 
 // CircleFace encodes if something is inside or outside of a circle

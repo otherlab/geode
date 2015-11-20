@@ -48,11 +48,6 @@ static void add_capsule_helper(ArcAccumulator<Pb::Implicit>& result, const Exact
     }
   }
   else {
-    // Tolerance is for each dimension, so we need to multiply by sqrt(2) to get distance error
-    const Interval intersection_error_bound = assume_safe_sqrt(Interval(2))*ApproxIntersection::tolerance();
-    // If we grow endcap for an arc by this amount, we ensure intersection or coverage of inner and outer offset arcs
-    const Quantized endcap_safety_margin = ceil(intersection_error_bound.box().max); // Since offset circles don't need to construct new centers and have exactly correct radius, we only need to account for error of intersections
-
     const Quantized endcap_r = abs_offset + endcap_safety_margin;
 
     // Find or build circles for endcaps
