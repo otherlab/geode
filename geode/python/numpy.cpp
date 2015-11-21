@@ -125,6 +125,8 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
   }
 #elif (NPY_FEATURE_VERSION == 0x00000006) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
   // This config seems to works
+#elif (NPY_FEATURE_VERSION == 0x0000000A) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
+  // As does this one
 #else
   // Maintainers of NumPy are aware of alignment issues and I think have a fix for the next release
   // The above workaround shouldn't be necessary if using an older or newer version of NumPy
