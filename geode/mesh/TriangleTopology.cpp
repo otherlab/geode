@@ -132,7 +132,7 @@ VertexId TriangleTopology::internal_add_vertex() {
 
 VertexId TriangleTopology::internal_add_vertices(int n) {
   GEODE_ASSERT(n >= 0);
-  int id = n_vertices_;
+  int id = vertex_to_edge_.size(); // This doesn't attempt to recycle erased vertex ids
   const_cast<int&>(n_vertices_) += n;
   const_cast_(vertex_to_edge_).const_cast_().flat.resize(vertex_to_edge_.size()+n);
   return VertexId(id);
