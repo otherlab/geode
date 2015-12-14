@@ -22,7 +22,7 @@ GEODE_DEFINE_TYPE(ValueBase)
 // Link list of actions which have pending signals.  The fact that this is a two-sided doubly-linked list
 // is important, since Actions need to be able to delete their links from the pending list if they
 // destruct during dependency propagation.
-ValueBase::Link* ValueBase::pending = 0;
+GEODE_THREAD_LOCAL ValueBase::Link* ValueBase::pending = 0;
 
 ValueBase::ValueBase(string const &s)
   : dirty_(true), name_(s), actions(0)

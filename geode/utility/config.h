@@ -226,6 +226,16 @@ typedef double real;
 #define GEODE_IF_NOT_MSVC(...) __VA_ARGS__
 #endif
 
+#if defined(__clang__)
+// Version of clang provided with XCode on OSX doesn't support thread_local, so we have to use __thread
+// We default to this behavior for all versions of clang instead of trying to special case
+#define GEODE_THREAD_LOCAL __thread
+#else
+// MSVC has a similar '__declspec(thread)', however Microsoft recommends using 'thread_local' instead
+// According to Microsoft's documentation, accessing thread local storage allocated in a dynamically loaded library will cause failures on pre-Vista versions of Windows
+#define GEODE_THREAD_LOCAL thread_local
+#endif
+
 #ifndef GEODE_VARIADIC
 #error Support for compilers without C++11 features has not been actively maintained and likely requires significant updating
 #error If you would like geode to continue supporting older compilers please let us know as we are considering removing this support completely
