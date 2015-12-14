@@ -570,7 +570,12 @@ public:
   // first. This may create non-manifold vertices, which must be treated separately.
   GEODE_CORE_EXPORT Vector<HalfedgeId,2> split_along_edge(HalfedgeId he);
 
-  // Split a face into three by inserting a new vertex.
+  // Split an edge by inserting a new vertex. Two new faces are created. The id of
+  // the new vertex is returned. The two new faces (added at the end) have fields
+  // that are newly initialized; the existing faces' area changes but its field are
+  // untouched. The halfedge fields of the original face are copied to the halfedges
+  // that are their obvious equivalent (their incides change). The new halfedges (all
+  // those connected to the new vertex) are newly initialized.
   GEODE_CORE_EXPORT VertexId split_edge(HalfedgeId e);
 
   // Split an edge by inserting an existing isolated vertex in the center.
@@ -579,6 +584,13 @@ public:
 
   // Check whether an edge collapse is safe
   GEODE_CORE_EXPORT bool is_collapse_safe(HalfedgeId h) const;
+
+  // Check whether a halfedge is part of a tunnel: three edges which form a loop
+  // but are not part of a triangle. Returns the third vertex in the tunnel,
+  // or an invalid vertex if the halfedges are not part of a tunnel. There are two
+  // types of tunnels: boundary tunnels are triangle-shaped holes, and non-boundary
+  // tunnels are topological holes in a contiguous surface.
+  GEODE_CORE_EXPORT VertexId tunnel_vertex(HalfedgeId h) const;
 
   // Collapse an edge assuming that is_collapse_safe(h) is true. This function may
   // leave the mesh in a broken or nonmanifold state if is_collapse_safe(h) is not
@@ -644,6 +656,9 @@ public:
 
   // erase all isolated vertices
   GEODE_CORE_EXPORT void erase_isolated_vertices();
+
+  // erase all twin faces (abc,bac)
+  GEODE_CORE_EXPORT void erase_twin_faces(bool erase_vertices_too = true);
 };
 
 

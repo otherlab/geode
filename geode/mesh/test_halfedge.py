@@ -61,7 +61,7 @@ def test_collapse():
       m.collapse(he)
       m.assert_consistent(True)
 
-def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
+def construction_test(Mesh,random_edge_flips=random_edge_flips,random_splits=random_face_splits,mesh_destruction_test=mesh_destruction_test):
   random.seed(813177)
   nanosphere = TriangleSoup([(0,1,2),(0,2,1)])
   print
@@ -146,7 +146,7 @@ def construction_test(Mesh,random_edge_flips=random_edge_flips,random_face_split
       partial.add_vertices(soup.nodes())
       check_add_faces(partial,tris)
       # Check that face (and maybe edge) splits are safe
-      random_face_splits(mesh,20,key+10)
+      random_splits(mesh,20,key+10)
       mesh.assert_consistent(True)
       # Tear the mesh apart in random order
       mesh_destruction_test(mesh,key+20)
@@ -156,7 +156,7 @@ def test_halfedge_construction():
   construction_test(HalfedgeMesh)
 
 def test_corner_construction():
-  construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_face_splits,corner_mesh_destruction_test)
+  construction_test(MutableTriangleTopology,corner_random_edge_flips,corner_random_splits,corner_mesh_destruction_test)
 
 def test_flip():
   soup = icosahedron_mesh()[0]

@@ -12,10 +12,19 @@ struct Quadric {
 
   Quadric(): c(0) {}
 
-  inline real operator()(Vector<real,3> const &x) {
+  inline real operator()(Vector<real,3> const &x) const {
     real e = dot(x,A*x-b)+c;
     assert(e > -1e-12);
     return max(0,e);
+  }
+
+  inline void normalize(real total) {
+    if (total) {
+      const real inv_total = 1/total;
+      A *= inv_total;
+      b *= inv_total;
+      c *= inv_total;
+    }
   }
 
   real add_plane(Vector<real,3> const &n_times_w, Vector<real,3> const &p) {
@@ -30,9 +39,15 @@ struct Quadric {
               pn = dot(p,n_times_w);
       A += scaled_outer_product(inv_w,n_times_w);
       b += 2*inv_w*pn*n_times_w;
-      c += inv_w*sqr(pn); 
+      c += inv_w*sqr(pn);
     }
     return w;
+  }
+
+  real add_face(Triangle<Vector<real,3>> const &t) {
+    const auto p = t.x0,
+               n = cross(t.x1-t.x0,t.x2-t.x0);
+    return add_plane(n, p);
   }
 
   real add_face(TriangleTopology const &mesh, RawField<Vector<real,3>, VertexId> const &X, FaceId f) {
