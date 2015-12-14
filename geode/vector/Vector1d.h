@@ -80,8 +80,11 @@ public:
         x=v[0];return *this;
     }
 
-    int size() const
+    constexpr int size() const
     {return 1;}
+
+    constexpr bool empty() const
+    {return false;}
 
     const T& operator[](const int i) const
     {assert(i==0);return x;}

@@ -107,11 +107,16 @@ public:
     return Id(flat.append(uninit));
   }
 
-  template<class TField> void extend(const TField& append_field) {
-    flat.extend(append_field.flat);
+  // A Field is extended with an array, not another field (A different field would use different ids)
+  template<class TArray> void extend(const TArray& append_array) {
+    flat.extend(append_array);
   }
 
-  void preallocate(const int m_new) {
+  void extend(const int n, Uninit) GEODE_ALWAYS_INLINE {
+    flat.extend(n,uninit);
+  }
+
+  void preallocate(const int m_new) GEODE_ALWAYS_INLINE {
     flat.preallocate(m_new);
   }
 

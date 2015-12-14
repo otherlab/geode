@@ -96,8 +96,11 @@ public:
       x=v[0];y=v[1];z=v[2];w=v[3];return *this;
     }
 
-    int size() const
+    constexpr int size() const
     {return 4;}
+
+    constexpr bool empty() const
+    {return false;}
 
     const T& operator[](const int i) const
     {assert(unsigned(i)<4);return *((const T*)(this)+i);}

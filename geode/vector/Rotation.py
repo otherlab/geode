@@ -181,7 +181,8 @@ def from_rotated_vector(initial,final):
     zeros = v_norms==0
     if any(zeros): # Some initial and final vectors are collinear
       zeros = asarray(zeros).reshape(-1)
-      v.reshape(-1,d)[zeros] = orthogonal_vector(initial.reshape(-1,d)[zeros])
+      rs = v.reshape(-1,d)
+      v.reshape(-1,d)[zeros] = orthogonal_vector(initial.reshape(-1,d)[zeros] if initial.shape[0] > len(zeros) else final.reshape(-1,d)[zeros])
       v_norms = magnitudes(v)
     sqr_s = .5*(1+cos_theta) # half angle formula
     return from_sv(sqrt(sqr_s),(sqrt(1-sqr_s)/v_norms)[...,None]*v)

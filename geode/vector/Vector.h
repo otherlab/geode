@@ -129,8 +129,11 @@ public:
         for(int i=0;i<d;i++) array[i]=v.array[i];return *this;
     }
 
-    int size() const
+    constexpr int size() const
     {return m;}
+
+    constexpr bool empty() const
+    {return m>0;}
 
     const T& operator[](const int i) const
     {assert(unsigned(i)<d);return array[i];}

@@ -4,6 +4,11 @@ import sys
 import glob
 import subprocess
 
+try:
+    from shlex import quote # For Python 3.3+
+except ImportError:
+    from pipes import quote # Python 2.7
+
 def die(message):
   print>>sys.stderr,'fatal:',message
   sys.exit(1)
@@ -30,7 +35,10 @@ def options(env,*vars):
       try:
         value = int(value)
       except ValueError:
-        pass
+        if ',' in value:
+          value = value.split(',')
+        else:
+          pass
       env[name] = value
     elif has_config:
       env[name] = config.__dict__.get(name,default)
@@ -546,7 +554,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
       headers.append(f)
   if not sources and not headers:
     print 'Warning: library %s has no input source files'%name
-  if env.get('need_qt',0): # Qt gets confused if we only set options on the builder
+  if env.get('need_qt',0) and env['use_qt']: # Qt gets confused if we only set options on the builder
     env = env.Clone()
     force_external('qt')
     env.Append(CXXFLAGS=externals['qt']['cxxflags'])
@@ -568,7 +576,8 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
   if env['shared']:
     linkflags = env['LINKFLAGS']
     if darwin:
-      linkflags = '-install_name %s/${SHLIBPREFIX}%s${SHLIBSUFFIX} '%(Dir(env.subst(env['prefix_lib'])).abspath,name)+linkflags
+      install_name = quote('%s/${SHLIBPREFIX}%s${SHLIBSUFFIX}'%(Dir(env.subst(env['prefix_lib'])).abspath,name))
+      linkflags = '-install_name %s '%install_name+linkflags
     # On Windows, this will create two files: a .lib (for other builds), and a .dll for the runtime.
     lib = env.SharedLibrary(path,source=sources,LINKFLAGS=linkflags)
   else:
@@ -700,7 +709,7 @@ def configure_python(env,python):
     p(get('PYTHONFRAMEWORKPREFIX'))
     p(get('VERSION'))
     p(get('prefix'))
-    ''')],stdout=subprocess.PIPE).communicate()[0]
+    ''')],cwd=os.path.abspath(os.sep),stdout=subprocess.PIPE).communicate()[0]
   include,nmpy,libpath,lib,frameworkpath,version,prefix = [s.strip()[1:-1] for s in data.strip().split('\n')]
   assert include,nmpy
   python['cpppath'] = [include] if os.path.exists(os.path.join(include,'numpy')) else [include,nmpy]

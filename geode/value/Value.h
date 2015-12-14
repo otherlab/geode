@@ -50,9 +50,9 @@ public:
   GEODE_CORE_EXPORT virtual ~ValueBase();
 
 #ifdef GEODE_PYTHON
-  virtual PyObject* get_python() const = 0;
+  virtual Ref<> get_python() const = 0;
 
-  PyObject* operator()() const {
+  Ref<> operator()() const {
     return get_python();
   }
 #endif
@@ -112,9 +112,11 @@ private:
   ValueBase& set_allowed(PyObject* v);
   ValueBase& set_min_py(PyObject* m);
   ValueBase& set_max_py(PyObject* m);
+  Ref<> get_min_py() const;
+  Ref<> get_max_py() const;
   ValueBase& set_step_py(PyObject* s);
-  PyObject* get_default() const;
-  PyObject* get_allowed() const;
+  Ref<> get_default() const;
+  Ref<> get_allowed() const;
 #endif
 };
 
@@ -171,9 +173,9 @@ public:
   }
 
 #ifdef GEODE_PYTHON
-  PyObject* get_python() const {
+  Ref<> get_python() const {
     pull();
-    return try_to_python(*static_cast<const T*>(static_cast<const void*>(&buffer)));
+    return try_to_python_ref(*static_cast<const T*>(static_cast<const void*>(&buffer)));
   }
 #endif
 

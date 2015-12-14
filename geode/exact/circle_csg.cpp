@@ -5,12 +5,14 @@
 #include <geode/array/NestedField.h>
 #include <geode/array/sort.h>
 #include <geode/exact/circle_csg.h>
+#include <geode/exact/circle_offsets.h>
 #include <geode/exact/circle_quantization.h>
 #include <geode/exact/scope.h>
 #include <geode/exact/Exact.h>
-#include <geode/exact/ExactArcGraph.h>
 #include <geode/exact/math.h>
 #include <geode/exact/perturb.h>
+#include <geode/exact/PlanarArcGraph.h>
+#include <geode/geometry/ArcSegment.h>
 #include <geode/geometry/BoxTree.h>
 #include <geode/geometry/polygon.h>
 #include <geode/geometry/traverse.h>
@@ -41,31 +43,26 @@ Nested<CircleArc> split_circle_arcs(Nested<const CircleArc> arcs, const int dept
   IntervalScope scope;
   const auto PS = Pb::Implicit;
   auto q_and_graph = quantize_circle_arcs<PS>(arcs);
-  auto& g = q_and_graph.y;
-  g.split_edges();
-
+  const PlanarArcGraph<PS>& g = *(q_and_graph.y);
 
   Field<bool, FaceId> interior_faces;
   // This would be a good place to switch on a splitting rule
   interior_faces = faces_greater_than(g, depth);
-
-  const auto contour_edges = extract_region(g.graph, interior_faces);
-  auto result = g.unquantize_circle_arcs(q_and_graph.x, contour_edges);
-  return result;
+  const auto contour_edges = extract_region(g.topology, interior_faces);
+  return g.unquantize_circle_arcs(q_and_graph.x, contour_edges);
 }
 
 Nested<CircleArc> split_arcs_by_parity(Nested<const CircleArc> arcs) {
   IntervalScope scope;
   const auto PS = Pb::Implicit;
   auto q_and_graph = quantize_circle_arcs<PS>(arcs);
-  auto& g = q_and_graph.y;
-  g.split_edges();
+  auto& g = *(q_and_graph.y);
 
   Field<bool, FaceId> interior_faces;
   // This would be a good place to switch on a splitting rule
   interior_faces = odd_faces(g);
 
-  const auto contour_edges = extract_region(g.graph, interior_faces);
+  const auto contour_edges = extract_region(g.topology, interior_faces);
   auto result = g.unquantize_circle_arcs(q_and_graph.x, contour_edges);
   return result;
 }
@@ -95,6 +92,16 @@ real circle_arc_area(Nested<const CircleArc> polys) {
   for (const auto arcs : polys)
     area += circle_arc_area(arcs);
   return area;
+}
+
+real circle_arc_length(Nested<const CircleArc> arcs) {
+  real total = 0;
+  for(const auto contour : arcs) {
+    for(int prev_i = contour.size()-1, curr_i = 0; curr_i < contour.size(); prev_i = curr_i++) {
+      total += arc_length(contour[prev_i].x, contour[curr_i].x, contour[prev_i].q);
+    }
+  }
+  return total;
 }
 
 void reverse_arcs(RawArray<CircleArc> arcs) {
@@ -170,9 +177,9 @@ static void _set_circle_arc_dtypes(PyObject* inexact, PyObject* exact) {
 static Nested<CircleArc> circle_arc_quantize_test(Nested<const CircleArc> arcs) {
   IntervalScope scope;
   const auto quant = make_arc_quantizer(approximate_bounding_box(arcs));
-  auto g = ExactArcGraph<Pb::Implicit>();
-  auto edges = g.quantize_and_add_arcs(quant, arcs);
-  return g.unquantize_circle_arcs(quant, edges);
+  VertexSet<Pb::Implicit> verts;
+  const auto contours = verts.quantize_circle_arcs(quant, arcs);
+  return verts.unquantize_circle_arcs(quant, contours);
 }
 
 
@@ -182,24 +189,22 @@ static Tuple<Nested<CircleArc>,Nested<CircleArc>,Nested<CircleArc>> single_circl
   const auto test_bounds = test_center_range.thickened(max_test_r);
   const auto quant = make_arc_quantizer(test_bounds); // Get appropriate quantizer for test_bounds
   IntervalScope scope;
-
   auto rnd = new_<Random>(seed);
-  auto graph = ExactArcGraph<Pb::Implicit>();
 
-  Nested<HalfedgeId, false> input_contours;
+  ArcAccumulator<Pb::Implicit> acc;
+
   for(int i = 0; i < count; ++i) {
     const auto center = quant(rnd->uniform(test_center_range));
     const Quantized r = max(1, quant.quantize_length(rnd->uniform<real>(0, max_test_r)));
-    const EdgeId added_edge = graph.add_full_circle(ExactCircle<Pb::Implicit>(center, r), ExactArcGraph<Pb::Implicit>::EdgeValue(1,1));
+
+    acc.add_full_circle(ExactCircle<Pb::Implicit>(center, r), ArcDirection::CCW);
     // Each circle becomes a single ccw halfedge
-    input_contours.append_empty();
-    input_contours.append_to_back(graph.graph->halfedge(added_edge, false));
   }
 
-  const auto unquantized_input = graph.unquantize_circle_arcs(quant, input_contours.freeze());
-  graph.split_edges();
-  const auto unquantized_unions = graph.unquantize_circle_arcs(quant, extract_region(graph.graph, faces_greater_than(graph, 0)));
-  const auto unquantized_overlaps = graph.unquantize_circle_arcs(quant, extract_region(graph.graph, faces_greater_than(graph, 1)));
+  const auto unquantized_input = acc.vertices.unquantize_circle_arcs(quant, acc.contours);
+  auto graph = new_<PlanarArcGraph<Pb::Implicit>>(acc.vertices, acc.contours);
+  const auto unquantized_unions   = graph->unquantize_circle_arcs(quant, extract_region(graph->topology, faces_greater_than(*graph, 0)));
+  const auto unquantized_overlaps = graph->unquantize_circle_arcs(quant, extract_region(graph->topology, faces_greater_than(*graph, 1)));
   return tuple(unquantized_input, unquantized_unions, unquantized_overlaps);
 }
 
@@ -216,9 +221,9 @@ static void random_circle_quantize_test(int seed) {
         arcs.append(make_circle(s*r->unit_ball<Vec2>(),s*r->unit_ball<Vec2>()));
       }
     }
+    // Take the union and make sure we don't hit any asserts
     circle_arc_union(arcs);
   }
-
   {
     // Build a bunch of arcs that don't touch
     const auto log_options = vec(1.e-3,1.e-1,1.e1,1.e3);
@@ -237,8 +242,7 @@ static void random_circle_quantize_test(int seed) {
       arcs.append(make_circle(Vec2(curr_x, 0.),Vec2(curr_x+next_r, 0.)));
       curr_x += next_r + spacing;
     }
-
-    // Take the union
+    // Take the union and make sure we don't hit any asserts
     auto unioned = circle_arc_union(arcs);
 
     // If range of sizes is very large, some arcs could be filtered out if they are smaller than quantization threshold...
@@ -251,8 +255,13 @@ using namespace geode;
 
 void wrap_circle_csg() {
   GEODE_FUNCTION(split_circle_arcs)
+  GEODE_FUNCTION(split_arcs_by_parity)
   GEODE_FUNCTION(canonicalize_circle_arcs)
   GEODE_FUNCTION_2(circle_arc_area,static_cast<real(*)(Nested<const CircleArc>)>(circle_arc_area))
+  GEODE_FUNCTION(circle_arc_length)
+  GEODE_FUNCTION(offset_arcs)
+  GEODE_FUNCTION(offset_open_arcs)
+  GEODE_FUNCTION(offset_shells)
 #ifdef GEODE_PYTHON
   GEODE_FUNCTION(_set_circle_arc_dtypes)
   GEODE_FUNCTION(circle_arc_quantize_test)

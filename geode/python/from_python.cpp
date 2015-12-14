@@ -39,7 +39,7 @@ int FromPython<int>::convert(PyObject* object) {
 
 int FromPython<unsigned int>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (i!=(unsigned int)i) {
+  if (i!=(long)(unsigned int)i) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C int");
     throw_python_error();
   }

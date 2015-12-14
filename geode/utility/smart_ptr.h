@@ -5,7 +5,7 @@
 
 // If we're on clang, check for the right header directly.  If we're not,
 // any sufficient recently version of gcc should always have the right header.
-#if defined(__clang__) ? GEODE_HAS_INCLUDE(<memory>) : defined(__GNU__)
+#if defined(__clang__) ? GEODE_HAS_INCLUDE(<memory>) : defined(__GNUC__)
 #include <memory>
 namespace geode {
 template<class T> using scoped_ptr = std::unique_ptr<T>;

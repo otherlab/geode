@@ -21,8 +21,8 @@ static inline int popcount(uint32_t n) {
 }
 
 static inline int popcount(uint64_t n) {
-  static_assert(sizeof(long)==8,"");
-  return __builtin_popcountl(n);
+  static_assert(sizeof(long long)==8,"");
+  return __builtin_popcountll(n);
 }
 
 #else

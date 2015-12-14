@@ -59,14 +59,14 @@ INSTANTIATE(float)
 INSTANTIATE(double)
 }
 
-static PyObject* build_limits(PyObject* object) {
+static Ref<> build_limits(PyObject* object) {
   PyArray_Descr* dtype;
   if (!PyArray_DescrConverter(object,&dtype))
-    return 0;
+    throw_python_error();
   const Ref<> save = steal_ref(*(PyObject*)dtype);
   const int type = dtype->type_num;
   switch (type) {
-    #define CASE(T) case NumpyScalar<T>::value: return to_python(new_<Limits<T>>());
+    #define CASE(T) case NumpyScalar<T>::value: return to_python_ref(new_<Limits<T>>());
     CASE(int32_t)
     CASE(int64_t)
     CASE(uint32_t)

@@ -17,6 +17,7 @@ class NestedField {
  public:
   Nested<T> raw;
 
+  NestedField() = default;
   NestedField(Nested<T>&& _raw) : raw(_raw) {}
   NestedField(RawField<const int,Id> lengths) : raw(lengths.flat) {}
   NestedField(RawField<const int,Id> lengths, Uninit) : raw(lengths.flat, uninit) {}
@@ -43,6 +44,8 @@ class NestedField {
   int front_offset(const Id i) const { return raw.offsets[i.idx()]; }
   // return index into raw.flat for (*this)[i].back()
   int back_offset(const Id i) const { return raw.offsets[i.idx()+1]-1; }
+  // return range of indices into raw.flat for (*this)[i]
+  Range<int> offset_range(const Id i) const { return raw.range(i.idx()); }
 
   Range<IdIter<Id>> id_range() const { return range(IdIter<Id>(Id(0)),IdIter<Id>(Id(size()))); }
 };

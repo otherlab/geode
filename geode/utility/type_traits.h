@@ -6,7 +6,7 @@
 
 // If we're on clang, check for the right header directly.  If we're not,
 // any sufficient recently version of gcc should always have the right header.
-#if defined(__clang__) ? GEODE_HAS_INCLUDE(<type_traits>) : defined(__GNU__)
+#if defined(__clang__) ? GEODE_HAS_INCLUDE(<type_traits>) : defined(__GNUC__)
 
 #include <type_traits>
 #define GEODE_TYPE_TRAITS_NAMESPACE std

@@ -206,8 +206,10 @@ ValueBase& ValueBase::set_allowed(PyObject* v)      { prop().set_allowed_python(
 ValueBase& ValueBase::set_min_py(PyObject* m)       { prop().set_min_python(m); return *this; }
 ValueBase& ValueBase::set_max_py(PyObject* m)       { prop().set_max_python(m); return *this; }
 ValueBase& ValueBase::set_step_py(PyObject* s)      { prop().set_step_python(s); return *this; }
-PyObject* ValueBase::get_default() const      { return prop().default_python(); }
-PyObject* ValueBase::get_allowed() const      { return prop().allowed_python(); }
+Ref<> ValueBase::get_default() const      { return prop().default_python(); }
+Ref<> ValueBase::get_min_py() const          { return prop().get_min_python(); }
+Ref<> ValueBase::get_max_py() const          { return prop().get_max_python(); }
+Ref<> ValueBase::get_allowed() const      { return prop().allowed_python(); }
 #endif
 
 }
@@ -244,6 +246,8 @@ void wrap_value_base() {
     .GEODE_METHOD(set_category)
     .GEODE_METHOD_2("set_min",set_min_py)
     .GEODE_METHOD_2("set_max",set_max_py)
+    .GEODE_METHOD_2("get_min",get_min_py)
+    .GEODE_METHOD_2("get_max",get_max_py)
     .GEODE_METHOD_2("set_step",set_step_py)
     ;
 

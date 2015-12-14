@@ -65,6 +65,7 @@ public:
   bool has_all_border_data() const { return !borders_.empty() || halfedges_.empty(); }
   bool safe_to_modify_edges() const { return borders_.empty(); }
 
+  bool check_invariants() const; // Attempt to check that all info is consistent. Only intended for debugging
 protected:
   RawField<Vector<HalfedgeInfo,2>, EdgeId> edge_view() {
     return RawField<Vector<HalfedgeInfo,2>, EdgeId>(vector_view<2>(halfedges_.flat));
@@ -124,6 +125,7 @@ public:
   FaceId     opp_face(const HalfedgeId e) const { return face(reverse(e)); }
   BorderId   border(const FaceId f)       const { return faces_[f].border; }
   HalfedgeId halfedge(const FaceId f)     const { return halfedge(border(f)); }
+  Vector<FaceId,2> faces(const EdgeId e)  const { return vec(face(halfedge(e,0)),face(halfedge(e,1))); }
 
   // Check id validity
   bool valid(const VertexId v)   const;
@@ -266,6 +268,7 @@ Field<CrossingInfo, FaceId> get_crossing_depths(const HalfedgeGraph& g, const Fa
 // Compute winding numbers for all faces starting with a value of 0 inside boundary_face and using edge_weights
 // If e is an EdgeId, the weight for 'g.halfedge(e,0)' will be 'edge_weights[e]' and the weight for 'g.halfedge(e,1)' will be '-edge_weights[e]'
 // Requires face(he).valid() == face(reverse(he)).valid()
+// This function requires manifold edge weights (i.g. all edge_weights come from closed contours) where any path will have the same winding
 Field<int, FaceId> compute_winding_numbers(const HalfedgeGraph& g, const FaceId boundary_face, const RawField<const int, EdgeId> edge_weights);
 
 // Compute interior and exterior boundaries of region for union of all faces that are true in interior_faces

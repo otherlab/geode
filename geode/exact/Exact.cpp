@@ -7,6 +7,9 @@
 #include <geode/random/Random.h>
 namespace geode {
 
+using std::cout;
+using std::endl;
+
 RawArray<mp_limb_t> trim(RawArray<mp_limb_t> x) {
   int n = x.size();
   for (;n>0;n--)

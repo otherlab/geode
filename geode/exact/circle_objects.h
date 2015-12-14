@@ -49,6 +49,11 @@ template<Pb PS> Vector<HorizontalIntersection<PS>,2> get_intersections(const Exa
 
 template<Pb PS> inline Box<exact::Vec2> bounding_box(const ExactCircle<PS>& c);
 template<Pb PS> Box<exact::Vec2> bounding_box(const ExactArc<PS>& a);
+template<Pb PS> Box<exact::Vec2> bounding_box(const ExactHorizontalArc<PS>& a);
+
+// Test if intersection is on the left side of center of reference circle
+template<Pb PS> inline bool left_of_center(const IncidentCircle<PS>& i);
+template<Pb PS> inline bool left_of_center(const IncidentHorizontal<PS>& i);
 
 // Overloads for sorting and hashing.
 template<Pb PS> inline bool operator==(const ExactCircle<PS>& lhs, const ExactCircle<PS>& rhs) { return is_same_circle(lhs, rhs); }
@@ -63,12 +68,10 @@ template<Pb PS> inline Hash hash_reduce(const CircleIntersectionKey<PS>& k);
 // We disambiguate incident intersections around a reference circle, by tracking if the reference circle would become cl or cr in a CircleIntersection
 enum class ReferenceSide : bool { cl = false, cr = true };
 inline ReferenceSide opposite(const ReferenceSide side) { return static_cast<ReferenceSide>(static_cast<bool>(side)^1); }
-
 // ReferenceSide can be confusing; these are here to help document usage
 inline bool cl_is_reference(const ReferenceSide side) { return side == ReferenceSide::cl; }
 inline bool cr_is_reference(const ReferenceSide side) { return side == ReferenceSide::cr; }
 inline bool cl_is_incident(const ReferenceSide side) { return side == ReferenceSide::cr; }
-
 ////////////////////////////////////////////////////////////////////////////////
 
 // Approximate circle intersections are initially computed with interval arithmetic only falling back to exact values when tolerance limits aren't met
@@ -135,13 +138,26 @@ template<Pb PS> struct ExactCircle : public ExactCirclePerturbationHelper<PS> {
   bool intersections_upwards          (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;
   bool intersections_upwards          (const IncidentCircle<PS>& i,  const IncidentHorizontal<PS>& h) const;
   bool intersections_ccw              (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const; // Is the triangle {center,i0,i1} positively oriented?
-  bool intersections_sorted           (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const; // Sort order is ccw with positive x axis first
+
+  // These help make IncidentCircle and IncidentHorizontal interchangable in some templates:
+  static constexpr bool is_same_intersection(const IncidentCircle<PS>& i, const IncidentHorizontal<PS>& h) { return false; }
+  static constexpr bool is_same_intersection(const IncidentHorizontal<PS>& h, const IncidentCircle<PS>& i) { return false; }
 
   // If quadrants of incident circles have already been compared, these can be used
   bool intersections_upwards_same_q   (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;
   bool intersections_ccw_same_q       (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;
   bool intersections_ccw_same_q       (const IncidentCircle<PS>& i0, const IncidentHorizontal<PS>& i1) const;
   bool intersections_ccw_same_q       (const IncidentHorizontal<PS>& i0, const IncidentCircle<PS>& i1) const { return !intersections_ccw_same_q(i1,i0); }
+
+  // Sort order is ccw with positive x axis first
+  template<class TA, class TB> inline bool intersections_sorted(const TA& i0, const TB& i1) const { return (i0.q != i1.q) ? (i0.q < i1.q) : !is_same_intersection(i0,i1) && intersections_ccw_same_q(i0, i1); }
+  // unique_intersections_sorted is slightly faster, but caller is responsible for catching ties
+  template<class TA, class TB> inline bool unique_intersections_sorted(const TA& i0, const TB& i1) const { assert(!is_same_intersection(i0,i1)); return (i0.q != i1.q) ? (i0.q < i1.q) : intersections_ccw_same_q(i0, i1); }
+
+  // Get angle (in range 0 to 2*pi) of vector from circle center to i relative to positive x axis
+  // Warning: These aren't currently used by circle csg and haven't been thoroughly tested. They also rely on evaluation of trig functions that might be comparatively slow
+  Interval approx_angle(const IncidentCircle<PS>& i) const;
+  Interval approx_angle(const IncidentHorizontal<PS>& i) const;
 };
 // Check that we didn't break layout
 static_assert(sizeof(ExactCircleIm) == 3*sizeof(Quantized), "Error: Implicitly perturbed ExactCircle not using empty base optimization");
@@ -159,7 +175,7 @@ template<Pb PS> struct IncidentCircle : public ExactCircle<PS> {
   IncidentCircle() = default;
   IncidentCircle(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr, const ReferenceSide _side);
   IncidentCircle(const ExactCircle<PS>& cl, const ExactCircle<PS>& cr, const ReferenceSide _side, const ApproxIntersection _approx);
-  IncidentCircle(const ExactCircle<PS>& incident, const ReferenceSide _side, const ApproxIntersection _approx, const uint8_t _q);
+  inline IncidentCircle(const ExactCircle<PS>& incident, const ReferenceSide _side, const ApproxIntersection _approx, const uint8_t _q);
   Box<exact::Vec2> box() const { return approx.box(); }
   Vector<Interval,2> p() const { return approx.p(); }
 
@@ -229,6 +245,7 @@ template<Pb PS> struct IncidentHorizontal {
   Interval x; // x-coordinate of intersection
   bool left; // True if the intersection is the left of the *vertical* line through the circle's center
   uint8_t q; // Quadrant relative to circle's center
+  Vector<Interval,2> p() const { return vec(x,Interval(line.y)); }
   Box<Vec2> box() const { const auto bx = x.box(); return Box<Vec2>(Vec2(bx.min,line.y),Vec2(bx.max,line.y)); }
 };
 
@@ -242,21 +259,22 @@ template<Pb PS> struct HorizontalIntersection : public IncidentHorizontal<PS> {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
+// ExactArc represents a non-empty subset of points on a circle (possibly the improper subset 'all')
 template<Pb PS> struct ExactArc {
   ExactCircle<PS> circle;
-  IncidentCircle<PS> src, dst;
+  IncidentCircle<PS> src, dst; // Arc contains all points CCW from src until dst
+  // Note: ExactArc doesn't encode an order for its points. Swapping the endpoints forms the complement (unless arc is a full circle).
 
   bool is_full_circle() const;
 
-  inline bool is_endpoint(const IncidentCircle<PS>& i) const; // Check if i is src or dst
-  bool    unsafe_contains(const IncidentCircle<PS>& i) const; // i must not be an endpoint of this arc
-  bool  interior_contains(const IncidentCircle<PS>& i) const; // if i is an endpoint result will be false, unless arc is a full circle
-
+  inline bool has_endpoint(const IncidentCircle<PS>& i) const; // Check if i is src or dst
+  bool     unsafe_contains(const IncidentCircle<PS>& i) const; // i must not be an endpoint of this arc
+  bool   interior_contains(const IncidentCircle<PS>& i) const; // if i is an endpoint result will be false, unless arc is a full circle
+  bool  half_open_contains(const IncidentCircle<PS>& i) const; // Check if i is in [src, dst) (will be true for a full circle)
   bool contains_horizontal(const IncidentHorizontal<PS>& h) const; // Since arc starts and ends at incident circles, we don't need to handle coincident endpoints
 
   // Overloads that automatically convert CircleIntersection to IncidentCircle
-  bool       is_endpoint(const CircleIntersection<PS>& i) const { return       is_endpoint(i.as_incident_to(circle)); }
+  bool      has_endpoint(const CircleIntersection<PS>& i) const { return      has_endpoint(i.as_incident_to(circle)); }
   bool   unsafe_contains(const CircleIntersection<PS>& i) const { return   unsafe_contains(i.as_incident_to(circle)); }
   bool interior_contains(const CircleIntersection<PS>& i) const { return interior_contains(i.as_incident_to(circle)); }
 
@@ -270,7 +288,39 @@ template<Pb PS> struct ExactArc {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+
+// Like ExactArc, but with one of the endpoints at intersections of a horizontal and a circle
+// With some carefully designed templates and overloads this could share most of its implementation with ExactArc, but for now it doesn't seem worth the added complexity
+template<Pb PS> struct ExactHorizontalArc {
+  ExactCircle<PS> circle;
+  IncidentCircle<PS> i;
+  IncidentHorizontal<PS> h;
+  bool h_is_src;
+
+  // Construct ccw arc from i to h
+  ExactHorizontalArc(const ExactCircle<PS>& _circle, const IncidentCircle<PS>& _i, const IncidentHorizontal<PS>& _h)
+   : circle(_circle), i(_i), h(_h)
+   , h_is_src(false) { }
+
+  // Construct ccw arc from h to i
+  ExactHorizontalArc(const ExactCircle<PS>& _circle, const IncidentHorizontal<PS>& _h, const IncidentCircle<PS>& _i)
+   : circle(_circle), i(_i), h(_h)
+   , h_is_src(true) { }
+
+  bool contains(const IncidentCircle<PS>& i) const;
+
+  bool contains(const CircleIntersection<PS>& i) const { return contains(i.as_incident_to(circle)); }
+
+  SmallArray<IncidentCircle<PS>,2> intersections_if_any(const ExactCircle<PS>& incident) const;
+  SmallArray<IncidentCircle<PS>,2> intersections_if_any(const ExactArc<PS>& a) const;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Definitions for inline functions
+
+template<Pb PS> inline bool left_of_center(const IncidentCircle<PS>& i) { return i.q == 1 || i.q == 2; }
+template<Pb PS> inline bool left_of_center(const IncidentHorizontal<PS>& i) { return i.q == 1 || i.q == 2; }
 
 template<Pb PS> inline bool operator<(const HorizontalIntersection<PS>& lhs, const HorizontalIntersection<PS>& rhs) {
   return !(lhs == rhs) && intersections_rightwards(lhs, rhs); // We have to check for equality since std::sort will sometimes compare elements with themselves
@@ -306,6 +356,13 @@ template<Pb PS> inline IncidentCircle<PS> CircleIntersection<PS>::incident(const
                               : IncidentCircle<PS>(this->cr, side, approx, ql);
 }
 
+template<Pb PS> inline IncidentCircle<PS>::IncidentCircle(const ExactCircle<PS>& _incident, const ReferenceSide _side, const ApproxIntersection _approx, const uint8_t _q)
+ : ExactCircle<PS>(_incident)
+ , approx(_approx)
+ , q(_q)
+ , side(_side)
+{ }
+
 #if GEODE_KEEP_INTERSECTION_INTERVALS
 inline exact::Vec2 ApproxIntersection::guess() const { return center(_approx_interval); }
 inline exact::Vec2 ApproxIntersection::snapped() const { return snap(_approx_interval); }
@@ -329,7 +386,7 @@ template<Pb PS> inline ReferenceSide CircleIntersectionKey<PS>::find(const Exact
   return is_same_circle(reference, cl) ?  ReferenceSide::cl : ReferenceSide::cr;
 }
 
-template<Pb PS> inline bool ExactArc<PS>::is_endpoint(const IncidentCircle<PS>& i) const {
+template<Pb PS> inline bool ExactArc<PS>::has_endpoint(const IncidentCircle<PS>& i) const {
   return circle.is_same_intersection(src, i) || circle.is_same_intersection(dst, i);
 }
 

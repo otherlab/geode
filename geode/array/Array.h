@@ -298,8 +298,7 @@ public:
     int m_end = geode::min(m_,m_new);
     if (max_size_!=m_new) {
       Buffer* new_owner = Buffer::new_<T>(m_new);
-      for (int i=0;i<m_end;i++)
-        new_owner->data[i] = data_[i];
+      std::copy(data_,data_+m_end,(Element*)new_owner->data);
       GEODE_XDECREF(owner_);
       max_size_ = m_new;
       data_ = (T*)new_owner->data;
@@ -320,8 +319,7 @@ public:
     int m_end = geode::min(m_,m_new);
     if (max_size_!=m_new) {
       Buffer* new_owner = Buffer::new_<T>(m_new);
-      for (int i=0;i<m_end;i++)
-        new_owner->data[i] = data_[i];
+      std::copy(data_,data_+m_end,(Element*)new_owner->data);
       GEODE_XDECREF(owner_);
       max_size_ = m_new;
       data_ = (T*)new_owner->data;

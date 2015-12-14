@@ -1,6 +1,7 @@
 #include <geode/mesh/HalfedgeGraph.h>
 #include <geode/python/Class.h>
 #include <geode/structure/Tuple.h>
+#include <geode/structure/UnionFind.h>
 #include <geode/array/RawField.h>
 #include <geode/array/Nested.h>
 
@@ -175,6 +176,55 @@ Vector<HalfedgeId*, 4> HalfedgeGraph::halfedge_refs(const HalfedgeId h) {
              prev_ptr(next(h)),
              src_h.valid() && halfedge(src_h) == h ? halfedge_ptr(src_h) : nullptr,
              border_h.valid() && halfedge(border_h) == h ? halfedge_ptr(border_h) : nullptr);
+}
+
+bool HalfedgeGraph::check_invariants() const {
+  for(const HalfedgeId he : halfedges()) {
+    if(prev(next(he)) != he) {
+      return false;
+    }
+    if(src(next(he)) != dst(he)) {
+      return false;
+    }
+    if(!halfedge(src(he)).valid()) {
+      return false;
+    }
+  }
+  for(const VertexId v : vertices()) {
+    const HalfedgeId he = halfedge(v);
+    if(he.valid() && src(he) != v) {
+      return false;
+    }
+  }
+  if(!borders_.empty() || !faces_.empty()) {
+    for(const HalfedgeId he : halfedges()) {
+      if(!border(he).valid()) {
+        return false;
+      }
+      if(border(he) != border(next(he))) {
+        return false;
+      }
+    }
+
+    for(const BorderId b : borders()) {
+      if(prev(next(b)) != b) {
+        return false;
+      }
+      if(border(halfedge(b)) != b) {
+        return false;
+      }
+      if(face(b) != face(next(b))) {
+        return false;
+      }
+    }
+
+    for(const FaceId f : faces()) {
+      if(face(border(f)) != f) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 void HalfedgeGraph::swap_ids(const EdgeId e0, const EdgeId e1) {
@@ -505,9 +555,33 @@ Field<CrossingInfo, FaceId> get_crossing_depths(const HalfedgeGraph& g, const Fa
   return info;
 }
 
-Field<int, FaceId> compute_winding_numbers(const HalfedgeGraph& g, const FaceId boundary_face, const RawField<const int, EdgeId> edge_weights) {
+bool has_manifold_edge_weights(const HalfedgeGraph& g, const RawField<const int, EdgeId> edge_weights) {
+  for(const VertexId vid : g.vertices()) {
+    int net = 0;
+    for(const HalfedgeId hid : g.outgoing(vid)) {
+      const EdgeId eid = HalfedgeGraph::edge(hid);
+      if(HalfedgeGraph::is_forward(hid))
+        net += edge_weights[eid];
+      else
+        net -= edge_weights[eid];
+    }
+    if(net)
+      return false;
+  }
+  return true;
+}
+
+// compute_winding_numbers has a number of fragile and complicated internal interactions that proved difficult to debug
+// compute_winding_numbers_oracle is a slower but more straightforward implementation that can be used as a reference
+#define USE_WINDING_NUMBER_ORACLE 0
+
+// We compile this function even if USE_WINDING_NUMBER_ORACLE is set to 0 to help catch refactoring bugs
+GEODE_UNUSED static Field<int, FaceId> compute_winding_numbers_oracle(const HalfedgeGraph& g, const FaceId boundary_face, const RawField<const int, EdgeId> edge_weights) {
+  GEODE_WARNING("Slow, redundant winding number check is enabled!");
   assert(g.has_all_border_data());
-  const int unset_winding_number = std::numeric_limits<int>::max();
+  assert(g.check_invariants());
+  assert(has_manifold_edge_weights(g, edge_weights));
+  constexpr int unset_winding_number = std::numeric_limits<int>::max();
   auto winding_numbers = Field<int, FaceId>(g.n_faces());
   winding_numbers.flat.fill(unset_winding_number);
 
@@ -520,7 +594,6 @@ Field<int, FaceId> compute_winding_numbers(const HalfedgeGraph& g, const FaceId 
   Array<FaceId> queue;
   queue.append(boundary_face);
   winding_numbers[boundary_face] = 0;
-
   while(!queue.empty()) {
     const FaceId curr_face = queue.pop();
     const int n = winding_numbers[curr_face];
@@ -534,12 +607,12 @@ Field<int, FaceId> compute_winding_numbers(const HalfedgeGraph& g, const FaceId 
         auto& opp_n = winding_numbers[opp_face];
         if(opp_n == unset_winding_number) {
           // If we haven't set the winding number, update it
-          opp_n = n - edge_weights[g.edge(eid)] * (g.is_forward(eid) ? 1 : -1);
+          opp_n = n - edge_weights[HalfedgeGraph::edge(eid)] * (HalfedgeGraph::is_forward(eid) ? 1 : -1);
           queue.append(opp_face);
         }
         else {
           // If we have set the winding number, check that value is consistant
-          assert(opp_n == (n - edge_weights[g.edge(eid)] * (g.is_forward(eid) ? 1 : -1)));
+          assert(opp_n == (n - edge_weights[HalfedgeGraph::edge(eid)] * (HalfedgeGraph::is_forward(eid) ? 1 : -1)));
         }
       }
     }
@@ -547,6 +620,176 @@ Field<int, FaceId> compute_winding_numbers(const HalfedgeGraph& g, const FaceId 
   assert(!winding_numbers.flat.contains(unset_winding_number));
   return winding_numbers;
 }
+
+namespace {
+static constexpr int invalid_depth = std::numeric_limits<int>::max();
+class WindingDepthHelper {
+  struct DepthNode {
+    int parent_ = -1;
+    int depth_to_parent_;
+    bool is_root() const { return parent_ < 0; }
+    FaceId parent() const { assert(parent_ >= 0); return FaceId(parent_); }
+    int rank() const { assert(parent_ < 0); return parent_; }
+    int depth_to_parent() const { assert(!is_root()); return depth_to_parent_; }
+  };
+  Field<DepthNode, FaceId> nodes;
+  Field<int, FaceId> depths;
+
+#if USE_WINDING_NUMBER_ORACLE
+ public:
+  Field<int, FaceId> oracle;
+ private:
+  bool depth_to_parent_correct(const FaceId f) const {
+    if(nodes[f].is_root()
+     || oracle[f] + nodes[f].depth_to_parent() == oracle[nodes[f].parent()])
+      return true;
+    return false;
+  }
+  bool absolute_depth_correct(const FaceId f, const int depth) {
+    return oracle[f] == depth;
+  }
+  int oracle_depth(const FaceId f) { return oracle[f]; }
+#else
+ bool depth_to_parent_correct(const FaceId a) const { return true; }
+ bool absolute_depth_correct(const FaceId f, const int depth) { return true; }
+ int oracle_depth(const FaceId f) { return 0; }
+#endif
+
+  void set_parent(const FaceId child, const FaceId new_parent, const int new_depth_to_parent) {
+    auto& c = nodes[child];
+    assert(c.is_root());
+    c.parent_ = new_parent.idx();
+    c.depth_to_parent_ = new_depth_to_parent;
+    assert(depth_to_parent_correct(child));
+  }
+
+  void share_grandparent(const FaceId child) {
+    assert(depth_to_parent_correct(child));
+    auto& c = nodes[child];
+    assert(!c.is_root());
+    auto& p = nodes[c.parent()];
+    assert(!p.is_root());
+    c.parent_ = p.parent_;
+    c.depth_to_parent_ += p.depth_to_parent();
+    assert(depth_to_parent_correct(child));
+  }
+
+  FaceId find_root(FaceId i, int& depth_to_root) {
+    depth_to_root = 0;
+    for(;;) {
+      if(nodes[i].is_root())
+        return i;
+      depth_to_root += nodes[i].depth_to_parent();
+      const FaceId pi = nodes[i].parent();
+      if(nodes[pi].is_root())
+        return pi;
+      depth_to_root += nodes[pi].depth_to_parent();
+      share_grandparent(i);
+      i = nodes[pi].parent();
+    }
+  }
+
+  FaceId merge_roots(FaceId a, int a_to_b, FaceId b) {
+    assert(depth_to_parent_correct(a));
+    assert(depth_to_parent_correct(b));
+    assert(nodes[a].is_root() && nodes[b].is_root());
+    if(a != b) {
+      if(nodes[a].rank() > nodes[b].rank()) {
+        swap(a,b);
+        a_to_b = -a_to_b;
+      }
+      else if(nodes[a].rank() == nodes[b].rank()) {
+        nodes[a].parent_--;
+      }
+      nodes[b].parent_ = a.idx();
+      nodes[b].depth_to_parent_ = -a_to_b;
+      assert(depth_to_parent_correct(b));
+    }
+    else {
+      assert(a_to_b == 0);
+    }
+    return a;
+  }
+
+  void seed_depth(FaceId seed, int seed_depth) {
+    assert(depths.valid(seed));
+    assert(depths[seed] == invalid_depth);
+    do {
+      assert(depths.valid(seed));
+      assert(depth_to_parent_correct(seed));
+      assert(absolute_depth_correct(seed, seed_depth));
+      depths[seed] = seed_depth;
+      if(nodes[seed].is_root())
+        return;
+      seed_depth += nodes[seed].depth_to_parent();
+      seed = nodes[seed].parent();
+      assert(depths.valid(seed));
+      assert(absolute_depth_correct(seed, seed_depth));
+    } while(depths[seed] == invalid_depth);
+  }
+
+ public:
+  WindingDepthHelper(const int n_faces)
+   : nodes(n_faces)
+   , depths(n_faces, uninit)
+  {
+    depths.flat.fill(invalid_depth);
+  }
+
+  FaceId connect(const FaceId a, const int a_to_b, const FaceId b) {
+    int a_to_root_a = 0;
+    int b_to_root_b = 0;
+    const FaceId root_a = find_root(a, a_to_root_a);
+    const FaceId root_b = find_root(b, b_to_root_b);
+    const int root_a_to_root_b = -a_to_root_a + a_to_b + b_to_root_b;
+    return merge_roots(root_a, root_a_to_root_b, root_b);
+  }
+
+  Field<int, FaceId> get_depths(const FaceId seed, const int seed_d) {
+    assert(depths.valid(seed));
+    assert(absolute_depth_correct(seed, seed_d));
+    seed_depth(seed, seed_d);
+    for(const FaceId start : depths.id_range()) {
+      if(depths[start] != invalid_depth)
+        continue;
+      FaceId i = start;
+      int start_to_i = 0;
+      do {
+        start_to_i += nodes[i].depth_to_parent();
+        i = nodes[i].parent();
+        assert(absolute_depth_correct(i, oracle_depth(start) + start_to_i));
+        assert(depth_to_parent_correct(i));
+        assert(i.valid());
+      } while(depths[i] == invalid_depth);
+      const int start_depth = depths[i] - start_to_i;
+      assert(depths.valid(seed));
+      seed_depth(start, start_depth); // Save data back ensuring that no nodes need to be traversed multiple times
+      assert(depths[i] != invalid_depth);
+    }
+    assert(!depths.flat.contains(invalid_depth));
+    return depths;
+  }
+}; }
+
+Field<int, FaceId> compute_winding_numbers(const HalfedgeGraph& g, const FaceId boundary_face, const RawField<const int, EdgeId> edge_weights) {
+  assert(g.check_invariants());
+  assert(has_manifold_edge_weights(g, edge_weights));
+  auto helper = WindingDepthHelper(g.n_faces());
+#if USE_WINDING_NUMBER_ORACLE
+  helper.oracle = compute_winding_numbers_oracle(g, boundary_face, edge_weights);
+#endif
+  for(const EdgeId eid : g.edges()) {
+    const Vector<FaceId,2> faces = g.faces(eid);
+    if(faces[0] != faces[1])
+      helper.connect(faces[0],-edge_weights[eid],faces[1]);
+  }
+  const auto result = helper.get_depths(boundary_face, 0);
+#if USE_WINDING_NUMBER_ORACLE
+  assert(result.flat == helper.oracle.flat);
+#endif
+  return result;
+}
+
 
 Nested<HalfedgeId> extract_region(const HalfedgeGraph& g, const RawField<const bool, FaceId> interior_faces) {
   assert(g.n_faces() == interior_faces.size());

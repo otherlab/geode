@@ -19,8 +19,8 @@ template<class Iter> struct EnumerateIter {
     : i(i), it(it) {}
 
   bool operator!=(const EnumerateIter& o) const { return it != o.it; }
-  void operator++() const { ++i; ++it; }
-  void operator--() const { --i; --it; }
+  void operator++() { ++i; ++it; }
+  void operator--() { --i; --it; }
   Tuple<int,R> operator*() { return Tuple<int,R>(i,*it); }
 };
 }

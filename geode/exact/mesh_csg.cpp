@@ -55,7 +55,7 @@ using std::endl;
 // For interface simplicity, we use a single fixed random number as the seed.
 // This is safe unless the points are chosen maliciously.  We've reused the key
 // from delaunay.cpp.
-static const uint128_t key = 9975794406056834021u+(uint128_t(920519151720167868u)<<64);
+static const uint128_t key = (uint128_t(920519151720167868u)<<64)+9975794406056834021u;
 
 // Some variables in the code can refer to either original vertices (possibly loop vertices),
 // edge-face intersection vertices, or face-face-face intersection vertices.  For this purpose,
@@ -456,7 +456,7 @@ struct Policy : public State, public Noncopyable {
           auto e2 = edges[ef2.edge];
           if (flipped_in(e1,fv)) swap(e1.x,e1.y);
           if (flipped_in(e2,fv)) swap(e2.x,e2.y);
-          return flip ^ (e1.contains(v0) && e2.contains(v0)) ^ e1.y==e2.x;
+          return flip ^ (e1.contains(v0) && e2.contains(v0)) ^ (e1.y==e2.x);
         }}
       case C(B,B,B): {
         const auto &ef0 = ef_vertices.flat[v0-n],
@@ -789,7 +789,15 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
         const auto &f0 = faces[i0.face],
                    &f1 = faces[i1.face];
         return FILTER(dot(de,i1.p()-i0.p()),
-                      segment_triangle_intersections_ordered(e0,e1,FX(f0),FX(f1)));
+                      helper(i0.face,f0,i1.face,f1));
+      }
+
+      bool helper(const int i0, const Vector<int,3> f0,
+                  const int i1, const Vector<int,3> f1) const {
+        if (f0.sorted() == f1.sorted())
+          throw ValueError(format("mesh_csg: Duplicate faces found: face %d (%d,%d,%d) = %d (%d,%d,%d)",
+                                  i0,f0.x,f0.y,f0.z,i1,f1.x,f1.y,f1.z));
+        return segment_triangle_intersections_ordered(e0,e1,FX(f0),FX(f1));
       }
     } less({faces.elements,X,e0,e1,iv(e1)-iv(e0)});
     sort(ef_vertices[e],less);
