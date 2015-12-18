@@ -203,4 +203,12 @@ static inline void transpose(__m128i& i0, __m128i& i1, __m128i& i2, __m128i& i3)
 }
 
 }
+#include <geode/vector/Vector.h>
+namespace geode {
+
+static inline Vector<double,2> unpack(const __m128d x) {
+  return Vector<double,2>(_mm_cvtsd_f64(x),_mm_cvtsd_f64(_mm_unpackhi_pd(x,x)));
+}
+
+}
 #endif

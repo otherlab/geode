@@ -42,7 +42,7 @@ namespace exact {
 template<int d> struct Perturbed {
   static constexpr Perturbation ps = Perturbation::Explicit;
   typedef Vector<Quantized, d> ValueType;
-  static constexpr auto m = ValueType::m;
+  static const int m = ValueType::m;
   int seed_;
   ValueType value_;
   int seed() const { return seed_; }
@@ -52,15 +52,13 @@ template<int d> struct Perturbed {
   template<class... Args> explicit Perturbed(const int seed_, const Args... value_args)
    : seed_(seed_)
    , value_(value_args...) // Pass args along to choose a Vector constructor
-  {
-    static_assert(sizeof(*this)==sizeof(int)+4+d*sizeof(Quantized),"");
-  }
+  {}
 };
 
 template<int d> struct ImplicitlyPerturbed {
   static constexpr Perturbation ps = Perturbation::Implicit;
   typedef Vector<Quantized, d> ValueType;
-  static constexpr auto m = ValueType::m;
+  static const int m = ValueType::m;
   ValueType value_;
   ValueType seed() const { return value_; }
   ValueType value() const { return value_; }

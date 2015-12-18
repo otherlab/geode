@@ -14,6 +14,7 @@
 #include <geode/utility/config.h>
 #include <geode/utility/type_traits.h>
 #include <stdlib.h>
+#include <stddef.h>
 namespace geode {
 
 struct Buffer {

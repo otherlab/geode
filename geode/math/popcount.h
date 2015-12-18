@@ -30,7 +30,6 @@ static inline int popcount(uint64_t n) {
 #else
   #error "Can't deduce __builtin_popcount for uint64_t"
 #endif
-
 }
 
 #else
