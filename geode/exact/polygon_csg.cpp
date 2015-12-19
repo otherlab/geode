@@ -22,9 +22,10 @@ namespace geode {
 
 std::string str(const FillRule rule) {
   switch (rule) {
-    case FillRule::Greater: return "Greater";
-    case FillRule::Parity: return "Parity";
+    case FillRule::Greater:  return "Greater";
+    case FillRule::Parity:   return "Parity";
     case FillRule::NotEqual: return "NotEqual";
+    default:                 return "Error";
   }
   GEODE_UNREACHABLE("Bad enum value");
 }
@@ -208,11 +209,11 @@ Nested<EV> exact_split_polygons(Nested<const EV> polys, const int depth) {
   return output;
 }
 
-static inline bool include_face(int delta, const FillRule rule) {
+static inline bool include_face(const int delta, const FillRule rule) {
   switch(rule) {
     case FillRule::Greater: return delta > 0;
-    case FillRule::Parity: return !(delta & 1);
-    case FillRule::NotEqual: return !delta;
+    case FillRule::Parity:  return !(delta & 1);
+    default /* NotEqual */: return !delta;
   }
   GEODE_UNREACHABLE("Bad enum value");
 }

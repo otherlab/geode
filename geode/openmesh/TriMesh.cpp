@@ -1786,6 +1786,7 @@ void wrap_trimesh() {
   // need to specify exact type for overloaded functions
   typedef Box<Vector<real,3> > (TriMesh::*box_Method)() const;
   typedef TriMesh::FaceHandle (TriMesh::*fh_Method_vh_vh_vh)(TriMesh::VertexHandle, TriMesh::VertexHandle, TriMesh::VertexHandle);
+
   typedef Vector<TriMesh::VertexHandle, 3> (TriMesh::*Vvh3_Method_fh)(TriMesh::FaceHandle ) const;
   typedef Vector<TriMesh::VertexHandle, 2> (TriMesh::*Vvh2_Method_eh)(TriMesh::EdgeHandle ) const;
 
@@ -1796,6 +1797,8 @@ void wrap_trimesh() {
   typedef void (TriMesh::*v_Method_vec3_vec3)(Vector<real, 3>, const Vector<real, 3>&);
 
   typedef Ref<TriMesh> (TriMesh::*Mesh_CMethod_vfh)(vector<FaceHandle> const &faces) const;
+
+  typedef Segment<Vector<real, 3> > Segment3;
 
   Class<Self>("TriMesh")
     .GEODE_INIT()
@@ -1854,10 +1857,16 @@ void wrap_trimesh() {
     .GEODE_OVERLOADED_METHOD(void(Self::*)(Matrix<real,4>const&),transform)
     .GEODE_METHOD(translate)
     .GEODE_METHOD(boundary_loops)
+    .GEODE_METHOD(boundary_loop)
     .GEODE_METHOD(face_tree)
     .GEODE_METHOD(edge_tree)
     .GEODE_METHOD(point_tree)
+    .GEODE_METHOD(garbage_collection_with_map)
+    .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(VertexHandle,VertexHandle)const, halfedge_handle)
     .GEODE_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
+    .GEODE_OVERLOADED_METHOD(Segment3 (Self::*)(HalfedgeHandle)const, segment)
+    .GEODE_OVERLOADED_METHOD(bool (Self::*)(HalfedgeHandle)const, is_boundary)
+    .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(HalfedgeHandle)const, opposite_halfedge_handle)
     .GEODE_OVERLOADED_METHOD_2(OTriMesh::Point (Self::*)(FaceHandle,Vector<real,3>const&)const, "interpolated_point", point)
     .GEODE_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
     .GEODE_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)

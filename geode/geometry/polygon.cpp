@@ -612,5 +612,7 @@ using namespace geode;
 void wrap_polygon() {
   GEODE_FUNCTION_2(polygon_area,polygon_area_py)
   GEODE_FUNCTION(polygons_from_index_list)
+  GEODE_FUNCTION(resample_polygon)
   GEODE_FUNCTION(canonicalize_polygons)
+  GEODE_FUNCTION(offset_polygon_with_correspondence)
 }

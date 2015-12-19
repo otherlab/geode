@@ -145,14 +145,14 @@ static void bounding_box_py_helper(const int depth, Array<Box<real>>& box, PyObj
   }
 }
 
-static PyObject* bounding_box_py(PyObject* object) {
+static Ref<> bounding_box_py(PyObject* object) {
   if (is_numpy_array(object)) {
     const auto array = from_python<NdArray<const real>>(object);
     GEODE_ASSERT(array.rank()>=2);
     if (array.shape.back()==2)
-      return to_python(bounding_box(vector_view<2>(array.flat)));
+      return to_python_ref(bounding_box(vector_view<2>(array.flat)));
     else if (array.shape.back()==3)
-      return to_python(bounding_box(vector_view<3>(array.flat)));
+      return to_python_ref(bounding_box(vector_view<3>(array.flat)));
     else
       throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",array.shape.back()));
   } else if (is_nested_array(object))
@@ -162,9 +162,9 @@ static PyObject* bounding_box_py(PyObject* object) {
   Array<Box<real>> box;
   bounding_box_py_helper(0,box,object);
   if (box.size()==2)
-    return to_python(Box<Vector<real,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
+    return to_python_ref(Box<Vector<real,2>>(vec(box[0].min,box[1].min),           vec(box[0].max,box[1].max)));
   else if (box.size()==3)
-    return to_python(Box<Vector<real,3>>(vec(box[0].min,box[1].min,box[2].min),vec(box[0].max,box[1].max,box[2].max)));
+    return to_python_ref(Box<Vector<real,3>>(vec(box[0].min,box[1].min,box[2].min),vec(box[0].max,box[1].max,box[2].max)));
   else
     throw TypeError(format("bounding_box: 2D or 3D vectors expected, got %dD",box.size()));
 }

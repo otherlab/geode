@@ -594,13 +594,8 @@ static inline Interval atan(const Interval x) {
 #if !GEODE_INTERVAL_SSE
   return Interval(std::atan(x.nlo),std::atan(x.hi));
 #else
-#ifdef _MSC_VER
-  GEODE_ALIGNED(16) double raw[2];
-  _mm_store_pd(raw, x.s);
-  return Interval(pack<double>(std::atan(raw[0]),std::atan(raw[1])));
-#else
-  return Interval(pack<double>(std::atan(x.s[0]),std::atan(x.s[1])));
-#endif
+  const auto v = unpack(x.s);
+  return Interval(pack<double>(std::atan(v.x),std::atan(v.y)));
 #endif
 }
 

@@ -79,5 +79,6 @@ template<class F> PyObject* to_python(const function<F>& f) {
   GEODE_NOT_IMPLEMENTED();
 }
 
+
 #endif
 }
