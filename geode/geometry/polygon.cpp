@@ -14,7 +14,7 @@
 #include <geode/array/IndirectArray.h>
 #include <geode/array/NdArray.h>
 #include <geode/array/Nested.h>
-#include <geode/geometry/Ray.h>
+#include <geode/geometry/RayIntersection.h>
 #include <geode/array/RawArray.h>
 #include <geode/array/sort.h>
 namespace geode {
@@ -30,7 +30,7 @@ bool polygon_outlines_intersect(RawArray<const Vec2> p1, RawArray<const Vec2> p2
   // walk p1, check for each segment's intersection
   for (int i = 0, j = p1.size()-1; i < (int)p1.size(); j = i++) {
     Vec2 dir = p1[i] - p1[j];
-    Ray<Vec2> ray(p1[j], dir);
+    RayIntersection<Vec2> ray(p1[j], dir);
     ray.t_max = dir.magnitude();
     if (p2_tree->intersection(ray, 1e-10))
       return true;

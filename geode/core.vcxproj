@@ -120,7 +120,7 @@
     <ClInclude Include="geometry\Plane.h" />
     <ClInclude Include="geometry\platonic.h" />
     <ClInclude Include="geometry\polygon.h" />
-    <ClInclude Include="geometry\Ray.h" />
+    <ClInclude Include="geometry\RayIntersection.h" />
     <ClInclude Include="geometry\Segment.h" />
     <ClInclude Include="geometry\SimplexTree.h" />
     <ClInclude Include="geometry\Sphere.h" />

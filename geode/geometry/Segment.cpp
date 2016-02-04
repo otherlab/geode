@@ -1,7 +1,7 @@
 // Segments
 
 #include <geode/geometry/Segment.h>
-#include <geode/geometry/Ray.h>
+#include <geode/geometry/RayIntersection.h>
 #include <geode/array/Array.h>
 #include <geode/math/clamp.h>
 #include <geode/math/givens.h>
@@ -299,7 +299,7 @@ template<int d> Tuple<T,TV3,TV2> segment_segment_distance_and_normal(const Segme
   return best;
 }
 
-bool segment_ray_intersection(const Segment<TV2>& seg, Ray<TV2>& ray, const T half_thickness) {
+bool segment_ray_intersection(const Segment<TV2>& seg, RayIntersection<TV2>& ray, const T half_thickness) {
   const TV2 from_start_to_start = seg.x0-ray.start;
   TV2 segment_direction = seg.x1-seg.x0;
   const T segment_length = segment_direction.normalize();

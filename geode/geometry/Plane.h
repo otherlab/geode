@@ -90,13 +90,13 @@ public:
     static std::string name()
     {return "Plane<T>";}
 
-    bool intersection(Plane<T> const &, Ray<Vector<T,3> > &ray) const;
-    bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2,const T distance,const T rate_of_approach) const;
-    bool intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2=0) const;
+    bool intersection(Plane<T> const &, RayIntersection<Vector<T,3> > &ray) const;
+    bool intersection(RayIntersection<Vector<T,3> >& ray,const T thickness_over_2,const T distance,const T rate_of_approach) const;
+    bool intersection(RayIntersection<Vector<T,3> >& ray,const T thickness_over_2=0) const;
     template<class TThickness> bool intersection(const Box<TV>& box,const TThickness thickness_over_2=Zero()) const;
     bool segment_plane_intersection(const TV& endpoint1,const TV& endpoint2,T& interpolation_fraction) const;
-    bool lazy_intersection(Ray<Vector<T,3> >& ray) const;
-    bool rectangle_intersection(Ray<Vector<T,3> >& ray,const Plane<T>& bounding_plane_1,const Plane<T>& bounding_plane_2,const Plane<T>& bounding_plane_3,const Plane<T>& bounding_plane_4,
+    bool lazy_intersection(RayIntersection<Vector<T,3> >& ray) const;
+    bool rectangle_intersection(RayIntersection<Vector<T,3> >& ray,const Plane<T>& bounding_plane_1,const Plane<T>& bounding_plane_2,const Plane<T>& bounding_plane_3,const Plane<T>& bounding_plane_4,
         const T thickness_over_2=0) const;
 
     string repr() const

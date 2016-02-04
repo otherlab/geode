@@ -2,13 +2,13 @@
 // Class Plane
 //#####################################################################
 #include <geode/geometry/Plane.h>
-#include <geode/geometry/Ray.h>
+#include <geode/geometry/RayIntersection.h>
 #include <geode/geometry/Segment.h>
 #include <geode/vector/Matrix3x3.h>
 namespace geode {
 
 template<class T> bool Plane<T>::
-intersection(Plane<T> const &p, Ray<Vector<T,3> > &ray) const {
+intersection(Plane<T> const &p, RayIntersection<Vector<T,3> > &ray) const {
   if (n == p.n) {
     if (dot(n, x0) != dot(p.n,p.x0)) {
       return false;
@@ -32,30 +32,30 @@ intersection(Plane<T> const &p, Ray<Vector<T,3> > &ray) const {
 //#####################################################################
 // A version to make Box3d::Intersection have to do fewer redundant dot products
 template<class T> bool Plane<T>::
-intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2,const T distance,const T rate_of_approach) const
+intersection(RayIntersection<Vector<T,3> >& ray,const T thickness_over_2,const T distance,const T rate_of_approach) const
 {
-    if(distance>-thickness_over_2 && distance<thickness_over_2){ray.t_max=0;ray.intersection_location=Ray<Vector<T,3> >::StartPoint;return true;} // within the boundary
+    if(distance>-thickness_over_2 && distance<thickness_over_2){ray.t_max=0;ray.intersection_location=RayIntersection<Vector<T,3> >::StartPoint;return true;} // within the boundary
     if(rate_of_approach*distance<=0) return false; // no intersection
     if(rate_of_approach>0 && distance-thickness_over_2<ray.t_max*rate_of_approach){
-        ray.t_max=(distance-thickness_over_2)/rate_of_approach;ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+        ray.t_max=(distance-thickness_over_2)/rate_of_approach;ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
     else if(rate_of_approach<0 && distance+thickness_over_2>ray.t_max*rate_of_approach){
-        ray.t_max=(distance+thickness_over_2)/rate_of_approach;ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+        ray.t_max=(distance+thickness_over_2)/rate_of_approach;ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
     return false;
 }
 //#####################################################################
 // Function Intersection
 //#####################################################################
 template<class T> bool Plane<T>::
-intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
+intersection(RayIntersection<Vector<T,3> >& ray,const T thickness_over_2) const
 {
     T distance=dot(n,ray.start-x0);
-    if(distance>-thickness_over_2 && distance<thickness_over_2){ray.t_max=0;ray.intersection_location=Ray<Vector<T,3> >::StartPoint;return true;} // within the boundary
+    if(distance>-thickness_over_2 && distance<thickness_over_2){ray.t_max=0;ray.intersection_location=RayIntersection<Vector<T,3> >::StartPoint;return true;} // within the boundary
     T rate_of_approach=-dot(n,ray.direction);
     if(rate_of_approach*distance<=0) return false; // no intersection
     if(rate_of_approach>0 && distance-thickness_over_2<ray.t_max*rate_of_approach){
-        ray.t_max=(distance-thickness_over_2)/rate_of_approach;ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+        ray.t_max=(distance-thickness_over_2)/rate_of_approach;ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
     else if(rate_of_approach<0 && distance+thickness_over_2>ray.t_max*rate_of_approach){
-        ray.t_max=(distance+thickness_over_2)/rate_of_approach;ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+        ray.t_max=(distance+thickness_over_2)/rate_of_approach;ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
     return false;
 }
 
@@ -87,7 +87,7 @@ intersection(const Box<TV>& box,const TThickness thickness_over_2) const
 // Function Lazy_Intersection
 //#####################################################################
 template<class T> bool Plane<T>::
-lazy_intersection(Ray<Vector<T,3> >& ray) const
+lazy_intersection(RayIntersection<Vector<T,3> >& ray) const
 {
     T distance=dot(n,ray.start-x0),rate_of_approach=-dot(n,ray.direction);
     if(rate_of_approach*distance<=0) return false; // no intersection
@@ -110,10 +110,10 @@ segment_plane_intersection(const TV& endpoint1,const TV& endpoint2,T& interpolat
 // Function Rectangle_Intersection
 //#####################################################################
 template<class T> bool Plane<T>::
-rectangle_intersection(Ray<Vector<T,3> >& ray,const Plane<T>& bounding_plane_1,const Plane<T>& bounding_plane_2,const Plane<T>& bounding_plane_3,const Plane<T>& bounding_plane_4,
+rectangle_intersection(RayIntersection<Vector<T,3> >& ray,const Plane<T>& bounding_plane_1,const Plane<T>& bounding_plane_2,const Plane<T>& bounding_plane_3,const Plane<T>& bounding_plane_4,
                        const T thickness_over_2) const
 {
-    Ray<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
+    RayIntersection<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
     if(intersection(ray,thickness_over_2)){
         TV point=ray.point(ray.t_max);
         if(!bounding_plane_1.outside(point,thickness_over_2) && !bounding_plane_2.outside(point,thickness_over_2) && !bounding_plane_3.outside(point,thickness_over_2)

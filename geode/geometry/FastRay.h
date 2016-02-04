@@ -2,7 +2,7 @@
 #pragma once
 
 #include <geode/geometry/Box.h>
-#include <geode/geometry/Ray.h>
+#include <geode/geometry/RayIntersection.h>
 namespace geode {
 namespace {
 
@@ -17,7 +17,7 @@ template<class TV,int signs> struct FastRay {
   const TV inv_dx;
   T t_max;
 
-  FastRay(const Ray<TV>& ray)
+  FastRay(const RayIntersection<TV>& ray)
     : start(ray.start), inv_dx(1/ray.direction), t_max(ray.t_max) {
     for (int i=0;i<TV::m;i++)
       assert(sign(i)==(inv_dx[i]<0));
@@ -53,7 +53,7 @@ template<class TV,int signs> struct FastRay {
   }
 };
 
-template<class TV> static inline int fast_ray_signs(const Ray<TV>& ray) {
+template<class TV> static inline int fast_ray_signs(const RayIntersection<TV>& ray) {
   const TV inv_dx = 1/ray.direction; 
   int signs = 0;
   for (int i=0;i<TV::m;i++)

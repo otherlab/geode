@@ -4,7 +4,7 @@
 #include <geode/geometry/Triangle3d.h>
 #include <geode/array/Array.h>
 #include <geode/math/constants.h>
-#include <geode/geometry/Ray.h>
+#include <geode/geometry/RayIntersection.h>
 #include <geode/geometry/Segment.h>
 #include <geode/math/lerp.h>
 namespace geode {
@@ -52,7 +52,7 @@ intersection(Triangle<Vector<T,3>> const &t, Segment<Vector<T,3>> &result) const
     return false;
 
   // define a ray through the plane/plane intersection
-  Ray<Vector<T,3>> L;
+  RayIntersection<Vector<T,3>> L;
   if (!Plane<T>::intersection(t, L)) {
     return false;
   }
@@ -130,9 +130,9 @@ intersection(Plane<T> const &plane, Segment<Vector<T,3>> &result) const {
 }
 
 template<class T> bool Triangle<Vector<T,3> >::
-intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
+intersection(RayIntersection<Vector<T,3> >& ray,const T thickness_over_2) const
 {
-    Ray<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
+    RayIntersection<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
     T thickness=2*thickness_over_2;
 
     // first check the plane of the triangle's face
@@ -147,24 +147,24 @@ intersection(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
     if(edge_plane_12.outside(plane_point,thickness_over_2) && edge_plane_12.intersection(ray,thickness_over_2)){
         Vector<T,3> edge_point(ray.point(ray.t_max));
         if(Plane<T>::boundary(edge_point,thickness) && !edge_plane_23.outside(edge_point,thickness) && !edge_plane_31.outside(edge_point,thickness)){
-            ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+            ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
         else ray.restore_intersection_information(ray_temp);}
     if(edge_plane_23.outside(plane_point,thickness_over_2) && edge_plane_23.intersection(ray,thickness_over_2)){
         Vector<T,3> edge_point(ray.point(ray.t_max));
         if(Plane<T>::boundary(edge_point,thickness) && !edge_plane_12.outside(edge_point,thickness) && !edge_plane_31.outside(edge_point,thickness)){
-            ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+            ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
         else ray.restore_intersection_information(ray_temp);}
     if(edge_plane_31.outside(plane_point,thickness_over_2) && edge_plane_31.intersection(ray,thickness_over_2)){
         Vector<T,3> edge_point(ray.point(ray.t_max));
         if(Plane<T>::boundary(edge_point,thickness) && !edge_plane_12.outside(edge_point,thickness) && !edge_plane_23.outside(edge_point,thickness)){
-            ray.intersection_location=Ray<Vector<T,3> >::InteriorPoint;return true;}
+            ray.intersection_location=RayIntersection<Vector<T,3> >::InteriorPoint;return true;}
         else ray.restore_intersection_information(ray_temp);}
 
     return false;
 }
 
 template<class T> bool Triangle<Vector<T,3> >::
-lazy_intersection(Ray<Vector<T,3> >& ray) const
+lazy_intersection(RayIntersection<Vector<T,3> >& ray) const
 {
     T save_t_max=ray.t_max;int save_aggregate_id=ray.aggregate_id;
     if(!Plane<T>::lazy_intersection(ray)) return false; // otherwise intersects the plane
@@ -173,11 +173,11 @@ lazy_intersection(Ray<Vector<T,3> >& ray) const
 }
 
 template<class T> bool Triangle<Vector<T,3> >::
-closest_non_intersecting_point(Ray<Vector<T,3> >& ray,const T thickness_over_2) const
+closest_non_intersecting_point(RayIntersection<Vector<T,3> >& ray,const T thickness_over_2) const
 {
-    Ray<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
+    RayIntersection<Vector<T,3> > ray_temp;ray.save_intersection_information(ray_temp);
     if(!intersection(ray,thickness_over_2)) return false;
-    else if(ray.intersection_location==Ray<Vector<T,3> >::StartPoint) return true;
+    else if(ray.intersection_location==RayIntersection<Vector<T,3> >::StartPoint) return true;
     else ray.restore_intersection_information(ray_temp);
 
     // Todo: Save having to re-generate all the planes...
@@ -299,7 +299,7 @@ signed_solid_angle(const Vector<T,3>& center) const
 }
 
 bool intersection(const Segment<TV>& segment, const Triangle<TV>& triangle, const T thickness_over_2) {
-  Ray<TV> ray(segment);
+  RayIntersection<TV> ray(segment);
   return triangle.intersection(ray,thickness_over_2);
 }
 

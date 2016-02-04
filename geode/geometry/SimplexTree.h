@@ -34,8 +34,8 @@ public:
   ~SimplexTree();
 
   GEODE_CORE_EXPORT void update(); // Call whenever X changes
-  GEODE_CORE_EXPORT bool intersection(Ray<TV>& ray, const T thickness_over_two) const;
-  GEODE_CORE_EXPORT Array<Ray<TV> > intersections(const Ray<TV>& ray, const T thickness_over_two) const;
+  GEODE_CORE_EXPORT bool intersection(RayIntersection<TV>& ray, const T thickness_over_two) const;
+  GEODE_CORE_EXPORT Array<RayIntersection<TV> > intersections(const RayIntersection<TV>& ray, const T thickness_over_two) const;
   GEODE_CORE_EXPORT void intersection(const Sphere<TV>& sphere, Array<int>& hits) const;
   GEODE_CORE_EXPORT void intersections(const Plane<T>& plane, Array<Segment<TV>>& result) const;
   GEODE_CORE_EXPORT bool inside(TV point) const;
