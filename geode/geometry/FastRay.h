@@ -23,7 +23,7 @@ template<class TV,int signs> struct FastRay {
       assert(sign(i)==(inv_dx[i]<0));
   }
 
-  bool sign(const int i) const {
+  constexpr bool sign(const int i) const {
     return (signs&1<<i)!=0;
   }
 
@@ -53,7 +53,7 @@ template<class TV,int signs> struct FastRay {
   }
 };
 
-template<class TV> static inline int fast_ray_signs(const RayIntersection<TV>& ray) {
+template<class TV> static inline int fast_ray_signs(const Ray<TV>& ray) {
   const TV inv_dx = 1/ray.direction; 
   int signs = 0;
   for (int i=0;i<TV::m;i++)
@@ -61,5 +61,5 @@ template<class TV> static inline int fast_ray_signs(const RayIntersection<TV>& r
   return signs;
 }
 
-}
-}
+} // anonymous namespace
+} // geode namespace
