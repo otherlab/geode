@@ -143,7 +143,7 @@ class Rotation<Vector<T,2> >
 
     std::complex<T> c;
 
-    Rotation(const std::complex<T>& c2)
+    explicit Rotation(const std::complex<T>& c2)
         :c(c2)
     {}
 

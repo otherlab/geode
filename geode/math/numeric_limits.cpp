@@ -12,6 +12,10 @@ using std::numeric_limits;
 
 namespace {
 template<class T> struct Limits : public Object {
+ private:
+  static const char* get_typename();
+  static string repr_helper(const T x);
+ public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   static const T min, max, epsilon, round_error, infinity, quiet_NaN, signaling_NaN, denorm_min;
   static const int digits = numeric_limits<T>::digits;
@@ -22,12 +26,12 @@ template<class T> struct Limits : public Object {
   static const int max_exponent10 = numeric_limits<T>::max_exponent10;
   string repr() const {
     // Use separate format calls since Windows lacks variadic templates
-    return format("numeric_limits<%s>:\n  min = %g\n  max = %g\n  epsilon = %g\n  round_error = %g\n  quiet_NaN = %g\n",
-                  is_same<T,float>::value?"float":"double",
-                  min,max,epsilon,round_error,quiet_NaN)
-         + format("  signaling_NaN = %g\n  denorm_min = %g\n",
-                  signaling_NaN,denorm_min)
-         + format("  digits = %d\n  digits10 = %d\n  min_exponent = %d\n  min_exponent10 = %d\n  max_exponent = %d\n  max_exponent10 = %d",
+    return format("numeric_limits<%s>(\n  min = %s\n  max = %s\n  epsilon = %s\n  round_error = %s\n  quiet_NaN = %s\n",
+                  get_typename(),
+                  repr_helper(min),repr_helper(max),repr_helper(epsilon),repr_helper(round_error),repr_helper(quiet_NaN))
+         + format("  signaling_NaN = %s\n  denorm_min = %s\n",
+                  repr_helper(signaling_NaN),repr_helper(denorm_min))
+         + format("  digits = %d\n  digits10 = %d\n  min_exponent = %d\n  min_exponent10 = %d\n  max_exponent = %d\n  max_exponent10 = %d)",
                   digits,digits10,min_exponent,min_exponent10,max_exponent,max_exponent10);
   }
 };
@@ -50,13 +54,17 @@ COUNT(max_exponent)
 COUNT(max_exponent10)
 #undef COUNT
 
-#define INSTANTIATE(T) template<> GEODE_DEFINE_TYPE(Limits<T>)
-INSTANTIATE(int32_t)
-INSTANTIATE(int64_t)
-INSTANTIATE(uint32_t)
-INSTANTIATE(uint64_t)
-INSTANTIATE(float)
-INSTANTIATE(double)
+#define INSTANTIATE(T,fmt) \
+  template<> GEODE_DEFINE_TYPE(Limits<T>) \
+  template<> const char* Limits<T>::get_typename() { return #T; } \
+  template<> string Limits<T>::repr_helper(const T x) { return format("%" fmt,x); }
+
+INSTANTIATE(int32_t,PRId32)
+INSTANTIATE(int64_t,PRId64)
+INSTANTIATE(uint32_t,PRIu32)
+INSTANTIATE(uint64_t,PRIu64)
+INSTANTIATE(float,"g")
+INSTANTIATE(double,"g")
 }
 
 static Ref<> build_limits(PyObject* object) {

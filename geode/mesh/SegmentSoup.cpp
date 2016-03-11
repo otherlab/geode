@@ -18,7 +18,7 @@ typedef Vector<real,2> TV2;
 
 GEODE_DEFINE_TYPE(SegmentSoup)
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__MINGW32__)
 const int SegmentSoup::d;
 #endif
 

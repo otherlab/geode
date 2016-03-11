@@ -318,7 +318,10 @@ public:
 template<class TK,class T>
 struct HashtableIter {
   typedef typename CopyConst<HashtableEntry<TK,typename remove_const<T>::type>,T>::type Entry;
-
+  typedef decltype(declval<Entry>().value()) ValueReference;
+  typedef decltype(&(declval<ValueReference>())) ValuePointer;
+  // Try to make sure we don't inadvertently start returning copied values during iteration:
+  static_assert(is_reference<ValueReference>::value, "HashtableEntry::value() doesn't return a reference. This is likely a bug");
   const RawArray<Entry> table;
   int index;
 
@@ -341,16 +344,14 @@ struct HashtableIter {
     return index!=other.index; // Assume same table
   }
 
-  auto operator*() const
-    -> decltype(table[index].value()) {
+  ValueReference operator*() const {
     auto& entry = table[index];
     assert(entry.active());
     return entry.value();
   }
 
-  auto operator->() const
-    -> decltype(&table[index].value()) { // Can't be decltype(&operator*()) due to gcc 4.9 bug
-    return &operator*();
+  ValuePointer operator->() const {
+    return &(*this);
   }
 
   void operator++() {

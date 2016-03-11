@@ -29,7 +29,7 @@ public:
 
 private:
   struct Unusable{};
-  typedef typename mpl::if_<is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
+  typedef typename mpl::if_<geode::is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
 public:
 
   int m,n; // sizes
@@ -174,6 +174,14 @@ public:
 
   bool valid(const int i,const int j) const {
     return unsigned(i)<unsigned(m) && unsigned(j)<unsigned(n);
+  }
+
+  // Convert a 2d index into a 1d index into this->flat
+  int flat_index(const Vector<int,d>& index) const {
+    assert(valid(index));
+    const int result = index.x*n+index.y;
+    assert(&(this->flat[result]) == &((*this)[index]));
+    return result;
   }
 
   void resize(const int m_new, const int n_new) {

@@ -38,6 +38,9 @@ struct SignedArcInfo {
   bool is_full_circle() const { return to_vid(_head) == _tail; }
   bool positive() const { return direction() == ArcDirection::CCW; }
 };
+static inline std::ostream& operator<<(std::ostream& os, const SignedArcInfo& x) {
+  return os << "{" << x.head() << ", " << x.tail() << ", " << x.direction() << "}";
+}
 
 // To can store a sequence of signed arcs by saving start and direction, with tail implicitly specified by the start of the next arc
 struct SignedArcHead {
@@ -49,6 +52,9 @@ struct SignedArcHead {
   // ArcDirection direction() const { return arc_direction(ref_cid); }
   // IncidentId tail_iid(const SignedArcHead next_head) const { return is_same_circle(ref_cid, next_head.ref_cid) ? next_head.iid : opposite(next_head.iid); }
 };
+static inline std::ostream& operator<<(std::ostream& os, const SignedArcHead& x) {
+  return os << "{" << x.iid << ", " << x.direction << "}";
+}
 
 // Adaptor to make array of SignedArcHead behave like an array of SignedArcInfo
 struct RawArcContour {
@@ -374,7 +380,7 @@ template<Pb PS> struct ArcAccumulator {
   void append_to_back(const SignedArcHead h); 
 
   // Copy intersections out of a VertexSet and add contours with the new ids
-  void copy_contours(const ArcContours& contour, const VertexSet<PS>& vertices);
+  void copy_contours(const ArcContours& src_contours, const VertexSet<PS>& src_vertices);
 
   // Use vertices and contours to create a PlanarArcGraph
   Ref<PlanarArcGraph<PS>> compute_embedding() const;

@@ -38,7 +38,7 @@ class NestedField {
   int total_size() const { return raw.total_size(); }
   Array<int> sizes() const { return raw.sizes(); }
   T& operator()(const Id i, const int j) const { return raw(i.idx(),j); }
-  decltype(raw[0]) operator[](const Id i) const { return raw[i.idx()]; }
+  RawArray<T> operator[](const Id i) const { return raw[i.idx()]; }
 
   // return index into raw.flat for (*this)[i].front()
   int front_offset(const Id i) const { return raw.offsets[i.idx()]; }

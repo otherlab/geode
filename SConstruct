@@ -19,14 +19,13 @@ EnsureSConsVersion(2,0,0)
 # Read configuration from config.py.
 # As far as I can tell, the scons version of this doesn't allow defining new options in SConscript files.
 sys.path.insert(0,Dir('#').abspath)
-
 try:
   import config
   has_config = True
 except ImportError:
   has_config = False
-
 del sys.path[0]
+
 def options(env,*vars):
   for name,help,default in vars:
     Help('%s: %s (default %s)\n'%(name,help,default))
@@ -45,14 +44,75 @@ def options(env,*vars):
     else:
       env[name] = default
 
+# Alternate spawn function to work around command line length limits
+# Modified based on: http://www.scons.org/wiki/LongCmdLinesOnWin32
+def spawn_with_long_arg(sh, escape, cmd, args, env):
+  newargs = ' '.join(args[1:])
+  cmdline = cmd + " " + newargs
+  startupinfo = None
+  if False:
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+  proc = subprocess.Popen(cmdline, stdin=subprocess.PIPE, startupinfo=startupinfo, env=env)
+  return proc.wait()
+
+# This function makes Environment(tools=['default'],mingw_disables_msvc=True) use the MinGW tools if available
+# It also fixes some issues with detecting MinGW32-W64 and executing long command lines on windows
+# WARNING 0: Lacking good alternatives, this reaches into the SCons module and mutates things
+# WARNING 1: This is a terrifying breach of good practice and will probably come back to bite someone later. My apologies if this bites you
+# WARNING 2: 'mingw_disables_msvc' must be True before default tools are initialized and may prevent 'msvc' tool from being manually imported
+def patch_scons_for_mingw64_support():
+  import SCons
+  import SCons.Tool.msvc as msvc_module
+  import SCons.Tool.mingw as mingw_module
+  # The 'msvc' and 'mingw' tools scramble each others settings so we need to force only one to exist
+  # SCons attempts to load MSVC as a 'default' tool, which prevents installing 'mingw' later
+  # We reach into the actual modules and clobber some of the functions to help them play nice
+  
+  # First, alter mingw.key_program to something that MinGW32-W64 also has
+  mingw_module.key_program = 'mingw32-make'
+  
+  class SConsMingw64Patch:
+    def __init__(self):
+      # Save original functions
+      self.orig_mingw_exists = mingw_module.exists
+      self.orig_mingw_generate = mingw_module.generate
+      self.orig_msvc_exists = msvc_module.exists
+      self.orig_msvc_generate = msvc_module.generate
+      
+      # Override with patched functions
+      msvc_module.exists = self.patched_msvc_exists
+      msvc_module.generate = self.patched_msvc_generate
+      mingw_module.generate = self.patched_mingw_generate
+    
+    def patched_msvc_exists(self,env):
+      if env.get('mingw_disables_msvc'):
+        return not self.orig_mingw_exists(env) and self.orig_msvc_exists(env)
+      else:
+        return self.orig_msvc_exists(env)
+    def patched_msvc_generate(self,env):
+      if 'mingw' in env.get('TOOLS',[]):
+        raise Exception("Can't initialize 'mingw' tool and 'msvc' tool in the same environment. They set incompatible values")
+      result = self.orig_msvc_generate(env)
+    def patched_mingw_generate(self,env):
+      if 'msvc' in env.get('TOOLS',[]):
+        raise Exception("Can't initialize 'mingw' tool and 'msvc' tool in the same environment. They set incompatible values")
+      result = self.orig_mingw_generate(env)
+      env['SPAWN'] = spawn_with_long_arg
+  SConsMingw64Patch()
+patch_scons_for_mingw64_support()
+
+construction_options = dict()
+options(construction_options,
+  ('mingw_disables_msvc','Trick SCons to prefer default tools based on MinGW over MSVC',0))
+
 # Base environment
-env = Environment(tools=['default','pdflatex','pdftex','textfile'],TARGET_ARCH='x86') # TARGET_ARCH needed on Windows
+env = Environment(ENV=os.environ,tools=['default','pdflatex','pdftex','textfile'], **construction_options)
+
 default_cxx = env['CXX']
 posix = env['PLATFORM']=='posix'
 darwin = env['PLATFORM']=='darwin'
 windows = env['PLATFORM']=='win32'
-if not windows:
-  env.Replace(ENV=os.environ)
 verbose = True
 
 # Default base directory
@@ -73,7 +133,7 @@ env['develop'] = 'develop' in COMMAND_LINE_TARGETS
 if env['develop']:
   env.Alias('develop',[])
 
-# Base options
+# More options
 options(env,
   ('cxx','C++ compiler','<detect>'),
   ('arch','Architecture (e.g. opteron, nocona, powerpc, native)','native'),
@@ -138,12 +198,24 @@ if env['cxx']=='<detect>':
     env.Replace(cxx=default_cxx)
   else:
     for gcc in 'clang++ g++-4.7 g++-4.6 g++'.split():
-      if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE).communicate()[0]:
+      if subprocess.Popen(['which',gcc], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]:
         env.Replace(cxx=gcc)
         break
     else:
       die('no suitable version of g++ found')
 env.Replace(CXX=env['cxx'])
+
+# Indicate if using gcc, clang, or another compiler with compatible flags (As opposed to MSVC or icl)
+# Mostly to catch usage of g++ on windows (via Mingw or something) so we don't pass it MSVC config flags
+def is_gnuc(cxx):
+  cxx_base = os.path.basename(cxx)
+  if re.search(r'g\+\+(\.exe)?$', cxx_base): return True
+  elif re.match(r'clang', cxx_base): return True
+  elif re.search(r'cl(\.exe)?$',cxx_base): return False
+  elif re.search(r'icl(\.exe)?$',cxx_base): return False
+  else:
+    die('Unhandled C++ compiler "%s". Can\'t deduce which configuration flags to use.' % cxx)
+gnuc = is_gnuc(env.subst('$cxx'))
 
 # If we're using gcc, insist on 4.6 or higher
 if re.match(r'\bg\+\+',env['cxx']):
@@ -172,14 +244,23 @@ env.VariantDir(env['variant_build'],'.',duplicate=0)
 
 # Compiler flags
 clang = bool(re.search(r'clang\b',env['cxx']))
-if windows:
-  def ifsse(s):
-    return s if env['sse'] else ''
+if not gnuc:
+  if env['arch'] != 'native':
+    die("Specific architecture configuration on this compiler not supported")
+    # Warning: If adding more options for architecture, be aware that /arch:AVX seems to have some compiler bugs with the current VS2015 preview (as of Feburary 2015)
+  # Since I don't know a sane way to detect which target is active I'm leaving this commented out for now:
+  # if env['sse'] and building_for_32bit_target():
+  #  # If this give an 'unrecognized option' warning you might be using the compiler for 64 bit targets which has implied support for SSE
+  #  env.Append(CXXFLAGS=' /arch:SSE2')
+  if env['type'] == 'debug':
+    env.Append(CXXFLAGS=' /Od /Oy-')
   if env['type'] in ('debug','optdebug'):
-    env.Append(CXXFLAGS=' /Zi')
+    env.Append(CXXFLAGS=' /Zi /FS')
+    # You might try this instead if your debugger is having trouble locating the pdb files:
+    #   env.Append(CXXFLAGS=' /Z7',LINKFLAGS=' /DEBUG')
   if env['type'] in ('release','optdebug','profile'):
     env.Append(CXXFLAGS=' /O2')
-  env.Append(CXXFLAGS=ifsse('/arch:SSE2') + ' /W3 /wd4996 /wd4267 /wd4180 /EHs',LINKFLAGS='/ignore:4221')
+  env.Append(CXXFLAGS=' /EHs /W3',LINKFLAGS='/ignore:4221')
   if env['cxx'].endswith('icl') or env['cxx'].endswith('icl"'):
     env.Append(CXXFLAGS=' /wd2415 /wd597 /wd177')
   if env['type']=='debug':
@@ -193,14 +274,15 @@ elif env['cxx'].endswith('icc') or env['cxx'].endswith('icpc'):
   if env['type']=='release' or env['type']=='optdebug' or env['type']=='profile':
     env.Append(CXXFLAGS=' -O3')
   env.Append(CXXFLAGS=' -w -vec-report0 -Wall -Winit-self -Woverloaded-virtual',LINKFLAGS=' -w')
-else: # assume g++...
-  gcc = True
+else:
   # Machine flags
   def ifsse(s):
     return s if env['sse'] else ' -mno-sse'
   if env['arch']=='athlon':    machine_flags = ' -march=athlon-xp '+ifsse('-msse')
   elif env['arch']=='nocona':  machine_flags = ' -march=nocona '+ifsse('-msse2')
   elif env['arch']=='opteron': machine_flags = ' -march=opteron '+ifsse('-msse3')
+  elif env['arch']=='corei7':  machine_flags = ' -march=corei7 '
+  elif env['arch']=='x86-64':  machine_flags = ' -march=x86-64 -mtune=generic '
   elif env['arch']=='powerpc': machine_flags = ''
   elif env['arch']=='native':  machine_flags = ' -march=native -mtune=native '+ifsse('')
   else: machine_flags = ''
@@ -213,7 +295,7 @@ else: # assume g++...
       if   env['arch']=='pentium4': optimizations = '-O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
       elif env['arch']=='pentium3': optimizations = '-O2 -fexpensive-optimizations -falign-functions=4 -funroll-loops -fprefetch-loop-arrays'
       elif env['arch']=='opteron':  optimizations = '-O2'
-      elif env['arch'] in ('nocona','native','powerpc'): optimizations = '-O3 -funroll-loops'
+      elif env['arch'] in ('nocona','native','powerpc', 'corei7', 'x86-64'): optimizations = '-O3 -funroll-loops'
     env.Append(CXXFLAGS=optimizations)
     if not clang:
       env.Append(LINKFLAGS=' -dead_strip')
@@ -227,15 +309,15 @@ if env['Wconversion']:
 
 # Optionally stop after syntax checking
 if env['syntax']:
-  assert clang or gcc
+  assert gnuc
   env.Append(CXXFLAGS='-fsyntax-only')
   # Don't rebuild files if syntax checking succeeds the first time
   for rule in 'CXXCOM','SHCXXCOM':
     env[rule] += ' && touch $TARGET'
 
 # Use c++11
-if not windows:
-  if darwin:
+if gnuc:
+  if darwin or windows:
     env.Append(CXXFLAGS=' -std=c++11')
   else: # Ubuntu
     env.Append(CXXFLAGS=' -std=c++0x')
@@ -245,7 +327,7 @@ if env['hidden']:
   env.Append(CXXFLAGS=' -fvisibility=hidden',LINKFLAGS=' -fvisibility=hidden')
 
 if env['Werror']:
-  env.Append(CXXFLAGS=(' /WX' if windows else ' -Werror'))
+  env.Append(CXXFLAGS=(' -Werror' if gnuc else ' /WX'))
 
 # Relax a few warnings for clang
 if clang:
@@ -257,7 +339,7 @@ if env['type']=='release' or env['type']=='profile' or env['type']=='optdebug':
 
 # Enable OpenMP
 if env['openmp']:
-  if windows:
+  if not gnuc:
     env.Append(CXXFLAGS=' /openmp')
   elif not clang:
     env.Append(CXXFLAGS='-fopenmp',LINKFLAGS='-fopenmp')
@@ -451,7 +533,8 @@ def link_flags(env):
         env_link.Append(LINKFLAGS=' '.join('-Xlinker -reexport-l%s'%n for n in lib['publiclibs']))
       else:
         env_link.Append(LIBS=lib['publiclibs'])
-      env_link.AppendUnique(LIBPATH=lib['libpath'])
+      # prepend specific lib paths so libs there will be found before any installed libs
+      env_link.PrependUnique(LIBPATH=lib['libpath'])
       if workaround: # Prevent qt tool from dropping include paths when building moc files
         env_link.PrependUnique(CPPPATH=lib['cpppath'])
       if lib.has_key('rpath'):
@@ -546,9 +629,12 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
   headers = []
   skip = tuple(skip)+tuple(env['skip'])
   dir = Dir('.').srcnode().abspath
+  has_module_cpp = False
   candidates = list(files(dir,skip)) if not skip_all else []
   for f in candidates + list(extra):
     if f.endswith('.cpp') or f.endswith('.cc') or f.endswith('.c'):
+      if f.endswith('module.cpp'):
+        has_module_cpp = True
       sources.append(f)
     elif f.endswith('.h'):
       headers.append(f)
@@ -572,7 +658,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
 
   libpath = '#'+os.path.join(env['variant_build'],'lib')
   path = os.path.join(libpath,name)
-  env.Append(LIBS=libs)
+  env.Prepend(LIBS=libs)
   if env['shared']:
     linkflags = env['LINKFLAGS']
     if darwin:
@@ -593,7 +679,7 @@ def library(env,name,libs=(),skip=(),extra=(),skip_all=False,no_exports=False,py
         installed.extend(env.Install(env['prefix_lib'],l))
     lib = installed
     all_libs.append(lib)
-    if 'module.cpp' in cpps:
+    if env['use_python'] and has_module_cpp:
       python_libs.append(lib)
   else:
     for l in lib:
@@ -616,7 +702,7 @@ def config_header(env,name,extra=()):
     flags.append('GEODE_FLOAT')
   flags.append(('GEODE_THREAD_SAFE',int(env['thread_safe'])))
   if env['sse']:
-    flags.append('__SSE__')
+    flags.append('GEODE_SSE')
   if windows:
     if not env['shared']:
       flags.append('GEODE_SINGLE_LIB')
@@ -840,7 +926,12 @@ if windows and 0:
 if windows and env['use_python']:
   if env['shared']:
     raise RuntimeError('Separate shared libraries do not work on windows.  Switch to shared=0.')
-
+  
+  def get_libname(lib):
+    name = lib[0].name
+    assert(name.startswith(env['LIBPREFIX']) and name.endswith(env['LIBSUFFIX']))
+    return name[len(env['LIBPREFIX']):-len(env['LIBSUFFIX'])]
+  
   # Autogenerate a toplevel module initialization routine calling all child initialization routines
   def make_modules(env,target,source):
     libs = str(source[0]).split()
@@ -848,20 +939,22 @@ if windows and env['use_python']:
 // Autogenerated by SConstruct: DO NOT EDIT
 #define GEODE_PYTHON
 #define GEODE_SINGLE_LIB
-#include <other/core/python/module.h>
-#define SUB(name) void other_init_helper_##name(); other_init_helper_##name();
-GEODE_PYTHON_MODULE(other_all) {
+#include <geode/python/module.h>
+#define SUB(name) void geode_init_helper_##name(); geode_init_helper_##name();
+GEODE_PYTHON_MODULE(geode_all) {
   %s
 }
-'''%'\n  '.join('SUB(%s)'%name for name in libs))
+'''%'\n  '.join('SUB(%s)'% (name if name != 'geode' else 'geode_wrap') for name in libs))
   modules, = env.Command(os.path.join(env['variant_build'],'modules.cpp'),
-                         Value(' '.join(lib[0].name[:-4] for lib in python_libs)),[make_modules])
-
-  # Build other_all.pyd
+                         Value(' '.join(get_libname(lib) for lib in python_libs)),[make_modules])
+  
+  # Build geode_all.pyd
   env = env.Clone(SHLIBSUFFIX='.pyd',shared=1)
   for use in all_uses:
     env[use] = 1
-  other_all = library(env,os.path.join(env['variant_build'],'other_all'),
-                      [lib[0].name[:-4] for lib in all_libs],
+  
+  geode_all = library(env,'geode_all',
+                      [get_libname(lib) for lib in all_libs],
                       extra=(modules.path,),skip_all=True,no_exports=True)
-  env.Alias('py',other_all)
+  env.Alias('py',geode_all)
+

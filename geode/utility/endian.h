@@ -4,6 +4,8 @@
 #include <geode/utility/config.h>
 #ifdef __APPLE__
 #include <sys/types.h>
+#elif defined(_WIN32)
+// For now Windows assumes little endian and relies on unit test to catch issues
 #else
 #include <endian.h>
 #endif
@@ -25,7 +27,14 @@ namespace geode {
 #  else
 #    error Unknown machine endianness
 #  endif
+#elif defined(_WIN32)
+// I've found no good way to check this at compile time on windows so I'm depending on test_geode_endian
+// If this goes wrong and comes back to 'byte' you at some point I'm sorry
+#  define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
 #else
+#  ifndef __BYTE_ORDER
+#    error __BYTE_ORDER not defined!
+#  endif
 #  if __BYTE_ORDER == __LITTLE_ENDIAN
 #    define GEODE_ENDIAN GEODE_LITTLE_ENDIAN
 #  elif __BYTE_ORDER == __BIG_ENDIAN

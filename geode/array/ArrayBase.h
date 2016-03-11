@@ -28,6 +28,7 @@
 #include <typeinfo>
 #include <iostream>
 #include <limits>
+#include <typeinfo>
 namespace geode {
 
 using std::type_info;

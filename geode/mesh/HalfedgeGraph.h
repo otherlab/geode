@@ -108,7 +108,7 @@ public:
 
   static HalfedgeId reverse(const HalfedgeId e)               { assert(e.valid()); return HalfedgeId(e.id^1); }
   static EdgeId     edge(const HalfedgeId e)                  { assert(e.valid()); return EdgeId(e.id>>1); }
-  static HalfedgeId halfedge(const EdgeId e, const bool which){ assert(e.valid()); return HalfedgeId((e.id<<1)|which); }
+  static HalfedgeId halfedge(const EdgeId e, const bool which){ assert(e.valid()); return HalfedgeId((e.id<<1)|(which<<0)); }
   static Vector<HalfedgeId,2> halfedges(const EdgeId e)       { assert(e.valid()); return vec(halfedge(e,0),halfedge(e,1)); }
   static bool is_forward(HalfedgeId e)                        { assert(e.valid()); return (e.id&1) == 0; }
 

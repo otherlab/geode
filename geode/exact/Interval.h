@@ -28,7 +28,7 @@ template<> struct IsScalar<Interval> : public mpl::true_ {};
 template<> struct is_packed_pod<Interval> : public mpl::true_ {};
 
 // If possible, use SSE to speed up interval arithmetic.
-#if defined(__SSE4_1__)
+#if defined(GEODE_SSE4_1)
 #define GEODE_INTERVAL_SSE 1
 #else
 #define GEODE_INTERVAL_SSE 0
@@ -558,7 +558,7 @@ template<int m> static inline bool small(const Vector<Interval,m>& xs, const dou
 template<int m> static inline Box<Vector<Quantized,m>> snap_box(const Vector<Interval,m>& xs) {
   Box<Vector<Quantized,m>> box;
   for (int i=0;i<m;i++) {
-#ifdef __SSE4_1__
+#ifdef GEODE_SSE4_1
     const auto b = ceil(xs[i].s);
     box.min[i] = b.min;
     box.max[i] = b.max;
@@ -622,7 +622,7 @@ template<int m> static inline Vector<double,m> center(const Vector<Interval,m>& 
 template<int m> static inline Vector<Quantized,m> snap(const Vector<Interval,m>& xs) {
   Vector<Quantized,m> r;
   for (int i=0;i<m;i++)
-    r[i] = Quantized(round(xs[i].center()));
+    r[i] = Quantized(std::round(xs[i].center()));
   return r;
 }
 

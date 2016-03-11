@@ -6,7 +6,6 @@
 #include <geode/geometry/Box.h>
 
 namespace geode {
-
 ////////////////////////////////////////////////////////////////////////////////
 // Non-member circle predicates
 
@@ -67,7 +66,7 @@ template<Pb PS> inline Hash hash_reduce(const CircleIntersectionKey<PS>& k);
 // For CircleIntersection we use the order of "cl" and "cr" to disambiguate the two intersections between them. (i.g. {c0,c1} is one intersection and {c1,c0} is the other)
 // We disambiguate incident intersections around a reference circle, by tracking if the reference circle would become cl or cr in a CircleIntersection
 enum class ReferenceSide : bool { cl = false, cr = true };
-inline ReferenceSide opposite(const ReferenceSide side) { return static_cast<ReferenceSide>(static_cast<bool>(side)^1); }
+inline ReferenceSide opposite(const ReferenceSide side) { return static_cast<ReferenceSide>(static_cast<bool>(side)^true); }
 // ReferenceSide can be confusing; these are here to help document usage
 inline bool cl_is_reference(const ReferenceSide side) { return side == ReferenceSide::cl; }
 inline bool cr_is_reference(const ReferenceSide side) { return side == ReferenceSide::cr; }
@@ -115,6 +114,7 @@ template<Pb PS> struct ExactCircle : public ExactCirclePerturbationHelper<PS> {
   Quantized radius;
 
   ExactCircle() = default;
+  ExactCircle(const ExactCircle<PS>&) = default;
   ExactCircle(const Vector<Quantized,2> _center, const Quantized _radius); // Use iif using Implicit perturbation
   ExactCircle(const Vector<Quantized,2> _center, const Quantized _radius, const int _index); // Use iif using Explicit perturbation
 
@@ -140,8 +140,8 @@ template<Pb PS> struct ExactCircle : public ExactCirclePerturbationHelper<PS> {
   bool intersections_ccw              (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const; // Is the triangle {center,i0,i1} positively oriented?
 
   // These help make IncidentCircle and IncidentHorizontal interchangable in some templates:
-  static constexpr bool is_same_intersection(const IncidentCircle<PS>& i, const IncidentHorizontal<PS>& h) { return false; }
-  static constexpr bool is_same_intersection(const IncidentHorizontal<PS>& h, const IncidentCircle<PS>& i) { return false; }
+  static GEODE_CONSTEXPR_IF_NOT_MSVC bool is_same_intersection(const IncidentCircle<PS>& i, const IncidentHorizontal<PS>& h) { return false; }
+  static GEODE_CONSTEXPR_IF_NOT_MSVC bool is_same_intersection(const IncidentHorizontal<PS>& h, const IncidentCircle<PS>& i) { return false; }
 
   // If quadrants of incident circles have already been compared, these can be used
   bool intersections_upwards_same_q   (const IncidentCircle<PS>& i0, const IncidentCircle<PS>& i1) const;
@@ -307,9 +307,9 @@ template<Pb PS> struct ExactHorizontalArc {
    : circle(_circle), i(_i), h(_h)
    , h_is_src(true) { }
 
-  bool contains(const IncidentCircle<PS>& i) const;
+  bool contains(const IncidentCircle<PS>& other) const;
 
-  bool contains(const CircleIntersection<PS>& i) const { return contains(i.as_incident_to(circle)); }
+  bool contains(const CircleIntersection<PS>& other) const { return contains(other.as_incident_to(circle)); }
 
   SmallArray<IncidentCircle<PS>,2> intersections_if_any(const ExactCircle<PS>& incident) const;
   SmallArray<IncidentCircle<PS>,2> intersections_if_any(const ExactArc<PS>& a) const;

@@ -371,9 +371,7 @@ template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>
 
       // Canonical arcs are ccw so we connect prev to dst and next to src if we are going to use a negative winding
       // We compute all options and choose the best one
-      GEODE_UNUSED const auto prev_circle = this->circle(prev.cid);
-      const auto next_circle = this->circle(next.cid);
-      const auto src_options = hc.get_intersections(next_circle);
+      const auto src_options = hc.get_intersections(this->circle(next.cid));
       const auto dst_option_0 = this->incident(opposite(prev.x1_inc));
       const auto dst_option_1 = hc.other_intersection(dst_option_0);
 
@@ -394,8 +392,8 @@ template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>
       // We need to make sure next starts at end of helper_arc
       next.x0_inc = get_or_insert(helper_arc.src.reference_as_incident(helper_arc.circle), next.cid, helper_cid);
 
-      assert(is_same_intersection(prev_circle, this->incident(prev.x1_inc), helper_arc.circle, helper_arc.dst));
-      assert(is_same_intersection(next_circle, this->incident(next.x0_inc), helper_arc.circle, helper_arc.src));
+      assert(is_same_intersection(this->circle(prev.cid), this->incident(prev.x1_inc), helper_arc.circle, helper_arc.dst));
+      assert(is_same_intersection(this->circle(next.cid), this->incident(next.x0_inc), helper_arc.circle, helper_arc.src));
 
       // We add the helper arcs in the next pass along with the regular arcs
     }

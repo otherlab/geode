@@ -36,7 +36,7 @@ def test_array_prop():
   d = Prop('d',zeros((2,2),dtype=int32),shape=(-1,2))
   assert d().dtype==dtype('int32')
   d = Prop('d',((2,2),),shape=(-1,2))
-  assert d().dtype==dtype('int32')
+  assert d().dtype == int_ # int_ is numpy's default integer type
 
 def test_unusable():
   unusable = unusable_prop_test()

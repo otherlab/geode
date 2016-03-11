@@ -15,6 +15,7 @@ enum class ArcDirection : bool { CCW = false, CW = true }; // directed_edge assu
 // These make it easier to use ArcDirection as a winding
 inline int sign(const ArcDirection d) { return (d == ArcDirection::CCW) ? 1 : -1; }
 inline ArcDirection operator-(const ArcDirection dir) { return static_cast<ArcDirection>(!static_cast<bool>(dir)); }
+constexpr int direction_index(const ArcDirection dir) { return static_cast<int>(dir != ArcDirection::CCW); }
 
 // CircleFace encodes if something is inside or outside of a circle
 // We use this to determine if a path following just inside/outside a circle would cross an incident edges that ends on the circle
@@ -27,10 +28,11 @@ GEODE_DEFINE_ID(IncidentId)
 
 // This defines order of the two incident ids that refer to the same vertex
 constexpr ReferenceSide first_iid_side = ReferenceSide::cl;
+constexpr int incident_index(const ReferenceSide side) { return static_cast<int>(side != first_iid_side); }
+static_assert(incident_index(first_iid_side) == 0, "first_iid_side doesn't match implementation of incident_id");
 
 // Pack VertexId and ReferenceSide into an IncidentId
-inline IncidentId incident_id(const VertexId vid, const ReferenceSide side) { assert(vid.valid()); return IncidentId(vid.idx()<<1 | static_cast<bool>(side)); }
-static_assert(static_cast<bool>(first_iid_side) == 0, "first_iid_side doesn't match implementation of incident_id");
+inline IncidentId incident_id(const VertexId vid, const ReferenceSide side) { assert(vid.valid()); return IncidentId(vid.idx()<<1 | incident_index(side)); }
 
 // Convenience functions to manipulate VertexId/IncidentId
 inline IncidentId iid_cl(const VertexId vid)     { return incident_id(vid, ReferenceSide::cl); }
@@ -42,7 +44,7 @@ inline bool is_same_vid(const IncidentId iid0, const IncidentId iid1) { assert(i
 inline bool cl_is_reference(const IncidentId iid) { assert(iid.valid()); return cl_is_reference(side(iid)); }
 
 // For an ExactArcGraph we use forward halfedges as CCW arcs and reversed halfedges as CW arcs
-inline HalfedgeId directed_edge(const EdgeId eid, const ArcDirection direction) { assert(eid.valid()); return HalfedgeId(eid.idx()<<1 | static_cast<bool>(direction)); }
+inline HalfedgeId directed_edge(const EdgeId eid, const ArcDirection direction) { assert(eid.valid()); return HalfedgeId(eid.idx()<<1 | direction_index(direction)); }
 inline ArcDirection arc_direction(const HalfedgeId hid) { assert(hid.valid()); return static_cast<ArcDirection>(hid.idx() & 1); }
 inline HalfedgeId ccw_edge(const EdgeId eid) { return directed_edge(eid, ArcDirection::CCW); }
 inline HalfedgeId cw_edge (const EdgeId eid) { return directed_edge(eid, ArcDirection::CW ); }

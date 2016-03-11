@@ -12,6 +12,10 @@ namespace geode {
 
 #ifdef GEODE_PYTHON
 
+// Verify that Python macros agree with sizeof operator
+static_assert(SIZEOF_SIZE_T == sizeof(size_t), "Error: Bad value for SIZEOF_SIZE_T");
+static_assert(SIZEOF_INT == sizeof(int), "Error: Bad value for SIZEOF_INT");
+
 extern bool numpy_imported;
 
 #define ASSERT_NUMPY_TYPE_CONSISTENT(type)\

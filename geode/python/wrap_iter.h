@@ -48,7 +48,15 @@ template<class T> struct wrapped_iternext_helper<T, true> {
 };
 
 template<class T> struct wrapped_iternext_helper<T, false> {
-  constexpr static PyObject* (* const iter)(PyObject *o) = 0;
+#if GEODE_CONSTEXPR_INCOMPLETE
+  static const iternextfunc iter;
+#else
+  static constexpr iternextfunc iter = nullptr;
+#endif
 };
+
+#if GEODE_CONSTEXPR_INCOMPLETE
+template<class T> iternextfunc wrapped_iternext_helper<T,false>::iter = nullptr;
+#endif
 
 }
