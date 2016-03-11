@@ -44,6 +44,7 @@ public:
   virtual Ref<> default_python() const = 0;
   virtual Ref<> get_min_python() const = 0;
   virtual Ref<> get_max_python() const = 0;
+  virtual Ref<> get_step_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual Ref<> allowed_python() const = 0;
   virtual void set_min_python(PyObject* v) = 0;
@@ -267,6 +268,14 @@ public:
     else
       throw ValueError(format("non-clampable prop does not have a max"));
   }
+
+  Ref<> get_step_python() const {
+    if (has_clamp<T>::value)
+      return try_to_python_ref(dynamic_cast<const PropClamp<T,true>*>(this)->step);
+    else
+      throw ValueError(format("non-clampable prop does not have a step"));
+  }
+
 
 #endif
 
