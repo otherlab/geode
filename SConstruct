@@ -139,13 +139,15 @@ options(env,
   ('cxx','C++ compiler','<detect>'),
   ('arch','Architecture (e.g. opteron, nocona, powerpc, native)','native'),
   ('type','Type of build (e.g. release, debug, profile)','release'),
+  #('type','Type of build (e.g. release, debug, profile)','debug'),
   ('default_arch','Architecture that doesn\'t need a suffix',''),
   ('cache','Cache directory to use',''),
   ('shared','Build shared libraries',1),
   ('shared_objects','Build shareable objects when without shared libraries',1),
   ('real','Primary floating point type (float or double)','double'),
   ('install_programs','install programs into source directories',1),
-  ('Werror','turn warnings into errors',1),
+  #('Werror','turn warnings into errors',1),
+  ('Werror','turn warnings into errors',0),
   ('Wconversion','warn about various conversion issues',0),
   ('hidden','make symbols invisible by default',0),
   ('openmp','use openmp',1),
@@ -305,6 +307,7 @@ else:
     if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
   elif env['type']=='debug': env.Append(CXXFLAGS=' -g',LINKFLAGS=' -g')
   env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
+  #env.Append(CXXFLAGS=' -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
 
 # Optionally warn about conversion issues
 if env['Wconversion']:
@@ -333,8 +336,10 @@ if env['Werror']:
   env.Append(CXXFLAGS=(' -Werror' if gnuc else ' /WX'))
 
 # Relax a few warnings for clang
-if clang:
+if clang or gnuc:
   env.Append(CXXFLAGS=' -Wno-array-bounds -Wno-unknown-pragmas -Wno-deprecated') # for Python and OpenMP, respectively
+  # Extra flags needed for OpenMesh
+  env.Append(CXXFLAGS=' -Wno-deprecated-declarations -Wno-unused-variable')
 
 # Decide whether to disable assertions (does not affect GEODE_ASSERT)
 if env['type']=='release' or env['type']=='profile' or env['type']=='optdebug':
