@@ -209,6 +209,7 @@ ValueBase& ValueBase::set_step_py(PyObject* s)      { prop().set_step_python(s);
 Ref<> ValueBase::get_default() const      { return prop().default_python(); }
 Ref<> ValueBase::get_min_py() const          { return prop().get_min_python(); }
 Ref<> ValueBase::get_max_py() const          { return prop().get_max_python(); }
+Ref<> ValueBase::get_step_py() const          { return prop().get_step_python(); }
 Ref<> ValueBase::get_allowed() const      { return prop().allowed_python(); }
 #endif
 
@@ -249,6 +250,7 @@ void wrap_value_base() {
     .GEODE_METHOD_2("get_min",get_min_py)
     .GEODE_METHOD_2("get_max",get_max_py)
     .GEODE_METHOD_2("set_step",set_step_py)
+    .GEODE_METHOD_2("get_step",get_step_py)
     ;
 
   GEODE_FUNCTION(value_test)

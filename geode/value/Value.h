@@ -114,6 +114,7 @@ private:
   ValueBase& set_max_py(PyObject* m);
   Ref<> get_min_py() const;
   Ref<> get_max_py() const;
+  Ref<> get_step_py() const;
   ValueBase& set_step_py(PyObject* s);
   Ref<> get_default() const;
   Ref<> get_allowed() const;

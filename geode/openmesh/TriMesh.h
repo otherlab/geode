@@ -171,6 +171,7 @@ GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexHandle)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexHandle)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceHandle)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceHandle)
+GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,HalfedgeHandle)
 
 }
 
@@ -372,6 +373,10 @@ public:
   // get all vertices in the one-ring
   GEODE_CORE_EXPORT vector<VertexHandle> vertex_one_ring(VertexHandle vh) const;
 
+
+  GEODE_CORE_EXPORT vector<HalfedgeHandle> outgoing_halfedges(VertexHandle vh) const;
+  GEODE_CORE_EXPORT vector<HalfedgeHandle> incoming_halfedges(VertexHandle vh) const;
+
   // check whether the quad around an edge is convex (and the edge can be flipped safely)
   GEODE_CORE_EXPORT bool quad_convex(EdgeHandle eh) const;
 
@@ -523,6 +528,8 @@ public:
   // this function will report a boundary for isolated vertices!
   GEODE_CORE_EXPORT bool has_boundary() const;
 
+  GEODE_CORE_EXPORT bool is_boundary_vertex(const VertexHandle&) const;
+
   // find boundary loops
   GEODE_CORE_EXPORT vector<vector<HalfedgeHandle> > boundary_loops() const;
 
@@ -561,11 +568,17 @@ public:
   // Warning: these construct new arrays or copy memory
   GEODE_CORE_EXPORT Array<Vector<int,3>> elements() const;
   GEODE_CORE_EXPORT Array<Vector<int,2>> segments() const;
+  GEODE_CORE_EXPORT Array<Vector<real,3>> verts() const;
+  GEODE_CORE_EXPORT Array<int> vert_ids() const;
   GEODE_CORE_EXPORT Array<Vector<real,3>> X_python() const;
   GEODE_CORE_EXPORT Field<Vector<Vector<real,2>,3>,FaceHandle> face_texcoords() const;
   GEODE_CORE_EXPORT void set_X_python(RawArray<const Vector<real,3>> new_X);
   GEODE_CORE_EXPORT void set_vertex_normals(RawArray<const Vector<real,3>> normals);
   GEODE_CORE_EXPORT void set_vertex_colors(RawArray<const Vector<real,3>> colors);
+
+  GEODE_CORE_EXPORT Vector<real,4> face_color(const FaceHandle& fh);
+  GEODE_CORE_EXPORT Vector<real,4> vertex_color(const VertexHandle& vh);
+  GEODE_CORE_EXPORT Vector<real,4> edge_color(const EdgeHandle& eh);
   GEODE_CORE_EXPORT void set_face_texcoords(RawField<const Vector<Vector<real,2>,3>,FaceHandle> texcoords);
 
   // Warning: reference goes invalid if the mesh is changed

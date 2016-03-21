@@ -55,6 +55,7 @@ GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,VertexHandle)
 GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,VertexHandle)
 GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,FaceHandle)
 GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,FaceHandle)
+GEODE_DEFINE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,HalfedgeHandle)
 
 TriMesh::TriMesh() {}
 
@@ -361,6 +362,23 @@ vector<VertexHandle> TriMesh::vertex_one_ring(VertexHandle vh) const {
   }
   return v;
 }
+
+vector<HalfedgeHandle> TriMesh::outgoing_halfedges(VertexHandle vh) const {
+  auto vr = vertex_one_ring(vh);
+  vector<HalfedgeHandle> h;
+  for( auto v : vr)
+    h.push_back(halfedge_handle(vh,v));
+  return h;
+}
+
+vector<HalfedgeHandle> TriMesh::incoming_halfedges(VertexHandle vh) const {
+  auto vr = vertex_one_ring(vh);
+  vector<HalfedgeHandle> h;
+  for( auto v : vr)
+    h.push_back(halfedge_handle(v,vh));
+  return h;
+}
+
 
 vector<FaceHandle> TriMesh::incident_faces(VertexHandle vh) const {
   vector<FaceHandle> fh;
@@ -1131,6 +1149,12 @@ bool TriMesh::has_boundary() const {
   return false;
 }
 
+
+bool TriMesh::is_boundary_vertex(const VertexHandle& vh) const {
+  return is_boundary(vh);
+}
+
+
 // find boundary loops
 vector<vector<TriMesh::HalfedgeHandle> > TriMesh::boundary_loops() const {
   unordered_set<HalfedgeHandle, Hasher> done;
@@ -1230,6 +1254,25 @@ Array<Vector<int,2> > TriMesh::segments() const {
   }
   return segs;
 }
+
+Array<Vector<real,3> > TriMesh::verts() const {
+  Array<Vector<real,3> > vs;
+  vs.preallocate(n_vertices());
+  for (auto vh : vertex_handles()) {
+    vs.append(point(vh));
+  }
+  return vs;
+}
+
+Array<int> TriMesh::vert_ids() const {
+  Array<int> vs;
+  vs.preallocate(n_vertices());
+  for (auto vh : vertex_handles()) {
+    vs.append(vh.idx());
+  }
+  return vs;
+}
+
 
 RawArray<const Vector<real,3> > TriMesh::X() const {
   return RawArray<const Vector<real,3> >(n_vertices(),points());
@@ -1762,6 +1805,22 @@ Ref<TriMesh> merge(vector<Ref<const TriMesh>> meshes) {
   return m;
 }
 
+//TODO: refactor these three
+Vector<real,4> TriMesh::face_color(const FaceHandle& fh){
+  auto vv = this->color(fh);
+  return Vector<real,4>(vv[0],vv[1],vv[2],vv[3])/255.;
+}
+
+Vector<real,4> TriMesh::vertex_color(const VertexHandle& vh){
+  auto vv = this->color(vh);
+  return Vector<real,4>(vv[0],vv[1],vv[2],vv[3])/255.;
+}
+
+Vector<real,4> TriMesh::edge_color(const EdgeHandle& eh){
+  auto vv = this->color(eh);
+  return Vector<real,4>(vv[0],vv[1],vv[2],vv[3])/255.;
+}
+
 }
 
 // Reduce template bloat
@@ -1789,6 +1848,8 @@ void wrap_trimesh() {
 
   typedef Vector<TriMesh::VertexHandle, 3> (TriMesh::*Vvh3_Method_fh)(TriMesh::FaceHandle ) const;
   typedef Vector<TriMesh::VertexHandle, 2> (TriMesh::*Vvh2_Method_eh)(TriMesh::EdgeHandle ) const;
+
+  typedef Vector<TriMesh::HalfedgeHandle, 3> (TriMesh::*Vhe3_Method_fh)(TriMesh::FaceHandle ) const;
 
   typedef void (TriMesh::*v_Method_str)(string const &);
   typedef void (TriMesh::*v_CMethod_str)(string const &) const;
@@ -1820,14 +1881,20 @@ void wrap_trimesh() {
     .GEODE_METHOD(mean_edge_length)
     .GEODE_OVERLOADED_METHOD_2(Vvh3_Method_fh, "face_vertex_handles", vertex_handles)
     .GEODE_OVERLOADED_METHOD_2(Vvh2_Method_eh, "edge_vertex_handles", vertex_handles)
+    .GEODE_OVERLOADED_METHOD_2(Vhe3_Method_fh, "face_halfedge_handles", halfedge_handles)
     .GEODE_METHOD(incident_faces)
     .GEODE_METHOD(vertex_one_ring)
+    .GEODE_METHOD(outgoing_halfedges)
+    .GEODE_METHOD(incoming_halfedges)
     .GEODE_METHOD(smooth_normal)
     .GEODE_METHOD(add_cylinder)
     .GEODE_METHOD(add_sphere)
     .GEODE_METHOD(add_box)
     .GEODE_METHOD(vertex_shortest_path)
     .GEODE_METHOD(elements)
+    .GEODE_METHOD(segments)
+    .GEODE_METHOD(verts)
+    .GEODE_METHOD(vert_ids)
     .GEODE_METHOD(invert)
     .GEODE_METHOD(to_vertex_handle)
     .GEODE_METHOD(from_vertex_handle)
@@ -1839,6 +1906,8 @@ void wrap_trimesh() {
     .GEODE_METHOD(set_vertex_colors)
     .GEODE_METHOD(face_texcoords)
     .GEODE_METHOD(set_face_texcoords)
+    .GEODE_METHOD(has_vertex_texcoords2D)
+    .GEODE_METHOD(has_halfedge_texcoords2D)
     .GEODE_METHOD(component_meshes)
     .GEODE_METHOD(largest_connected_component)
     .GEODE_METHOD(request_vertex_normals)
@@ -1848,8 +1917,18 @@ void wrap_trimesh() {
     .GEODE_METHOD(update_normals)
     .GEODE_METHOD(request_face_colors)
     .GEODE_METHOD(request_vertex_colors)
+    .GEODE_METHOD(has_face_normals)
+    .GEODE_METHOD(has_vertex_normals)
+    .GEODE_METHOD(has_vertex_colors)
+    .GEODE_METHOD(has_face_colors)
+    .GEODE_METHOD(has_edge_colors)
+    .GEODE_METHOD(face_color)
+    .GEODE_METHOD(vertex_color)
+    .GEODE_METHOD(edge_color)
     .GEODE_METHOD_2("request_face_texcoords",request_halfedge_texcoords2D)
     .GEODE_METHOD(request_halfedge_texcoords2D)
+    .GEODE_OVERLOADED_METHOD_2(const Self::TexCoord2D& (Self::*)(VertexHandle)const, "vertex_texcoord2D", texcoord2D)
+    .GEODE_OVERLOADED_METHOD_2(const Self::TexCoord2D& (Self::*)(HalfedgeHandle)const, "halfedge_texcoord2D", texcoord2D)
     .GEODE_OVERLOADED_METHOD(real(Self::*)()const,volume)
     .GEODE_OVERLOADED_METHOD(real(Self::*)()const,area)
     .GEODE_OVERLOADED_METHOD_2(v_Method_r_vec3, "scale", scale)
@@ -1866,9 +1945,13 @@ void wrap_trimesh() {
     .GEODE_OVERLOADED_METHOD(OTriMesh::Point const &(Self::*)(VertexHandle)const, point)
     .GEODE_OVERLOADED_METHOD(Segment3 (Self::*)(HalfedgeHandle)const, segment)
     .GEODE_OVERLOADED_METHOD(bool (Self::*)(HalfedgeHandle)const, is_boundary)
+    .GEODE_OVERLOADED_METHOD(bool (Self::*)(const VertexHandle&)const, is_boundary_vertex)
     .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(HalfedgeHandle)const, opposite_halfedge_handle)
+    .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(HalfedgeHandle)const, next_halfedge_handle)
+    .GEODE_OVERLOADED_METHOD(HalfedgeHandle (Self::*)(HalfedgeHandle)const, prev_halfedge_handle)
     .GEODE_OVERLOADED_METHOD_2(OTriMesh::Point (Self::*)(FaceHandle,Vector<real,3>const&)const, "interpolated_point", point)
     .GEODE_OVERLOADED_METHOD(Self::Normal (Self::*)(FaceHandle)const, normal)
+    .GEODE_OVERLOADED_METHOD_2(Self::Normal (Self::*)(VertexHandle)const, "vertex_normal",normal)
     .GEODE_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
     .GEODE_OVERLOADED_METHOD_2(Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
     ;
