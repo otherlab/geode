@@ -6,8 +6,8 @@ def is_windows():
 
 # Import geode_wrap, possibly as geode_all on windows
 if is_windows():
-  from . import geode_all as geode_wrap
-  from .geode_all import *
+  import geode_all as geode_wrap
+  from geode_all import *
 else:
   from . import geode_wrap
   from .geode_wrap import *
@@ -24,4 +24,5 @@ from .geometry import *
 from .value import *
 from .vector import *
 from .mesh import *
+from .tubes import *
 real = geode_wrap.real

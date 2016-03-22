@@ -5,8 +5,8 @@ import platform
 from geode.array import *
 from geode.mesh import merge_meshes, meshify
 if platform.system()=='Windows':
-  from ..geode_all import *
-  from .. import geode_all as geode_wrap
+  from geode_all import *
+  import geode_all as geode_wrap
 else:
   from .. import geode_wrap
   from ..geode_wrap import *

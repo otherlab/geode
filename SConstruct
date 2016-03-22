@@ -306,7 +306,10 @@ else:
       env.Append(LINKFLAGS=' -dead_strip')
     if env['type']=='profile': env.Append(CXXFLAGS=' -pg',LINKFLAGS=' -pg')
   elif env['type']=='debug': env.Append(CXXFLAGS=' -g',LINKFLAGS=' -g')
-  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
+  # boost spirit has mixed comparisons so we can't have -Wsign-compare
+  # Note: -Wno-#pragma-messages isn't recognized by g++ on Windows.
+  # On Mac it's helpful for boost::spirit as well.
+  env.Append(CXXFLAGS=' -Wall -Winit-self -Woverloaded-virtual -fno-strict-aliasing') # -Wstrict-aliasing=2
   #env.Append(CXXFLAGS=' -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing') # -Wstrict-aliasing=2
 
 # Optionally warn about conversion issues

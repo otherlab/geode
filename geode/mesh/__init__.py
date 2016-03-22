@@ -8,7 +8,7 @@ import platform
 # this is getting seriously ugly, but we do need to be able to test isinstance on
 # these somehow.
 if platform.system()=='Windows':
-  from geode.geode_all import TriangleTopology as CTriangleTopology
+  from geode_all import TriangleTopology as CTriangleTopology
 else:
   from geode.geode_wrap import TriangleTopology as CTriangleTopology
 

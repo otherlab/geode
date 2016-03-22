@@ -8,9 +8,9 @@ import types
 import os
 
 if platform.system()=='Windows':
-  from ..geode_all import resource_py,cache
+  from geode_all import resource_py,cache
 else:
-  from ..geode_wrap import resource_py,cache
+  from geode_wrap import resource_py,cache
 
 def curry(f,*a,**k):
   def g(*a2,**k2):
