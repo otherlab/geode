@@ -13,19 +13,16 @@ echo Architecture is set to $ARCH
 if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   declare -a args=()
   SYSTEM_NAME=`uname -s`
+  args+=(sse=0)
+  args+=(arch=$ARCH)
   if [ "$SYSTEM_NAME" = "Darwin" ]; then
     # OSX specific config:
-    # These were previously needed, but maybe aren't any more?:
-    # args+=(cxxflags_extra='-std=c++11 -stdlib=libc++' linkflags_extra='-stdlib=libc++')
-    args+=(sse=0)
-    #args+=(cxxflags_extra='-msse4.1')
     args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
-    args+=(arch=$ARCH)
     echo "" # Can't have an empty if block
   elif echo "$SYSTEM_NAME" | grep -q "MINGW64_NT"; then
     # Windows specific config:
     args+=(libs_extra=psapi)
-    args+=(use_openmesh=1 Werror=0 arch=corei7 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=1 Werror=0 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
   elif echo "$SYSTEM_NAME" | grep -q "MSYS"; then
     echo "ERROR: the MSYS shell is not supported. Please use the MinGW-w64 Win64 Shell instead."
     exit 1
