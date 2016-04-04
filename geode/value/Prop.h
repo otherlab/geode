@@ -45,6 +45,7 @@ public:
   virtual Ref<> get_min_python() const = 0;
   virtual Ref<> get_max_python() const = 0;
   virtual Ref<> get_step_python() const = 0;
+  virtual Ref<> peek_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual Ref<> allowed_python() const = 0;
   virtual void set_min_python(PyObject* v) = 0;
@@ -253,6 +254,10 @@ public:
 
   Ref<> default_python() const {
     return try_to_python_ref(default_);
+  }
+
+  Ref<> peek_python() const {
+    return try_to_python_ref(peek());
   }
 
   Ref<> get_min_python() const {
