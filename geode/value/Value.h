@@ -118,6 +118,7 @@ private:
   ValueBase& set_step_py(PyObject* s);
   Ref<> get_default() const;
   Ref<> get_allowed() const;
+  Ref<> peek_py() const;
 #endif
 };
 
