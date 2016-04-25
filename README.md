@@ -1,7 +1,6 @@
 Geode: The Otherlab computational geometry library
 ==================================================
 
-
 Geode is an open source library of computational geometry and associated mathematical utilities
 together with a fast, lightweight python binding layer.  The license is standard three-clause BSD
 (see the included `LICENSE` file or [LICENSE](https://github.com/otherlab/core/blob/master/LICENSE)).
