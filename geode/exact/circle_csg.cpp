@@ -9,6 +9,7 @@
 #include <geode/exact/circle_quantization.h>
 #include <geode/exact/scope.h>
 #include <geode/exact/Exact.h>
+#include <geode/exact/find_overlapping_offsets.h>
 #include <geode/exact/math.h>
 #include <geode/exact/perturb.h>
 #include <geode/exact/PlanarArcGraph.h>
@@ -395,6 +396,7 @@ void wrap_circle_csg() {
   GEODE_FUNCTION(offset_arcs)
   GEODE_FUNCTION(offset_open_arcs)
   GEODE_FUNCTION(offset_shells)
+  GEODE_FUNCTION(find_overlapping_offsets)
 #ifdef GEODE_PYTHON
   GEODE_FUNCTION(_set_circle_arc_dtypes)
   GEODE_FUNCTION(circle_arc_quantize_test)
