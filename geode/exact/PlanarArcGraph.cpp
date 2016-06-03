@@ -718,8 +718,8 @@ template<Pb PS> static Field<IncidentId, EdgeId> init_topology_and_windings(Half
   assert(topology.n_vertices() == 0 && topology.n_edges() == 0);
   assert(edge_windings.empty());
   assert(ccw_next_edges.empty());
-  // We could use incident_order
-  auto incident_values = Field<int, IncidentId>(verts.n_incidents()); // Winding of edge between iid, and ccw_next[iid]
+  auto incident_values = Field<int, IncidentId>(verts.n_incidents()); // Winding of edge between iid and ccw_next[iid]
+  auto incident_active = Field<bool, IncidentId>(verts.n_incidents()); // True if there should be an edge (possibly with zero weight) between iid and ccw_next[iid]
   for(const auto c : contours) {
     for(const SignedArcInfo sa : c) {
       const UnsignedArcInfo ua = verts.ccw_arc(sa);
@@ -727,6 +727,7 @@ template<Pb PS> static Field<IncidentId, EdgeId> init_topology_and_windings(Half
       auto ic = incident_order.circulator(cid, ua.src);
       do {
         incident_values[*ic] += sign(sa.direction());
+        incident_active[*ic] = true;
         ++ic;
       } while(*ic != ua.dst);
     }
@@ -736,8 +737,14 @@ template<Pb PS> static Field<IncidentId, EdgeId> init_topology_and_windings(Half
 
   Field<IncidentId, EdgeId> edge_srcs;
   for(const IncidentId src_iid : verts.incident_ids()) {
-    if(incident_values[src_iid] == 0)
+    if(!incident_active[src_iid]) {
+      assert(incident_values[src_iid] == 0); // If incident value was touched, should have also marked active
       continue;
+    }
+    // Note: This used to skip creation of zero weight edges since they aren't important when only looking at winding numbers (which is most of the time)
+    //   However, preserving zero weight edges is important if caller wants to later query the fate of input contours
+    //   My intuition is that even with lots of degenerate inputs, the overhead of maintaining the zero weight edges will be a small fraction of total time/memory
+    //   For now, we always preserve zero weight edges since letting caller control this seems messy and error prone
     edge_windings.append(incident_values[src_iid]);
     const EdgeId eid = edge_srcs.append(src_iid);
     assert(edge_windings.size() == edge_srcs.size());
