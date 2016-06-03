@@ -123,9 +123,8 @@ static Field<bool, FaceId> find_overlapping_components(const HalfedgeGraph& grap
 
       assert(num_child_crossings.flat.contains_only(0));
       assert(crossing_tree.size() == graph.n_faces());
-      assert(crossing_tree.total_size() == (graph.n_faces() - 1));
-
-      traverse_crossing_tree(boundary_face);
+      if(graph.valid(boundary_face))
+        traverse_crossing_tree(boundary_face);
     }
 
     void update_depths(const HalfedgeId crossed_edge) {

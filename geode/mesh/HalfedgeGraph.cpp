@@ -518,8 +518,9 @@ std::ostream& operator<<(std::ostream& os, const HalfedgeGraph& g) {
 
 Field<CrossingInfo, FaceId> get_crossing_depths(const HalfedgeGraph& g, const FaceId boundary_face) {
   assert(g.has_all_border_data());
-  auto info = Field<CrossingInfo, FaceId>(g.n_faces());
-
+  auto info = Field<CrossingInfo, FaceId>{g.n_faces()};
+  if(info.empty())
+    return info; // Avoid issues that arise if g is empty
   std::deque<FaceId> queue;
 
   queue.emplace_front(boundary_face);
