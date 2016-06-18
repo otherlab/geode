@@ -108,7 +108,7 @@ options(env,
   ('prefix_lib','Override path to install libraries','$prefix/lib'),
   ('prefix_bin','Override path to install binaries','$prefix/bin'),
   ('prefix_share','Override path to install resources','$prefix/share'),
-  ('boost_lib_suffix','Suffix to add to each boost library','-mt'),
+  ('boost_lib_suffix','Suffix to add to each boost library',''),
   ('python','Python executable','python'),
   ('mpicc','MPI wrapper compiler (used only to extract flags)','<detect>'),
   ('qtdir','Top level Qt dir (autodetect by default)',''))
