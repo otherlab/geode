@@ -509,7 +509,9 @@ template<> ExactCircle<Pb::Implicit>::ExactCircle(const Vector<Quantized,2> cent
  : ExactCirclePerturbationHelper<Pb::Implicit>()
  , center(center)
  , radius(radius)
-{ }
+{
+  assert(exact::is_quantized(center) && exact::is_quantized(radius));
+}
 
 template<> ExactCircle<Pb::Explicit>::ExactCircle(const Vector<Quantized,2> center, const Quantized radius, const int index)
  : ExactCirclePerturbationHelper<Pb::Explicit>(index)
