@@ -123,6 +123,14 @@ public:
     min+=r;max+=r;return *this;
   }
 
+  Box<TV> operator+(const TV& r) const {
+    return Box<TV>(min+r,max+r);
+  }
+
+  Box<TV> operator-(const TV& r) const {
+    return Box<TV>(min-r,max-r);
+  }
+
   Box<TV> operator+(const Box<TV>& r) const {
     return Box<TV>(min+r.min,max+r.max);
   }
