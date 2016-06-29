@@ -36,6 +36,16 @@ enum class Perturbation { Explicit, Implicit };
 
 namespace exact {
 
+#ifdef NDEBUG
+#else
+// Check that values are correctly quantized
+// ImplicitlyPerturbed doesn't allow negative zero so that values can be hashed byte by byte
+static inline bool is_quantized(Quantized x) { return static_cast<ExactInt>(x) == x && ((x != 0.) || !std::signbit(x)); }
+static inline bool is_quantized(Vector<Quantized, 1> v) { return is_quantized(v.x); }
+static inline bool is_quantized(Vector<Quantized, 2> v) { return is_quantized(v.x) && is_quantized(v.y); }
+static inline bool is_quantized(Vector<Quantized, 3> v) { return is_quantized(v.x) && is_quantized(v.y) && is_quantized(v.z); }
+#endif
+
 // Like CGAL, GMP assumes that the C++11 standard library exists whenever C++11 does.  This is false for clang.
 #define __GMPXX_USE_CXX11 0
 
@@ -60,7 +70,7 @@ template<int d> struct ImplicitlyPerturbed {
   typedef Vector<Quantized, d> ValueType;
   static const int m = ValueType::m;
   ValueType value_;
-  ValueType seed() const { return value_; }
+  ValueType seed() const { assert(is_quantized(value_)); return value_; }
   ValueType value() const { return value_; }
 
   template<class... Args> explicit ImplicitlyPerturbed(const Args... value_args) : value_(value_args...) {}
@@ -71,7 +81,7 @@ struct ImplicitlyPerturbedCenter {
   typedef Vector<Quantized, 2> ValueType;
   static constexpr auto m = ValueType::m;
   Vector<Quantized, 3> data;
-  Vector<Quantized, 3> seed() const { return data; }
+  Vector<Quantized, 3> seed() const { assert(is_quantized(data)); return data; }
   Vector<Quantized, 2> value() const { return data.xy(); }
 
   template<class... Args> explicit ImplicitlyPerturbedCenter(const Args... value_args) : data(value_args...) {}

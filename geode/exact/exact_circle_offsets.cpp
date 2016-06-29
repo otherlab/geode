@@ -19,12 +19,17 @@ Quantized quantize_offset(const Quantizer<Quantized,2>& quant, const real d) {
 
 #ifdef NDEBUG
 #else
-// For asserts to check that a value is actually quantized rather than some non-integer value
-static bool is_quantized(const Quantized x) { return ExactInt(x) == x; }
-static bool is_quantized(const exact::Vec2 v) { return is_quantized(v.x) && is_quantized(v.y); }
+using exact::is_quantized;
 #endif
 
-static Vec2 round(const Vec2 x) { return vec(std::round(x.x),std::round(x.y)); }
+// As std::round, but rounds -0. to 0.
+static Quantized exact_round(const double x) {
+  auto result = std::round(x);
+  if(result == 0.) result = std::fabs(0.);
+  return result;
+}
+
+static Vec2 exact_round(const Vec2 x) { return vec(exact_round(x.x),exact_round(x.y)); }
 
 static void add_capsule_helper(ArcAccumulator<Pb::Implicit>& result, const ExactCircle<Pb::Implicit> c, const exact::Vec2 x0, const exact::Vec2 x1, const bool left_flags_safe, const bool prefer_full_circle, const Quantized signed_offset) {
   static constexpr Pb PS = Pb::Implicit;
@@ -53,7 +58,7 @@ static void add_capsule_helper(ArcAccumulator<Pb::Implicit>& result, const Exact
     }
     else {
       // Use midpoint of vertices to minimize largest error
-      const auto new_center = round(0.5*(x0 + x1));
+      const auto new_center = exact_round(0.5*(x0 + x1));
       const Quantized endcap_r = abs_offset + 2*endcap_safety_margin;
       result.add_full_circle(ExactCircle<PS>(new_center, endcap_r), capsule_sign); // Approximate as a single circle
     }

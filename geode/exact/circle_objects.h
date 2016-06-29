@@ -325,7 +325,13 @@ template<Pb PS> inline bool left_of_center(const IncidentHorizontal<PS>& i) { re
 template<Pb PS> inline bool operator<(const HorizontalIntersection<PS>& lhs, const HorizontalIntersection<PS>& rhs) {
   return !(lhs == rhs) && intersections_rightwards(lhs, rhs); // We have to check for equality since std::sort will sometimes compare elements with themselves
 }
-template<> inline Hash hash_reduce(const ExactCircle<Pb::Implicit>& c) { return Hash(c.center,c.radius); }
+template<> inline Hash hash_reduce(const ExactCircle<Pb::Implicit>& c) {
+  // If we end up with a negative zero in c.center, it won't hash to the same value as positive zero
+  // This could cause two circles that compare equal to have different hashes
+  assert(c.center.x != 0. || !std::signbit(c.center.x));
+  assert(c.center.y != 0. || !std::signbit(c.center.y));
+  return Hash(c.center,c.radius);
+}
 template<> inline Hash hash_reduce(const ExactCircle<Pb::Explicit>& c) { return Hash(c.index); }
 template<Pb PS> inline Hash hash_reduce(const CircleIntersectionKey<PS>& k) { return Hash(k.cl,k.cr); }
 
