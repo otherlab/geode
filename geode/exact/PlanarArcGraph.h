@@ -63,6 +63,7 @@ struct RawArcContour {
     SignedArcHead const* i;
     inline SignedArcInfo operator*() const { return { i->iid, to_vid((i+1)->iid), i->direction }; }
     void operator++() { ++i; }
+    void operator--() { --i; }
     bool operator!=(const ArcIterator& rhs) const { return i != rhs.i; }
   };
   int n_arcs() const { return heads.size() - 1; }
