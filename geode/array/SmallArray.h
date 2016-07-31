@@ -90,6 +90,10 @@ public:
     return m_-1;
   }
 
+  template<class TArray> void extend(const TArray& array) GEODE_ALWAYS_INLINE {
+    for(const auto& e : array) append(e);
+  }
+
   T& pop() {
     assert(m_);
     return data()[--m_];
