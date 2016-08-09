@@ -143,7 +143,9 @@ template<Pb PS> static HalfedgeId find_incident_edge(const PlanarArcGraph<PS>& g
 template<Pb PS> static ExactHorizontal<PS> select_horizontal(const ExactArc<PS>& arc) {
   const auto arc_bounds = bounding_box(arc);
   const auto safe_y = Box<Quantized>(arc.circle.center.y).thickened(arc.circle.radius - 1); // This range will always have a non-degenerate intersection with arc.circle
-  return ExactHorizontal<PS>(safe_y.clamp(std::round(arc_bounds.vertical_box().center().x)));
+  const auto clamped_center = safe_y.clamp(std::round(arc_bounds.vertical_box().center().x));
+  // We need to ensure we quantize as 0. instead of -0. so that value can be safely hashed
+  return ExactHorizontal<PS>((clamped_center == -0.) ? 0. : clamped_center);
 }
 template<Pb PS> static Tuple<IncidentHorizontal<PS>,ArcDirection> closest_intersection(const ExactArc<PS>& a, const Vector<IncidentHorizontal<PS>,2>& hits) {
   for(const auto& h : hits) {
