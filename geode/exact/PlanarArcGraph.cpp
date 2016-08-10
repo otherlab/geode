@@ -510,7 +510,7 @@ struct AlwaysOneSequence {
   {
     constexpr One operator*() const { return One{}; }
     constexpr Iter operator++() const { return *this; }
-    inline friend constexpr bool operator!=(const Iter, const End) { return true; }
+    GEODE_UNUSED inline friend constexpr bool operator!=(const Iter, const End) { return true; }
   };
   constexpr Iter begin() const { return Iter{}; }
   constexpr End end() const { return End{}; }
