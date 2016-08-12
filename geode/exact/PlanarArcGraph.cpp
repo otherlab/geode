@@ -1028,6 +1028,18 @@ template<Pb PS> static Vector<CircleArc, 2> unquantize_circle(const Quantizer<re
   return vec(CircleArc(rhs, q), CircleArc(lhs, q));
 }
 
+// Given two points and a circle, select a q value for an ArcSegment between them
+// This function is specifically intended to handle noise in x0 and x1, but they should at least be approximately on the circle
+// Result will be for the smaller positive arc (0 < q <= 1. before rounding noise)
+template<Pb PS> static real fit_arc_q_to_circle(const Vec2 x0, const Vec2 x1, const ExactCircle<PS>& circle) {
+  const auto l = min(circle.radius, 0.5*(x1 - x0).magnitude());
+  const auto m = 0.5*(x0+x1); // Compute the midpoint of the chord from x0 to x1
+  const auto h = min(circle.radius, (circle.center - m).magnitude()); // Height from chord to center of circle (clamped in case noise moved m outside of circle)
+  const auto q =  l / (circle.radius+h);
+  assert(q <= 1.); // Result never be nan and should be less than or equal to 1
+  return q;
+}
+
 template<Pb PS> Nested<CircleArc> VertexSet<PS>::unquantize_circle_arcs(const Quantizer<real,2>& quant, const ArcContours& contours) const {
   Nested<CircleArc, false> result;
   for(const auto contour : contours) {
@@ -1049,8 +1061,55 @@ template<Pb PS> Nested<CircleArc> VertexSet<PS>::unquantize_circle_arcs(const Qu
       else {
         can_cull = true;
         const auto unsigned_arc = this->arc(ccw_arc(sa));
-        const auto x0 = quant.inverse(incident(sa.head()).approx.guess());
-        result.append_to_back(CircleArc(x0, sign(sa.direction()) * unsigned_arc.q()));
+        const auto unsigned_q = unsigned_arc.q();
+        // Accuracy of CircleArc representation starts to degrade as abs(q) gets larger than 1 (over 180 degrees)
+        // As endpoints get closer together, q goes to infinity and it becomes impossible to construct midpoint of arc
+        // In practice, this only seems to be a problem when arcs are nearly full circles so we only split when q is significantly larger than 1
+        // Using a larger threshold also avoids odd looking output that can occur if we split arcs that are only slightly above 180 degrees
+        if(unsigned_q > 3.) {
+          // We will split this arc into two smaller arcs
+          // To do so, we need to construct a point on the arc at or near the midpoint
+
+          // Pull members into local scope
+          const auto& circle = unsigned_arc.circle; // This is the arc the circle travels along
+          const auto& src = unsigned_arc.src;
+          const auto& dst = unsigned_arc.dst;
+          const auto x0 = src.approx.guess();
+          const auto x1 = dst.approx.guess();
+
+          // We could use direction from midpoint of chord to center of circle, but this will be unstable when arc is close to 180 degrees
+          // We could also use perpendicular of direction between endpoints, but this is unstable when they are close together
+          // Select whichever option has the highest magnitude
+          auto radial0 = 0.5*(x0 + x1) - circle.center; // Center of circle to midpoint of chord
+          auto radial1 = rotate_left_90(x1 - x0); // Perpendicular of chord
+          // Compare magnitude and normalize at the same time
+          const auto radial_dir = (radial0.normalize() < radial1.normalize()) ? radial1 : radial0;
+
+          // Reflect direction across center of circle to get a midpoint
+          const auto xs = circle.center - circle.radius*radial_dir;
+
+          // Note: For very small circles, approximation of x0 and x1 makes radial_dir essentially random
+          //  This should only happen for circles where radius is close to the endpoint error in which case the arcs to/from xs will also be small and we shouldn't cause anything worse than if we weren't splitting the arc
+          const auto q0 = fit_arc_q_to_circle(x0, xs, circle);
+          const auto q1 = fit_arc_q_to_circle(xs, x1, circle);
+
+          // q0 and q1 should be the same or at least very close if we correctly computed the midpoint
+          // This might be triggered in some cases when circle.radius is very small, but I haven't found a test case yet
+          assert(abs(q0-q1) < 1e-3);
+
+          if(sa.direction() == ArcDirection::CCW) {
+            result.append_to_back(CircleArc(quant.inverse(x0), q0));
+            result.append_to_back(CircleArc(quant.inverse(xs), q1));
+          }
+          else {
+            result.append_to_back(CircleArc(quant.inverse(x1), -q1));
+            result.append_to_back(CircleArc(quant.inverse(xs), -q0));
+          }
+        }
+        else {
+          const auto x0 = quant.inverse(incident(sa.head()).approx.guess());
+          result.append_to_back(CircleArc(x0, sign(sa.direction()) * unsigned_q));
+        }
       }
     }
 
