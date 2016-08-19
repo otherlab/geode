@@ -719,6 +719,19 @@ template<Pb PS> EdgeId PlanarArcGraph<PS>::outgoing_edge(const IncidentId src) c
   return EdgeId();
 }
 
+template<Pb PS> HalfedgeId PlanarArcGraph<PS>::halfedge(const SignedArcHead head) const {
+  const auto edge_src = (head.direction == ArcDirection::CCW) ? head.iid
+                                                              : incident_order.ccw_prev(vertices.reference_cid(head.iid), head.iid);
+  const auto edge_id = outgoing_edges[edge_src];
+  if(!edge_id.valid())
+    return HalfedgeId{};
+
+  const HalfedgeId result = directed_edge(edge_id, head.direction);
+  assert(topology->src(result) == to_vid(head.iid));
+  assert(circle_id(result) == vertices.reference_cid(head.iid));
+  return result;
+}
+
 namespace { template<Pb PS> struct CompareIncId {
   const VertexSet<PS>& verts; const ExactCircle<PS> c;
   bool operator()(const IncidentId iid0, const IncidentId iid1) const {

@@ -337,6 +337,9 @@ public:
   // Find edge such that starts at or contains src. If no such edge exists, returns an invalid id
   EdgeId outgoing_edge(const IncidentId src) const;
 
+  // Find halfedge that starts at head and extends along the same circle in the same direction. If no such halfedge exists, returns an invalid id
+  HalfedgeId halfedge(const SignedArcHead head) const;
+
   // Find incident such that vertices.arc(*result, result.next()).half_open_contains(i)
   IncidentCirculator find_prev(const CircleId cid, const IncidentCircle<PS>& i) const;
   // Find incident such that vertices.arc(*result, result.next()).contains_horizontal(i)
