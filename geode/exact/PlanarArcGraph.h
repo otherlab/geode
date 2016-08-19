@@ -198,6 +198,7 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
 
   // Converts exact contours (which currently must be closed although open contours should be handled in the future) into CircleArcs
   // This function attempts to cull artifacts introduced by quantization, but will also simplify nearly degenerate arcs or contours
+  void unquantize_circle_arcs(const Quantizer<real,2>& quant, const RawArcContour& contour, Nested<CircleArc, false>& result) const;
   Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2>& quant, const ArcContours& contours) const;
 
   // This combines arcs that continue along the same circle into a single arc wherever possible
