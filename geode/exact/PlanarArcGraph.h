@@ -159,8 +159,10 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
   Field<CircleId, IncidentId> iid_to_cid;
   Hashtable<Vector<CircleId,2>,VertexId> vid_cache; // Used to avoid duplicates of the same intersection
  public:
+  using VertexField<PS>::approx;
   using VertexField<PS>::reference;
   using VertexField<PS>::incident;
+  using VertexField<PS>::arc;
   using CircleSet<PS>::get_or_insert;
   using CircleSet<PS>::find_cid;
 
@@ -405,6 +407,10 @@ template<Pb PS> Field<bool, FaceId> odd_faces(const PlanarArcGraph<PS>& g);
 template<Pb PS> Ref<PlanarArcGraph<PS>> quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> arcs);
 // As above, but computes and returns an appropriate quantizer
 template<Pb PS> Tuple<Quantizer<real,2>, Ref<PlanarArcGraph<PS>>> quantize_circle_arcs(const Nested<const CircleArc> arcs);
+
+// Convert from ExactArc to CircleArc, will split into multiple CircleArcs if needed
+// Endpoints will not be included so a chain of connected ExactArcs can be converted to a chain of CircleArcs by concatenating results from this function
+template<Pb PS> SmallArray<CircleArc, 2> unquantize_arc(const Quantizer<real,2>& quant, const ExactArc<PS>& unsigned_arc, const ArcDirection direction);
 
 ////////////////////////////////////////////////////////////////////////////////
 

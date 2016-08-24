@@ -1053,86 +1053,91 @@ template<Pb PS> static real fit_arc_q_to_circle(const Vec2 x0, const Vec2 x1, co
   return q;
 }
 
-template<Pb PS> void VertexSet<PS>::unquantize_circle_arcs(const Quantizer<real,2>& quant, const RawArcContour& contour, Nested<CircleArc, false>& result) const {
-  assert(contour.is_closed());
-  const int n = contour.n_arcs();
-  if(n == 1) {
-    const auto a = *(contour.begin());
-    result.append(unquantize_circle(quant, this->circle(reference_cid(a.head())), a.direction()));
-    return;
+template<Pb PS> SmallArray<CircleArc, 2> unquantize_arc(const Quantizer<real,2>& quant, const ExactArc<PS>& unsigned_arc, const ArcDirection direction) {
+  SmallArray<CircleArc, 2> result;
+  const auto unsigned_q = unsigned_arc.is_full_circle() ? std::numeric_limits<real>::infinity() : unsigned_arc.q();
+
+  // Accuracy of CircleArc representation starts to degrade as abs(q) gets larger than 1 (over 180 degrees)
+  // As endpoints get closer together, q goes to infinity and it becomes impossible to construct midpoint of arc
+  // In practice, this only seems to be a problem when arcs are nearly full circles so we only split when q is significantly larger than 1
+  // Using a larger threshold also avoids odd looking output that can occur if we split arcs that are only slightly above 180 degrees
+  if(unsigned_q > 3.) {
+    // Pull members into local scope
+    const auto& circle = unsigned_arc.circle; // This is the arc the circle travels along
+    const auto& src = unsigned_arc.src;
+    const auto& dst = unsigned_arc.dst;
+    const auto x0 = src.approx.guess();
+    const auto x1 = dst.approx.guess();
+
+    // We could use direction from midpoint of chord to center of circle, but this will be unstable when arc is close to 180 degrees
+    // We could also use perpendicular of direction between endpoints, but this is unstable when they are close together
+    // Select whichever option has the highest magnitude
+    auto radial0 = 0.5*(x0 + x1) - circle.center; // Center of circle to midpoint of chord
+    auto radial1 = rotate_left_90(x1 - x0); // Perpendicular of chord
+    // Compare magnitude and normalize at the same time
+    const auto radial_dir = (radial0.normalize() < radial1.normalize()) ? radial1 : radial0;
+
+    // Reflect direction across center of circle to get a midpoint
+    const auto xs = circle.center - circle.radius*radial_dir;
+
+    // Note: For very small circles, approximation of x0 and x1 makes radial_dir essentially random
+    //  This should only happen for circles where radius is close to the endpoint error in which case the arcs to/from xs will also be small and we shouldn't cause anything worse than if we weren't splitting the arc
+    const auto q0 = fit_arc_q_to_circle(x0, xs, circle);
+    const auto q1 = fit_arc_q_to_circle(xs, x1, circle);
+
+    // q0 and q1 should be the same or at least very close if we correctly computed the midpoint
+    // This might be triggered in some cases when circle.radius is very small, but I haven't found a test case yet
+    assert(abs(q0-q1) < 1e-3);
+
+    if(direction == ArcDirection::CCW) {
+      result.append(CircleArc{quant.inverse(x0), q0});
+      result.append(CircleArc{quant.inverse(xs), q1});
+    }
+    else {
+      result.append(CircleArc{quant.inverse(x1), -q1});
+      result.append(CircleArc{quant.inverse(xs), -q0});
+    }
   }
+  else {
+    const auto x0 = quant.inverse((direction == ArcDirection::CCW ? unsigned_arc.src : unsigned_arc.dst).approx.guess());
+    result.append(CircleArc{x0, sign(direction) * unsigned_q});
+  }
+  return result;
+}
+
+template<Pb PS> void VertexSet<PS>::unquantize_circle_arcs(const Quantizer<real,2>& quant, const RawArcContour& contour, Nested<CircleArc, false>& result) const {
+  const int n = contour.n_arcs();
+
   result.append_empty();
   bool can_cull = (n >= 3);
-
   for(const SignedArcInfo sa : contour) {
-    assert(!sa.is_full_circle());
     if(can_cull && reference(sa.head()).radius == helper_circle_radius()) {
       can_cull = false;
     }
     else {
       can_cull = true;
-      const auto unsigned_arc = this->arc(ccw_arc(sa));
-      const auto unsigned_q = unsigned_arc.q();
-      // Accuracy of CircleArc representation starts to degrade as abs(q) gets larger than 1 (over 180 degrees)
-      // As endpoints get closer together, q goes to infinity and it becomes impossible to construct midpoint of arc
-      // In practice, this only seems to be a problem when arcs are nearly full circles so we only split when q is significantly larger than 1
-      // Using a larger threshold also avoids odd looking output that can occur if we split arcs that are only slightly above 180 degrees
-      if(false) { // unsigned_q > 3.) {
-        // We will split this arc into two smaller arcs
-        // To do so, we need to construct a point on the arc at or near the midpoint
-
-        // Pull members into local scope
-        const auto& circle = unsigned_arc.circle; // This is the arc the circle travels along
-        const auto& src = unsigned_arc.src;
-        const auto& dst = unsigned_arc.dst;
-        const auto x0 = src.approx.guess();
-        const auto x1 = dst.approx.guess();
-
-        // We could use direction from midpoint of chord to center of circle, but this will be unstable when arc is close to 180 degrees
-        // We could also use perpendicular of direction between endpoints, but this is unstable when they are close together
-        // Select whichever option has the highest magnitude
-        auto radial0 = 0.5*(x0 + x1) - circle.center; // Center of circle to midpoint of chord
-        auto radial1 = rotate_left_90(x1 - x0); // Perpendicular of chord
-        // Compare magnitude and normalize at the same time
-        const auto radial_dir = (radial0.normalize() < radial1.normalize()) ? radial1 : radial0;
-
-        // Reflect direction across center of circle to get a midpoint
-        const auto xs = circle.center - circle.radius*radial_dir;
-
-        // Note: For very small circles, approximation of x0 and x1 makes radial_dir essentially random
-        //  This should only happen for circles where radius is close to the endpoint error in which case the arcs to/from xs will also be small and we shouldn't cause anything worse than if we weren't splitting the arc
-        const auto q0 = fit_arc_q_to_circle(x0, xs, circle);
-        const auto q1 = fit_arc_q_to_circle(xs, x1, circle);
-
-        // q0 and q1 should be the same or at least very close if we correctly computed the midpoint
-        // This might be triggered in some cases when circle.radius is very small, but I haven't found a test case yet
-        assert(abs(q0-q1) < 1e-3);
-
-        if(sa.direction() == ArcDirection::CCW) {
-          result.append_to_back(CircleArc(quant.inverse(x0), q0));
-          result.append_to_back(CircleArc(quant.inverse(xs), q1));
-        }
-        else {
-          result.append_to_back(CircleArc(quant.inverse(x1), -q1));
-          result.append_to_back(CircleArc(quant.inverse(xs), -q0));
-        }
-      }
-      else {
-        const auto x0 = quant.inverse(incident(sa.head()).approx.guess());
-        result.append_to_back(CircleArc(x0, sign(sa.direction()) * unsigned_q));
-      }
+      result.extend_back(unquantize_arc(quant, arc(ccw_arc(sa)), sa.direction()));
     }
   }
 
-  // Quantization can introduce tiny self intersecting loops that remain after splitting so we attempt to cull any miniscule slivers.
-  // This doesn't feel like a robust solution, but I don't know a better alternative. Future versions of this function might leave slivers for caller to handle.
-  if(result.back().size() <= 3) {
-    // If the entire arc is thin, area will be less than thickness * perimeter / 2
-    // We can use diagonal of bounding box as an estimate for perimeter / 2
-    const real d = approximate_bounding_box(result.back()).sizes().magnitude();
-    const real a = circle_arc_area(result.back());
-    if(abs(a) < d * quant.inverse.unquantize_length(2*constructed_arc_endpoint_error_bound())) {
-      result.pop_back();
+  if(contour.is_closed()) {
+    // Quantization can introduce tiny self intersecting loops that remain after splitting so we attempt to cull any miniscule slivers.
+    // This doesn't feel like a robust solution, but I don't know a better alternative. Future versions of this function might leave slivers for caller to handle.
+    if(result.back().size() <= 3) {
+      // If the entire arc is thin, area will be less than thickness * perimeter / 2
+      // We can use diagonal of bounding box as an estimate for perimeter / 2
+      const real d = approximate_bounding_box(result.back()).sizes().magnitude();
+      const real a = circle_arc_area(result.back());
+      if(abs(a) < d * quant.inverse.unquantize_length(2*constructed_arc_endpoint_error_bound())) {
+        result.pop_back();
+      }
+    }
+  }
+  else {
+    // For open contours, need to add the very last point
+    if(n > 0) {
+      const auto tail_point = approx(iid_cl(contour.tail())).guess();
+      result.append_to_back(CircleArc{quant.inverse(tail_point), 0.});
     }
   }
 }
@@ -1325,6 +1330,7 @@ template<Pb PS> Tuple<Quantizer<real,2>,Ref<PlanarArcGraph<PS>>> quantize_circle
   template Tuple<Quantizer<real,2>,Ref<PlanarArcGraph<PS>>> quantize_circle_arcs(const Nested<const CircleArc> arcs); \
   template Field<bool, FaceId> faces_greater_than(const PlanarArcGraph<PS>& g, const int depth); \
   template Field<bool, FaceId> odd_faces(const PlanarArcGraph<PS>& g); \
+  template SmallArray<CircleArc, 2> unquantize_arc(const Quantizer<real,2>& quant, const ExactArc<PS>& unsigned_arc, const ArcDirection direction); \
 //INSTANTIATE(Pb::Explicit)
 INSTANTIATE(Pb::Implicit)
 #undef INSTANTIATE
