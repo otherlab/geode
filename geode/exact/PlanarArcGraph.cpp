@@ -965,13 +965,13 @@ template<Pb PS> ArcContours VertexSet<PS>::combine_concentric_arcs(const ArcCont
   for(const auto contour : contours) {
     RawArray<const SignedArcHead> heads = contour.heads; // We break the abstraction barrier of ArcContours to grab heads directly
     assert(heads.size() >= 1); // Shouldn't have an empty contour
-    assert(is_same_vid(heads.front().iid, heads.back().iid)); // We assume first head is repeated at tail for a closed contour
 
     // Get a pair of iterators for our input range to track which inputs we have already processed
     auto input_front = heads.begin();
     auto input_back = heads.end()-1; // Input back is the last input, not the end
 
     if(contour.is_closed()) {
+      assert(is_same_vid(heads.front().iid, heads.back().iid)); // We assume first head is repeated at tail for a closed contour
       --input_back; // For a closed contour we have a redundant head at the end which we can ignore
 
       // We start by lopping off any redundant heads at back of input which need special treatment to handle wrap around
