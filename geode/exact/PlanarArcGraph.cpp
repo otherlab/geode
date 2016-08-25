@@ -8,7 +8,7 @@
 
 namespace geode {
 
-template<Pb PS> static bool valid_contours(const VertexSet<PS>& vertices, const ArcContours& contours) { 
+template<Pb PS> static bool valid_contours(const VertexSet<PS>& vertices, const ArcContours& contours) {
   for(const auto c : contours) {
     for(const auto a : c) {
       if(!vertices.circle_ids(a.tail()).contains(vertices.reference_cid(a.head()))) {
@@ -178,7 +178,7 @@ namespace { template<Pb PS> struct ActiveCirclesHelper {
   const Box<Vec2> search_bounds;
   Array<CircleId> result;
   bool cull(const int n) const { return !search_bounds.intersects(tree.tree->boxes[n]); }
-  void leaf(const int n) { 
+  void leaf(const int n) {
     assert(!cull(n));
     result.append(tree.prim(n));
   }
@@ -224,7 +224,7 @@ template<Pb PS> static CircleTree<PS> insert_circle_intersections(VertexSet<PS>&
   return tree;
 }
 
-namespace { 
+namespace {
 template<Pb PS> ExactCircle<PS> construct_circle(const exact::Vec2 x0, const exact::Vec2 x1, const real q) {
   const auto c_and_r = construct_circle_center_and_radius(x0,x1,q);
   return ExactCircle<PS>(c_and_r.x, c_and_r.y);
@@ -315,7 +315,41 @@ static Array<int> make_next_i(const int n) {
   return result;
 }
 
-template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>& quant, const RawArray<const CircleArc> src_arcs, ArcContours& result) {
+
+// Construct a circle to generate an intersection with input circle at a point close to x0
+// Result should on or inside a helper_circle centered at x0
+template<Pb PS> static IncidentCircle<PS> construct_intersection_for_endpoint(const ExactCircle<PS>& circle, const exact::Vec2 x0) {
+  assert(has_intersections(circle, helper_circle<PS>(x0))); // This should only be called for points that are 'close' to circle
+
+  // Using this for multiple iterations of quantization/unquantization might behave poorly since any given endpoint will tend to be approximated in the same direction each iteration
+  // It if turns out to be a problems we could hash x0 to select between intersection_min and intersection_max via threefry(first_arc.x0.x, first_arc.x0.y) which might help
+  // I suspect we could construct another circle that will have an intersection with the input circle somewhere inside the helper circle in most (all?) cases
+  // I don't think any of this is actually necessary so I'm using the simple version for now instead of debugging this
+#if 0
+
+  // We rotate offset from target point to center of input circle to get center of a new circle that would intersect the input circle at x0 if x0 was exactly on input circle
+  const auto ortho_circle = ExactCircle<PS>{x0 + rotate_left_90(x0-circle.center), circle.radius};
+
+  // Distance from x0 should be same for both circles so ortho_circle should also intersect a helper circle at x0
+
+  // There should be an intersection between ortho_circle and the input circle
+  assert(has_intersections(circle, ortho_circle));
+
+  const auto result = circle.intersection_min(ortho_circle);
+
+  // Intersection of ortho_circle and input circle should be inside helper circle
+  assert(ExactArc<PS>{circle,
+                      circle.intersection_min(helper_circle<PS>(x0)),
+                      circle.intersection_max(helper_circle<PS>(x0))}.interior_contains(result));
+  return result;
+#else
+  // I don't think this is likely to be a problem in practice so I'm just using the simple implementation for now
+  return circle.intersection_min(helper_circle<PS>(x0));
+#endif
+}
+
+
+template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>& quant, const RawArray<const CircleArc> src_arcs, ArcContours& result, const bool src_arcs_open) {
   const int src_n = src_arcs.size();
   const auto src_next = make_next_i(src_n);
 
@@ -323,40 +357,64 @@ template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>
   if(src_n == 0) {
     return; // Ignore empty input
   }
-  else {
-    exact::Vec2 x0 = quant(src_arcs.front().x);
-    for(const int src_i : range(src_n)) {
-      const exact::Vec2 x1 = quant(src_arcs[src_next[src_i]].x);
-      if(x0 == x1 || circles_overlap(helper_circle<PS>(x0), helper_circle<PS>(x1)))
-        continue; // Skip over small degenerate arcs
-      // If we skipped arcs, x0 won't be same as src_arcs[src_i].x, but it should have changed by at most the helper circle diameter + 1 so it should be safe to use
-      new_arcs.append({x0, src_arcs[src_i].q});
-      x0 = x1;
-    }
+
+  exact::Vec2 tail_point = quant(src_arcs.front().x);
+  for(const int src_i : range(src_n - src_arcs_open)) {
+    const exact::Vec2 x0 = tail_point;
+    const exact::Vec2 x1 = quant(src_arcs[src_next[src_i]].x);
+    if(x0 == x1 || circles_overlap(helper_circle<PS>(x0), helper_circle<PS>(x1)))
+      continue; // Skip over small degenerate arcs
+    // If we skipped arcs, x0 won't be same as src_arcs[src_i].x, but it should have changed by at most the helper circle diameter + 1 so it should be safe to use
+    new_arcs.append({x0, src_arcs[src_i].q});
+    tail_point = x1;
   }
 
   // If after filtering we have a single point, ignore it and return without adding anything to result
-  if(new_arcs.size() <= 1)
+  if(new_arcs.size() <= 1 - src_arcs_open)
     return;
 
   const int new_n = new_arcs.size();
-  for(int curr_i = new_n-1, next_i = 0; next_i < new_n; curr_i = next_i++) {
+  const int before_start = src_arcs_open ? 0 : new_n-1;
+  const int after_start = src_arcs_open ? 1 : 0;
+
+  for(int curr_i = before_start, next_i = after_start; next_i < new_n; curr_i = next_i++) {
     new_arcs[curr_i].set_circle_and_direction(*this, new_arcs[next_i].x0); // Construct all of the circles
   }
-  for(int prev_i = new_n-1, curr_i = 0; curr_i < new_n; prev_i = curr_i++) {
+
+  // For open arcs need to treat front and back differently
+  if(src_arcs_open) {
+    auto& first_arc = new_arcs.front();
+    auto& last_arc = new_arcs.back();
+
+    last_arc.set_circle_and_direction(*this, tail_point);
+
+    const auto first_intersection = construct_intersection_for_endpoint(this->circle(first_arc.cid), first_arc.x0);
+
+    // Helper circles constructed at endpoints of each arc don't overlap
+    // This lets us assume constructed endpoints will safely avoid hitting other side of arcs
+    first_arc.x0_inc = get_or_insert(first_intersection, first_arc.cid,
+                                     get_or_insert(first_intersection.as_circle()));
+
+    const auto last_intersection = construct_intersection_for_endpoint(this->circle(last_arc.cid), tail_point);
+    last_arc.x1_inc = get_or_insert(last_intersection, last_arc.cid,
+                                    get_or_insert(last_intersection.as_circle()));
+  }
+
+  for(int prev_i = before_start, curr_i = after_start; curr_i < new_n; prev_i = curr_i++) {
     // Construct starting vertices
     new_arcs[curr_i].set_x0_inc(*this, new_arcs[prev_i]);
   }
-  for(int curr_i = new_n-1, next_i = 0; next_i < new_n; curr_i = next_i++) {
+
+  for(int curr_i = before_start, next_i = after_start; next_i < new_n; curr_i = next_i++) {
     // Either reuse starting vertices or construct new end ones
     new_arcs[curr_i].set_x1_inc(*this, new_arcs[next_i]);
   }
 
-  for(int prev_i = new_n-1, next_i = 0; next_i < new_n; prev_i = next_i++) {
+  for(int prev_i = before_start, next_i = after_start; next_i < new_n; prev_i = next_i++) {
     // Although we have a series of arcs and their endpoints, some neighbors might need helper arcs inserted between them
     auto& prev = new_arcs[prev_i];
     auto& next = new_arcs[next_i];
-    
+
     // Check if end of previous arc isn't start of next arc in which case we need to add a helper arc
     if(!is_same_vid(prev.x1_inc, next.x0_inc)) {
       // If endpoints aren't the same, we will need to construct a helper arc
@@ -402,7 +460,10 @@ template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>
   }
 
   result.start_contour();
-  for(int prev_i = new_n-1, curr_i = 0; curr_i < new_n; prev_i = curr_i++) {
+  if(src_arcs_open) {
+    result.append_to_back({new_arcs[0].x0_inc, new_arcs[0].direction});
+  }
+  for(int prev_i = before_start, curr_i = after_start; curr_i < new_n; prev_i = curr_i++) {
     const auto& prev = new_arcs[prev_i];
     const auto& curr = new_arcs[curr_i];
 
@@ -413,18 +474,26 @@ template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>
     }
     result.append_to_back({curr.x0_inc, curr.direction});
   }
-  result.end_closed_contour();
+  if(src_arcs_open) {
+    result.end_open_contour(to_vid(new_arcs.back().x1_inc));
+  }
+  else {
+    result.end_closed_contour();
+  }
 }
 
-template<Pb PS> ArcContours VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> src_arcs) {
-  ArcContours result;
+template<Pb PS> void VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> src_arcs, ArcContours& result, const bool src_arcs_open) {
   for(const auto contour : src_arcs) {
-    quantize_circle_arcs(quant, contour, result);
+    quantize_circle_arcs(quant, contour, result, src_arcs_open);
   }
   assert(valid_contours(*this, result));
-  return result;
 }
 
+template<Pb PS> ArcContours VertexSet<PS>::quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> src_arcs, const bool src_arcs_open) {
+  ArcContours result;
+  quantize_circle_arcs(quant, src_arcs, result, src_arcs_open);
+  return result;
+}
 
 template<Pb PS> PlanarArcGraph<PS>::PlanarArcGraph(Uninit)
  : circle_tree(uninit)
@@ -432,14 +501,36 @@ template<Pb PS> PlanarArcGraph<PS>::PlanarArcGraph(Uninit)
  , topology(new_<HalfedgeGraph>())
 { }
 
-template<Pb PS> void PlanarArcGraph<PS>::embed_arcs(const ArcContours& contours) {
+namespace {
+// This class provides iterators over an infinite sequence of ones
+// Used as default for weights in init_topology_and_windings
+struct AlwaysOneSequence {
+  struct End {};
+  struct Iter
+  {
+    constexpr One operator*() const { return One{}; }
+    constexpr Iter operator++() const { return *this; }
+    GEODE_UNUSED inline friend constexpr bool operator!=(const Iter, const End) { return true; }
+  };
+  constexpr Iter begin() const { return Iter{}; }
+  constexpr End end() const { return End{}; }
+};
+} // anonymous namespace
+
+template<Pb PS> void PlanarArcGraph<PS>::embed_arcs(const ArcContours& contours, const RawArray<const int8_t> weights) {
   circle_tree = insert_circle_intersections(vertices, contours);
   incident_order = VertexSort<PS>(vertices);
-  edge_srcs = init_topology_and_windings(topology, edge_windings, outgoing_edges, vertices, contours, incident_order);
+  if(weights.empty()) {
+    edge_srcs = init_topology_and_windings(topology, edge_windings, outgoing_edges, vertices, contours, AlwaysOneSequence{}, incident_order);
+  }
+  else {
+    assert(weights.size() == contours.size());
+    edge_srcs = init_topology_and_windings(topology, edge_windings, outgoing_edges, vertices, contours, weights, incident_order);
+  }
   init_borders_and_faces();
 }
 
-template<Pb PS> PlanarArcGraph<PS>::PlanarArcGraph(const VertexSet<PS>& _vertices, const ArcContours& contours)
+template<Pb PS> PlanarArcGraph<PS>::PlanarArcGraph(const VertexSet<PS>& _vertices, const ArcContours& contours, const RawArray<const int8_t> weights)
  : circle_tree(uninit)
  , vertices(_vertices)
  , incident_order(uninit)
@@ -448,7 +539,7 @@ template<Pb PS> PlanarArcGraph<PS>::PlanarArcGraph(const VertexSet<PS>& _vertice
  , edge_srcs()
  , topology(new_<HalfedgeGraph>())
 {
-  embed_arcs(contours);
+  embed_arcs(contours, weights);
 }
 
 namespace { template<Pb PS> struct LeftwardRaycastHelper {
@@ -461,11 +552,11 @@ namespace { template<Pb PS> struct LeftwardRaycastHelper {
   bool ray_x_intersects(const Box<real>& b) const {
     return !(b.max < dst.x.box().min);
   }
-  bool cull(const int n) const { 
+  bool cull(const int n) const {
     const auto b = graph.circle_tree.tree->boxes[n];
     return !ray_x_intersects(b[0]) || !b[1].inside(dst.line.y, Zero());
   }
-  void leaf(const int n) { 
+  void leaf(const int n) {
     assert(!cull(n));
     const auto hit_bounds = graph.circle_tree.tree->boxes[n];
     const auto hit_cid = graph.circle_tree.prim(n);
@@ -504,7 +595,7 @@ template<Pb PS> Array<HalfedgeId> PlanarArcGraph<PS>::path_from_infinity(const E
   const IncidentHorizontal<PS> h_inc = h_inc_and_dir.x;
   const CircleId target_cid = circle_id(target_eid);
   Array<HalfedgeId> result = leftward_raycast_to(target_cid, h_inc);
-  
+
   assert(!find_edge(target_cid, h_inc).valid() // Either no edge on circle at h
           || (!result.empty() && circle_id(result.back()) == target_cid)); // Or raycast path ends at edge on circle
   if(result.empty() || HalfedgeGraph::edge(result.back()) != target_eid) {
@@ -526,7 +617,7 @@ template<Pb PS> Array<HalfedgeId> PlanarArcGraph<PS>::path_from_infinity(const E
     const auto h_to_target = (path_dir == ArcDirection::CCW) ? ExactHorizontalArc<PS>(ref_circle, h_inc, target_inc)
                                                              : ExactHorizontalArc<PS>(ref_circle, target_inc, h_inc);
     const auto arc_path_bounds = bounding_box(h_to_target);
-      
+
     Array<IncidentVertexInfo<PS>> path_incidents; // We will collect incident intersections on our path here
     for(const CircleId inc_cid : circle_tree.circles_active_near(vertices, arc_path_bounds)) {
       for(const IncidentCircle<PS>& i : target_arc.circle.intersections_if_any(vertices.circle(inc_cid))) {
@@ -542,7 +633,7 @@ template<Pb PS> Array<HalfedgeId> PlanarArcGraph<PS>::path_from_infinity(const E
       sort_relative<PS,ArcDirection::CCW>(path_incidents, IncComp<PS,ArcDirection::CCW>({target_arc.circle}), h_inc);
     else
       sort_relative<PS,ArcDirection::CW>(path_incidents, IncComp<PS,ArcDirection::CW>({target_arc.circle}), h_inc);
-    
+
     // path_incidents should now be all incidents along h_to_target in order, starting at h_inc and ending just before target_inc
     // Add one more for target_inc which we excluded above
     path_incidents.append(IncidentVertexInfo<PS>({target_inc, vertices.reference_cid(target_iid), vertices.incident_cid(target_iid)}));
@@ -645,12 +736,12 @@ namespace { template<Pb PS> struct CompareIncId {
   }
   bool operator()(const IncidentId iid0, const IncidentCircle<PS>& i1) const {
     assert(is_same_circle(c, verts.reference(iid0)));
-    const auto& i0 = verts.incident(iid0); 
+    const auto& i0 = verts.incident(iid0);
     return c.intersections_sorted(i0, i1);
   }
   bool operator()(const IncidentCircle<PS>& i0, const IncidentId iid1) const {
     assert(is_same_circle(c, verts.reference(iid1)));
-    const auto& i1 = verts.incident(iid1); 
+    const auto& i1 = verts.incident(iid1);
     return c.intersections_sorted(i0, i1);
   }
 };} // end anonymous namespace
@@ -716,22 +807,29 @@ template<Pb PS> static SmallArray<HalfedgeId,4> outgoing_edges(const VertexId vi
   return result;
 }
 
-template<Pb PS> static Field<IncidentId, EdgeId> init_topology_and_windings(HalfedgeGraph& topology, Field<int, EdgeId>& edge_windings, Field<EdgeId, IncidentId>& ccw_next_edges, const VertexSet<PS>& verts, const ArcContours& contours, const VertexSort<PS>& incident_order) {
+template<Pb PS, class Weights> static Field<IncidentId, EdgeId> init_topology_and_windings(HalfedgeGraph& topology, Field<int, EdgeId>& edge_windings, Field<EdgeId, IncidentId>& ccw_next_edges, const VertexSet<PS>& verts, const ArcContours& contours, const Weights weights, const VertexSort<PS>& incident_order) {
   assert(topology.n_vertices() == 0 && topology.n_edges() == 0);
   assert(edge_windings.empty());
   assert(ccw_next_edges.empty());
   auto incident_values = Field<int, IncidentId>(verts.n_incidents()); // Winding of edge between iid and ccw_next[iid]
   auto incident_active = Field<bool, IncidentId>(verts.n_incidents()); // True if there should be an edge (possibly with zero weight) between iid and ccw_next[iid]
-  for(const auto c : contours) {
-    for(const SignedArcInfo sa : c) {
-      const UnsignedArcInfo ua = verts.ccw_arc(sa);
-      const CircleId cid = verts.reference_cid(ua.src);
-      auto ic = incident_order.circulator(cid, ua.src);
-      do {
-        incident_values[*ic] += sign(sa.direction());
-        incident_active[*ic] = true;
-        ++ic;
-      } while(*ic != ua.dst);
+
+  {
+    auto weight_iter = weights.begin();
+    for(const auto c : contours) {
+      assert(weight_iter != weights.end());
+      const auto weight = *weight_iter;
+      ++weight_iter;
+      for(const SignedArcInfo sa : c) {
+        const UnsignedArcInfo ua = verts.ccw_arc(sa);
+        const CircleId cid = verts.reference_cid(ua.src);
+        auto ic = incident_order.circulator(cid, ua.src);
+        do {
+          incident_values[*ic] += sign(sa.direction()) * weight;
+          incident_active[*ic] = true;
+          ++ic;
+        } while(*ic != ua.dst);
+      }
     }
   }
 
@@ -846,7 +944,7 @@ template<Pb PS> static bool is_middle_head_redundant(const SignedArcHead prev_he
   if(vertices.reference_cid(prev_head.iid) != vertices.reference_cid(curr_head.iid))
     return false; // Arcs must continue along the same circle at curr
 
-  
+
   if(prev_head.iid == curr_head.iid) // Check if prev_head to curr_head is a full circle
     return false;  // Can't represent more than a full circle with a single arc, so we need to keep intermediate head
 
@@ -867,13 +965,13 @@ template<Pb PS> ArcContours VertexSet<PS>::combine_concentric_arcs(const ArcCont
   for(const auto contour : contours) {
     RawArray<const SignedArcHead> heads = contour.heads; // We break the abstraction barrier of ArcContours to grab heads directly
     assert(heads.size() >= 1); // Shouldn't have an empty contour
-    assert(is_same_vid(heads.front().iid, heads.back().iid)); // We assume first head is repeated at tail for a closed contour
 
     // Get a pair of iterators for our input range to track which inputs we have already processed
     auto input_front = heads.begin();
     auto input_back = heads.end()-1; // Input back is the last input, not the end
 
     if(contour.is_closed()) {
+      assert(is_same_vid(heads.front().iid, heads.back().iid)); // We assume first head is repeated at tail for a closed contour
       --input_back; // For a closed contour we have a redundant head at the end which we can ignore
 
       // We start by lopping off any redundant heads at back of input which need special treatment to handle wrap around
@@ -930,6 +1028,18 @@ template<Pb PS> static Vector<CircleArc, 2> unquantize_circle(const Quantizer<re
   return vec(CircleArc(rhs, q), CircleArc(lhs, q));
 }
 
+// Given two points and a circle, select a q value for an ArcSegment between them
+// This function is specifically intended to handle noise in x0 and x1, but they should at least be approximately on the circle
+// Result will be for the smaller positive arc (0 < q <= 1. before rounding noise)
+template<Pb PS> static real fit_arc_q_to_circle(const Vec2 x0, const Vec2 x1, const ExactCircle<PS>& circle) {
+  const auto l = min(circle.radius, 0.5*(x1 - x0).magnitude());
+  const auto m = 0.5*(x0+x1); // Compute the midpoint of the chord from x0 to x1
+  const auto h = min(circle.radius, (circle.center - m).magnitude()); // Height from chord to center of circle (clamped in case noise moved m outside of circle)
+  const auto q =  l / (circle.radius+h);
+  assert(q <= 1.); // Result never be nan and should be less than or equal to 1
+  return q;
+}
+
 template<Pb PS> Nested<CircleArc> VertexSet<PS>::unquantize_circle_arcs(const Quantizer<real,2>& quant, const ArcContours& contours) const {
   Nested<CircleArc, false> result;
   for(const auto contour : contours) {
@@ -951,8 +1061,55 @@ template<Pb PS> Nested<CircleArc> VertexSet<PS>::unquantize_circle_arcs(const Qu
       else {
         can_cull = true;
         const auto unsigned_arc = this->arc(ccw_arc(sa));
-        const auto x0 = quant.inverse(incident(sa.head()).approx.guess());
-        result.append_to_back(CircleArc(x0, sign(sa.direction()) * unsigned_arc.q()));
+        const auto unsigned_q = unsigned_arc.q();
+        // Accuracy of CircleArc representation starts to degrade as abs(q) gets larger than 1 (over 180 degrees)
+        // As endpoints get closer together, q goes to infinity and it becomes impossible to construct midpoint of arc
+        // In practice, this only seems to be a problem when arcs are nearly full circles so we only split when q is significantly larger than 1
+        // Using a larger threshold also avoids odd looking output that can occur if we split arcs that are only slightly above 180 degrees
+        if(unsigned_q > 3.) {
+          // We will split this arc into two smaller arcs
+          // To do so, we need to construct a point on the arc at or near the midpoint
+
+          // Pull members into local scope
+          const auto& circle = unsigned_arc.circle; // This is the arc the circle travels along
+          const auto& src = unsigned_arc.src;
+          const auto& dst = unsigned_arc.dst;
+          const auto x0 = src.approx.guess();
+          const auto x1 = dst.approx.guess();
+
+          // We could use direction from midpoint of chord to center of circle, but this will be unstable when arc is close to 180 degrees
+          // We could also use perpendicular of direction between endpoints, but this is unstable when they are close together
+          // Select whichever option has the highest magnitude
+          auto radial0 = 0.5*(x0 + x1) - circle.center; // Center of circle to midpoint of chord
+          auto radial1 = rotate_left_90(x1 - x0); // Perpendicular of chord
+          // Compare magnitude and normalize at the same time
+          const auto radial_dir = (radial0.normalize() < radial1.normalize()) ? radial1 : radial0;
+
+          // Reflect direction across center of circle to get a midpoint
+          const auto xs = circle.center - circle.radius*radial_dir;
+
+          // Note: For very small circles, approximation of x0 and x1 makes radial_dir essentially random
+          //  This should only happen for circles where radius is close to the endpoint error in which case the arcs to/from xs will also be small and we shouldn't cause anything worse than if we weren't splitting the arc
+          const auto q0 = fit_arc_q_to_circle(x0, xs, circle);
+          const auto q1 = fit_arc_q_to_circle(xs, x1, circle);
+
+          // q0 and q1 should be the same or at least very close if we correctly computed the midpoint
+          // This might be triggered in some cases when circle.radius is very small, but I haven't found a test case yet
+          assert(abs(q0-q1) < 1e-3);
+
+          if(sa.direction() == ArcDirection::CCW) {
+            result.append_to_back(CircleArc(quant.inverse(x0), q0));
+            result.append_to_back(CircleArc(quant.inverse(xs), q1));
+          }
+          else {
+            result.append_to_back(CircleArc(quant.inverse(x1), -q1));
+            result.append_to_back(CircleArc(quant.inverse(xs), -q0));
+          }
+        }
+        else {
+          const auto x0 = quant.inverse(incident(sa.head()).approx.guess());
+          result.append_to_back(CircleArc(x0, sign(sa.direction()) * unsigned_q));
+        }
       }
     }
 
@@ -1094,7 +1251,7 @@ template<Pb PS> void ArcAccumulator<PS>::copy_contours(const ArcContours& src_co
       const auto inc_cid = vertices.get_or_insert(src_vertices.incident(h.iid).as_circle());
       h.iid = vertices.get_or_insert(src_vertices.incident(h.iid), ref_cid, inc_cid);
     }
-  } 
+  }
 }
 template<Pb PS> Ref<PlanarArcGraph<PS>> ArcAccumulator<PS>::compute_embedding() const {
   return new_<PlanarArcGraph<PS>>(vertices, contours);

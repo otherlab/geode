@@ -406,6 +406,21 @@ public:
     m_ = m_new;
   }
 
+  template<class U> void extend(const std::initializer_list<U>& extra) {
+    // Perhaps this should be combined with the implementation above, but ConstantMap (and maybe others) don't support begin/end
+    STATIC_ASSERT_SAME(Element,typename remove_const<U>::type);
+    const int append_m = extra.size(),
+              m_new = m_+append_m;
+    preallocate(m_new);
+    auto* out = data_ + m_;
+    for(const auto& e : extra) {
+      assert(out < this->end());
+      geode::const_cast_(*out) = e;
+      ++out;
+    }
+    m_ = m_new;
+  }
+
   template<class TA> void extend_assuming_enough_space(const TA& extra) {
     STATIC_ASSERT_SAME(Element,typename remove_const<typename TA::value_type>::type);
     const int append_m = extra.size(),
