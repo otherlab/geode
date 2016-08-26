@@ -159,8 +159,10 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
   Field<CircleId, IncidentId> iid_to_cid;
   Hashtable<Vector<CircleId,2>,VertexId> vid_cache; // Used to avoid duplicates of the same intersection
  public:
+  using VertexField<PS>::approx;
   using VertexField<PS>::reference;
   using VertexField<PS>::incident;
+  using VertexField<PS>::arc;
   using CircleSet<PS>::get_or_insert;
   using CircleSet<PS>::find_cid;
 
@@ -198,6 +200,7 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
 
   // Converts exact contours (which currently must be closed although open contours should be handled in the future) into CircleArcs
   // This function attempts to cull artifacts introduced by quantization, but will also simplify nearly degenerate arcs or contours
+  void unquantize_circle_arcs(const Quantizer<real,2>& quant, const RawArcContour& contour, Nested<CircleArc, false>& result) const;
   Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2>& quant, const ArcContours& contours) const;
 
   // This combines arcs that continue along the same circle into a single arc wherever possible
@@ -337,6 +340,9 @@ public:
   // Find edge such that starts at or contains src. If no such edge exists, returns an invalid id
   EdgeId outgoing_edge(const IncidentId src) const;
 
+  // Find halfedge that starts at head and extends along the same circle in the same direction. If no such halfedge exists, returns an invalid id
+  HalfedgeId halfedge(const SignedArcHead head) const;
+
   // Find incident such that vertices.arc(*result, result.next()).half_open_contains(i)
   IncidentCirculator find_prev(const CircleId cid, const IncidentCircle<PS>& i) const;
   // Find incident such that vertices.arc(*result, result.next()).contains_horizontal(i)
@@ -401,6 +407,10 @@ template<Pb PS> Field<bool, FaceId> odd_faces(const PlanarArcGraph<PS>& g);
 template<Pb PS> Ref<PlanarArcGraph<PS>> quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> arcs);
 // As above, but computes and returns an appropriate quantizer
 template<Pb PS> Tuple<Quantizer<real,2>, Ref<PlanarArcGraph<PS>>> quantize_circle_arcs(const Nested<const CircleArc> arcs);
+
+// Convert from ExactArc to CircleArc, will split into multiple CircleArcs if needed
+// Endpoints will not be included so a chain of connected ExactArcs can be converted to a chain of CircleArcs by concatenating results from this function
+template<Pb PS> SmallArray<CircleArc, 2> unquantize_arc(const Quantizer<real,2>& quant, const ExactArc<PS>& unsigned_arc, const ArcDirection direction);
 
 ////////////////////////////////////////////////////////////////////////////////
 
