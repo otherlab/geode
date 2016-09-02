@@ -1099,7 +1099,8 @@ template<Pb PS> SmallArray<CircleArc, 2> unquantize_arc(const Quantizer<real,2>&
     }
   }
   else {
-    const auto x0 = quant.inverse((direction == ArcDirection::CCW ? unsigned_arc.src : unsigned_arc.dst).approx.guess());
+    const bool is_ccw = (direction == ArcDirection::CCW); // This goes on it's own line as a workaround for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69772
+    const auto x0 = quant.inverse((is_ccw ? unsigned_arc.src : unsigned_arc.dst).approx.guess());
     result.append(CircleArc{x0, sign(direction) * unsigned_q});
   }
   return result;
