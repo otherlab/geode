@@ -132,7 +132,7 @@ VertexId TriangleTopology::internal_add_vertex() {
 
 VertexId TriangleTopology::internal_add_vertices(int n) {
   GEODE_ASSERT(n >= 0);
-  int id = n_vertices_;
+  int id = vertex_to_edge_.size(); // This doesn't attempt to recycle erased vertex ids
   const_cast<int&>(n_vertices_) += n;
   const_cast_(vertex_to_edge_).const_cast_().flat.resize(vertex_to_edge_.size()+n);
   return VertexId(id);
@@ -1180,11 +1180,35 @@ void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
   if (!is_boundary(o))
     vr = dst(next(o));
 
-  // if v1 used o or v1vl as outgoing halfedge, change it to something else
-  if (halfedge(v1) == o) {
-    unsafe_set_halfedge(v1, left(o));
-  } else if (dst(halfedge(v1)) == vl) {
-    unsafe_set_halfedge(v1, right(halfedge(v1)));
+  // We need to choose a new outgoing halfedge for v1 if the current one is going to be erased or if v1 becomes a boundary halfedge
+  HalfedgeId new_v1_he; // If set, v1's halfedge will be changed to this after the collapse is finished
+  // Hitting an empty leaf in this conditional will cause v1's halfedge to remain unchanged since new_v1_he will remain invalid
+  if(is_boundary(o)) {
+    // In this case, o will be the only erased halfedge
+    // If v1 was using o we need to switch
+    if(halfedge(v1) == o) {
+      new_v1_he = next(o); // next(o) will be a boundary halfedge and after we collapse v0 into v1 it will start at v1
+    }
+    // else, we don't need to change anything so leave new_v1_he invalid
+  }
+  else if(is_boundary(h)) {
+    // halfedge(v1) must be a boundary edge (probably next(h) but possibly a different halfedge if there are disjoint boundary curves at v1)
+    assert(is_boundary(halfedge(v1)));
+    // We don't need to change v1's halfedge since it can't be h and h is the only erased boundary halfedge
+  }
+  else {
+    // If we get here, we aren't erasing any boundary halfedges
+    if(is_boundary(halfedge(v1))) {
+      // v1's halfedge is on the boundary so we aren't going to erase it
+    }
+    else if(is_boundary(halfedge(v0))) {
+      new_v1_he = halfedge(v0); // Combined vertex will now be on boundary so reuse halfedge(v0) to get a boundary halfedge with the right source
+    }
+    else {
+      if(halfedge(v1) == o || dst(halfedge(v1)) == vl) {
+        new_v1_he = left(o); // Can use v1vr which we must exist and isn't going to be erased
+      }
+    }
   }
 
   // if vl used vlv0 as outgoing halfedge, change it to something else
@@ -1202,8 +1226,11 @@ void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
     unsafe_replace_vertex(f, v0, v1);
 
   // replace v0 with v1 in all boundary edge src entries
-  if (is_boundary(v0))
-    unsafe_set_src(halfedge(v0), v1);
+  // Since we might have pointers from multiple disjoint boundary curves we have to check all outgoing halfedges of v0
+  if (is_boundary(v0)) for(const auto he : outgoing(v0)) {
+    if(is_boundary(he))
+      unsafe_set_src(he, v1);
+  }
 
   // connect reverses: v0vl -- vlv1, vrv0 -- v1vr
   // (if v0vl and vlv1 or vrv0 and v1vr are boundaries, don't connect them,
@@ -1258,13 +1285,15 @@ void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
   // delete v0
   unsafe_set_erased(v0);
 
-  // make sure that if v1 is now a boundary, it has a boundary halfedge
-  for (auto he : outgoing(v1)) {
-    if (is_boundary(he)) {
-      unsafe_set_src(he, v1);
-      unsafe_set_halfedge(v1, he);
-    }
+  // If we need to update halfedge for v1, do so here
+  if(new_v1_he.valid()) {
+    assert(erased(halfedge(v1)) || (is_boundary(new_v1_he) && !is_boundary(halfedge(v1))));
+    assert(!erased(new_v1_he));
+    unsafe_set_halfedge(v1, new_v1_he);
+    assert(src(new_v1_he) == v1);
   }
+
+  assert(!erased(halfedge(v1)));
 
   assert_consistent(true);
 }
@@ -2045,6 +2074,7 @@ static string id_error(const TriangleTopology& mesh, const HalfedgeId x) {
 MAKE_SAFE(halfedge,VertexId)
 MAKE_SAFE(prev,    HalfedgeId)
 MAKE_SAFE(next,    HalfedgeId)
+MAKE_SAFE(reverse,    HalfedgeId)
 MAKE_SAFE(src,     HalfedgeId)
 MAKE_SAFE(dst,     HalfedgeId)
 MAKE_SAFE(face,    HalfedgeId)
@@ -2251,6 +2281,7 @@ void wrap_corner_mesh() {
       .SAFE_METHOD(halfedge_faces)
       .SAFE_METHOD(outgoing)
       .SAFE_METHOD(incoming)
+      .SAFE_METHOD(reverse)
       .GEODE_METHOD(vertex_one_ring)
       .GEODE_METHOD(incident_faces)
       .GEODE_METHOD(face_soup)
@@ -2258,6 +2289,9 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(common_halfedge)
       .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, FaceId)const, "common_vertex_between_faces", common_vertex)
       .GEODE_OVERLOADED_METHOD_2(VertexId(Self::*)(FaceId, HalfedgeId)const, "common_vertex_between_face_and_halfedge", common_vertex)
+      .GEODE_OVERLOADED_METHOD_2(HalfedgeId(Self::*)(FaceId, VertexId)const, "opposite_halfedge", opposite)
+      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(VertexId)const, "is_boundary_vertex", is_boundary)
+      .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(HalfedgeId)const, "is_boundary_halfedge", is_boundary)
       .GEODE_METHOD(elements)
       .GEODE_METHOD(degree)
       .GEODE_METHOD(surface_components)
@@ -2273,17 +2307,23 @@ void wrap_corner_mesh() {
       .GEODE_METHOD(all_halfedges)
       .GEODE_METHOD(all_boundary_edges)
       .GEODE_METHOD(all_interior_halfedges)
+      .GEODE_METHOD(area)
+      .GEODE_OVERLOADED_METHOD_2(TV3(Self::*)(RawField<const TV3,VertexId> X, const FaceId f) const, "face_normal", normal)
+      .GEODE_OVERLOADED_METHOD_2(TV3(Self::*)(RawField<const TV3,VertexId> X, const  VertexId v) const, "vertex_normal", normal)
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<VertexId>>(Self::*)() const, vertices)
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<FaceId>>(Self::*)() const, faces)
       .GEODE_OVERLOADED_METHOD(Range<TriangleTopologyIter<HalfedgeId>>(Self::*)() const, halfedges)
       .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(VertexId) const, "vertex_valid", valid)
+
       .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(FaceId) const, "face_valid", valid)
       .GEODE_OVERLOADED_METHOD_2(bool(Self::*)(HalfedgeId) const, "halfedge_valid", valid)
       .GEODE_METHOD(boundary_edges)
       .GEODE_METHOD(interior_halfedges)
       .GEODE_METHOD(is_garbage_collected)
+#ifdef GEODE_PYTHON
       .GEODE_METHOD_2("edge_tree",edge_tree_py)
       .GEODE_METHOD_2("face_tree",face_tree_py)
+#endif
       ;
   }
   {
