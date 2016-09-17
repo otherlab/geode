@@ -22,7 +22,7 @@
 #ifdef __APPLE__
 #include <mach/task.h>
 #include <mach/mach_init.h>
-#ifdef __SSE__
+#ifdef GEODE_SSE
 #include <xmmintrin.h>
 #endif
 #endif
@@ -123,7 +123,7 @@ static void float_exception_handler(int sig_number, siginfo_t* info, void *data)
 }
 
 #ifdef __APPLE__
-#ifdef __SSE__
+#ifdef GEODE_SSE
 
 // feenableexcept and fedisableexcept are not defined, so define them
 

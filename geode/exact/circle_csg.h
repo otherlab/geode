@@ -30,8 +30,6 @@ struct CircleArc {
   bool operator!=(const CircleArc& rhs) const { return !((*this) == rhs);}
 };
 
-std::ostream& operator<<(std::ostream& output, const CircleArc& a);
-
 // Resolve all intersections between circular arc polygons, and extract the contour with given depth
 // Depth starts at 0 at infinity, and increases by 1 when crossing a contour from outside to inside.
 // For example, depth = 0 corresponds to polygon_union.
@@ -61,7 +59,7 @@ GEODE_CORE_EXPORT void reverse_arcs(Nested<CircleArc> arcs);
 
 GEODE_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const RawArray<const CircleArc> input);
 GEODE_CORE_EXPORT Box<Vector<real,2>> approximate_bounding_box(const Nested<const CircleArc>& input);
-GEODE_CORE_EXPORT ostream& operator<<(ostream& output, const CircleArc& arc);
+GEODE_CORE_EXPORT std::ostream& operator<<(std::ostream& output, const CircleArc& arc);
 
 // Transformation operators for circle arcs
 static inline CircleArc operator*(const real a,                      const CircleArc& c) { return CircleArc(a*c.x,c.q); }

@@ -228,7 +228,7 @@ entries() const {
 
 template<class TV> void SolidMatrix<TV>::
 add_multiply_outers(RawArray<const TV> x, RawArray<TV> y) const {
-  GEODE_ASSERT(valid() && x.size()==size() && y.size()==size());
+  GEODE_ASSERT(valid() && x.size()==this->size() && y.size()==this->size());
   for (int o=0;o<(int)outers.size();o++) {
     RawArray<const int> nodes = outers[o].x;
     T B = outers[o].y;
@@ -261,7 +261,7 @@ multiply(RawArray<const TV> x, RawArray<TV> y) const {
 
 template<class TV> typename TV::Scalar SolidMatrix<TV>::
 inner_product(RawArray<const TV> x, RawArray<const TV> y) const {
-  GEODE_ASSERT(valid() && x.size()==size() && y.size()==size());
+  GEODE_ASSERT(valid() && x.size()==this->size() && y.size()==this->size());
   T sum = 0;
   for (int i=0;i<sparse_j.size();i++) {
     sum += dot(x[i],assume_symmetric(sparse_A(i,0))*y[i]);
@@ -291,7 +291,7 @@ template<class TV> Box<typename TV::Scalar> SolidMatrix<TV>::
 diagonal_range() const {
   GEODE_ASSERT(!outers.size());
   Box<T> range = Box<T>::empty_box();
-  for(int i=0;i<size();i++) {
+  for(int i=0;i<this->size();i++) {
     DiagonalMatrix<T,d> D = assume_symmetric(sparse_A(i,0)).diagonal_part();
     range.enlarge(Box<T>(D.min(),D.max()));
   }
@@ -333,8 +333,8 @@ dense() const {
 template<class TV> Ref<SolidDiagonalMatrix<TV>> SolidMatrix<TV>::
 inverse_block_diagonal() const {
   GEODE_ASSERT(!outers.size());
-  const auto diagonal = new_<SolidDiagonalMatrix<TV>>(size(),uninit);
-  for(int i=0;i<size();i++)
+  const auto diagonal = new_<SolidDiagonalMatrix<TV>>(this->size(),uninit);
+  for(int i=0;i<this->size();i++)
     diagonal->A[i] = assume_symmetric(sparse_A(i,0)).inverse();
   return diagonal;
 }

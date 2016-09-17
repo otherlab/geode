@@ -35,31 +35,31 @@ public:
 
   TV min, max;
 
-  Box()
+  constexpr Box()
     : min(numeric_limits<T>::max()*TV::ones()), max((T)-numeric_limits<T>::max()*TV::ones()) {}
 
-  Box(const T xmin, const T xmax)
+  constexpr Box(const T xmin, const T xmax)
     : min(xmin), max(xmax) {
     static_assert(d==1,"");
   }
 
-  Box(const T xmin, const T xmax, const T ymin, const T ymax)
+  constexpr Box(const T xmin, const T xmax, const T ymin, const T ymax)
     : min(xmin,ymin), max(xmax,ymax) {
     static_assert(d==2,"");
   }
 
-  Box(const T xmin, const T xmax, const T ymin, const T ymax, const T zmin, const T zmax)
+  constexpr Box(const T xmin, const T xmax, const T ymin, const T ymax, const T zmin, const T zmax)
     : min(xmin,ymin,zmin), max(xmax,ymax,zmax) {
     static_assert(d==3,"");
   }
 
-  Box(const TV& min, const TV& max)
+  constexpr Box(const TV& min, const TV& max)
     : min(min), max(max) {}
 
-  template<class T2> explicit Box(const Box<T2>& box)
+  template<class T2> constexpr explicit Box(const Box<T2>& box)
     : min(TV(box.min)), max(TV(box.max)) {}
 
-  explicit Box(const TV& point)
+  constexpr explicit Box(const TV& point)
     : min(point), max(point) {}
 
   Box(const Box<TV>& box, const Frame<Vector<T,1> >& frame) // Allow 1d boxes to be used as oriented boxes

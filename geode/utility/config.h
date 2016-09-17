@@ -18,6 +18,18 @@ typedef double real;
 #endif
 }
 
+// Mostly sizeof(size_t) will work, but not for preprocessor stuff
+// Warning: SIZEOF_SIZE_T may exists, but only when Python support is enabled
+#if defined(__GNUC__)
+  #define GEODE_SIZEOF_SIZE_T __SIZEOF_SIZE_T__
+#elif defined(_WIN64)
+  #define GEODE_SIZEOF_SIZE_T 8
+#elif defined(_WIN32)
+  #define GEODE_SIZEOF_SIZE_T 4
+#else
+  #error "Failed to configure GEODE_SIZEOF_SIZE_T for this platform"
+#endif
+
 #ifdef __clang__
 #define GEODE_CLANG_ONLY(...) __VA_ARGS__
 #define GEODE_CLANG_VERSION_GE(major,minor) \
@@ -29,10 +41,16 @@ typedef double real;
 #define GEODE_CLANG_VERSION_GE(major,minor) false
 #endif
 
+#ifdef __MINGW32__
+#define GEODE_MINGW_ONLY(...) __VA_ARGS__
+#else
+#define GEODE_MINGW_ONLY(...)
+#endif
+
 #define GEODE_NO_EXPORT // For documentation purposes
 
-#ifndef _WIN32
-
+#ifdef __GNUC__
+#define GEODE_GNUC_ONLY(...) __VA_ARGS__
 #define GEODE_VARIADIC
 
 // Mark the current symbol for export
@@ -48,7 +66,7 @@ typedef double real;
 #define GEODE_NEVER_INLINE __attribute__ ((noinline))
 #define GEODE_PURE __attribute__ ((pure))
 #define GEODE_CONST __attribute__ ((const))
-#define GEODE_FORMAT(type,fmt,list) __attribute__ ((format(type,fmt,list)))
+#define GEODE_FORMAT(type,fmt,list) __attribute__ ((__format__(type,fmt,list)))
 #define GEODE_EXPECT(value,expect) __builtin_expect((value),expect)
 
 #if defined(__GNUC__) && __GNUC__ > 3 && defined(__GNUC_MINOR__) && __GNUC_MINOR__ > 4
@@ -58,40 +76,52 @@ typedef double real;
 #endif
 
 #ifdef NDEBUG
-#  define GEODE_ALWAYS_INLINE __attribute__ ((always_inline))
+  #define GEODE_ALWAYS_INLINE __attribute__ ((always_inline))
 #else
-#  define GEODE_ALWAYS_INLINE
+  #define GEODE_ALWAYS_INLINE
 #endif
 
 #if !defined(__clang__)
-#  define GEODE_COLD __attribute__ ((cold))
+  #define GEODE_COLD __attribute__ ((cold))
 #else
-#  define GEODE_COLD
+  #define GEODE_COLD
+#endif
+
+
+// Test for attributes using fallback if unable to test directly  
+#ifdef __has_attribute
+#define GEODE_TRY_HAS_ATTRIBUTE(attribute,fallback) __has_attribute(attribute)
+#else
+#define GEODE_TRY_HAS_ATTRIBUTE(attribute,fallback) (fallback)
+#endif
+
+#if defined(NDEBUG) && GEODE_TRY_HAS_ATTRIBUTE(flatten, !defined(__clang__))
+  #define GEODE_FLATTEN __attribute__ ((flatten))
+#else
+  #define GEODE_FLATTEN
 #endif
 
 #ifdef __clang__
-#  define GEODE_HAS_FEATURE(feature) __has_feature(feature)
-#  define GEODE_HAS_INCLUDE __has_include
+  #define GEODE_HAS_FEATURE(feature) __has_feature(feature)
 #else
-#  define GEODE_HAS_FEATURE(feature) false
-#  define GEODE_HAS_INCLUDE(header) false
+  #define GEODE_HAS_FEATURE(feature) 0
 #endif
 
-#if defined(NDEBUG) && (!defined(__clang__) || GEODE_HAS_FEATURE(flatten))
-#  define GEODE_FLATTEN __attribute__ ((flatten))
+#if !defined(__clang__) || GEODE_HAS_FEATURE(cxx_noexcept) || (defined(_MSC_VER) && _MSC_VER >= 1900)
+  #define GEODE_NOEXCEPT noexcept
 #else
-#  define GEODE_FLATTEN
+  #define GEODE_NOEXCEPT
 #endif
 
-#if !defined(__clang__) || GEODE_HAS_FEATURE(cxx_noexcept)
-#  define GEODE_NOEXCEPT noexcept
-#else
-#  define GEODE_NOEXCEPT
+#define GEODE_ALIGNED(n) alignas(n)
+
+#else // not __GNUC__
+#define GEODE_GNUC_ONLY(...)
+
+#if _MSC_VER >= 1700
+#define _SCL_SECURE_NO_WARNINGS
+#define GEODE_VARIADIC
 #endif
-
-#define GEODE_ALIGNED(n) __attribute__((aligned(n)))
-
-#else // _WIN32
 
 #ifndef GEODE_SINGLE_LIB
 #define GEODE_EXPORT __declspec(dllexport)
@@ -114,10 +144,44 @@ typedef double real;
 #define GEODE_UNREACHABLE(...) GEODE_FATAL_ERROR(__VA_ARGS__)
 #define GEODE_NOEXCEPT
 #define GEODE_COLD
-#define GEODE_FORMAT
+#define GEODE_FORMAT(type,fmt,list)
 #define GEODE_EXPECT(value,expect) (value)
-#define GEODE_ALIGNED(n) __declspec(align(n))
+#define GEODE_ALIGNED(n) alignas(n)
 
+#endif
+
+#if defined(__has_include)
+// If we have access to the __has_include macro, use that to check for availability
+#define GEODE_HAS_CPP11_STD_HEADER(header) __has_include(header)
+#elif defined(__GNU__) || (defined(_MSC_VER) && (_MSC_VER >= 1700)) || defined(__MINGW32__)
+// Assume recent versions of MSVC or gcc will be used with C++11 stdlib
+#define GEODE_HAS_CPP11_STD_HEADER(header) 1
+#else
+// In other cases, assume not available
+#define GEODE_HAS_CPP11_STD_HEADER(header) 0
+#endif
+
+#if defined(GEODE_SSE)
+  #ifdef _MSC_VER
+    #ifdef _M_X64
+    // 64 bit targets should always have SSE support
+    #else
+      #if !(_M_IX86_FP >= 2)
+      #error "GEODE_SSE enabled, but compiler doesn't indicate SSE support on targeted architecture. Either disable GEODE_SSE or change target architecture"
+      #endif
+    #endif
+    // MSVC doesn't have a different target to enable the SSE4.1 extensions so we assume they are available
+    #define GEODE_SSE4_1
+  #else // not _MSC_VER
+    #ifndef __SSE__
+      #error "GEODE_SSE enabled, but compiler doesn't define __SSE__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
+    #endif
+    #ifdef __SSE4_1__
+      #define GEODE_SSE4_1
+    #else
+      #error "GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
+    #endif
+  #endif
 #endif
 
 // Mark symbols when building geode
@@ -141,4 +205,38 @@ typedef double real;
 // On non-windows, typeid needs to be exported for each class
 #define GEODE_CORE_CLASS_EXPORT GEODE_EXPORT
 
+#endif
+
+#if defined(_MSC_VER) && ((_MSC_VER < 1900) || (_MSC_VER == 1900 && _MSC_BUILD <= 1))
+// The current beta of VS2015 still only partial supports constexpr so we use these macros to dodge trouble cases
+// Use GEODE_CONSTEXPR_INCOMPLETE to control workarounds that should be removed in the future
+#define GEODE_CONSTEXPR_INCOMPLETE 1
+// Use GEODE_CONSTEXPR_UNLESS_MSVC for cases where substituting const is sufficient
+#define GEODE_CONSTEXPR_IF_NOT_MSVC const
+#else
+#define GEODE_CONSTEXPR_INCOMPLETE 0
+#define GEODE_CONSTEXPR_IF_NOT_MSVC constexpr
+#endif
+
+#ifdef _MSC_VER
+#define GEODE_IF_MSVC(...) __VA_ARGS__
+#define GEODE_IF_NOT_MSVC(...)
+#else
+#define GEODE_IF_MSVC(...)
+#define GEODE_IF_NOT_MSVC(...) __VA_ARGS__
+#endif
+
+#if defined(__clang__)
+// Version of clang provided with XCode on OSX doesn't support thread_local, so we have to use __thread
+// We default to this behavior for all versions of clang instead of trying to special case
+#define GEODE_THREAD_LOCAL __thread
+#else
+// MSVC has a similar '__declspec(thread)', however Microsoft recommends using 'thread_local' instead
+// According to Microsoft's documentation, accessing thread local storage allocated in a dynamically loaded library will cause failures on pre-Vista versions of Windows
+#define GEODE_THREAD_LOCAL thread_local
+#endif
+
+#ifndef GEODE_VARIADIC
+#error Support for compilers without C++11 features has not been actively maintained and likely requires significant updating
+#error If you would like geode to continue supporting older compilers please let us know as we are considering removing this support completely
 #endif

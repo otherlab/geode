@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import platform
 if platform.system()=='Windows':
-  import other_all as geode_wrap
+  from .. import geode_all as geode_wrap
 else:
   from .. import geode_wrap
 from numpy import inf

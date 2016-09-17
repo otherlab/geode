@@ -4,10 +4,8 @@
 #include <geode/utility/config.h> // Must be included first
 #include <geode/utility/mpl.h>
 
-// If we're on clang, check for the right header directly.  If we're not,
-// any sufficient recently version of gcc should always have the right header.
-#if defined(__clang__) ? GEODE_HAS_INCLUDE(<type_traits>) : defined(__GNUC__)
-
+#if GEODE_HAS_CPP11_STD_HEADER(<type_traits>)
+#include <cstdint>
 #include <type_traits>
 #define GEODE_TYPE_TRAITS_NAMESPACE std
 namespace geode {
@@ -17,7 +15,6 @@ template<bool c,class T=void> struct disable_if_c : public std::enable_if<!c,T> 
 template<class C,class T=void> struct enable_if : public std::enable_if<C::value,T> {};
 template<class C,class T=void> struct disable_if : public std::enable_if<!C::value,T> {};
 }
-
 #else
 
 // No <type_traits> header, so pull everything out of boost.  We need at least boost-1.47.
@@ -80,16 +77,20 @@ using GEODE_TYPE_TRAITS_NAMESPACE::is_integral;
 using GEODE_TYPE_TRAITS_NAMESPACE::is_pointer;
 using GEODE_TYPE_TRAITS_NAMESPACE::is_reference;
 using GEODE_TYPE_TRAITS_NAMESPACE::is_same;
+using GEODE_TYPE_TRAITS_NAMESPACE::is_signed;
+using GEODE_TYPE_TRAITS_NAMESPACE::is_unsigned;
+using GEODE_TYPE_TRAITS_NAMESPACE::make_unsigned;
 using GEODE_TYPE_TRAITS_NAMESPACE::remove_const;
 using GEODE_TYPE_TRAITS_NAMESPACE::remove_pointer;
 using GEODE_TYPE_TRAITS_NAMESPACE::remove_reference;
 using GEODE_TYPE_TRAITS_NAMESPACE::result_of;
 
-// The following don't necessary exist on Mac, so implement them ourselves if possible
+// Provide is_trivially_destructible as alias of has_trivial_destructor or manually implement it
 #ifdef __GNUC__
-template<class T> struct has_trivial_destructor : public mpl::bool_<__has_trivial_destructor(T)> {};
+// The following don't necessary exist on Mac, so implement them ourselves if possible
+template<class T> struct is_trivially_destructible : public mpl::bool_<__has_trivial_destructor(T)> {};
 #else
-using GEODE_TYPE_TRAITS_NAMESPACE::has_trivial_destructor;
+using GEODE_TYPE_TRAITS_NAMESPACE::is_trivially_destructible;
 #endif
 
 // Add a few more useful ones
@@ -100,6 +101,7 @@ template<class T> struct is_smart_pointer : public is_pointer<T> {};
 
 // Unsigned ints with the right number of bits
 template<int bits> struct uint_t;
+
 #define UINT(bits) template<> struct uint_t<bits> { typedef uint##bits##_t exact; };
 UINT(8)
 UINT(16)

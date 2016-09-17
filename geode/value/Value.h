@@ -41,7 +41,7 @@ private:
     Action* action;
   };
   mutable Link* actions; // linked list of links to actions which depend on us
-  static Link* pending; // linked list of pending signals
+  static GEODE_THREAD_LOCAL Link* pending; // linked list of pending signals
 
 protected:
   GEODE_CORE_EXPORT ValueBase(string const &name = string());
@@ -118,6 +118,7 @@ private:
   ValueBase& set_step_py(PyObject* s);
   Ref<> get_default() const;
   Ref<> get_allowed() const;
+  Ref<> peek_py() const;
 #endif
 };
 

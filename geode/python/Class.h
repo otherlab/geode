@@ -178,11 +178,11 @@ public:
 
   template<class Method> Class&
   method(const char* name, Method method) {
-#ifndef _WIN32
-    add_descriptor(type,name,wrap_method<T,Method>(name,method));
+#ifdef GEODE_VARIADIC
+    add_descriptor(type,name,wrap_method<T,Method>(name, method));
 #else
-    typedef typename DerivedMethod<Self,Method>::type DM;
-    add_descriptor(type,name,wrap_method<T,Self>(name,(DM)method));
+    typedef typename geode::DerivedMethod<Self, Method>::type DM;
+    add_descriptor(type,name,wrap_method<T,  Self>(name, (DM)method));
 #endif
     return *this;
   }

@@ -12,7 +12,7 @@ template<class T> inline Vector<T,3> normal(const Vector<T,3>& x0,const Vector<T
 {return cross(x1-x0,x2-x0).normalized();}
 
 template<class TArray> inline typename EnableForSize<3,TArray,typename TArray::Element>::type normal(const TArray& X)
-{return normal(X(0),X(1),X(2));}
+{return normal(X[0],X[1],X[2]);}
 
 template<class T>
 class Plane

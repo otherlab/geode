@@ -17,7 +17,7 @@ if openmesh_enabled():
     f = trimesh.add_face(v0,v1,v2)
     assert f==0
     assert trimesh.n_faces()==1
-
+  
   def test_curvature():
     r = e
     known = [('sphere',       sphere_mesh(4,radius=r),1/r,1/(r*r))
@@ -37,7 +37,21 @@ if openmesh_enabled():
         Ke = relative_error(K,Ka,absolute=1e-6)
         print 'K error = %g (range %g %g, correct %g)'%(Ke,Ka.min(),Ka.max(),K)
         assert Ke<2e-3
+  
+  # Ensure readers and writers in OpenMesh were installed
+  def test_openmesh_formats():
+    # Statically linking against OpenMesh requires defining OM_STATIC_BUILD
+    # If this isn't defined, readers and writers are never instantiated and thus aren't attached to the IOManager
+    # IOManager has a can_read function, but this is broken for many of the formats so we can't use it
+    # Checking the qt filters should ensure that we have attached formats to OpenMesh's IOManager
+    read_filter = openmesh_qt_read_filters()
+    write_filter = openmesh_qt_write_filters()
+    all_extensions = ['*.off ', '*.obj ', '*.ply ', '*.stl ', '*.stla ', '*.stlb ', '*.om ']
+    for ext in all_extensions:
+      assert read_filter.find(ext) != -1
+      assert write_filter.find(ext) != -1 or (ext == '*.stl ') # .stl appears to work, but filter seems to want stla/stlb (alpha/binary)
 
 if __name__=='__main__':
   test_trimesh()
   test_curvature()
+  test_openmesh_formats()

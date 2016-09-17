@@ -3,9 +3,7 @@
 
 #include <geode/utility/config.h>
 
-// If we're on clang, check for the right header directly.  If we're not,
-// any sufficient recently version of gcc should always have the right header.
-#if defined(__clang__) ? GEODE_HAS_INCLUDE(<unordered_set>) : defined(__GNUC__)
+#if GEODE_HAS_CPP11_STD_HEADER(<unordered_set>) && GEODE_HAS_CPP11_STD_HEADER(<unordered_map>)
 #include <unordered_set>
 #include <unordered_map>
 #define GEODE_UNORDERED_NAMESPACE std

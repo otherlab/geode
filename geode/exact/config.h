@@ -63,7 +63,6 @@ template<int d> struct ImplicitlyPerturbed {
   ValueType seed() const { return value_; }
   ValueType value() const { return value_; }
 
-  ImplicitlyPerturbed() {}
   template<class... Args> explicit ImplicitlyPerturbed(const Args... value_args) : value_(value_args...) {}
 };
 
@@ -75,7 +74,6 @@ struct ImplicitlyPerturbedCenter {
   Vector<Quantized, 3> seed() const { return data; }
   Vector<Quantized, 2> value() const { return data.xy(); }
 
-  ImplicitlyPerturbedCenter() {}
   template<class... Args> explicit ImplicitlyPerturbedCenter(const Args... value_args) : data(value_args...) {}
 };
 

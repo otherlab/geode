@@ -1,7 +1,7 @@
 // Floating point rounding mode control
 #pragma once
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__MINGW32__) 
 #include <fenv.h>
 #else
 #include <float.h>
@@ -15,7 +15,7 @@ namespace geode {
 // Be careful when using fesetround as Clang can 'optimize' your code by moving
 // operations past the fesetround call and has no safe mechanism to prevent this.
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 
 // Teach Windows that we care about floating point rounding modes
 #pragma fenv_access (on)

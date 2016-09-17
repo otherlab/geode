@@ -13,7 +13,7 @@ private:
   template<class T> friend void set_value_and_dependencies(ValueRef<T> &, T const &, vector<ValueBase const*> const &);
   friend class ValueBase;
   mutable ValueBase::Link* inputs_; // linked list of inputs we depend on
-  GEODE_CORE_EXPORT static const Action* current; // if nonzero, pulled values link themselves to this automatically
+  GEODE_CORE_EXPORT static GEODE_THREAD_LOCAL const Action* current; // if nonzero, pulled values link themselves to this automatically
   mutable bool executing; // are we in the middle of execution?
 protected:
   class Executing {
