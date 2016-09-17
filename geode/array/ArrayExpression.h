@@ -21,7 +21,7 @@ template<int m_> struct SameSizeHelper<m_> { enum {m = m_}; };
 template<int m_,class A,class... Args> struct SameSizeHelper<m_,A,Args...> {
   enum {Am = SizeIfConstant<typename remove_const_reference<A>::type>::m};
   static_assert(m_<0 || Am<0 || m_==Am,"");
-  enum {m = geode::SameSizeHelper<(m_<0)?Am:m_,Args...>::m};
+  enum {m = SameSizeHelper<m_<0?Am:m_,Args...>::m};
 };
 #else
 template<int m_,class A0=void,class A1=void> struct SameSizeHelper {

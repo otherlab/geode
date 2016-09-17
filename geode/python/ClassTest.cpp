@@ -56,8 +56,8 @@ public:
     if (pythis != 0) {
       uint8_t const *p = (uint8_t const *)pythis;
       for (int i = -24; i < (int)(sizeof(ClassTest) + sizeof(PyObject) + pytype.tp_weaklistoffset); i += 8) {
-          std::cout << format("0x%016" PRIxPTR " (%4d): %02x %02x %02x %02x  %02x %02x %02x %02x",
-                            (uintptr_t)(p+i), i, p[i], p[i+1], p[i+2], p[i+3], p[i+4], p[i+5], p[i+6], p[i+7]) << std::endl;
+        std::cout << format("0x%016x (%4d): %02x %02x %02x %02x  %02x %02x %02x %02x",
+                            p+i, i, p[i], p[i+1], p[i+2], p[i+3], p[i+4], p[i+5], p[i+6], p[i+7]) << std::endl;
       }
     }
     #endif

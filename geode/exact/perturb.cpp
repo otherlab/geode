@@ -294,21 +294,12 @@ void snap_divs(RawArray<Quantized> result, RawArray<mp_limb_t,2> values, const b
     const auto s = take_sqrt ? sqrt_helper(num,trim_q) : trim_q;
 
     // Verify that result lies in [-exact::bound,exact::bound];
-    constexpr int ratio = sizeof(ExactInt)/sizeof(mp_limb_t);
+    const int ratio = sizeof(ExactInt)/sizeof(mp_limb_t);
     static_assert(ratio<=2,"");
     if (s.size() > ratio)
       goto overflow;
-
-
-#ifdef _MSC_VER
-    static_assert(ratio==1, "Need to handle ratio==2 case for MSVC");
-    // MSVC isn't smart enough to elide evaluation of upper word when ratio is 1
-    const auto nn = s[0],
-               n = (1+nn)/2;
-#else
     const auto nn = ratio==2 && s.size()==2 ? s[0]|ExactInt(s[1])<<8*sizeof(mp_limb_t) : s[0],
                n = (1+nn)/2;
-#endif
     if (uint64_t(n) > uint64_t(exact::bound))
       goto overflow;
 
@@ -536,7 +527,7 @@ template<int m> static void perturbed_sign_test() {
 
 static void nasty_ratio(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exact<1>,2>> X) {
   assert(result.m==2 && X.size()==2);
-  remove_const_reference<decltype(X[0])>::type p1;
+  typename remove_const_reference<decltype(X[0])>::type p1;
   for (int i=0;i<2;i++)
     mpz_set(asarray(p1[i].n),Exact<1>(perturbation<2>(1,nasty_index)[i]));
   const auto d = edet(X[0],p1);
@@ -548,7 +539,7 @@ static void nasty_ratio(RawArray<mp_limb_t,2> result, RawArray<const Vector<Exac
 }
 static void nasty_denominator(RawArray<mp_limb_t> result, RawArray<const Vector<Exact<1>,2>> X) {
   assert(X.size()==2);
-  remove_const_reference<decltype(X[0])>::type p1;
+  typename remove_const_reference<decltype(X[0])>::type p1;
   for (int i=0;i<2;i++)
     mpz_set(asarray(p1[i].n),Exact<1>(perturbation<2>(1,nasty_index)[i]));
   const auto d = edet(X[0],p1);

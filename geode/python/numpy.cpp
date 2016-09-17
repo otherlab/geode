@@ -109,32 +109,6 @@ void throw_array_conversion_error(PyObject* object, int flags, int rank_range, P
 
 void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray_Descr* descr) {
   ASSERT_IMPORTED();
-
-#if (NPY_FEATURE_VERSION == 0x00000009) && (NPY_ABI_VERSION == 0x01000009) && defined(_WIN64)
-  // In NumPy 1.9.1 it appears that there are very few cases where it is possible to get arrays with the NPY_ARRAY_ALIGNED flag set
-  // As a workaround we don't require NPY_ARRAY_ALIGNED as long as data is sufficiently aligned for our needs (SSE which needs 16 bytes)
-  // On 64 bit windows it appears that arrays allocated by NumPy are already aligned to 16 bytes so this will always work
-  // Note: Since conversion to uintptr_t could involve adding 3 (or some other invertible transform) this isn't technically portable behavior,
-  //   however std::align is messy to use as a predicate since it mutates arguments. But I'm willing to bet this will work anywhere we care
-  if (((uintptr_t)(static_cast<void*>(PyArray_DATA((PyArrayObject*)object))) % 16) == 0) {
-    flags &= ~NPY_ARRAY_ALIGNED; // Clear the array aligned flag since we are aligned enough
-  }
-  else {
-    // Alignment flag should trigger an exception from throw_array_conversion_error, but we emit a warning here to help track down the cause
-    GEODE_WARNING("NumPy array alignment bug workaround failed!");
-  }
-#elif (NPY_FEATURE_VERSION == 0x00000006) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
-  // This config seems to works
-#elif (NPY_FEATURE_VERSION == 0x0000000A) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
-  // As does this one
-#else
-  // Maintainers of NumPy are aware of alignment issues and I think have a fix for the next release
-  // The above workaround shouldn't be necessary if using an older or newer version of NumPy
-  // However, instead of mysterious runtime errors we spit out a compile time error here
-  // If you test this on a particular configuration you should add ifdefs to whitelist it here or use the workaround above
-  #error Alignment for this version of NumPy has not been tested.
-#endif
-
   const int rank = PyArray_NDIM((PyArrayObject*)object);
   const int min_rank = rank_range<0?-rank_range-1:rank_range,max_rank=rank_range<0?100:rank_range;
   if (!PyArray_CHKFLAGS((PyArrayObject*)object,flags) || min_rank>rank || rank>max_rank || !PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*)object),descr))
@@ -222,8 +196,7 @@ Tuple<Array<uint8_t>,size_t> fill_numpy_header(int rank,const npy_intp* dimensio
   size_t total_size = 1;
   for (int i=0;i<rank;i++) {
     total_size *= dimensions[i];
-    // TODO: This could walk off the end of our buffer if our array had about 90 dimensions (unlikely, but possible if most of the dimensions were 1)
-    len += sprintf(base+len,"%" PRIdPTR "%s",dimensions[i],rank==1||i<rank-1?",":"");
+    len += sprintf(base+len,"%ld%s",long(dimensions[i]),rank==1||i<rank-1?",":"");
   }
   strcpy(base+len,"), }");
   len+=4;

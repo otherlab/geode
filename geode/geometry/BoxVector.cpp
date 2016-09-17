@@ -126,7 +126,7 @@ static void bounding_box_py_helper(const int depth, Array<Box<real>>& box, PyObj
     if (!box.size())
       box.resize(int(d));
     if (box.size() != d)
-      throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),static_cast<int>(d)));
+      throw TypeError(format("bounding_box: vectors of different sizes found, including %d and %d",box.size(),d));
     const ssize_t count = PyArray_SIZE((PyArrayObject*)array.get())/d;
     GEODE_ASSERT(0<=count && count<=numeric_limits<int>::max());
     const real* data = (const real*)PyArray_DATA((PyArrayObject*)array.get());

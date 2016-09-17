@@ -5,7 +5,7 @@
 
 #include <geode/utility/config.h>
 #include <algorithm>
-#ifdef GEODE_SSE
+#ifdef __SSE__
 #include <xmmintrin.h>
 #endif
 namespace geode {
@@ -14,7 +14,7 @@ namespace geode {
 using ::std::min;
 
 // Forward declarations required by clang
-#ifdef GEODE_SSE
+#ifdef __SSE__
 inline __m128 min(__m128 a, __m128 b);
 inline __m128i min(__m128i a, __m128i b);
 #endif

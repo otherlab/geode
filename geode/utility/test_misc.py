@@ -59,13 +59,9 @@ def test_cache_method():
   assert a.n==2
   assert b.n==1
 
-def test_geode_endian():
-  assert geode_endian_matches_native()
-
 if __name__=='__main__':
   test_cache_method()
   test_partition_loop()
   test_base64()
   test_curry()
   test_format()
-  test_geode_endian()

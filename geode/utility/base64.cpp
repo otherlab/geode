@@ -65,7 +65,7 @@ string base64_decode(const string& src) {
   if (!src.size())
     return dst;
   if (src.size()&3)
-    throw ValueError(format("base 64 encoded string has length %" GEODE_PRIUSIZE " not a multiple of 4",src.size()));
+    throw ValueError(format("base 64 encoded string has length %d not a multiple of 4",src.size()));
   const auto dst_size = src.size()/4*3-(src[src.size()-1]=='=')-(src[src.size()-2]=='=');
   GEODE_ASSERT(dst_size<size_t(numeric_limits<int>::max()));
   dst.resize(int(dst_size));

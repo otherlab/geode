@@ -1,41 +1,30 @@
 // SSE helper routines
 #pragma once
 
-#include <geode/utility/config.h>
 #include <geode/math/copysign.h>
 #include <geode/math/isfinite.h>
 #include <geode/utility/type_traits.h>
 #include <iostream>
 
-#ifdef GEODE_SSE
+#ifdef __SSE__
 #include <xmmintrin.h>
 #include <emmintrin.h>
-#include <immintrin.h>
-#ifdef GEODE_SSE4_1
+#ifdef __SSE4_1__
 #include <smmintrin.h>
 #endif
 namespace geode {
 
 // Declaring these is legal on Windows, and they already exist for clang/gcc.
-#if defined(_WIN32) && !defined(__MINGW32__)
-static inline __m128 operator+(__m128  a, __m128 b) { return _mm_add_ps(a,b); }
-static inline __m128 operator-(__m128  a, __m128 b) { return _mm_sub_ps(a,b); }
-static inline __m128 operator*(__m128  a, __m128 b) { return _mm_mul_ps(a,b); }
+#ifdef _WIN32
+static inline __m128 operator+(__m128 a, __m128 b) { return _mm_add_ps(a,b); }
+static inline __m128 operator-(__m128 a, __m128 b) { return _mm_sub_ps(a,b); }
+static inline __m128 operator*(__m128 a, __m128 b) { return _mm_mul_ps(a,b); }
 static inline __m128 operator/(__m128 a, __m128 b) { return _mm_div_ps(a,b); }
 static inline __m128i operator&(__m128i a, __m128i b) { return _mm_and_si128(a,b); }
 static inline __m128i operator^(__m128i a, __m128i b) { return _mm_xor_si128(a,b); }
 static inline __m128i operator|(__m128i a, __m128i b) { return _mm_or_si128(a,b); }
 static inline __m128i operator~(__m128i a) { return _mm_andnot_si128(a,_mm_set1_epi32(~0)); }
 static inline __m128 operator-(__m128 a) { return _mm_castsi128_ps(_mm_castps_si128(a)^_mm_set1_epi32(1<<31)); }
-
-static inline __m128d operator+(__m128d a, __m128d b) { return _mm_add_pd(a,b); }
-static inline __m128d operator-(const __m128d a, const __m128d b) { return _mm_sub_pd(a,b); }
-static inline __m128d operator*(__m128d a, __m128d b) { return _mm_mul_pd(a,b); }
-static inline __m128d operator/(__m128d a, __m128d b) { return _mm_div_pd(a,b); }
-
-static inline __m128d operator-(__m128d a) { return _mm_castsi128_pd(_mm_castpd_si128(a)^_mm_set1_epi64x(0x8000000000000000L)); }
-static inline __m128d operator+=(__m128d& a, __m128d b) { return a = (a+b); }
-static inline __m128i operator|=(__m128i& a, __m128i b) { return a = (a|b); }
 #endif
 
 // Mark __m128 and __m128i as fundamental types
@@ -151,7 +140,7 @@ static inline __m128d sqrt(__m128d a) {
   return _mm_sqrt_pd(a);
 }
 
-#ifdef GEODE_SSE4_1
+#ifdef __SSE4_1__
 static inline __m128 ceil(__m128 a) {
   return _mm_ceil_ps(a);
 }

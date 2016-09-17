@@ -12,7 +12,6 @@
 #include <geode/utility/forward.h>
 #include <geode/math/max.h>
 #include <new>
-#include <stdlib.h>
 namespace geode {
 
 #ifdef GEODE_VARIADIC

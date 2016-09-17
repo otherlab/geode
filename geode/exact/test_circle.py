@@ -53,10 +53,6 @@ def subplot_arcs(arcs,subplot_index=111,title=None,full=True,label=True,dots=Tru
   draw_circle_arcs(arcs,label=label,dots=dots,jitter=jitter)
   ax.set_aspect('equal')
 
-# py.test doesn't seem to like running C++ functions directly (no __name__ property) so we have a wrapper here
-def test_circle_arc_area():
-  circle_arc_area_test()
-
 def test_circle_reverse():
   random.seed(1240405)
   for k in [2,3,4,10,100]:
@@ -70,7 +66,6 @@ def test_circle_reverse():
 def test_circle_quantize():
   random_circle_quantize_test(12312) # Test quantization for complete circles
   random.seed(37130)
-  # TODO: This should be combined with check_circle_quantize
   arcs0 = random_circle_arcs(1,100)
   #arcs0 = random_circle_arcs(20,5)
   arcs1 = circle_arc_quantize_test(arcs0)
@@ -89,6 +84,7 @@ def test_circle_quantize():
     subplot_arcs(arcs0, 121, "Before Quantization", **plot_args)
     subplot_arcs(arcs1, 122, "After Quantization", **plot_args)
     pylab.show()
+
 
   assert ex<1e-6 and eq<3e-5 #This threshold is pretty agressive and might not work for many seeds
 
@@ -200,210 +196,65 @@ def test_single_circle(show_results=False):
         subplot_arcs(overlap_arcs, 122, "Output of overlaps", **plot_args)
         pylab.show()
 
-# Compute t such that offset_arcs(arcs,-(t+tolerance/2)) will be empty and offset_arcs(arcs,-(t-tolerance/2) will not
-def find_thickness(arcs, tolerance):
-  if len(arcs) == 0:
-    return 0.
-  t_hi = 1.
-  while len(offset_arcs(arcs, -t_hi)) > 0:
-    t_hi *= 2.
-  t_lo = 0.
-  while abs(t_hi - t_lo) > tolerance:
-    t = 0.5*(t_lo+t_hi)
-    if len(offset_arcs(arcs, -t)) == 0:
-      t_hi = t
-    else:
-      t_lo = t
-    # These checks are commented out because they are expensive, but they should always be true inside this loop:
-    # assert len(offset_arcs(arcs, -t_hi)) == 0
-    # assert len(offset_arcs(arcs, -t_lo)) > 0
-  return 0.5*(t_lo + t_hi)
 
-def check_offset_error(arcs):
-  quantization_unit = circle_arc_quantization_unit(arcs)
-  # Offset should introduce errors bounded by a small constant number of quantization unit plus some floating point rounding errors
-  # I think the guaranteed error bound is probably higher than this, but I haven't found a test case where this fails
-  error_per_offset = 5.*quantization_unit
+def test_offsets():
+  random.seed(441424)
+  arcs0 = circle_arc_union(random_circle_arcs(10,10))
 
-  def thickness_ok(arcs, expected, max_error):
-    thickness_lo = expected - max_error
-    thickness_hi = expected + max_error
-    return len(offset_arcs(arcs, -thickness_lo)) > 0 \
-     and len(offset_arcs(arcs, -thickness_hi)) == 0
-
-  # Find starting thickness
-  starting_thickness = find_thickness(arcs,quantization_unit)
-  # Offset inward by a random 
-  delta = -starting_thickness*random.uniform(0.1,0.9)
-  new_arcs = offset_arcs(arcs,delta)
-
-  expected_new_thickness = starting_thickness + delta
-  if not thickness_ok(new_arcs, expected_new_thickness, error_per_offset):
-    new_thickness = find_thickness(new_arcs, quantization_unit)
-    error = abs(new_thickness - expected_new_thickness)
-    print "Starting thickness:",starting_thickness
-    print "New thickness:",new_thickness
-    print "Expected new thickness:",expected_new_thickness
-    error_msg = "For delta of %s, resulting error = %s (%s quantization units)" % (delta, error, error/quantization_unit)
-    if 0:
-      import pylab
-      pylab.suptitle(error_msg)
-      subplot_arcs(arcs, 121, "Initial", full=False)
-      subplot_arcs(new_arcs, 122, "Offset", full=False)
-      pylab.show()
-    assert False
-
-def fuzzy_arcs_equal(arcs0, arcs1, allowed_error_multiplier):
-  # Compare two sets of arcs that should be roughly the same shape up to noise introduced by quantization and inexact constructions
-  # allowed_error_multiplier should be in units of round trip error for quantization->offset->unquantization
-  # Actual errors appear to be substantially higher than expected in many cases and I'm not sure why!
-  combined = Nested.concatenate(arcs0, arcs1)
-  quantization_scale = circle_arc_quantization_unit(combined)
-  error_per_opp = quantization_scale*(circle_arc_max_quantization_error_guess()+circle_arc_max_offset_error_guess())
-  # xor arcs to get difference
-  delta = split_arcs_by_parity(combined)
-  # We might have thin features around edges, but a small negative offset should erase everything
-  max_error = (allowed_error_multiplier+1)*error_per_opp
-  squeezed_delta = offset_arcs(delta,-max_error) # Add additional margin for error during offsetting
-  similar = (len(squeezed_delta) == 0)
-  area_error = abs(circle_arc_area(arcs0) - circle_arc_area(arcs1))
-  # Sanity check that similar arcs have similar area
-  # In theory area_error tolerance should grow proportional to max_error*arcs_perimeter_length, but a constant works for current usage
-  if similar and not area_error < 3e-5:
-    if 0:
-      import pylab
-      pylab.suptitle("area_error: %s" % area_error)
-      subplot_arcs(combined, 121, "Combined", full=False)
-      subplot_arcs(delta, 122, "delta", full=False)
-      pylab.show()
-    assert False
-  return similar
-
-def check_positive_offsets(test_arcs, shell_delta=0.2, num_shells=5):
-  assert circle_arc_area(test_arcs) > 0 # These tests assume we start with a positive shape
-  assert shell_delta > 0 # These tests assume positive offsets
   print "Offsetting arcs"
-  # Test a single outward offset
-  outward_arcs = offset_arcs(test_arcs, 0.5*shell_delta)
-  assert circle_arc_area(outward_arcs) > circle_arc_area(test_arcs)
+  arcs1 = offset_arcs(arcs0, 0.1)
+  assert circle_arc_area(arcs1) > circle_arc_area(arcs0)
 
   print "Offsetting arcs with shells"
-  shells = offset_shells(test_arcs, shell_delta, num_shells)
-  assert num_shells == len(shells) # For positive input arcs and offset we should always get back requested number of shells
-  shells = [(shells[i], shell_delta*(i+1)) for i in range(len(shells))] # Zip shells and offsets
+  shells = offset_shells(arcs0, 0.2, 10)
+  # Check that we have monatonically increasing area
   prev_area, prev_arcs = 0, []
-  for shell,offset_d in [(test_arcs,0.), (outward_arcs,0.5*shell_delta)] + shells:
-    area = circle_arc_area(shell)
-    if not (area > prev_area):
+  for arcs in [arcs0, arcs1] + shells:
+    area = circle_arc_area(arcs)
+
+    if not area > prev_area:
       error = "Positive offset caused decrease in area from %g to %g" % (prev_area, area)
       print error
-      if 0: # Enable this to visualize arcs
+      if 0:
         import pylab
         pylab.suptitle(error)
         subplot_arcs(prev_arcs, 121, "Previous shell", full=False)
-        subplot_arcs(shell, 122, "After offset", full=False)
+        subplot_arcs(arcs, 122, "After offset", full=False)
         pylab.show()
       assert False
-    if offset_d >= shell_delta:
-      # Offset of the same distance starting at test_arcs should be almost exactly the same result
-      single_step_offset = offset_arcs(test_arcs, offset_d)
-      shell_steps = offset_d / shell_delta
-      quantization_unit = circle_arc_quantization_unit(shell)
+    prev_area, prev_arcs = area, arcs
 
-      # This check fails in some cases and I'm not sure why!
-      if not fuzzy_arcs_equal(shell, single_step_offset, shell_steps + 1):
-        combined = Nested.concatenate(shell,single_step_offset)
-        delta = split_arcs_by_parity(combined)
-        quantization_unit = circle_arc_quantization_unit(combined)
-        t = find_thickness(delta, quantization_unit)
-        print "Error size: %s (%s quantization units)" % (t, t/quantization_unit)
-        if 0: # Enable this to visualize arcs
-          import pylab
-          pylab.suptitle("Area difference: %s" % abs(circle_arc_area(shell)-circle_arc_area(single_step_offset)))
-          subplot_arcs(test_arcs, 131, "Base Input", full=False)
-          subplot_arcs(shell, 132, "Shell based offset", full=False)
-          subplot_arcs(single_step_offset, 133, "Direct offset", full=False)
-          pylab.figure()
-          subplot_arcs(delta, 121, "Delta", full=False)
-          subplot_arcs(offset_arcs(delta,-quantization_unit*5*(shell_steps+1)), 122, "Bad Delta", full=False)
-          pylab.show()
-        assert False
-    prev_area, prev_arcs = area, shell
-
-  print "Offsetting open arcs"
-  open_offset = offset_open_arcs(test_arcs, 0.001) # Mostly this just ensures we don't hit any asserts
-  assert circle_arc_area(open_offset) > 0 # We should at least have a positive area
-  total_offset = 0
-
-def test_positive_offsets():
-  # Check that offset of empty arcs is empty
-  empty_arcs = to_arcs([[]])
-  assert len(offset_arcs(empty_arcs, 1.)) == 0
-
-  unit_circle = to_arcs([[((1.,0.),1.),((-1.,0.),1.)]]) # Unit circle
-  check_positive_offsets(unit_circle)
-
-  random.seed(44122)
-  arcs0 = circle_arc_union(random_circle_arcs(10,10))
-  check_positive_offsets(arcs0)
-
-def check_negative_offsets(test_arcs):
-  d = 0.4
-  # Offset inward then outward would normally erode sharp features, but we can use a positive offset to generate a shape with no sharp features
-  outer = offset_arcs(test_arcs, d*1.5) # Ensure features big enough to not disappear if we inset/offset again
-  inset = offset_arcs(outer, -d)
-  reset = offset_arcs(inset, d)
-  outer_area = circle_arc_area(outer)
-  inset_area = circle_arc_area(inset)
-  reset_area = circle_arc_area(reset)
-  assert inset_area < outer_area # Offset by negative amount should reduce area
-  if not fuzzy_arcs_equal(outer, reset, 2):
-    if 0:
-      import pylab
-      area_error = abs(outer_area - reset_area)
-      pylab.suptitle("Offset: %s, Area error:%s" % (sub_d, area_error))
-      print "outer_area:",outer_area
-      print "inset_area:",inset_area
-      print "reset_area:",reset_area
-      subplot_arcs(outer, 131, "outer", full=False)
-      subplot_arcs(inset, 132, "inset", full=False)
-      subplot_arcs(reset, 133, "reset", full=False)
-      pylab.show()
-    assert False
-  # Check that a large negative offset leaves nothing
-  empty_arcs = offset_arcs(test_arcs, -100.)
-  assert len(empty_arcs) == 0
+  print "Offsetting of open arcs"
+  arcs4 = offset_open_arcs(arcs0, 0.001) # Mostly this just ensures we don't hit any asserts
+  assert circle_arc_area(arcs4) > 0 # We should at least have a positive area
 
 def test_negative_offsets(seed=7056389):
+  print "Testing negative offset"
   random.seed(seed)
-  check_negative_offsets(random_circle_arcs(10,10)) # Test on some random arcs
-  
-  unit_circle = to_arcs([[((1.,0.),1.),((-1.,0.),1.)]]) # Unit circle
-  check_negative_offsets(unit_circle)
+  d = 0.4
+  # Offset inward then outward would normally erode sharp features, but we can use a positive offset to generate a shape with no sharp features
+  arcs0 = offset_arcs(random_circle_arcs(10,10), d*1.5) # Generate random arcs and ensure features big enough to not disappear if we inset/offset again
+  inset = offset_arcs(arcs0, -d)
+  reset = offset_arcs(inset, d)
+  arcs0_area = circle_arc_area(arcs0)
+  inset_area = circle_arc_area(inset)
+  reset_area = circle_arc_area(reset)
+  assert inset_area < arcs0_area # Offset by negative amount should reduce area
+  area_error = abs(arcs0_area - reset_area)
+  assert area_error < 2e-6
+  # xor input arcs and result after inset/offset to get difference
+  delta = split_arcs_by_parity(Nested.concatenate(arcs0,reset))
+  # We expect thin features around edges of input arcs, but a small negative offset should erase everything
+  squeezed_delta = offset_arcs(delta,-1e-6)
+  assert len(squeezed_delta) == 0
 
-# Endlessly test offset code for different pseudo-random circle arcs
-def fuzz_offsets():
-  # Start with an actually random seed so that multiple tests aren't redundant
-  random.seed()
-  seed = random.randint(0,2<<30)
-  while True:
-    # Put our random sequence in an easy to recreate state
-    print "Testing with seed",seed
-    random.seed(seed)
-    # This would benefit from a smarter version of random_circle_arcs that generates more special cases (full circles, straight lines, etc)
-    raw_random_arcs = random_circle_arcs(10,10)
-    check_circle_quantize(raw_random_arcs)
-    random_arcs = circle_arc_union(raw_random_arcs)
-    check_positive_offsets(random_arcs)
-    check_negative_offsets(random_arcs)
-    check_offset_error(random_arcs)
-    check_circle_quantize(random_arcs)
-    seed += 1
+  # Check that a large negative offset leaves nothing
+  empty_arcs = offset_arcs(random_circle_arcs(10,10), -100.)
+  assert len(empty_arcs) == 0
 
 if __name__=='__main__':
-  test_positive_offsets()
+  test_offsets()
   test_negative_offsets()
   test_circle_quantize()
   test_single_circle()
   test_circles()
-  fuzz_offsets()

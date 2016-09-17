@@ -79,6 +79,7 @@ template<class TV> class SolidMatrix : public SolidMatrixBase<TV> {
 public:
   GEODE_DECLARE_TYPE(GEODE_CORE_EXPORT)
   typedef SolidMatrixBase<TV> Base;
+  using Base::size;
 
   const Nested<const int> sparse_j;
   const Nested<TMatrix> sparse_A;

@@ -8,7 +8,7 @@ import types
 import os
 
 if platform.system()=='Windows':
-  from ..geode_all import resource_py,cache
+  from other_all import resource_py,cache
 else:
   from ..geode_wrap import resource_py,cache
 

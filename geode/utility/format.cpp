@@ -81,7 +81,7 @@ static void format_test() {
   const string digits_70 = "1234567890123456789012345678901234567890123456789012345678901234567890";
 
   for(size_t size = 0; size < 100; ++size) {
-    string test = format("%*s",static_cast<int>(size),"");
+    string test = format("%*s",size,"");
     GEODE_ASSERT(test.size() == size);
   }
 

@@ -45,34 +45,36 @@ public:
 
     T x,y,z;
 
-    constexpr Vector()
+    Vector()
         :x(),y(),z()
     {
         static_assert(sizeof(Vector)==3*sizeof(T),"");
     }
 
-    constexpr Vector(const T& x,const T& y,const T& z)
+    Vector(const T& x,const T& y,const T& z)
         :x(x),y(y),z(z)
     {}
 
-    constexpr Vector(const Vector& vector) = default;
+    Vector(const Vector& vector)
+        :x(vector.x),y(vector.y),z(vector.z)
+    {}
 
     template<class T2> explicit Vector(const Vector<T2,3>& vector)
         :x(T(vector.x)),y(T(vector.y)),z(T(vector.z))
     {}
 
-    explicit constexpr Vector(const Vector<T,2>& vector)
+    explicit Vector(const Vector<T,2>& vector)
         :x(vector.x),y(vector.y),z()
     {}
 
     template<class TVector,class TIndices>
-    explicit constexpr Vector(const IndirectArray<TVector,TIndices>& v)
+    explicit Vector(const IndirectArray<TVector,TIndices>& v)
         :x(v[0]),y(v[1]),z(v[2])
     {
         static_assert(is_same<T,typename IndirectArray<TVector,TIndices>::Element>::value && IndirectArray<TVector,TIndices>::m==3,"");
     }
 
-    explicit constexpr Vector(const Vector<T,2>& vector, const T& z)
+    explicit Vector(const Vector<T,2>& vector, const T& z)
       :x(vector.x),y(vector.y),z(z)
     {}
 
@@ -88,7 +90,10 @@ public:
         x=v[0];y=v[1];z=v[2];return *this;
     }
 
-    Vector& operator=(const Vector& v) = default;
+    Vector& operator=(const Vector& v)
+    {
+        x=v[0];y=v[1];z=v[2];return *this;
+    }
 
     constexpr int size() const
     {return 3;}
@@ -282,9 +287,6 @@ public:
 
     static Vector repeat(const T& constant)
     {return Vector(constant,constant,constant); }
-    
-    static Vector nans()
-    {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     // shifts vector (wrapped) such that element a is first
     Vector<T,3> roll(const int a) {

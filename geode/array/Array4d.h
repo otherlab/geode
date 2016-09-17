@@ -28,7 +28,7 @@ public:
 
 private:
   struct Unusable{};
-  typedef typename mpl::if_<geode::is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
+  typedef typename mpl::if_<is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
 public:
 
   Vector<int,4> shape;

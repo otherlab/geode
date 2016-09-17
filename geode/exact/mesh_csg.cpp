@@ -55,7 +55,7 @@ using std::endl;
 // For interface simplicity, we use a single fixed random number as the seed.
 // This is safe unless the points are chosen maliciously.  We've reused the key
 // from delaunay.cpp.
-static const uint128_t key = uint128_t(9975794406056834021u)+(uint128_t(920519151720167868u)<<64);
+static const uint128_t key = (uint128_t(920519151720167868u)<<64)+9975794406056834021u;
 
 // Some variables in the code can refer to either original vertices (possibly loop vertices),
 // edge-face intersection vertices, or face-face-face intersection vertices.  For this purpose,
@@ -436,14 +436,14 @@ struct Policy : public State, public Noncopyable {
     #define C(t0,t1,t2) (9*(t0)+3*(t1)+(t2))
     switch (C(t0,t1,t2)) {
       case C(V,V,V):
-        return flip ^ flipped_in(vec(v0,v1),fv) ^ true;
+        return flip ^ flipped_in(vec(v0,v1),fv) ^ 1;
       case C(V,V,B):
       case C(V,V,EF):
       case C(V,V,FFF): {
         // If we're not colinear, we're unconditionally positively oriented as long
         // as v0,v1 is oriented within the triangle.  If we're colinear, pretend we're
         // positively oriented as well to avoid sliver triangles.
-        return flip ^ flipped_in(vec(v0,v1),fv) ^ true; }
+        return flip ^ flipped_in(vec(v0,v1),fv) ^ 1; }
       case C(V,B,B): {
         const auto &ef1 = ef_vertices.flat[v1-n],
                    &ef2 = ef_vertices.flat[v2-n];
@@ -464,10 +464,11 @@ struct Policy : public State, public Noncopyable {
                    &ef2 = ef_vertices.flat[v2-n];
         const auto e0 = edges[ef0.edge],
                    e1 = edges[ef1.edge];
-        return flip ^ (  (ef0.edge==ef1.edge) ? flipped_in(e0,fv) ^ (v0<v1) ^ (ef0.edge==ef2.edge ? (v0>v2) ^ (v1<v2) : false)
-                       : (ef0.edge==ef2.edge) ? flipped_in(e0,fv) ^ (v2<v0)
-                       : (ef1.edge==ef2.edge) ? flipped_in(e1,fv) ^ (v1<v2)
-                                              : flipped_in(vec(ef1.edge,ef0.edge),face_edges) ^ false); }
+        return flip ^ (  ef0.edge==ef1.edge ?   flipped_in(e0,fv) ^ (v0<v1)
+                                              ^ (ef0.edge==ef2.edge ? (v0>v2) ^ (v1<v2) : 0)
+                       : ef0.edge==ef2.edge ? flipped_in(e0,fv) ^ (v2<v0)
+                       : ef1.edge==ef2.edge ? flipped_in(e1,fv) ^ (v1<v2)
+                                            : flipped_in(vec(ef1.edge,ef0.edge),face_edges)); }
       case C(V,B,EF):
       case C(V,B,FFF): {
         const auto& ef1 = ef_vertices.flat[v1-n];
@@ -475,7 +476,7 @@ struct Policy : public State, public Noncopyable {
         if (e1.contains(v0)) {
           // v1 is on an edge which touches v0, so we're the same as above.
           const int v1p = e1.sum()-v0;
-          return flip ^ flipped_in(vec(v0,v1p),fv) ^ true;
+          return flip ^ flipped_in(vec(v0,v1p),fv) ^ 1;
         } else if (t2==EF) {
           const auto& ef2 = ef_vertices.flat[v2-n];
           const auto e2 = edges[ef2.edge];
@@ -736,16 +737,8 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
 
   // Find edge-face intersections
   Nested<EdgeFaceVertex> ef_vertices; // Edge-face intersection vertices
-
   {
     // Find ef_vertices
-
-    // In my MSVC version (19.00.22310.1 for x64) using new_ in the initializer list below results in edge_tree not pointing to a valid object
-    // My guess is that the destructor for the temporary is getting being called before the edge_tree Ref is initialized
-    // Perhaps copy elision of a temporary passed via an initializer list to construct an anonymous struct hits a compiler bug?
-    // Or perhaps I misunderstand something about lifetime of temporaries in this context?
-    // Adding a seperate reference is a clean enough workaround
-    const auto helper_edge_tree = new_<SimplexTree<EV, 1>>(edges, X, 1);
     struct {
       const Ref<const SimplexTree<EV,1>> edge_tree;
       const SimplexTree<EV,2>& face_tree;
@@ -768,7 +761,7 @@ intersection_simplices(const SimplexTree<EV,2>& face_tree) {
           }
         }
       }
-    } helper({helper_edge_tree,face_tree,X});
+    } helper({new_<SimplexTree<EV,1>>(edges,X,1),face_tree,X});
     double_traverse(*helper.edge_tree,face_tree,helper);
 
     // Bucket edge face vertices by edge

@@ -14,7 +14,7 @@ string str(uint128_t n) {
   const auto lo = cast_uint128<uint64_t>(n),
              hi = cast_uint128<uint64_t>(n>>64);
   // For now, we lazily produce hexadecimal to avoid having to divide.
-  return hi ? format("0x%" PRIx64 "%016" PRIx64,hi,lo) : format("0x%" PRIx64,lo);
+  return hi ? format("0x%llx%016llx",hi,lo) : format("0x%llx",lo);
 }
 
 ostream& operator<<(ostream& output, uint128_t n) {

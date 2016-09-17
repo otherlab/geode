@@ -45,7 +45,6 @@ public:
   virtual Ref<> get_min_python() const = 0;
   virtual Ref<> get_max_python() const = 0;
   virtual Ref<> get_step_python() const = 0;
-  virtual Ref<> peek_python() const = 0;
   virtual void set_allowed_python(PyObject* values) = 0;
   virtual Ref<> allowed_python() const = 0;
   virtual void set_min_python(PyObject* v) = 0;
@@ -95,9 +94,9 @@ template<class T> struct PropClamp<T,false> {
     return self();
   }
 
-  void set_min_python(PyObject* v){throw ValueError("non-clampable prop cannot set min");}
-  void set_max_python(PyObject* v){ throw ValueError("non-clampable prop cannot set max");}
-  void set_step_python(PyObject* v){ throw ValueError("non-clampable prop cannot set step");}
+  void set_min_python(PyObject* v){throw ValueError(format("non-clampable prop cannot set min"));}
+  void set_max_python(PyObject* v){ throw ValueError(format("non-clampable prop cannot set max"));}
+  void set_step_python(PyObject* v){ throw ValueError(format("non-clampable prop cannot set step"));}
 };
 
 template<class T> struct PropClamp<T,true> {
@@ -256,22 +255,18 @@ public:
     return try_to_python_ref(default_);
   }
 
-  Ref<> peek_python() const {
-    return try_to_python_ref(peek());
-  }
-
   Ref<> get_min_python() const {
     if (has_clamp<T>::value)
       return try_to_python_ref(dynamic_cast<const PropClamp<T,true>*>(this)->min);
     else
-      throw ValueError("non-clampable prop does not have a min");
+      throw ValueError(format("non-clampable prop does not have a min"));
   }
 
   Ref<> get_max_python() const {
     if (has_clamp<T>::value)
       return try_to_python_ref(dynamic_cast<const PropClamp<T,true>*>(this)->max);
     else
-      throw ValueError("non-clampable prop does not have a max");
+      throw ValueError(format("non-clampable prop does not have a max"));
   }
 
   Ref<> get_step_python() const {

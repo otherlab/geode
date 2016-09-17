@@ -26,7 +26,7 @@ static string executable_path() {
 #endif
   str path(MAX_PATH, 0);
   LPTSTR buffer = const_cast<LPTSTR>(path.data());
-  GEODE_UNUSED size_t m = GetModuleFileName(0, buffer, MAX_PATH-1);
+  size_t m = GetModuleFileName(0, buffer, MAX_PATH-1);
 #if defined(_UNICODE) || defined(UNICODE)
 #pragma message("Need to verify if non-ASCII characters are handled as UTF-8")
   const str::value_type* start = path.data();

@@ -12,7 +12,7 @@ template<class T, class Id, class K=T> struct IdSet {
   Field<T, Id> id_to_t;
  public:
   int size() const { assert(k_to_id.size() == id_to_t.size()); return id_to_t.size(); }
-  auto id_range() -> decltype(id_to_t.id_range()) const { return id_to_t.id_range(); }
+  decltype(id_to_t.id_range()) id_range() const { return id_to_t.id_range(); }
 
   Id find(const K& k) const { return k_to_id.get_default(k,Id()); }
   

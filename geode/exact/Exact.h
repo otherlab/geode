@@ -286,21 +286,18 @@ template<int d> static inline void mpz_set(RawArray<mp_limb_t> x, const Exact<d>
 }
 
 // For use in construction-related templates
-template<int d0, int d1> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d0>,1>,Exact<d1>>& y) {
-  static_assert(d0 == d1+1, "Mismatched sizes"); // MSVC isn't smart enough to match 'd' and 'd+1' so we use two different template arguments
+template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,1>,Exact<d>>& y) {
   assert(x.m==2);
   mpz_set(x[0],asarray(y.x.x.n));
   mpz_set(x[1],asarray(y.y.n));
 }
-template<int d0, int d1> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d0>,2>,Exact<d1>>& y) {
-  static_assert(d0 == d1+1, "Mismatched sizes"); // MSVC isn't smart enough to match 'd' and 'd+1' so we use two different template arguments
+template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,2>,Exact<d>>& y) {
   assert(x.m==3);
   mpz_set(x[0],asarray(y.x.x.n));
   mpz_set(x[1],asarray(y.x.y.n));
   mpz_set(x[2],asarray(y.y.n));
 }
-template<int d0, int d1> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d0>,3>,Exact<d1>>& y) {
-  static_assert(d0 == d1+1, "Mismatched sizes"); // MSVC isn't smart enough to match 'd' and 'd+1' so we use two different template arguments
+template<int d> static inline void mpz_set(RawArray<mp_limb_t,2> x, const Tuple<Vector<Exact<d+1>,3>,Exact<d>>& y) {
   assert(x.m==4);
   mpz_set(x[0],asarray(y.x.x.n));
   mpz_set(x[1],asarray(y.x.y.n));

@@ -141,7 +141,7 @@ static void interval_tests(const int steps) {
     GEODE_ASSERT(contains(i0*i1,e0*e1));
     GEODE_ASSERT(contains(-i0,-e0));
     GEODE_ASSERT(contains(sqr(i0),sqr(e0)));
-    for (int s=1;s<=2;s++)
+    for (int s=0;s<=2;s++)
       GEODE_ASSERT(contains(i0<<s,e0<<s));
     GEODE_ASSERT(equal(min(i0,i1),min(e0,e1)));
     GEODE_ASSERT(equal(max(i0,i1),max(e0,e1)));

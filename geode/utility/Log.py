@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import platform
 
 if platform.system()=='Windows':
-  from ..import geode_all as geode_wrap
+  import other_all as geode_wrap
 else:
   from .. import geode_wrap
 

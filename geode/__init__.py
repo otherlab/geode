@@ -4,10 +4,10 @@ import platform
 def is_windows():
   return platform.system()=='Windows'
 
-# Import geode_wrap, possibly as geode_all on windows
+# Import geode_wrap, possibly as other_all on windows
 if is_windows():
-  from . import geode_all as geode_wrap
-  from .geode_all import *
+  import other_all as geode_wrap
+  from other_all import *
 else:
   from . import geode_wrap
   from .geode_wrap import *

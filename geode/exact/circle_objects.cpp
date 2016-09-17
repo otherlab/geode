@@ -3,7 +3,6 @@
 #include <geode/exact/math.h>
 #include <geode/exact/perturb.h>
 #include <geode/exact/predicates.h>
-#include <cmath>
 namespace geode {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -517,6 +516,7 @@ template<> ExactCircle<Pb::Explicit>::ExactCircle(const Vector<Quantized,2> cent
  , radius(radius)
 { }
 
+
 template<Pb PS> Vector<IncidentCircle<PS>,2>     ExactCircle<PS>::get_intersections(const ExactCircle<PS>& incident) const {
   const auto approx = circle_circle_approx_intersections<PS>(*this, incident);
   return vec(IncidentCircle<PS>(*this, incident, ReferenceSide::cl, approx.x),
@@ -700,13 +700,13 @@ static Interval approx_angle_helper(const Vector<Quantized,2> center, const Vect
 
   if(!delta.x.contains_zero()) {
     const Interval pos_theta = atan(delta.y * inverse(delta.x));
-    return (Interval(half_pi)*(q+0)) + pos_theta;
+    return (Interval(M_PI_2)*(q+0)) + pos_theta;
   }
   if(!delta.y.contains_zero()) {
     const Interval neg_theta = atan(delta.x * inverse(delta.y));
-    return (Interval(half_pi)*(q+1)) - neg_theta;
+    return (Interval(M_PI_2)*(q+1)) - neg_theta;
   }
-  return Interval(half_pi)*q + Interval(0, half_pi);
+  return Interval(M_PI_2)*q + Interval(0, M_PI_2);
 }
 
 template<Pb PS> Interval ExactCircle<PS>::approx_angle(const IncidentCircle<PS>& i) const {
@@ -825,25 +825,16 @@ template<Pb PS> Vec2 ExactArc<PS>::q_and_opp_q() const {
   assert(!is_full_circle()); // q isn't defined for a full circle
 
   const auto r = circle.radius;
-  const auto x0 = src.approx.guess();
-  const auto x1 = dst.approx.guess();
-  const auto l = min(r, 0.5 * (x0 - x1).magnitude());
-
-  const auto xm = 0.5*(x0+x1); // Compute the midpoint of the chord from x0 to x1
-  const auto h = min(r,(circle.center - xm).magnitude()); // Height from chord to center of circle (clamped in case error in xm moved it outside of circle)
-  // There are many different ways we could compute q, of which I considered several in depth:
-  //   q = l / (r + sqrt(sqr(r) - sqr(l)))  // (argument to sqrt needs to be clamped to zero to handle rounding errors)
-  //   q = sqrt((r-h) / (r+h))
-  //   q = l / (r + h)
-  // We have to be careful about noise in x0 and x1 as well as floating point stability
-  // Since endpoints are fixed regardless of q, we want to compute a value that will match the intended arc in the middle
-  // The first approach fits a fixed radius to inaccurate endpoints making it unstable when q is close to +/-1 resulting in large worst case errors
-  // By including information from center of circle (which is exact) we should get more stable position of arc midpoint
-  // I choose the third approach over the second since it ensures q is 0 when l is 0
-  const real abs_q_short = l / (r+h);
-  const real abs_q_long = (r+h) / l;
+  const auto l = min(r, 0.5 * (src.approx.guess() - dst.approx.guess()).magnitude());
+  const auto root = sqrt(max(0.,sqr(r) - sqr(l)));
 
   const bool is_small_arc = circle.intersections_ccw(src, dst);
+  // If l is 0 or very small both q and opposite_q will be 0. We would like to get 0 and +/-inf.
+  // q = (d0*l / (r + d0*d1*root)) or q = ((r - d0*d1*root) / ( d0*l)) are algebraically equivalent, but the latter is numerically unstable as l approaches 0
+  // We factor out signs and get expression for the smaller and larger q values
+  const real abs_q_short = l / (r + root); // ...use this to ensure q will go to zero as l goes to zero
+  const real abs_q_long = (r + root) / l; // i.e. 1./abs_q_short
+
   const real q =      (is_small_arc ? abs_q_short : abs_q_long);
   const real opp_q = -(is_small_arc ? abs_q_long : abs_q_short);
 
@@ -943,23 +934,23 @@ template<Pb PS> bool ExactArc<PS>::contains_horizontal(const IncidentHorizontal<
   }
 }
 
-template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& o) const {
-  const IncidentCircle<PS>& src = i;
+template<Pb PS> bool ExactHorizontalArc<PS>::contains(const IncidentCircle<PS>& i) const {
+  const IncidentCircle<PS>& src = this->i;
   const IncidentHorizontal<PS>& dst = h;
   const bool flipped = h_is_src;
 
   if (src.q != dst.q) { // arc starts and ends in different quadrants
-    if (src.q == o.q)
-      return flipped ^ circle.intersections_ccw_same_q(src, o);
-    else if (dst.q == o.q)
-      return flipped ^ circle.intersections_ccw_same_q(o, dst);
+    if (src.q == i.q)
+      return flipped ^ circle.intersections_ccw_same_q(src, i);
+    else if (dst.q == i.q)
+      return flipped ^ circle.intersections_ccw_same_q(i, dst);
     else
-      return flipped ^ (((o.q-src.q)&3)<((dst.q-src.q)&3));
+      return flipped ^ (((i.q-src.q)&3)<((dst.q-src.q)&3));
   } else { // arc starts and ends in the same quadrant
     const bool small = circle.intersections_ccw_same_q(src, dst);
-    return flipped ^ small ^ (   src.q != o.q
-                               || (small ^ circle.intersections_ccw_same_q(src,o))
-                               || (small ^ circle.intersections_ccw_same_q(o,dst)));
+    return flipped ^ small ^ (   src.q != i.q
+                               || (small ^ circle.intersections_ccw_same_q(src,i))
+                               || (small ^ circle.intersections_ccw_same_q(i,dst)));
   }
 }
 

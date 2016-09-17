@@ -30,9 +30,6 @@
 #include <geode/vector/Vector.h>
 #include <geode/utility/const_cast.h>
 #include <vector>
-#include <array>
-#include <initializer_list>
-
 namespace geode {
 
 using std::swap;
@@ -480,7 +477,7 @@ public:
   }
 
   Array<const T> pop_elements(const int count) { // Return value shares ownership with original
-    static_assert(is_trivially_destructible<T>::value,"");
+    static_assert(has_trivial_destructor<T>::value,"");
     assert(m_-count>=0);
     m_ -= count;
     return Array<const T>(count,data_+m_,owner_);
@@ -532,14 +529,6 @@ public:
   }
 };
 
-template<class T> static inline Array<T> make_array( std::initializer_list<T> list ) {
-  Array<T> result;
-  result.preallocate(list.size());
-  for( const auto ref : list)
-     result.append_assuming_enough_space(ref);
-  return result;
-}
-
 template<class T,int d>   static inline const RawArray<T>       asarray(T (&v)[d])                 { return RawArray<T>(d,v); }
 template<class T,int d>   static inline const RawArray<T>       asarray(Vector<T,d>& v)            { return RawArray<T>(d,v.begin()); }
 template<class T,int d>   static inline const RawArray<const T> asarray(const Vector<T,d>& v)      { return RawArray<const T>(d,v.begin()); }
@@ -554,7 +543,6 @@ template<class T,int d>   static inline const RawArray<const T> asconstarray(con
 template<class T>         static inline const RawArray<const T> asconstarray(const RawArray<T>& v)      { return v; }
 template<class T>         static inline const RawArray<const T> asconstarray(const Array<T>& v)         { return v; }
 template<class T,class A> static inline const RawArray<const T> asconstarray(const std::vector<T,A>& v) { return RawArray<const T>(v.size(),&v[0]); }
-template<class T,size_t N> static inline const RawArray<const T> asconstarray(const std::array<T,N>& a) { static_assert(N <= INT_MAX, "Size too big"); return RawArray<const T>(int(N),a.data()); }
 template<class T,class A> static inline const A&                asconstarray(const ArrayBase<T,A>& v)   { return v.derived(); }
 
 template<class T,int d> static inline       Array<T>& flat(      Array<T,d>& A) { return A.flat; }

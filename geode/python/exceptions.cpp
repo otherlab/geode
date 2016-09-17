@@ -70,14 +70,14 @@ void unregistered_python_type(PyObject* object, PyTypeObject* type, const char* 
 
 void throw_arity_mismatch(const int expected, const Py_ssize_t got) {
   if(expected)
-    GEODE_CALL_PyErr_Format(PyExc_TypeError, "function takes %d argument%s (%zd given)",expected,(expected==1?"":"s"),got);
+    PyErr_Format(PyExc_TypeError, "function takes %d argument%s (%ld given)",expected,(expected==1?"":"s"),long(got));
   else
-    GEODE_CALL_PyErr_Format(PyExc_TypeError, "function takes no arguments (%zd given)",got);
+    PyErr_Format(PyExc_TypeError, "function takes no arguments (%ld given)",long(got));
   throw PythonError();
 }
 
 void throw_no_keyword_args(PyObject* kwargs) {
-  GEODE_CALL_PyErr_Format(PyExc_TypeError, "function takes no keyword arguments (%zd given)",PyDict_Size(kwargs));
+  PyErr_Format(PyExc_TypeError, "function takes no keyword arguments (%ld given)",long(PyDict_Size(kwargs)));
   throw PythonError();
 }
 

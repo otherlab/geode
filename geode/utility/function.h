@@ -3,7 +3,9 @@
 
 #include <geode/utility/config.h>
 
-#if GEODE_HAS_CPP11_STD_HEADER(<functional>)
+// If we're on clang, check for the right header directly.  If we're not,
+// any sufficient recently version of gcc should always have the right header.
+#if defined(__clang__) ? GEODE_HAS_INCLUDE(<functional>) : defined(__GNUC__)
 #include <functional>
 #define GEODE_FUNCTION_NAMESPACE std
 #else

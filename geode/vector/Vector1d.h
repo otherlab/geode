@@ -40,26 +40,26 @@ public:
 
     T x;
 
-    constexpr Vector()
+    Vector()
         :x()
     {
         static_assert(sizeof(Vector)==sizeof(T),"");
     }
 
-    explicit constexpr Vector(const T& x)
+    explicit Vector(const T& x)
         :x(x)
     {}
 
-    template<class T2> explicit constexpr Vector(const Vector<T2,1>& vector)
+    template<class T2> explicit Vector(const Vector<T2,1>& vector)
         :x(T(vector.x))
     {}
 
-    constexpr Vector(const Vector& vector)
+    Vector(const Vector& vector)
         :x(vector.x)
     {}
 
     template<class TVector>
-    explicit constexpr Vector(const TVector& v,typename EnableForVectorLike<T,1,TVector,Unusable>::type unusable=Unusable())
+    explicit Vector(const TVector& v,typename EnableForVectorLike<T,1,TVector,Unusable>::type unusable=Unusable())
         :x(v[0])
     {}
 
@@ -75,7 +75,10 @@ public:
         x=v[0];return *this;
     }
 
-    Vector& operator=(const Vector& v) = default;
+    Vector& operator=(const Vector& v)
+    {
+        x=v[0];return *this;
+    }
 
     constexpr int size() const
     {return 1;}
@@ -249,9 +252,6 @@ public:
 
     static Vector repeat(const T& constant)
     {return Vector(constant); }
-    
-    static Vector nans()
-    {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     void fill(const T& constant)
     {x=constant;}

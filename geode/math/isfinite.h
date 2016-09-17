@@ -3,7 +3,7 @@
 #include <cmath>
 namespace geode {
   
-#ifndef __GNUC__
+#ifdef _WIN32
   
 template<class T> static inline bool isfinite(T x) {
   return _finite(x)!=0;

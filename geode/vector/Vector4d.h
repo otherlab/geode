@@ -42,38 +42,40 @@ public:
     static const int m = 4;
     static const bool is_const = false;
 
-    T x,y,z,w;
+  T x,y,z,w;
 
-    constexpr Vector()
+    Vector()
       :x(),y(),z(),w()
     {
         static_assert(sizeof(Vector)==4*sizeof(T),"");
     }
 
-    constexpr Vector(const T& x,const T& y,const T& z,const T& w)
+  Vector(const T& x,const T& y,const T& z,const T& w)
     :x(x),y(y),z(z),w(w)
     {}
 
-    constexpr Vector(const Vector& vector) = default;
+    Vector(const Vector& vector)
+      :x(vector.x),y(vector.y),z(vector.z),w(vector.w)
+    {}
 
-    template<class T2> explicit constexpr Vector(const Vector<T2,4>& vector)
+    template<class T2> explicit Vector(const Vector<T2,4>& vector)
       :x(T(vector.x)),y(T(vector.y)),z(T(vector.z)),w(T(vector.w))
     {}
 
-    explicit constexpr Vector(const Vector<T,2>& vector)
+    explicit Vector(const Vector<T,2>& vector)
       :x(vector.x),y(vector.y),z(),w()
     {}
 
-    explicit constexpr Vector(const Vector<T,3>& vector)
+    explicit Vector(const Vector<T,3>& vector)
       :x(vector.x),y(vector.y),z(vector.z),w()
     {}
 
-    explicit constexpr Vector(const Vector<T,3>& vector, const T& w)
+    explicit Vector(const Vector<T,3>& vector, const T& w)
       :x(vector.x),y(vector.y),z(vector.z),w(w)
     {}
 
     template<class TVector>
-    explicit constexpr Vector(const TVector& v, typename EnableForVectorLike<T,4,TVector,Unusable>::type=Unusable())
+    explicit Vector(const TVector& v, typename EnableForVectorLike<T,4,TVector,Unusable>::type=Unusable())
       :x(v[0]),y(v[1]),z(v[2]),w(v[3])
     {}
 
@@ -89,7 +91,10 @@ public:
       x=v[0];y=v[1];z=v[2];w=v[3];return *this;
     }
 
-    Vector& operator=(const Vector& v) = default;
+    Vector& operator=(const Vector& v)
+    {
+      x=v[0];y=v[1];z=v[2];w=v[3];return *this;
+    }
 
     constexpr int size() const
     {return 4;}
@@ -269,9 +274,6 @@ public:
 
     static Vector repeat(const T& constant)
     {return Vector(constant,constant,constant,constant); }
-    
-    static Vector nans()
-    {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     // shifts vector (wrapped) such that element a is first
     Vector<T,4> roll(const int a) {

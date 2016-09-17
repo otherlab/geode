@@ -5,8 +5,8 @@ import platform
 from geode.array import *
 from geode.mesh import merge_meshes, meshify
 if platform.system()=='Windows':
-  from ..geode_all import *
-  from .. import geode_all as geode_wrap
+  from other_all import *
+  import other_all as geode_wrap
 else:
   from .. import geode_wrap
   from ..geode_wrap import *
@@ -34,7 +34,7 @@ ExactCircleArc = dtype([('center','2i8'),
                         ('positive','b'),
                         ('left','b'),
                         ('_pad','2V')]) # Work around https://github.com/numpy/numpy/issues/2383
-ExactInt = dtype('int64')
+
 geode_wrap._set_circle_arc_dtypes(CircleArc,ExactCircleArc)
 
 def circle_arc_union(*arcs):

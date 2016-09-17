@@ -149,9 +149,9 @@ template<class T,class V,class H> struct FromPython<unordered_map<T,V,H>>:public
 
 template<class T0,class T1> struct FromPython<pair<T0,T1> >{static pair<T0,T1> convert(PyObject* object) {
   Ref<PyObject> seq = steal_ref_check(PySequence_Fast(object,"expected pair"));
-  Py_ssize_t len = PySequence_Length(&*seq);
+  size_t len = PySequence_Length(&*seq);
   if (len!=2) {
-    GEODE_CALL_PyErr_Format(PyExc_TypeError,"expected pair, got length %zd",len);
+    PyErr_Format(PyExc_TypeError,"expected pair, got length %ld",long(len));
     throw_python_error();
   }
   return pair<T0,T1>(from_python<T0>(ref_check(PySequence_Fast_GET_ITEM(&*seq,0))),

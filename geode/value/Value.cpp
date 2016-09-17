@@ -22,7 +22,7 @@ GEODE_DEFINE_TYPE(ValueBase)
 // Link list of actions which have pending signals.  The fact that this is a two-sided doubly-linked list
 // is important, since Actions need to be able to delete their links from the pending list if they
 // destruct during dependency propagation.
-GEODE_THREAD_LOCAL ValueBase::Link* ValueBase::pending = 0;
+ValueBase::Link* ValueBase::pending = 0;
 
 ValueBase::ValueBase(string const &s)
   : dirty_(true), name_(s), actions(0)
@@ -211,7 +211,6 @@ Ref<> ValueBase::get_min_py() const          { return prop().get_min_python(); }
 Ref<> ValueBase::get_max_py() const          { return prop().get_max_python(); }
 Ref<> ValueBase::get_step_py() const          { return prop().get_step_python(); }
 Ref<> ValueBase::get_allowed() const      { return prop().allowed_python(); }
-Ref<> ValueBase::peek_py() const      { return prop().peek_python(); }
 #endif
 
 }
@@ -252,7 +251,6 @@ void wrap_value_base() {
     .GEODE_METHOD_2("get_max",get_max_py)
     .GEODE_METHOD_2("set_step",set_step_py)
     .GEODE_METHOD_2("get_step",get_step_py)
-    .GEODE_METHOD_2("peek",peek_py)
     ;
 
   GEODE_FUNCTION(value_test)

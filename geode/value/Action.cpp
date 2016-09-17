@@ -6,7 +6,7 @@ namespace geode {
 using std::cout;
 using std::endl;
 
-GEODE_THREAD_LOCAL const Action* Action::current = 0;
+const Action* Action::current = 0;
 
 Action::Action()
   : inputs_(0), executing(false) {}
@@ -57,9 +57,7 @@ void Action::depend_on(const ValueBase& value) const {
   value.actions = link;
 }
 
-// Although ignored_executing is never read and only set to false we still need to be careful since multiple concurrent writes to a memory location is undefined behavior
-// For examples, compiler might reuse memory location of ignored_executing for another variable which could then be corrupted by a write from another thread
-static GEODE_THREAD_LOCAL bool ignored_executing = false;
+static bool ignored_executing = false;
 
 Action::Executing::Executing()
   : executing(ignored_executing), parent(Action::current) {

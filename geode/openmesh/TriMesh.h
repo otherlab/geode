@@ -1,16 +1,26 @@
 #pragma once
 
-#include <geode/openmesh/config.h>
 #include <geode/mesh/forward.h>
 
 // OpenMesh includes
 #include <cstddef>
+// Since we're using hidden symbol visibility, dynamic_casts across shared library
+// boundaries are problematic. Therefore, don't use them even in debug mode.
+#define OM_FORCE_STATIC_CAST
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 4244 )
+#endif
 
 #ifdef GEODE_OPENMESH
-  #include <OpenMesh/Core/IO/MeshIO.hh>
-  #include <OpenMesh/Core/Utils/vector_traits.hh>
-  #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
-  #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+#include <OpenMesh/Core/IO/MeshIO.hh>
+#include <OpenMesh/Core/Utils/vector_traits.hh>
+#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+#endif
+
+#ifdef _WIN32
+#pragma warning( pop )
 #endif
 
 #include <geode/utility/config.h>

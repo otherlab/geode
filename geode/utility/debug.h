@@ -7,7 +7,7 @@
 
 // Wow.  The gcc folk have fixed segfault bugs for __FUNCTION__ or __PRETTY_FUNCTION__ numerous times.
 // Is this really so complicated?  I am giving up on gcc 4.8 and using 0.
-#if defined(__clang__) || defined(__MINGW32__)
+#if defined(__clang__)
 #define GEODE_DEBUG_FUNCTION_NAME ((const char*)__PRETTY_FUNCTION__)
 #elif defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__==4 && __GNUC_MINOR__==8
 #define GEODE_DEBUG_FUNCTION_NAME ("unknown") // gcc 4.8 is broken

@@ -12,8 +12,8 @@ import platform
 import numpy
 from numpy import *
 if platform.system()=='Windows':
-  from .. import geode_all as geode_wrap
-  from ..geode_all import *
+  import other_all as geode_wrap
+  from other_all import *
 else: 
   from .. import geode_wrap
   from ..geode_wrap import *

@@ -41,10 +41,6 @@ template<class T,int d> PyObject* to_python(const Vector<T,d>& vector);
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,int)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,int)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,4,int)
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,long)
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,long)
-GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,4,long)
-
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,2,short int)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,3,short int)
 GEODE_DECLARE_VECTOR_CONVERSIONS(GEODE_CORE_EXPORT,4,short int)
@@ -296,9 +292,6 @@ public:
 
     static Vector repeat(const T& constant)
     {Vector r;for(int i=0;i<d;i++) r.array[i]=constant;return r;}
-    
-    static Vector nans()
-    {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     // shifts vector (wrapped) such that element a is first
     Vector<T,d> roll(int a) const {

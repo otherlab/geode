@@ -58,18 +58,18 @@ class WeakRefSupport;
 
 template<class T, bool has_weakrefs = is_base_of<WeakRefSupport,T>::value >
 struct WeakRef_Helper {
-  static long offset() { return 0; }
+  static int offset() { return 0; }
   static void clear_refs(PyObject *) {}
 };
 
+
 template<class T>
 struct WeakRef_Helper<T, true> {
-  static long offset() {
+  static int offset() {
     // Enable weak reference support if the class derives from WeakRefSupport
-    // This is dangerous since T isn't standard layout (it has virtual methods from Object), but we need it for PyTypeObject::tp_weaklistoffset
-    const T* test = (T*)0x1000; // Use 0x1000 so at least alignment is likely to be correct
-    PyObject * const * weaklist = &test->weakreflist; // This might attempt to read a vptr table or such from test. Hopefully it doesn't
-    const long offset = long(static_cast<char const*>(static_cast<void const*>(weaklist)) - static_cast<char const*>(static_cast<void const*>(test)) + sizeof(geode::PyObject));
+    const T* test = (T*)0xff;
+    PyObject * const * weaklist = &test->weakreflist;
+    const int offset = int(long(weaklist) - long(test) + sizeof(geode::PyObject));
     return offset;
   }
 

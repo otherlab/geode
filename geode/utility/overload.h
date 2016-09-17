@@ -6,29 +6,6 @@
 #include <geode/utility/config.h>
 namespace geode {
 
-// It's possible the MSVC version of this will also work with other compilers, but this has not been tested
-#ifdef _MSC_VER
-// Helper function to handle MSVC preprocessor quirk with __VA_ARGS__
-//   MSVC treats __VA_ARGS__ as a single argument if passed directly to another macro call (usually resulting in a warning that not enough arguments were given)
-//   If we add parenthesis, i.g. '(__VA_ARGS__)', to make the argument list for another macro call, the arguments will be separated back out 
-#define GEODE_CALL_ON_PACKAGED_ARGS(fn,args_with_parens) fn args_with_parens
-// Helper function for GEODE_SIZE and GEODE_ONE_OR_MORE
-#define GEODE_GET_ARG_33(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,count, ...) count
-// Return number of arguments passed from 1 to 32 (Note: empty argument list will return 1)
-#define GEODE_SIZE(...) GEODE_CALL_ON_PACKAGED_ARGS(GEODE_GET_ARG_33,(__VA_ARGS__,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0))
-
-// Concatenate two tokens but try to ensure macros are fully expanded first
-#define GEODE_PRIMITIVE_CAT(a,b) a ## b
-#define GEODE_EXPAND_ONCE_THEN_CAT(a,b) GEODE_PRIMITIVE_CAT(a,b)
-#define GEODE_EXPAND_TWICE_THEN_CAT(a,b) GEODE_EXPAND_ONCE_THEN_CAT(a,b)
-
-#define GEODE_OVERLOAD(prefix,...) GEODE_EXPAND_TWICE_THEN_CAT(prefix,GEODE_SIZE(__VA_ARGS__))
-
-// Returns ONE or MORE based on number of argument (Note: empty argument list will return ONE)
-#define GEODE_ONE_OR_MORE(...) GEODE_CALL_ON_PACKAGED_ARGS(GEODE_GET_ARG_33,(__VA_ARGS__,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,MORE,ONE))
-#define GEODE_OVERLOAD_ONE_OR_MORE(prefix,...) GEODE_EXPAND_TWICE_THEN_CAT(prefix,GEODE_ONE_OR_MORE(__VA_ARGS__))
-
-#else
 // See http://groups.google.com/group/comp.std.c/browse_thread/thread/7cdd9f2984c15e3e/effa7cda7c378dac%23effa7cda7c378dac for macro explanations
 
 #define GEODE_CAT(a,...) GEODE_PRIMITIVE_CAT(a,__VA_ARGS__)
@@ -49,5 +26,4 @@ namespace geode {
 #define GEODE_ONE_OR_MORE_B(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,_,...) _
 #define GEODE_OVERLOAD_ONE_OR_MORE(prefix,...) GEODE_CAT(prefix,GEODE_ONE_OR_MORE(__VA_ARGS__))
 
-#endif
 }

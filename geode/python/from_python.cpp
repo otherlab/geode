@@ -2,7 +2,6 @@
 // Function from_python
 //#####################################################################
 #include <geode/python/from_python.h>
-#include <geode/math/signed_compare.h>
 #include <geode/utility/format.h>
 namespace geode {
 
@@ -29,18 +28,9 @@ long FromPython<long>::convert(PyObject* object) {
   return i;
 }
 
-// TODO: This would probably be useful elsewhere and worth moving to math/signed_compare.h
-// Test if argument is in range of values that can be represented by ToT
-// Note: This doesn't have specializations for range of ToT being strictly greater than range of FromT
-template<class ToT, class FromT> static bool representable_as(const FromT x) {
-  // Make sure user isn't expecting us to check if floating point conversions require truncation or rounding
-  static_assert(std::is_integral<FromT>::value && std::is_integral<ToT>::value, "This function only supports integral types");
-  return signed_leq(std::numeric_limits<ToT>::lowest(), x) && signed_leq(x, std::numeric_limits<ToT>::max());
-}
-
 int FromPython<int>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (!representable_as<int>(i)) {
+  if (i!=(int)i) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C int");
     throw_python_error();
   }
@@ -49,7 +39,7 @@ int FromPython<int>::convert(PyObject* object) {
 
 int FromPython<unsigned int>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (!representable_as<unsigned int>(i)) {
+  if (i!=(long)(unsigned int)i) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C int");
     throw_python_error();
   }
@@ -94,7 +84,7 @@ unsigned long long FromPython<unsigned long long>::convert(PyObject* object) {
 
 unsigned long FromPython<unsigned long>::convert(PyObject* object) {
   unsigned long long i = FromPython<unsigned long long>::convert(object);
-  if (!representable_as<unsigned long>(i)) {
+  if (i!=(unsigned long)i) {
     PyErr_SetString(PyExc_OverflowError,"int too long to convert to C unsigned long");
     throw_python_error();
   }
@@ -131,7 +121,7 @@ string FromPython<string>::convert(PyObject* object) {
 
 uint8_t FromPython<uint8_t>::convert(PyObject* object) {
   long i = FromPython<long>::convert(object);
-  if (!representable_as<uint8_t>(i)) {
+  if (i!=(uint8_t)i) {
     PyErr_SetString(PyExc_OverflowError,"int too large to convert to C uint8_t");
     throw_python_error();
   }

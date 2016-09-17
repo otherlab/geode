@@ -103,9 +103,7 @@ def test_polygon():
 
 if __name__=='__main__':
   Log.configure('exact tests',0,0,100)
-  if '-i' in sys.argv:
-    test_interval()
-  elif '-b' in sys.argv:
+  if '-b' in sys.argv:
     cgal = '-c' in sys.argv
     circle = '-d' in sys.argv
     Mesh = HalfedgeMesh if '-h' in sys.argv else TriangleTopology

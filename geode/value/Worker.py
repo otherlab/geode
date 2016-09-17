@@ -136,10 +136,7 @@ class Worker(object):
     else:
       key = base64_encode(os.urandom(32))
       listener = multiprocessing.connection.Listener(('localhost',0),authkey=key)
-      args = command+['%d,%d,%s'%(bool(debug),listener.address[1],key)]
-      if command[0].endswith(".py"):
-        args = [sys.executable] + args # If attempting to execute a python file, use currently running interpreter
-      worker = self.worker = subprocess.Popen(args,shell=is_windows()) # shell=True is required on Windows, but doesn't work on Mac
+      worker = self.worker = subprocess.Popen(command+['%d,%d,%s'%(bool(debug),listener.address[1],key)],shell=is_windows()) # shell=True is required on Windows, but doesn't work on Mac
       # Ugly hack to avoid blocking forever if client never shows up.
       # Borrowed from http://stackoverflow.com/questions/357656/proper-way-of-cancelling-accept-and-closing-a-python-processing-multiprocessing
       listener.fileno = lambda:listener._listener._socket.fileno()

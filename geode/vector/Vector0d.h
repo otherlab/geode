@@ -22,9 +22,10 @@ public:
     typedef typename mpl::if_<IsScalar<T>,T,Unusable>::type Scalar;
     typedef T Element;
 
-    constexpr Vector() = default;
+    Vector()
+    {}
 
-    template<class T2> explicit constexpr
+    template<class T2> explicit
     Vector(const Vector<T2,0>& vector_input)
     {}
 
@@ -127,10 +128,7 @@ public:
     {return Vector();}
 
     static Vector repeat(const T& constant)
-    {return Vector();}
-    
-    static Vector nans()
-    {return Vector();}
+    {return Vector(); }
 
     // For stl
     T* begin() { return 0; }

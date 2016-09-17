@@ -34,7 +34,7 @@ public:
   template<class T> UntypedArray(Types<T>)
     : UntypedArray(&typeid(T), sizeof(T))
   {
-    static_assert(is_trivially_destructible<T>::value,"UntypedArray can only store POD-like types");
+    static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
   }
 
   // Create an initialized (zeroed) untyped array
@@ -49,7 +49,7 @@ public:
     , max_size_(size)
     , t_size_(sizeof(T))
     , type_(&typeid(T)) {
-    static_assert(is_trivially_destructible<T>::value,"UntypedArray can only store POD-like types");
+    static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
     const auto buffer = Buffer::new_<T>(m_);
     data_ = buffer->data;
     owner_ = (PyObject*)buffer;
@@ -89,7 +89,7 @@ public:
     , t_size_(sizeof(T))
     , type_(&typeid(T))
   {
-    static_assert(is_trivially_destructible<T>::value,"UntypedArray can only store POD-like types");
+    static_assert(has_trivial_destructor<T>::value,"UntypedArray can only store POD-like types");
     assert(owner_ || !data_);
   }
 

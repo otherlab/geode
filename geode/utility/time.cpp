@@ -2,9 +2,7 @@
 
 #include <geode/utility/time.h>
 #if defined(_WIN32)
-#ifndef __MINGW32__
 #pragma comment(lib, "winmm.lib")
-#endif
 #include <windows.h>
 #elif defined(__linux__) || defined(__CYGWIN__) || defined(__APPLE__)
 #include <sys/time.h>

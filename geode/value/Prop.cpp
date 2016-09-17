@@ -82,14 +82,19 @@ static Ref<PropBase> make_prop_shape(const string& n, PyObject* value,
     throw TypeError(format("make_prop_shape: numpy array convertible type expected, got %s",a->ob_type->tp_name));
   }
   switch (PyArray_TYPE((PyArrayObject*)a.get())) {
-    #define TYPE_CASE(E,T) \
-      case E: \
-        return make_prop_shape_helper(n,from_python<NdArray<const T>>(a.get()),shape);
-    TYPE_CASE(NPY_INT,    npy_int)
-    TYPE_CASE(NPY_LONG,   npy_long)
-    TYPE_CASE(NPY_FLOAT,  npy_float)
-    TYPE_CASE(NPY_DOUBLE, npy_double)
+    #define TYPE_CASE(S) \
+      case NumpyScalar<S>::value: \
+        return make_prop_shape_helper(n,from_python<NdArray<const S>>(a.get()),shape);
+    TYPE_CASE(int)
+    TYPE_CASE(real)
     #undef TYPE_CASE
+    case NumpyScalar<long>::value:
+    case NumpyScalar<long long>::value: {
+      const auto b = from_python<NdArray<const int64_t>>(a.get());
+      const auto c = b.as<const int>();
+      GEODE_ASSERT(b.flat==c.flat.as<const int64_t>());
+      return make_prop_shape_helper(n,c,shape);
+    }
   }
   throw NotImplementedError(format("make_prop_shape: unhandled dtype %s",
     PyArray_DESCR((PyArrayObject*)a.get())->typeobj->tp_name));

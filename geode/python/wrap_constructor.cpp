@@ -10,9 +10,9 @@ void set_argument_count_error(int desired,PyObject* args,PyObject* kwds) {
   Py_ssize_t size = PyTuple_GET_SIZE(args);
   if (size!=desired) {
     if (!desired)
-      GEODE_CALL_PyErr_Format(PyExc_TypeError,"constructor takes no arguments (%zd given)",size);
+      PyErr_Format(PyExc_TypeError,"constructor takes no arguments (%zd given)",size);
     else
-      GEODE_CALL_PyErr_Format(PyExc_TypeError,"constructor takes %d argument%s (%zd given)",desired,(desired>1?"s":""),size);
+      PyErr_Format(PyExc_TypeError,"constructor takes %d argument%s (%zd given)",desired,(desired>1?"s":""),size);
   } else
     PyErr_SetString(PyExc_TypeError,"constructor takes no keyword arguments");
 }

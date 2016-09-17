@@ -245,7 +245,7 @@ ExactSegmentGraph::ExactSegmentGraph(const Nested<const exact::Vec2> polys)
     Vector<HalfedgeId,4> sorted_he; // CCW order should be fwd on seg0, fwd on !seg0, rev on seg0, rev on !seg0
     for(const HalfedgeId he : topology->outgoing(vid)) {
       const auto s = edges[HalfedgeGraph::edge(he)].segment;
-      sorted_he[(HalfedgeGraph::is_forward(he)<<1) | ((s==seg0)<<0)] = he;
+      sorted_he[HalfedgeGraph::is_forward(he)<<1 | (s == seg0)] = he;
     }
     for(const int i : range(4)) { // Link edges in a loop
       assert(sorted_he[i].valid());
@@ -299,7 +299,7 @@ Array<HalfedgeId> ExactSegmentGraph::path_from_infinity(const SegmentId seed_seg
   for(const HalfedgeId he : topology->outgoing(seed_vert)) {
     const SegmentId s = edges[HalfedgeGraph::edge(he)].segment;
     const bool fwd = HalfedgeGraph::is_forward(he);
-    const uint8_t q = fwd ? segs.quadrant(s) : ((segs.quadrant(s) + 2)&3);
+    const auto q = fwd ? segs.quadrant(s) : ((segs.quadrant(s) + 2)&3);
     if(!min_he.valid()
       || q < min_q
       || (q == min_q && segs.directions_oriented(s, min_s) ^ min_fwd ^ fwd)) {

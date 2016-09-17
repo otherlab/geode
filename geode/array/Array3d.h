@@ -29,7 +29,7 @@ public:
 
 private:
   struct Unusable{};
-    typedef typename geode::mpl::if_<typename geode::is_const<T>, typename geode::Array<Element, d>, Unusable>::type MutableSelf;
+  typedef typename mpl::if_<is_const<T>,Array<Element,d>,Unusable>::type MutableSelf;
 public:
 
   int m, n, mn; // sizes

@@ -61,11 +61,6 @@ public:
     Frame& operator*=(const Frame& f)
     {t+=r*f.t;r*=f.r;return *this;}
 
-    #if defined(_MSC_VER) && defined(__AVX__)
-    #error With optimization enabled, MSVC might not correctly evaluate result. Proceed with caution!
-    // A compiler bug for MSVC build 19.00.22310.1 for x64, leaves last two components of quaternion set to zero when compiled with /O2 and /arch:AVX or higher
-    // Making the Vector<T,3> copy constructor "=default" or rewriting as "Frame result=*this; return result*=f;" seems to fix unit tests, but might fail unexpectedly in other cases
-    #endif
     Frame operator*(const Frame& f) const
     {return Frame(t+r*f.t,r*f.r);}
 
