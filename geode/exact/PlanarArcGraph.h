@@ -60,11 +60,18 @@ static inline std::ostream& operator<<(std::ostream& os, const SignedArcHead& x)
 struct RawArcContour {
   RawArray<const SignedArcHead> heads; // Direct access to heads should be avoided in case future optimizations alter how closed/open contours are represented
   struct ArcIterator {
+    using difference_type = int;
+    using value_type = SignedArcInfo;
+    using pointer = void; // Need to define something for std::iterator_traits but using SignedArcInfo* might be dangerous since dereferencing returns temporary objects
+    using reference = const SignedArcInfo;
+    using iterator_category = std::input_iterator_tag; // Can't use stronger category since this returns proxy objects
+
     SignedArcHead const* i;
     inline SignedArcInfo operator*() const { return { i->iid, to_vid((i+1)->iid), i->direction }; }
     void operator++() { ++i; }
     void operator--() { --i; }
     bool operator!=(const ArcIterator& rhs) const { return i != rhs.i; }
+    bool operator==(const ArcIterator& rhs) const { return i == rhs.i; }
   };
   int n_arcs() const { return heads.size() - 1; }
   SignedArcInfo arc(const int i) const { return { heads[i].iid, to_vid(heads[i+1].iid), heads[i].direction }; }
