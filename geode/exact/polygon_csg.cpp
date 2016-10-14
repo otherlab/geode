@@ -213,7 +213,7 @@ static inline bool include_face(const int delta, const FillRule rule) {
   switch(rule) {
     case FillRule::Greater: return delta > 0;
     case FillRule::Parity:  return !(delta & 1);
-    default /* NotEqual */: return !delta;
+    default /* NotEqual */: return delta != 0;
   }
   GEODE_UNREACHABLE("Bad enum value");
 }
