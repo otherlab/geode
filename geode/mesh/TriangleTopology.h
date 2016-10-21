@@ -93,7 +93,7 @@ public:
     VertexId src; // If erased, src = erased_id
   };
   const Field<const FaceInfo,FaceId> faces_;
-  const Field<const HalfedgeId,VertexId> vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased, boundary if on the boundar
+  const Field<const HalfedgeId,VertexId> vertex_to_edge_; // outgoing halfedge, invalid if isolated, erased_id if vertex erased, boundary if on the boundary
   const Array<const BoundaryInfo> boundaries_; // If HalfedgeId(-1-b) is a boundary halfedge, boundaries_[b] is its info
 
   // The linked list of erased boundary edges
@@ -302,7 +302,6 @@ public:
   HalfedgeId safe_halfedge(VertexId v) const;
   HalfedgeId safe_prev    (HalfedgeId e) const;
   HalfedgeId safe_next    (HalfedgeId e) const;
-  HalfedgeId safe_reverse (HalfedgeId e) const;
   VertexId   safe_src     (HalfedgeId e) const;
   VertexId   safe_dst     (HalfedgeId e) const;
   FaceId     safe_face    (HalfedgeId e) const;
