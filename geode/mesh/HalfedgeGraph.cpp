@@ -5,6 +5,8 @@
 #include <geode/array/RawField.h>
 #include <geode/array/Nested.h>
 
+#include <deque>
+
 namespace geode {
 
 GEODE_DEFINE_TYPE(HalfedgeGraph)
@@ -516,25 +518,23 @@ std::ostream& operator<<(std::ostream& os, const HalfedgeGraph& g) {
 
 Field<CrossingInfo, FaceId> get_crossing_depths(const HalfedgeGraph& g, const FaceId boundary_face) {
   assert(g.has_all_border_data());
-  auto info = Field<CrossingInfo, FaceId>(g.n_faces());
+  auto info = Field<CrossingInfo, FaceId>{g.n_faces()};
+  if(info.empty())
+    return info; // Avoid issues that arise if g is empty
+  std::deque<FaceId> queue;
 
-  typedef Tuple<FaceId, int> Update;
-  Array<Update> queue;
-
-  queue.append(Update(boundary_face, 0));
+  queue.emplace_front(boundary_face);
   info[boundary_face].depth = 0;
 
   while(!queue.empty()) {
-    const Update top = queue.pop();
-    const FaceId curr_face = top.x;
-    const int depth = top.y;
+    const FaceId curr_face = queue.front();
+    const int depth = info[curr_face].depth;
+    queue.pop_front();
 
-    // Check if we already updated a face and can skip it
-    if(info[curr_face].depth != depth) {
-      assert(info[curr_face].depth < depth);
-      continue;
-    }
+    assert(depth != CrossingInfo::unset_depth());
+    assert(queue.empty() || depth <= info[queue.front()].depth); // We should process all faces by ascending depth
 
+    const int new_opp_depth = depth+1;
     // Loop over all borders of the face
     for(const BorderId bid : g.face_borders(curr_face)) {
       // And over all edges of each border
@@ -544,14 +544,20 @@ Field<CrossingInfo, FaceId> get_crossing_depths(const HalfedgeGraph& g, const Fa
         const FaceId opp_face = g.face(opp_edge);
         assert(opp_face.valid());
         auto& opp_info = info[opp_face];
-        if(opp_info.depth > (depth+1)) { // If we found a shorter path, propagate an update
-          opp_info.depth = depth+1; // Mark smaller value so we don't try and propagate multiple updates
+        assert(opp_info.depth == CrossingInfo::unset_depth() || opp_info.depth <= new_opp_depth);
+        if(new_opp_depth < opp_info.depth) { // If we found a shorter path, propagate an update
+          assert(opp_info.depth == CrossingInfo::unset_depth()); // Actually, this should be the first and only path we check
+          opp_info.depth = new_opp_depth; // Mark smaller value so we don't try to perform multiple updates
           opp_info.next = opp_edge;
-          queue.append(Update(opp_face, opp_info.depth));
+          assert(queue.empty() || info[queue.back()].depth <= opp_info.depth); // Make sure queue will still be sorted
+          queue.emplace_back(opp_face); // Queue processing of face after all current faces are handled
         }
       }
     }
   }
+
+  assert(std::all_of(info.flat.begin(), info.flat.end(), [](const CrossingInfo& ci) { return ci.depth != CrossingInfo::unset_depth(); }));
+
   return info;
 }
 

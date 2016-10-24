@@ -11,7 +11,7 @@ template<class TV> class Box;
 template<class TV> class Segment;
 template<class TV> class Triangle;
 template<class T> class Plane;
-template<class TV> class Ray;
+template<class TV> class RayIntersection;
 template<class TV> class Sphere;
 class Cylinder;
 

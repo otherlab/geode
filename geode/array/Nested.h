@@ -276,9 +276,11 @@ template<class T,bool f> static inline const Nested<T,f>& concatenate(const Nest
   return a0;
 }
 
-template<class T,bool f0,bool f1> Nested<typename remove_const<T>::type,false> concatenate(const Nested<T,f0>& a0, const Nested<T,f1>& a1) {
-  return Nested<typename remove_const<T>::type,false>(concatenate(a0.offsets,a0.offsets.back()+a1.offsets.slice(1,a1.offsets.size())),
-                                                      concatenate(a0.flat,a1.flat));
+template<class T0, class T1, bool f0, bool f1> static inline auto concatenate(const Nested<T0,f0>& a0, const Nested<T1,f1>& a1)
+  -> Nested<typename common_type<typename remove_const<T0>::type, typename remove_const<T1>::type>::type, false>
+{
+  return {concatenate(a0.offsets,a0.offsets.back()+a1.offsets.slice(1,a1.offsets.size())),
+          concatenate(a0.flat,a1.flat)};
 }
 
 template<class T,bool f> static inline Hash hash_reduce(const Nested<T,f>& a) {

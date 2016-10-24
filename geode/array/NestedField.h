@@ -36,7 +36,7 @@ class NestedField {
   bool empty() const { return raw.empty(); }
   bool valid(const Id i) const { return raw.valid(i.idx()); }
   int total_size() const { return raw.total_size(); }
-  Array<int> sizes() const { return raw.sizes(); }
+  Field<int, Id> sizes() const { return Field<int,Id>{raw.sizes()}; }
   T& operator()(const Id i, const int j) const { return raw(i.idx(),j); }
   RawArray<T> operator[](const Id i) const { return raw[i.idx()]; }
 

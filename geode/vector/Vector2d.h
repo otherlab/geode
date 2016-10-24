@@ -53,9 +53,7 @@ public:
         :x(x),y(y)
     {}
 
-    constexpr Vector(const Vector& vector)
-        :x(vector.x),y(vector.y)
-    {}
+    constexpr Vector(const Vector& vector) = default;
 
     template<class T2> explicit constexpr Vector(const Vector<T2,2>& vector)
         :x(T(vector.x)),y(T(vector.y))
