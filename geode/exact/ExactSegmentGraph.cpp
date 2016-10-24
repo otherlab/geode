@@ -106,7 +106,9 @@ struct RightwardRaycast {
   }
 
   bool operator()(const SegmentId s0, const SegmentId s1) const {
-    return ray_intersections_rightwards(segs.src(s0),segs.dst(s0),segs.src(s1),segs.dst(s1),start);
+    // We should never have duplicates of the same segment in hits, but some implementations of std::sort will compare elements to themselves
+    // To avoid failures in perturbed sign, we make sure we aren't comparing a segment with itself
+    return (s0 != s1) && ray_intersections_rightwards(segs.src(s0),segs.dst(s0),segs.src(s1),segs.dst(s1),start);
   }
 
   RightwardRaycast(const ExactSegmentSet& segs, const SegmentId src_seg)
