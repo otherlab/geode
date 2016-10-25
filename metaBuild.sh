@@ -10,6 +10,8 @@ else
 fi
 echo Architecture is set to $ARCH
 
+thirdparty_dir='#/..'
+
 if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   declare -a args=()
   SYSTEM_NAME=`uname -s`
@@ -17,12 +19,12 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   args+=(arch=$ARCH)
   if [ "$SYSTEM_NAME" = "Darwin" ]; then
     # OSX specific config:
-    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=1 openmesh_libpath=$thirdparty_dir/OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=$thirdparty_dir/OpenMesh-2.0/src)
     echo "" # Can't have an empty if block
   elif echo "$SYSTEM_NAME" | grep -q "MINGW64_NT"; then
     # Windows specific config:
     args+=(libs_extra=psapi)
-    args+=(use_openmesh=1 Werror=0 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=1 Werror=0 openmesh_libpath=$thirdparty_dir/OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=$thirdparty_dir/OpenMesh-2.0/src)
   elif echo "$SYSTEM_NAME" | grep -q "MSYS"; then
     echo "ERROR: the MSYS shell is not supported. Please use the MinGW-w64 Win64 Shell instead."
     exit 1
@@ -33,7 +35,7 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
 
   args+=(use_python=0 use_libjpeg=0 use_libpng=0 use_openexr=0 use_boost=0)
   args+=(shared=1 install=0)
-  args+=(use_gmp=1 gmp_libpath=#/../mpir/.libs/ gmp_include=#/../mpir/)
+  args+=(use_gmp=1 gmp_libpath=$thirdparty_dir/mpir/.libs/ gmp_include=$thirdparty_dir/mpir/)
 
   if [ "$2" = "debug" ]; then
     echo "Building geode for debug only, using $ARCH architecture"
