@@ -108,8 +108,8 @@ Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const V
     // H_den cancels except for sign and we have: H_prime = ((H_den < 0 : -1 : 1) * max_r * H_num) / H_num_l1
     // C = (0.5 * (x0 + x1)) + H_prime
     // We use sign of q in case rational_approximation rounded it to zero
-    assert(!is_nonzero(H_den) || is_negative(H_den) == signbit(q));
-    center = snap_div(emul((signbit(q) ? -max_r : max_r)*exact_two, H_num) + emul(H_num_l1, ex0 + ex1), H_num_l1*exact_two, false);
+    assert(!is_nonzero(H_den) || is_negative(H_den) == std::signbit(q));
+    center = snap_div(emul((std::signbit(q) ? -max_r : max_r)*exact_two, H_num) + emul(H_num_l1, ex0 + ex1), H_num_l1*exact_two, false);
   }
   else {
     // Otherwise we do:
