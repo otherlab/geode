@@ -248,7 +248,7 @@ template<Pb PS> struct NewArc {
 
   void set_circle_and_direction(VertexSet<PS>& verts, const exact::Vec2 x1) {
     cid = verts.get_or_insert(construct_circle<PS>(x0, x1, q));
-    direction = (q >= 0.) ? ArcDirection::CCW : ArcDirection::CW;
+    direction = std::signbit(q) ? ArcDirection::CW : ArcDirection::CCW;
   }
 
   // These find the first/last intersection relative to direction of arc
