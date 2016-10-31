@@ -163,7 +163,8 @@ void add_capsule(ArcAccumulator<Pb::Implicit>& g, const exact::Vec2 x0, const re
   const bool prefer_full_circle = (abs(q) >= 1) && (c.radius > 0);
 
   assert(left_flags_safe || !prefer_full_circle); // This would likely be wildly unstable and so we explode here (in debug builds at least) to avoid headache later
-  add_capsule_helper(g, c, (q >= 0) ? x0 : x1, (q >= 0) ? x1 : x0, left_flags_safe, prefer_full_circle, signed_offset);
+  const bool is_ccw = !std::signbit(q);
+  add_capsule_helper(g, c, is_ccw ? x0 : x1, is_ccw ? x1 : x0, left_flags_safe, prefer_full_circle, signed_offset);
 }
 
 void add_capsule(ArcAccumulator<Pb::Implicit>& g, const ExactArc<Pb::Implicit>& arc, const Quantized signed_offset) {
