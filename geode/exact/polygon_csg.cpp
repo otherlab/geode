@@ -223,8 +223,28 @@ Nested<Vec2> split_polygons(Nested<const Vec2> polys, const int depth) {
   return amap(quant.inverse,exact_split_polygons(amap(quant,polys),depth));
 }
 
+// Remove any polygons with fewer than three edges
+// Ideally ExactSegmentGraph would handle these, but for now we filter them out here
+static Nested<const Vec2> filter_degenerate_polys(Nested<const Vec2> polys) {
+  if(std::all_of(polys.begin(), polys.end(), [](RawArray<const Vec2> p) { return p.size() > 2; })) {
+    return polys;
+  }
+  else {
+    Nested<Vec2, false> result;
+    for(const auto& p : polys) {
+      if(p.size() > 2)
+        result.append(p);
+    }
+    return result;
+  }
+}
+
 Nested<Vec2> exact_split_polygons_with_rule(Nested<const Vec2> polys, const int depth, const FillRule rule) {
-  const auto g = ExactSegmentGraph(polys);
+  const auto nondegenerate_polys = filter_degenerate_polys(polys);
+  if(nondegenerate_polys.empty()) {
+    return Nested<Vec2>{};
+  }
+  const auto g = ExactSegmentGraph(nondegenerate_polys);
   const auto edge_windings = Field<int, EdgeId>(constant_map(g.topology->n_edges(), 1).copy());
   const auto face_winding_depths = compute_winding_numbers(g.topology, g.boundary_face(), edge_windings);
   auto included_faces = Field<bool, FaceId>(g.topology->n_faces(), uninit);
