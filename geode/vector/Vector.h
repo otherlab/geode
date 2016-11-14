@@ -33,8 +33,8 @@ using ::std::pow;
 template<class TArray,class TIndices> class IndirectArray;
 
 #ifdef GEODE_PYTHON
-// Declare blanket to_python for numpy-incompatible vectors
-template<class T,int d> PyObject* to_python(const Vector<T,d>& vector);
+// Declare blanket to_python for numpy-incompatible vectors with inner types that can be converted
+template<class T,int d> typename enable_if<has_to_python<T>, PyObject*>::type to_python(const Vector<T,d>& v);
 #endif
 
 // Declare the base set of numpy compatible vector conversions
