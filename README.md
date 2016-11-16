@@ -183,4 +183,3 @@ John Salmon et al. at D. E. Shaw Research.  Random123 is included inline in `cor
 The interval arithmetic in `exact/Interval` is based on code by [Robert Bridson](http://www.cs.ubc.ca/~rbridson)
 and [Tyson Brochu](http://www.cs.ubc.ca/~tbrochu).
 
-
