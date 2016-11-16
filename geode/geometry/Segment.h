@@ -93,7 +93,7 @@ public:
     return min(w,1-w);
   }
 
-  bool intersection(Ray<Vector<T,2>>& ray,const T half_thickness) const {
+  bool intersection(RayIntersection<Vector<T,2>>& ray,const T half_thickness) const {
     return segment_ray_intersection(*this,ray,half_thickness);
   }
 };
@@ -155,7 +155,7 @@ template<int d> GEODE_CORE_EXPORT Tuple<real,Vector<real,3>,Vector<real,2>> segm
 /********* Segment / Ray *********/
 
 // Segment is lengthened at each end by half_thickness
-GEODE_CORE_EXPORT bool segment_ray_intersection(const Segment<Vector<real,2>>& seg, Ray<Vector<real,2>>& ray, const real half_thickness);
+GEODE_CORE_EXPORT bool segment_ray_intersection(const Segment<Vector<real,2>>& seg, RayIntersection<Vector<real,2>>& ray, const real half_thickness);
 
 /********* Point / Line *********/
 

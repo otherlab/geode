@@ -128,7 +128,9 @@ or
 
 which will allow you to develop with geode in C++ as if it was installed.
 
+### Post install
 
+On linux you may have to update the shared library cache via ldconfig if this is the first time you've installed. Make sure /usr/local/lib (or wherever you installed libgeode.so) is included in the cache's search path.
 
 ### Testing
 

@@ -90,7 +90,7 @@ template<> void SimplexTree<Vector<real,3>,2>::intersections(const Plane<real>& 
   single_traverse(*this,PlaneVisitor<real>(*this,plane,results));
 }
 
-template<int signs,class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, Ray<TV>& ray, const typename TV::Scalar half_thickness) {
+template<int signs,class TV,int d> static void intersection_helper(const SimplexTree<TV,d>& self, RayIntersection<TV>& ray, const typename TV::Scalar half_thickness) {
   typedef typename TV::Scalar T;
   FastRay<TV,signs> fast(ray);
   // If we don't intersect the root box, there's nothing to do
@@ -131,11 +131,11 @@ template<int signs,class TV,int d> static void intersection_helper(const Simplex
   }
 }
 
-template<class TV,int d> static void intersection_dispatch(const SimplexTree<TV,d>& self, Ray<TV>& ray, const typename TV::Scalar half_thickness) {
+template<class TV,int d> static void intersection_dispatch(const SimplexTree<TV,d>& self, RayIntersection<TV>& ray, const typename TV::Scalar half_thickness) {
   GEODE_NOT_IMPLEMENTED();
 }
 
-template<> void intersection_dispatch(const SimplexTree<Vector<real,2>,1>& self, Ray<Vector<real,2>>& ray, const real half_thickness) {
+template<> void intersection_dispatch(const SimplexTree<Vector<real,2>,1>& self, RayIntersection<Vector<real,2>>& ray, const real half_thickness) {
   switch (fast_ray_signs(ray)) {
     case 0: intersection_helper<0>(self,ray,half_thickness); break;
     case 1: intersection_helper<1>(self,ray,half_thickness); break;
@@ -144,7 +144,7 @@ template<> void intersection_dispatch(const SimplexTree<Vector<real,2>,1>& self,
   }
 }
 
-template<> void intersection_dispatch(const SimplexTree<Vector<real,3>,2>& self, Ray<Vector<real,3>>& ray, const real half_thickness) {
+template<> void intersection_dispatch(const SimplexTree<Vector<real,3>,2>& self, RayIntersection<Vector<real,3>>& ray, const real half_thickness) {
   switch (fast_ray_signs(ray)) {
     case 0: intersection_helper<0>(self,ray,half_thickness); break;
     case 1: intersection_helper<1>(self,ray,half_thickness); break;
@@ -157,7 +157,7 @@ template<> void intersection_dispatch(const SimplexTree<Vector<real,3>,2>& self,
   }
 }
 
-template<class TV,int d> bool SimplexTree<TV,d>::intersection(Ray<TV>& ray, const typename TV::Scalar half_thickness) const {
+template<class TV,int d> bool SimplexTree<TV,d>::intersection(RayIntersection<TV>& ray, const typename TV::Scalar half_thickness) const {
   if (boxes.size() == 0)
     return false; // No intersections possible for empty trees
   const int aggregate_save = ray.aggregate_id;
@@ -201,12 +201,12 @@ namespace {
 template<class TV,int signs> struct MultiRayVisitor {
   typedef typename TV::Scalar T;
   const SimplexTree<TV,TV::m-1>& self;
-  const Ray<TV> ray;
+  const RayIntersection<TV> ray;
   const FastRay<TV,signs> fast;
   const T half_thickness;
-  Array<Ray<TV>>& results;
+  Array<RayIntersection<TV>>& results;
 
-  MultiRayVisitor(const SimplexTree<TV,TV::m-1>& self, const Ray<TV>& ray, const T half_thickness, Array<Ray<TV>>& results)
+  MultiRayVisitor(const SimplexTree<TV,TV::m-1>& self, const RayIntersection<TV>& ray, const T half_thickness, Array<RayIntersection<TV>>& results)
     : self(self), ray(ray), fast(ray), half_thickness(half_thickness), results(results) {}
 
   bool cull(const int node) const {
@@ -215,7 +215,7 @@ template<class TV,int signs> struct MultiRayVisitor {
 
   void leaf(const int node) {
     for (const int t : self.prims(node)) {
-      Ray<TV> copy = ray;
+      RayIntersection<TV> copy = ray;
       if (self.simplices[t].intersection(copy,half_thickness)) {
         copy.aggregate_id = t;
         results.append(copy);
@@ -225,7 +225,7 @@ template<class TV,int signs> struct MultiRayVisitor {
 };
 }
 
-template<class TV> static inline void intersections_dispatch(const SimplexTree<Vector<typename TV::Scalar,2>,1>& self, const Ray<TV>& ray, const typename TV::Scalar half_thickness, Array<Ray<TV>>& results) {
+template<class TV> static inline void intersections_dispatch(const SimplexTree<Vector<typename TV::Scalar,2>,1>& self, const RayIntersection<TV>& ray, const typename TV::Scalar half_thickness, Array<RayIntersection<TV>>& results) {
   switch (fast_ray_signs(ray)) {
     case 0: single_traverse(self,MultiRayVisitor<TV,0>(self,ray,half_thickness,results)); break;
     case 1: single_traverse(self,MultiRayVisitor<TV,1>(self,ray,half_thickness,results)); break;
@@ -234,7 +234,7 @@ template<class TV> static inline void intersections_dispatch(const SimplexTree<V
   }
 }
 
-template<class TV> static inline void intersections_dispatch(const SimplexTree<Vector<typename TV::Scalar,3>,2>& self, const Ray<TV>& ray, const typename TV::Scalar half_thickness, Array<Ray<TV>>& results) {
+template<class TV> static inline void intersections_dispatch(const SimplexTree<Vector<typename TV::Scalar,3>,2>& self, const RayIntersection<TV>& ray, const typename TV::Scalar half_thickness, Array<RayIntersection<TV>>& results) {
   switch (fast_ray_signs(ray)) {
     case 0: single_traverse(self,MultiRayVisitor<TV,0>(self,ray,half_thickness,results)); break;
     case 1: single_traverse(self,MultiRayVisitor<TV,1>(self,ray,half_thickness,results)); break;
@@ -247,14 +247,14 @@ template<class TV> static inline void intersections_dispatch(const SimplexTree<V
   }
 }
 
-template<class TV,int d> Array<Ray<TV>> SimplexTree<TV,d>::intersections(const Ray<TV>& ray, const T half_thickness) const {
-  Array<Ray<TV>> results;
+template<class TV,int d> Array<RayIntersection<TV>> SimplexTree<TV,d>::intersections(const RayIntersection<TV>& ray, const T half_thickness) const {
+  Array<RayIntersection<TV>> results;
   intersections_dispatch(*this,ray,half_thickness,results);
   return results;
 }
 
-template<> Array<Ray<Vector<real,2>>> SimplexTree<Vector<real,2>,2>::intersections(const Ray<Vector<real,2>>& ray, const real half_thickness) const { GEODE_NOT_IMPLEMENTED(); }
-template<> Array<Ray<Vector<real,3>>> SimplexTree<Vector<real,3>,1>::intersections(const Ray<Vector<real,3>>& ray, const real half_thickness) const { GEODE_NOT_IMPLEMENTED(); }
+template<> Array<RayIntersection<Vector<real,2>>> SimplexTree<Vector<real,2>,2>::intersections(const RayIntersection<Vector<real,2>>& ray, const real half_thickness) const { GEODE_NOT_IMPLEMENTED(); }
+template<> Array<RayIntersection<Vector<real,3>>> SimplexTree<Vector<real,3>,1>::intersections(const RayIntersection<Vector<real,3>>& ray, const real half_thickness) const { GEODE_NOT_IMPLEMENTED(); }
 
 // Random directions courtesy of numpy.random.randn.
 template<class T> static RawArray<const Vector<T,2>> directions_helper_2() {
@@ -295,7 +295,7 @@ inside(TV point) const {
   // Fire rays in random directions until we hit either nothing or a pure simplex.
   const T epsilon = small*bounding_box().sizes().max();
   for (const TV& dir : directions<TV>()) {
-    Ray<TV> ray(point,dir,true);
+    RayIntersection<TV> ray(point,dir,true);
     if (!intersection(ray,epsilon))
       return false; // No intersections, so we must be outside
     const Simplex& simplex = simplices[ray.aggregate_id];
@@ -373,7 +373,7 @@ template<class T, int d> static int ray_traversal_test(const SimplexTree<Vector<
   int hits = 0;
   for (int i=0;i<rays;i++) {
     const TV start = random->uniform(box);
-    Ray<TV> ray(start,random->direction<TV>());
+    RayIntersection<TV> ray(start,random->direction<TV>());
     ray.t_max = 2;
     auto copy = ray;
     const bool hit = tree.intersection(ray,half_thickness);

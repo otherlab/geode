@@ -86,6 +86,8 @@ Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const V
   const Exact<1> max_r = Exact<1>(exact::bound/8); // FIXME: I'm not convinced this is correct, but it will work for now
 
   const Vector<Exact<1>,2> q_fract = rational_approximation(q);
+  assert(sign(q_fract.y) == 1);
+  assert(sign(q_fract.x) == sign(q) || !is_nonzero(q_fract.x));
 
   const SmallShift exact_two = (One()<<1);
   const Vector<Exact<1>,2> d_perp = delta.orthogonal_vector();
@@ -97,18 +99,24 @@ Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const V
   // Compare length of H (using l-one norm for simplicity) and max_r to ensure we aren't going to generate a center that is out of bounds
   const bool must_scale_H = (H_num_l1 >= max_r * abs(H_den));
 
-  Vector<Quantized,2> center = must_scale_H
+  Vector<Quantized,2> center;
+  if(must_scale_H) {
     // If H is too big, we need to scale it so that biggest component is <= max_r
     // We need: (H_num_l_inf / abs(H_den)) * s = max_r
     // Solve for s: s = (max_r * abs(H_den)) / H_num_l1
     // Plug in s: H * s = (H_num / H_den) * ((max_r * abs(H_den)) / H_num_l1)
     // H_den cancels except for sign and we have: H_prime = ((H_den < 0 : -1 : 1) * max_r * H_num) / H_num_l1
     // C = (0.5 * (x0 + x1)) + H_prime
-    ? snap_div(emul((is_negative(H_den) ? -max_r : max_r)*exact_two, H_num) + emul(H_num_l1, ex0 + ex1), H_num_l1*exact_two, false)
+    // We use sign of q in case rational_approximation rounded it to zero
+    assert(!is_nonzero(H_den) || is_negative(H_den) == std::signbit(q));
+    center = snap_div(emul((std::signbit(q) ? -max_r : max_r)*exact_two, H_num) + emul(H_num_l1, ex0 + ex1), H_num_l1*exact_two, false);
+  }
+  else {
     // Otherwise we do:
     // C = (0.5 * (x0 + x1)) + H
     // Combine into a single fraction and snap
-    : snap_div(H_num + emul(H_den_times_half, ex0 + ex1), H_den, false);
+    center = snap_div(H_num + emul(H_den_times_half, ex0 + ex1), H_den, false);
+  }
 
   assert(is_nonzero(H_den) || must_scale_H);
 
@@ -141,8 +149,6 @@ Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const V
 
 #if CHECK_CONSTRUCTIONS
   GEODE_WARNING("Expensive circle construction tests enabled");
-  const auto old_center = ecenter;
-  ecenter = Vector<Exact<1>,2>(center);
   const auto est_mid = 0.5*((x0 + x1) + q*rotate_right_90(x1 - x0));
 
   GEODE_ASSERT(test_circles_intersect(center, r, x0, constructed_arc_endpoint_error_bound()));
@@ -152,7 +158,6 @@ Tuple<Vector<Quantized,2>, Quantized> construct_circle_center_and_radius(const V
   // If we were forced to scale H we need to allow a larger error margin to account for added curvature.
   // I haven't been able to work out a guaranteed error bound at the midpoint, but found no errors larger than 6 units during testing.
   GEODE_ASSERT(test_circles_intersect(center, r, vec(round(est_mid.x),round(est_mid.y)), constructed_arc_endpoint_error_bound()*(must_scale_H ? 3 : 1)));
-
 #endif
 
   return tuple(center, r);

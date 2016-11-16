@@ -330,7 +330,7 @@
     <ClInclude Include="geometry\polygon.h">
       <Filter>geometry\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="geometry\Ray.h">
+    <ClInclude Include="geometry\RayIntersection.h">
       <Filter>geometry\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="geometry\SimplexTree.h">

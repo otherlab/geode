@@ -60,10 +60,18 @@ static inline std::ostream& operator<<(std::ostream& os, const SignedArcHead& x)
 struct RawArcContour {
   RawArray<const SignedArcHead> heads; // Direct access to heads should be avoided in case future optimizations alter how closed/open contours are represented
   struct ArcIterator {
+    using difference_type = int;
+    using value_type = SignedArcInfo;
+    using pointer = void; // Need to define something for std::iterator_traits but using SignedArcInfo* might be dangerous since dereferencing returns temporary objects
+    using reference = const SignedArcInfo;
+    using iterator_category = std::input_iterator_tag; // Can't use stronger category since this returns proxy objects
+
     SignedArcHead const* i;
     inline SignedArcInfo operator*() const { return { i->iid, to_vid((i+1)->iid), i->direction }; }
     void operator++() { ++i; }
+    void operator--() { --i; }
     bool operator!=(const ArcIterator& rhs) const { return i != rhs.i; }
+    bool operator==(const ArcIterator& rhs) const { return i == rhs.i; }
   };
   int n_arcs() const { return heads.size() - 1; }
   SignedArcInfo arc(const int i) const { return { heads[i].iid, to_vid(heads[i+1].iid), heads[i].direction }; }
@@ -99,7 +107,7 @@ struct ArcContours {
     end_closed_contour();
   }
   // Create a new open contour with the given heads and final endpoint
-  template<class TArray> void append_open(const TArray& array, const VertexId final_vertex) { 
+  template<class TArray> void append_open(const TArray& array, const VertexId final_vertex) {
     store.append(array);
     end_open_contour(final_vertex);
   }
@@ -155,11 +163,13 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
  protected:
   // Provide fast mapping between IncidentCircles in VertexField and ExactCircles in the CircleSet
   // Provides result of calling find_cid(incident(iid).as_circle()) without any expensive hashing
-  Field<CircleId, IncidentId> iid_to_cid; 
+  Field<CircleId, IncidentId> iid_to_cid;
   Hashtable<Vector<CircleId,2>,VertexId> vid_cache; // Used to avoid duplicates of the same intersection
  public:
+  using VertexField<PS>::approx;
   using VertexField<PS>::reference;
   using VertexField<PS>::incident;
+  using VertexField<PS>::arc;
   using CircleSet<PS>::get_or_insert;
   using CircleSet<PS>::find_cid;
 
@@ -181,21 +191,23 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
     return result;
   }
 
-  // These functions constructs exact arc contours to approximate closed inexact contours
-  // Constructed circles and intersections are added to the VertexSet with paths along those returned via ArcContours 
+  // These functions constructs exact arc contours to approximate inexact contours
+  // Constructed circles and intersections are added to the VertexSet with paths along those returned via ArcContours
   // All vertices on the constructed path should be within a maximum 'error distance' (in the quantized space) of their corresponding vertex on the input path
   // Vertices closer than 'error distance' may be collapsed into a single vertex, and small 'helper arcs' can be added
   // Rather than trying to guarantee the 'error distance' is at the limits of the quantization resolution, we allow a few small internal approximations
   // A precise maximum value for the 'error distance' is hard to work out and may change, but it is likely around 10 quantized units.
-  // Endpoint errors can be magnified by the q value for the middle of an arc. Contours with q larger than +/-1 can have worst case errors up to max(abs(q))*'error distance'
+  // Error distance for midpoint of arc can be larger than for endpoints by the q value of the arc. Contours with q larger than +/-1 can have worst case errors up to max(abs(q))*'error distance'
   // Approximations can result in the addition of small self intersections
   // Since arcs can be inserted or culled, current implementation doesn't guarantee any particular mapping between input arcs and the resulting contours
-  void quantize_circle_arcs(const Quantizer<real,2>& quant, const RawArray<const CircleArc> src_arcs, ArcContours& result);
-  ArcContours quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> src_arcs);
-  // TODO: Add a version of quantize_circle_arcs for open inputs
+  // Assumes input arcs are closed contours where last arc connects back to start. Set src_arcs_open to true to avoid this
+  void quantize_circle_arcs(const Quantizer<real,2>& quant, const RawArray<const CircleArc> src_arcs, ArcContours& result, const bool src_arcs_open=false);
+  void quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> src_arcs, ArcContours& result, const bool src_arcs_open=false);
+  ArcContours quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> src_arcs, const bool src_arcs_open=false);
 
   // Converts exact contours (which currently must be closed although open contours should be handled in the future) into CircleArcs
   // This function attempts to cull artifacts introduced by quantization, but will also simplify nearly degenerate arcs or contours
+  void unquantize_circle_arcs(const Quantizer<real,2>& quant, const RawArcContour& contour, Nested<CircleArc, false>& result) const;
   Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2>& quant, const ArcContours& contours) const;
 
   // This combines arcs that continue along the same circle into a single arc wherever possible
@@ -206,7 +218,7 @@ template<Pb PS> class VertexSet : public CircleSet<PS> , public VertexField<PS> 
   // Utility operators for SignedArcInfo
   CircleId reference_cid(const SignedArcInfo arc) const { return reference_cid(arc.head()); }
   IncidentId tail_iid(const SignedArcInfo arc) const { return find_iid(arc.tail(), reference_cid(arc)); }
-  // This removes the direction from a SignedArcInfo to get endpoints in CCW order  
+  // This removes the direction from a SignedArcInfo to get endpoints in CCW order
   UnsignedArcInfo ccw_arc(const SignedArcInfo arc) const {
     return (arc.direction() == ArcDirection::CCW) ? UnsignedArcInfo({ arc.head(), tail_iid(arc) })
                                                   : UnsignedArcInfo({ tail_iid(arc), arc.head() });
@@ -308,17 +320,20 @@ public:
   Ref<HalfedgeGraph> topology;
 
 protected:
-  // To construct a PlanarArcGraph, but doesn't initialize members
+  // Construct a PlanarArcGraph, but doesn't initialize members
   // User can safely access vertices by reference to add circles and intersections
   // Must then call embed_arcs which will initialize remaining members
   PlanarArcGraph(Uninit);
 
   // This constructor splits edges and computes the embedding
-  PlanarArcGraph(const VertexSet<PS>& _vertices, const ArcContours& contours);
+  // If weights is non-empty, each edge in contour will have weight multiplied by corresponding value in weights
+  // Weights use an 8 bit int since I think only -1,0, and 1 are likely to be used in practice
+  PlanarArcGraph(const VertexSet<PS>& _vertices, const ArcContours& contours, RawArray<const int8_t> weights={});
+
 public:
   // Initializes a PlanarArcGraph for the given contours
   // All vertices and circles must have been added to vertices
-  void embed_arcs(const ArcContours& contours);
+  void embed_arcs(const ArcContours& contours, RawArray<const int8_t> weights={});
 
   inline CircleId circle_id(const EdgeId eid) const;
   inline IncidentId src(const EdgeId eid) const;
@@ -331,6 +346,9 @@ public:
 
   // Find edge such that starts at or contains src. If no such edge exists, returns an invalid id
   EdgeId outgoing_edge(const IncidentId src) const;
+
+  // Find halfedge that starts at head and extends along the same circle in the same direction. If no such halfedge exists, returns an invalid id
+  HalfedgeId halfedge(const SignedArcHead head) const;
 
   // Find incident such that vertices.arc(*result, result.next()).half_open_contains(i)
   IncidentCirculator find_prev(const CircleId cid, const IncidentCircle<PS>& i) const;
@@ -352,7 +370,7 @@ public:
   // See VertexSet::combine_concentric_arcs for more details
   ArcContours combine_concentric_arcs(const ArcContours& contours) const { return vertices.combine_concentric_arcs(contours, incident_order); }
 
-  // Similar to VertexSet::unquantize_circle_arcs, but accepts connected chains of halfedges and first calls combine_concentric_arcs  
+  // Similar to VertexSet::unquantize_circle_arcs, but accepts connected chains of halfedges and first calls combine_concentric_arcs
   Nested<CircleArc> unquantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const HalfedgeId> contours) const;
 
   // Does the arc from a.x to a.y contain i?
@@ -377,7 +395,7 @@ template<Pb PS> struct ArcAccumulator {
   void add_full_circle(const ExactCircle<PS>& c, const ArcDirection dir);
 
   // calls contours.append_to_back(h), but performs additional error checking for debug builds
-  void append_to_back(const SignedArcHead h); 
+  void append_to_back(const SignedArcHead h);
 
   // Copy intersections out of a VertexSet and add contours with the new ids
   void copy_contours(const ArcContours& src_contours, const VertexSet<PS>& src_vertices);
@@ -396,6 +414,10 @@ template<Pb PS> Field<bool, FaceId> odd_faces(const PlanarArcGraph<PS>& g);
 template<Pb PS> Ref<PlanarArcGraph<PS>> quantize_circle_arcs(const Quantizer<real,2>& quant, const Nested<const CircleArc> arcs);
 // As above, but computes and returns an appropriate quantizer
 template<Pb PS> Tuple<Quantizer<real,2>, Ref<PlanarArcGraph<PS>>> quantize_circle_arcs(const Nested<const CircleArc> arcs);
+
+// Convert from ExactArc to CircleArc, will split into multiple CircleArcs if needed
+// Endpoints will not be included so a chain of connected ExactArcs can be converted to a chain of CircleArcs by concatenating results from this function
+template<Pb PS> SmallArray<CircleArc, 2> unquantize_arc(const Quantizer<real,2>& quant, const ExactArc<PS>& unsigned_arc, const ArcDirection direction);
 
 ////////////////////////////////////////////////////////////////////////////////
 

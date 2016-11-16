@@ -18,6 +18,8 @@ def hausdorff(A,B,boundary=False):
   return max(f(0,1),f(1,0))
 
 def test_decimate():
+  # fail this test -- it is hanging
+  assert 1 == 2
   for steps in 2,3:
     mesh = TriangleSoup([(0,1,2),(0,2,3),(0,3,1)])
     _,X = tetrahedron_mesh()

@@ -621,8 +621,10 @@ template<int m> static inline Vector<double,m> center(const Vector<Interval,m>& 
 // Snap an interval vector to integers, rounding to the best integer guess
 template<int m> static inline Vector<Quantized,m> snap(const Vector<Interval,m>& xs) {
   Vector<Quantized,m> r;
-  for (int i=0;i<m;i++)
+  for (int i=0;i<m;i++) {
     r[i] = Quantized(std::round(xs[i].center()));
+    if(r[i] == 0.) r[i] = fabs(r[i]); // Make sure we snap to positive zero instead of negative zero (which causes problems with hashing)
+  }
   return r;
 }
 

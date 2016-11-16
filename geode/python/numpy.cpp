@@ -123,16 +123,11 @@ void check_numpy_conversion(PyObject* object, int flags, int rank_range, PyArray
     // Alignment flag should trigger an exception from throw_array_conversion_error, but we emit a warning here to help track down the cause
     GEODE_WARNING("NumPy array alignment bug workaround failed!");
   }
-#elif (NPY_FEATURE_VERSION == 0x00000006) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
-  // This config seems to works
-#elif (NPY_FEATURE_VERSION == 0x0000000A) && (NPY_ABI_VERSION == 0x1000009) && !defined(_WIN32)
-  // As does this one
 #else
   // Maintainers of NumPy are aware of alignment issues and I think have a fix for the next release
   // The above workaround shouldn't be necessary if using an older or newer version of NumPy
-  // However, instead of mysterious runtime errors we spit out a compile time error here
-  // If you test this on a particular configuration you should add ifdefs to whitelist it here or use the workaround above
-  #error Alignment for this version of NumPy has not been tested.
+  // This used to generate a compile time error for untested versions of NumPy, but I've yet to see another configuration where this error occurred
+  // For now, I'm going to assume any other version or any non WIN64 operating systems will be okay
 #endif
 
   const int rank = PyArray_NDIM((PyArrayObject*)object);

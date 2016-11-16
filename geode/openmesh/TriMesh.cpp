@@ -11,7 +11,7 @@
 #include <geode/structure/UnionFind.h>
 #include <geode/geometry/SimplexTree.h>
 #include <geode/geometry/ParticleTree.h>
-#include <geode/geometry/Ray.h>
+#include <geode/geometry/RayIntersection.h>
 #include <geode/utility/path.h>
 #include <geode/vector/Rotation.h>
 #include <geode/utility/convert_case.h>
@@ -1697,13 +1697,13 @@ vector<Ref<TriMesh> > TriMesh::nested_components() const{
     // only emit from holes (volume <0)
     real cur_volume = volumes[id];
     if(cur_volume > 0) continue;
-    Ray<TV> r(m->triangle(FaceHandle(0)).center(),m->normal(FaceHandle(0))*-1);
+    RayIntersection<TV> r(m->triangle(FaceHandle(0)).center(),m->normal(FaceHandle(0))*-1);
     auto ints = tree->intersections(r,thicken);
-    vector<Ray<TV> > results(ints.begin(),ints.end());
+    vector<RayIntersection<TV> > results(ints.begin(),ints.end());
     vector<pair<real,int> > ts;
     vector<int> hits(meshes.size(),0); //potentially overkill
     //aggregate hits
-    for (const Ray<TV>& r : results){
+    for (const RayIntersection<TV>& r : results){
       int hit_id = fmap[r.aggregate_id];
       // ignore self
       if(id!=hit_id){

@@ -3,7 +3,6 @@
 //#####################################################################
 #include <geode/geometry/Box.h>
 #include <geode/geometry/AnalyticImplicit.h>
-#include <geode/geometry/Ray.h>
 #include <geode/array/NdArray.h>
 #include <geode/array/Nested.h>
 #include <geode/array/view.h>
