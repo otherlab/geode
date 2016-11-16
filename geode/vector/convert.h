@@ -15,7 +15,7 @@ namespace geode {
   Vector<__VA_ARGS__,d> FromPython<Vector<__VA_ARGS__,d>>::convert(PyObject* o) { return from_numpy<Vector<__VA_ARGS__,d>>(o); }
 
 // To python conversion for arbitrary vectors
-template<class T,int d> PyObject* to_python(const Vector<T,d>& v) {
+template<class T,int d> typename enable_if<has_to_python<T>, PyObject*>::type to_python(const Vector<T,d>& v) {
   static_assert(!NumpyIsStatic<T>::value,"Numpy compatible types should use GEODE_DECLARE/DEFINE_VECTOR_CONVERSIONS");
   PyObject *o[d]={0},*tuple=0;
   for (int i=0;i<d;i++)

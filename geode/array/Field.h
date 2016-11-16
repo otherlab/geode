@@ -13,7 +13,7 @@ namespace geode {
 
 template<class T,class Id> struct HasCheapCopy<Field<T,Id> >:public mpl::true_{};
 
-template<class T,class Id> static inline PyObject* to_python(const Field<T,Id>& field) {
+template<class T,class Id> static inline typename enable_if<has_to_python<Array<T>>, PyObject*>::type to_python(const Field<T,Id>& field) {
   return to_python(field.flat);
 }
 
