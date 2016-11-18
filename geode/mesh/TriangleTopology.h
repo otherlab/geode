@@ -245,6 +245,9 @@ public:
   inline Range<TriangleTopologyIter<HalfedgeId>> boundary_edges()     const;
   inline Range<TriangleTopologyIter<HalfedgeId>> interior_halfedges() const;
 
+  // Calculate distance between two vertices
+  GEODE_CORE_EXPORT int edge_length(RawField<const TV3, VertexId> X, const HalfedgeId e) const;
+
   // Find a halfedge between two vertices, or return an invalid id if none exists.
   GEODE_CORE_EXPORT HalfedgeId halfedge(VertexId v0, VertexId v1) const;
 
