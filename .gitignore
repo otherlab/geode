@@ -10,7 +10,6 @@
 *.vcxproj.user
 Debug*/
 Release*/
-/config.py
 .sconsign.dblite
 .sconf_temp
 config.log
