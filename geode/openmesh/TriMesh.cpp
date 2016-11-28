@@ -22,6 +22,13 @@
 #include <geode/array/NdArray.h>
 #include <iostream>
 #include <queue>
+
+#include <geode/value/Value.h>
+#include <geode/value/Prop.h>
+#include <geode/utility/curry.h>
+#include <geode/value/Compute.h>
+#include <geode/python/config.h>
+
 namespace geode {
 
 using std::map;
@@ -1821,6 +1828,52 @@ Vector<real,4> TriMesh::edge_color(const EdgeHandle& eh){
   return Vector<real,4>(vv[0],vv[1],vv[2],vv[3])/255.;
 }
 
+void TriMesh::render_mesh(
+  geode::ColorType ct,
+  bool use_vertex_normals
+  ) const{
+  glBegin(GL_TRIANGLES);
+  for (geode::TriMesh::ConstFaceIter it = this->faces_sbegin();
+    it != this->faces_end();
+    ++it) {
+    render_face(it.handle(), ct, use_vertex_normals);
+  }
+  glEnd();
+  GEODE_CHECK_GL();
+}
+
+void TriMesh::render_face(
+    geode::TriMesh::FaceHandle const &fh,
+    ColorType ct,
+    bool use_vertex_normals
+  ) const{
+  if (this->has_face_normals()
+    && !(use_vertex_normals
+    && this->has_vertex_normals()))
+    gl_normal(this->normal(fh));
+  if (this->has_face_colors() && (ct & ctFace))
+    gl_color(this->color(fh));
+  for (
+    geode::TriMesh::ConstFaceHalfedgeIter fv = this->cfh_iter(fh);
+    fv;
+    ++fv) {
+    if (use_vertex_normals && this->has_vertex_normals())
+      gl_normal(this->normal(this->to_vertex_handle(fv)));
+
+    if (this->has_vertex_colors() && (ct & ctVertex))
+      gl_color(this->color(this->to_vertex_handle(fv)));
+
+    if (ct & ctTexture2D) {
+      if (this->has_vertex_texcoords2D())
+        gl_texcoord(this->texcoord2D(this->to_vertex_handle(fv.handle())));
+
+      if (this->has_halfedge_texcoords2D())
+        gl_texcoord(this->texcoord2D(fv.handle()));
+    }
+    gl_vertex(this->point(this->to_vertex_handle(fv)));
+  }
+}
+
 }
 
 // Reduce template bloat
@@ -1954,6 +2007,8 @@ void wrap_trimesh() {
     .GEODE_OVERLOADED_METHOD_2(Self::Normal (Self::*)(VertexHandle)const, "vertex_normal",normal)
     .GEODE_OVERLOADED_METHOD(Self::TV(Self::*)()const, centroid)
     .GEODE_OVERLOADED_METHOD_2(Self::TV(Self::*)(FaceHandle)const, "face_centroid", centroid)
+    .GEODE_METHOD(render_mesh)
+    .GEODE_METHOD(render_face)
     ;
 }
 

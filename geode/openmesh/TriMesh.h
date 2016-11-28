@@ -40,6 +40,8 @@
 #include <geode/random/Random.h>
 #include <geode/structure/Hashtable.h>
 
+#include <geode/mesh/glut.h>
+
 #ifdef GEODE_OPENMESH
 
 namespace geode {
@@ -119,6 +121,25 @@ struct vector_traits<geode::OVec<T,d> >
 }
 
 namespace geode {
+
+enum ColorType {
+  ctNone,
+  ctFace = 1,
+  ctVertex = 2,
+  ctVertexOrFace = 3,
+  ctEdge = 4,
+  ctVertexOrEdge = 6,
+  ctTexture2D = 8
+};
+
+template<> struct FromPython<ColorType>{
+  GEODE_CORE_EXPORT static ColorType convert(PyObject* object) {
+    if (PyInt_Check(object)) {
+      return static_cast<ColorType>PyInt_AS_LONG(object);
+    }    
+    return ColorType::ctNone;
+  }
+};
 
 template<class T,int d>
 struct FromPython<OVec<T,d> > {
@@ -617,6 +638,124 @@ public:
   inline Range<HandleIter<ConstHalfedgeIter>> halfedge_handles() const { return handle_range(halfedges_sbegin(),halfedges_end()); }
   inline Range<HandleIter<FaceIter>> face_handles() { return handle_range(faces_sbegin(),faces_end()); }
   inline Range<HandleIter<ConstFaceIter>> face_handles() const { return handle_range(faces_sbegin(),faces_end()); }
+
+  GEODE_CORE_EXPORT void render_mesh(
+      geode::ColorType ct,
+      bool use_vertex_normals
+    ) const;
+  GEODE_CORE_EXPORT void render_face(
+      geode::TriMesh::FaceHandle const &fh,
+      ColorType ct,
+      bool use_vertex_normals
+    ) const;
+
+  GEODE_CORE_EXPORT static inline void gl_vertex(
+    const geode::Vector<float, 2>& v) {
+    glVertex2f(v.x, v.y);
+  }
+  GEODE_CORE_EXPORT static inline void gl_vertex(
+    const geode::Vector<double, 2>& v) {
+    glVertex2d(v.x, v.y);
+  }
+  GEODE_CORE_EXPORT static inline void gl_vertex(
+    const geode::Vector<float, 3>& v) {
+    glVertex3f(v.x, v.y, v.z);
+  }
+  GEODE_CORE_EXPORT static inline void gl_vertex(
+    const geode::Vector<double, 3>& v) {
+    glVertex3d(v.x, v.y, v.z);
+  }
+  GEODE_CORE_EXPORT static inline void gl_vertex(
+    const geode::Array<const float>& v) {
+    switch ( v.size() ) {
+          case(2):
+           glVertex2f(v[0], v[1]);
+           break;
+           case(3):
+           glVertex3f(v[0], v[1], v[2]);
+           break;
+           default:
+           break;
+    }
+  }
+  GEODE_CORE_EXPORT static inline void gl_vertex(
+    const geode::Array<const double>& v) {
+    switch ( v.size() ) {
+          case(2):
+           glVertex2d(v[0], v[1]);
+           break;
+           case(3):
+           glVertex3d(v[0], v[1], v[2]);
+           break;
+           default:
+           break;
+    }
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<float, 1>& v) {
+    glTexCoord1f(v.x);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<double, 1>& v) {
+    glTexCoord1d(v.x);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<float, 2>& v) {
+    glTexCoord2f(v.x, v.y);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<double, 2>& v) {
+    glTexCoord2d(v.x, v.y);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<float, 3>& v) {
+    glTexCoord3f(v.x, v.y, v.z);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<double, 3>& v) {
+    glTexCoord3d(v.x, v.y, v.z);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<float, 4>& v) {
+    glTexCoord4f(v[0], v[1], v[2], v[3]);
+  }
+  GEODE_CORE_EXPORT static inline void gl_texcoord(
+    const geode::Vector<double, 4>& v) {
+    glTexCoord4d(v[0], v[1], v[2], v[3]);
+  }
+
+  GEODE_CORE_EXPORT static inline void gl_normal(
+    const geode::Vector<float, 3>& v) {
+    glNormal3f(v.x, v.y, v.z);
+  }
+  GEODE_CORE_EXPORT static inline void gl_normal(
+    const geode::Vector<double, 3>& v) {
+    glNormal3d(v.x, v.y, v.z);
+  }
+
+  GEODE_CORE_EXPORT static inline void gl_color(
+    const geode::Vector<unsigned char, 3>&v) {
+    glColor3ub(v[0], v[1], v[2]);
+  }
+  GEODE_CORE_EXPORT static inline void gl_color(
+    const geode::Vector<unsigned char, 4>&v) {
+    glColor4ub(v[0], v[1], v[2], v[3]);
+  }
+  GEODE_CORE_EXPORT static inline void gl_color(
+    const geode::Vector<geode::real, 3>&v) {
+    glColor3f(
+      static_cast<float>(v[0]),
+      static_cast<float>(v[1]),
+      static_cast<float>(v[2]));
+  }
+  GEODE_CORE_EXPORT static inline void gl_color(
+    const geode::Vector<geode::real, 4>&v) {
+    glColor4f(
+      static_cast<float>(v[0]),
+      static_cast<float>(v[1]),
+      static_cast<float>(v[2]),
+      static_cast<float>(v[3]));
+  }
 };
 
 // Silence OpenMesh output for the scope of this object
