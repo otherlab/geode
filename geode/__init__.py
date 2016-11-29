@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 import platform
+
 def is_windows():
   return platform.system()=='Windows'
 
+from OpenGL.GL import glBegin # for some reason the libgeode.so does not recognize this call
 # Import geode_wrap, possibly as geode_all on windows
 if is_windows():
   from . import geode_all as geode_wrap
