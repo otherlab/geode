@@ -1,0 +1,59 @@
+set(module_SOURCES
+  circle_csg.cpp
+  circle_objects.cpp
+  circle_offsets.cpp
+  exact_circle_offsets.cpp
+  circle_quantization.cpp
+  collision.cpp
+  constructions.cpp
+  delaunay.cpp
+  Exact.cpp
+  ExactSegmentGraph.cpp
+  Expansion.cpp
+  Interval.cpp
+  irreducible.cpp
+  mesh_csg.cpp
+  perturb.cpp
+  PlanarArcGraph.cpp
+  polygon_csg.cpp
+  polynomial.cpp
+  predicates.cpp
+  simple_triangulate.cpp
+  find_overlapping_offsets.cpp
+)
+
+set(module_HEADERS
+  circle_csg.h
+  circle_enums.h
+  circle_objects.h
+  circle_offsets.h
+  circle_quantization.h
+  collision.h
+  config.h
+  constructions.h
+  debug.h
+  delaunay.h
+  exact_circle_offsets.h
+  exact-generated.h
+  Exact.h
+  ExactSegmentGraph.h
+  Expansion.h
+  find_overlapping_offsets.h
+  forward.h
+  Interval.h
+  irreducible.h
+  math.h
+  mesh_csg.h
+  perturb.h
+  PlanarArcGraph.h
+  polygon_csg.h
+  polynomial.h
+  predicates.h
+  quantize.h
+  scope.h
+  simple_triangulate.h
+)
+
+install_geode_headers(exact ${module_HEADERS})
+
+add_geode_module(exact ${module_SOURCES})

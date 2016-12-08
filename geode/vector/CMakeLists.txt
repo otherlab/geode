@@ -1,0 +1,66 @@
+set(module_SRCS
+  blas.cpp
+  Frame.cpp
+  group.cpp
+  Matrix2x2.cpp
+  Matrix3x2.cpp
+  Matrix3x3.cpp
+  Matrix4x4.cpp
+  Matrix.cpp
+  Register.cpp
+  Rotation.cpp
+  SolidMatrix.cpp
+  SparseMatrix.cpp
+  SymmetricMatrix3x3.cpp
+  TetrahedralGroup.cpp
+  Vector.cpp
+)
+
+set(module_HEADERS
+  ArithmeticPolicy.h
+  blas.h
+  complex.h
+  convert.h
+  DiagonalMatrix2x2.h
+  DiagonalMatrix3x3.h
+  DiagonalMatrix.h
+  Dot.h
+  forward.h
+  Frame.h
+  group.h
+  magnitude.h
+  Matrix0x0.h
+  Matrix1x1.h
+  Matrix2x2.h
+  Matrix3x2.h
+  Matrix3x3.h
+  Matrix4x4.h
+  Matrix.h
+  normalize.h
+  Quaternion.h
+  Register.h
+  relative_error.h
+  Rotation.h
+  ScalarPolicy.h
+  SolidMatrix.h
+  SparseMatrix.h
+  SymmetricMatrix2x2.h
+  SymmetricMatrix3x3.h
+  SymmetricMatrix.h
+  TetrahedralGroup.h
+  Twist.h
+  UpperTriangularMatrix2x2.h
+  UpperTriangularMatrix3x3.h
+  UpperTriangularMatrix.h
+  Vector0d.h
+  Vector1d.h
+  Vector2d.h
+  Vector3d.h
+  Vector4d.h
+  Vector.h
+  VectorPolicy.h
+)
+
+install_geode_headers(vector ${module_HEADERS})
+
+add_geode_module(vector ${module_SRCS})
