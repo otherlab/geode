@@ -16,12 +16,10 @@ external(env,'imath',libs=['Imath'],cpppath=['$base/include/OpenEXR'],
   cxxflags=' /wd4290' if windows else '',headers=['OpenEXR/'*windows+'ImathMatrix.h'])
 external(env,'openexr',flags=['GEODE_OPENEXR'],libs=['IlmImf','Half'],requires=['imath'],
   headers=['OpenEXR/ImfRgbaFile.h'])
-external(env,'openmesh',libpath=['/usr/local/lib/OpenMesh'],flags=['GEODE_OPENMESH'],
-  publiclibs=['OpenMeshCore','OpenMeshTools'],headers=['OpenMesh/Core/Utils/Endian.hh'])
 if windows:
   external(env,'shellapi',default=windows,headers=['Shellapi.h'],libs=['Shell32.lib'])
 
-env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_openmesh=1,need_gmp=1)
+env = env.Clone(need_libpng=1,need_libjpeg=1,need_openexr=1,need_gmp=1)
 
 skip = () if env['use_gmp'] else ('exact',)
 config_header(env,'config.h',extra=['#include <geode/python/config.h>','#include <geode/utility/config.h>'])
