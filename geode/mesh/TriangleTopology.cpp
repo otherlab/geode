@@ -2200,6 +2200,11 @@ T TriangleTopology::cos_dihedral(RawField<const TV3,VertexId> X, const HalfedgeI
     const auto v = vertices(e); \
     return Segment<TV>(X[v.x],X[v.y]); \
   } \
+  real TriangleTopology::edge_length(RawField<const TV,VertexId> X, const HalfedgeId e) const{ \
+    const auto x0 = X[src(e)], \
+               x1 = X[dst(e)]; \
+      return (x0-x1).magnitude(); \
+  } \
   Tuple<Ref<SimplexTree<TV,1>>,Array<HalfedgeId>> TriangleTopology::edge_tree(Field<const TV,VertexId> X, const int leaf_size) const { \
     const auto soup = edge_soup(); \
     return tuple(new_<SimplexTree<TV,1>>(soup.x,X.flat,leaf_size),soup.y); \

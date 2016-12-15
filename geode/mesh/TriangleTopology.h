@@ -338,6 +338,10 @@ public:
   GEODE_CORE_EXPORT real angle_at(RawField<const TV2,VertexId> X, const HalfedgeId e) const;
   GEODE_CORE_EXPORT real angle_at(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
 
+  //Segment length
+  GEODE_CORE_EXPORT real edge_length(RawField<const TV3,VertexId> X, const HalfedgeId e) const;
+  GEODE_CORE_EXPORT real edge_length(RawField<const TV2,VertexId> X, const HalfedgeId e) const;
+
   // Compute the area of a face
   GEODE_CORE_EXPORT real area(RawField<const TV3,VertexId> X, const FaceId f) const;
 
