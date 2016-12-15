@@ -39,6 +39,9 @@ const int halfedge_texcoord_id = 2;
     bool operator<=(Name i) const { return id<=i.id; } \
     bool operator> (Name i) const { return id> i.id; } \
     bool operator>=(Name i) const { return id>=i.id; } \
+    Name operator+(int delta) const { assert(valid()); return Name{id+delta}; } \
+    Name operator-(int delta) const { assert(valid()); return Name{id-delta}; } \
+    int operator-(Name rhs) const { assert(valid() && rhs.valid()); return id-rhs.id; } \
     explicit operator int() const { return id; } \
   }; \
   template<GEODE_REMOVE_PARENS(template_args)> struct is_packed_pod<GEODE_REMOVE_PARENS(full_name)> : mpl::true_ {}; \
