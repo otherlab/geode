@@ -90,16 +90,6 @@ to_json_fn[MutableTriangleTopology] = lambda v: {
   }
 }
 
-if openmesh_enabled():
-  to_json_fn[TriMesh] = lambda v: {
-    't': 'TriMesh',
-    'v': {
-      'vertices': from_ndarray(v.X()),
-      'elements': from_ndarray(v.elements(), int)
-    }
-  }
-  from_json_fn[TriMesh] = lambda d: d['v']
-
 def to_json(v):
   fn = to_json_fn.get(type(v), None)
   if callable(fn):
