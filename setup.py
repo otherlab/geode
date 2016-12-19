@@ -13,5 +13,5 @@ setup(
 
   # Installation
   packages=find_packages(),
-  package_data={'geode':['*.py','*.so']},
+  package_data={'geode':['*.py','*.so'], 'gui': ['*.py', '*.so']},
 )

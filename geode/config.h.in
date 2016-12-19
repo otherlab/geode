@@ -1,0 +1,10 @@
+#cmakedefine GEODE_PYTHON
+#cmakedefine GEODE_LIBJPEG
+#cmakedefine GEODE_LIBPNG
+#cmakedefine GEODE_THREAD_SAFE
+#cmakedefine __SSE__
+#cmakedefine GEODE_GMP
+#cmakedefine BOOST_EXCEPTION_DISABLE
+
+#include <geode/python/config.h>
+#include <geode/utility/config.h>

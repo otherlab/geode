@@ -1,0 +1,59 @@
+set(module_SOURCES
+  Buffer.cpp
+  Class.cpp
+  ClassTest.cpp
+  exceptions.cpp
+  ExceptionValue.cpp
+  from_python.cpp
+  function.cpp
+  numpy.cpp
+  Object.cpp
+  Ref.cpp
+  repr.cpp
+  try_convert.cpp
+  wrap_constructor.cpp
+  wrap_field.cpp
+  wrap_function.cpp
+  wrap_method.cpp
+  wrap_property.cpp
+)
+
+set(module_HEADERS
+  Buffer.h
+  cast.h
+  Class.h
+  config.h
+  enum.h
+  exceptions.h
+  ExceptionValue.h
+  forward.h
+  from_python.h
+  function.h
+  module.h
+  new.h
+  numpy.h
+  numpy-types.h
+  Object.h
+  outer_wrapper.h
+  Ptr.h
+  PyDictAdaptor.h
+  pyrange.h
+  Ref.h
+  repr.h
+  stl.h
+  to_python.h
+  try_convert.h
+  utility.h
+  wrap_call.h
+  wrap_constructor.h
+  wrap_field.h
+  wrap_function.h
+  wrap.h
+  wrap_iter.h
+  wrap_method.h
+  wrap_property.h
+)
+
+install_geode_headers(python ${module_HEADERS})
+
+add_geode_module(python ${module_SOURCES})
