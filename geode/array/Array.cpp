@@ -24,8 +24,8 @@ namespace {
   // I think it should be impossible to ever refer to these conversion functions except possibly when looking at a symbol dump
   template<class T, size_t N> struct UniqueDummyWrapper {};
   // We define these specializations so that conversion functions can successfully be instantiated
-  template<class T, size_t N> struct geode::NumpyIsScalar<UniqueDummyWrapper<T, N>>:public mpl::true_{};
-  template<class T, size_t N> struct geode::NumpyScalar<UniqueDummyWrapper<T, N>>:public NumpyScalar<T>{};
+  template<class T, size_t N> struct NumpyIsScalar<UniqueDummyWrapper<T, N>>:public mpl::true_{};
+  template<class T, size_t N> struct NumpyScalar<UniqueDummyWrapper<T, N>>:public NumpyScalar<T>{};
 }
 
 // ENABLE_IF_UNIQUE can be used to avoid duplicate explicit template instantiation in ARRAY_CONVERSIONS
