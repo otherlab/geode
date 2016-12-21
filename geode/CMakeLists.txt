@@ -1,3 +1,4 @@
+option(GEODE_THREAD_SAFE "Compile with thread safety" TRUE)
 if (PYTHON_FOUND)
   set(GEODE_PYTHON YES)
 endif()

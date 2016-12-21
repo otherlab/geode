@@ -1,7 +1,7 @@
 #cmakedefine GEODE_PYTHON
 #cmakedefine GEODE_LIBJPEG
 #cmakedefine GEODE_LIBPNG
-#cmakedefine GEODE_THREAD_SAFE
+#cmakedefine GEODE_THREAD_SAFE true
 #cmakedefine __SSE__
 #cmakedefine GEODE_GMP
 #cmakedefine BOOST_EXCEPTION_DISABLE
