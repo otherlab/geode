@@ -70,6 +70,9 @@ public:
     bool valid_index(const int i,const int j) const
     {return i==0 && j==0;}
 
+    const Vector<T,1> row(const int i) const
+    {assert(i==0);return Vector<T,1>(x00);}
+
     const Vector<T,1> column(const int j) const
     {assert(j==0);return Vector<T,1>(x00);}
 

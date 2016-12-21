@@ -48,6 +48,9 @@ public:
     const T& operator()(const int i,const int j=0) const
     {GEODE_FATAL_ERROR();}
 
+    const Vector<T,0> row(const int i) const
+    {GEODE_FATAL_ERROR();}
+
     const Vector<T,0> column(const int i) const
     {GEODE_FATAL_ERROR();}
 

@@ -49,8 +49,11 @@ public:
     int columns() const
     {return 2;}
 
-    Vector<T,2> column(const int axis) const
+    Vector<T,2> row(const int axis) const
     {assert(unsigned(axis)<2);return axis==0?Vector<T,2>(x00,x10):Vector<T,2>(x10,x11);}
+
+    Vector<T,2> column(const int axis) const
+    { return row(axis); } // Since matrix is symmetric column and row are interchangeable
 
     T& operator()(int i,int j)
     {return i<j?element_upper(i,j):element_lower(i,j);}

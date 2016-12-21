@@ -72,10 +72,10 @@ public:
     Vector<int,2> sizes() const
     {return Vector<int,2>(2,2);}
 
-    int rows() const
+    constexpr int rows() const
     {return 2;}
 
-    int columns() const
+    constexpr int columns() const
     {return 2;}
 
     T& operator()(const int i,const int j)
@@ -92,6 +92,12 @@ public:
 
     bool valid_index(const int i,const int j) const
     {return unsigned(i)<2 && unsigned(j)<2;}
+
+    Vector<T,2>& row(const int i)
+    {return (*this)[i]; }
+
+    const Vector<T,2>& row(const int i) const
+    {return (*this)[i]; }
 
     const Vector<T,2> column(const int j) const
     {assert(unsigned(j)<2);return Vector<T,2>(x[0][j],x[1][j]);}
