@@ -7,6 +7,7 @@ function(add_python_module _name)
     ${_name}
     PUBLIC
       ${PYTHON_INCLUDE_DIRS}
+      ${NUMPY_INCLUDE_DIRS}
       ${CMAKE_BINARY_DIR}
   )
 
@@ -99,6 +100,7 @@ macro(ADD_GEODE_MODULE _name)
         ${_name}
         PUBLIC
           ${PYTHON_INCLUDE_DIRS}
+          ${NUMPY_INCLUDE_DIRS}
       )
 
       file(GLOB _python_bits *.py)
