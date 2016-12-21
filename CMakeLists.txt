@@ -7,15 +7,25 @@ find_package(PkgConfig)
 
 pkg_search_module(PYTHON python)
 
-find_library(GMP_LIBRARIES gmp)
-if (GMP_LIBRARIES)
+set(GMP_LIB_DIR "/usr/lib/" CACHE PATH "Path to libgmp.so")
+set(GMP_INCLUDE_DIR "/usr/include/" CACHE PATH "Path to gmp.h")
+
+find_library(
+  GMP_LIBRARIES gmp
+  HINTS ${GMP_LIB_DIR}
+)
+find_path(
+  GMP_INCLUDE_DIR gmp.h
+  HINTS ${GMP_INCLUDE_DIR}
+)
+if (GMP_LIBRARIES AND GMP_INCLUDE_DIR)
   set(GMP_FOUND TRUE)
 endif()
 
 if (GMP_FOUND)
-  message(STATUS "GMP found. Building exact submodule")
+  message(STATUS "GMP found in ${GMP_LIBRARIES}")
 else()
-  message(STATUS "GMP not found. Exact module will not be built.")
+  message(FATAL_ERROR "Required dependency GMP not found. Set GMP_LIB_DIR and GMP_INCLUDE_DIR to inform cmake where to look")
 endif()
 
 if (PYTHON_FOUND)
