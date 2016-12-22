@@ -30,6 +30,12 @@ endif()
 
 if (PYTHON_FOUND)
   message(STATUS "Python found. Building python bindings")
+  execute_process(
+    COMMAND
+      python -c "import numpy, sys;sys.stdout.write(numpy.get_include())"
+    OUTPUT_VARIABLE NUMPY_INCLUDE_DIRS
+  )
+  message(STATUS "Numpy found in ${NUMPY_INCLUDE_DIRS}")
 else()
   message(STATUS "Python not found. Python bindings will not be built.")
 endif()
