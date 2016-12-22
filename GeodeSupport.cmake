@@ -71,6 +71,14 @@ macro(ADD_GEODE_MODULE _name)
         ${CMAKE_SOURCE_DIR}
         ${CMAKE_BINARY_DIR}
     )
+    
+    if (GMP_FOUND)
+      target_include_directories(
+        ${_name}
+        PUBLIC
+        ${GMP_INCLUDE_DIR}
+      )
+    endif()
 
     target_compile_options(
       ${_name}
