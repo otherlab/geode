@@ -37,7 +37,7 @@ build_make()
 
     if [[ $OS == *"Darwin"* ]] # Assume Mac OS X
     then
-	NPROCS=$(system_profiler | awk '/Number Of CPUs/{print $4}{next;}')
+	NPROCS=$(sysctl -n hw.ncpu)
     fi
 
     make -j $NPROCS
