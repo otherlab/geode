@@ -43,7 +43,7 @@ public:
     int columns() const
     {return columns_;}
 
-    template<class TX,class TY> void multiply(const TX& x,const TY& result) {
+    template<class TX,class TY> void multiply(const TX& x,const TY& result) const {
       return multiply_helper<typename TX::Element>(x,result);
     }
 

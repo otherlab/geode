@@ -29,7 +29,7 @@ public:
     }
 
     static T signed_area(const TV& x1,const TV& x2,const TV& x3)
-    {return (T).5*TV::cross_product(x2-x1,x3-x1).x;}
+    {return (T).5*cross(x2-x1,x3-x1);}
 
     T signed_area() const
     {return signed_area(X[0],X[1],X[2]);}
@@ -72,8 +72,8 @@ public:
 
     static T aspect_ratio(const TV& x1_input,const TV& x2_input,const TV& x3_input)
     {TV u=x1_input-x2_input,v=x2_input-x3_input,w=x3_input-x1_input;
-    T u2=TV::dot_product(u,u),v2=TV::dot_product(v,v),w2=TV::dot_product(w,w);
-    return max(u2,v2,w2)/abs(TV::cross_product(u,v).x);}
+    T u2=dot(u,u),v2=dot(v,v),w2=dot(w,w);
+    return max(u2,v2,w2)/abs(cross(u,v).x);}
 
     static T minimum_edge_length(const TV& x1,const TV& x2,const TV& x3)
     {return sqrt(minimum_edge_length_squared(x1,x2,x3));}
@@ -134,7 +134,7 @@ public:
 
     static TV circumcenter(const TV& x1,const TV& x2,const TV& x3)
     {TV x1x2=x2-x1,x1x3=x3-x1,m1=(T).5*(x1+x2),m2=(T).5*(x1+x3),m1m2=m2-m1,x1x2_perp(-x1x2.y,x1x2.x);
-    return m1+x1x2_perp*(TV::dot_product(m1m2,x1x3)/TV::dot_product(x1x2_perp,x1x3));}
+    return m1+x1x2_perp*(dot(m1m2,x1x3)/dot(x1x2_perp,x1x3));}
 
     static Vector<T,3> circumcenter_barycentric_coordinates(const TV& x1,const TV& x2,const TV& x3)
     {TV a=x3-x2,b=x3-x1,c=x2-x1;T aa=a.sqr_magnitude(),bb=b.sqr_magnitude(),cc=c.sqr_magnitude();
@@ -142,20 +142,20 @@ public:
 
     T minimum_angle() const
     {TV s1=(X[0]-X[1]).normalized(),s2=(X[1]-X[2]).normalized(),s3=(X[2]-X[0]).normalized();
-    return acos(max(TV::dot_product(s1,-s2),TV::dot_product(-s1,s3),TV::dot_product(s2,-s3)));}
+    return acos(max(dot(s1,-s2),dot(-s1,s3),dot(s2,-s3)));}
 
     T maximum_angle() const
     {TV s1=(X[0]-X[1]).normalized(),s2=(X[1]-X[2]).normalized(),s3=(X[2]-X[0]).normalized();
-    return acos(min(TV::dot_product(s1,-s2),TV::dot_product(-s1,s3),TV::dot_product(s2,-s3)));}
+    return acos(min(dot(s1,-s2),dot(-s1,s3),dot(s2,-s3)));}
 
     bool outside(const TV& location,const T thickness_over_2=0)
     {return outside(location,X[0],X[1],X[2],thickness_over_2);}
 
     static bool outside(const TV& location,const TV& x1,const TV& x2,const TV& x3,const T thickness_over_2=0)
     {assert(check_orientation(x1,x2,x3));TV location_minus_x1=location-x1;
-    TV edge1=x2-x1;if(TV::cross_product(location_minus_x1,edge1).x>thickness_over_2*edge1.magnitude()) return true;
-    TV edge3=x1-x3;if(TV::cross_product(location_minus_x1,edge3).x>thickness_over_2*edge3.magnitude()) return true;
-    TV edge2=x3-x2;if(TV::cross_product(location-x2,edge2).x>thickness_over_2*edge2.magnitude()) return true;
+    TV edge1=x2-x1;if(cross(location_minus_x1,edge1).x>thickness_over_2*edge1.magnitude()) return true;
+    TV edge3=x1-x3;if(cross(location_minus_x1,edge3).x>thickness_over_2*edge3.magnitude()) return true;
+    TV edge2=x3-x2;if(cross(location-x2,edge2).x>thickness_over_2*edge2.magnitude()) return true;
     return false;}
 
     Box<TV> bounding_box() const

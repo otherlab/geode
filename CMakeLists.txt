@@ -46,9 +46,13 @@ configure_file(${CMAKE_SOURCE_DIR}/geode.pc.in ${CMAKE_BINARY_DIR}/geode.pc
   @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/geode.pc DESTINATION lib/pkgconfig/)
 
+if(NOT GUI_DIR)
+  # Check in current directory by default
+  set(GUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gui)
+endif()
 
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/gui)
-  message(STATUS "gui found")
-  set(Geode_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  add_subdirectory(gui)
+if (EXISTS ${GUI_DIR})
+  message(STATUS "gui found at ${GUI_DIR}")
+  set(Geode_DIR ${CMAKE_CURRENT_BINARY_DIR}/geode)
+  add_subdirectory(${GUI_DIR} ${CMAKE_CURRENT_BINARY_DIR}/gui)
 endif()

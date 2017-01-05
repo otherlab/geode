@@ -289,7 +289,7 @@ public:
     {STATIC_ASSERT_SAME(T,bool);int count=0;for(int i=0;i<d;i++)if(array[i]) count++;return count;}
 
     static Vector axis_vector(const int axis)
-    {Vector r;r(axis)=(T)1;return r;}
+    {Vector r;r[axis]=(T)1;return r;}
 
     static Vector ones()
     {Vector r;for(int i=0;i<d;i++) r.array[i]=(T)1;return r;}

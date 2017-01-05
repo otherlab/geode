@@ -74,10 +74,10 @@ public:
     Vector<int,2> sizes() const
     {return Vector<int,2>(3,3);}
 
-    int rows() const
+    constexpr int rows() const
     {return 3;}
 
-    int columns() const
+    constexpr int columns() const
     {return 3;}
 
     T& operator()(const int i,const int j)
@@ -94,6 +94,12 @@ public:
 
     const Vector<T,3>& operator[](const int i) const
     {assert(unsigned(i)<3);return *(const Vector<T,3>*)x[i];}
+
+    Vector<T,3>& row(const int i)
+    { return (*this)[i]; }
+
+    const Vector<T,3>& row(const int i) const
+    { return (*this)[i]; }
 
     const Vector<T,3> column(const int j) const
     {assert(unsigned(j)<3);return Vector<T,3>(x[0][j],x[1][j],x[2][j]);}

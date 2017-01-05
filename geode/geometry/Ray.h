@@ -37,7 +37,7 @@ public:
     { int axis=direction.dominant_axis();return (point[axis]-start[axis])/direction[axis]; }
 
     TV reflected_direction(const TV& normal) const
-    { return 2*TV::dot_product(-direction,normal)*normal+direction; }
+    { return 2*dot(-direction,normal)*normal+direction; }
 };
 
 template<class TV> std::ostream &operator<<(std::ostream &output,const Ray<TV> &ray)

@@ -74,8 +74,11 @@ public:
     const T& element_lower(int i,int j) const
     {assert(unsigned(j)<=unsigned(i) && unsigned(i)<3);return ((const T*)this)[((5-j)*j>>1)+i];}
 
-    Vector<T,3> column(const int axis) const
+    Vector<T,3> row(const int axis) const
     {assert(unsigned(axis)<3);return axis==0?Vector<T,3>(x00,x10,x20):axis==1?Vector<T,3>(x10,x11,x21):Vector<T,3>(x20,x21,x22);}
+
+    Vector<T,3> column(const int axis) const
+    { return row(axis); } // Since matrix is symmetric column and row are interchangeable
 
     bool operator==(const SymmetricMatrix& A) const
     {return x00==A.x00 && x10==A.x10 && x20==A.x20 && x11==A.x11 && x21==A.x21 && x22==A.x22;}

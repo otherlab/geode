@@ -116,6 +116,9 @@ template<> static inline __int64 fetch_and_add<__int64>(volatile __int64* n, __i
 #error "Don't know atomic fetch and add for this compiler"
 #endif
 
+// Workaround for type deduction issues
+template<class T> static inline T fetch_and_add_i(volatile T* n, int dn) { return fetch_and_add<T>(n,(T)dn); }
+
 #else // non-threadsafe
 
 template<class T> static inline T fetch_and_add(T* n, T dn) {
@@ -124,10 +127,11 @@ template<class T> static inline T fetch_and_add(T* n, T dn) {
   return old;
 }
 
+// Workaround for type deduction issues
+template<class T> static inline T fetch_and_add_i(T* n, int dn) { return fetch_and_add<T>(n,(T)dn); }
+
 #endif
 
-// Workaround for type deduction issues
-template<class T> static inline T fetch_and_add_i(volatile T* n, int dn) { return fetch_and_add<T>(n,(T)dn); }
 
 } // end namespace geode
 
