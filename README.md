@@ -14,7 +14,6 @@ For C++:
 * [cmake >= 3.3](https://cmake.org): A build system (GPL)
 * [gmp >= 4.0](http://gmplib.org): Arbitrary precision arithmetic (LGPL)
 * [cblas](http://www.netlib.org/blas/blast-forum/cblas.tgz): C wrappers for BLAS (BSD license)
-* [boost >= 1.46](http://www.boost.org): Not needed if a C++11 standard library exists (Boost Software License)
 
 For Python:
 
@@ -91,11 +90,10 @@ If necessary, dependencies can be installed via one of
 
     # Homebrew (recommended)
     brew install cmake openexr gfortran python #Note: gfortran brew is now part of gcc, so although previous versions can still be accessed, brew install gcc is the preferred method
-    brew install boost # Not needed for 10.9 or later
     sudo pip install --upgrade pip setuptools numpy scipy pytest #numpy and scipy can be
 
     # MacPorts (not recommended).  If you have python 2.7, replace py26 with py27.
-    sudo port -v install python26 py26-numpy cmake boost
+    sudo port -v install python26 py26-numpy cmake
     sudo port -v install py26-scipy py26-py libpng jpeg openexr # optional
     sudo port -v install gcc47 # If clang is unavailable
 
@@ -156,12 +154,6 @@ These options can also be passed via command line to cmake.  Run `ccmake` for a 
 Use `CMAKE_BUILD_TYPE=Debug` for a much slower build with many more assertions:
 
     cmake -DCMAKE_BUILD_TYPE=Debug
-
-### Common Issues
-On recent Linux machines, the boost libraries are already multithread-capable, and will not include the 'mt' suffix. As this is the default in the geode SConstruct, the following should be added in config.py:
-    boost_lib_suffix = ''
-
-
 
 ### Acknowledgements
 
