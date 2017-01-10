@@ -54,7 +54,7 @@ template<class TM> PyObject* to_python_map(const TM& m) {
   Py_XDECREF(dict);
   return 0;
 }
-}
+} // geode namespace
 
 // to_python needs to go in the std namespace to make Koenig lookup work
 namespace std {
@@ -103,9 +103,6 @@ template<class T0,class T1> PyObject* to_python(const pair<T0,T1>& p) {
   return 0;
 }
 
-}
-namespace GEODE_UNORDERED_NAMESPACE {
-
 template<class T,class H> static inline PyObject* to_python(const unordered_set<T,H>& s) {
   return geode::to_python_set(s);
 }
@@ -114,7 +111,7 @@ template<class T,class V,class H> static inline PyObject* to_python(const unorde
   return geode::to_python_map(m);
 }
 
-}
+} // std namespace
 namespace geode {
 
 using std::vector;
