@@ -197,15 +197,13 @@ inline std::ostream &operator<<(std::ostream &os, std::map<T,U> const &v) {
 }
 
 }
-namespace GEODE_SMART_PTR_NAMESPACE {
+
+namespace std {
 
 template<class T> static inline geode::Hash hash_reduce(const shared_ptr<T>& p) {
   using geode::hash_reduce;
   return hash_reduce(p.get());
 }
-
-}
-namespace std {
 
 template<class T, class U> geode::Hash hash_reduce(const std::pair<T,U>&s) {
   return geode::Hash(s.first, s.second);

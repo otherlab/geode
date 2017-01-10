@@ -4,7 +4,6 @@
 #cmakedefine GEODE_THREAD_SAFE true
 #cmakedefine __SSE__
 #cmakedefine GEODE_GMP
-#cmakedefine BOOST_EXCEPTION_DISABLE
 
 #include <geode/python/config.h>
 #include <geode/utility/config.h>
