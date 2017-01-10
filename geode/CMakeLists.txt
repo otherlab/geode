@@ -47,11 +47,19 @@ install(EXPORT Geode FILE GeodeConfig.cmake DESTINATION cmake)
 export(TARGETS geode FILE ${CMAKE_CURRENT_BINARY_DIR}/GeodeConfig.cmake)
 
 if (GMP_FOUND)
+  target_include_directories(
+    geode
+    PUBLIC
+      ${GMP_INCLUDE}
+  )
+
   target_link_libraries(
     geode
     PUBLIC
       ${GMP_LIBRARIES}
   )
+else()
+  message(STATUS "GMP_FOUND not set")
 endif()
 
 if (PYTHON_FOUND)

@@ -8,17 +8,17 @@ find_package(PkgConfig)
 pkg_search_module(PYTHON python)
 
 set(GMP_LIB_DIR "/usr/lib/" CACHE PATH "Path to libgmp.so")
-set(GMP_INCLUDE_DIR "/usr/include/" CACHE PATH "Path to gmp.h")
+set(GMP_INCLUDE_DIR "/usr/local/Cellar/ /usr/include/" CACHE PATH "Path to gmp.h")
 
 find_library(
   GMP_LIBRARIES gmp
   HINTS ${GMP_LIB_DIR}
 )
 find_path(
-  GMP_INCLUDE_DIR gmp.h
+  GMP_INCLUDE gmp.h
   HINTS ${GMP_INCLUDE_DIR}
 )
-if (GMP_LIBRARIES AND GMP_INCLUDE_DIR)
+if (GMP_LIBRARIES AND GMP_INCLUDE)
   set(GMP_FOUND TRUE)
 endif()
 
