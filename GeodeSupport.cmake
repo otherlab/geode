@@ -94,6 +94,8 @@ macro(ADD_GEODE_MODULE _name)
         -fno-strict-aliasing
         -std=c++0x
         -Werror
+        -Wno-unused-function
+        -Wno-misleading-indentation
         -Wno-array-bounds
         -Wno-unknown-pragmas
         -Wno-deprecated
