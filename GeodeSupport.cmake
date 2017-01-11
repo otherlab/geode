@@ -76,7 +76,7 @@ macro(ADD_GEODE_MODULE _name)
       target_include_directories(
         ${_name}
         PUBLIC
-        ${GMP_INCLUDE_DIR}
+        ${GMP_INCLUDE}
       )
     endif()
 
