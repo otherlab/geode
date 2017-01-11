@@ -92,4 +92,11 @@ if (PYTHON_FOUND)
   file(COPY __init__.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
   install(CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
+
+  add_custom_target(develop DEPENDS geode)
+  add_custom_command(
+    TARGET develop
+    COMMAND ${CMAKE_SOURCE_DIR}/setup.py develop
+  )
+  install(CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
 endif()
