@@ -9,18 +9,6 @@ fi
 return $(pwd) 
 }
 
-function python_inc()
-{
-    A="${./show_py_inc.py}"
-    echo $A
-}
-
-function python_lib()
-{
-    A="${./show_py_lib.py}"
-    echo $A
-}
-
 clean_build_dir()
 {
 if [ -a "build" ]
