@@ -53,10 +53,9 @@ macro(ADD_GEODE_MODULE _name)
 
     set(GEODE_MODULE_OBJECTS ${GEODE_MODULE_OBJECTS} $<TARGET_OBJECTS:${_name}> PARENT_SCOPE)
 
-    target_compile_features(
-      ${_name}
-      PUBLIC
-        cxx_static_assert
+    set_property(
+      TARGET ${_name}
+      PROPERTY CXX_STANDARD 11
     )
 
     target_compile_definitions(
