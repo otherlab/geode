@@ -1,3 +1,5 @@
+include(CheckCXXCompilerFlag)
+
 function(add_python_module _name)
   add_library(
     ${_name} MODULE ${ARGN}
@@ -91,18 +93,25 @@ macro(ADD_GEODE_MODULE _name)
         -Woverloaded-virtual
         -Wsign-compare
         -fno-strict-aliasing
-        -std=c++0x
         -Werror
         -Wno-unused-function
-        -Wno-misleading-indentation
         -Wno-array-bounds
         -Wno-unknown-pragmas
         -Wno-deprecated
-        -Wno-unused-variable
         -Wno-format-security
         -Wno-attributes
         -fPIC
     )
+
+    CHECK_CXX_COMPILER_FLAG(-Wno-misleading-indentation COMPILER_CHECKS_MISLEADING_INDENTATION)
+    if (COMPILER_CHECKS_MISLEADING_INDENTATION)
+      target_compile_options(
+        ${_name}
+        PUBLIC
+          -Wno-misleading-indentation
+      )
+    endif()
+
 
     if (PYTHON_FOUND)
       target_include_directories(
