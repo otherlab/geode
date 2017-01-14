@@ -569,7 +569,7 @@ template<class T,int d>   static inline const RawArray<const T> asconstarray(con
 template<class T>         static inline const RawArray<const T> asconstarray(const RawArray<T>& v)      { return v; }
 template<class T>         static inline const RawArray<const T> asconstarray(const Array<T>& v)         { return v; }
 template<class T,class A> static inline const RawArray<const T> asconstarray(const std::vector<T,A>& v) { return RawArray<const T>(v.size(),&v[0]); }
-template<class T,size_t N> static inline const RawArray<const T> asconstarray(const std::array<T,N>& a) { static_assert(N <= INT_MAX, "Size too big"); return RawArray<const T>(int(N),a.data()); }
+template<class T,size_t N> static inline const RawArray<const T> asconstarray(const std::array<T,N>& a) { static_assert(N <= std::numeric_limits<int>::max(), "Size too big"); return RawArray<const T>(int(N),a.data()); }
 template<class T,class A> static inline const A&                asconstarray(const ArrayBase<T,A>& v)   { return v.derived(); }
 
 template<class T,int d> static inline       Array<T>& flat(      Array<T,d>& A) { return A.flat; }
