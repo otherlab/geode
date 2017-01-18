@@ -26,6 +26,9 @@
 #include <xmmintrin.h>
 #endif
 #endif
+#if defined(__linux__)
+#include <unistd.h> // for getpagesize()
+#endif
 namespace geode {
 namespace process {
 
