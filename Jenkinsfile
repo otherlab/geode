@@ -11,46 +11,48 @@ node {
   def cxx = tool "CXX-${COMPILER_FAMILY}"
   echo "Using CC=${cc}, CXX=${cxx}"
 
-  withEnv(["CC=${cc}", "CXX=${cxx}"]) {
-    stage('Checkout') {
-      try {
-        notifyPending("Git checkout", COMPILER_FAMILY)
-        checkout scm
-      } catch (e) {
-        currentBuild.result = 'FAILED'
-        notifyFailure('Git checkout failed', COMPILER_FAMILY)
-        throw e
-      }
-    }
-    stage('Configure') {
-      if (!fileExists('build')) {
-        sh 'mkdir build'
-      }
-      dir('build') {
+  ws("/opt/jenkins/workspaces/workspace") {
+    withEnv(["CC=${cc}", "CXX=${cxx}"]) {
+      stage('Checkout') {
         try {
-          notifyPending("Configuring with CMake", COMPILER_FAMILY)
-          sh "${cmake} ../"
-        } catch (e) {
-          currentBuild.resuilt = 'FAILED'
-          notifyFailure('CMake failed', COMPILER_FAMILY)
-          throw e
-        }
-      }
-    }
-
-    stage('Build') {
-      dir('build') {
-        try {
-          notifyPending("Building", COMPILER_FAMILY)
-          sh 'make'
+          notifyPending("Git checkout", COMPILER_FAMILY)
+          checkout scm
         } catch (e) {
           currentBuild.result = 'FAILED'
-          notifyFailure("Build failed", COMPILER_FAMILY)
+          notifyFailure('Git checkout failed', COMPILER_FAMILY)
           throw e
         }
       }
+      stage('Configure') {
+        if (!fileExists('build')) {
+          sh 'mkdir build'
+        }
+        dir('build') {
+          try {
+            notifyPending("Configuring with CMake", COMPILER_FAMILY)
+            sh "${cmake} ../"
+          } catch (e) {
+            currentBuild.resuilt = 'FAILED'
+            notifyFailure('CMake failed', COMPILER_FAMILY)
+            throw e
+          }
+        }
+      }
+
+      stage('Build') {
+        dir('build') {
+          try {
+            notifyPending("Building", COMPILER_FAMILY)
+            sh 'make'
+          } catch (e) {
+            currentBuild.result = 'FAILED'
+            notifyFailure("Build failed", COMPILER_FAMILY)
+            throw e
+          }
+        }
+      }
+      notifySuccess(COMPILER_FAMILY);
     }
-    notifySuccess(COMPILER_FAMILY);
   }
 }
 
