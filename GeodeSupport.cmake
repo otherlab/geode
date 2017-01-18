@@ -100,6 +100,7 @@ macro(ADD_GEODE_MODULE _name)
         -Wno-deprecated
         -Wno-format-security
         -Wno-attributes
+        -Wno-unused-variable
         -fPIC
     )
 
