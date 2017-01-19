@@ -27,9 +27,7 @@ else()
 endif()
 
 # Find PYTHON_EXECTUABLE first based on $PATH
-message(STATUS "Testing if PYTHON_FOUND set before searching for PythonInterp: ${PYTHON_FOUND}")
 find_package(PythonInterp)
-message(STATUS "Testing if PYTHON_FOUND set after searching for PythonInterp: ${PYTHON_FOUND}")
 if (PYTHONINTERP_FOUND)
   message(STATUS "Python binary found at ${PYTHON_EXECUTABLE}")
 
@@ -49,7 +47,7 @@ if (PYTHONINTERP_FOUND)
   message(STATUS "Numpy found in ${NUMPY_INCLUDE_DIRS}")
   message(STATUS "Looking for python pkgconfig in ${PYTHON_LIBPC}")
 
-  message(STATUS "Testing if PYTHON_FOUND already set: ${PYTHON_FOUND}")
+  unset(PYTHON_FOUND) # WIP: Force pkg_check_modules to search even if there is a cached PYTHON_FOUND
   set(ENV{PKG_CONFIG_PATH} "${PYTHON_LIBPC}:$ENV{PKG_CONFIG_PATH}")
   pkg_check_modules(PYTHON python)
   message(STATUS "Testing if PYTHON_FOUND set after looking: ${PYTHON_FOUND}")
