@@ -27,7 +27,9 @@ else()
 endif()
 
 # Find PYTHON_EXECTUABLE first based on $PATH
+message(STATUS "Testing if PYTHON_FOUND set before searching for PythonInterp: ${PYTHON_FOUND}")
 find_package(PythonInterp)
+message(STATUS "Testing if PYTHON_FOUND set after searching for PythonInterp: ${PYTHON_FOUND}")
 if (PYTHONINTERP_FOUND)
   message(STATUS "Python binary found at ${PYTHON_EXECUTABLE}")
 
