@@ -53,12 +53,13 @@ if (PYTHONINTERP_FOUND)
   # PYTHON_LIBRARIES and PYTHON_LIBRARY_DIRS have the name and path to where python library exists
   # We need to combine those and add appropriate prefixes and suffixes so we can pass library directly later
   # Use a name other than PYTHON_LIBRARY since find_library won't do anything if variable is already set
-  find_library(PYTHON_FULL_LIBRARY NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
-  if(NOT ${PYTHON_FULL_LIBRARY})
-    set(PYTHON_LIBRARY ${PYTHON_FULL_LIBRARY})
+  unset(_PYTHON_LIBRARY)
+  find_library(_PYTHON_LIBRARY NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
+  if(_PYTHON_LIBRARY)
+    set(PYTHON_LIBRARY ${_PYTHON_LIBRARY})
     message(STATUS "Python library found at ${PYTHON_LIBRARY}")
   else()
-    message(ERROR "Unable to find full path to python lib")
+    message(WARNING " Unable to find full path to python lib")
     set(PYTHON_FOUND FALSE)
   endif()
 else()
