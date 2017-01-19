@@ -49,22 +49,24 @@ if (PYTHONINTERP_FOUND)
 
   unset(PYTHON_FOUND) # WIP: Force pkg_check_modules to search even if there is a cached PYTHON_FOUND
   set(ENV{PKG_CONFIG_PATH} "${PYTHON_LIBPC}:$ENV{PKG_CONFIG_PATH}")
-  pkg_check_modules(PYTHON python)
-  message(STATUS "Testing if PYTHON_FOUND set after looking: ${PYTHON_FOUND}")
-  message(STATUS "Python headers should be at: ${PYTHON_INCLUDEDIR}")
+  pkg_check_modules(_TEMP_PYTHON python)
+  message(STATUS "Testing if PYTHON_FOUND set after looking: ${_TEMP_PYTHON_FOUND}")
+  message(STATUS "Python headers should be at: ${_TEMP_PYTHON_INCLUDEDIR}")
 
-  message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
+  message(STATUS "Expecting to find ${_TEMP_PYTHON_LIBRARIES} in ${_TEMP_PYTHON_LIBRARY_DIRS}")
 
   # PYTHON_LIBRARIES and PYTHON_LIBRARY_DIRS have the name and path to where python library exists
   # We need to combine those and add appropriate prefixes and suffixes so we can pass library directly later
   # Use a name other than PYTHON_LIBRARY since find_library won't do anything if variable is already set
-  unset(_PYTHON_LIBRARY)
-  message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
-  find_library(_PYTHON_LIBRARY NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
-  message(STATUS "find_library returned ${_PYTHON_LIBRARY}")
-  if(_PYTHON_LIBRARY)
-    set(PYTHON_LIBRARY ${_PYTHON_LIBRARY})
+  unset(__TEMP_PYTHON_LIBRARY)
+  message(STATUS "Expecting to find ${_TEMP_PYTHON_LIBRARIES} in ${_TEMP_PYTHON_LIBRARY_DIRS}")
+  find_library(__TEMP_PYTHON_LIBRARY NAMES ${_TEMP_PYTHON_LIBRARIES} PATHS ${_TEMP_PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
+  message(STATUS "find_library returned ${__TEMP_PYTHON_LIBRARY}")
+  if(__TEMP_PYTHON_LIBRARY)
+    set(PYTHON_LIBRARY ${__TEMP_PYTHON_LIBRARY})
     message(STATUS "Python library found at ${PYTHON_LIBRARY}")
+    set(PYTHON_FOUND TRUE)
+    set(PYTHON_INCLUDEDIR ${_TEMP_PYTHON_INCLUDEDIR})
   else()
     message(WARNING " Unable to find full path to python lib")
     set(PYTHON_FOUND FALSE)
