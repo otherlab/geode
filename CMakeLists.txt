@@ -54,7 +54,9 @@ if (PYTHONINTERP_FOUND)
   # We need to combine those and add appropriate prefixes and suffixes so we can pass library directly later
   # Use a name other than PYTHON_LIBRARY since find_library won't do anything if variable is already set
   unset(_PYTHON_LIBRARY)
+  message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
   find_library(_PYTHON_LIBRARY NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
+  message(STATUS "find_library returned ${_PYTHON_LIBRARY}")
   if(_PYTHON_LIBRARY)
     set(PYTHON_LIBRARY ${_PYTHON_LIBRARY})
     message(STATUS "Python library found at ${PYTHON_LIBRARY}")
