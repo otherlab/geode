@@ -2,66 +2,68 @@
 def COMPILER_FAMILY = "GCC"
 
 node {
-  notifyPending("Starting build", COMPILER_FAMILY)
+  withNotifications("jenkins/${COMPILER_FAMILY}") {
+    def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
+    echo "Using CMake from ${cmake}"
 
-  def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
-  echo "Using CMake from ${cmake}"
+    def cc = tool "CC-${COMPILER_FAMILY}"
+    def cxx = tool "CXX-${COMPILER_FAMILY}"
+    echo "Using CC=${cc}, CXX=${cxx}"
 
-  def cc = tool "CC-${COMPILER_FAMILY}"
-  def cxx = tool "CXX-${COMPILER_FAMILY}"
-  echo "Using CC=${cc}, CXX=${cxx}"
+    withVirtualenv(pwd() + "/virtualenv") {
+      sh "python -m pip install nose numpy pytest scipy"
+      withEnv(["CC=${cc}", "CXX=${cxx}"]) {
+        stage('Checkout') {
+          checkout scm
+        }
+        cleanDir('build') {
+          stage('Configure') {
+              sh "${cmake} ../"
+          }
 
-  withEnv(["CC=${cc}", "CXX=${cxx}"]) {
-    stage('Checkout') {
-      try {
-        notifyPending("Git checkout", COMPILER_FAMILY)
-        checkout scm
-      } catch (e) {
-        currentBuild.result = 'FAILED'
-        notifyFailure('Git checkout failed', COMPILER_FAMILY)
-        throw e
-      }
-    }
-    stage('Configure') {
-      if (!fileExists('build')) {
-        sh 'mkdir build'
-      }
-      dir('build') {
-        try {
-          notifyPending("Configuring with CMake", COMPILER_FAMILY)
-          sh "${cmake} ../"
-        } catch (e) {
-          currentBuild.resuilt = 'FAILED'
-          notifyFailure('CMake failed', COMPILER_FAMILY)
-          throw e
+          stage('Build') {
+            sh 'make'
+          }
+
+          stage('Test') {
+            try {
+              sh "python -m nose --with-xunit"
+            } finally {
+              junit 'nosetests.xml'
+            }
+          }
         }
       }
     }
-
-    stage('Build') {
-      dir('build') {
-        try {
-          notifyPending("Building", COMPILER_FAMILY)
-          sh 'make'
-        } catch (e) {
-          currentBuild.result = 'FAILED'
-          notifyFailure("Build failed", COMPILER_FAMILY)
-          throw e
-        }
-      }
-    }
-    notifySuccess(COMPILER_FAMILY);
   }
 }
 
-def notifyPending(description, key) {
-  githubNotify context: "jenkins/${key}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'PENDING', description: "${description}"
+def cleanDir(path, cl) {
+  if (fileExists(path)) {
+    dir(path) {
+      deleteDir()
+    }
+    sh "mkdir ${path}"
+  }
+  dir(path) {
+    cl()
+  }
 }
 
-def notifyFailure(description, key) {
-  githubNotify context: "jenkins/${key}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'FAILURE', description: "${description}"
+def withNotifications(context, cl) {
+  githubNotify context: "${context}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'PENDING'
+  try {
+    cl()
+  } catch (e) {
+    githubNotify context: "${context}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'FAILURE'
+    throw e
+  }
+  githubNotify context: "${context}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'SUCCESS'
 }
 
-def notifySuccess(key) {
-  githubNotify context: "jenkins/${key}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'SUCCESS', description: 'Success!'
+def withVirtualenv(path, cl) {
+  sh "virtualenv ${path}"
+  withEnv(["PATH+VIRTUALENV=${path}/bin"]) {
+    cl()
+  }
 }
