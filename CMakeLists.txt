@@ -47,8 +47,13 @@ if (PYTHONINTERP_FOUND)
   message(STATUS "Numpy found in ${NUMPY_INCLUDE_DIRS}")
   message(STATUS "Looking for python pkgconfig in ${PYTHON_LIBPC}")
 
+  message(STATUS "Testing if PYTHON_FOUND already set: ${PYTHON_FOUND}")
   set(ENV{PKG_CONFIG_PATH} "${PYTHON_LIBPC}:$ENV{PKG_CONFIG_PATH}")
   pkg_check_modules(PYTHON python)
+  message(STATUS "Testing if PYTHON_FOUND set after looking: ${PYTHON_FOUND}")
+  message(STATUS "Python headers should be at: ${PYTHON_INCLUDEDIR}")
+
+  message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
 
   # PYTHON_LIBRARIES and PYTHON_LIBRARY_DIRS have the name and path to where python library exists
   # We need to combine those and add appropriate prefixes and suffixes so we can pass library directly later
