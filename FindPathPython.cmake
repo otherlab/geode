@@ -60,12 +60,18 @@ if (PYTHONINTERP_FOUND)
     )
   endif()
 
+  execute_process(
+    COMMAND
+      ${PYTHON_EXECUTABLE} -c "import sysconfig, sys;sys.stdout.write(sysconfig.get_config_var('MULTIARCH'))"
+    OUTPUT_VARIABLE PYTHON_MULTIARCH_DIRS
+  )
+
   # PYTHON_LIBRARIES and PYTHON_LIBRARY_DIRS have the name and path to where python library exists
   # We need to combine those and add appropriate prefixes and suffixes so we can pass library directly later
   # Use a name other than PYTHON_LIBRARY since find_library won't do anything if variable is already set
   unset(_PYTHON_LIBRARIES)
   message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
-  find_library(_PYTHON_LIBRARIES NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
+  find_library(_PYTHON_LIBRARIES NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} PATH_SUFFIXES ${PYTHON_MULTIARCH_DIRS} NO_DEFAULT_PATH)
   message(STATUS "find_library returned ${_PYTHON_LIBRARIES}")
 
   if(_PYTHON_LIBRARIES)
@@ -83,13 +89,13 @@ if(EXISTS "${PYTHON_INCLUDE_DIRS}/Python.h")
   message(STATUS "Python.h found in: ${PYTHON_INCLUDE_DIRS}")
 else()
   set(PYTHON_FOUND PYTHON_INCLUDE_DIRS-NOTFOUND)
-  message(ERROR "Unable to find python include directory")
+  message(ERROR " Unable to find python include directory")
 endif()
 
 if(EXISTS "${PYTHON_LIBRARIES}")
   message(STATUS "Python lib found at: ${PYTHON_LIBRARIES}")
 else()
   set(PYTHON_FOUND PYTHON_LIBRARIES-NOTFOUND)
-  message(ERROR "Unable to find python library")
+  message(ERROR " Unable to find python library")
 endif()
 
