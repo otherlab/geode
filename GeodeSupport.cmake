@@ -16,7 +16,7 @@ function(add_python_module _name)
   target_link_libraries(
     ${_name}
     PUBLIC
-      ${PYTHON_LIBRARY}
+      ${PYTHON_LIBRARIES}
   )
 
   set_target_properties(
