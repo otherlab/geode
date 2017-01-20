@@ -26,54 +26,8 @@ else()
   message(FATAL_ERROR "Required dependency GMP not found. Set GMP_LIB_DIR and GMP_INCLUDE_DIR to inform cmake where to look")
 endif()
 
-# Find PYTHON_EXECTUABLE first based on $PATH
-find_package(PythonInterp)
-if (PYTHONINTERP_FOUND)
-  message(STATUS "Python binary found at ${PYTHON_EXECUTABLE}")
-
-  execute_process(
-    COMMAND
-      ${PYTHON_EXECUTABLE} -c "import numpy, sys;sys.stdout.write(numpy.get_include())"
-    OUTPUT_VARIABLE NUMPY_INCLUDE_DIRS
-  )
-
-  # This uses sysconfig from inside PYTHON_EXECTUABLE to ensure we link against same python executable that is present in $PATH
-  execute_process(
-    COMMAND
-      ${PYTHON_EXECUTABLE} -c "import sysconfig, sys;sys.stdout.write(sysconfig.get_config_var('LIBPC'))"
-    OUTPUT_VARIABLE PYTHON_LIBPC
-  )
-
-  message(STATUS "Numpy found in ${NUMPY_INCLUDE_DIRS}")
-  message(STATUS "Looking for python pkgconfig in ${PYTHON_LIBPC}")
-
-  unset(PYTHON_FOUND) # WIP: Force pkg_check_modules to search even if there is a cached PYTHON_FOUND
-  set(ENV{PKG_CONFIG_PATH} "${PYTHON_LIBPC}:$ENV{PKG_CONFIG_PATH}")
-  set(ENV{PKG_CONFIG_ALLOW_SYSTEM_LIBS} "1")
-  set(ENV{PKG_CONFIG_ALLOW_SYSTEM_CFLAGS} "1")
-  pkg_check_modules(PYTHON python)
-  message(STATUS "Testing if PYTHON_FOUND set after looking: ${PYTHON_FOUND}")
-  message(STATUS "Python headers should be at: ${PYTHON_INCLUDEDIR}")
-
-  message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
-
-  # PYTHON_LIBRARIES and PYTHON_LIBRARY_DIRS have the name and path to where python library exists
-  # We need to combine those and add appropriate prefixes and suffixes so we can pass library directly later
-  # Use a name other than PYTHON_LIBRARY since find_library won't do anything if variable is already set
-  unset(_PYTHON_LIBRARY)
-  message(STATUS "Expecting to find ${PYTHON_LIBRARIES} in ${PYTHON_LIBRARY_DIRS}")
-  find_library(_PYTHON_LIBRARY NAMES ${PYTHON_LIBRARIES} PATHS ${PYTHON_LIBRARY_DIRS} NO_DEFAULT_PATH)
-  message(STATUS "find_library returned ${_PYTHON_LIBRARY}")
-  if(_PYTHON_LIBRARY)
-    set(PYTHON_LIBRARY ${_PYTHON_LIBRARY})
-    message(STATUS "Python library found at ${PYTHON_LIBRARY}")
-  else()
-    message(WARNING " Unable to find full path to python lib")
-    set(PYTHON_FOUND FALSE)
-  endif()
-else()
-  message(WARNING "No python interpreter found!")
-endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/)
+find_package(PathPython)
 
 if(NOT PYTHON_FOUND)
   message(STATUS "Python libs not found. Python bindings will not be built.")
