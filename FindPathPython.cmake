@@ -8,8 +8,8 @@
 #
 #   NUMPY_INCLUDE_DIRS         - Include directory for NumPy
 #   PYTHON_FOUND               - Evaluates to false if unsuccessful
-#   PYTHON_INCLUDE_DIRS        - Path to directory that contains Python.h
-#   PYTHON_LIBRARY             - Python standard library including full path
+#   PYTHON_INCLUDE_DIRS        - Path to directories that contains Python.h
+#   PYTHON_LIBRARIES           - Python standard library including full path
 #
 
 find_package(PkgConfig)
@@ -85,15 +85,9 @@ endif()
 
 set(PYTHON_FOUND TRUE)
 
-if(EXISTS "${PYTHON_INCLUDE_DIRS}/Python.h")
-  message(STATUS "Python.h found in: ${PYTHON_INCLUDE_DIRS}")
-else()
+if(NOT PYTHON_INCLUDE_DIRS)
   set(PYTHON_FOUND PYTHON_INCLUDE_DIRS-NOTFOUND)
-  if(PYTHON_INCLUDE_DIRS)
-    message(ERROR " Unable to find Python.h in ${PYTHON_INCLUDE_DIRS}")
-  else()
-    message(ERROR "No python include directory set")
-  endif()
+  message(ERROR " Python include directory invalid ${PYTHON_INCLUDE_DIRS}")
 endif()
 
 if(EXISTS "${PYTHON_LIBRARIES}")

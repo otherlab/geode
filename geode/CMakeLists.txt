@@ -66,7 +66,7 @@ if (PYTHON_FOUND)
   target_link_libraries(
     geode
     PUBLIC
-      ${PYTHON_LIBRARY}
+      ${PYTHON_LIBRARIES}
   )
 
   add_python_module(geode_wrap module.cpp)
