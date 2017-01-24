@@ -5,12 +5,6 @@ include(GeodeSupport.cmake)
 
 find_package(PkgConfig)
 
-# Find PYTHON_EXECTUABLE first based on $PATH
-find_package(PythonInterp)
-
-# This module then uses PYTHON_EXECUTABLE to find compile flags
-find_package(PythonLibs)
-
 set(GMP_LIB_DIR "/usr/lib/" CACHE PATH "Path to libgmp.so")
 set(GMP_INCLUDE_DIR "/usr/local/Cellar/ /usr/include/" CACHE PATH "Path to gmp.h")
 
@@ -32,18 +26,11 @@ else()
   message(FATAL_ERROR "Required dependency GMP not found. Set GMP_LIB_DIR and GMP_INCLUDE_DIR to inform cmake where to look")
 endif()
 
-if (PYTHONINTERP_FOUND)
-  message(STATUS "Python binary found at ${PYTHON_EXECUTABLE}. Building python bindings")
-  execute_process(
-    COMMAND
-      ${PYTHON_EXECUTABLE} -c "import numpy, sys;sys.stdout.write(numpy.get_include())"
-    OUTPUT_VARIABLE NUMPY_INCLUDE_DIRS
-  )
-  message(STATUS "Numpy found in ${NUMPY_INCLUDE_DIRS}")
-  message(STATUS "Using python libraries in ${PYTHON_LIBRARIES}")
-  message(STATUS "Using python headers in ${PYTHON_INCLUDE_DIRS}")
-else()
-  message(STATUS "Python not found. Python bindings will not be built.")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/)
+find_package(PathPython)
+
+if(NOT PYTHON_FOUND)
+  message(STATUS "Python libs not found. Python bindings will not be built.")
 endif()
 
 add_subdirectory(geode)
