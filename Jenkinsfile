@@ -6,31 +6,38 @@ node {
     def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
     echo "Using CMake from ${cmake}"
 
-    def cc = tool "CC-${COMPILER_FAMILY}"
-    def cxx = tool "CXX-${COMPILER_FAMILY}"
-    echo "Using CC=${cc}, CXX=${cxx}"
-
     withVirtualenv(pwd() + "/virtualenv") {
       sh "python -m pip install nose numpy pytest scipy"
-      withEnv(["CC=${cc}", "CXX=${cxx}"]) {
-        stage('Checkout') {
-          checkout scm
+      parallel gcc: buildWithCompilers('GCC'), llvm: buildWithCompilers('Clang')
+    }
+  }
+}
+
+def buildWithCompilers(family) {
+  def cc = tool "CC-${family}"
+  def cxx = tool "CXX-${family}"
+  echo "Using CC=${cc}, CXX=${cxx}"
+
+  def srcRoot = pwd()
+  ws(family) {
+    withEnv(["CC=${cc}", "CXX=${cxx}"]) {
+      stage('Checkout') {
+        checkout scm
+      }
+      cleanDir('build') {
+        stage('Configure') {
+            sh "${cmake} ${srcRoot}"
         }
-        cleanDir('build') {
-          stage('Configure') {
-              sh "${cmake} ../"
-          }
 
-          stage('Build') {
-            sh 'make'
-          }
+        stage('Build') {
+          sh 'make'
+        }
 
-          stage('Test') {
-            try {
-              sh "python -m nose --with-xunit"
-            } finally {
-              junit 'nosetests.xml'
-            }
+        stage('Test') {
+          try {
+            sh "python -m nose --with-xunit"
+          } finally {
+            junit 'nosetests.xml'
           }
         }
       }
