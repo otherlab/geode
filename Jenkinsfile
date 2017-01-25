@@ -4,14 +4,18 @@ node {
       sh "python -m pip install nose numpy pytest scipy"
       tasks = [:]
       for(compiler in ['GCC', 'Clang']) {
-        tasks[compiler] = { family -> {
-          withNotifications("jenkins/${c}") {
-            buildWithCompilers(c)
-          }
-        } }(compiler)
+        tasks[compiler] = builderForFamily(compiler)
       }
     }
     parallel tasks
+  }
+}
+
+def Closure builderForFamily(family) {
+  return {
+    withNotifications("jenkins/${family}") {
+      buildWithCompilers(family)
+    }
   }
 }
 
