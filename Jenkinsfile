@@ -28,7 +28,7 @@ def buildWithCompilers(family) {
   echo "Using CMake from ${cmake}"
 
   def srcRoot = pwd()
-  ws(family) {
+  ws("${srcRoot}/${family}") {
     withEnv(["CC=${cc}", "CXX=${cxx}"]) {
       stage("Checkout ${family}") {
         checkout scm
@@ -68,16 +68,16 @@ def cleanDir(path, cl) {
 
 def withNotifications(context, cl) {
   githubNotify context: "${context}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'PENDING'
-  slackSend channel: 'softcad_skynet', color: '#4444ff', message: "Build Started - ${env.JOB_NAME}/${context} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+  //slackSend channel: 'softcad_skynet', color: '#4444ff', message: "Build Started - ${env.JOB_NAME}/${context} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
   try {
     cl()
   } catch (e) {
     githubNotify context: "${context}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'FAILURE'
-    slackSend channel: 'softcad_skynet', color: 'danger', message: "Build Failed - ${env.JOB_NAME}/${context} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>, <${env.BUILD_URL}/testReport|View test results>)"
+    //slackSend channel: 'softcad_skynet', color: 'danger', message: "Build Failed - ${env.JOB_NAME}/${context} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>, <${env.BUILD_URL}/testReport|View test results>)"
     throw e
   }
   githubNotify context: "${context}", account: 'otherlab', credentialsId: 'd411dfdb-4ceb-4d55-845e-46d1d40e40dc', repo: 'geode', status: 'SUCCESS'
-  slackSend channel: 'softcad_skynet', color: 'good', message: "Build Succeeded - ${env.JOB_NAME}/${context} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>, <${env.BUILD_URL}/testReport|View test results>)"
+  //slackSend channel: 'softcad_skynet', color: 'good', message: "Build Succeeded - ${env.JOB_NAME}/${context} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>, <${env.BUILD_URL}/testReport|View test results>)"
 }
 
 def withVirtualenv(path, cl) {
