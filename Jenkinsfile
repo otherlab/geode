@@ -4,11 +4,11 @@ node {
       sh "python -m pip install nose numpy pytest scipy"
       tasks = [:]
       for(compiler in ['GCC', 'Clang']) {
-        tasks[compiler] = {
-          withNotifications("jenkins/${compiler}") {
-            buildWithCompilers(compiler)
+        tasks[compiler] = { family -> {
+          withNotifications("jenkins/${c}") {
+            buildWithCompilers(c)
           }
-        }
+        } }(compiler)
       }
     }
     parallel tasks
@@ -18,7 +18,7 @@ node {
 def buildWithCompilers(family) {
   def cc = tool "CC-${family}"
   def cxx = tool "CXX-${family}"
-  echo "Using CC=${cc}, CXX=${cxx}"
+  echo "Using CC=${cc}, CXX=${cxx} for ${family}"
 
   def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
   echo "Using CMake from ${cmake}"
