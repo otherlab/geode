@@ -54,6 +54,7 @@ macro(ADD_GEODE_MODULE _name)
     )
 
     set(GEODE_MODULE_OBJECTS ${GEODE_MODULE_OBJECTS} $<TARGET_OBJECTS:${_name}> PARENT_SCOPE)
+    set(GEODE_MODULE_NAMES ${GEODE_MODULE_NAMES} ${_name} PARENT_SCOPE)
 
     set_property(
       TARGET ${_name}
@@ -135,8 +136,43 @@ macro(ADD_GEODE_MODULE _name)
       list(APPEND _pytargets "${CMAKE_CURRENT_BINARY_DIR}/${_pyfile}")
       endforeach()
       add_custom_target(${_name}-python
-        ALL DEPENDS ${_pytargets}
+        DEPENDS ${_pytargets}
       )
+      add_dependencies(${_name} ${_name}-python)
     endif()
   endif()
 endmacro(ADD_GEODE_MODULE)
+
+function(STATUS _name _value)
+  list(APPEND STATUS_TABLE "${_name}")
+  list(APPEND STATUS_TABLE "${_value}")
+  set(STATUS_TABLE "${STATUS_TABLE}" PARENT_SCOPE)
+endfunction(STATUS)
+
+function(STATUS_REPORT)
+  message(STATUS "Build configuration:")
+  set(_isName TRUE)
+  set(_max_name_width 0)
+  foreach(v IN LISTS STATUS_TABLE)
+    if (_isName)
+      set(_isName FALSE)
+      string(LENGTH "${v}" _name_length)
+      if (_name_length GREATER _max_name_width)
+        set(_max_name_width ${_name_length})
+      endif()
+    else()
+      set(_isName TRUE)
+    endif()
+  endforeach()
+  while(STATUS_TABLE)
+    list(GET STATUS_TABLE 0 _name)
+    list(GET STATUS_TABLE 1 _value)
+    list(REMOVE_AT STATUS_TABLE 0 1)
+
+    string(LENGTH "${_name}" _name_length)
+    math(EXPR _padding_size "${_max_name_width}-${_name_length} + 1")
+    string(RANDOM LENGTH ${_padding_size} ALPHABET " " _padding)
+
+    message(STATUS "\t${_name}${_padding}\t${_value}")
+  endwhile()
+endfunction()

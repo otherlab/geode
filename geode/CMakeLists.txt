@@ -13,6 +13,7 @@ configure_file(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config.h DESTINATION include/geode/)
 
 set(GEODE_MODULE_OBJECTS "" PARENT_SCOPE)
+set(GEODE_MODULE_NAMES "" PARENT_SCOPE)
 
 add_subdirectory(array)
 add_subdirectory(python)
@@ -32,6 +33,14 @@ add_subdirectory(vector)
 if (GMP_FOUND)
   add_subdirectory(exact)
 endif()
+
+set(_module_list)
+list(SORT GEODE_MODULE_NAMES)
+foreach(module IN LISTS GEODE_MODULE_NAMES)
+  set(_module_list "${_module_list}, ${module}")
+endforeach()
+string(SUBSTRING "${_module_list}" 2 -1 _module_list)
+status("Built modules" "${_module_list}")
 
 add_library(geode SHARED ${GEODE_MODULE_OBJECTS})
 target_include_directories(
@@ -100,3 +109,5 @@ if (PYTHON_FOUND)
   )
   install(CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
 endif()
+
+set(STATUS_TABLE "${STATUS_TABLE}" PARENT_SCOPE)
