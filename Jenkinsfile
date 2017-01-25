@@ -35,7 +35,7 @@ def buildWithCompilers(family) {
       }
       cleanDir('build') {
         stage("Configure ${family}") {
-            sh "${cmake} ${srcRoot}"
+            sh "${cmake} ../"
         }
 
         stage("Build ${family}") {
