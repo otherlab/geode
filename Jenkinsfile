@@ -1,18 +1,20 @@
-// Switch to Clang to run against clang. A future iteration of the pipeline will run clang+gcc in parallel
-def COMPILER_FAMILY = "GCC"
-
 node {
   def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
   echo "Using CMake from ${cmake}"
+
   withVirtualenv(pwd() + "/virtualenv") {
     stage('Setup') {
       sh "python -m pip install nose numpy pytest scipy"
+      def tasks = {}
+      for(compiler in ['GCC', 'Clang']) {
+        tasks[compiler] = {
+          withNotifications("jenkins/${compiler}") {
+            buildWithCompilers(compiler)
+          }
+        }
+      }
     }
-    parallel gcc: withNotifications("jenkins/GCC") {
-      buildWithCompilers("GCC")
-    }, clang: withNotifications("jenkins/Clang") {
-      buildWithCompilers("Clang")
-    }
+    parallel tasks
   }
 }
 
