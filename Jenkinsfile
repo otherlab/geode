@@ -2,13 +2,16 @@
 def COMPILER_FAMILY = "GCC"
 
 node {
-  withNotifications("jenkins/${COMPILER_FAMILY}") {
-    def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
-    echo "Using CMake from ${cmake}"
-
-    withVirtualenv(pwd() + "/virtualenv") {
+  def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
+  echo "Using CMake from ${cmake}"
+  withVirtualenv(pwd() + "/virtualenv") {
+    stage('Setup') {
       sh "python -m pip install nose numpy pytest scipy"
-      parallel gcc: buildWithCompilers('GCC'), llvm: buildWithCompilers('Clang')
+    }
+    parallel gcc: withNotifications("jenkins/GCC") {
+      buildWithCompilers("GCC")
+    }, clang: withNotifications("jenkins/Clang") {
+      buildWithCompilers("Clang")
     }
   }
 }
@@ -21,19 +24,19 @@ def buildWithCompilers(family) {
   def srcRoot = pwd()
   ws(family) {
     withEnv(["CC=${cc}", "CXX=${cxx}"]) {
-      stage('Checkout') {
+      stage('Checkout ${family}') {
         checkout scm
       }
       cleanDir('build') {
-        stage('Configure') {
+        stage('Configure ${family}') {
             sh "${cmake} ${srcRoot}"
         }
 
-        stage('Build') {
+        stage('Build ${family}') {
           sh 'make'
         }
 
-        stage('Test') {
+        stage('Test ${family}') {
           try {
             sh "python -m nose --with-xunit"
           } finally {
