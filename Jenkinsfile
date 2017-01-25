@@ -2,7 +2,7 @@ node {
   withVirtualenv(pwd() + "/virtualenv") {
     stage('Setup') {
       sh "python -m pip install nose numpy pytest scipy"
-      def tasks = {}
+      tasks = [:]
       for(compiler in ['GCC', 'Clang']) {
         tasks[compiler] = {
           withNotifications("jenkins/${compiler}") {
