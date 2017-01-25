@@ -26,19 +26,19 @@ def buildWithCompilers(family) {
   def srcRoot = pwd()
   ws(family) {
     withEnv(["CC=${cc}", "CXX=${cxx}"]) {
-      stage('Checkout ${family}') {
+      stage("Checkout ${family}") {
         checkout scm
       }
       cleanDir('build') {
-        stage('Configure ${family}') {
+        stage("Configure ${family}") {
             sh "${cmake} ${srcRoot}"
         }
 
-        stage('Build ${family}') {
+        stage("Build ${family}") {
           sh 'make'
         }
 
-        stage('Test ${family}') {
+        stage("Test ${family}") {
           try {
             sh "python -m nose --with-xunit"
           } finally {
