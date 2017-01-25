@@ -63,4 +63,4 @@ endif()
 
 status("Found GUI" "${GUI_DIR}")
 status("Compilers" "${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}")
-status_report()
+#status_report()
