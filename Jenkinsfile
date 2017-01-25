@@ -1,7 +1,4 @@
 node {
-  def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
-  echo "Using CMake from ${cmake}"
-
   withVirtualenv(pwd() + "/virtualenv") {
     stage('Setup') {
       sh "python -m pip install nose numpy pytest scipy"
@@ -22,6 +19,9 @@ def buildWithCompilers(family) {
   def cc = tool "CC-${family}"
   def cxx = tool "CXX-${family}"
   echo "Using CC=${cc}, CXX=${cxx}"
+
+  def cmake = tool name: 'Latest', type: 'hudson.plugins.cmake.CmakeTool'
+  echo "Using CMake from ${cmake}"
 
   def srcRoot = pwd()
   ws(family) {
