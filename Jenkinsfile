@@ -27,7 +27,7 @@ node {
 
           stage('Test') {
             try {
-              sh "pytest --junitxml=pytests.xml"
+              sh "python -m pytest --junitxml=pytests.xml"
             } finally {
               junit 'pytests.xml'
             }
