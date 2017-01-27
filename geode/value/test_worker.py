@@ -4,7 +4,9 @@ from __future__ import with_statement
 from geode import Prop,PropManager,cache
 from geode.value import Worker
 import sys
+import unittest
 
+@unittest.skip("not a test")
 def worker_test_factory(props):
   x = props.get('x')
   y = props.add('y',5)
@@ -22,6 +24,7 @@ def remote(conn):
     n.set(i)
   done.set(True)
 
+@unittest.skip("worker tests do not run yet")
 def test_worker():
   command_file = __file__
   if command_file.endswith('.pyc'):
