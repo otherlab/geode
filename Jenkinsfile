@@ -11,7 +11,7 @@ node {
     echo "Using CC=${cc}, CXX=${cxx}"
 
     withVirtualenv(pwd() + "/virtualenv") {
-      sh "python -m pip install nose numpy pytest scipy"
+      sh "python -m pip install numpy pytest scipy"
       withEnv(["CC=${cc}", "CXX=${cxx}"]) {
         stage('Checkout') {
           checkout scm
@@ -27,9 +27,9 @@ node {
 
           stage('Test') {
             try {
-              sh "python -m nose --with-xunit"
+              sh "pytest --junitxml=pytests.xml"
             } finally {
-              junit 'nosetests.xml'
+              junit 'pytests.xml'
             }
           }
         }
