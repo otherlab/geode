@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from geode.utility import tryfile
 from numpy import *
 import py.test
+import tempfile
+import unittest
 
 def check(a,b):
   if isinstance(a,dict) and isinstance(b,dict):
@@ -20,10 +22,10 @@ def check(a,b):
 
 dir = None
 def setup_module(module):
-  module.dir = py.test.ensuretemp('try')
+  module.dir = tempfile.mkdtemp()
 
 def test_try():
-  file = dir.strpath+'/try.try'
+  file = dir+'/try.try'
   value={'a':{'b':array([1,2]),
               'c':array([1.,2.,3.])},
          'd':array([4,5],dtype=float64),
@@ -35,12 +37,12 @@ def test_try():
   check(value,tryfile.unpack(tryfile.pack(value)))
 
 def test_version_1():
-  file = dir.strpath+'/1.try' 
+  file = dir+'/1.try' 
   open(file,'wb').write('\x03TRY\x03\x01\x0a\x03\x00\x05array\x00\x01\x03\x02\x00\x11')
   check(tryfile.read(file),17)
 
 def test_version_2():
-  file = dir.strpath+'/2.try'
+  file = dir+'/2.try'
   raw = '\x03TRY\x07\x02\x0e\x0e\xe9\x28\xd7\n\x00\x05array\x00\x07\x0eA\xc8~@x\x9cce\x10d``\x00\x00\x00h\x00\x17'
   # Verify that our raw string is a correct version 2 file
   open(file,'wb').write(raw)

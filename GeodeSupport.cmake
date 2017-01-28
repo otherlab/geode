@@ -123,7 +123,20 @@ macro(ADD_GEODE_MODULE _name)
       )
 
       file(GLOB _python_bits *.py)
-      file(COPY ${_python_bits} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+      set(_pytargets "")
+      foreach(_python_bit ${_python_bits})
+        get_filename_component(_pyfile ${_python_bit} NAME)
+        add_custom_command(
+          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${_pyfile}"
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/${_pyfile}" "${CMAKE_CURRENT_BINARY_DIR}/${_pyfile}"
+          DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${_pyfile}"
+          COMMENT "Copying ${_pyfile} to build tree"
+        )
+      list(APPEND _pytargets "${CMAKE_CURRENT_BINARY_DIR}/${_pyfile}")
+      endforeach()
+      add_custom_target(${_name}-python
+        ALL DEPENDS ${_pytargets}
+      )
     endif()
   endif()
 endmacro(ADD_GEODE_MODULE)
