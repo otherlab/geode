@@ -3,7 +3,6 @@
 from __future__ import division
 from geode.geometry.platonic import *
 from geode.vector import *
-import unittest
 
 def test_octahedron():
   mesh,X = octahedron_mesh()
@@ -18,7 +17,6 @@ def test_icosahedron():
   assert relative_error(mesh.volume(X),5/12*(3+sqrt(5))*a**3) < 1e-5
   sphere = sphere_mesh(3)
 
-@unittest.skip("module import bugs")
 def test_tetrahedron():
   mesh,X = tetrahedron_mesh()
   a = sqrt(8) # see http://en.wikipedia.org/wiki/Tetrahedron

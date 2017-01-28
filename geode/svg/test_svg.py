@@ -164,12 +164,28 @@ arcs02 = ('''\
 ''',
 [[[925,325],[933,306],[954,290],[986,279],[1025,275],[1064,279],[1096,290],[1117,306],[1125,325],[1117,344],[1096,360],[1064,371],[1025,375]],[[525,325],[486,329],[454,340],[433,356],[425,375],[433,394],[454,410],[486,421],[525,425],[564,421],[596,410],[617,394],[625,375]],[[925,75],[964,79],[996,90],[1017,106],[1025,125]],[[525,75],[533,94],[554,110],[586,121],[625,125]],[[1,1],[301,1],[600,1],[900,1],[1199,1],[1199,132],[1199,263],[1199,393],[1199,524],[900,524],[600,524],[301,524],[1,524],[1,393],[1,263],[1,132],[1,1]]])
 
+# SVG evaluation can result in slightly different outputs on some systems (Presumable because of different compilers or compiler settings, but I haven't tested this much)
+# We use this function to allow slight variation in results without failing tests
+def approx_equal(sig1, sig2):
+  def is_sequence(x): return hasattr(x, "__len__")
+  if is_sequence(sig1) and is_sequence(sig2):
+    n1,n2 = len(sig1),len(sig2)
+    if n1 != n2:
+      return False
+    for i in range(n1):
+      if not approx_equal(sig1[i],sig2[i]):
+        return False
+    return True
+  elif is_sequence(sig1) != is_sequence(sig2):
+    return False
+  else:
+    return abs(sig1-sig2) <= 1
+
 def svg_test(name,svg,known):
   beziers = svgstring_to_beziers(svg)
   sig = [rint(b.evaluate(4)).astype(int) for b in beziers]
-  sig,known = map(compact_str,(sig,known))
-  if sig!=known or '-dd' in sys.argv:
-    print 'sig = %s'%sig
+  if not approx_equal(sig,known) or '-dd' in sys.argv:
+    print 'sig = %s'%compact_str(sig)
     if '-d' in sys.argv or '-dd' in sys.argv:
       import pylab
       for bezier in beziers:
@@ -179,12 +195,18 @@ def svg_test(name,svg,known):
       pylab.axes().set_aspect('equal')
       pylab.show()
     if '-dd' not in sys.argv:
-      assert sig==known
+      assert approx_equal(sig, known)
 
-def test_svg():
+def test_svg_cubic02():
   svg_test('cubic02',*cubic02)
+
+def test_svg_arcs01():
   svg_test('arcs01',*arcs01)
+
+def test_svg_arcs02():
   svg_test('arcs02',*arcs02)
 
 if __name__=='__main__':
-  test_svg()
+  test_svg_cubic02()
+  test_svg_arcs01()
+  test_svg_arcs02()

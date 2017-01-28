@@ -3,14 +3,12 @@
 from __future__ import division,print_function
 from geode import *
 from geode.geometry.platonic import *
-import unittest
 
 def test_simple_triangulate():
   for n in 0,1,2,3,4,5,10,50:
     for k in xrange(10):
       simple_triangulate_test(n+1000*k,n,n+1,n,n)
 
-@unittest.skip("module import bugs")
 def test_csg():
   random.seed(17)
 
@@ -55,7 +53,6 @@ def test_csg():
           assert allclose(Is[name],Is[name[4:]])
   print('Success!')
 
-@unittest.skip("module import bugs")
 def test_depth_weight():
   tet,X0 = tetrahedron_mesh()
   X0 *= tet.volume(X0)**(-1/3)

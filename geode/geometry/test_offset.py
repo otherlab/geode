@@ -3,9 +3,7 @@
 from __future__ import division
 from geode.geometry.platonic import *
 from geode.vector import *
-import unittest
 
-@unittest.skip("module import bugs")
 def test_offset():
   random.seed(8123171)
   offset = .1
