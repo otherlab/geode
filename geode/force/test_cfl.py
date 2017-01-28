@@ -15,7 +15,6 @@ def dt(dx,stiffness,mass):
   springs.add_frequency_squared(sqr_frequency)
   return 1/sqrt(sqr_frequency.max())
 
-# @unittest.skip("failure in dt()")
 def test_cfl():
   assert allclose(1/sqrt(2),dt(1,2,1)/dt(1,1,1))
   assert allclose(2,dt(2,1,1)/dt(1,1,1))
