@@ -5,6 +5,10 @@ endif()
 if (GMP_FOUND)
   set(GEODE_GMP YES)
 endif()
+if (JPEG_FOUND)
+  set(GEODE_LIBJPEG YES)
+endif()
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
@@ -60,6 +64,20 @@ if (GMP_FOUND)
   )
 else()
   message(STATUS "GMP_FOUND not set")
+endif()
+
+if (JPEG_FOUND)
+  target_include_directories(
+    geode
+    PUBLIC
+      ${JPEG_INCLUDE}
+  )
+
+  target_link_libraries(
+    geode
+    PUBLIC
+      ${JPEG_LIBRARIES}
+  )
 endif()
 
 if (PYTHON_FOUND)

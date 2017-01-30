@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.2)
 include(GeodeSupport.cmake)
 
 find_package(PkgConfig)
+find_package(JPEG)
 
 set(GMP_LIB_DIR "/usr/lib/" CACHE PATH "Path to libgmp.so")
 set(GMP_INCLUDE_DIR "/usr/local/Cellar/ /usr/include/" CACHE PATH "Path to gmp.h")
