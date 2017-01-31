@@ -11,7 +11,9 @@ node {
     echo "Using CC=${cc}, CXX=${cxx}"
 
     withVirtualenv(pwd() + "/virtualenv") {
+      sh "python -m pip freeze"
       sh "python -m pip install numpy pytest scipy"
+      sh "python -m pip freeze"
       withEnv(["CC=${cc}", "CXX=${cxx}"]) {
         stage('Checkout') {
           checkout scm
@@ -27,7 +29,6 @@ node {
 
           stage('Test') {
             try {
-              sh "pip freeze"
               sh "python -m pytest --junitxml=pytests.xml"
             } finally {
               junit 'pytests.xml'
