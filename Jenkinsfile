@@ -27,6 +27,7 @@ node {
 
           stage('Test') {
             try {
+              sh "pip freeze"
               sh "python -m pytest --junitxml=pytests.xml"
             } finally {
               junit 'pytests.xml'
