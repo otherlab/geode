@@ -38,6 +38,7 @@ target_include_directories(
   geode
   INTERFACE
     $<INSTALL_INTERFACE:include/>
+    ${PYTHON_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../>
 )
@@ -79,8 +80,8 @@ if (PYTHON_FOUND)
   target_include_directories(
     geode_wrap
     PUBLIC
-      ${CMAKE_SOURCE_DIR}
-      ${CMAKE_BINARY_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/../
+      ${CMAKE_CURRENT_BINARY_DIR}/../
   )
 
   target_compile_features(
@@ -91,12 +92,12 @@ if (PYTHON_FOUND)
 
   file(COPY __init__.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-  install(CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
+  install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
 
   add_custom_target(develop DEPENDS geode)
   add_custom_command(
     TARGET develop
-    COMMAND ${CMAKE_SOURCE_DIR}/setup.py develop
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setup.py develop
   )
-  install(CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
+  install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setup.py install --prefix ${CMAKE_INSTALL_PREFIX})")
 endif()
