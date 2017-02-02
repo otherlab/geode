@@ -27,7 +27,7 @@ else()
   message(FATAL_ERROR "Required dependency GMP not found. Set GMP_LIB_DIR and GMP_INCLUDE_DIR to inform cmake where to look")
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/)
 find_package(PathPython)
 
 if(NOT PYTHON_FOUND)
@@ -36,7 +36,7 @@ endif()
 
 add_subdirectory(geode)
 
-configure_file(${CMAKE_SOURCE_DIR}/geode.pc.in ${CMAKE_BINARY_DIR}/geode.pc
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/geode.pc.in ${CMAKE_BINARY_DIR}/geode.pc
   @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/geode.pc DESTINATION lib/pkgconfig/)
 
