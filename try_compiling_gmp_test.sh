@@ -1,0 +1,1 @@
+clang++-3.6 -c -march=native -mtune=native -O3 -funroll-loops -Wall -Winit-self -Woverloaded-virtual -Wsign-compare -fno-strict-aliasing -std=c++0x -Werror -Wno-array-bounds -Wno-unknown-pragmas -Wno-deprecated -Wno-format-security -DNDEBUG -I. -Ibuild/native/release -I. -I/usr/local/include -I/usr/local/include ./gmp_test.cpp  -o ./gmp_test.o

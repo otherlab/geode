@@ -18,3 +18,5 @@ dist
 *.egg-info
 *.so
 *.swp
+*.o
+.cache/
