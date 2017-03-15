@@ -11,7 +11,7 @@ node {
     echo "Using CC=${cc}, CXX=${cxx}"
 
     withVirtualenv(pwd() + "/virtualenv") {
-      sh "python -m pip install numpy pytest scipy"
+      sh "python -m pip install --upgrade numpy pytest scipy"
       withEnv(["CC=${cc}", "CXX=${cxx}"]) {
         stage('Checkout') {
           checkout scm

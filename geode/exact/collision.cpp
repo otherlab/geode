@@ -522,8 +522,8 @@ inline void edge_edge_collision_function(const Vec3d &d_x0,    const Vec3d &d_x1
     }
     
     out[0] = Interval(-out_lower[0],out_upper[0]);
-    out[1] = Interval(-out_lower[0],out_upper[1]);
-    out[2] = Interval(-out_lower[0],out_upper[2]);
+    out[1] = Interval(-out_lower[1],out_upper[1]);
+    out[2] = Interval(-out_lower[2],out_upper[2]);
 }
 
 
