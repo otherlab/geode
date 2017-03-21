@@ -287,7 +287,7 @@ public:
     {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     // shifts vector (wrapped) such that element a is first
-    Vector<T,3> roll(const int a) {
+    Vector<T,3> roll(const int a) const {
       Vector<T,3> v;
       v.x = (*this)[(0+a) % 3];
       v.y = (*this)[(1+a) % 3];
