@@ -21,11 +21,12 @@ template<class T,class Id> struct FromPython<Field<T,Id> >{static inline Field<T
   return Field<T,Id>(from_python<Array<T>>(object));
 }};
 
-template<class T,class Id>
+template<class T,class Id_>
 class Field {
 private:
   struct Unusable {};
 public:
+  using Id = Id_;
   typedef typename remove_const<T>::type Element;
   static const bool is_const = geode::is_const<T>::value;
   typedef T& result_type;
@@ -81,6 +82,14 @@ public:
   T& operator()(Id i) const { // Allow use as a function
     return flat[i.idx()];
   }
+
+  // Extract values of several ids at the same time as a Vector
+  Vector<T,2> vec(const Vector<Id,2> ids) const
+  { return {(*this)[ids[0]], (*this)[ids[1]]}; }
+  Vector<T,3> vec(const Vector<Id,3> ids) const
+  { return {(*this)[ids[0]], (*this)[ids[1]], (*this)[ids[2]]}; }
+  Vector<T,4> vec(const Vector<Id,4> ids) const
+  { return {(*this)[ids[0]], (*this)[ids[1]], (*this)[ids[2]], (*this)[ids[3]]}; }
 
   bool valid(Id i) const {
     return flat.valid(i.idx());
