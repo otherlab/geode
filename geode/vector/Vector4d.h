@@ -336,6 +336,9 @@ public:
     Vector<T,4> sorted() const
     {Vector<T,4> r(*this);small_sort(r.x,r.y,r.z,r.w);return r;}
 
+    template<class Fn> Vector<T,4> sorted(const Fn& pred) const
+    {Vector<T,4> r(*this);small_sort(r.x,r.y,r.z,r.w,pred);return r;}
+
     Vector reversed() const
     {return Vector(w,z,y,x);}
 
