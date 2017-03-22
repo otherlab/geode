@@ -17,4 +17,13 @@ GEODE_CORE_EXPORT Ref<TriangleTopology> exact_delaunay_points(RawArray<const Vec
                                                               RawArray<const Vector<int,2>> edges=Tuple<>(),
                                                               const bool validate=false);
 
+
+struct GEODE_CORE_CLASS_EXPORT DelaunayConstraintConflict : public ValueError {
+  typedef ValueError Base;
+  GEODE_CORE_EXPORT DelaunayConstraintConflict(const Vector<int,2> new_e0, const Vector<int,2> new_e1);
+  GEODE_CORE_EXPORT virtual ~DelaunayConstraintConflict() throw ();
+  Vector<int,2> e0;
+  Vector<int,2> e1;
+};
+
 }

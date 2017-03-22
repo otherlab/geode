@@ -75,6 +75,15 @@ struct Node {
 };
 }
 
+DelaunayConstraintConflict::DelaunayConstraintConflict(const Vector<int,2> new_e0, const Vector<int,2> new_e1)
+ : Base(format("delaunay: Constraints (%d,%d) and (%d,%d) intersect", new_e0.x, new_e0.y, new_e1.x, new_e1.y))
+ , e0(new_e0)
+ , e1(new_e1)
+{ }
+
+DelaunayConstraintConflict::~DelaunayConstraintConflict() throw () {}
+
+
 // When a BSP leaf face is replaced by a node, update the links to point to the new node.
 static inline void set_links(RawArray<Node> bsp, const Vector<int,2> links, const int node) {
   bsp[links.x>>1].children[links.x&1] = node; // The first link is always valid
@@ -158,10 +167,8 @@ GEODE_ALWAYS_INLINE static inline bool is_delaunay(const TriangleTopology& mesh,
 static inline FaceId bsp_search(RawArray<const Node> bsp, RawField<const Perturbed2,VertexId> X, const VertexId v) {
   if (!bsp.size())
     return FaceId(0);
-  int iters = 0;
   int node = 0;
   do {
-    iters++;
     const Node& n = bsp[node];
     node = n.children[triangle_oriented(X,n.test.x,n.test.y,v)];
   } while (node >= 0);
@@ -251,6 +258,7 @@ GEODE_COLD static void assert_delaunay(const char* prefix,
     Xp.flat[i] = Perturbed2(i,X.flat[i]);
   assert_delaunay(prefix,mesh,Xp,constrained,oriented_only,check_boundary);
 }
+
 
 // This routine assumes the sentinel points have already been added, and processes points in order
 GEODE_NEVER_INLINE static Ref<MutableTriangleTopology> deterministic_exact_delaunay(RawField<const Perturbed2,VertexId> X, const bool validate) {
@@ -674,8 +682,7 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
       auto cut = mesh.reverse(mesh.next(e0));
       if (mesh.dst(mesh.next(cut))==v1) {
         if (constrained.contains(vec(mesh.src(cut),mesh.dst(cut)).sorted()))
-          throw ValueError(format("delaunay: Constraints (%d,%d) and (%d,%d) intersect",
-                                  v0.id,v1.id,mesh.src(cut).id,mesh.dst(cut).id));
+          throw DelaunayConstraintConflict(vec(v0.id,v1.id),vec(mesh.src(cut).id,mesh.dst(cut).id));
         cut = mesh.flip_edge(cut);
         goto success;
       }
@@ -688,8 +695,7 @@ GEODE_NEVER_INLINE static void add_constraint_edges(MutableTriangleTopology& mes
       mesh.erase(mesh.face(e0));
       for (;;) {
         if (constrained.contains(vec(mesh.src(cut),mesh.dst(cut)).sorted()))
-          throw ValueError(format("delaunay: Constraints (%d,%d) and (%d,%d) intersect",
-                                  v0.id,v1.id,mesh.src(cut).id,mesh.dst(cut).id));
+          throw DelaunayConstraintConflict(vec(v0.id,v1.id),vec(mesh.src(cut).id,mesh.dst(cut).id));
         const auto n = mesh.reverse(mesh.next(cut)),
                    p = mesh.reverse(mesh.prev(cut));
         const auto v = mesh.src(n);
