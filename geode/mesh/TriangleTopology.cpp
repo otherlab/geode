@@ -357,9 +357,10 @@ void TriangleTopology::assert_consistent(bool check_for_double_halfedges) const 
 
   // Check that no two halfedges share the same vertices
   if (check_for_double_halfedges) {
-    Hashtable<Vector<VertexId,2>> pairs;
+    auto&& pairs = Hashtable<Vector<VertexId,2>>{2*n_edges()};
     for (const auto e : halfedges())
       GEODE_ASSERT(pairs.set(vertices(e)));
+    GEODE_ASSERT(pairs.size() == 2*n_edges());
   }
 
   // Check that all halfedges are reachable by swinging around their source vertices, and that
@@ -1294,8 +1295,6 @@ void MutableTriangleTopology::unsafe_collapse(HalfedgeId h) {
   }
 
   assert(!erased(halfedge(v1)));
-
-  assert_consistent(true);
 }
 
 void MutableTriangleTopology::collapse(HalfedgeId h) {

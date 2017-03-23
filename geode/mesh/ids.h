@@ -115,6 +115,8 @@ template<class Id> struct IdIter {
   IdIter operator+(int d) const { return Id(i.id+d);}
   IdIter operator-(int d) const { return Id(i.id-d);}
   int operator-(IdIter o) const { return i.id-o.i.id; }
+  inline friend bool operator<(const IdIter lhs, const IdIter rhs) { return lhs.id < rhs.id; }
+  inline friend bool operator<=(const IdIter lhs, const IdIter rhs) { return lhs.id <= rhs.id; }
 };
 
 template<class Id> Range<IdIter<Id>> id_range(const Id min, const Id end) {

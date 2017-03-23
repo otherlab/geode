@@ -42,6 +42,10 @@ public:
     return magnitude(x1-x0);
   }
 
+  T sqr_length() const {
+    return sqr_magnitude(x1-x0);
+  }
+
   T size() const {
     return length();
   }

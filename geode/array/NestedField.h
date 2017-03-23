@@ -12,10 +12,10 @@
 
 namespace geode {
 
-template<class T, class Id>
+template<class T, class Id, bool frozen=true>
 class NestedField {
  public:
-  Nested<T> raw;
+  Nested<T,frozen> raw;
 
   NestedField() = default;
   NestedField(Nested<T>&& _raw) : raw(_raw) {}

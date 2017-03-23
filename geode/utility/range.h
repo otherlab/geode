@@ -25,6 +25,7 @@ template<class Iter,class Enable> struct Range {
   const Iter& begin() const { return lo; }
   const Iter& end() const { return hi; }
 
+  bool empty() const { return !(lo != hi); }
   Size size() const { return hi-lo; }
   template<class I> reference operator[](const I i) const { assert(i<hi-lo); return *(lo+i); }
 

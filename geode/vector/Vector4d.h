@@ -274,7 +274,7 @@ public:
     {return Vector::repeat(std::numeric_limits<T>::quiet_NaN());}
 
     // shifts vector (wrapped) such that element a is first
-    Vector<T,4> roll(const int a) {
+    Vector<T,4> roll(const int a) const {
       Vector<T,4> v;
       for(int i = 0; i < 4; ++i)
         v[i] = (*this)[(i+a) & 3];
@@ -335,6 +335,9 @@ public:
 
     Vector<T,4> sorted() const
     {Vector<T,4> r(*this);small_sort(r.x,r.y,r.z,r.w);return r;}
+
+    template<class Fn> Vector<T,4> sorted(const Fn& pred) const
+    {Vector<T,4> r(*this);small_sort(r.x,r.y,r.z,r.w,pred);return r;}
 
     Vector reversed() const
     {return Vector(w,z,y,x);}
