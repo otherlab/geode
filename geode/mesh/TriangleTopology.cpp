@@ -86,6 +86,10 @@ HalfedgeId TriangleTopology::halfedge(VertexId v0, VertexId v1) const {
   return HalfedgeId();
 }
 
+int TriangleTopology::edge_length(RawField<const TV3, VertexId> X, const HalfedgeId edge) const {
+  return (X[src(edge)] - X[dst(edge)]).magnitude();
+}
+
 HalfedgeId TriangleTopology::common_halfedge(FaceId f0, FaceId f1) const {
   if (f0.valid()) {
     for (const auto e : halfedges(f0))
