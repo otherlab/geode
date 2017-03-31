@@ -84,11 +84,11 @@ public:
   }
 
   // Extract values of several ids at the same time as a Vector
-  Vector<T,2> vec(const Vector<Id,2> ids) const
+  Vector<Element,2> vec(const Vector<Id,2> ids) const
   { return {(*this)[ids[0]], (*this)[ids[1]]}; }
-  Vector<T,3> vec(const Vector<Id,3> ids) const
+  Vector<Element,3> vec(const Vector<Id,3> ids) const
   { return {(*this)[ids[0]], (*this)[ids[1]], (*this)[ids[2]]}; }
-  Vector<T,4> vec(const Vector<Id,4> ids) const
+  Vector<Element,4> vec(const Vector<Id,4> ids) const
   { return {(*this)[ids[0]], (*this)[ids[1]], (*this)[ids[2]], (*this)[ids[3]]}; }
 
   bool valid(Id i) const {
