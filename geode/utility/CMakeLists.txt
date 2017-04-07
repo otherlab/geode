@@ -16,6 +16,7 @@ set(module_SRCS
   resource.cpp
   stream.cpp
   time.cpp
+  timed_call.cpp
 )
 
 set(module_HEADERS
