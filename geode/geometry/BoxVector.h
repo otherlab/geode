@@ -218,10 +218,9 @@ public:
     enlarge_nonempty(p2);
   }
 
-  void enlarge_nonempty(const TV& p1, const TV& p2, const TV& p3) {
-    enlarge_nonempty(p1);
-    enlarge_nonempty(p2);
-    enlarge_nonempty(p3);
+  template<class... More> void enlarge_nonempty(const TV& p1, const TV& p2, const TV& p3, const More&... more) {
+    enlarge_nonempty(p1, p2);
+    enlarge_nonempty(p3, more...);
   }
 
   template<class TArray> void enlarge_nonempty(const TArray& points) {

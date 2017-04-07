@@ -10,11 +10,13 @@ set(module_SRCS
   module.cpp
   PolygonSoup.cpp
   quadric.cpp
+  refine_mesh.cpp
   SegmentSoup.cpp
   TriangleMesh.cpp
   TriangleSoup.cpp
   TriangleSubdivision.cpp
   TriangleTopology.cpp
+  triangulate.cpp
 )
 
 set(module_HEADERS
@@ -29,11 +31,13 @@ set(module_HEADERS
   lower_hull.h
   PolygonSoup.h
   quadric.h
+  refine_mesh.h
   SegmentSoup.h
   TriangleMesh.h
   TriangleSoup.h
   TriangleSubdivision.h
   TriangleTopology.h
+  triangulate.h
 )
 
 install_geode_headers(mesh ${module_HEADERS})
