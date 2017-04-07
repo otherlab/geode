@@ -95,7 +95,7 @@ template<class T> auto RankedTree<T>::test_subtree_invarients(const Node* node) 
     }
     result.max_height = 1 + max(l_stats.max_height, r_stats.max_height);
     GEODE_ASSERT(2*result.black_height >= result.max_height); // Should have at least every other link black
-    GEODE_ASSERT(result.total_size <= 1<<result.max_height);
+    GEODE_ASSERT(result.total_size <= result.max_height);
   }
   return result;  
 }
