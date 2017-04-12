@@ -2542,7 +2542,7 @@ bool edge_edge_collision_parity(const TV& x0old, const TV& x1old, const TV& x2ol
 // True if the point x0 intersects the triangle x123 an odd or degenerate number of times during linear motion
 bool point_triangle_collision_parity(const TV& x0old, const TV& x1old, const TV& x2old, const TV& x3old,
                                      const TV& x0new, const TV& x1new, const TV& x2new, const TV& x3new) {
-  RootParityCollisionTest test(x0old,x1old,x2old,x3old,x0new,x1new,x2new,x3new,true);
+  RootParityCollisionTest test(x0old,x1old,x2old,x3old,x0new,x1new,x2new,x3new,false);
   return test.point_triangle_collision();
 }
 
