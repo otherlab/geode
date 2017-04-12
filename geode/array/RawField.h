@@ -62,6 +62,14 @@ public:
     return flat[i.idx()];
   }
 
+  // Extract values of several ids at the same time as a Vector
+  Vector<Element,2> vec(const Vector<Id,2> ids) const
+  { return {(*this)[ids[0]], (*this)[ids[1]]}; }
+  Vector<Element,3> vec(const Vector<Id,3> ids) const
+  { return {(*this)[ids[0]], (*this)[ids[1]], (*this)[ids[2]]}; }
+  Vector<Element,4> vec(const Vector<Id,4> ids) const
+  { return {(*this)[ids[0]], (*this)[ids[1]], (*this)[ids[2]], (*this)[ids[3]]}; }
+
   bool valid(Id i) const {
     return flat.valid(i.idx());
   }
