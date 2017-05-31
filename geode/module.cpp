@@ -33,6 +33,7 @@ GEODE_PYTHON_MODULE(geode_wrap) {
   GEODE_WRAP(value)
   GEODE_WRAP(force)
   GEODE_WRAP(solver)
+  GEODE_WRAP(openmesh)
   GEODE_WRAP(structure)
   GEODE_WRAP(svg_to_bezier)
 #ifdef GEODE_GMP
