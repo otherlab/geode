@@ -33,7 +33,7 @@ set(OPENMESH_LIB_DIR "/usr/local/lib/OpenMesh/")
 set(OPENMESH_INCLUDE_DIR "/usr/local/include/OpenMesh")
 
 find_library(
-  OPENMESH_LIBRARIES libOpenMeshCore.dylib libOpenMeshTools.dylib
+  OPENMESH_LIBRARIES libOpenMeshCore.a libOpenMeshTools.a
   HINTS ${OPENMESH_LIB_DIR}
 )
 
