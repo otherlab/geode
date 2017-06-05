@@ -69,6 +69,22 @@ else()
   message(STATUS "GMP_FOUND not set")
 endif()
 
+if (OPENMESH_FOUND)
+  target_include_directories(
+    geode
+    PUBLIC
+      ${OPENMESH_INCLUDE}
+  )
+
+  target_link_libraries(
+    geode
+    PUBLIC
+      ${OPENMESH_LIBRARIES}
+  )
+else()
+  message(STATUS "OPENMESH_FOUND not set")
+endif()
+
 if (JPEG_FOUND)
   target_include_directories(
     geode
