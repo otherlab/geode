@@ -40,6 +40,14 @@ So far the code has been tested on
 * [clang 3.4](http://clang.llvm.org)
 * [clang 3.5](http://clang.llvm.org)
 
+
+This branch requires openmesh. To get it and install system wide:
+
+    git clone https://github.com/OLModelingAgency/otherfab-data.git
+    cd OpenMesh-2.0/
+    mkdir build && cd build && cmake .. && make
+    sudo make install
+
 ### Windows
   This has been built and run successfully with the Visual Studio 2015 preview. We are working to make this more streamlined and robust (as well as fixing the hundreds of compiler warnings), but the following worked for me:
 
@@ -52,33 +60,39 @@ So far the code has been tested on
    ** You may need to set Tools->Options->Projects and Solutions->Build and Run->"Maximum number of parallel project builds" to 1 to avoid parallel builds clobbering config headers
 
    Create a config.py and point gmp to installation of mpir:
-     gmp_libpath = '#/../mpir/build.vc12/x64/Debug'
-     gmp_include='#/../mpir'
-     gmp_publiclibs='mpir.lib'
+   
+       gmp_libpath = '#/../mpir/build.vc12/x64/Debug'
+       gmp_include='#/../mpir'
+       gmp_publiclibs='mpir.lib'
 
    Setup Command Prompt environment:
-     Python from:
-       ...\WinPython-64bit-2.7.9.2\scripts\env.bat
-     VS dev tools using:
-       "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\VsDevCmd.bat"
-     Select x64 tools using:
-       "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
 
-  Create a build directory separate from the sources (optional, but recommended):
-    mkdir build
+     # Python from:
+         ...\WinPython-64bit-2.7.9.2\scripts\env.bat
+     # VS dev tools using:
+         "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\VsDevCmd.bat"
+     # Select x64 tools using:
+         "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+
+   Create a build directory separate from the sources (optional, but recommended):
+   
+       mkdir build
 
    Build with:
-     cmake ../
-     make
+   
+       cmake ../
+       make
 
    If you wish to install geode to a different location (such as a python
    virtualenv), add -DCMAKE_BUILD_PREFIX=/path/to/wherever to the cmake command.
 
    Install with:
-     make install
+   
+       make install
 
    To use geode outside of project directory or for test_worker to pass you must add geode to your PYTHONPATH:
-     set PYTHONPATH=<path_to_dir_outside_repo>\geode;%PYTHONPATH%
+   
+       set PYTHONPATH=<path_to_dir_outside_repo>\geode;%PYTHONPATH%
 
 ### Installation
 
