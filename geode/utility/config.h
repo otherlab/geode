@@ -161,28 +161,28 @@ typedef double real;
 #define GEODE_HAS_CPP11_STD_HEADER(header) 0
 #endif
 
-#if defined(GEODE_SSE)
-  #ifdef _MSC_VER
-    #ifdef _M_X64
-    // 64 bit targets should always have SSE support
-    #else
-      #if !(_M_IX86_FP >= 2)
-      #error "GEODE_SSE enabled, but compiler doesn't indicate SSE support on targeted architecture. Either disable GEODE_SSE or change target architecture"
-      #endif
-    #endif
-    // MSVC doesn't have a different target to enable the SSE4.1 extensions so we assume they are available
-    #define GEODE_SSE4_1
-  #else // not _MSC_VER
-    #ifndef __SSE__
-      #error "GEODE_SSE enabled, but compiler doesn't define __SSE__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
-    #endif
-    #ifdef __SSE4_1__
-      #define GEODE_SSE4_1
-    #else
-      #error "GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
-    #endif
-  #endif
-#endif
+// #if defined(GEODE_SSE)
+//   #ifdef _MSC_VER
+//     #ifdef _M_X64
+//     // 64 bit targets should always have SSE support
+//     #else
+//       #if !(_M_IX86_FP >= 2)
+//       #error "GEODE_SSE enabled, but compiler doesn't indicate SSE support on targeted architecture. Either disable GEODE_SSE or change target architecture"
+//       #endif
+//     #endif
+//     // MSVC doesn't have a different target to enable the SSE4.1 extensions so we assume they are available
+//     #define GEODE_SSE4_1
+//   #else // not _MSC_VER
+//     #ifndef __SSE__
+//       #error "GEODE_SSE enabled, but compiler doesn't define __SSE__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
+//     #endif
+//     #ifdef __SSE4_1__
+//       #define GEODE_SSE4_1
+//     #else
+//       #error "GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
+//     #endif
+//   #endif
+// #endif
 
 // Mark symbols when building geode
 #ifdef _WIN32
