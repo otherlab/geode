@@ -94,7 +94,8 @@ void decimate_inplace(MutableTriangleTopology& mesh, RawField<TV,VertexId> X,
         min_e = e;
       }
     }
-    return tuple(min_q,mesh.dst(min_e));
+    // Catch isolated vertices here
+    return tuple(min_q, mesh.valid(min_e) ? mesh.dst(min_e) : VertexId{});
   };
 
   // Initialize quadrics and heap
