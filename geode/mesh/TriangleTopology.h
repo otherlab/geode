@@ -782,7 +782,7 @@ struct TriangleTopologyOutgoing {
   bool first;
   TriangleTopologyOutgoing(const TriangleTopology& mesh, HalfedgeId e, bool first) : mesh(mesh), e(e), first(first) {}
   void operator++() { e = mesh.left(e); first = false; }
-  bool operator!=(TriangleTopologyOutgoing o) { return first || e!=o.e; } // For use only inside range-based for loops
+  bool operator!=(TriangleTopologyOutgoing o) const { return first || e!=o.e; } // For use only inside range-based for loops
   HalfedgeId operator*() const { return e; }
 };
 
@@ -792,7 +792,7 @@ struct TriangleTopologyIncoming {
   bool first;
   TriangleTopologyIncoming(const TriangleTopology& mesh, HalfedgeId e, bool first) : mesh(mesh), e(e), first(first) {}
   void operator++() { e = mesh.left(e); first = false; }
-  bool operator!=(TriangleTopologyIncoming o) { return first || e!=o.e; } // For use only inside range-based for loops
+  bool operator!=(TriangleTopologyIncoming o) const { return first || e!=o.e; } // For use only inside range-based for loops
   HalfedgeId operator*() const { return mesh.reverse(e); }
 };
 
