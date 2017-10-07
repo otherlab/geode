@@ -453,6 +453,16 @@ public:
   } \
   template<class T> const Field<const T,Id>& field(const FieldId<T,Id> id) const { \
     return prim##_fields[id_to_##prim##_field.get(id.id)].template get<const T,Id>(); \
+  } \
+  template<class T> const FieldId<T,Id> find_field(const Field<T,Id>& f) const { \
+    for(const auto id_and_index : id_to_##prim##_field) { \
+      const UntypedArray& untyped = prim##_fields[id_and_index.y]; \
+      if(untyped.type() != typeid(T)) continue; \
+      if(f.flat.same_array(f.flat, untyped.template get<T>())) { \
+        return FieldId<T,Id>{id_and_index.x}; \
+      } \
+    } \
+    return FieldId<T,Id>{invalid_id}; \
   }
   FIELD_ACCESS_FUNCTIONS(vertex,   VertexId,   vertex_to_edge_.size())
   FIELD_ACCESS_FUNCTIONS(face,     FaceId,     faces_.size())
@@ -593,6 +603,16 @@ public:
   // Collapse an edge: move src(h) to dst(h) and delete the faces incident to h.
   // Throws an exception if is_collapse_safe(h) is not true.
   GEODE_CORE_EXPORT void collapse(HalfedgeId h);
+
+  // Split three consecutive halfedges and fill the two new boundaries with new faces
+  // There shouldn't already be a face present
+  // Returns ids of the newly inserted faces
+  GEODE_CORE_EXPORT Vector<FaceId,2> split_loop(HalfedgeId e01, HalfedgeId e12, HalfedgeId e20);
+
+  // Given an edge between two faces that share the same three vertices (one face should have reversed order), erase both faces linking any adjacent edges across
+  // Isolated vertices will be erased
+  // Returns a halfedges from each of the two relinked adjacent faces (reverse(next(e01)) and reverse(prev(e01)))
+  GEODE_CORE_EXPORT void collapse_degenerate_face_pair(HalfedgeId e01);
 
   // Erase the given vertex. Erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
   GEODE_CORE_EXPORT void erase(VertexId id, bool erase_isolated = false);

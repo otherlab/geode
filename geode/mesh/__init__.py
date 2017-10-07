@@ -183,3 +183,6 @@ def mesh_offset(mesh, offset):
 
 def decimate(mesh,X,distance,max_angle=pi/2,min_vertices=-1,boundary_distance=0):
   return geode_wrap.decimate(mesh,X,distance,max_angle,min_vertices,boundary_distance)
+
+def simplify(mesh,X,distance,max_angle=pi/2,min_vertices=-1,boundary_distance=0):
+  return geode_wrap.simplify(mesh,X,distance,max_angle,min_vertices,boundary_distance)

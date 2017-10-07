@@ -12,7 +12,7 @@ struct Quadric {
 
   Quadric(): c(0) {}
 
-  inline real operator()(Vector<real,3> const &x) {
+  inline real operator()(Vector<real,3> const &x) const {
     real e = dot(x,A*x-b)+c;
     assert(e > -1e-12);
     return max(0,e);
@@ -35,15 +35,22 @@ struct Quadric {
     return w;
   }
 
-  real add_face(TriangleTopology const &mesh, RawField<Vector<real,3>, VertexId> const &X, FaceId f) {
+  real add_face(TriangleTopology const &mesh, RawField<const Vector<real,3>, VertexId> X, FaceId f) {
     const auto v = mesh.vertices(f);
     const auto p = X[v.x],
                n = cross(X[v.y]-p,X[v.z]-p);
     return add_plane(n, p);
   }
+
+  Quadric& operator+=(const Quadric& rhs) {
+    A += rhs.A;
+    b += rhs.b;
+    c += rhs.c;
+    return *this;
+  }
 };
 
 class TriangleTopology;
-Quadric compute_quadric(TriangleTopology const &mesh, RawField<Vector<real,3>, VertexId> const &X, VertexId v);
+Quadric compute_quadric(TriangleTopology const &mesh, RawField<const Vector<real,3>, VertexId> X, VertexId v);
 
 }
