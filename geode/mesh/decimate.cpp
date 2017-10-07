@@ -21,6 +21,18 @@ enum class CollapseRank {
   not_allowed
 };
 
+// For debugging
+GEODE_UNUSED static std::ostream& operator<<(std::ostream& os, const CollapseRank rank) {
+  switch(rank) {
+    case CollapseRank::simple: return os << "simple"; 
+    case CollapseRank::degenerate_faces: return os << "degenerate_faces"; 
+    case CollapseRank::requires_split: return os << "requires_split"; 
+    case CollapseRank::unset: return os << "unset"; 
+    case CollapseRank::not_allowed: return os << "not_allowed"; 
+  }
+  return os << "<invalid-enum>";
+}
+
 struct CollapsePriority {
   CollapseRank rank; // Sort by rank
   T cost; // Then by value
@@ -30,6 +42,9 @@ struct CollapsePriority {
   }
   inline friend bool operator==(const CollapsePriority& lhs, const CollapsePriority& rhs) {
     return (lhs.rank == rhs.rank) && (lhs.cost == rhs.cost);
+  }
+  inline friend std::ostream& operator<<(std::ostream& os, const CollapsePriority& cp) {
+    return os << "{" << cp.rank << ", " << cp.cost << "}";
   }
 };
 
@@ -165,6 +180,9 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
   if (mesh.n_vertices() <= min_vertices)
     return;
 
+  if(splitting_enabled(reduce_mode)) {
+    mesh.erase_isolated_vertices();
+  }
   // If splitting is enabled, make sure X is managed by the mesh and will be updated accordingly
   assert(!splitting_enabled(reduce_mode) || mesh_owns_field(mesh, X));
 
@@ -222,6 +240,9 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
   // Finds the best edge to collapse v along.  Returns (q(e),dst(e)).
   // Best edge to collapse doesn't require splitting any vertices if possible and has smallest error cost for quadric
   const auto best_collapse = [&mesh,&X,&collapse_changes_normal_too_much,area,boundary_distance](const VertexId v) {
+    if(mesh.isolated(v)) {
+      return tuple(CollapsePriority{},VertexId{});
+    }
     Quadric q = compute_quadric(mesh,X,v);
     // Find the best edge, including normal constraints
     T min_q = inf;
@@ -348,6 +369,9 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
     }
     dirty.clear();
   }
+  // With splitting enabled, isolated vertices are erased
+  // No new isolated vertices should be created
+  assert(mesh.n_vertices() <= min_vertices || !splitting_enabled(reduce_mode) || !mesh.has_isolated_vertices());
 }
 
 Tuple<Ref<const TriangleTopology>,Field<const TV,VertexId>>
@@ -459,7 +483,7 @@ static int count_degenerate_edges(const MeshAndX& mesh_and_x, const T epsilon) {
   int degenerate_edges = 0;
   for(const HalfedgeId hid : mesh.halfedges()) {
     if(mesh.reverse(hid) > hid) continue; // Only visit each edge once
-    if(mesh.edge_length(X, hid) < 1e-6) {
+    if(mesh.edge_length(X, hid) < epsilon) {
       degenerate_edges += 1;
     }
   }
@@ -527,7 +551,7 @@ void test_simplify_case(Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> soup_and_
   {
     const auto simplified = simplify(mesh,X,0.);
     simplified.x->assert_consistent();
-    GEODE_ASSERT(input.x->chi() >= simplified.x->chi()); // This should only ever be reduced
+    GEODE_ASSERT(input.x->chi() <= simplified.x->chi()); // This should only ever be increased
     GEODE_ASSERT(abs(mesh_volume(input) - mesh_volume(simplified)) <= 1e-6); // Volume shouldn't be significantly different
     GEODE_ASSERT(count_degenerate_edges(simplified, 0.) == 0); // All degenerate edges should be removed
     GEODE_ASSERT(count_unconnected_clusters(simplified, 0.) == 0); // Adjacent vertices should have been merged (TODO: Implement additional operations in simplify to do this)
