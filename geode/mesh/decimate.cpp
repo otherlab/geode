@@ -187,9 +187,13 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
   assert(!splitting_enabled(reduce_mode) || mesh_owns_field(mesh, X));
 
   const T area = sqr(distance);
+  // We consider face to be degenerate if face area is smaller than sqr(distance) (this is a mostly arbitrary choice, but at least the units match)
+  // area_of_face = 0.5*magnitude(n) < sqr(distance)
+  // sqr_magnitude(n) < 4.*sqr(sqr(distance))
+  const T sqr_magnitude_n_eps = 4.*sqr(area); // Threshold for testing if faces are degenerate
   const T sign_sqr_min_cos = sign_sqr(max_angle > .99*pi ? -1 : cos(max_angle));
 
-  const auto collapse_changes_normal_too_much = [&mesh, &X, sign_sqr_min_cos](const HalfedgeId e) {
+  const auto collapse_changes_normal_too_much = [&mesh, &X, sign_sqr_min_cos, sqr_magnitude_n_eps](const HalfedgeId e) {
     if (sign_sqr_min_cos > -1) {
       const VertexId vs = mesh.src(e);
       const VertexId vd = mesh.dst(e);
@@ -218,7 +222,7 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
             auto sqr_magnitude_n0 = sqr_magnitude(n0);
             const auto sqr_magnitude_n1 = sqr_magnitude(n1);
             // Does collapse turn a degenerate face into a non-degenerate face?
-            if(sqr_magnitude_n0 == 0 && sqr_magnitude_n1 != 0) {
+            if(sqr_magnitude_n0 <= sqr_magnitude_n_eps && !(sqr_magnitude_n1 <= sqr_magnitude_n_eps)) {
               // If so, we don't have an original normal, but we still need to make sure new face isn't 'flipped'
               // I'm not sure what the best way to do this is, but without some sort of check here, concave areas near degenerate vertices can get filled in by thin sheets
               // I'm using average normal at the src vertex since it's robust and easy
