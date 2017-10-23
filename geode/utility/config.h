@@ -161,6 +161,7 @@ typedef double real;
 #define GEODE_HAS_CPP11_STD_HEADER(header) 0
 #endif
 
+#define GEODE_SSE
 #if defined(GEODE_SSE)
   #ifdef _MSC_VER
     #ifdef _M_X64
@@ -178,8 +179,8 @@ typedef double real;
     #endif
     #ifdef __SSE4_1__
       #define GEODE_SSE4_1
-    #else
-      #error "GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture"
+    /* #else */
+    /*   #error "GEODE_SSE enabled, but compiler doesn't define __SSE4_1__ for targeted architecture. Either disable GEODE_SSE or change target architecture" */
     #endif
   #endif
 #endif
