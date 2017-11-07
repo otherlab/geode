@@ -5,6 +5,7 @@ include(GeodeSupport.cmake)
 
 find_package(PkgConfig)
 find_package(JPEG)
+find_package(PNG)
 
 add_definitions(-DGEODE_OPENMESH)
 

@@ -8,6 +8,9 @@ endif()
 if (JPEG_FOUND)
   set(GEODE_LIBJPEG YES)
 endif()
+if (PNG_FOUND)
+  set(GEODE_LIBPNG YES)
+endif()
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
@@ -96,6 +99,20 @@ if (JPEG_FOUND)
     geode
     PUBLIC
       ${JPEG_LIBRARIES}
+  )
+endif()
+
+if (PNG_FOUND)
+  target_include_directories(
+    geode
+    PUBLIC
+      ${PNG_INCLUDE}
+  )
+
+  target_link_libraries(
+    geode
+    PUBLIC
+      ${PNG_LIBRARIES}
   )
 endif()
 
