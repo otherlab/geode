@@ -1,7 +1,7 @@
 // Quadric-based mesh decimation
 
 #include <geode/mesh/decimate.h>
-#include <geode/geometry/ParticleTree.h>
+#include <geode/mesh/mesh_debug.h>
 #include <geode/mesh/quadric.h>
 #include <geode/python/wrap.h>
 #include <geode/structure/Heap.h>
@@ -440,73 +440,6 @@ static Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> tetrahedron_mesh() {
   return tuple(new_<TriangleSoup>(asarray(tris).copy()),asarray(X).copy());
 }
 
-using MeshAndX = Tuple<Ref<const TriangleTopology>,Field<const TV,VertexId>>;
-
-static int count_unconnected_clusters(const MeshAndX& mesh_and_x, const T epsilon) {
-  const auto& mesh = *mesh_and_x.x;
-  const auto& X = mesh_and_x.y;
-
-  Array<TV> non_erased_verts;
-  Array<VertexId> ids;
-  for(const VertexId vid : mesh.vertices()) {
-    non_erased_verts.append(X[vid]);
-    ids.append(vid);
-  }
-
-  const int n = non_erased_verts.size();
-  GEODE_ASSERT(n == mesh.n_vertices());
-  Array<int> duplicates = new_<ParticleTree<TV>>(non_erased_verts, 4)->remove_duplicates(epsilon);
-  GEODE_ASSERT(non_erased_verts.size() == n);
-  GEODE_ASSERT(duplicates.size() == n);
-
-  Hashtable<int, Array<VertexId>> clusters;
-  for(const int i : range(n)) {
-    clusters[duplicates[i]].append(ids[i]);
-  }
-
-  int unconnected_clusters = 0;
-  for(const auto& index_and_cluster : clusters) {
-    const Array<VertexId>& cluster = index_and_cluster.y;
-    GEODE_ASSERT(!cluster.empty());
-    Hashtable<VertexId> neighbors;
-    for(const HalfedgeId e : mesh.outgoing(cluster.front())) neighbors.set(mesh.dst(e));
-    neighbors.set(cluster.front());
-    for(const VertexId v : cluster) {
-      if(!neighbors.contains(v)) {
-        unconnected_clusters += 1;
-        break;
-      }
-    }
-  }
-
-  return unconnected_clusters;
-}
-static int count_degenerate_edges(const MeshAndX& mesh_and_x, const T epsilon) {
-  const auto& mesh = *mesh_and_x.x;
-  const auto& X = mesh_and_x.y;
-  int degenerate_edges = 0;
-  for(const HalfedgeId hid : mesh.halfedges()) {
-    if(mesh.reverse(hid) > hid) continue; // Only visit each edge once
-    if(mesh.edge_length(X, hid) < epsilon) {
-      degenerate_edges += 1;
-    }
-  }
-  return degenerate_edges;
-}
-
-static bool has_duplicate_faces(const MeshAndX& mesh_and_x) {
-  const auto& mesh = *mesh_and_x.x;
-  Hashtable<Vector<VertexId,3>,FaceId> face_map;
-  for(const FaceId f : mesh.faces()) {
-    const auto f_verts = mesh.vertices(f).sorted();
-    if(face_map.contains(f_verts)) {
-      return true;
-    }
-    face_map.set(f_verts, f);
-  }
-  return false;
-}
-
 static bool operator!=(const TriangleTopology::FaceInfo& lhs, const TriangleTopology::FaceInfo& rhs) {
   return (lhs.vertices != rhs.vertices) || (lhs.neighbors != rhs.neighbors);
 }
@@ -517,33 +450,18 @@ static bool operator!=(const TriangleTopology::BoundaryInfo& lhs, const Triangle
       || (lhs.src != rhs.src);
 }
 
-static bool modified_mesh(const MeshAndX& mesh_and_x1,
-                          const MeshAndX& mesh_and_x2) {
-  const TriangleTopology& m1 = *mesh_and_x1.x;
-  const TriangleTopology& m2 = *mesh_and_x2.x;
-  if(m1.faces_.flat != m2.faces_.flat) return true;
-  if(m1.vertex_to_edge_.flat != m2.vertex_to_edge_.flat) return true;
-  if(m1.boundaries_ != m2.boundaries_) return true;
+static bool modified_mesh(const TriangleTopology& mesh1, const RawField<const TV,VertexId> X1,
+                          const TriangleTopology& mesh2, const RawField<const TV,VertexId> X2) {
+  if(mesh1.faces_.flat != mesh2.faces_.flat) return true;
+  if(mesh1.vertex_to_edge_.flat != mesh2.vertex_to_edge_.flat) return true;
+  if(mesh1.boundaries_ != mesh2.boundaries_) return true;
+  if(X1.flat != X2.flat) return true;
   return false;
-}
-
-static T mesh_volume(const MeshAndX& mesh_and_x) {
-  const auto& mesh = *mesh_and_x.x;
-  const auto& X = mesh_and_x.y;
-  GEODE_ASSERT(!mesh.has_boundary());
-  T sum = 0;
-  for(const FaceId f : mesh.faces()) {
-    const auto verts = mesh.vertices(f);
-    sum += det(X[verts[0]],X[verts[1]],X[verts[2]]);
-  }
-  return T(1./6)*sum;
 }
 
 void test_simplify_case(Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> soup_and_x) {
   const auto mesh = new_<TriangleTopology>(soup_and_x.x);
   const auto X = Field<TV,VertexId>{soup_and_x.y.copy()};
-  const auto input = MeshAndX{mesh,X};
-
   {
     // If every point in mesh is degenerate, simplify should eliminate everything 
     const auto zero_X = Field<TV,VertexId>{X.size()};
@@ -555,12 +473,12 @@ void test_simplify_case(Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> soup_and_
   {
     const auto simplified = simplify(mesh,X,0.);
     simplified.x->assert_consistent();
-    GEODE_ASSERT(input.x->chi() <= simplified.x->chi()); // This should only ever be increased
-    GEODE_ASSERT(abs(mesh_volume(input) - mesh_volume(simplified)) <= 1e-6); // Volume shouldn't be significantly different
-    GEODE_ASSERT(count_degenerate_edges(simplified, 0.) == 0); // All degenerate edges should be removed
-    GEODE_ASSERT(count_unconnected_clusters(simplified, 0.) == 0); // Adjacent vertices should have been merged (TODO: Implement additional operations in simplify to do this)
+    GEODE_ASSERT(mesh->chi() <= simplified.x->chi()); // This should only ever be increased
+    GEODE_ASSERT(abs(mesh_volume(mesh, X) - mesh_volume(simplified.x, simplified.y)) <= 1e-6); // Volume shouldn't be significantly different
+    GEODE_ASSERT(count_degenerate_edges(simplified.x, simplified.y, 0.) == 0); // All degenerate edges should be removed
+    GEODE_ASSERT(get_unconnected_clusters(simplified.x, simplified.y, 0.).size() == 0); // Adjacent vertices should have been merged (TODO: Implement additional operations in simplify to do this)
     const auto simplified2 = simplify(simplified.x,simplified.y,0.);
-    GEODE_ASSERT(!modified_mesh(simplified, simplified2)); // After simplification, further simplification should do nothing
+    GEODE_ASSERT(!modified_mesh(simplified.x, simplified.y, simplified2.x, simplified2.y)); // After simplification, further simplification should do nothing
   }
 }
 

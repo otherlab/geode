@@ -7,6 +7,7 @@ set(module_SRCS
   improve_mesh.cpp
   io.cpp
   lower_hull.cpp
+  mesh_debug.cpp
   module.cpp
   PolygonSoup.cpp
   quadric.cpp
@@ -29,6 +30,7 @@ set(module_HEADERS
   improve_mesh.h
   io.h
   lower_hull.h
+  mesh_debug.h
   PolygonSoup.h
   quadric.h
   refine_mesh.h
