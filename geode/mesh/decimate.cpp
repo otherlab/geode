@@ -1,6 +1,7 @@
 // Quadric-based mesh decimation
 
 #include <geode/mesh/decimate.h>
+#include <geode/mesh/simplify.h>
 #include <geode/mesh/mesh_debug.h>
 #include <geode/mesh/quadric.h>
 #include <geode/python/wrap.h>
@@ -396,7 +397,7 @@ void decimate_inplace(MutableTriangleTopology& mesh,
   mesh_reduce_helper<ReduceMode::decimate_only>(mesh, X, distance, max_angle, min_vertices, boundary_distance);
 }
 
-void simplify_inplace(MutableTriangleTopology& mesh,
+void simplify_inplace_deprecated(MutableTriangleTopology& mesh,
                  const FieldId<Vector<real,3>,VertexId> X_id,
                  const real distance,
                  const real max_angle,
@@ -405,7 +406,7 @@ void simplify_inplace(MutableTriangleTopology& mesh,
   mesh_reduce_helper<ReduceMode::simplify_topology>(mesh, mesh.field(X_id), distance, max_angle, min_vertices, boundary_distance);
 } 
 
-void simplify_inplace_python(MutableTriangleTopology& mesh,
+void simplify_inplace_deprecated_python(MutableTriangleTopology& mesh,
                  const PyFieldId& X_id,
                  const real distance,
                  const real max_angle,
@@ -416,8 +417,20 @@ void simplify_inplace_python(MutableTriangleTopology& mesh,
   mesh_reduce_helper<ReduceMode::simplify_topology>(mesh, mesh.field(FieldId<Vector<real,3>,VertexId>{X_id.id}), distance, max_angle, min_vertices, boundary_distance);
 }
 
+void simplify_inplace_python(MutableTriangleTopology& mesh,
+                 const PyFieldId& X_id,
+                 const real distance,
+                 const real max_angle,
+                 const int min_vertices,
+                 const real boundary_distance) {
+  GEODE_ASSERT(X_id.prim == PyFieldId::Vertex);
+  GEODE_ASSERT(X_id.type && (*X_id.type == typeid(Vector<real,3>)));
+  simplify_inplace(mesh, FieldId<Vector<real,3>,VertexId>{X_id.id}, distance, max_angle, min_vertices, boundary_distance);
+}
+
+
 GEODE_CORE_EXPORT Tuple<Ref<const TriangleTopology>,Field<const Vector<real,3>,VertexId>>
-simplify(const TriangleTopology& mesh,
+simplify_deprecated(const TriangleTopology& mesh,
          RawField<const Vector<real,3>,VertexId> X,
          const real distance,
          const real max_angle,
@@ -425,7 +438,7 @@ simplify(const TriangleTopology& mesh,
          const real boundary_distance) {
   Ref<MutableTriangleTopology> rmesh = mesh.mutate();
   const auto X_id = rmesh->add_field(X.copy());
-  simplify_inplace(rmesh, X_id, distance, max_angle, min_vertices, boundary_distance);
+  simplify_inplace_deprecated(rmesh, X_id, distance, max_angle, min_vertices, boundary_distance);
   return {new_<TriangleTopology>(rmesh), // Make a non-mutable TriangleTopology from rmesh. This should share rather than copy non-mutable parts and let mutable parts be released after this function returns
           rmesh->field(X_id)};
 }
@@ -497,6 +510,7 @@ void wrap_decimate() {
   GEODE_FUNCTION(decimate_inplace)
   GEODE_FUNCTION(simplify)
   GEODE_FUNCTION_2(simplify_inplace, simplify_inplace_python)
+  GEODE_FUNCTION_2(simplify_inplace_deprecated, simplify_inplace_deprecated_python)
   GEODE_FUNCTION(test_simplify_helper)
 
 }

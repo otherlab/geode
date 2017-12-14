@@ -1,6 +1,7 @@
 set(module_SRCS
   ComponentData.cpp
   decimate.cpp
+  simplify.cpp
   HalfedgeGraph.cpp
   HalfedgeMesh.cpp
   ids.cpp
@@ -23,6 +24,7 @@ set(module_SRCS
 set(module_HEADERS
   ComponentData.h
   decimate.h
+  simplify.h
   forward.h
   HalfedgeGraph.h
   HalfedgeMesh.h

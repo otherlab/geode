@@ -48,6 +48,17 @@ struct Quadric {
     c += rhs.c;
     return *this;
   }
+
+  Quadric& operator*=(const real rhs) {
+    A *= rhs;
+    b *= rhs;
+    c *= rhs;
+    return *this;
+  }
+
+  inline friend bool operator!=(const Quadric& lhs, const Quadric& rhs)
+  { return (lhs.A != rhs.A) || (lhs.b != rhs.b) || (lhs.c != rhs.c); }
+
 };
 
 class TriangleTopology;

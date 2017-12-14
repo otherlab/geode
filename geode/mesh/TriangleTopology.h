@@ -654,6 +654,20 @@ public:
   // will have the same fields before and after.
   GEODE_CORE_EXPORT HalfedgeId unsafe_flip_edge(HalfedgeId e) GEODE_WARN_UNUSED_RESULT;
 
+  struct UnflippedEdgeState {
+    Vector<FaceInfo,2> old_faces;
+    HalfedgeId old_ve0;
+    HalfedgeId old_ve1;
+    HalfedgeId old_oe0;
+    HalfedgeId old_oe1;
+    HalfedgeId e0;
+    HalfedgeId e1;
+  };
+  // Save info needed for unflip_edge to undo an edge flip
+  UnflippedEdgeState save_state_before_flip(const HalfedgeId e0) const;
+  // Restore an edge to it's state before flipping assuming no modifications to mesh were performed after saving state other than flipping the saved edge
+  void unflip_edge(const UnflippedEdgeState u);
+
   // Remove a face from the mesh, shuffling face and halfedge ids in the process.
   // Vertex ids are untouched, and in particular isolated vertices are not erased.
   GEODE_CORE_EXPORT void erase_face_with_reordering(FaceId f);

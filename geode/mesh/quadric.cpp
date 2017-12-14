@@ -13,10 +13,7 @@ Quadric compute_quadric(TriangleTopology const &mesh, const RawField<const Vecto
 
   // Normalize
   if (total) {
-    const real inv_total = 1/total;
-    q.A *= inv_total;
-    q.b *= inv_total;
-    q.c *= inv_total;
+    q *= 1/total;
   }
 
   return q;

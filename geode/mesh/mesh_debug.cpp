@@ -1,3 +1,4 @@
+#include <geode/array/sort.h>
 #include <geode/mesh/mesh_debug.h>
 #include <geode/geometry/ParticleTree.h>
 
@@ -42,6 +43,16 @@ real mesh_volume(const TriangleTopology& mesh, const RawField<const Vector<real,
     sum += det(X[verts[0]],X[verts[1]],X[verts[2]]);
   }
   return real{1./6.}*sum;
+}
+
+Array<real> mesh_component_volumes(const TriangleTopology& mesh, const RawField<const Vector<real,3>, VertexId> X) {
+  const auto components = get_component_faces(mesh);
+  const auto result = Field<real,ComponentId>{components.size(), uninit};
+  for(const ComponentId c : components.id_range()) {
+    result[c] = mesh_volume(mesh, X, components[c]);
+  }
+  sort(result.flat);
+  return result.flat;
 }
 
 NestedField<FaceId, ComponentId> get_component_faces(const TriangleTopology& mesh) {

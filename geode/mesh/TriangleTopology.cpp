@@ -1487,6 +1487,56 @@ HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
   return HalfedgeId(3*f0.id);
 }
 
+MutableTriangleTopology::UnflippedEdgeState MutableTriangleTopology::save_state_before_flip(const HalfedgeId e0) const {
+  const HalfedgeId e1 = reverse(e0);
+  return UnflippedEdgeState{
+    Vector<FaceInfo,2>{faces_[face(e0)],faces_[face(e1)]},
+    vertex_to_edge_[src(e0)],
+    vertex_to_edge_[src(e1)],
+    vertex_to_edge_[opposite(e0)],
+    vertex_to_edge_[opposite(e1)],
+    e0, e1};
+}
+
+static HalfedgeId interior_next(const HalfedgeId he)
+{ return HalfedgeId{he.id+(he.id%3==2?-2:1)}; }
+static HalfedgeId interior_prev(const HalfedgeId he)
+{ return HalfedgeId{he.id+(he.id%3==0?2:-1)}; }
+
+void MutableTriangleTopology::unflip_edge(const UnflippedEdgeState u) {
+
+  // Reconstruct original ids from saved data
+  const auto faces = Vector<FaceId,2>{FaceId{u.e0.id/3}, FaceId{u.e1.id/3}};
+  const HalfedgeId n0 = interior_next(u.e0);
+  const HalfedgeId n1 = interior_next(u.e1);
+  const HalfedgeId p0 = interior_prev(u.e0);
+  const HalfedgeId p1 = interior_prev(u.e1);
+  const auto ie0 = u.e0.id - 3*faces[0].id;
+  const auto ie1 = u.e1.id - 3*faces[1].id;
+  const HalfedgeId rn0 = u.old_faces[0].neighbors[(ie0 + 1) % 3];
+  const HalfedgeId rn1 = u.old_faces[1].neighbors[(ie1 + 1) % 3];
+  const HalfedgeId rp0 = u.old_faces[0].neighbors[(ie0 + 2) % 3];
+  const HalfedgeId rp1 = u.old_faces[1].neighbors[(ie1 + 2) % 3];
+
+  // Swap halfedge fields back to original positions
+  for(auto& s : halfedge_fields) {
+    s.swap(n0.id,reverse(rn0).id);
+    s.swap(n1.id,reverse(rn1).id);
+    s.swap(p0.id,reverse(rp0).id);
+    s.swap(p1.id,reverse(rp1).id);
+  }
+
+  // Restore links
+  for(const int i : {0,1}) {
+    // Restore vertex order
+    mutable_faces_[faces[i]].vertices = u.old_faces[i].vertices;
+    // Restore incoming neighbor links
+    for(const int j : {0,1,2}) {
+      unsafe_set_reverse(faces[i], j, u.old_faces[i].neighbors[j]);
+    }
+  }
+}
+
 void MutableTriangleTopology::erase_last_vertex_with_reordering() {
   const VertexId v(vertex_to_edge_.size()-1);
   // Erase all incident faces

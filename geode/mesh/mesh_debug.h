@@ -19,6 +19,9 @@ real mesh_volume(const TriangleTopology& mesh, const RawField<const Vector<real,
 // Assumes component_faces defines a closed sub-mesh
 real mesh_volume(const TriangleTopology& mesh, const RawField<const Vector<real,3>, VertexId> X, const RawArray<const FaceId> component_faces);
 
+// Volume of each connected component of mesh
+Array<real> mesh_component_volumes(const TriangleTopology& mesh, const RawField<const Vector<real,3>, VertexId> X);
+
 // Returns clusters of connected faces
 // Isolated vertices are ignored
 NestedField<FaceId, ComponentId> get_component_faces(const TriangleTopology& mesh);
