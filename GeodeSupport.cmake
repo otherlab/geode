@@ -104,6 +104,15 @@ macro(ADD_GEODE_MODULE _name)
         -fPIC
     )
 
+    CHECK_CXX_COMPILER_FLAG(-Wno-undefined-var-template COMPILER_CHECKS_UNDEFINED_VAR_TEMPLATE)
+    if (COMPILER_CHECKS_UNDEFINED_VAR_TEMPLATE)
+      target_compile_options(
+        ${_name}
+        PUBLIC
+          -Wno-undefined-var-template
+      )
+    endif()
+
     CHECK_CXX_COMPILER_FLAG(-Wno-misleading-indentation COMPILER_CHECKS_MISLEADING_INDENTATION)
     if (COMPILER_CHECKS_MISLEADING_INDENTATION)
       target_compile_options(
