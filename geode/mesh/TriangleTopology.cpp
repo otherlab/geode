@@ -47,9 +47,9 @@ TriangleTopology::TriangleTopology(const TriangleTopology& mesh, bool copy)
   , boundaries_(copy ? mesh.boundaries_.copy() : mesh.boundaries_)
   , erased_boundaries_(mesh.erased_boundaries_) {}
 
-TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
+TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices)
   : TriangleTopology() {
-  const int nodes = faces.size() ? scalar_view(faces).max()+1 : 0;
+  const int nodes = max(faces.size() ? scalar_view(faces).max()+1 : 0, min_vertices);
   internal_add_vertices(nodes);
   internal_add_faces(faces);
   internal_collect_boundary_garbage();
@@ -573,8 +573,8 @@ MutableTriangleTopology::MutableTriangleTopology(const MutableTriangleTopology& 
   for (const auto& p : mesh.halfedge_fields) halfedge_fields.push_back(copy ? p.copy() : p);
 }
 
-MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces)
-  : TriangleTopology(faces)
+MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices)
+  : TriangleTopology(faces, min_vertices)
   , mutable_n_vertices_(const_cast_(n_vertices_))
   , mutable_n_faces_(const_cast_(n_faces_))
   , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
@@ -586,7 +586,7 @@ MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> f
 {}
 
 MutableTriangleTopology::MutableTriangleTopology(TriangleSoup const &soup)
-: MutableTriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
+: MutableTriangleTopology(RawArray<const Vector<int,3>>(soup.elements), soup.nodes()) {
 }
 
 MutableTriangleTopology::~MutableTriangleTopology() {}

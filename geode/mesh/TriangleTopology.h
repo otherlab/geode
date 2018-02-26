@@ -167,7 +167,7 @@ protected:
   GEODE_CORE_EXPORT TriangleTopology();
   GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, const bool copy=false);
   GEODE_CORE_EXPORT explicit TriangleTopology(const TriangleSoup& soup);
-  GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
+  GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices=0);
 
 public:
 
@@ -411,7 +411,7 @@ protected:
   GEODE_CORE_EXPORT MutableTriangleTopology(const TriangleTopology& mesh, bool copy = false);
   GEODE_CORE_EXPORT MutableTriangleTopology(const MutableTriangleTopology& mesh, bool copy = false);
   GEODE_CORE_EXPORT MutableTriangleTopology(TriangleSoup const &soup);
-  GEODE_CORE_EXPORT MutableTriangleTopology(RawArray<const Vector<int,3>> faces);
+  GEODE_CORE_EXPORT MutableTriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices=0);
 
 public:
 
