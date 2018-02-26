@@ -473,7 +473,11 @@ struct SimplifyHelper {
 
   void set_simplify_cost_post_flip(const HalfedgeId he, const T flip_cost) {
     // After we flip this edge will we be able to collapse the resulting edge (best) or at least have fewer degenerate faces?
-    assert(mesh.is_flip_safe(he)); // Should have already checked this
+    // FIXME: Somewhere we aren't invalidating operations correctly. I'm replacing the assert with a check for now, but this likely indicates a deeper bug that will come back to haunt us
+    // assert(mesh.is_flip_safe(he)); // Should have already checked this
+    if(!mesh.is_flip_safe(he)) {
+      return;
+    }
     const HalfedgeId rev_he = mesh.reverse(he);
     const VertexId vs = mesh.src(he);
     const VertexId vd = mesh.dst(he);
