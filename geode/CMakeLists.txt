@@ -1,5 +1,6 @@
 option(GEODE_THREAD_SAFE "Compile with thread safety" TRUE)
-if (PYTHON_FOUND)
+
+if (PYTHON_FOUND AND NOT GEODE_DISABLE_PYTHON)
   set(GEODE_PYTHON YES)
 endif()
 if (GMP_FOUND)
@@ -7,6 +8,20 @@ if (GMP_FOUND)
 endif()
 if (JPEG_FOUND)
   set(GEODE_LIBJPEG YES)
+endif()
+
+# Check Python binding configuration
+if (GEODE_REQUIRE_PYTHON AND NOT GEODE_PYTHON)
+  if(NOT PYTHON_FOUND)
+    message(WARNING "Python libs not found.")
+  endif()
+  message(FATAL_ERROR "Python bindings could not be configured as required")
+endif()
+
+if(GEODE_PYTHON)
+  message(STATUS "Python bindings for geode enabled")
+else()
+  message(STATUS "Python bindings for geode disabled")
 endif()
 
 configure_file(
@@ -42,11 +57,18 @@ target_include_directories(
   geode
   INTERFACE
     $<INSTALL_INTERFACE:include/>
-    ${PYTHON_INCLUDE_DIRS}
-    ${NUMPY_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../>
 )
+
+if (GEODE_PYTHON)
+  target_include_directories(
+    geode
+    INTERFACE
+      ${PYTHON_INCLUDE_DIRS}
+      ${NUMPY_INCLUDE_DIRS}
+  )
+endif()
 
 set_target_properties(geode PROPERTIES BUILD_WITH_INSTALL_RPATH 1 INSTALL_NAME_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -84,7 +106,7 @@ if (JPEG_FOUND)
   )
 endif()
 
-if (PYTHON_FOUND)
+if (GEODE_PYTHON)
   target_link_libraries(
     geode
     PUBLIC

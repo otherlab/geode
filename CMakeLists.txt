@@ -1,6 +1,13 @@
 project(geode)
 cmake_minimum_required(VERSION 3.2)
 
+option(GEODE_REQUIRE_PYTHON "Generate an error if python bindings won't be built instead of silently disabling them" FALSE)
+option(GEODE_DISABLE_PYTHON "Don't build python bindings even if available" FALSE)
+
+if (GEODE_REQUIRE_PYTHON AND GEODE_DISABLE_PYTHON)
+  message(STATUS "Geode Python bindings set to required and disabled at the same time. Please choose at most one")
+endif()
+
 include(GeodeSupport.cmake)
 
 find_package(PkgConfig)
@@ -28,11 +35,8 @@ else()
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/)
-find_package(PathPython)
 
-if(NOT PYTHON_FOUND)
-  message(STATUS "Python libs not found. Python bindings will not be built.")
-endif()
+find_package(PathPython)
 
 add_subdirectory(geode)
 
