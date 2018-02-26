@@ -114,7 +114,7 @@ macro(ADD_GEODE_MODULE _name)
     endif()
 
 
-    if (PYTHON_FOUND)
+    if (GEODE_PYTHON)
       target_include_directories(
         ${_name}
         PUBLIC
