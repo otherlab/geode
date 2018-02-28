@@ -42,12 +42,16 @@ static inline exact::ImplicitlyPerturbedCenter perturbed_center(const ExactHoriz
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template<> bool is_same_circle(const ExactCircle<Pb::Implicit>& c0, const ExactCircle<Pb::Implicit>& c1) {
+static bool is_same_circle_helper(const ExactCircle<Pb::Implicit>& c0, const ExactCircle<Pb::Implicit>& c1) {
   return (c0.radius == c1.radius) && (c0.center == c1.center);
 }
-template<> bool is_same_circle(const ExactCircle<Pb::Explicit>& c0, const ExactCircle<Pb::Explicit>& c1) {
+static bool is_same_circle_helper(const ExactCircle<Pb::Explicit>& c0, const ExactCircle<Pb::Explicit>& c1) {
   assert(c0.index != c1.index || ((c0.radius == c1.radius) && (c0.center == c1.center)));
   return (c0.index == c1.index);
+}
+// This is implemented via an overloaded helper function instead of template specialization to avoid tricky specialization/instantiation ordering issues that upset some compilers
+template<Pb PS> bool is_same_circle(const ExactCircle<PS>& c0, const ExactCircle<PS>& c1) {
+  return is_same_circle_helper(c0,c1);
 }
 
 template<Pb PS> bool is_same_horizontal(const ExactHorizontal<PS>& h0, const ExactHorizontal<PS>& h1) {
