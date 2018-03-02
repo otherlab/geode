@@ -49,6 +49,7 @@ static Vec2i dir_offset(const GridDir d) {
     case GridDir::W: return Vec2i(-1, 0);
     case GridDir::S: return Vec2i( 0,-1);
   }
+  GEODE_FATAL_ERROR("Unhandled case in switch statement");
 }
 
 static int index_of(const GridDir dir) {
