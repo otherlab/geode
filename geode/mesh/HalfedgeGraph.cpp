@@ -6,6 +6,7 @@
 #include <geode/array/Nested.h>
 
 #include <deque>
+#include <climits>
 
 namespace geode {
 

@@ -47,9 +47,9 @@ TriangleTopology::TriangleTopology(const TriangleTopology& mesh, bool copy)
   , boundaries_(copy ? mesh.boundaries_.copy() : mesh.boundaries_)
   , erased_boundaries_(mesh.erased_boundaries_) {}
 
-TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces)
+TriangleTopology::TriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices)
   : TriangleTopology() {
-  const int nodes = faces.size() ? scalar_view(faces).max()+1 : 0;
+  const int nodes = max(faces.size() ? scalar_view(faces).max()+1 : 0, min_vertices);
   internal_add_vertices(nodes);
   internal_add_faces(faces);
   internal_collect_boundary_garbage();
@@ -573,8 +573,8 @@ MutableTriangleTopology::MutableTriangleTopology(const MutableTriangleTopology& 
   for (const auto& p : mesh.halfedge_fields) halfedge_fields.push_back(copy ? p.copy() : p);
 }
 
-MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces)
-  : TriangleTopology(faces)
+MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices)
+  : TriangleTopology(faces, min_vertices)
   , mutable_n_vertices_(const_cast_(n_vertices_))
   , mutable_n_faces_(const_cast_(n_faces_))
   , mutable_n_boundary_edges_(const_cast_(n_boundary_edges_))
@@ -586,7 +586,7 @@ MutableTriangleTopology::MutableTriangleTopology(RawArray<const Vector<int,3>> f
 {}
 
 MutableTriangleTopology::MutableTriangleTopology(TriangleSoup const &soup)
-: MutableTriangleTopology(RawArray<const Vector<int,3>>(soup.elements)) {
+: MutableTriangleTopology(RawArray<const Vector<int,3>>(soup.elements), soup.nodes()) {
 }
 
 MutableTriangleTopology::~MutableTriangleTopology() {}
@@ -1304,6 +1304,119 @@ void MutableTriangleTopology::collapse(HalfedgeId h) {
   unsafe_collapse(h);
 }
 
+void MutableTriangleTopology::collapse_degenerate_face_pair(const HalfedgeId e01) {
+  const HalfedgeId e10 = reverse(e01);
+  // The same opposite vertex on two connected faces means they are identical
+  assert(opposite(e01) == opposite(e10));
+  assert(vertices(e01) == vertices(e10).reversed());
+  assert(face(e01) != face(e10)); // For simplicity we assume we aren't handling two copies of the same face (though this might work anyway)
+  assert(valid(face(e01)));
+  assert(valid(face(e10)));
+  const auto doubled_faces = faces(e01); // These are the faces that we need to clean up
+  const auto doubled_verts = vertices(doubled_faces.x);
+
+  // Attempt to update halfedge references for any affected vertices
+  for(const VertexId v : doubled_verts) {
+    for(const HalfedgeId e : outgoing(v)) {
+      if(!doubled_faces.contains(face(e))) {
+        unsafe_set_halfedge(v, e);
+        break;
+      }
+    }
+  }
+
+  // If we didn't find a different face to use, vertex will now be isolated so we erase it
+  for(const VertexId v : doubled_verts) {
+    if(doubled_faces.contains(face(halfedge(v)))) {
+      unsafe_set_erased(v);
+    }
+  }
+
+  // We want faces to 'cancel' out without leaving a boundary so we relink neighbors to each other
+  const auto pn = Vector<HalfedgeId,2>{reverse(prev(e01)), reverse(next(e10))};
+  const auto np = Vector<HalfedgeId,2>{reverse(next(e01)), reverse(prev(e10))};
+  unsafe_interior_link(pn.x,pn.y);
+  unsafe_interior_link(np.x,np.y);
+
+  // Faces are linked to each other along e01/e10 so that edge can be ignored
+  // Mark the faces as erased
+  unsafe_set_erased(doubled_faces.x);
+  unsafe_set_erased(doubled_faces.y);
+
+  // Check that we don't need to recursively collapse more newly degenerate faces
+  assert(erased(pn.x) || erased(pn.y) || opposite(pn.x) != opposite(pn.y));
+  assert(erased(np.x) || erased(np.y) || opposite(np.x) != opposite(np.y));
+}
+
+Vector<FaceId,2> MutableTriangleTopology::split_loop(HalfedgeId e01, HalfedgeId e12, HalfedgeId e20) {
+  
+  const VertexId v0 = src(e01);
+  const VertexId v1 = src(e12);
+  const VertexId v2 = src(e20);
+
+  const HalfedgeId e10 = reverse(e01);
+  const HalfedgeId e21 = reverse(e12);
+  const HalfedgeId e02 = reverse(e20);
+
+  // We will cut along e01,e12,e20 and cap each side with a new face
+  // These are the new vertices and neighbors of the new faces
+  const Vector<Vector<VertexId,3>,2> cap_verts = {vec(v0, v1, v2),
+                                                  vec(copy_vertex(v2), copy_vertex(v1), copy_vertex(v0))};
+  const Vector<Vector<HalfedgeId,3>,2> cap_neighbors = {vec(e10, e21, e02),
+                                                        vec(e12, e01, e20)};
+
+  const_cast_(n_faces_) += 2;
+
+  // This face goes around ring on side with vl
+  const FaceId fl = mutable_faces_.append(TriangleTopology::FaceInfo{cap_verts[0], cap_neighbors[0]});
+  // This face goes around ring on side with vr
+  const FaceId fr = mutable_faces_.append(TriangleTopology::FaceInfo{cap_verts[1], cap_neighbors[1]});
+
+  const Vector<FaceId,2> cap_faces = {fl, fr};
+
+  // Update any fields with empty data
+  for(auto& s : face_fields)
+    s.extend(2);
+  for(auto& s : halfedge_fields)
+    s.extend(6);
+
+  // Need to relink halfedges along cut to halfedges around cap
+  for(const int side : range(2)) {
+    const FaceId cap_face = cap_faces[side];
+    for(const int i : range(3)) {
+      const HalfedgeId new_he = halfedge(cap_face, i);
+      assert(src(new_he) == cap_verts[side][i]);
+      assert(dst(new_he) == cap_verts[side][(i+1)%3]);
+      const HalfedgeId new_neighbor = cap_neighbors[side][i];
+      assert(new_neighbor == reverse(new_he)); // Link in this direction should already be present
+      // Src for neighbor should be dst for cap and vice versa
+      unsafe_interior_link(new_he, new_neighbor);
+      assert(reverse(new_he) == new_neighbor); // Link shouldn't have been changed
+    }
+
+    // Need to update vertex to edge pointers
+    for(const int i : range(3)) {
+      // For side 0 this ensures we are using a halfedge that wasn't on other side of cut
+      // For side 1 this sets invalid id to a valid id
+      assert((side == 0) ? halfedge(vertex(cap_face,i)).id >= 0
+                         : !halfedge(vertex(cap_face,i)).valid());
+      unsafe_set_halfedge(vertex(cap_face, i), halfedge(cap_face, i));
+    }
+  }
+
+  // Now that all edges are linked, walk outgoing halfedges for each vertex and update face to vertex pointers
+  for(const auto& verts : cap_verts) {
+    for(const VertexId v : verts) {
+      for(const HalfedgeId h : outgoing(v)) {
+        const int f = h.id/3;
+        mutable_faces_.flat[f].vertices[h.id-3*f] = v;
+      }
+    }
+  }
+
+  return cap_faces;
+}
+
 HalfedgeId MutableTriangleTopology::flip_edge(HalfedgeId e) {
   if (!is_flip_safe(e))
     throw RuntimeError(format("TriangleTopology::flip_edge: edge flip %d [%d,%d] is invalid",
@@ -1372,6 +1485,56 @@ HalfedgeId MutableTriangleTopology::unsafe_flip_edge(HalfedgeId e0) {
   }
 
   return HalfedgeId(3*f0.id);
+}
+
+MutableTriangleTopology::UnflippedEdgeState MutableTriangleTopology::save_state_before_flip(const HalfedgeId e0) const {
+  const HalfedgeId e1 = reverse(e0);
+  return UnflippedEdgeState{
+    Vector<FaceInfo,2>{faces_[face(e0)],faces_[face(e1)]},
+    vertex_to_edge_[src(e0)],
+    vertex_to_edge_[src(e1)],
+    vertex_to_edge_[opposite(e0)],
+    vertex_to_edge_[opposite(e1)],
+    e0, e1};
+}
+
+static HalfedgeId interior_next(const HalfedgeId he)
+{ return HalfedgeId{he.id+(he.id%3==2?-2:1)}; }
+static HalfedgeId interior_prev(const HalfedgeId he)
+{ return HalfedgeId{he.id+(he.id%3==0?2:-1)}; }
+
+void MutableTriangleTopology::unflip_edge(const UnflippedEdgeState u) {
+
+  // Reconstruct original ids from saved data
+  const auto faces = Vector<FaceId,2>{FaceId{u.e0.id/3}, FaceId{u.e1.id/3}};
+  const HalfedgeId n0 = interior_next(u.e0);
+  const HalfedgeId n1 = interior_next(u.e1);
+  const HalfedgeId p0 = interior_prev(u.e0);
+  const HalfedgeId p1 = interior_prev(u.e1);
+  const auto ie0 = u.e0.id - 3*faces[0].id;
+  const auto ie1 = u.e1.id - 3*faces[1].id;
+  const HalfedgeId rn0 = u.old_faces[0].neighbors[(ie0 + 1) % 3];
+  const HalfedgeId rn1 = u.old_faces[1].neighbors[(ie1 + 1) % 3];
+  const HalfedgeId rp0 = u.old_faces[0].neighbors[(ie0 + 2) % 3];
+  const HalfedgeId rp1 = u.old_faces[1].neighbors[(ie1 + 2) % 3];
+
+  // Swap halfedge fields back to original positions
+  for(auto& s : halfedge_fields) {
+    s.swap(n0.id,reverse(rn0).id);
+    s.swap(n1.id,reverse(rn1).id);
+    s.swap(p0.id,reverse(rp0).id);
+    s.swap(p1.id,reverse(rp1).id);
+  }
+
+  // Restore links
+  for(const int i : {0,1}) {
+    // Restore vertex order
+    mutable_faces_[faces[i]].vertices = u.old_faces[i].vertices;
+    // Restore incoming neighbor links
+    for(const int j : {0,1,2}) {
+      unsafe_set_reverse(faces[i], j, u.old_faces[i].neighbors[j]);
+    }
+  }
 }
 
 void MutableTriangleTopology::erase_last_vertex_with_reordering() {

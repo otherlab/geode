@@ -167,7 +167,7 @@ protected:
   GEODE_CORE_EXPORT TriangleTopology();
   GEODE_CORE_EXPORT TriangleTopology(const TriangleTopology& mesh, const bool copy=false);
   GEODE_CORE_EXPORT explicit TriangleTopology(const TriangleSoup& soup);
-  GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces);
+  GEODE_CORE_EXPORT explicit TriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices=0);
 
 public:
 
@@ -411,7 +411,7 @@ protected:
   GEODE_CORE_EXPORT MutableTriangleTopology(const TriangleTopology& mesh, bool copy = false);
   GEODE_CORE_EXPORT MutableTriangleTopology(const MutableTriangleTopology& mesh, bool copy = false);
   GEODE_CORE_EXPORT MutableTriangleTopology(TriangleSoup const &soup);
-  GEODE_CORE_EXPORT MutableTriangleTopology(RawArray<const Vector<int,3>> faces);
+  GEODE_CORE_EXPORT MutableTriangleTopology(RawArray<const Vector<int,3>> faces, const int min_vertices=0);
 
 public:
 
@@ -453,6 +453,16 @@ public:
   } \
   template<class T> const Field<const T,Id>& field(const FieldId<T,Id> id) const { \
     return prim##_fields[id_to_##prim##_field.get(id.id)].template get<const T,Id>(); \
+  } \
+  template<class T> const FieldId<T,Id> find_field(const Field<T,Id>& f) const { \
+    for(const auto id_and_index : id_to_##prim##_field) { \
+      const UntypedArray& untyped = prim##_fields[id_and_index.y]; \
+      if(untyped.type() != typeid(T)) continue; \
+      if(f.flat.same_array(f.flat, untyped.template get<T>())) { \
+        return FieldId<T,Id>{id_and_index.x}; \
+      } \
+    } \
+    return FieldId<T,Id>{invalid_id}; \
   }
   FIELD_ACCESS_FUNCTIONS(vertex,   VertexId,   vertex_to_edge_.size())
   FIELD_ACCESS_FUNCTIONS(face,     FaceId,     faces_.size())
@@ -594,6 +604,16 @@ public:
   // Throws an exception if is_collapse_safe(h) is not true.
   GEODE_CORE_EXPORT void collapse(HalfedgeId h);
 
+  // Split three consecutive halfedges and fill the two new boundaries with new faces
+  // There shouldn't already be a face present
+  // Returns ids of the newly inserted faces
+  GEODE_CORE_EXPORT Vector<FaceId,2> split_loop(HalfedgeId e01, HalfedgeId e12, HalfedgeId e20);
+
+  // Given an edge between two faces that share the same three vertices (one face should have reversed order), erase both faces linking any adjacent edges across
+  // Isolated vertices will be erased
+  // Returns a halfedges from each of the two relinked adjacent faces (reverse(next(e01)) and reverse(prev(e01)))
+  GEODE_CORE_EXPORT void collapse_degenerate_face_pair(HalfedgeId e01);
+
   // Erase the given vertex. Erases all incident faces. If erase_isolated is true, also erase other vertices that are now isolated.
   GEODE_CORE_EXPORT void erase(VertexId id, bool erase_isolated = false);
 
@@ -633,6 +653,20 @@ public:
   // flipped edge) keep their fields, the interior halfedge of face 1 before
   // will have the same fields before and after.
   GEODE_CORE_EXPORT HalfedgeId unsafe_flip_edge(HalfedgeId e) GEODE_WARN_UNUSED_RESULT;
+
+  struct UnflippedEdgeState {
+    Vector<FaceInfo,2> old_faces;
+    HalfedgeId old_ve0;
+    HalfedgeId old_ve1;
+    HalfedgeId old_oe0;
+    HalfedgeId old_oe1;
+    HalfedgeId e0;
+    HalfedgeId e1;
+  };
+  // Save info needed for unflip_edge to undo an edge flip
+  UnflippedEdgeState save_state_before_flip(const HalfedgeId e0) const;
+  // Restore an edge to it's state before flipping assuming no modifications to mesh were performed after saving state other than flipping the saved edge
+  void unflip_edge(const UnflippedEdgeState u);
 
   // Remove a face from the mesh, shuffling face and halfedge ids in the process.
   // Vertex ids are untouched, and in particular isolated vertices are not erased.
@@ -782,7 +816,7 @@ struct TriangleTopologyOutgoing {
   bool first;
   TriangleTopologyOutgoing(const TriangleTopology& mesh, HalfedgeId e, bool first) : mesh(mesh), e(e), first(first) {}
   void operator++() { e = mesh.left(e); first = false; }
-  bool operator!=(TriangleTopologyOutgoing o) { return first || e!=o.e; } // For use only inside range-based for loops
+  bool operator!=(TriangleTopologyOutgoing o) const { return first || e!=o.e; } // For use only inside range-based for loops
   HalfedgeId operator*() const { return e; }
 };
 
@@ -792,7 +826,7 @@ struct TriangleTopologyIncoming {
   bool first;
   TriangleTopologyIncoming(const TriangleTopology& mesh, HalfedgeId e, bool first) : mesh(mesh), e(e), first(first) {}
   void operator++() { e = mesh.left(e); first = false; }
-  bool operator!=(TriangleTopologyIncoming o) { return first || e!=o.e; } // For use only inside range-based for loops
+  bool operator!=(TriangleTopologyIncoming o) const { return first || e!=o.e; } // For use only inside range-based for loops
   HalfedgeId operator*() const { return mesh.reverse(e); }
 };
 

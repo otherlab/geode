@@ -2,7 +2,7 @@
 
 namespace geode {
 
-Quadric compute_quadric(TriangleTopology const &mesh, RawField<Vector<real,3>, VertexId> const &X, VertexId v) {
+Quadric compute_quadric(TriangleTopology const &mesh, const RawField<const Vector<real,3>, VertexId> X, VertexId v) {
   real total = 0;
   Quadric q;
   for (const auto e : mesh.outgoing(v)) {
@@ -13,10 +13,7 @@ Quadric compute_quadric(TriangleTopology const &mesh, RawField<Vector<real,3>, V
 
   // Normalize
   if (total) {
-    const real inv_total = 1/total;
-    q.A *= inv_total;
-    q.b *= inv_total;
-    q.c *= inv_total;
+    q *= 1/total;
   }
 
   return q;
