@@ -101,6 +101,7 @@ macro(ADD_GEODE_MODULE _name)
         -Wno-format-security
         -Wno-attributes
         -Wno-unused-variable
+        -fPIC
     )
 
     CHECK_CXX_COMPILER_FLAG(-Wno-undefined-var-template COMPILER_CHECKS_UNDEFINED_VAR_TEMPLATE)
