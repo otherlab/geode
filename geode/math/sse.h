@@ -39,7 +39,7 @@ static inline __m128i operator|=(__m128i& a, __m128i b) { return a = (a|b); }
 #endif
 
 // Mark __m128 and __m128i as fundamental types
-} namespace GEODE_TYPE_TRAITS_NAMESPACE {
+} namespace std {
 template<> struct is_fundamental<__m128> : public geode::mpl::true_ {};
 template<> struct is_fundamental<__m128i> : public geode::mpl::true_ {};
 } namespace geode {
