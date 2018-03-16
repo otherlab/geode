@@ -9,6 +9,9 @@ endif()
 if (JPEG_FOUND)
   set(GEODE_LIBJPEG YES)
 endif()
+if (PNG_FOUND)
+  set(GEODE_LIBPNG YES)
+endif()
 
 # Check Python binding configuration
 if (GEODE_REQUIRE_PYTHON AND NOT GEODE_PYTHON)
@@ -103,6 +106,20 @@ if (JPEG_FOUND)
     geode
     PUBLIC
       ${JPEG_LIBRARIES}
+  )
+endif()
+
+if (PNG_FOUND)
+  target_include_directories(
+    geode
+    PUBLIC
+      ${PNG_INCLUDE}
+  )
+
+  target_link_libraries(
+    geode
+    PUBLIC
+      ${PNG_LIBRARIES}
   )
 endif()
 
