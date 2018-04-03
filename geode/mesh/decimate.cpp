@@ -25,11 +25,11 @@ enum class CollapseRank {
 // For debugging
 GEODE_UNUSED static std::ostream& operator<<(std::ostream& os, const CollapseRank rank) {
   switch(rank) {
-    case CollapseRank::simple: return os << "simple"; 
-    case CollapseRank::degenerate_faces: return os << "degenerate_faces"; 
-    case CollapseRank::requires_split: return os << "requires_split"; 
-    case CollapseRank::unset: return os << "unset"; 
-    case CollapseRank::not_allowed: return os << "not_allowed"; 
+    case CollapseRank::simple: return os << "simple";
+    case CollapseRank::degenerate_faces: return os << "degenerate_faces";
+    case CollapseRank::requires_split: return os << "requires_split";
+    case CollapseRank::unset: return os << "unset";
+    case CollapseRank::not_allowed: return os << "not_allowed";
   }
   return os << "<invalid-enum>";
 }
@@ -253,7 +253,7 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
     T min_q = inf;
     // If splitting isn't enabled, initialize min_rank to simple so that we discard any collapses that would require a split
     CollapseRank min_rank = splitting_enabled(reduce_mode) ? CollapseRank::unset
-                                                           : CollapseRank::simple; 
+                                                           : CollapseRank::simple;
     HalfedgeId min_e;
 
     const bool is_boundary = mesh.is_boundary(v);
@@ -298,7 +298,7 @@ template<ReduceMode reduce_mode, class TField> static void mesh_reduce_helper(Mu
   heap.make();
 
   // Update the quadric information for a vertex
-  const auto update = [&heap,best_collapse,area](const VertexId v) {
+  const auto update = [&heap,best_collapse](const VertexId v) {
     const auto qe = best_collapse(v);
     if (qe.y.valid())
       heap.set(v,qe.x,qe.y);
@@ -404,7 +404,7 @@ void simplify_inplace_deprecated(MutableTriangleTopology& mesh,
                  const int min_vertices,
                  const real boundary_distance) {
   mesh_reduce_helper<ReduceMode::simplify_topology>(mesh, mesh.field(X_id), distance, max_angle, min_vertices, boundary_distance);
-} 
+}
 
 void simplify_inplace_deprecated_python(MutableTriangleTopology& mesh,
                  const PyFieldId& X_id,
@@ -457,7 +457,7 @@ static bool operator!=(const TriangleTopology::FaceInfo& lhs, const TriangleTopo
   return (lhs.vertices != rhs.vertices) || (lhs.neighbors != rhs.neighbors);
 }
 static bool operator!=(const TriangleTopology::BoundaryInfo& lhs, const TriangleTopology::BoundaryInfo& rhs) {
-  return (lhs.prev != rhs.prev) 
+  return (lhs.prev != rhs.prev)
       || (lhs.next != rhs.next)
       || (lhs.reverse != rhs.reverse)
       || (lhs.src != rhs.src);
@@ -476,7 +476,7 @@ void test_simplify_case(Tuple<Ref<TriangleSoup>,Array<Vector<real,3>>> soup_and_
   const auto mesh = new_<TriangleTopology>(soup_and_x.x);
   const auto X = Field<TV,VertexId>{soup_and_x.y.copy()};
   {
-    // If every point in mesh is degenerate, simplify should eliminate everything 
+    // If every point in mesh is degenerate, simplify should eliminate everything
     const auto zero_X = Field<TV,VertexId>{X.size()};
     const auto simplified = simplify(mesh,zero_X,0.);
     GEODE_ASSERT(simplified.x->n_faces() == 0);
