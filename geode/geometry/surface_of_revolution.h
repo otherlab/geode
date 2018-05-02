@@ -1,7 +1,7 @@
 #pragma once
 #include <geode/array/Array.h>
 #include <geode/vector/Vector.h>
-#include <geode/structure/tuple.h>
+#include <geode/structure/Tuple.h>
 namespace geode {
 
 // Generates mesh by rotating profile_rz around z axis

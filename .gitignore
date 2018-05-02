@@ -19,3 +19,4 @@ dist
 *.egg-info
 *.so
 *.swp
+.pytest_cache

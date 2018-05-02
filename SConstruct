@@ -68,10 +68,10 @@ def patch_scons_for_mingw64_support():
   # The 'msvc' and 'mingw' tools scramble each others settings so we need to force only one to exist
   # SCons attempts to load MSVC as a 'default' tool, which prevents installing 'mingw' later
   # We reach into the actual modules and clobber some of the functions to help them play nice
-  
+
   # First, alter mingw.key_program to something that MinGW32-W64 also has
   mingw_module.key_program = 'mingw32-make'
-  
+
   class SConsMingw64Patch:
     def __init__(self):
       # Save original functions
@@ -79,12 +79,12 @@ def patch_scons_for_mingw64_support():
       self.orig_mingw_generate = mingw_module.generate
       self.orig_msvc_exists = msvc_module.exists
       self.orig_msvc_generate = msvc_module.generate
-      
+
       # Override with patched functions
       msvc_module.exists = self.patched_msvc_exists
       msvc_module.generate = self.patched_msvc_generate
       mingw_module.generate = self.patched_mingw_generate
-    
+
     def patched_msvc_exists(self,env):
       if env.get('mingw_disables_msvc'):
         return not self.orig_mingw_exists(env) and self.orig_msvc_exists(env)
@@ -157,7 +157,7 @@ options(env,
   ('skip_libs', 'list of libraries to skip', []),
   ('skip_programs','Build libraries only',0),
   ('base','Standard base directory for headers and libraries',env['base']),
-  ('cxxflags_extra','',[]),
+  ('cxxflags_extra','',['-Wno-undefined-var-template','-Wno-instantiation-after-specialization']),
   ('linkflags_extra','',[]),
   ('cpppath_extra','',['/usr/local/include']),
   ('libpath_extra','',['/usr/local/lib']),
@@ -926,12 +926,12 @@ if windows and 0:
 if windows and env['use_python']:
   if env['shared']:
     raise RuntimeError('Separate shared libraries do not work on windows.  Switch to shared=0.')
-  
+
   def get_libname(lib):
     name = lib[0].name
     assert(name.startswith(env['LIBPREFIX']) and name.endswith(env['LIBSUFFIX']))
     return name[len(env['LIBPREFIX']):-len(env['LIBSUFFIX'])]
-  
+
   # Autogenerate a toplevel module initialization routine calling all child initialization routines
   def make_modules(env,target,source):
     libs = str(source[0]).split()
@@ -947,14 +947,13 @@ GEODE_PYTHON_MODULE(geode_all) {
 '''%'\n  '.join('SUB(%s)'% (name if name != 'geode' else 'geode_wrap') for name in libs))
   modules, = env.Command(os.path.join(env['variant_build'],'modules.cpp'),
                          Value(' '.join(get_libname(lib) for lib in python_libs)),[make_modules])
-  
+
   # Build geode_all.pyd
   env = env.Clone(SHLIBSUFFIX='.pyd',shared=1)
   for use in all_uses:
     env[use] = 1
-  
+
   geode_all = library(env,'geode_all',
                       [get_libname(lib) for lib in all_libs],
                       extra=(modules.path,),skip_all=True,no_exports=True)
   env.Alias('py',geode_all)
-
