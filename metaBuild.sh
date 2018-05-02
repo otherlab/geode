@@ -10,7 +10,7 @@ else
 fi
 echo Architecture is set to $ARCH
 
-if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
+if [ "$1" = "clean" ] || [ "$1" = "debug" ] || [ "$1" = "release" ]; then
   declare -a args=()
   SYSTEM_NAME=`uname -s`
   args+=(sse=0)
@@ -35,13 +35,13 @@ if [ "$1" = "clean" ] || [ "$1" = "build" ]; then
   args+=(shared=1 install=0)
   args+=(use_gmp=1 gmp_libpath=#/../mpir/.libs/ gmp_include=#/../mpir/)
 
-  if [ "$2" = "debug" ]; then
+  if [ "$1" = "debug" ]; then
     echo "Building geode for debug only, using $ARCH architecture"
     types=debug
-  elif [ "$2" = "release" ]; then
+  elif [ "$1" = "release" ]; then
     echo "Building geode for release only, using $ARCH architecture"
     types=release
-  else 
+  else
     echo "Build type was not specified, building geode for both debug and release, using $ARCH architecture"
     types="debug release"
   fi
