@@ -26,6 +26,8 @@ if [ "$1" = "clean" ] || [ "$1" = "debug" ] || [ "$1" = "release" ]; then
   elif echo "$SYSTEM_NAME" | grep -q "MSYS"; then
     echo "ERROR: the MSYS shell is not supported. Please use the MinGW-w64 Win64 Shell instead."
     exit 1
+  elif echo "$SYSTEM_NAME" | grep -q "Linux"; then
+    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
   else
     echo "ERROR: Unrecognized or unsupported platform: $SYSTEM_NAME!"
     exit 1
