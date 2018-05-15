@@ -32,6 +32,7 @@
 #include <vector>
 #include <array>
 #include <initializer_list>
+#include <climits>
 
 namespace geode {
 

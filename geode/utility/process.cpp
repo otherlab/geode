@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <stdio.h>
 #include <cstring>
+#include <unistd.h>
 #ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
