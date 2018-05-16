@@ -17,17 +17,17 @@ if [ "$1" = "clean" ] || [ "$1" = "debug" ] || [ "$1" = "release" ]; then
   args+=(arch=$ARCH)
   if [ "$SYSTEM_NAME" = "Darwin" ]; then
     # OSX specific config:
-    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=0 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
     echo "" # Can't have an empty if block
   elif echo "$SYSTEM_NAME" | grep -q "MINGW64_NT"; then
     # Windows specific config:
     args+=(libs_extra=psapi)
-    args+=(use_openmesh=1 Werror=0 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=0 Werror=0 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
   elif echo "$SYSTEM_NAME" | grep -q "MSYS"; then
     echo "ERROR: the MSYS shell is not supported. Please use the MinGW-w64 Win64 Shell instead."
     exit 1
   elif echo "$SYSTEM_NAME" | grep -q "Linux"; then
-    args+=(use_openmesh=1 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
+    args+=(use_openmesh=0 openmesh_libpath=#/../OpenMesh-2.0/build/Build/lib/OpenMesh openmesh_publiclibs='OpenMeshCore,OpenMeshTools' openmesh_include=#/../OpenMesh-2.0/src)
   else
     echo "ERROR: Unrecognized or unsupported platform: $SYSTEM_NAME!"
     exit 1
