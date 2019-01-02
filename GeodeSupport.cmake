@@ -101,6 +101,8 @@ macro(ADD_GEODE_MODULE _name)
         -Wno-format-security
         -Wno-attributes
         -Wno-unused-variable
+        -Wno-ignored-attributes
+        -Wno-unused-result
         -fPIC
     )
 

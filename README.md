@@ -30,17 +30,9 @@ Optional dependencies (see below for how to disable these):
 * [libjpeg](http://www.ijg.org): Lossy image format (Custom noncopyleft license)
 
 Geode makes extensive use of C++11 features, so a relatively recent C++ compiler is necessary.
-So far the code has been tested on
-
-* [gcc 4.7](http://gcc.gnu.org)
-* [gcc 4.8](http://gcc.gnu.org)
-* [clang 3.1](http://clang.llvm.org)
-* [clang 3.2](http://clang.llvm.org)
-* [clang 3.3](http://clang.llvm.org)
-* [clang 3.4](http://clang.llvm.org)
-* [clang 3.5](http://clang.llvm.org)
 
 ### Windows
+
   This has been built and run successfully with the Visual Studio 2015 preview. We are working to make this more streamlined and robust (as well as fixing the hundreds of compiler warnings), but the following worked for me:
 
   Install the following dependencies:
@@ -85,8 +77,9 @@ So far the code has been tested on
 If necessary, dependencies can be installed via one of
 
     # Debian/Ubuntu
-    sudo apt-get install python python-numpy cmake libgmp-dev
+    sudo apt install cmake g++ python-dev python-pip python-numpy pkg-config libjpeg-dev libpng-dev zlib1g-dev libgmp-dev
     sudo apt-get install python-scipy python-pytest libpng-dev libjpeg-dev libopenexr-dev # optional
+    pip install numpy
 
     # Homebrew (recommended)
     brew install cmake openexr gfortran python #Note: gfortran brew is now part of gcc, so although previous versions can still be accessed, brew install gcc is the preferred method
@@ -106,7 +99,9 @@ Geode can then be installed from source via
     cmake . && make && make install
 
 At this point, you have a choice of either developer mode or install mode
+
 ### Install mode
+
     sudo make install
 
     This will also install python bindings if enabled.
