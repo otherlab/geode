@@ -80,7 +80,9 @@ public:
     template<int n>
     Vector(const Vector<T,n>& v1,const Vector<T,4-n>& v2)
     {
-        for(int i=0;i<n;i++) (*this)[i]=v1[i];for(int i=n;i<4;i++) (*this)[i]=v2[i-n];
+        for(int i=0;i<n;i++) {
+          (*this)[i]=v1[i];for(int i=n;i<4;i++) (*this)[i]=v2[i-n];
+        }
     }
 
     template<class TVector> typename EnableForVectorLike<T,4,TVector,Vector&>::type

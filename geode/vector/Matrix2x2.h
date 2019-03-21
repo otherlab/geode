@@ -63,7 +63,12 @@ public:
 
     Matrix& operator=(const Matrix& matrix_input)
     {
-        for(int i=0;i<2;i++) for(int j=0;j<2;j++) x[i][j]=matrix_input.x[i][j];return *this;
+        for(int i=0;i<2;i++) {
+            for(int j=0;j<2;j++) {
+                x[i][j]=matrix_input.x[i][j];
+            }
+        }
+        return *this;
     }
 
     void copy(const Matrix& A)

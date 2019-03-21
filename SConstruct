@@ -326,8 +326,8 @@ if gnuc:
 if env['hidden']:
   env.Append(CXXFLAGS=' -fvisibility=hidden',LINKFLAGS=' -fvisibility=hidden')
 
-if env['Werror']:
-  env.Append(CXXFLAGS=(' -Werror' if gnuc else ' /WX'))
+# if env['Werror']:
+#   env.Append(CXXFLAGS=(' -Werror' if gnuc else ' /WX'))
 
 # Relax a few warnings for clang
 if clang:

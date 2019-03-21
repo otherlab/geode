@@ -78,7 +78,9 @@ public:
 
     Vector()
     {
-        for(int i=0;i<d;i++) array[i]=T();
+        for(int i=0;i<d;i++) {
+            array[i]=T();
+        }
     }
 
     Vector(const T& x0,const T& x1,const T& x2,const T& x3)
@@ -100,37 +102,51 @@ public:
     explicit Vector(const Vector<T2,d2>& v)
     {
         static_assert(d2<=d,"");
-        for(int i=0;i<d2;i++) array[i]=T(v[i]);
-        for(int i=d2;i<d;i++) array[i]=T();
+        for(int i=0;i<d2;i++) {
+            array[i]=T(v[i]);
+        }
+        for(int i=d2;i<d;i++) {
+            array[i]=T();
+        }
     }
 
     template<class TVector>
     explicit Vector(const TVector& v)
     {
         static_assert(is_same<T,typename TVector::Element>::value && TVector::m==d,"");
-        for(int i=0;i<d;i++) array[i]=v[i];
+        for(int i=0;i<d;i++) {
+            array[i]=v[i];
+        }
     }
 
     Vector(const Vector& v)
     {
-        for(int i=0;i<d;i++) array[i]=v.array[i];
+        for(int i=0;i<d;i++) {
+            array[i]=v.array[i];
+        }
     }
 
     template<int n>
     Vector(const Vector<T,n>& v1,const Vector<T,d-n>& v2)
     {
-        for(int i=0;i<n;i++) (*this)(i)=v1(i);for(int i=n;i<d;i++) (*this)(i)=v2(i-n);
+        for(int i=0;i<n;i++) {
+            (*this)(i)=v1(i);for(int i=n;i<d;i++) (*this)(i)=v2(i-n);
+        }
     }
 
     template<class TVector> typename EnableForVectorLike<T,d,TVector,Vector&>::type
     operator=(const TVector& v)
     {
-        for(int i=0;i<d;i++) array[i]=v[i];return *this;
+        for(int i=0;i<d;i++) {
+            array[i]=v[i];return *this;
+        }
     }
 
     Vector& operator=(const Vector& v)
     {
-        for(int i=0;i<d;i++) array[i]=v.array[i];return *this;
+        for(int i=0;i<d;i++) {
+            array[i]=v.array[i];return *this;
+        }
     }
 
     constexpr int size() const

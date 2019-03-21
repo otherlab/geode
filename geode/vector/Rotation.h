@@ -432,7 +432,9 @@ public:
 
     static Rotation<TV> average_rotation(const Array<Rotation<TV> >& rotations)
     {if(rotations.m==0) return Rotation<TV>();Array<Rotation<TV> > r(rotations);
-    for(int i=1;i<r.m;i+=2) r.append(spherical_linear_interpolation(r(i),r(i+1),(T).5));return r(r.m);}
+    for(int i=1;i<r.m;i+=2) {
+        r.append(spherical_linear_interpolation(r(i),r(i+1),(T).5));return r(r.m);
+    }}
 
     static Rotation<TV> from_rotated_vector(const TV& initial_vector,const TV& final_vector)
     {TV initial_unit=initial_vector.normalized(),final_unit=final_vector.normalized();
