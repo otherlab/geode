@@ -93,7 +93,7 @@ macro(ADD_GEODE_MODULE _name)
         -Woverloaded-virtual
         -Wsign-compare
         -fno-strict-aliasing
-        -Werror
+#        -Werror
         -Wno-unused-function
         -Wno-array-bounds
         -Wno-unknown-pragmas
