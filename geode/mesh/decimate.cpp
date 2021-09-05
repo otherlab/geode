@@ -406,6 +406,8 @@ void simplify_inplace_deprecated(MutableTriangleTopology& mesh,
   mesh_reduce_helper<ReduceMode::simplify_topology>(mesh, mesh.field(X_id), distance, max_angle, min_vertices, boundary_distance);
 }
 
+#ifdef GEODE_PYTHON
+
 void simplify_inplace_deprecated_python(MutableTriangleTopology& mesh,
                  const PyFieldId& X_id,
                  const real distance,
@@ -428,7 +430,7 @@ void simplify_inplace_python(MutableTriangleTopology& mesh,
   simplify_inplace(mesh, FieldId<Vector<real,3>,VertexId>{X_id.id}, distance, max_angle, min_vertices, boundary_distance);
 }
 
-
+#endif
 GEODE_CORE_EXPORT Tuple<Ref<const TriangleTopology>,Field<const Vector<real,3>,VertexId>>
 simplify_deprecated(const TriangleTopology& mesh,
          RawField<const Vector<real,3>,VertexId> X,
@@ -509,8 +511,10 @@ void wrap_decimate() {
   GEODE_FUNCTION(decimate)
   GEODE_FUNCTION(decimate_inplace)
   GEODE_FUNCTION(simplify)
+#ifdef GEODE_PYTHON
   GEODE_FUNCTION_2(simplify_inplace, simplify_inplace_python)
   GEODE_FUNCTION_2(simplify_inplace_deprecated, simplify_inplace_deprecated_python)
+#endif
   GEODE_FUNCTION(test_simplify_helper)
 
 }
