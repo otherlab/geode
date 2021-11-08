@@ -68,6 +68,7 @@ set(module_HEADERS
   stream.h
   str.h
   time.h
+  timed_call.h
   tr1.h
   type_traits.h
   Unique.h
