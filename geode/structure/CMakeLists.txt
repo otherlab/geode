@@ -1,5 +1,6 @@
 set(module_SRCS
   Heap.cpp
+  RankedTree.cpp
   Tuple.cpp
 )
 
@@ -13,6 +14,8 @@ set(module_HEADERS
   Quad.h
   Queue.h
   Quintuple.h
+  RankedTree.h
+  RankedTree_p.h
   Singleton.h
   Stack.h
   Triple.h
